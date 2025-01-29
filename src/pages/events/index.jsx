@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/header";
-import AddButton from "../../components/shared/buttons/addButton";
+import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import { IoArrowUpOutline } from "react-icons/io5";
 
 const Events = () => {
@@ -17,7 +17,7 @@ const Events = () => {
       </Link>
       <div className="flexBetween ">
         <Header>Nearest Events</Header>
-        <AddButton className={"mt-3"} />
+        <PrimaryButton className={"mt-3"} />
       </div>
       <div className="grid gap-4 grid-cols-2 mt-3">
         {new Array(6).fill(" ").map((item, index) => (

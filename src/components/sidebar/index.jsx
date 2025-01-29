@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { TbLogout } from "react-icons/tb";
 import { SIDE_MENU } from "../../constants";
 import { useLocation, useNavigate } from "react-router-dom";
-import AddButton from "../shared/buttons/addButton";
+import PrimaryButton from "../shared/buttons/primaryButton";
 const Sidebar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -110,7 +110,7 @@ const Sidebar = () => {
                 />
               </div>
               <div className="flexEnd mt-2">
-                <AddButton />
+                <PrimaryButton />
               </div>
             </form>
           </div>

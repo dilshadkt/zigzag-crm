@@ -1,11 +1,12 @@
 import React from "react";
-import ProjectOverView from "../../components/projects/projectOverview";
-import SelectedProject from "../../components/projects/selectedProject";
-import PrimaryButton from "../../components/shared/buttons/primaryButton";
-import Header from "../../components/shared/header";
 import Navigator from "../../components/shared/navigator";
+import Header from "../../components/shared/header";
+import PrimaryButton from "../../components/shared/buttons/primaryButton";
+import SelectedProject from "../../components/projects/selectedProject";
+import ProjectOverView from "../../components/projects/projectOverview";
+import TaskOverView from "../TaskOverView";
 
-const ProjectDetails = () => {
+const TaskDetails = () => {
   return (
     <section className="flex flex-col h-full gap-y-1">
       <Navigator path={"/projects"} title={"Back to Projects"} />
@@ -21,10 +22,10 @@ const ProjectDetails = () => {
         {/* current project section  */}
         <SelectedProject />
         {/* project overview page  */}
-        <ProjectOverView />
+        <TaskOverView />
       </div>
     </section>
   );
 };
 
-export default ProjectDetails;
+export default TaskDetails;

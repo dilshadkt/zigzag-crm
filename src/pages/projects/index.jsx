@@ -1,8 +1,7 @@
 import React from "react";
 import Header from "../../components/shared/header";
-import AddButton from "../../components/shared/buttons/addButton";
+import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
-import IconButton from "../../components/shared/buttons/iconButton";
 import { IoArrowUpOutline } from "react-icons/io5";
 import Progress from "../../components/shared/progress";
 import { Link } from "react-router-dom";
@@ -12,7 +11,11 @@ const Prjects = () => {
     <section className="flex flex-col h-full gap-y-3">
       <div className="flexBetween ">
         <Header>Projects</Header>
-        <AddButton className={"mt-3"} />
+        <PrimaryButton
+          icon={"/icons/add.svg"}
+          title={"Add Task"}
+          className={"mt-3"}
+        />
       </div>
       <div className="w-full h-full  overflow-hidden gap-x-5  grid grid-cols-5">
         {/* current project section  */}
@@ -33,8 +36,7 @@ const Prjects = () => {
           >
             {/* project card  */}
             {new Array(5).fill(" ").map((project, index) => (
-              <Link
-                to={`/projects/Medical-app`}
+              <div
                 key={index}
                 className="hover:bg-[#F4F9FD] 
                  cursor-pointer relative rounded-2xl px-4
@@ -44,16 +46,19 @@ const Prjects = () => {
                 <h4 className="font-medium text-gray-800 text-sm">
                   Medical App (iOS native)
                 </h4>
-                <button className="flexStart cursor-pointer gap-x-1 text-[#3F8CFF]">
+                <Link
+                  to={`/projects/Medical-app`}
+                  className="flexStart hover:underline w-fit cursor-pointer gap-x-1 text-[#3F8CFF]"
+                >
                   <span className="text-sm"> View details</span>
                   <MdOutlineKeyboardArrowRight className="translate-y-0.5" />
-                </button>
+                </Link>
                 {/* the side bar  */}
                 <div
                   className="absolute w-1 top-0  -right-3
                 h-0 group-hover:h-full transition-all duration-300  bg-[#3F8CFF] rounded-full "
                 ></div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
@@ -61,7 +66,7 @@ const Prjects = () => {
         <div className="col-span-4 overflow-hidden   flex flex-col">
           <div className="flexBetween">
             <h3 className="text-lg font-medium text-gray-800">Tasks</h3>
-            <IconButton icon={"/icons/filter.svg"} />
+            <PrimaryButton icon={"/icons/filter.svg"} className={"bg-white"} />
           </div>
 
           <div className="flex flex-col h-full gap-y-4 mt-4  rounded-xl overflow-hidden   overflow-y-auto">

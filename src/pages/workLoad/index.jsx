@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/header";
-import AddButton from "../../components/shared/buttons/addButton";
+import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Navigator from "../../components/shared/navigator";
 
 const WorkLoad = () => {
@@ -10,7 +10,7 @@ const WorkLoad = () => {
       <Navigator path={"/"} title={"Back to Dashboard"} />
       <div className="flexBetween ">
         <Header>Current Workload</Header>
-        <AddButton className={"mt-3"} />
+        <PrimaryButton className={"mt-3"} />
       </div>
       <div className="grid grid-cols-2"></div>
     </section>

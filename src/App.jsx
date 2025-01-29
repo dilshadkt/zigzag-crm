@@ -10,6 +10,7 @@ import Prjects from "./pages/projects";
 import Events from "./pages/events";
 import WorkLoad from "./pages/workLoad";
 import ProjectDetails from "./pages/projectDetail";
+import TaskDetails from "./pages/taskDetails";
 
 function App() {
   return (
@@ -20,6 +21,10 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="projects" element={<Prjects />} />
             <Route path="projects/:projectName" element={<ProjectDetails />} />
+            <Route
+              path="projects/:projectName/:task"
+              element={<TaskDetails />}
+            />
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />

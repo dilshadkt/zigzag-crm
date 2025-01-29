@@ -1,11 +1,11 @@
 import React from "react";
 
-const IconButton = ({ icon, className }) => {
+const PrimaryButton = ({ icon, className }) => {
   return (
-    <button className={` flexCenter rounded-xl  w-11 h-11 ${className}`}>
+    <button className={` flexCenter rounded-xl  w-11 h-10 ${className}`}>
       <img src={icon} alt="" className="w-5" />
     </button>
   );
 };
 
-export default IconButton;
+export default PrimaryButton;
