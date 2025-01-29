@@ -1,60 +1,84 @@
 import React from "react";
 import Header from "../../components/shared/header";
 import AddButton from "../../components/shared/buttons/addButton";
+import { Link } from "react-router-dom";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import IconButton from "../../components/shared/buttons/iconButton";
-import { IoArrowUpOutline } from "react-icons/io5";
 import Progress from "../../components/shared/progress";
-import { Link } from "react-router-dom";
+import { IoArrowUpOutline } from "react-icons/io5";
+import Navigator from "../../components/shared/navigator";
 
-const Prjects = () => {
+const ProjectDetails = () => {
   return (
-    <section className="flex flex-col h-full gap-y-3">
-      <div className="flexBetween ">
-        <Header>Projects</Header>
+    <section className="flex flex-col h-full gap-y-1">
+      <Navigator path={"/projects"} title={"Back to Projects"} />
+      <div className="flexBetween   mb-2">
+        <Header>Medical App (iOS native)</Header>
         <AddButton className={"mt-3"} />
       </div>
       <div className="w-full h-full  overflow-hidden gap-x-5  grid grid-cols-5">
         {/* current project section  */}
         <div
-          className="col-span-1 bg-white overflow-hidden text-[#0A1629]
-         rounded-3xl  flex flex-col "
+          className="col-span-1 bg-white overflow-y-auto text-[#0A1629]
+     rounded-3xl  flex flex-col  p-4"
         >
-          <div className="flexCenter border-b  border-[#E4E6E8] gap-x-2 py-5">
-            <button className="flexCenter cursor-pointer">
-              <span className="font-medium ">Current Projects</span>
-              <img src="/icons/arrowDown.svg" alt="" />
-            </button>
-          </div>
-          {/* projects  */}
-          <div
-            className="flex flex-col h-full my-2 pl-2    
-            gap-y-2 overflow-y-auto"
-          >
-            {/* project card  */}
-            {new Array(5).fill(" ").map((project, index) => (
-              <Link
-                to={`/projects/Medical-app`}
-                key={index}
-                className="hover:bg-[#F4F9FD] 
-                 cursor-pointer relative rounded-2xl px-4
-                  gap-y-1.5  group  mr-3 py-3 flex flex-col"
-              >
-                <span className="text-xs text-[#91929E]">PN0001245</span>
-                <h4 className="font-medium text-gray-800 text-sm">
-                  Medical App (iOS native)
-                </h4>
-                <button className="flexStart cursor-pointer gap-x-1 text-[#3F8CFF]">
-                  <span className="text-sm"> View details</span>
-                  <MdOutlineKeyboardArrowRight className="translate-y-0.5" />
-                </button>
-                {/* the side bar  */}
-                <div
-                  className="absolute w-1 top-0  -right-3
-                h-0 group-hover:h-full transition-all duration-300  bg-[#3F8CFF] rounded-full "
-                ></div>
-              </Link>
-            ))}
+          <div className="flex flex-col overflow-y-auto">
+            <div className="flexBetween">
+              <span className="text-sm text-[#91929E] ">Project Number</span>
+              <div className="w-11 h-11 bg-[#F4F9FD] flexCenter rounded-xl">
+                <img src="/icons/edit.svg" alt="" className="w-5" />
+              </div>
+            </div>
+            <span className="-translate-y-1.5">PN0001245</span>
+            <div className="flex flex-col gap-y-2 my-4">
+              <h4 className="font-medium">Description</h4>
+              <p className="text-[#0A1629]/80">
+                App for maintaining your medical record, making appointments
+                with a doctor, storing prescriptions
+              </p>
+            </div>
+            <div className="flex flex-col gap-y-5 mt-1">
+              <div className="flex flex-col gap-y-2">
+                <span className="text-sm text-[#91929E]">Reporter </span>
+                <div className="flexStart gap-x-3 ">
+                  <div className="w-6 h-6 rounded-full overflow-hidden flexCenter">
+                    <img src="/image/photo.png" alt="" />
+                  </div>
+                  <span>Evan Yates</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-y-2">
+                <span className="text-sm text-[#91929E]">Priority </span>
+                <div className="flexStart gap-x-2  text-[#FFBD21]">
+                  <IoArrowUpOutline className="text-lg " />
+                  <span className="text-sm font-medium">Medium</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-y-2">
+                <span className="text-sm text-[#91929E]">Dead Line </span>
+                <span className="text-sm  font-medium text-gray-800">
+                  Feb 23, 2020
+                </span>
+              </div>
+              <div className="flex flex-col gap-y-2">
+                <div className="flexStart gap-x-2">
+                  <img src="/icons/fillCalender.svg" alt="" className="w-4" />
+                  <span className="text-sm text-[#91929E]">
+                    Created May 28, 2020{" "}
+                  </span>
+                </div>
+                <div className="flexStart gap-x-2">
+                  <IconButton
+                    icon={"/icons/file.svg"}
+                    className={"bg-[#6D5DD3]/10"}
+                  />
+                  <IconButton
+                    icon={"/icons/link.svg"}
+                    className={"bg-[#15C0E6]/10"}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         {/* project detail page  */}
@@ -104,7 +128,7 @@ const Prjects = () => {
                 <div className="col-span-2  flexBetween">
                   <span
                     className="bg-[#E0F9F2] text-[#00D097] 
-                  flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
+              flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
                   >
                     Done
                   </span>
@@ -151,7 +175,7 @@ const Prjects = () => {
                 <div className="col-span-2  flexBetween">
                   <span
                     className="bg-[#E0F9F2] text-[#00D097] 
-                  flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
+              flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
                   >
                     Done
                   </span>
@@ -166,4 +190,4 @@ const Prjects = () => {
   );
 };
 
-export default Prjects;
+export default ProjectDetails;

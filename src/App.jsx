@@ -9,6 +9,7 @@ import InfoPortal from "./pages/infoPortal";
 import Prjects from "./pages/projects";
 import Events from "./pages/events";
 import WorkLoad from "./pages/workLoad";
+import ProjectDetails from "./pages/projectDetail";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="projects" element={<Prjects />} />
+            <Route path="projects/:projectName" element={<ProjectDetails />} />
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />

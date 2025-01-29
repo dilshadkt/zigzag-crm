@@ -2,18 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Header from "../../components/shared/header";
 import AddButton from "../../components/shared/buttons/addButton";
+import Navigator from "../../components/shared/navigator";
 
 const WorkLoad = () => {
   return (
     <section className="flex flex-col">
-      <Link to={"/"} className="flexStart gap-x-2">
-        <img
-          src="/icons/arrowBack.svg"
-          alt=""
-          className="w-5 translate-y-0.4"
-        />
-        <span className="text-[#3F8CFF] text-sm">Back to Dashboard</span>
-      </Link>
+      <Navigator path={"/"} title={"Back to Dashboard"} />
       <div className="flexBetween ">
         <Header>Current Workload</Header>
         <AddButton className={"mt-3"} />

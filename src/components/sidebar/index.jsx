@@ -74,7 +74,12 @@ const Sidebar = () => {
                 onClick={() => setMenuOpen(false)}
                 className="w-11 h-11 flexCenter bg-[#F4F9FD] rounded-2xl"
               >
-                <img src="/icons/cancel.svg" alt="" className="w-5" />
+                <img
+                  src="/icons/cancel.svg"
+                  alt=""
+                  className="w-5"
+                  loading="lazy"
+                />
               </button>
             </div>
             <div className="mt-4">
