@@ -76,3 +76,8 @@
   -ms-overflow-style: none; /* Internet Explorer 10+ */
   overflow: -moz-scrollbars-none; /* Older Firefox (optional fallback) */
 }
+
+.element {
+  border: 2px solid; /* Set border width */
+  border-image: linear-gradient(to right, #ff7e5f, #feb47b) 1;
+}
