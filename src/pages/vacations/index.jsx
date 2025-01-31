@@ -4,9 +4,47 @@ import ButtonToggle from "../../components/shared/buttons/buttonToggle";
 import Header from "../../components/shared/header";
 import UserProfile from "../../components/shared/profile";
 import { IoArrowUpOutline } from "react-icons/io5";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  addMonths,
+  subMonths,
+} from "date-fns";
+import { USERS } from "../../constants";
 
 const Vacations = () => {
   const [stat, setStat] = useState("Employees’ vacations");
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const firstDay = startOfMonth(currentDate);
+  const lastDay = endOfMonth(currentDate);
+  const daysInMonth = eachDayOfInterval({ start: firstDay, end: lastDay });
+  const formattedDate = (date) => format(new Date(date), "dd/MM/yyyy");
+
+  const calendarDays = [
+    ...daysInMonth.map((date) => ({
+      day: format(date, "EEE"),
+      date: format(date, "d"),
+    })),
+    ...Array(31 - daysInMonth.length).fill({ day: "", date: "" }),
+  ];
+
+  const generateBgColor = (user, item) => {
+    if (user?.remote?.date?.includes(formattedDate(item).toString())) {
+      return [`#6D5DD3`, user?.remote?.status === "approved"];
+    } else if (user?.leave?.date?.includes(formattedDate(item).toString())) {
+      return [`#F65160`, user?.leave?.status === "approved"];
+    } else if (user?.approved?.date?.includes(formattedDate(item).toString())) {
+      return [`#15C0E6`, user?.approved?.status === "approved"];
+    } else {
+      return ["#F4F9FD", true];
+    }
+  };
+
   const renderStat = () => {
     if (stat === "Employees’ vacations") {
       return (
@@ -50,27 +88,35 @@ const Vacations = () => {
             </div>
             <div className="w-full border-b border-[#E6EBF5] flex flex-col">
               <div className="w-full h-full flexCenter relative">
-                <span className="font-medium ">First month (September)</span>
+                <span className="font-medium ">
+                  First month - {format(firstDay, "MMMM (yyyy)")}
+                </span>
                 <div className="flexStart gap-x-2 absolute right-6 top-0 bottom-0 my-auto">
-                  <button>
-                    <IoArrowUpOutline className="-rotate-90 cursor-pointer text-xl text-[#C9CCD1]" />
+                  <button onClick={handlePrevMonth}>
+                    <IoArrowUpOutline
+                      className="-rotate-90 cursor-pointer text-xl
+                     text-[#C9CCD1] hover:scale-75 hover:text-[#3F8CFF]"
+                    />
                   </button>
-                  <button>
-                    <IoArrowUpOutline className="rotate-90 cursor-pointer text-xl text-[#3F8CFF]" />
+                  <button onClick={handleNextMonth}>
+                    <IoArrowUpOutline
+                      className="rotate-90 cursor-pointer text-xl
+                     text-[#C9CCD1] hover:scale-75 hover:text-[#3F8CFF]"
+                    />
                   </button>
                 </div>
               </div>
               <div className="h-full gap-x-1 grid grid-cols-31  overflow-x-auto flexStart m-1">
-                {new Array(31).fill(" ").map((item, index) => (
+                {calendarDays.map((item, index) => (
                   <div
                     key={index}
                     className="w-full min-w-[28px] h-10  rounded-[7px] bg-[#F4F9FD] flexCenter flex-col"
                   >
                     <span className="text-[13px] font-medium text-[#7D8593]">
-                      {index + 1}
+                      {item?.date}
                     </span>
                     <span className="text-[11px] text-[#7D8594] -translate-y-1">
-                      Tue
+                      {item?.day}
                     </span>
                   </div>
                 ))}
@@ -79,7 +125,7 @@ const Vacations = () => {
           </div>
           <div className="w-full border-b overflow-y-auto flexStart border-[#E6EBF5] h-full">
             <div className="w-full h-full overflow-y-auto">
-              {new Array(8).fill(" ").map((item, index) => (
+              {USERS.map((user, index) => (
                 <div className="flex w-full">
                   <div
                     key={index}
@@ -88,19 +134,33 @@ const Vacations = () => {
                   >
                     <div className="w-6 h-6 overflow-hidden rounded-full flexCenter">
                       <img
-                        src="/image/photo.png"
+                        src={`/image/dummy/${user.avatar}`}
                         alt=""
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <span>Oscar Holloway</span>
+                    <span>{user?.name}</span>
                   </div>
                   <div className="w-full h-[52px] border-b border-[#E6EBF5]  gap-x-1 grid grid-cols-31  flexStart px-1">
-                    {new Array(31).fill(" ").map((item, index) => (
+                    {daysInMonth.map((item, index) => (
                       <div
+                        title={formattedDate(item)}
                         key={index}
-                        className=" min-w-[28px] w-full h-10  rounded-[7px] bg-[#F4F9FD] flexCenter flex-col"
-                      ></div>
+                        style={{
+                          borderColor: generateBgColor(user, item)[0],
+                        }}
+                        className={` min-w-[28px]  overflow-hidden  w-full h-10  rounded-[7px] 
+                    ${!generateBgColor(user, item)[1] && `border-[1.55px]`}
+                        flexCenter flex-col`}
+                      >
+                        <div
+                          style={{
+                            background: generateBgColor(user, item)[0],
+                            opacity: generateBgColor(user, item)[1] ? 1 : 0.2,
+                          }}
+                          className="w-full h-full rounded-[5px] "
+                        ></div>
+                      </div>
                     ))}
                   </div>
                 </div>
