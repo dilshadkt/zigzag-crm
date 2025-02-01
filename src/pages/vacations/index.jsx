@@ -49,24 +49,30 @@ const Vacations = () => {
     if (stat === "Employees’ vacations") {
       return (
         <div className="flex flex-col overflow-y-auto gap-y-3 mt-3">
-          {new Array(10).fill(" ").map((item, index) => (
+          {USERS.map((item, index) => (
             <div
               key={index}
               className=" rounded-3xl bg-white py-5 px-7 grid grid-cols-2"
             >
-              <UserProfile />
+              <UserProfile
+                user={{
+                  name: item.name,
+                  email: item.email,
+                  profile: item.avatar,
+                }}
+              />
               <div className="grid grid-cols-3">
                 <div className="flex flex-col gap-y-1">
                   <h5 className="text-sm text-[#91929E]">Vacations</h5>
-                  <span>10</span>
+                  <span>{item?.vacation}</span>
                 </div>
                 <div className="flex flex-col gap-y-1">
                   <h5 className="text-sm text-[#91929E]">Sick Leave</h5>
-                  <span>6</span>
+                  <span>{item?.sickLeave}</span>
                 </div>
                 <div className="flex flex-col gap-y-1">
                   <h5 className="text-sm text-[#91929E]">Work remotely</h5>
-                  <span>34</span>
+                  <span>{item?.workRemote}</span>
                 </div>
               </div>
             </div>

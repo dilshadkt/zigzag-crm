@@ -10,7 +10,8 @@ const Progress = ({
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
-  const pathColor = "#3F8CFF";
+  const pathColor =
+    currentValue > 50 ? "#3F8CFF" : currentValue > 30 ? "#FDC748" : "#f43118";
 
   return (
     <div
