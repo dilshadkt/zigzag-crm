@@ -1,21 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "../../components/shared/header";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { IoArrowUpOutline } from "react-icons/io5";
 import Progress from "../../components/shared/progress";
 import { Link } from "react-router-dom";
+import Input from "../../components/shared/Field/input";
+import DatePicker from "../../components/shared/Field/date";
+import Select from "../../components/shared/Field/select";
+import Description from "../../components/shared/Field/description";
+import AddProject from "../../components/projects/addProject";
+import AddTask from "../../components/projects/addTask";
 
 const Prjects = () => {
+  const [showModalProject, setShowModalProject] = useState(false);
+  const [showModalFilter, setShowModalFilter] = useState(false);
+  const [showModalTask, setShowModalTask] = useState(false);
   return (
     <section className="flex flex-col h-full gap-y-3">
       <div className="flexBetween ">
         <Header>Projects</Header>
-        <PrimaryButton
-          icon={"/icons/add.svg"}
-          title={"Add Task"}
-          className={"mt-3"}
-        />
+        <div className="flexEnd gap-x-2">
+          <PrimaryButton
+            icon={"/icons/add.svg"}
+            title={"Add Task"}
+            onclick={() => setShowModalTask(true)}
+            className={"mt-3"}
+          />
+          <PrimaryButton
+            icon={"/icons/add.svg"}
+            title={"Add Project"}
+            onclick={() => setShowModalProject(true)}
+            className={"mt-3"}
+          />
+        </div>
       </div>
       <div className="w-full h-full  overflow-hidden gap-x-5  grid grid-cols-5">
         {/* current project section  */}
@@ -66,7 +84,11 @@ const Prjects = () => {
         <div className="col-span-4 overflow-hidden   flex flex-col">
           <div className="flexBetween">
             <h3 className="text-lg font-medium text-gray-800">Tasks</h3>
-            <PrimaryButton icon={"/icons/filter.svg"} className={"bg-white"} />
+            <PrimaryButton
+              icon={"/icons/filter.svg"}
+              onclick={() => setShowModalFilter(true)}
+              className={"bg-white"}
+            />
           </div>
 
           <div className="flex flex-col h-full gap-y-4 mt-4  rounded-xl overflow-hidden   overflow-y-auto">
@@ -167,6 +189,111 @@ const Prjects = () => {
           </div>
         </div>
       </div>
+      {/* filter menu  */}
+      {showModalFilter && (
+        <div
+          className="fixed left-0 right-0 top-0 bottom-0
+bg-[#2155A3]/15  py-3 px-3 z-50 flexEnd"
+        >
+          <div
+            className="w-[400px]  bg-white rounded-3xl flex flex-col
+         py-7 h-full"
+          >
+            <div className="flexBetween px-7 border-b border-[#E4E6E8]/80 pb-4">
+              <h4 className="text-lg font-medium ">Filters</h4>
+              <PrimaryButton
+                icon={"/icons/cancel.svg"}
+                className={"bg-[#F4F9FD]"}
+                onclick={() => setShowModalFilter(false)}
+              />
+            </div>
+            <div className="px-7 pb-5 pt-4  border-b border-[#E4E6E8]/80">
+              <DatePicker title="Period" />
+            </div>
+            {/* task group  */}
+            <div className="px-7 py-5  border-b border-[#E4E6E8]/80 flex flex-col">
+              <h5 className="text-sm font-medium text-[#7D8592]">Task Group</h5>
+              <div className="flex flex-col mt-5 gap-y-5">
+                {new Array(4).fill(" ").map((item, index) => (
+                  <label
+                    key={index}
+                    class="flex items-center space-x-2 cursor-pointer peer"
+                  >
+                    <input type="checkbox" class="hidden peer" />
+                    <div
+                      class="w-4 h-4 border-2 border-gray-500 rounded-md flex
+                   items-center justify-center transition-all peer-checked:bg-black
+                    peer-checked:border-black peer-checked:text-white"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white opacity-0 transition-opacity duration-200
+                       peer-has-checked:opacity-100"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <span class="text-gray-700 text-sm font-medium">
+                      Design
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            {/* reporteres  */}
+            <div className="px-7 py-5  border-b border-[#E4E6E8]/80 flex flex-col">
+              <h5 className="text-sm font-medium text-[#7D8592]">Reporter</h5>
+              <div className="flex flex-col mt-5 gap-y-5">
+                {new Array(4).fill(" ").map((item, index) => (
+                  <label
+                    key={index}
+                    class="flex items-center space-x-2 cursor-pointer peer"
+                  >
+                    <input type="checkbox" class="hidden peer" />
+                    <div
+                      class="w-4 h-4 border-2 border-gray-500 rounded-md flex
+                   items-center justify-center transition-all peer-checked:bg-black
+                    peer-checked:border-black peer-checked:text-white"
+                    >
+                      <svg
+                        class="w-3 h-3 text-white opacity-0 transition-opacity duration-200
+                       peer-has-checked:opacity-100"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <span class="text-gray-700 text-sm font-medium">
+                      Custom Checkbox
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="px-7 py-5  border-b border-[#E4E6E8]/80 flex flex-col"></div>
+          </div>
+        </div>
+      )}
+
+      {/* add task modal  */}
+      {showModalTask && <AddTask setShowModalTask={setShowModalTask} />}
+
+      {/* add project modal */}
+      {showModalProject && (
+        <AddProject setShowModalProject={setShowModalProject} />
+      )}
     </section>
   );
 };
