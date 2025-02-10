@@ -4,6 +4,7 @@ import clsx from "clsx";
 const PrimaryButton = ({ className, icon, title, onclick }) => {
   return (
     <button
+      type="button"
       onClick={onclick}
       className={clsx(
         `flexCenter h-10 px-3  gap-x-2 cursor-pointer  bg-[#3F8CFF] text-white  rounded-xl `,

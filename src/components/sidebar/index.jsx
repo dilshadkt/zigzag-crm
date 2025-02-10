@@ -110,7 +110,7 @@ const Sidebar = () => {
                 />
               </div>
               <div className="flexEnd mt-2">
-                <PrimaryButton />
+                <PrimaryButton title={"Send Request"} />
               </div>
             </form>
           </div>

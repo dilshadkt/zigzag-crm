@@ -16,8 +16,10 @@ bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter"
 rounded-3xl max-w-[584px] w-full h-full relative"
       >
         <div className="w-full h-full flex flex-col overflow-y-auto">
-          <h4 className="text-lg font-medium">Add Task</h4>
-          <form action=" " className="mt-5 flex flex-col gap-y-4">
+          <h4 className="text-lg pb-2 font-medium sticky top-0 bg-white z-20">
+            Add Task
+          </h4>
+          <form action=" " className="mt-3 flex flex-col gap-y-4">
             <Input placeholder="Task Name" title="Task Name" />
             <Select
               title="Task Group"
@@ -56,7 +58,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
         </div>
         <PrimaryButton
           icon={"/icons/cancel.svg"}
-          className={"bg-[#F4F9FD] absolute top-7 right-7"}
+          className={"bg-[#F4F9FD] absolute z-40 top-7 right-7"}
           onclick={() => setShowModalTask(false)}
         />
       </div>

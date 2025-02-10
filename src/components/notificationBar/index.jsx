@@ -3,7 +3,10 @@ import PrimaryButton from "../shared/buttons/primaryButton";
 
 const NotificationBar = ({ setNotifyMenuOpen }) => {
   return (
-    <div className="fixed left-0 font-normal right-0 bottom-0 flexEnd py-4 px-5 top-0 m-auto bg-[#2155A3]/20 z-50 backdrop-blur-sm">
+    <div
+      className="fixed left-0 font-normal  right-0 bottom-0 flexEnd py-4 px-5 top-0 m-auto bg-[#2155A3]/20
+     z-[1000] backdrop-blur-sm"
+    >
       <div className="w-[390px] flex flex-col bg-white  rounded-3xl overflow-hidden h-full">
         <div className="h-[85px] border-b border-[#E4E6E8]  px-[26px] w-full flexCenter">
           <div className="flexBetween w-full">

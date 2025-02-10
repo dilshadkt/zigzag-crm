@@ -11,6 +11,7 @@ import Events from "./pages/events";
 import WorkLoad from "./pages/workLoad";
 import ProjectDetails from "./pages/projectDetail";
 import TaskDetails from "./pages/taskDetails";
+import Settings from "./pages/settings";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />
             <Route path="workload" element={<WorkLoad />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </BrowserRouter>

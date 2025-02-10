@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import NotificationBar from "../notificationBar";
+import { Link } from "react-router-dom";
 
 const DashboardHeader = () => {
   const [isNotifyMenuOpen, setNotifyMenuOpen] = useState(false);
@@ -27,10 +28,10 @@ const DashboardHeader = () => {
         </button>
         <div className="h-12 rounded-[14px] gap-x-2 px-3 w-fit bg-white flexCenter  ">
           <div className="w-[30px] aspect-square rounded-full overflow-hidden bg-black"></div>
-          <div className="flexStart gap-x-3.5 cursor-pointer">
+          <Link to={"/settings"} className="flexStart gap-x-3.5 cursor-pointer">
             <span className="text-sm font-medium ">Zubair</span>
             <img src="/icons/arrowDown.svg" alt="" className="w-5" />
-          </div>
+          </Link>
         </div>
       </div>
       {isNotifyMenuOpen && (
