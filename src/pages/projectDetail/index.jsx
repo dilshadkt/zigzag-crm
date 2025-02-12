@@ -12,7 +12,7 @@ const ProjectDetails = () => {
       <div className="flexBetween   mb-2">
         <Header>Medical App (iOS native)</Header>
         <PrimaryButton
-          className={"mt-3 px-5"}
+          className={"mt-3 px-5 text-white"}
           title={"Add Task"}
           icon={"/icons/add.svg"}
         />

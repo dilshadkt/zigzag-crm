@@ -7,6 +7,10 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [isMenuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    navigate("/auth/signin");
+  };
   return (
     <section className="flex flex-col w-[220px] justify-between rounded-[24px] bg-white h-full p-3">
       <div className="flex flex-col">
@@ -54,6 +58,7 @@ const Sidebar = () => {
           />
         </div>
         <button
+          onClick={handleLogout}
           className="text-[#7D8592] mt-2 px-2 py-[10px] rounded-[10px]  
   flexStart gap-x-3.5 hover:text-[#3F8CFF] text-sm"
         >

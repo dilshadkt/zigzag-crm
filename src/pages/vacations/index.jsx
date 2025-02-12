@@ -234,7 +234,7 @@ const Vacations = () => {
         <PrimaryButton
           icon={"/icons/add.svg"}
           title={"Add Request"}
-          className={"mt-3 px-5"}
+          className={"mt-3 px-5 text-white "}
         />
       </div>
       {/* body part  */}

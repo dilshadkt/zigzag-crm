@@ -1,13 +1,22 @@
 import React from "react";
 import clsx from "clsx";
 
-const PrimaryButton = ({ className, icon, title, onclick }) => {
+const PrimaryButton = ({
+  className = "text-white",
+  icon,
+  title,
+  onclick,
+  type = "button",
+  iconPosition = "left",
+}) => {
   return (
     <button
-      type="button"
+      type={type}
       onClick={onclick}
       className={clsx(
-        `flexCenter h-10 px-3  gap-x-2 cursor-pointer  bg-[#3F8CFF] text-white  rounded-xl `,
+        `flexCenter ${
+          iconPosition === "left" ? `` : `flex-row-reverse`
+        } h-10 px-3  gap-x-2 cursor-pointer  bg-[#3F8CFF]   rounded-xl `,
         className
       )}
     >

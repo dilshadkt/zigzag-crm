@@ -84,7 +84,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
         />
         <PrimaryButton
           title={"Save Project"}
-          className={"absolute right-[112px] px-4 bottom-[57px]"}
+          className={"absolute text-white right-[112px] px-4 bottom-[57px]"}
         />
       </div>
     </div>

@@ -11,7 +11,13 @@ import Events from "./pages/events";
 import WorkLoad from "./pages/workLoad";
 import ProjectDetails from "./pages/projectDetail";
 import TaskDetails from "./pages/taskDetails";
-import Settings from "./pages/settings";
+import SettingsLayout from "./layouts/settings";
+import Account from "./pages/settings/accounts";
+import AuthLayout from "./layouts/auth";
+import SignIn from "./pages/auth/signin";
+import Register from "./pages/auth/register";
+import SingUpSuccess from "./pages/auth/success";
+import ForgetPassword from "./pages/auth/forgetPassword";
 
 function App() {
   return (
@@ -33,7 +39,18 @@ function App() {
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />
             <Route path="workload" element={<WorkLoad />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<SettingsLayout />}>
+              <Route path="account" element={<Account />} />
+              <Route path="notifications" element={<Account />} />
+              <Route path="company" element={<Account />} />
+              <Route path="safety" element={<Account />} />
+            </Route>
+          </Route>
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route path="signin" element={<SignIn />} />
+            <Route path="register" element={<Register />} />
+            <Route path="sign-up-Success" element={<SingUpSuccess />} />
+            <Route path="forget-password" element={<ForgetPassword />} />
           </Route>
         </Routes>
       </BrowserRouter>

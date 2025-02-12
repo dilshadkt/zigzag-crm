@@ -10,7 +10,6 @@ const WorkLoad = () => {
       <Navigator path={"/"} title={"Back to Dashboard"} />
       <div className="flexBetween ">
         <Header>Current Workload</Header>
-        <PrimaryButton className={"mt-3"} />
       </div>
       <div className="grid grid-cols-2"></div>
     </section>

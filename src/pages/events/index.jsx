@@ -17,7 +17,11 @@ const Events = () => {
       </Link>
       <div className="flexBetween ">
         <Header>Nearest Events</Header>
-        <PrimaryButton className={"mt-3"} />
+        <PrimaryButton
+          className={"mt-3"}
+          icon={"/icons/add.svg"}
+          title={"Add Event"}
+        />
       </div>
       <div className="grid gap-4 grid-cols-2 mt-3">
         {new Array(6).fill(" ").map((item, index) => (

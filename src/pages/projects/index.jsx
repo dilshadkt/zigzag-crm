@@ -25,13 +25,13 @@ const Prjects = () => {
             icon={"/icons/add.svg"}
             title={"Add Task"}
             onclick={() => setShowModalTask(true)}
-            className={"mt-3"}
+            className={"mt-3 text-white px-5"}
           />
           <PrimaryButton
             icon={"/icons/add.svg"}
             title={"Add Project"}
             onclick={() => setShowModalProject(true)}
-            className={"mt-3"}
+            className={"mt-3 text-white px-5"}
           />
         </div>
       </div>

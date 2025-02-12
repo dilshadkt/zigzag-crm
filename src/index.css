@@ -65,7 +65,9 @@
   font-weight: 700;
   font-style: normal;
 }
-
+body {
+  font-family: "Nunito Sans", sans-serif;
+}
 ::-webkit-scrollbar {
   display: none; /* Chrome, Safari, and Opera */
 }

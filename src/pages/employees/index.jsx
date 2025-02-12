@@ -37,7 +37,7 @@ const Employees = () => {
             icon={"/icons/add.svg"}
             onclick={() => setShowAddEmployee(true)}
             title={"Add Employee"}
-            className={"mt-3 px-5"}
+            className={"mt-3 px-5 text-white"}
           />
         </div>
       </div>
