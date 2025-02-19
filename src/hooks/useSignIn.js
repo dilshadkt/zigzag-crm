@@ -2,7 +2,10 @@ import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { signIn } from "../api/service";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../store/slice/authSlice";
 export const useSignIn = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const initialValues = {
     email: "",
@@ -16,9 +19,10 @@ export const useSignIn = () => {
     initialValues,
     validationSchema,
     onSubmit: async (values) => {
-      const { success, message } = await signIn(values);
+      const { success, message, user } = await signIn(values);
       if (success) {
-        navigate("/");
+        dispatch(loginSuccess({ user: user._id, companyId: user.companyId }));
+        navigate(`/`);
       } else {
         console.log(message);
       }

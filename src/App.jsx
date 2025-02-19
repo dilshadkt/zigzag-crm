@@ -18,13 +18,42 @@ import SignIn from "./pages/auth/signin";
 import Register from "./pages/auth/register";
 import SingUpSuccess from "./pages/auth/success";
 import ForgetPassword from "./pages/auth/forgetPassword";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { useAuth } from "./hooks/useAuth";
+import { validateSession } from "./api/service";
+import { ProtectedRoute } from "./components/protectedRoute";
+import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      dispatch(setLoading(true));
+      try {
+        const { user } = await validateSession();
+        dispatch(loginSuccess({ user: user?._id, companyId: user?.companyId }));
+      } catch (error) {
+        dispatch(logout());
+      } finally {
+        dispatch(setLoading(false));
+      }
+    };
+    checkAuth();
+  }, [dispatch]);
   return (
     <>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<DashboardLayout />}>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="projects" element={<Prjects />} />
             <Route path="projects/:projectName" element={<ProjectDetails />} />

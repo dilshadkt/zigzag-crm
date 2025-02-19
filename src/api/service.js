@@ -27,6 +27,16 @@ export const signIn = async (data) => {
     return {
       success: false,
       message: error.response?.data?.message || "Login failed",
+      user: null,
     };
+  }
+};
+
+export const validateSession = async () => {
+  try {
+    const response = await apiClient.post("/auth/me");
+    return { success: true, user: response.data.user };
+  } catch (error) {
+    throw new Error("User not found");
   }
 };

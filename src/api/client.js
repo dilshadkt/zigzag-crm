@@ -25,7 +25,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token"); // Clear the token
-      window.location.href = "/auth/signin"; // Redirect to login page
+      // window.location.href = "/auth/signin"; // Redirect to login page
     }
     return Promise.reject(
       error.response?.data?.error || "Something went wrong"
