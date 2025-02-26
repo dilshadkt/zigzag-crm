@@ -7,9 +7,12 @@ import DatePicker from "../../components/shared/Field/date";
 import { FaArrowLeft } from "react-icons/fa";
 import { SETTINGS } from "../../constants";
 import { Link, Outlet } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import UserProfile from "../../components/settings/profile";
 
 const SettingsLayout = () => {
   const [selected, setSelected] = useState(SETTINGS[0].id);
+  const { user } = useAuth();
   return (
     <section className="flex flex-col h-full gap-y-3">
       <div className="flexBetween ">
@@ -21,42 +24,7 @@ const SettingsLayout = () => {
       </div>
       <div className="w-full h-full  overflow-hidden gap-x-5  flex">
         {/* current project section  */}
-        <div
-          className="w-[250px] bg-white overflow-hidden pb-4 h-full text-[#0A1629]
- rounded-3xl  flex flex-col "
-        >
-          <div className="flex flex-col border-b border-[#E4E6E8] p-5">
-            <div className="flex justify-between">
-              <div>
-                <Progress size={54} currentValue={75} />
-              </div>
-              <PrimaryButton
-                icon={"/icons/edit.svg"}
-                className={"bg-[#F4F9FD]"}
-              />
-            </div>
-            <h4 className="text-lg font-medium mt-2">Evan Yates</h4>
-            <span className="text-xs text-gray-600 ">UI/UX Designer</span>
-          </div>
-          <form
-            action=""
-            className="flex h-full flex-col px-5 py-4 overflow-y-auto"
-          >
-            <div className="flex flex-col gap-y-3">
-              <h4 className=" font-medium">Main info</h4>
-              <Input title="Position" placeholder="UI/UX Designer" />
-              <Input title="Company" placeholder="Cadabra" />
-              <Input title="Location" placeholder="NYC, New York, USA" />
-              <DatePicker title="Birthday Date" />
-            </div>
-            <div className="flex flex-col gap-y-3 mt-7">
-              <h4 className=" font-medium">Contact Info</h4>
-              <Input title="Email" placeholder="evanyates@gmail.com" />
-              <Input title="Mobile Number" placeholder="+1 675 346 23-10" />
-              <Input title="Skype" placeholder="Evan 2256" />
-            </div>
-          </form>
-        </div>
+        <UserProfile user={user} />
         {/* Settings info page  */}
         <div className="flex-1 overflow-hidden  gap-y-5  flex flex-col">
           <div className="flexStart gap-x-3 ">

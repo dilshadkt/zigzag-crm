@@ -40,3 +40,55 @@ export const validateSession = async () => {
     throw new Error("User not found");
   }
 };
+
+export const uploadSingleFile = async (file) => {
+  try {
+    const { data } = await apiClient.post("/upload/single", file, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return { success: true, ...data };
+  } catch (error) {
+    return { success: false, message: "Failed to upload" };
+  }
+};
+
+export const updateProject = async (updatedData, projectId) => {
+  const { data } = await apiClient.patch(`/projects/${projectId}`, updatedData);
+  return data;
+};
+
+export const updatedProfile = async (updatedData) => {
+  const headers = {
+    "Content-Type":
+      updatedData instanceof FormData
+        ? "multipart/form-data"
+        : "application/json",
+  };
+  const { data } = await apiClient.patch("/employee/profile", updatedData, {
+    headers,
+  });
+  return data;
+};
+export const createTask = async (taskData, projectId) => {
+  // api formated data
+  const data = {
+    title: taskData?.name,
+    description: taskData?.description,
+    project: `${projectId}`,
+    assignedTo: "67ac94becb62c811dc7fcdf6",
+    // assignedTo: taskData?.assignee,
+    priority: taskData?.periority,
+    dueDate: taskData?.dueDate,
+    startDate: taskData?.startDate,
+    taskGroup: taskData?.taskGroup,
+  };
+  const response = await apiClient.post("/tasks", data);
+  return response;
+};
+
+export const getTaskById = async (taskId) => {
+  const { data } = await apiClient.get(`/tasks/${taskId}`);
+  return data;
+};

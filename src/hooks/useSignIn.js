@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { signIn } from "../api/service";
@@ -6,7 +5,6 @@ import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/slice/authSlice";
 export const useSignIn = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const initialValues = {
     email: "",
     password: "",
@@ -21,8 +19,14 @@ export const useSignIn = () => {
     onSubmit: async (values) => {
       const { success, message, user } = await signIn(values);
       if (success) {
-        dispatch(loginSuccess({ user: user._id, companyId: user.companyId }));
-        navigate(`/`);
+        dispatch(
+          loginSuccess({
+            user: user._id,
+            companyId: user.company,
+            isProfileComplete: user?.isProfileComplete || false,
+          })
+        );
+        window.location.href = "/";
       } else {
         console.log(message);
       }

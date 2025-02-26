@@ -7,10 +7,13 @@ import Header from "../../components/shared/header";
 import PageNavigator from "../../components/shared/navigator/pageNavigator";
 import Input from "../../components/shared/Field/input";
 import { RiAddFill } from "react-icons/ri";
+import { useEmpoyees } from "../../api/hooks";
 
 const Employees = () => {
   const [stat, setStat] = useState("list");
   const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const { data: employees } = useEmpoyees();
+
   const renderStat = () => {
     if (stat === "list") {
       return <EmployeeList />;
@@ -22,7 +25,7 @@ const Employees = () => {
     <section className="flex flex-col h-full gap-y-3">
       {/* header  */}
       <div className="flexBetween ">
-        <Header>Employees (28)</Header>
+        <Header>Employees ({employees?.length})</Header>
         <ButtonToggle
           setValue={setStat}
           value={stat}

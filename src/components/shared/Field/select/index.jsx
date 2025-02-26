@@ -19,6 +19,7 @@ const Select = ({
   // Update selected value when `value` prop changes
   useEffect(() => {
     if (value !== undefined) {
+      onChange({ target: { name, value } });
       setSelected(value);
     }
   }, [value]);
@@ -53,7 +54,7 @@ const Select = ({
       <div
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         className={clsx(
-          `rounded-[14px] text-sm border-2 text-[#7D8592] w-full border-[#D8E0F0]/80 py-[10px] px-4
+          `rounded-[14px]  text-sm border-2 text-[#7D8592] w-full border-[#D8E0F0]/80 py-[10px] px-4
           outline-none focus:outline-none relative cursor-pointer`,
           className,
           {
@@ -83,15 +84,15 @@ const Select = ({
             ))}
           </ul>
         )}
-      </div>
-      {errors?.[name] && touched?.[name] && (
-        <span
-          className="text-[10px] text-red-500 bg-white whitespace-nowrap
+        {errors?.[name] && touched?.[name] && (
+          <span
+            className="text-[10px] -bottom-2 absolute text-red-500 bg-white whitespace-nowrap
             left-10 px-3 w-fit mx-auto"
-        >
-          {errors?.[name]}
-        </span>
-      )}
+          >
+            {errors?.[name]}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

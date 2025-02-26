@@ -23,8 +23,15 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token"); // Clear the token
+    if (
+      error.response?.status === 401 ||
+      error.response?.data?.message === "Invalid token"
+    ) {
+      localStorage.removeItem("token");
+      if (!window.location.href.includes("/auth/signin")) {
+        window.location.href = "/auth/signin";
+      }
+      // Clear the token
       // window.location.href = "/auth/signin"; // Redirect to login page
     }
     return Promise.reject(

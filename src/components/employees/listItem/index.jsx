@@ -9,7 +9,7 @@ const ListItem = ({ employee }) => {
         user={{
           name: employee?.name,
           email: employee?.email,
-          profile: employee?.profile,
+          profile: employee?.profileImage,
         }}
       />
       <div className="grid grid-cols-3">
@@ -19,7 +19,7 @@ const ListItem = ({ employee }) => {
         </div>
         <div className="flex flex-col gap-y-1">
           <h5 className="text-sm text-[#91929E]">Birthday</h5>
-          <span>{employee?.birthday || "-----"}</span>
+          <span>{employee?.dob || "-----"}</span>
         </div>
         <div className="flex flex-col gap-y-1">
           <h5 className="text-sm text-[#91929E]">Full age</h5>

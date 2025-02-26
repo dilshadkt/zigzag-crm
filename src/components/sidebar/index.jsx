@@ -16,8 +16,9 @@ const Sidebar = () => {
       <div className="flex flex-col">
         <div className="h-[70px] flexCenter "></div>
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
-          {SIDE_MENU.map((item) => (
+          {SIDE_MENU.map((item, index) => (
             <li
+              key={index}
               onClick={() => navigate(item.path)}
               className={` relative cursor-pointer px-2 py-[10px] flexStart
       gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${

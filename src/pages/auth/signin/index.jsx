@@ -3,27 +3,13 @@ import Input from "../../../components/shared/Field/input";
 import { Link } from "react-router-dom";
 import PrimaryButton from "../../../components/shared/buttons/primaryButton";
 import { useSignIn } from "../../../hooks/useSignIn";
+import AuthBanner from "../../../components/authBanner";
 
 const SignIn = () => {
   const { values, errors, touched, handleChange, handleSubmit } = useSignIn();
   return (
     <section className="w-full h-full bg-white grid grid-cols-2 rounded-3xl overflow-hidden">
-      <div className="w-full h-full bg-[#3F8CFF] flexCenter flex-col px-6 ">
-        <div className="flex flex-col gap-y-7">
-          <div className="flexStart pl-7 gap-x-4">
-            <img src="/image/logo.svg" alt="" className="w-10" />
-            <h1 className="text-2xl  text-white font-bold">Woorkroom</h1>
-          </div>
-          <h2 className="  text-4xl font-bold text-white pl-7 ">
-            Your place to work <br /> Plan. Create. Control.
-          </h2>
-          <img
-            src="/image/login.svg"
-            alt=""
-            className="w-[480px] opacity-85 scale-80 -translate-x-10"
-          />
-        </div>
-      </div>
+      <AuthBanner />
       <div className="flexCenter ">
         <form onSubmit={handleSubmit} className="flex flex-col max-w-md w-full">
           <h4 className="text-[22px] font-bold  text-center">

@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import NotificationBar from "../notificationBar";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const DashboardHeader = () => {
   const [isNotifyMenuOpen, setNotifyMenuOpen] = useState(false);
+  const { user } = useAuth();
   return (
     <div className="flexBetween">
       <div className="relative  w-1/3">
@@ -24,15 +26,21 @@ const DashboardHeader = () => {
           onClick={() => setNotifyMenuOpen(true)}
           className="flexCenter cursor-pointer w-12 h-12 rounded-[14px] bg-white "
         >
-          <img src="/icons/alert.svg" alt="" className="w-5" />
+          <img src={"/icons/alert.svg"} alt="" className="w-5" />
         </button>
         <div className="h-12 rounded-[14px] gap-x-2 px-3 w-fit bg-white flexCenter  ">
-          <div className="w-[30px] aspect-square rounded-full overflow-hidden bg-black"></div>
+          <div className="w-[30px] aspect-square rounded-full overflow-hidden bg-black">
+            <img
+              src={user?.profileImage}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
           <Link
             to={"/settings/account"}
             className="flexStart gap-x-3.5 cursor-pointer"
           >
-            <span className="text-sm font-medium ">Zubair</span>
+            <span className="text-sm font-medium ">{user?.firstName}</span>
             <img src="/icons/arrowDown.svg" alt="" className="w-5" />
           </Link>
         </div>

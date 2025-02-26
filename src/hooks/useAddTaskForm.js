@@ -1,7 +1,15 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
-export const useAddTaskForm = () => {
-  const initialValue = {
+export const useAddTaskForm = (createTaskMutation, allAssignee) => {
+  const handle = async (values) => {
+    const assignee = values?.assignee;
+    const assigneeId = allAssignee?.find(
+      (item) => item?.firstName === assignee
+    )._id;
+    values.assignee === assigneeId;
+    await createTaskMutation.mutate(values);
+  };
+  const initialValues = {
     name: "",
     taskGroup: "",
     startDate: "",
@@ -20,9 +28,11 @@ export const useAddTaskForm = () => {
     description: Yup.string().required("Description is required"),
   });
   const formik = useFormik({
-    initialValue,
+    initialValues,
     validationSchema,
-    onSubmit: (value) => {},
+    onSubmit: async (value) => {
+      handle(value);
+    },
   });
   return formik;
 };

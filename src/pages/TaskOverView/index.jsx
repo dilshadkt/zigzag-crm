@@ -1,35 +1,43 @@
-import React from "react";
+import React, { useState } from "react";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoArrowUpOutline } from "react-icons/io5";
 import Progress from "../../components/shared/progress";
+import FileAttachments from "../../components/shared/FileAttachement";
+import AddTask from "../../components/projects/addTask";
+import { useProject } from "../../hooks/useProject";
 
-const TaskOverView = () => {
+const TaskOverView = ({ taskDetails }) => {
+  const [showModalTask, setShowModalTask] = useState(false);
+  const { activeProject: selectProject } = useProject();
+
   return (
     <section className="col-span-4 overflow-hidden grid grid-cols-4   ">
       <div className="col-span-3  mr-5 flex flex-col">
         <div className="flexBetween">
           <h4 className="text-lg font-medium">Task Details</h4>
-          <PrimaryButton className={"bg-white "} icon={"/icons/edit.svg"} />
+          <PrimaryButton
+            className={"bg-white "}
+            icon={"/icons/edit.svg"}
+            onclick={() => setShowModalTask(true)}
+          />
         </div>
         <div className="flex flex-col h-full bg-white gap-y-1 rounded-3xl mt-5 p-6">
-          <span className="text-sm text-[#91929E]">PN0001245</span>
+          <span className="text-sm text-[#91929E] uppercase">
+            {taskDetails?._id?.slice(0, 8)}
+          </span>
           <div className="flexBetween">
-            <h4 className="text-lg font-medium">UX Login + Registration</h4>
+            <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
             <button
               className="text-xs font-medium 
               flexCenter gap-x-2 px-4 h-8 text-[#3F8CFF] bg-[#3F8CFF]/10
             cursor-pointer rounded-lg"
             >
-              <span> In Progress</span>
+              <span> {taskDetails?.status}</span>
               <IoIosArrowDown className="translate-y-0.5 " />
             </button>
           </div>
-          <p className="text-gray-600 mt-2">
-            Think over UX for Login and Registration, create a flow using
-            wireframes. Upon completion, show the team and discuss. Attach the
-            source to the task.
-          </p>
+          <p className="text-gray-600 mt-2">{taskDetails?.description}</p>
           <div className="flexStart gap-x-2 mt-3">
             <PrimaryButton
               icon={"/icons/file.svg"}
@@ -40,69 +48,7 @@ const TaskOverView = () => {
               className={"bg-[#15C0E6]/10"}
             />
           </div>
-          <h5 className="font-medium mt-4">Task Attachments (3)</h5>
-          <div className="grid grid-cols-4 gap-3 mt-4">
-            <div className="h-36  relative rounded-xl bg-[#2155A3]/20 overflow-hidden">
-              <img
-                src="/image/dummy/upload.png"
-                alt=""
-                className="w-full h-full object-cover opacity-80"
-              />
-              <div
-                className="absolute left-0 right-0  flex rounded-xl bottom-0 py-2 px-3
-               bg-white z-30 border border-gray-300 flex-col"
-              >
-                <span className="text-sm font-medium">site screens.png</span>
-                <span className="text-xs text-[#91929E]">
-                  Sep 19, 2020 | 10:52 AM
-                </span>
-              </div>
-              <PrimaryButton
-                icon={"/icons/file.svg"}
-                className={"absolute top-1 right-1 z-40 bg-[#6D5DD3]/20"}
-              />
-            </div>
-            <div className="h-36  relative rounded-xl bg-[#2155A3]/20 overflow-hidden">
-              <img
-                src="/image/dummy/upload.png"
-                alt=""
-                className="w-full h-full object-cover opacity-80"
-              />
-              <div
-                className="absolute left-0 right-0  flex rounded-xl bottom-0 py-2 px-3
-               bg-white z-30 border border-gray-300 flex-col"
-              >
-                <span className="text-sm font-medium">site screens.png</span>
-                <span className="text-xs text-[#91929E]">
-                  Sep 19, 2020 | 10:52 AM
-                </span>
-              </div>
-              <PrimaryButton
-                icon={"/icons/file.svg"}
-                className={"absolute top-1 right-1 z-40 bg-[#6D5DD3]/20"}
-              />
-            </div>
-            <div className="h-36  relative rounded-xl bg-[#2155A3]/20 overflow-hidden">
-              <img
-                src="/image/dummy/upload.png"
-                alt=""
-                className="w-full h-full object-cover opacity-80"
-              />
-              <div
-                className="absolute left-0 right-0  flex rounded-xl bottom-0 py-2 px-3
-               bg-white z-30 border border-gray-300 flex-col"
-              >
-                <span className="text-sm font-medium">site screens.png</span>
-                <span className="text-xs text-[#91929E]">
-                  Sep 19, 2020 | 10:52 AM
-                </span>
-              </div>
-              <PrimaryButton
-                icon={"/icons/file.svg"}
-                className={"absolute top-1 right-1 z-40 bg-[#6D5DD3]/20"}
-              />
-            </div>
-          </div>
+          <FileAttachments />
         </div>
       </div>
       {/* task info  */}
@@ -123,16 +69,20 @@ const TaskOverView = () => {
               <span className="text-sm text-[#91929E]">Assigned</span>
               <div className="flexStart gap-x-3">
                 <div className="w-6 h-6  rounded-full overflow-hidden">
-                  <img src="/image/photo.png" alt="" />
+                  <img
+                    src={taskDetails?.assignedTo?.profileImage}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <span>Evan Yates</span>
+                <span>{taskDetails?.assignedTo?.firstName}</span>
               </div>
             </div>
             <div className="flex flex-col  gap-y-2">
               <span className="text-sm text-[#91929E]">Priority</span>
               <div className="flexStart gap-x-1 text-[#FFBD21]">
                 <IoArrowUpOutline className="text-xl " />
-                <span className="text-sm">Medium</span>
+                <span className="text-sm">{taskDetails?.priority}</span>
               </div>
             </div>
           </div>
@@ -166,6 +116,14 @@ const TaskOverView = () => {
           <span className="text-sm  text-[#7D8592]">Created May 28, 2020</span>
         </div>
       </div>
+      {/* add task modal  */}
+      {showModalTask && (
+        <AddTask
+          setShowModalTask={setShowModalTask}
+          selectedProject={selectProject}
+          assignee={taskDetails?.teams}
+        />
+      )}
     </section>
   );
 };

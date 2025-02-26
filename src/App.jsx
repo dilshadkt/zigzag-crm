@@ -18,30 +18,52 @@ import SignIn from "./pages/auth/signin";
 import Register from "./pages/auth/register";
 import SingUpSuccess from "./pages/auth/success";
 import ForgetPassword from "./pages/auth/forgetPassword";
-import { useDispatch } from "react-redux";
-import { useEffect } from "react";
-import { useAuth } from "./hooks/useAuth";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 import { validateSession } from "./api/service";
 import { ProtectedRoute } from "./components/protectedRoute";
 import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
+import WelcomeHome from "./pages/welcome/home";
+import WelcomeLayout from "./layouts/welcome";
+import GetStart from "./pages/welcome/getStart";
+import ProfileImageUpload from "./pages/welcome/profile";
+import MobileNumberInput from "./pages/welcome/mobile";
+import ProjectDetailLayout from "./layouts/projectDetail";
 
 function App() {
   const dispatch = useDispatch();
+  const { loading, isAuthenticated } = useSelector((state) => state.auth); // Get loading and isAuthenticated state from Redux
+  const [isAuthChecked, setIsAuthChecked] = useState(false); // Track if auth check is complete
 
   useEffect(() => {
     const checkAuth = async () => {
-      dispatch(setLoading(true));
+      dispatch(setLoading(true)); // Set loading to true
       try {
         const { user } = await validateSession();
-        dispatch(loginSuccess({ user: user?._id, companyId: user?.companyId }));
+
+        dispatch(
+          loginSuccess({
+            user: user,
+            isProfileComplete: user?.isProfileComplete || false,
+            companyId: user?.company,
+          })
+        );
       } catch (error) {
         dispatch(logout());
       } finally {
-        dispatch(setLoading(false));
+        dispatch(setLoading(false)); // Set loading to false
+
+        setIsAuthChecked(true); // Mark auth check as complete
       }
     };
     checkAuth();
   }, [dispatch]);
+
+  // Show loading spinner while verifying the user
+  if (loading || !isAuthChecked) {
+    return <div className="h-screen w-full flexCenter">Loading .....</div>;
+  }
+
   return (
     <>
       <BrowserRouter>
@@ -56,11 +78,14 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="projects" element={<Prjects />} />
-            <Route path="projects/:projectName" element={<ProjectDetails />} />
             <Route
-              path="projects/:projectName/:task"
-              element={<TaskDetails />}
-            />
+              path="projects/:projectName"
+              element={<ProjectDetailLayout />}
+            >
+              <Route index element={<ProjectDetails />} />
+              <Route path=":taskId" element={<TaskDetails />} />
+            </Route>
+
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />
@@ -80,6 +105,19 @@ function App() {
             <Route path="register" element={<Register />} />
             <Route path="sign-up-Success" element={<SingUpSuccess />} />
             <Route path="forget-password" element={<ForgetPassword />} />
+          </Route>
+          <Route
+            path="/welcome"
+            element={
+              <ProtectedRoute requireProfileComplete={false}>
+                <WelcomeLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<WelcomeHome />} />
+            <Route path="get-start" element={<GetStart />} />
+            <Route path="user-profile" element={<ProfileImageUpload />} />
+            <Route path="contact" element={<MobileNumberInput />} />
           </Route>
         </Routes>
       </BrowserRouter>

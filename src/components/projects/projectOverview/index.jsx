@@ -2,7 +2,7 @@ import React from "react";
 import ProjectTask from "../task";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 
-const ProjectOverView = () => {
+const ProjectOverView = ({ currentProject }) => {
   return (
     <div className="col-span-4 overflow-hidden   flex flex-col">
       <div className="flexBetween">
@@ -15,8 +15,8 @@ const ProjectOverView = () => {
         <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
           Active Tasks
         </div>
-        {new Array(6).fill(" ").map((task, index) => (
-          <ProjectTask key={index} />
+        {currentProject?.tasks?.map((task) => (
+          <ProjectTask task={task} key={task._id} />
         ))}
         {/* back log  */}
         <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">

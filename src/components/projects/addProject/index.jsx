@@ -1,17 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Input from "../../shared/Field/input";
 import DatePicker from "../../shared/Field/date";
 import Select from "../../shared/Field/select";
 import Description from "../../shared/Field/description";
 import { useAddProjectForm } from "../../../hooks/useAddProjectForm";
+import FileAndLinkUpload from "../../shared/fileUpload";
+import ThumbImage from "../thumbImage";
+import AddEmployee from "../addEmployee";
 
-const AddProject = ({ setShowModalProject }) => {
-  const { values, errors, handleSubmit, handleChange, touched } =
-    useAddProjectForm();
+const AddProject = ({
+  setShowModalProject,
+  initialValues,
+  onSubmit,
+  isEditMode = false,
+}) => {
+  const {
+    values,
+    errors,
+    handleSubmit,
+    handleChange,
+    touched,
+    setFieldValue,
+    isSubmitting,
+  } = useAddProjectForm(initialValues, onSubmit); // Pass initialValues and onSubmit to the hook
+
   return (
     <div
-      className="fixed z-50 left-0 right-0 top-0 bottom-0
+      className="fixed z-[1000] left-0 right-0 top-0 bottom-0
 bg-blue-50 flexCenter py-8 backdrop-blur-sm"
     >
       <form
@@ -19,9 +35,11 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
         className="bg-white w-full rounded-3xl py-14 flex flex-col
   px-28 h-full max-w-[1149px] m-auto relative "
       >
-        <h4 className="text-3xl font-medium">Add Project</h4>
-        <div className="w-full grid grid-cols-5 mt-12 gap-x-[50px] ">
-          <div className="col-span-3 flex flex-col gap-y-5">
+        <h4 className="text-3xl font-bold">
+          {isEditMode ? "Edit Project" : "Add Project"}
+        </h4>
+        <div className="w-full grid grid-cols-5 my-7  overflow-hidden  gap-x-[50px] ">
+          <div className="col-span-3 flex flex-col gap-y-4 overflow-y-auto">
             <Input
               name={"name"}
               errors={errors}
@@ -32,61 +50,60 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
               title="Project Name"
             />
             <div className="grid grid-cols-2 gap-x-4">
-              <DatePicker title="Starts" />
-              <DatePicker title="Dead Line" />
+              <DatePicker
+                title="Starts"
+                errors={errors}
+                name={"startDate"}
+                onChange={handleChange}
+                touched={touched}
+                value={values.startDate}
+              />
+              <DatePicker
+                title="Dead Line"
+                errors={errors}
+                name={"dueDate"}
+                onChange={handleChange}
+                touched={touched}
+                value={values.dueDate}
+              />
             </div>
-            <Select title="Priority" options={["Low", "Medium", "High"]} />
+            <Select
+              title="Priority"
+              options={["Low", "Medium", "High"]}
+              errors={errors}
+              name={"priority"}
+              onChange={handleChange}
+              touched={touched}
+              value={values.periority !== null ? values.periority : "Low"}
+            />
             <Description
+              errors={errors}
+              touched={touched}
+              name={"description"}
+              onChange={handleChange}
+              value={values}
               title="Description"
               placeholder="Add some description of the project"
             />
+            <AddEmployee
+              defaultSelectedEmployee={values.teams}
+              onChange={(team) => setFieldValue("teams", team)}
+            />
           </div>
-          <div className="col-span-2  flex flex-col ">
-            <div
-              className="flex flex-col border h-fit max-h-[340px] 
-      px-7 py-6 border-[#CED5E0]/70 rounded-3xl"
-            >
-              <h4 className=" font-medium">Select image</h4>
-              <p className="text-[#0A1629]/70  my-2">
-                Select or upload an avatar for the project (available formats:
-                jpg, png)
-              </p>
-              <div className="grid gap-6 mt-2 grid-cols-4">
-                {new Array(7).fill(" ").map((item, index) => (
-                  <div
-                    key={index}
-                    className="w-full h-[53px] bg-[#F4F9FD] 
-            rounded-[10px] flexCenter flex flex-col overflow-hidden gap-y-2 cursor-pointer"
-                  >
-                    <img
-                      src={`/image/projects/icon${index + 1}.png`}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-                <div
-                  className="w-full h-[53px] bg-[#F4F9FD] 
-            rounded-[10px] flexCenter flex flex-col overflow-hidden gap-y-2 cursor-pointer"
-                >
-                  <img
-                    src={`/image/projects/upload.png`}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flexStart gap-x-4 mt-6">
-              <PrimaryButton
-                icon={"/icons/file.svg"}
-                className={"bg-[#6D5DD3]/10"}
-              />
-              <PrimaryButton
-                icon={"/icons/link.svg"}
-                className={"bg-[#15C0E6]/10"}
-              />
-            </div>
+          <div className="col-span-2  h-full  overflow-y-auto  flex flex-col ">
+            <ThumbImage
+              onSelect={(thmbImg) => setFieldValue("thumbImg", thmbImg)}
+            />
+            <FileAndLinkUpload
+              initialFiles={values?.attachments?.filter(
+                (file) => file?.type !== "link"
+              )}
+              initialLinks={values?.attachments?.filter(
+                (file) => file?.type === "link"
+              )}
+              fileClassName={"grid grid-cols-2 gap-3"}
+              onChange={(files) => (values.attachments = files)}
+            />
           </div>
         </div>
         <PrimaryButton
@@ -95,9 +112,16 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
           className={"absolute bg-[#F4F9FD] right-[30px] top-[30px]"}
         />
         <PrimaryButton
+          disable={isSubmitting}
           type="submit"
-          title={"Save Project"}
-          className={"absolute text-white right-[112px] px-4 bottom-[57px]"}
+          title={
+            isSubmitting
+              ? "Loading"
+              : isEditMode
+              ? "Save Changes"
+              : "Save Project"
+          }
+          className={"absolute text-white right-[112px] px-4 bottom-[35px]"}
         />
       </form>
     </div>

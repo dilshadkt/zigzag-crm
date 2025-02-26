@@ -1,7 +1,12 @@
 // src/api/hooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "./client";
-
+import {
+  createTask,
+  getTaskById,
+  updatedProfile,
+  updateProject,
+} from "./service";
 // Customers
 export const useCustomers = () =>
   useQuery({
@@ -9,62 +14,79 @@ export const useCustomers = () =>
     queryFn: () => apiClient.get("/customers").then((res) => res.data),
   });
 
-export const useCreateCustomer = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (customer) => apiClient.post("/customers", customer),
-    onSuccess: () => queryClient.invalidateQueries(["customers"]),
+export const useCompanyProjects = (companyId) => {
+  return useQuery({
+    queryKey: ["companyProjects", companyId],
+    queryFn: () =>
+      apiClient
+        .get(`/projects/company/${companyId}`)
+        .then((res) => res.data?.projects),
+
+    enabled: !!companyId,
   });
 };
 
-// Items
-export const useItems = () =>
-  useQuery({
-    queryKey: ["items"],
-    queryFn: () => apiClient.get("/items").then((res) => res.data),
-  });
-
-export const useUpdateStock = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, stock }) =>
-      apiClient.put(`/items/${id}/stock`, { stock }),
-    onSuccess: () => queryClient.invalidateQueries(["items"]),
+export const useProjectDetails = (projectId) => {
+  return useQuery({
+    queryKey: ["projectDetails", projectId],
+    queryFn: () =>
+      apiClient.get(`/projects/${projectId}`).then((res) => res.data?.project),
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 2, // 5 minutes (Prevents frequent refetches)
+    cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
+    refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
+    refetchOnReconnect: false, // Prevents refetch when network reconnects
   });
 };
+//empoyee
+export const useEmpoyees = () => {
+  return useQuery({
+    queryKey: ["employees"],
+    queryFn: () =>
+      apiClient.get("/employee").then((res) => res.data?.employess),
+  });
+};
+// task
 
-// Transactions
-export const useCreateTransaction = () => {
+export const useCreateTask = (handleClose, projectId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (transaction) => apiClient.post("/transactions", transaction),
+    mutationKey: ["createTask"],
+    mutationFn: (taskData) => createTask(taskData, projectId),
     onSuccess: () => {
-      queryClient.invalidateQueries(["transactions"]);
-      queryClient.invalidateQueries(["customers"]);
-      queryClient.invalidateQueries(["items"]);
+      queryClient.invalidateQueries({
+        queryKey: ["projectDetails", projectId],
+      });
+      handleClose();
+      // toast.success('Target set successfully!');
     },
   });
 };
 
-export const useSettleCredit = () => {
+export const useUpdateProfile = (handleSuccess) => {
+  return useMutation({
+    mutationKey: ["updateProfile"],
+    mutationFn: (updatedData) => updatedProfile(updatedData),
+    onSuccess: () => handleSuccess(),
+  });
+};
+
+export const useUpdateProject = (projectId, handleSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ transactionId, amount }) =>
-      apiClient.post("/transactions/settle", { transactionId, amount }),
+    mutationKey: ["updateProject"],
+    mutationFn: (updatedData) => updateProject(updatedData, projectId),
     onSuccess: () => {
-      queryClient.invalidateQueries(["transactions"]);
-      queryClient.invalidateQueries(["customers"]);
+      handleSuccess();
+      queryClient.invalidateQueries(["projectDetails", projectId]);
     },
   });
 };
-export const useDashboardData = () =>
-  useQuery({
-    queryKey: ["dashboard"],
-    queryFn: () => apiClient.get("/dashboard").then((res) => res.data),
+
+export const useGetTaskById = (taskId) => {
+  return useQuery({
+    queryKey: ["getTaskById", taskId],
+    queryFn: () => getTaskById(taskId),
+    select: (data) => data?.tasks,
   });
-// Routes
-export const useRootes = () =>
-  useQuery({
-    queryKey: ["routes"],
-    queryFn: () => apiClient.get("/routes").then((res) => res.data),
-  });
+};

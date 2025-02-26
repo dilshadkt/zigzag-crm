@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/shared/header";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
@@ -11,22 +11,31 @@ import Select from "../../components/shared/Field/select";
 import Description from "../../components/shared/Field/description";
 import AddProject from "../../components/projects/addProject";
 import AddTask from "../../components/projects/addTask";
+import { useCompanyProjects, useProjectDetails } from "../../api/hooks";
+import { useAuth } from "../../hooks/useAuth";
+import { useDispatch } from "react-redux";
+import { setActiveProject } from "../../store/slice/projectSlice";
+import { useProject } from "../../hooks/useProject";
 
 const Prjects = () => {
+  const { companyId } = useAuth();
+  const { activeProject: selectProject } = useProject();
+  const dispatch = useDispatch();
+  const { data: projects, isSuccess } = useCompanyProjects(companyId);
+  const { data: activeProject } = useProjectDetails(selectProject);
+
+  useEffect(() => {
+    dispatch(setActiveProject(projects?.[0]?._id));
+  }, [isSuccess]);
   const [showModalProject, setShowModalProject] = useState(false);
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [showModalTask, setShowModalTask] = useState(false);
+
   return (
     <section className="flex flex-col h-full gap-y-3">
       <div className="flexBetween ">
         <Header>Projects</Header>
         <div className="flexEnd gap-x-2">
-          <PrimaryButton
-            icon={"/icons/add.svg"}
-            title={"Add Task"}
-            onclick={() => setShowModalTask(true)}
-            className={"mt-3 text-white px-5"}
-          />
           <PrimaryButton
             icon={"/icons/add.svg"}
             title={"Add Project"}
@@ -53,16 +62,24 @@ const Prjects = () => {
             gap-y-2 overflow-y-auto"
           >
             {/* project card  */}
-            {new Array(5).fill(" ").map((project, index) => (
+            {projects?.map((project, index) => (
               <div
+                onClick={() => {
+                  dispatch(setActiveProject(project?._id));
+                  // setSelectProject(project?._id);
+                }}
                 key={index}
-                className="hover:bg-[#F4F9FD] 
+                className={`${
+                  selectProject === project?._id && `bg-[#F4F9FD]`
+                }  hover:bg-[#F4F9FD] 
                  cursor-pointer relative rounded-2xl px-4
-                  gap-y-1.5  group  mr-3 py-3 flex flex-col"
+                  gap-y-1.5  group  mr-3 py-3 flex flex-col`}
               >
-                <span className="text-xs text-[#91929E]">PN0001245</span>
+                <span className="text-xs uppercase text-[#91929E]">
+                  {project?._id.slice(0, 9)}
+                </span>
                 <h4 className="font-medium text-gray-800 text-sm">
-                  Medical App (iOS native)
+                  {project?.name}
                 </h4>
                 <Link
                   to={`/projects/Medical-app`}
@@ -73,8 +90,10 @@ const Prjects = () => {
                 </Link>
                 {/* the side bar  */}
                 <div
-                  className="absolute w-1 top-0  -right-3
-                h-0 group-hover:h-full transition-all duration-300  bg-[#3F8CFF] rounded-full "
+                  className={`absolute w-1 top-0  -right-3
+                  h-0 ${
+                    selectProject === project?._id && `h-full`
+                  } group-hover:h-full transition-all duration-300  bg-[#3F8CFF] rounded-full `}
                 ></div>
               </div>
             ))}
@@ -93,54 +112,80 @@ const Prjects = () => {
 
           <div className="flex flex-col h-full gap-y-4 mt-4  rounded-xl overflow-hidden   overflow-y-auto">
             {/* task  */}
-            <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
-              Active Tasks
-            </div>
-            {new Array(6).fill(" ").map((task, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
-              >
-                <div className="col-span-3 gap-y-1 flex flex-col">
-                  <span className="text-sm text-[#91929E]">Task Name</span>
-                  <h4>Research</h4>
-                </div>
-                <div className="col-span-5  grid grid-cols-4">
-                  <div className="flex flex-col gap-y-1">
-                    <span className="text-sm text-[#91929E]">Estimate</span>
-                    <h4>1d 2h</h4>
-                  </div>
-                  <div className="flex flex-col gap-y-1">
-                    <span className="text-sm text-[#91929E]">Spent Time</span>
-                    <h4>1d 2h</h4>
-                  </div>
-                  <div className="flex flex-col gap-y-1">
-                    <span className="text-sm text-[#91929E]">Assignee</span>
-                    <div className="w-6 h-6 rounded-full  flexCenter">
-                      <img src="/image/photo.png" alt="" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-y-1">
-                    <span className="text-sm text-[#91929E]">Priority</span>
-                    <div className="flexStart gap-x-1 text-[#FFBD21]">
-                      <IoArrowUpOutline className="text-lg " />
-                      <span className="text-xs font-medium">Medium</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-span-2  flexBetween">
-                  <span
-                    className="bg-[#E0F9F2] text-[#00D097] 
-                  flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
-                  >
-                    Done
-                  </span>
-                  <Progress size={30} strokeWidth={2} currentValue={100} />
-                </div>
+            {activeProject?.tasks?.length === 0 ? (
+              <div className="w-full h-full gap-y-5  flexCenter flex-col">
+                <img
+                  src="/image/projects/noTask.png"
+                  alt=""
+                  className="w-2xs"
+                />
+                <h4 className="font-semibold text-lg  leading-6 max-w-sm text-center">
+                  There are no tasks in this project <br /> yet Let's add them
+                </h4>
+                <PrimaryButton
+                  icon={"/icons/add.svg"}
+                  title={"Add Task"}
+                  onclick={() => setShowModalTask(true)}
+                />
               </div>
-            ))}
+            ) : (
+              <>
+                <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
+                  Active Tasks
+                </div>
+                {activeProject?.tasks?.map((task, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
+                  >
+                    <div className="col-span-3 gap-y-1 flex flex-col">
+                      <span className="text-sm text-[#91929E]">Task Name</span>
+                      <h4>{task?.title}</h4>
+                    </div>
+                    <div className="col-span-5  grid grid-cols-4">
+                      <div className="flex flex-col gap-y-1">
+                        <span className="text-sm text-[#91929E]">Estimate</span>
+                        <h4>{task?.timeEstimate}h</h4>
+                      </div>
+                      <div className="flex flex-col gap-y-1">
+                        <span className="text-sm text-[#91929E]">
+                          Spent Time
+                        </span>
+                        <h4>1d 2h</h4>
+                      </div>
+                      <div className="flex flex-col gap-y-1">
+                        <span className="text-sm text-[#91929E]">Assignee</span>
+
+                        <div className="w-6 h-6 rounded-full  flexCenter">
+                          <img src="/image/photo.png" alt="" />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-y-1">
+                        <span className="text-sm text-[#91929E]">Priority</span>
+                        <div className="flexStart gap-x-1 text-[#FFBD21]">
+                          <IoArrowUpOutline className="text-lg " />
+                          <span className="text-xs font-medium">
+                            {task?.priority}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-span-2  flexBetween">
+                      <span
+                        className="bg-[#E0F9F2] text-[#00D097] 
+                  flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
+                      >
+                        {task?.status}
+                      </span>
+                      <Progress size={30} strokeWidth={2} currentValue={100} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
             {/* back log  */}
-            <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
+            {/* <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
               Backlog
             </div>
             {new Array(6).fill(" ").map((task, index) => (
@@ -185,7 +230,7 @@ const Prjects = () => {
                   <Progress size={30} strokeWidth={2} currentValue={100} />
                 </div>
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
       </div>
@@ -288,7 +333,13 @@ bg-[#2155A3]/15  py-3 px-3 z-50 flexEnd"
       )}
 
       {/* add task modal  */}
-      {showModalTask && <AddTask setShowModalTask={setShowModalTask} />}
+      {showModalTask && (
+        <AddTask
+          setShowModalTask={setShowModalTask}
+          selectedProject={selectProject}
+          assignee={activeProject?.teams}
+        />
+      )}
 
       {/* add project modal */}
       {showModalProject && (

@@ -1,11 +1,13 @@
+import { useEmpoyees } from "../../../api/hooks";
 import { EMPOYEES } from "../../../constants";
 import ListItem from "../listItem";
 
 const EmployeeList = () => {
+  const { data: employees } = useEmpoyees();
   return (
     <>
-      {EMPOYEES.map((item, index) => (
-        <ListItem key={index} employee={item} />
+      {employees?.map((employee) => (
+        <ListItem key={employee?._id} employee={employee} />
       ))}
     </>
   );

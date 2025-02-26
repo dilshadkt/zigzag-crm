@@ -1,13 +1,16 @@
 import React from "react";
 import Header from "../../components/shared/header";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
-import CircularProgressProfile from "../../components/dashboard/workload/card/progressProfile";
 import WorkLoad from "../../components/dashboard/workload";
 import NearestEvents from "../../components/dashboard/workload/events";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { useCompanyProjects } from "../../api/hooks";
+import { useAuth } from "../../hooks/useAuth";
 
 const Dashboard = () => {
+  const { companyId } = useAuth();
+  const { data: projects, isSuccess } = useCompanyProjects(companyId);
   return (
     <section className="flex flex-col">
       <span className="text-[#7D8592]">Welcome back, Evan!</span>
@@ -41,25 +44,25 @@ const Dashboard = () => {
           </div>
           {/* project list section  */}
 
-          <div className="flex flex-col justify-between  h-full gap-y-3 mt-3">
-            {new Array(3).fill(" ").map((project, index) => (
-              <div key={index} className="flex flex-col  h-full ">
+          <div className=" flex flex-col h-full gap-y-3 mt-3">
+            {projects?.map((project, index) => (
+              <div key={project?._id} className="flex flex-col   h-fit ">
                 <div className="bg-white  rounded-3xl grid grid-cols-2">
                   <div className="p-4  py-5 h-full flex gap-y-4 flex-col border-r border-[#E4E6E8] ">
                     <div className="flexStart  gap-x-3.5">
                       <div className="w-12 h-12 rounded-2xl overflow-hidden">
                         <img
-                          src="/image/project.svg"
+                          src={project?.thumbImg}
                           alt=""
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex flex-col h-full">
-                        <span className="text-xs text-[#91929E]">
-                          PN0001265
+                        <span className="text-xs uppercase text-[#91929E]">
+                          {project?._id?.slice(0, 8)}
                         </span>
                         <h4 className=" font-medium text-gray-800">
-                          Medical App (iOS native)
+                          {project?.name}
                         </h4>
                       </div>
                     </div>
@@ -88,7 +91,7 @@ const Dashboard = () => {
                           All Tasks
                         </span>
                         <span className="font-semibold text-gray-800 text-lg">
-                          34
+                          {project?.tasks?.length}
                         </span>
                       </div>
                       <div className="flex flex-col gap-y-2">
@@ -96,24 +99,23 @@ const Dashboard = () => {
                           Active tasks
                         </span>
                         <span className="font-semibold text-gray-800 text-lg">
-                          34
+                          {project?.tasks?.length}
                         </span>
                       </div>
-                      <div className="flex flex-col gap-y-2">
+                      <div className="flex flex-col    gap-y-2">
                         <span className="text-[#91929E]/90 text-sm">
                           Assignees
                         </span>
-                        <div className="font-semibold text-gray-800 text-lg">
-                          <div className=" w-7 h-7 rounded-full bg-black border border-white relative">
-                            <div className=" w-7 h-7 rounded-full bg-red-500 translate-x-4 border-3 border-white absolute "></div>
-                            <div className=" w-7 h-7 rounded-full bg-red-500 translate-x-8 border-3 border-white absolute "></div>
-                            <div
-                              className=" w-7 h-7 rounded-full bg-blue-500 flexCenter
-                           translate-x-12 border-2 border-white absolute text-white text-xs "
-                            >
-                              +2
+                        <div className="font-semibold flexStart  text-gray-800 text-lg">
+                          {project?.teams?.map((team) => (
+                            <div className=" w-7 h-7 rounded-full  border-3 border-white  ">
+                              <img
+                                src={team?.profileImage}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                          </div>
+                          ))}
                         </div>
                       </div>
                     </div>
