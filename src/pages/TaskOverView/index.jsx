@@ -1,19 +1,56 @@
 import React, { useState } from "react";
-import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import { IoIosArrowDown } from "react-icons/io";
 import { IoArrowUpOutline } from "react-icons/io5";
-import Progress from "../../components/shared/progress";
-import FileAttachments from "../../components/shared/FileAttachement";
+import { useParams } from "react-router-dom";
+import {
+  useCreateTask,
+  useGetTaskById,
+  useUpdateTaskById,
+} from "../../api/hooks";
+import { uploadSingleFile } from "../../api/service";
 import AddTask from "../../components/projects/addTask";
+import PrimaryButton from "../../components/shared/buttons/primaryButton";
+import FileAndLinkUpload from "../../components/shared/fileUpload";
+import Progress from "../../components/shared/progress";
 import { useProject } from "../../hooks/useProject";
+import { processAttachments } from "../../lib/attachmentUtils";
+import StatuButton from "../../components/shared/StatusUpadate";
+import StatusButton from "../../components/shared/StatusUpadate";
 
-const TaskOverView = ({ taskDetails }) => {
+const TaskOverView = () => {
+  const { taskId } = useParams();
   const [showModalTask, setShowModalTask] = useState(false);
   const { activeProject: selectProject } = useProject();
+  const { data: taskDetails, isLoading } = useGetTaskById(taskId);
+  const { mutate } = useUpdateTaskById(taskId, () => setShowModalTask(false));
+  const handleTaskEdit = async (values, { setSubmitting }) => {
+    try {
+      const updatedValues = { ...values };
+      const proccesedValue = await processAttachments(
+        values?.attachments,
+        uploadSingleFile
+      );
+      updatedValues.attachments = proccesedValue;
+      mutate(updatedValues);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  // loading shimmer
+  if (isLoading) {
+    return (
+      <section className="col-span-4 overflow-hidden grid grid-cols-4   ">
+        <div className="col-span-3 bg-white rounded-3xl mr-5 flex flex-col"></div>
+        <div className="col-span-1 bg-white rounded-3xl px-2 justify-between  py-5 flex flex-col"></div>
+      </section>
+    );
+  }
 
   return (
     <section className="col-span-4 overflow-hidden grid grid-cols-4   ">
-      <div className="col-span-3  mr-5 flex flex-col">
+      <div className="col-span-3 overflow-y-auto  mr-5 flex flex-col">
         <div className="flexBetween">
           <h4 className="text-lg font-medium">Task Details</h4>
           <PrimaryButton
@@ -22,33 +59,27 @@ const TaskOverView = ({ taskDetails }) => {
             onclick={() => setShowModalTask(true)}
           />
         </div>
-        <div className="flex flex-col h-full bg-white gap-y-1 rounded-3xl mt-5 p-6">
-          <span className="text-sm text-[#91929E] uppercase">
-            {taskDetails?._id?.slice(0, 8)}
-          </span>
-          <div className="flexBetween">
-            <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
-            <button
-              className="text-xs font-medium 
-              flexCenter gap-x-2 px-4 h-8 text-[#3F8CFF] bg-[#3F8CFF]/10
-            cursor-pointer rounded-lg"
-            >
-              <span> {taskDetails?.status}</span>
-              <IoIosArrowDown className="translate-y-0.5 " />
-            </button>
+        <div className="flex flex-col h-full bg-white  overflow-hidden  rounded-3xl mt-5 p-6 pb-4">
+          <div className="overflow-y-auto flex flex-col  h-full   gap-y-1 ">
+            <span className="text-sm text-[#91929E] uppercase">
+              {taskDetails?._id?.slice(0, 8)}
+            </span>
+            <div className="flexBetween">
+              <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
+              <StatusButton taskDetails={taskDetails} />
+            </div>
+            <p className="text-gray-600 mt-2">{taskDetails?.description}</p>
+            <FileAndLinkUpload
+              disable={true}
+              fileClassName={"grid grid-cols-3 gap-3"}
+              initialFiles={taskDetails?.attachments.filter(
+                (file) => file.type !== "link"
+              )}
+              initialLinks={taskDetails?.attachments.filter(
+                (file) => file.type === "link"
+              )}
+            />{" "}
           </div>
-          <p className="text-gray-600 mt-2">{taskDetails?.description}</p>
-          <div className="flexStart gap-x-2 mt-3">
-            <PrimaryButton
-              icon={"/icons/file.svg"}
-              className={"bg-[#6D5DD3]/10"}
-            />
-            <PrimaryButton
-              icon={"/icons/link.svg"}
-              className={"bg-[#15C0E6]/10"}
-            />
-          </div>
-          <FileAttachments />
         </div>
       </div>
       {/* task info  */}
@@ -117,13 +148,15 @@ const TaskOverView = ({ taskDetails }) => {
         </div>
       </div>
       {/* add task modal  */}
-      {showModalTask && (
-        <AddTask
-          setShowModalTask={setShowModalTask}
-          selectedProject={selectProject}
-          assignee={taskDetails?.teams}
-        />
-      )}
+      <AddTask
+        isOpen={showModalTask}
+        onSubmit={handleTaskEdit}
+        isLoading={isLoading}
+        setShowModalTask={setShowModalTask}
+        selectedProject={selectProject}
+        assignee={taskDetails?.teams}
+        initialValues={taskDetails}
+      />
     </section>
   );
 };

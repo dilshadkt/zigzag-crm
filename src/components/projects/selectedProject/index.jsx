@@ -6,7 +6,6 @@ import { uploadSingleFile } from "../../../api/service";
 import { useUpdateProject } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 const SelectedProject = ({ currentProject }) => {
-  console.log(currentProject);
   const [showModal, setShowModal] = useState(false);
   const handleSuccess = () => {
     setShowModal(false);
@@ -24,6 +23,7 @@ const SelectedProject = ({ currentProject }) => {
   const handleEditProject = async (values, { setSubmitting }) => {
     try {
       const updatedValues = { ...values };
+
       // Handle thumbnail upload if it's a file (not a predefined icon)
       if (
         values.thumbImg &&
@@ -50,7 +50,6 @@ const SelectedProject = ({ currentProject }) => {
         const processedAttachments = [];
 
         for (const attachment of values?.attachments) {
-          console.log(attachment);
           if (
             attachment.preview.startsWith("blob:") &&
             attachment.type !== "link"
@@ -161,6 +160,7 @@ rounded-3xl  flex flex-col  p-4"
                 </span>
               </div>
               <FileAndLinkUpload
+                disable={true}
                 fileClassName={"grid grid-cols-1 gap-3"}
                 initialFiles={currentProject?.attachments.filter(
                   (file) => file.type !== "link"

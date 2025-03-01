@@ -6,6 +6,7 @@ import {
   getTaskById,
   updatedProfile,
   updateProject,
+  updateTaskById,
 } from "./service";
 // Customers
 export const useCustomers = () =>
@@ -87,6 +88,18 @@ export const useGetTaskById = (taskId) => {
   return useQuery({
     queryKey: ["getTaskById", taskId],
     queryFn: () => getTaskById(taskId),
-    select: (data) => data?.tasks,
+    select: (data) => data?.task,
+  });
+};
+
+export const useUpdateTaskById = (taskId, handleClose) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updatedTaskById", taskId],
+    mutationFn: (updatedData) => updateTaskById(taskId, updatedData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["getTaskById", taskId]);
+      handleClose();
+    },
   });
 };

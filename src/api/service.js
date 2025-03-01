@@ -74,11 +74,11 @@ export const updatedProfile = async (updatedData) => {
 export const createTask = async (taskData, projectId) => {
   // api formated data
   const data = {
-    title: taskData?.name,
+    title: taskData?.title,
     description: taskData?.description,
     project: `${projectId}`,
-    assignedTo: "67ac94becb62c811dc7fcdf6",
-    // assignedTo: taskData?.assignee,
+    attachments: taskData?.attachments,
+    assignedTo: taskData?.assignee,
     priority: taskData?.periority,
     dueDate: taskData?.dueDate,
     startDate: taskData?.startDate,
@@ -90,5 +90,10 @@ export const createTask = async (taskData, projectId) => {
 
 export const getTaskById = async (taskId) => {
   const { data } = await apiClient.get(`/tasks/${taskId}`);
+  return data;
+};
+
+export const updateTaskById = async (taskId, updatedData) => {
+  const { data } = await apiClient.put(`/tasks/${taskId}`, updatedData);
   return data;
 };

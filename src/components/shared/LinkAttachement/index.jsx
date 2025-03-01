@@ -21,7 +21,7 @@ const LinkAttachement = ({ disable, links, removeLink }) => {
             >
               {link?.preview}
             </Link>
-            {disable && (
+            {!disable && (
               <button
                 type="button"
                 onClick={() => removeLink(index)}

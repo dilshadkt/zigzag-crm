@@ -19,12 +19,12 @@ const ProjectOverView = ({ currentProject }) => {
           <ProjectTask task={task} key={task._id} />
         ))}
         {/* back log  */}
-        <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
+        {/* <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
           Backlog
         </div>
         {new Array(6).fill(" ").map((task, index) => (
           <ProjectTask key={index} />
-        ))}
+        ))} */}
       </div>
     </div>
   );

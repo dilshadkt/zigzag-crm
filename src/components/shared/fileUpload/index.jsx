@@ -17,6 +17,19 @@ const FileAndLinkUpload = ({
   const fileInputRef = useRef(null);
   const linkInputRef = useRef(null);
 
+  // Sync internal state with initialFiles and initialLinks
+  useEffect(() => {
+    if (initialFiles) {
+      setFiles(initialFiles);
+    }
+  }, [initialFiles]);
+
+  useEffect(() => {
+    if (initialLinks) {
+      setLinks(initialLinks);
+    }
+  }, [initialLinks]);
+
   useEffect(() => {
     const handleClose = (e) => {
       if (linkInputRef.current && !linkInputRef.current.contains(e.target)) {
@@ -99,6 +112,7 @@ const FileAndLinkUpload = ({
     <div className="w-full  flex flex-col gap-y-3 max-w-2xl mx-auto">
       {/* File previews */}
       <FileAttachments
+        disable={disable}
         files={files}
         className={fileClassName}
         onRemove={removeFile}
@@ -148,13 +162,13 @@ const FileAndLinkUpload = ({
         />
 
         <PrimaryButton
-          disable
+          disable={disable}
           icon={"/icons/file.svg"}
           onclick={() => fileInputRef.current.click()}
           className={"bg-[#6D5DD3]/10"}
         />
         <PrimaryButton
-          disable
+          disable={disable}
           icon={"/icons/link.svg"}
           onclick={() => setShowLinkInput((prev) => !prev)}
           className={"bg-[#15C0E6]/10"}

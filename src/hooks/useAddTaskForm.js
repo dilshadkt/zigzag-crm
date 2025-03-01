@@ -1,25 +1,19 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
-export const useAddTaskForm = (createTaskMutation, allAssignee) => {
-  const handle = async (values) => {
-    const assignee = values?.assignee;
-    const assigneeId = allAssignee?.find(
-      (item) => item?.firstName === assignee
-    )._id;
-    values.assignee === assigneeId;
-    await createTaskMutation.mutate(values);
-  };
+import { processAttachments } from "../lib/attachmentUtils";
+import { uploadSingleFile } from "../api/service";
+export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
-    name: "",
+    title: defaultValue?.title || "",
     taskGroup: "",
-    startDate: "",
-    dueDate: "",
-    periority: "",
-    assignee: "",
-    description: "",
+    startDate: defaultValue?.startDate || "",
+    dueDate: defaultValue?.dueDate || "",
+    periority: defaultValue?.priority || "",
+    assignee: defaultValue?.assignedTo?.firstName || "",
+    description: defaultValue?.description || "",
   };
   const validationSchema = Yup.object().shape({
-    name: Yup.string().required("Name is required"),
+    title: Yup.string().required("Name is required"),
     taskGroup: Yup.string().required("Task group is required"),
     startDate: Yup.string().required("Start date is required"),
     dueDate: Yup.string().required("Due date is required"),
@@ -30,9 +24,7 @@ export const useAddTaskForm = (createTaskMutation, allAssignee) => {
   const formik = useFormik({
     initialValues,
     validationSchema,
-    onSubmit: async (value) => {
-      handle(value);
-    },
+    onSubmit,
   });
   return formik;
 };

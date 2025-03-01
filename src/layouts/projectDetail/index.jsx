@@ -6,13 +6,30 @@ import SelectedProject from "../../components/projects/selectedProject";
 import ProjectOverView from "../../components/projects/projectOverview";
 import AddTask from "../../components/projects/addTask";
 import { useProject } from "../../hooks/useProject";
-import { useProjectDetails } from "../../api/hooks";
+import { useCreateTask, useProjectDetails } from "../../api/hooks";
 import { Outlet } from "react-router-dom";
+import { processAttachments } from "../../lib/attachmentUtils";
+import { uploadSingleFile } from "../../api/service";
 
 const ProjectDetailLayout = () => {
   const { activeProject } = useProject();
   const { data } = useProjectDetails(activeProject);
   const [showModalTask, setShowModalTask] = useState(false);
+  const { mutate } = useCreateTask(() => setShowModalTask(false), data?._id);
+  const handle = async (values) => {
+    const assignee = values?.assignee;
+    const assigneeId = data?.teams?.find(
+      (item) => item?.firstName === assignee
+    )._id;
+    values.assignee = assigneeId;
+    const updatedValues = { ...values };
+    const proccesedValue = await processAttachments(
+      values?.attachments,
+      uploadSingleFile
+    );
+    updatedValues.attachments = proccesedValue;
+    mutate(updatedValues);
+  };
   return (
     <section className="flex flex-col h-full gap-y-1">
       <Navigator path={"/projects"} title={"Back to Projects"} />
@@ -31,13 +48,13 @@ const ProjectDetailLayout = () => {
         {/* project overview page  */}
         <Outlet />
         {/* <ProjectOverView currentProject={data} /> */}
-        {showModalTask && (
-          <AddTask
-            setShowModalTask={setShowModalTask}
-            selectedProject={data?._id}
-            assignee={data?.teams}
-          />
-        )}
+        <AddTask
+          isOpen={showModalTask}
+          onSubmit={handle}
+          setShowModalTask={setShowModalTask}
+          selectedProject={data?._id}
+          assignee={data?.teams}
+        />
       </div>
     </section>
   );

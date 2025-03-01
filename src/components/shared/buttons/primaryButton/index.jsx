@@ -11,6 +11,7 @@ const PrimaryButton = ({
   iconPosition = "left",
   disable = false,
 }) => {
+  if (disable) return null;
   return (
     <button
       disabled={disable}

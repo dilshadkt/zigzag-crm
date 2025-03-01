@@ -79,7 +79,7 @@ const Dashboard = () => {
                       </div>
                       <div className="flexEnd text-[#FFBD21] text-xs gap-x-2 pr-2">
                         <IoArrowUpOutline className="text-lg" />
-                        <span>Medium</span>
+                        <span>{project?.status}</span>
                       </div>
                     </div>
                   </div>

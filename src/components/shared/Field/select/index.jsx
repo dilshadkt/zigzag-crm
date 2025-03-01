@@ -11,6 +11,7 @@ const Select = ({
   onChange,
   name,
   errors,
+  selectedValue,
   touched,
 }) => {
   const [selected, setSelected] = useState(defaultValue || options[0]);

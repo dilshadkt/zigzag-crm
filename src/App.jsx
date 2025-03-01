@@ -61,7 +61,11 @@ function App() {
 
   // Show loading spinner while verifying the user
   if (loading || !isAuthChecked) {
-    return <div className="h-screen w-full flexCenter">Loading .....</div>;
+    return (
+      <div className="h-screen w-full flexCenter">
+        <img src="/icons/loading.svg" alt="" />
+      </div>
+    );
   }
 
   return (

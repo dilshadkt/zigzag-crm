@@ -3,7 +3,7 @@ import PrimaryButton from "../buttons/primaryButton";
 import clsx from "clsx";
 import { formatDate } from "../../../config/formateDate";
 
-const FileAttachments = ({ files, className, onRemove }) => {
+const FileAttachments = ({ files, className, onRemove, disable }) => {
   return (
     <div className="w-full  flex flex-col gap-y-2 ">
       {files?.length > 0 && (
@@ -11,7 +11,12 @@ const FileAttachments = ({ files, className, onRemove }) => {
       )}
       <div className={clsx(" ", className)}>
         {files?.map((file, index) => (
-          <File key={index} file={file} handleRemove={() => onRemove(index)} />
+          <File
+            key={index}
+            disable={disable}
+            file={file}
+            handleRemove={() => onRemove(index)}
+          />
         ))}
       </div>
     </div>
@@ -20,7 +25,7 @@ const FileAttachments = ({ files, className, onRemove }) => {
 
 export default FileAttachments;
 
-const File = ({ file, handleRemove }) => {
+const File = ({ file, handleRemove, disable }) => {
   const isImage = file.type.startsWith("image");
   const isPDF = file.type === "application/pdf";
   return (
@@ -54,6 +59,7 @@ const File = ({ file, handleRemove }) => {
         </span>
       </div>
       <PrimaryButton
+        disable={disable}
         icon={"/icons/cancel.svg"}
         className={"absolute top-1 right-1 z-40 bg-[#6D5DD3]/20"}
         onclick={handleRemove}
