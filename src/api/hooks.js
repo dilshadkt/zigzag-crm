@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "./client";
 import {
+  createEmployee,
   createTask,
   getTaskById,
   updatedProfile,
@@ -101,5 +102,11 @@ export const useUpdateTaskById = (taskId, handleClose) => {
       queryClient.invalidateQueries(["getTaskById", taskId]);
       handleClose();
     },
+  });
+};
+export const useAddEmployee = (handleClose) => {
+  return useMutation({
+    mutationKey: ["addEmployee"],
+    mutationFn: (data) => createEmployee(data),
   });
 };

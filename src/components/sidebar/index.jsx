@@ -3,7 +3,14 @@ import { TbLogout } from "react-icons/tb";
 import { SIDE_MENU } from "../../constants";
 import { useLocation, useNavigate } from "react-router-dom";
 import PrimaryButton from "../shared/buttons/primaryButton";
+import { useAuth } from "../../hooks/useAuth";
 const Sidebar = () => {
+  const { user } = useAuth();
+  const filteredSidebar =
+    user?.role === "employee"
+      ? SIDE_MENU.filter((item) => item.access.includes("employee"))
+      : SIDE_MENU;
+
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [isMenuOpen, setMenuOpen] = useState(false);
@@ -16,7 +23,7 @@ const Sidebar = () => {
       <div className="flex flex-col">
         <div className="h-[70px] flexCenter "></div>
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
-          {SIDE_MENU.map((item, index) => (
+          {filteredSidebar.map((item, index) => (
             <li
               key={index}
               onClick={() => navigate(item.path)}

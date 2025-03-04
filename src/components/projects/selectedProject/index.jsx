@@ -6,6 +6,7 @@ import { uploadSingleFile } from "../../../api/service";
 import { useUpdateProject } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 const SelectedProject = ({ currentProject }) => {
+  console.log(currentProject);
   const [showModal, setShowModal] = useState(false);
   const handleSuccess = () => {
     setShowModal(false);
@@ -120,16 +121,29 @@ rounded-3xl  flex flex-col  p-4"
             {currentProject?.teams?.length > 0 && (
               <div className="flex flex-col gap-y-2">
                 <span className="text-sm text-[#91929E]">Team </span>
-                <div className="flexStart gap-x-3 ">
-                  {currentProject?.teams.map((team) => (
+                <div className=" flexStart">
+                  {currentProject?.teams.map((team, index) => (
                     <div
                       key={team?._id}
-                      className="w-6 h-6 rounded-full  overflow-hidden  flexCenter"
+                      className="w-6 h-6 group cursor-pointer relative  rounded-full hover:scale-150
+                      transition-all duration-300  flexCenter border border-white"
+                      style={{
+                        marginLeft: index > 0 ? "-8px" : "0",
+                      }}
                     >
+                      {/* Tooltip that appears on hover */}
+                      <div
+                        className="absolute -top-7 left-1/2 transform 
+        bg-gray-800 text-white text-[8px] py-1 px-2 rounded opacity-0 
+        group-hover:opacity-100 whitespace-nowrap pointer-events-none
+        transition-opacity duration-200  z-[1000]"
+                      >
+                        {team?.firstName}
+                      </div>
                       <img
                         src={team?.profileImage}
                         alt={team?.firstName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full rounded-full object-cover"
                       />
                     </div>
                   ))}

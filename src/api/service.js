@@ -97,3 +97,8 @@ export const updateTaskById = async (taskId, updatedData) => {
   const { data } = await apiClient.put(`/tasks/${taskId}`, updatedData);
   return data;
 };
+
+export const createEmployee = async (employeeData) => {
+  const { data } = await apiClient.post("/employee", employeeData);
+  return data;
+};

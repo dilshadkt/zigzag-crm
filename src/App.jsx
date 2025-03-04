@@ -29,10 +29,12 @@ import GetStart from "./pages/welcome/getStart";
 import ProfileImageUpload from "./pages/welcome/profile";
 import MobileNumberInput from "./pages/welcome/mobile";
 import ProjectDetailLayout from "./layouts/projectDetail";
+import Unauthorized from "./pages/Unauthorized";
+import WithRoleAcess from "./components/withRoleAccess";
 
 function App() {
   const dispatch = useDispatch();
-  const { loading, isAuthenticated } = useSelector((state) => state.auth); // Get loading and isAuthenticated state from Redux
+  const { loading } = useSelector((state) => state.auth); // Get loading and isAuthenticated state from Redux
   const [isAuthChecked, setIsAuthChecked] = useState(false); // Track if auth check is complete
 
   useEffect(() => {
@@ -80,7 +82,14 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
+            <Route
+              index
+              element={
+                <WithRoleAcess allowedRoles={["company-admin"]}>
+                  <Dashboard />
+                </WithRoleAcess>
+              }
+            />
             <Route path="projects" element={<Prjects />} />
             <Route
               path="projects/:projectName"
@@ -110,6 +119,8 @@ function App() {
             <Route path="sign-up-Success" element={<SingUpSuccess />} />
             <Route path="forget-password" element={<ForgetPassword />} />
           </Route>
+          <Route path="unauthorized" element={<Unauthorized />} />
+
           <Route
             path="/welcome"
             element={

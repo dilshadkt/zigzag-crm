@@ -11,7 +11,6 @@ import FileAndLinkUpload from "../../shared/fileUpload";
 const AddTask = ({
   isOpen,
   setShowModalTask,
-  selectedProject,
   assignee,
   initialValues,
   isLoading = false,
@@ -21,10 +20,10 @@ const AddTask = ({
     resetForm();
     setShowModalTask(false);
   };
-  if (!isOpen) return null;
 
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
+  if (!isOpen) return null;
   return (
     <div
       className="fixed left-0 right-0 top-0 bottom-0

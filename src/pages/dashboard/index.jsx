@@ -10,7 +10,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 const Dashboard = () => {
   const { companyId } = useAuth();
-  const { data: projects, isSuccess } = useCompanyProjects(companyId);
+  const { data: projects } = useCompanyProjects(companyId);
   return (
     <section className="flex flex-col">
       <span className="text-[#7D8592]">Welcome back, Evan!</span>
@@ -107,8 +107,11 @@ const Dashboard = () => {
                           Assignees
                         </span>
                         <div className="font-semibold flexStart  text-gray-800 text-lg">
-                          {project?.teams?.map((team) => (
-                            <div className=" w-7 h-7 rounded-full  border-3 border-white  ">
+                          {project?.teams?.map((team, index) => (
+                            <div
+                              key={index}
+                              className=" w-7 h-7 rounded-full  border-3 border-white  "
+                            >
                               <img
                                 src={team?.profileImage}
                                 alt=""

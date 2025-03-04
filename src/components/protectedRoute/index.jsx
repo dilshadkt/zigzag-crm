@@ -14,7 +14,7 @@ export const ProtectedRoute = ({ children, requireProfileComplete = true }) => {
   }
 
   if (requireProfileComplete && !isProfileComplete) {
-    return <Navigate to="/welcome/user-profile" />; // Redirect to profile page if profile is incomplete
+    return <Navigate to="/welcome" />; // Redirect to profile page if profile is incomplete
   }
 
   if (!requireProfileComplete && isProfileComplete) {

@@ -26,7 +26,11 @@ export const useSignIn = () => {
             isProfileComplete: user?.isProfileComplete || false,
           })
         );
-        window.location.href = "/";
+        if (user?.role === "employee") {
+          window.location.href = "/projects";
+        } else {
+          window.location.href = "/";
+        }
       } else {
         console.log(message);
       }

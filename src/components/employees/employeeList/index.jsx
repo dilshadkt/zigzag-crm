@@ -2,8 +2,7 @@ import { useEmpoyees } from "../../../api/hooks";
 import { EMPOYEES } from "../../../constants";
 import ListItem from "../listItem";
 
-const EmployeeList = () => {
-  const { data: employees } = useEmpoyees();
+const EmployeeList = ({ employees }) => {
   return (
     <>
       {employees?.map((employee) => (

@@ -6,10 +6,8 @@ import { useUpdateProfile } from "../../../api/hooks";
 import { useNavigate } from "react-router-dom";
 
 const MobileNumberInput = () => {
-  const phoneRegExp = /^\d{13}$/;
-  const navigate = useNavigate();
   const handleSuccess = () => {
-    navigate("/");
+    window.location.href = "/";
   };
   const { mutate } = useUpdateProfile(handleSuccess);
 
