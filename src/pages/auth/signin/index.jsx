@@ -6,7 +6,8 @@ import { useSignIn } from "../../../hooks/useSignIn";
 import AuthBanner from "../../../components/authBanner";
 
 const SignIn = () => {
-  const { values, errors, touched, handleChange, handleSubmit } = useSignIn();
+  const { values, errors, touched, handleChange, handleSubmit, isSubmitting } =
+    useSignIn();
   return (
     <section className="w-full h-full bg-white grid grid-cols-2 rounded-3xl overflow-hidden">
       <AuthBanner />
@@ -49,6 +50,7 @@ const SignIn = () => {
             </div>
             <div className="flex flex-col mt-5  items-center">
               <PrimaryButton
+                loading={isSubmitting}
                 type="submit"
                 iconPosition="right"
                 title={"Sign In"}

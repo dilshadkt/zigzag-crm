@@ -6,7 +6,6 @@ import { uploadSingleFile } from "../../../api/service";
 import { useUpdateProject } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 const SelectedProject = ({ currentProject }) => {
-  console.log(currentProject);
   const [showModal, setShowModal] = useState(false);
   const handleSuccess = () => {
     setShowModal(false);

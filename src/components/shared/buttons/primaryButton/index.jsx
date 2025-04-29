@@ -22,18 +22,13 @@ const PrimaryButton = ({
           iconPosition === "left" ? `` : `flex-row-reverse`
         } h-10 px-3   gap-x-2 ${
           disable ? `cursor-default` : ` cursor-pointer`
-        }  bg-[#3F8CFF]   rounded-xl `,
+        }  ${loading && "opacity-50"} bg-[#3F8CFF]   rounded-xl `,
         className
       )}
     >
-      {loading ? (
-        "Loading"
-      ) : (
-        <>
-          {icon && <img src={icon} alt="" className="w-5" />}
-          {title && <span>{title}</span>}
-        </>
-      )}
+      {icon && <img src={icon} alt="" className="w-5" />}
+      {title && <span>{title}</span>}
+      {loading && <img src="/icons/loader.svg" alt="" className="w-5" />}
     </button>
   );
 };

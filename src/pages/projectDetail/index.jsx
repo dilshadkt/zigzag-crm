@@ -2,6 +2,7 @@ import React from "react";
 import { useProjectDetails } from "../../api/hooks";
 import ProjectOverView from "../../components/projects/projectOverview";
 import { useProject } from "../../hooks/useProject";
+import { useAuth } from "../../hooks/useAuth";
 
 const ProjectDetails = () => {
   const { activeProject } = useProject();

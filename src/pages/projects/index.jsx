@@ -22,14 +22,25 @@ const Prjects = () => {
   const { activeProject: selectProject } = useProject();
   const dispatch = useDispatch();
   const { data: projects, isSuccess } = useCompanyProjects(companyId);
-  const { data: activeProject } = useProjectDetails(selectProject);
-
+  const { data: activeProject, isLoading } = useProjectDetails(selectProject);
   useEffect(() => {
     dispatch(setActiveProject(projects?.[0]?._id));
   }, [isSuccess]);
   const [showModalProject, setShowModalProject] = useState(false);
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [showModalTask, setShowModalTask] = useState(false);
+
+  if (isLoading) return <div>Loading...</div>;
+
+  const activeTasks = activeProject?.tasks?.filter(
+    (task) => task?.status === "todo"
+  );
+  const progressTasks = activeProject?.tasks?.filter(
+    (task) => task?.status === "in-progress"
+  );
+  const completedTasks = activeProject?.tasks?.filter(
+    (task) => task?.status === "completed"
+  );
 
   return (
     <section className="flex flex-col h-full gap-y-3">
@@ -133,7 +144,7 @@ const Prjects = () => {
                 <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
                   Active Tasks
                 </div>
-                {activeProject?.tasks?.map((task, index) => (
+                {activeTasks.map((task, index) => (
                   <div
                     key={index}
                     className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
@@ -173,7 +184,7 @@ const Prjects = () => {
                     <div className="col-span-2  flexBetween">
                       <span
                         className="bg-[#E0F9F2] text-[#00D097] 
-                  flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
+                  flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
                       >
                         {task?.status}
                       </span>
@@ -185,22 +196,22 @@ const Prjects = () => {
             )}
 
             {/* back log  */}
-            {/* <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
-              Backlog
+            <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
+              Progress
             </div>
-            {new Array(6).fill(" ").map((task, index) => (
+            {progressTasks.map((task, index) => (
               <div
                 key={index}
                 className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
               >
                 <div className="col-span-3 gap-y-1 flex flex-col">
                   <span className="text-sm text-[#91929E]">Task Name</span>
-                  <h4>Research</h4>
+                  <h4>{task?.title}</h4>
                 </div>
                 <div className="col-span-5  grid grid-cols-4">
                   <div className="flex flex-col gap-y-1">
                     <span className="text-sm text-[#91929E]">Estimate</span>
-                    <h4>1d 2h</h4>
+                    <h4>{task?.timeEstimate}h</h4>
                   </div>
                   <div className="flex flex-col gap-y-1">
                     <span className="text-sm text-[#91929E]">Spent Time</span>
@@ -208,6 +219,7 @@ const Prjects = () => {
                   </div>
                   <div className="flex flex-col gap-y-1">
                     <span className="text-sm text-[#91929E]">Assignee</span>
+
                     <div className="w-6 h-6 rounded-full  flexCenter">
                       <img src="/image/photo.png" alt="" />
                     </div>
@@ -216,21 +228,73 @@ const Prjects = () => {
                     <span className="text-sm text-[#91929E]">Priority</span>
                     <div className="flexStart gap-x-1 text-[#FFBD21]">
                       <IoArrowUpOutline className="text-lg " />
-                      <span className="text-xs font-medium">Medium</span>
+                      <span className="text-xs font-medium">
+                        {task?.priority}
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="col-span-2  flexBetween">
                   <span
                     className="bg-[#E0F9F2] text-[#00D097] 
-                  flexCenter text-xs font-medium py-[7px] px-[15px] rounded-lg"
+            flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
                   >
-                    Done
+                    {task?.status}
                   </span>
                   <Progress size={30} strokeWidth={2} currentValue={100} />
                 </div>
               </div>
-            ))} */}
+            ))}
+            {/* back log  */}
+            <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
+              Completed
+            </div>
+            {completedTasks.map((task, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
+              >
+                <div className="col-span-3 gap-y-1 flex flex-col">
+                  <span className="text-sm text-[#91929E]">Task Name</span>
+                  <h4>{task?.title}</h4>
+                </div>
+                <div className="col-span-5  grid grid-cols-4">
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#91929E]">Estimate</span>
+                    <h4>{task?.timeEstimate}h</h4>
+                  </div>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#91929E]">Spent Time</span>
+                    <h4>1d 2h</h4>
+                  </div>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#91929E]">Assignee</span>
+
+                    <div className="w-6 h-6 rounded-full  flexCenter">
+                      <img src="/image/photo.png" alt="" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#91929E]">Priority</span>
+                    <div className="flexStart gap-x-1 text-[#FFBD21]">
+                      <IoArrowUpOutline className="text-lg " />
+                      <span className="text-xs font-medium">
+                        {task?.priority}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-span-2  flexBetween">
+                  <span
+                    className="bg-[#E0F9F2] text-[#00D097] 
+            flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
+                  >
+                    {task?.status}
+                  </span>
+                  <Progress size={30} strokeWidth={2} currentValue={100} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
