@@ -110,7 +110,7 @@ const Dashboard = () => {
                           {project?.teams?.map((team, index) => (
                             <div
                               key={index}
-                              className=" w-7 h-7 rounded-full  border-3 border-white  "
+                              className=" w-7 h-7 rounded-full overflow-hidden  border-3 border-white  "
                             >
                               <img
                                 src={team?.profileImage}

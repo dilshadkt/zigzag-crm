@@ -144,7 +144,7 @@ const Prjects = () => {
                 <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
                   Active Tasks
                 </div>
-                {activeTasks.map((task, index) => (
+                {activeTasks?.map((task, index) => (
                   <div
                     key={index}
                     className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
@@ -199,7 +199,7 @@ const Prjects = () => {
             <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
               Progress
             </div>
-            {progressTasks.map((task, index) => (
+            {progressTasks?.map((task, index) => (
               <div
                 key={index}
                 className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
@@ -249,7 +249,7 @@ const Prjects = () => {
             <div className="min-h-10 font-medium  sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
               Completed
             </div>
-            {completedTasks.map((task, index) => (
+            {completedTasks?.map((task, index) => (
               <div
                 key={index}
                 className="grid grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
