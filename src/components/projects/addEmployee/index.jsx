@@ -98,7 +98,7 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
             <div className="mt-4 flex flex-wrap gap-2">
               {selectedEmployees.map((employee) => (
                 <div
-                  key={employee._id}
+                  key={employee?._id}
                   className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center"
                 >
                   <span className="text-sm">{employee?.firstName}</span>

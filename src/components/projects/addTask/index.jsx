@@ -11,7 +11,7 @@ import FileAndLinkUpload from "../../shared/fileUpload";
 const AddTask = ({
   isOpen,
   setShowModalTask,
-  assignee,
+  teams,
   initialValues,
   isLoading = false,
   onSubmit,
@@ -24,6 +24,7 @@ const AddTask = ({
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
   if (!isOpen) return null;
+  console.log(errors);
   return (
     <div
       className="fixed left-0 right-0 top-0 bottom-0
@@ -99,10 +100,10 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   errors={errors}
                   onChange={handleChange}
                   touched={touched}
-                  name={"assignee"}
-                  selectedValue={values?.assignee}
-                  options={assignee?.map((user) => user?.firstName)}
-                  defaultValue={values?.assignee || "Select Assignee"}
+                  name={"assignedTo"}
+                  selectedValue={values?.assignedTo}
+                  options={teams?.map((user) => user?._id)}
+                  defaultValue={values?.assignedTo || "Select Assignee"}
                 />
                 <Description
                   errors={errors}

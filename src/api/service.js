@@ -1,4 +1,5 @@
 import apiClient from "./client";
+import { POST_PROJECT } from "./enpoint";
 
 export const register = async (data) => {
   try {
@@ -23,10 +24,9 @@ export const signIn = async (data) => {
       return { success: true, user: response.data.user };
     }
   } catch (error) {
-    console.error("Login error:", error);
     return {
       success: false,
-      message: error.response?.data?.message || "Login failed",
+      message: error || "Login failed",
       user: null,
     };
   }
@@ -101,4 +101,9 @@ export const updateTaskById = async (taskId, updatedData) => {
 export const createEmployee = async (employeeData) => {
   const { data } = await apiClient.post("/employee", employeeData);
   return data;
+};
+
+////////////  PROJECT SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+export const addProject = (projectDetails) => {
+  return apiClient.post(POST_PROJECT, projectDetails).then((res) => res.data);
 };

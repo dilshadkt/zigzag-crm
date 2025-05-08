@@ -78,7 +78,7 @@ const Select = ({
               <li
                 key={index}
                 onClick={() => handleSelect(item)}
-                className="px-4 py-2 hover:bg-blue-50"
+                className="px-4 py-2 capitalize hover:bg-blue-50"
               >
                 {item}
               </li>

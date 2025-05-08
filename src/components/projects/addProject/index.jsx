@@ -13,6 +13,7 @@ const AddProject = ({
   setShowModalProject,
   initialValues,
   onSubmit,
+  isOpen,
   isEditMode = false,
 }) => {
   const {
@@ -24,6 +25,9 @@ const AddProject = ({
     setFieldValue,
     isSubmitting,
   } = useAddProjectForm(initialValues, onSubmit); // Pass initialValues and onSubmit to the hook
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div
@@ -69,12 +73,12 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
             </div>
             <Select
               title="Priority"
-              options={["Low", "Medium", "High"]}
+              options={["low", "medium", "high"]}
               errors={errors}
-              name={"priority"}
+              name={"periority"}
               onChange={handleChange}
               touched={touched}
-              value={values.periority !== null ? values.periority : "Low"}
+              value={values.periority !== null ? values.periority : "low"}
             />
             <Description
               errors={errors}
@@ -112,11 +116,10 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
           className={"absolute bg-[#F4F9FD] right-[30px] top-[30px]"}
         />
         <PrimaryButton
-          disable={isSubmitting}
           type="submit"
           title={
             isSubmitting
-              ? "Loading"
+              ? "Loading..."
               : isEditMode
               ? "Save Changes"
               : "Save Project"

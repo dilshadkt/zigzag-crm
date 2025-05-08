@@ -18,6 +18,7 @@ const initialState = {
   isAuthenticated: false,
   loading: true,
   isProfileComplete: false,
+  isCompany: false,
 };
 
 const authSlice = createSlice({
@@ -29,6 +30,7 @@ const authSlice = createSlice({
       state.companyId = action.payload.companyId;
       state.isAuthenticated = true;
       state.loading = false;
+      state.isCompany = action.payload?.user?.role === "company-admin";
       state.isProfileComplete = action.payload.isProfileComplete;
       localStorage.setItem("authState", JSON.stringify(state)); // Save state
     },

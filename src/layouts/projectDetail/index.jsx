@@ -10,12 +10,14 @@ import { useCreateTask, useProjectDetails } from "../../api/hooks";
 import { Outlet } from "react-router-dom";
 import { processAttachments } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
+import { useAuth } from "../../hooks/useAuth";
 
 const ProjectDetailLayout = () => {
   const { activeProject } = useProject();
   const { data } = useProjectDetails(activeProject);
   const [showModalTask, setShowModalTask] = useState(false);
   const { mutate } = useCreateTask(() => setShowModalTask(false), data?._id);
+  const { isCompany } = useAuth();
   const handle = async (values) => {
     const assignee = values?.assignee;
     const assigneeId = data?.teams?.find(
@@ -36,6 +38,7 @@ const ProjectDetailLayout = () => {
       <div className="flexBetween   mb-2">
         <Header>{data?.name}</Header>
         <PrimaryButton
+          disable={!isCompany}
           className={"mt-3 px-5 text-white"}
           title={"Add Task"}
           icon={"/icons/add.svg"}
@@ -47,7 +50,6 @@ const ProjectDetailLayout = () => {
         <SelectedProject currentProject={data} />
         {/* project overview page  */}
         <Outlet />
-        {/* <ProjectOverView currentProject={data} /> */}
         <AddTask
           isOpen={showModalTask}
           onSubmit={handle}

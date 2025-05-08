@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  // baseURL: "https://crm.zigzagdigitalsolutions.com/api",
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://crm.zigzagdigitalsolutions.com/api",
+  // baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -36,7 +36,7 @@ apiClient.interceptors.response.use(
       // window.location.href = "/auth/signin"; // Redirect to login page
     }
     return Promise.reject(
-      error.response?.data?.error || "Something went wrong"
+      error.response?.data?.message || "Something went wrong"
     );
   }
 );

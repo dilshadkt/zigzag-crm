@@ -26,17 +26,25 @@ const SignIn = () => {
               title="Email Address"
               placeholder="youremail@gmail.com"
             />
-            <Input
-              name={"password"}
-              value={values}
-              touched={touched}
-              onchange={handleChange}
-              errors={errors}
-              title="Password"
-              type="password"
-              placeholder="Password"
-            />
-            <div className="flexBetween mt-2">
+            <div>
+              <Input
+                name={"password"}
+                value={values}
+                touched={touched}
+                onchange={handleChange}
+                errors={errors}
+                title="Password"
+                type="password"
+                placeholder="Password"
+              />
+              {errors.general && (
+                <p className="text-red-500 mt-2 text-xs font-medium">
+                  {errors.general}
+                </p>
+              )}
+            </div>
+
+            <div className="flexBetween ">
               <div className="flexStart gap-x-2">
                 <input type="checkbox" name="" id="" />
                 <span className="text-[#7D8592] text-sm">Remember me</span>

@@ -5,12 +5,15 @@ import AddProject from "../addProject";
 import { uploadSingleFile } from "../../../api/service";
 import { useUpdateProject } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
+import { useAuth } from "../../../hooks/useAuth";
 const SelectedProject = ({ currentProject }) => {
   const [showModal, setShowModal] = useState(false);
   const handleSuccess = () => {
     setShowModal(false);
   };
   const { mutate } = useUpdateProject(currentProject?._id, handleSuccess);
+  const { isCompany } = useAuth();
+
   const formatedDate = (isoDate) => {
     const date = new Date(isoDate);
     const formattedDate = date.toLocaleDateString("en-US", {
@@ -93,6 +96,7 @@ rounded-3xl  flex flex-col  p-4"
           <div className="flexBetween">
             <span className="text-sm text-[#91929E] ">Project Number</span>
             <PrimaryButton
+              disable={!isCompany}
               icon={"/icons/edit.svg"}
               onclick={() => setShowModal(true)}
               className="bg-[#F4F9FD]"
@@ -186,24 +190,25 @@ rounded-3xl  flex flex-col  p-4"
           </div>
         </div>
       </div>
-      {showModal && (
-        <AddProject
-          setShowModalProject={setShowModal}
-          isEditMode={true}
-          onSubmit={handleEditProject}
-          initialValues={{
-            name: currentProject?.name || "",
-            taskGroup: currentProject?.taskGroup || "",
-            startDate: currentProject?.startDate || "",
-            dueDate: currentProject?.endDate || "",
-            periority: currentProject?.periority || "",
-            assignee: currentProject?.teams || "",
-            description: currentProject?.description || "",
-            attachments: currentProject?.attachments,
-            teams: currentProject?.teams,
-          }}
-        />
-      )}
+      {/* {showModal && ( */}
+      <AddProject
+        isOpen={showModal}
+        setShowModalProject={setShowModal}
+        isEditMode={true}
+        onSubmit={handleEditProject}
+        initialValues={{
+          name: currentProject?.name || "",
+          taskGroup: currentProject?.taskGroup || "",
+          startDate: currentProject?.startDate || "",
+          dueDate: currentProject?.endDate || "",
+          periority: currentProject?.periority || "",
+          assignee: currentProject?.teams || "",
+          description: currentProject?.description || "",
+          attachments: currentProject?.attachments,
+          teams: currentProject?.teams,
+        }}
+      />
+      {/* )} */}
     </>
   );
 };

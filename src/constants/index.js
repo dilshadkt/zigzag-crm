@@ -21,20 +21,20 @@ export const SIDE_MENU = [
     path: "/projects",
     access: ["admin", "employee"],
   },
-  {
-    id: 3,
-    title: "Calender",
-    icon: FaCalendar,
-    path: "/calender",
-    access: ["admin"],
-  },
-  {
-    id: 4,
-    title: "Vacations",
-    icon: BiSolidPlane,
-    path: "/vacations",
-    access: ["admin", "employee"],
-  },
+  // {
+  //   id: 3,
+  //   title: "Calender",
+  //   icon: FaCalendar,
+  //   path: "/calender",
+  //   access: ["admin"],
+  // },
+  // {
+  //   id: 4,
+  //   title: "Vacations",
+  //   icon: BiSolidPlane,
+  //   path: "/vacations",
+  //   access: ["admin", "employee"],
+  // },
   {
     id: 5,
     title: "Employees",
@@ -42,20 +42,20 @@ export const SIDE_MENU = [
     path: "/employees",
     access: ["admin"],
   },
-  {
-    id: 6,
-    title: "Messenger",
-    icon: FaSignalMessenger,
-    path: "/messenger",
-    access: ["admin"],
-  },
-  {
-    id: 7,
-    title: "Info Portal",
-    icon: GoFileDirectoryFill,
-    path: "/infoPortal",
-    access: ["admin"],
-  },
+  // {
+  //   id: 6,
+  //   title: "Messenger",
+  //   icon: FaSignalMessenger,
+  //   path: "/messenger",
+  //   access: ["admin"],
+  // },
+  // {
+  //   id: 7,
+  //   title: "Info Portal",
+  //   icon: GoFileDirectoryFill,
+  //   path: "/infoPortal",
+  //   access: ["admin"],
+  // },
 ];
 
 export const USERS = [

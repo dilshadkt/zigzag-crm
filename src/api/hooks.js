@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "./client";
 import {
+  addProject,
   createEmployee,
   createTask,
   getTaskById,
@@ -73,18 +74,6 @@ export const useUpdateProfile = (handleSuccess) => {
   });
 };
 
-export const useUpdateProject = (projectId, handleSuccess) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationKey: ["updateProject"],
-    mutationFn: (updatedData) => updateProject(updatedData, projectId),
-    onSuccess: () => {
-      handleSuccess();
-      queryClient.invalidateQueries(["projectDetails", projectId]);
-    },
-  });
-};
-
 export const useGetTaskById = (taskId) => {
   return useQuery({
     queryKey: ["getTaskById", taskId],
@@ -108,5 +97,26 @@ export const useAddEmployee = (handleClose) => {
   return useMutation({
     mutationKey: ["addEmployee"],
     mutationFn: (data) => createEmployee(data),
+  });
+};
+
+/////////////  PROJECT SECTION ⚠️⚠️⚠️⚠️⚠️ ////////////////////
+
+// Add PROJECT
+export const useAddProject = () =>
+  useMutation({
+    mutationKey: ["addProject"],
+    mutationFn: (projectDetails) => addProject(projectDetails),
+  });
+
+export const useUpdateProject = (projectId, handleSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateProject"],
+    mutationFn: (updatedData) => updateProject(updatedData, projectId),
+    onSuccess: () => {
+      handleSuccess();
+      queryClient.invalidateQueries(["projectDetails", projectId]);
+    },
   });
 };

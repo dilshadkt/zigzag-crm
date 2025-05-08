@@ -16,7 +16,7 @@ export const useSignIn = () => {
   const formik = useFormik({
     initialValues,
     validationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setErrors }) => {
       const { success, message, user } = await signIn(values);
       if (success) {
         dispatch(
@@ -26,13 +26,9 @@ export const useSignIn = () => {
             isProfileComplete: user?.isProfileComplete || false,
           })
         );
-        if (user?.role === "employee") {
-          window.location.href = "/projects";
-        } else {
-          window.location.href = "/";
-        }
+        window.location.href = user?.role === "employee" ? "/projects" : "/";
       } else {
-        console.log(message);
+        setErrors({ general: message || "Something went wrong" });
       }
     },
   });

@@ -6,7 +6,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     thumbImg: defaultValue?.thumbImg || null,
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
-    periority: defaultValue?.periority || "",
+    periority: defaultValue?.periority || "low",
     assignee: defaultValue?.assignee || "",
     attachments: defaultValue?.attachments || [],
     description: defaultValue?.description || "",
