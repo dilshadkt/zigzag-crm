@@ -15,6 +15,7 @@ const AddTask = ({
   initialValues,
   isLoading = false,
   onSubmit,
+  projectData,
 }) => {
   const handleClose = () => {
     resetForm();
@@ -23,8 +24,66 @@ const AddTask = ({
 
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
+
+  // Get task group options from project work details
+  const getTaskGroupOptions = () => {
+    if (!projectData?.workDetails) return [];
+    
+    const options = [];
+    const workDetails = projectData.workDetails;
+    
+    // Add main work types
+    if (workDetails.reels?.count > 0) {
+      options.push({
+        label: `Reels (${workDetails.reels.count} remaining)`,
+        value: "reels"
+      });
+    }
+    if (workDetails.poster?.count > 0) {
+      options.push({
+        label: `Poster (${workDetails.poster.count} remaining)`,
+        value: "poster"
+      });
+    }
+    if (workDetails.motionPoster?.count > 0) {
+      options.push({
+        label: `Motion Poster (${workDetails.motionPoster.count} remaining)`,
+        value: "motionPoster"
+      });
+    }
+    if (workDetails.shooting?.count > 0) {
+      options.push({
+        label: `Shooting (${workDetails.shooting.count} remaining)`,
+        value: "shooting"
+      });
+    }
+    if (workDetails.motionGraphics?.count > 0) {
+      options.push({
+        label: `Motion Graphics (${workDetails.motionGraphics.count} remaining)`,
+        value: "motionGraphics"
+      });
+    }
+    
+    // Add other work types
+    if (workDetails.other?.length > 0) {
+      workDetails.other.forEach(item => {
+        if (item.count > 0) {
+          options.push({
+            label: `${item.name} (${item.count} remaining)`,
+            value: item.name
+          });
+        }
+      });
+    }
+    
+    return options;
+  };
+
+  const taskGroupOptions = getTaskGroupOptions();
+  const isTaskGroupSelected = values.taskGroup && values.taskGroup !== "Select task group";
+
   if (!isOpen) return null;
-  console.log(errors);
+
   return (
     <div
       className="fixed left-0 right-0 top-0 bottom-0
@@ -50,6 +109,18 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 onSubmit={handleSubmit}
                 className="mt-3 flex flex-col gap-y-4"
               >
+                <Select
+                  errors={errors}
+                  touched={touched}
+                  name={"taskGroup"}
+                  selectedValue={values?.taskGroup || "Select task group"}
+                  value={values?.taskGroup || "Select task group"}
+                  onChange={handleChange}
+                  title="Task Group"
+                  options={taskGroupOptions}
+                  defaultValue="Select task group"
+                  required
+                />
                 <Input
                   placeholder="Task Name"
                   title="Task Name"
@@ -58,15 +129,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onchange={handleChange}
                   touched={touched}
                   value={values}
-                />
-                <Select
-                  errors={errors}
-                  touched={touched}
-                  name={"taskGroup"}
-                  value="Design"
-                  onChange={handleChange}
-                  title="Task Group"
-                  options={["Design", "Content", "Editing"]}
+                  disabled={!isTaskGroupSelected}
                 />
                 <div className="grid gap-x-4 grid-cols-2">
                   <DatePicker
@@ -76,6 +139,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     name={"startDate"}
                     title="Estimate"
                     touched={touched}
+                    disabled={!isTaskGroupSelected}
                   />
                   <DatePicker
                     title="Dead Line"
@@ -84,6 +148,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     onChange={handleChange}
                     touched={touched}
                     name={"dueDate"}
+                    disabled={!isTaskGroupSelected}
                   />
                 </div>
                 <Select
@@ -94,6 +159,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={handleChange}
                   title="Priority"
                   options={["Low", "Medium", "High"]}
+                  disabled={!isTaskGroupSelected}
                 />
                 <Select
                   title="Assignee"
@@ -102,8 +168,12 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   touched={touched}
                   name={"assignedTo"}
                   selectedValue={values?.assignedTo}
-                  options={teams?.map((user) => user?._id)}
+                  options={teams?.map((user) => ({
+                    label: `${user.firstName} (${user.position})`,
+                    value: user._id
+                  })) || []}
                   defaultValue={values?.assignedTo || "Select Assignee"}
+                  disabled={!isTaskGroupSelected}
                 />
                 <Description
                   errors={errors}
@@ -113,6 +183,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={values}
                   title="Description"
                   placeholder="Add some description of the task"
+                  disabled={!isTaskGroupSelected}
                 />
                 <div>
                   <FileAndLinkUpload
@@ -124,9 +195,14 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       (file) => file.type === "link"
                     )}
                     onChange={(files) => (values.attachments = files)}
+                    disabled={!isTaskGroupSelected}
                   />
                   <div className="flexEnd">
-                    <PrimaryButton type="submit" title="Save Task" />
+                    <PrimaryButton 
+                      type="submit" 
+                      title="Save Task"
+                      disabled={!isTaskGroupSelected}
+                    />
                   </div>
                 </div>
               </form>

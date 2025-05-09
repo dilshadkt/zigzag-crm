@@ -13,10 +13,12 @@ const Select = ({
   errors,
   selectedValue,
   touched,
+  disabled,
 }) => {
-  const [selected, setSelected] = useState(defaultValue || options[0]);
+  const [selected, setSelected] = useState(defaultValue || (options[0]?.label || options[0]));
   const [isMenuOpen, setIsMenuOpen] = useState(false); // TOGGLE MENU
   const menuRef = useRef();
+
   // Update selected value when `value` prop changes
   useEffect(() => {
     if (value !== undefined) {
@@ -40,11 +42,22 @@ const Select = ({
 
   // Handle option selection
   const handleSelect = (item) => {
-    setSelected(item);
+    const selectedValue = typeof item === 'object' ? item.value : item;
+    const displayValue = typeof item === 'object' ? item.label : item;
+    
+    setSelected(displayValue);
     if (onChange) {
-      onChange({ target: { name, value: item } }); // Mimic event object for Formik
+      onChange({ target: { name, value: selectedValue } }); // Mimic event object for Formik
     }
     setIsMenuOpen(false);
+  };
+
+  // Helper function to get display value
+  const getDisplayValue = (item) => {
+    if (typeof item === 'object' && item !== null) {
+      return item.label;
+    }
+    return item;
   };
 
   return (
@@ -53,13 +66,14 @@ const Select = ({
         {title}
       </label>
       <div
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        onClick={() => !disabled && setIsMenuOpen(!isMenuOpen)}
         className={clsx(
           `rounded-[14px]  text-sm border-2 text-[#7D8592] w-full border-[#D8E0F0]/80 py-[10px] px-4
           outline-none focus:outline-none relative cursor-pointer`,
           className,
           {
             "border-red-400/50": errors?.[name] && touched?.[name], // Add error border
+            "opacity-50 cursor-not-allowed": disabled, // Add disabled styling
           }
         )}
       >
@@ -80,7 +94,7 @@ const Select = ({
                 onClick={() => handleSelect(item)}
                 className="px-4 py-2 capitalize hover:bg-blue-50"
               >
-                {item}
+                {getDisplayValue(item)}
               </li>
             ))}
           </ul>

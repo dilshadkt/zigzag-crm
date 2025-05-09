@@ -12,6 +12,7 @@ const DatePicker = ({
   errors,
   touched,
   readOnly = false,
+  disabled,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value || "");
@@ -64,11 +65,11 @@ const DatePicker = ({
       </label>
       <div className="relative">
         <div
-          onClick={() => !readOnly && setIsMenuOpen(!isMenuOpen)}
+          onClick={() => !readOnly && !disabled && setIsMenuOpen(!isMenuOpen)}
           className={clsx(
             `rounded-[14px] text-sm border-2 text-[#7D8592] w-full border-[#D8E0F0]/80 py-[10px] px-4
             outline-none focus:outline-none relative  ${
-              readOnly ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+              (readOnly || disabled) ? "cursor-not-allowed opacity-60" : "cursor-pointer"
             }`,
             className,
             {

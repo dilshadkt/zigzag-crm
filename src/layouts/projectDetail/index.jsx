@@ -18,13 +18,12 @@ const ProjectDetailLayout = () => {
   const [showModalTask, setShowModalTask] = useState(false);
   const { mutate } = useCreateTask(() => setShowModalTask(false), data?._id);
   const { isCompany } = useAuth();
-  const handle = async (values) => {
-    const assignee = values?.assignee;
-    const assigneeId = data?.teams?.find(
-      (item) => item?.firstName === assignee
-    )._id;
-    values.assignee = assigneeId;
+
+  const handleSubmit = async (values) => {
+  
     const updatedValues = { ...values };
+    const { assignedTo, ...restValues } = updatedValues;
+    updatedValues.assignee = assignedTo;
     const proccesedValue = await processAttachments(
       values?.attachments,
       uploadSingleFile
@@ -32,6 +31,7 @@ const ProjectDetailLayout = () => {
     updatedValues.attachments = proccesedValue;
     mutate(updatedValues);
   };
+
   return (
     <section className="flex flex-col h-full gap-y-1">
       <Navigator path={"/projects"} title={"Back to Projects"} />
@@ -52,10 +52,11 @@ const ProjectDetailLayout = () => {
         <Outlet />
         <AddTask
           isOpen={showModalTask}
-          onSubmit={handle}
+          onSubmit={handleSubmit}
           setShowModalTask={setShowModalTask}
           selectedProject={data?._id}
-          assignee={data?.teams}
+          teams={data?.teams}
+          projectData={data}
         />
       </div>
     </section>

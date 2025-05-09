@@ -5,17 +5,19 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     name: defaultValue?.name || "",
     thumbImg: defaultValue?.thumbImg || null,
     startDate: defaultValue?.startDate || "",
-    dueDate: defaultValue?.dueDate || "",
+    endDate: defaultValue?.endDate || "",
     periority: defaultValue?.periority || "low",
     assignee: defaultValue?.assignee || "",
     attachments: defaultValue?.attachments || [],
     description: defaultValue?.description || "",
     teams: defaultValue?.teams || [],
+    workDetails: defaultValue?.workDetails || {},
+    socialMedia: defaultValue?.socialMedia || {},
   };
   const validationSchema = Yup.object().shape({
     name: Yup.string().required("Name is required"),
     startDate: Yup.string().required("Start date is required"),
-    dueDate: Yup.string().required("Due date is required"),
+    endDate: Yup.string().required("Due date is required"),
     periority: Yup.string().required("Periority is required"),
     assignee: Yup.array().of(
       Yup.object().shape({
@@ -27,6 +29,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
   });
   const formik = useFormik({
     initialValues,
+    enableReinitialize: true,
     validationSchema,
     onSubmit,
   });

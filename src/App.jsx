@@ -31,6 +31,7 @@ import MobileNumberInput from "./pages/welcome/mobile";
 import ProjectDetailLayout from "./layouts/projectDetail";
 import Unauthorized from "./pages/Unauthorized";
 import WithRoleAcess from "./components/withRoleAccess";
+import EditProject from "./pages/editProject";
 
 function App() {
   const dispatch = useDispatch();
@@ -98,7 +99,7 @@ function App() {
               <Route index element={<ProjectDetails />} />
               <Route path=":taskId" element={<TaskDetails />} />
             </Route>
-
+            <Route path="projects/:projectName/edit" element={<EditProject />} />
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />

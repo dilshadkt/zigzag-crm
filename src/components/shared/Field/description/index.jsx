@@ -12,6 +12,7 @@ const Description = ({
   touched,
   rows = 4,
   maxLength,
+  disabled,
 }) => {
   // Handle text change
   const handleChange = (e) => {
@@ -38,9 +39,11 @@ const Description = ({
             className,
             {
               "border-red-400/50": errors?.[name] && touched?.[name],
+              "opacity-50 cursor-not-allowed": disabled,
             }
           )}
           placeholder={placeholder}
+          disabled={disabled}
         />
 
         {maxLength && (

@@ -2,6 +2,7 @@ import React from "react";
 import Progress from "../../shared/progress";
 
 const ActivityCard = ({ employee }) => {
+  console.log(employee)
   const genereteBgColor = (value) => {
     if (value > 50) {
       return "#F4F9FD";
@@ -34,7 +35,7 @@ left-0 right-0 bottom-0 w-full h-full rounded-full
 flexCenter overflow-hidden "
           >
             <img
-              src={`/image/dummy/${employee?.profile}`}
+              src={employee?.profile || `/image/dummy/avatar1.svg`}
               alt=""
               className="w-full h-full object-cover scale-92"
             />

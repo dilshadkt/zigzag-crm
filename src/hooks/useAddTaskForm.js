@@ -5,7 +5,7 @@ import { uploadSingleFile } from "../api/service";
 export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
     title: defaultValue?.title || "",
-    taskGroup: "",
+    taskGroup: defaultValue?.taskGroup || "",
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
     periority: defaultValue?.priority || "",

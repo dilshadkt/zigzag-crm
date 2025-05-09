@@ -107,3 +107,7 @@ export const createEmployee = async (employeeData) => {
 export const addProject = (projectDetails) => {
   return apiClient.post(POST_PROJECT, projectDetails).then((res) => res.data);
 };
+
+export const updateTaskOrder = async (taskId, newOrder) => {
+  return apiClient.put(`/tasks/${taskId}/order`, { newOrder }).then((res) => res.data);
+};

@@ -1,15 +1,74 @@
 import React from "react";
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
+import { useUpdateTaskOrder } from "../../../api/hooks";
 
-const Task = ({ task, onClick }) => {
+const Task = ({ task, onClick, isBoardView, projectId, index, onDragStart, onDragOver, onDrop }) => {
+  const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
+
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData("text/plain", task._id);
+    onDragStart && onDragStart(e, index);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    onDragOver && onDragOver(e, index);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const draggedTaskId = e.dataTransfer.getData("text/plain");
+    if (draggedTaskId !== task._id) {
+      updateOrder({ taskId: draggedTaskId, newOrder: index });
+    }
+    onDrop && onDrop(e, index);
+  };
+
   const handleClick = () => {
-    if (onClick) {
+    if (onClick && !isBoardView) {
       onClick(task);
     }
   };
+
+  if (isBoardView) {
+    return (
+      <div 
+        draggable
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className="bg-white p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div className="flex flex-col gap-3">
+          <h4 className="font-medium text-gray-800 line-clamp-2">{task?.title}</h4>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 overflow-hidden rounded-full">
+                <img
+                  src={task?.assignedTo?.profileImage}
+                  alt={task?.assignedTo?.firstName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex items-center gap-1 text-[#FFBD21]">
+                <IoArrowUpOutline className="text-sm" />
+                <span className="text-xs font-medium">{task?.priority}</span>
+              </div>
+            </div>
+            <Progress size={24} strokeWidth={2} currentValue={100} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       onClick={() => handleClick()}
       className="grid grid-cols-10 cursor-pointer gap-x-3 px-5 bg-white py-5 rounded-3xl"
     >
@@ -31,7 +90,7 @@ const Task = ({ task, onClick }) => {
 
           <div className="w-6 h-6 overflow-hidden rounded-full  flexCenter">
             <img
-              src={task?.assignedTo.profileImage}
+              src={task?.assignedTo?.profileImage}
               alt={task?.assignedTo?.firstName}
               className="w-full h-full object-cover"
             />

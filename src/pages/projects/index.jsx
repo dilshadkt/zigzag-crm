@@ -23,10 +23,12 @@ const Prjects = () => {
   const { data: projects, isSuccess } = useCompanyProjects(companyId);
   const { data: activeProject, isLoading } = useProjectDetails(selectProject);
 
+
   // Mutation
   const addProject = useAddProject();
 
   const handleAddProject = async (values) => {
+    console.log(values);
     try {
       await addProject.mutateAsync(values);
       setShowModalProject(false);
@@ -91,6 +93,7 @@ const Prjects = () => {
 
       {/* add project modal */}
       <AddProject
+      
         isOpen={showModalProject}
         setShowModalProject={setShowModalProject}
         onSubmit={handleAddProject}

@@ -9,6 +9,7 @@ import {
   updatedProfile,
   updateProject,
   updateTaskById,
+  updateTaskOrder,
 } from "./service";
 // Customers
 export const useCustomers = () =>
@@ -46,7 +47,7 @@ export const useEmpoyees = () => {
   return useQuery({
     queryKey: ["employees"],
     queryFn: () =>
-      apiClient.get("/employee").then((res) => res.data?.employess),
+      apiClient.get("/employee").then((res) => res.data?.employees),
   });
 };
 // task
@@ -116,6 +117,36 @@ export const useUpdateProject = (projectId, handleSuccess) => {
     mutationFn: (updatedData) => updateProject(updatedData, projectId),
     onSuccess: () => {
       handleSuccess();
+      queryClient.invalidateQueries(["projectDetails", projectId]);
+    },
+  });
+};
+
+// Time Log Hooks
+export const useGetTaskTimeLogs = (taskId) => {
+  return useQuery({
+    queryKey: ["taskTimeLogs", taskId],
+    queryFn: () => apiClient.get(`/time-logs/task/${taskId}`).then((res) => res.data),
+    enabled: !!taskId,
+  });
+};
+
+export const useCreateTimeLog = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (timeLogData) => apiClient.post("/time-logs", timeLogData).then((res) => res.data),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["taskTimeLogs", variables.taskId]);
+    },
+  });
+};
+
+export const useUpdateTaskOrder = (projectId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, newOrder }) => updateTaskOrder(taskId, newOrder),
+    onSuccess: () => {
+      // Invalidate project details to refresh the task list
       queryClient.invalidateQueries(["projectDetails", projectId]);
     },
   });

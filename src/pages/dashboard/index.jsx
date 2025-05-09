@@ -45,7 +45,7 @@ const Dashboard = () => {
           {/* project list section  */}
 
           <div className=" flex flex-col h-full gap-y-3 mt-3">
-            {projects?.map((project, index) => (
+            {projects?.slice(0, 3).map((project, index) => (
               <div key={project?._id} className="flex flex-col   h-fit ">
                 <div className="bg-white  rounded-3xl grid grid-cols-2">
                   <div className="p-4  py-5 h-full flex gap-y-4 flex-col border-r border-[#E4E6E8] ">

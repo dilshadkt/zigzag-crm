@@ -9,10 +9,11 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
     defaultSelectedEmployee || []
   );
   const { data: employeesList, isLoading } = useEmpoyees();
-
   // Filter employees based on search term
   const filteredEmployees = employeesList?.filter((employee) =>
-    employee?.firstName?.toLowerCase().includes(searchTerm.toLowerCase())
+    employee?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee?.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle search input change
@@ -36,11 +37,10 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
   const handleAddClick = () => {
     setShowDropdown(false);
     setSearchTerm("");
-    // Here you can add logic to save the selected employees
   };
 
   useEffect(() => {
-    onChange(selectedEmployees.map((emply) => emply._id));
+    onChange(selectedEmployees);
   }, [selectedEmployees]);
 
   if (isLoading) {
@@ -55,7 +55,7 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
           <input
             type="text"
             className="rounded-lg text-sm border-2 text-gray-500 border-gray-200/80 py-2 px-4 outline-none focus:outline-none w-full"
-            placeholder="Search by employee name"
+            placeholder="Search by name, position or email"
             value={searchTerm}
             onChange={handleSearchChange}
             onFocus={() => setShowDropdown(true)}
@@ -63,7 +63,7 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
 
           {/* Dropdown Results */}
           {showDropdown && searchTerm && (
-            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+            <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {filteredEmployees?.length > 0 ? (
                 filteredEmployees.map((employee) => (
                   <div
@@ -79,12 +79,24 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
                       )}
                       onChange={() => {}}
                     />
-                    <span className="text-sm text-gray-600">
-                      {employee?.firstName}
-                    </span>
-                    <span className="text-xs rounded-lg ml-3 bg-gray-100 px-2">
-                      {employee?.position}
-                    </span>
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-800">
+                          {employee?.name}
+                        </span>
+                        <span className="text-xs rounded-lg ml-3 bg-gray-100 px-2">
+                          {employee?.position}
+                        </span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <span className="text-xs text-gray-500">
+                          {employee?.email}
+                        </span>
+                        <span className="text-xs rounded-lg ml-3 bg-blue-100 text-blue-800 px-2">
+                          {employee?.level || 'No Level'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -101,7 +113,7 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
                   key={employee?._id}
                   className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center"
                 >
-                  <span className="text-sm">{employee?.firstName}</span>
+                  <span className="text-sm">{employee?.name}</span>
                   <button
                     className="ml-2 text-blue-600 hover:text-blue-800"
                     onClick={() => handleEmployeeSelect(employee)}

@@ -14,6 +14,7 @@ const Input = ({
   errors,
   touched,
   readOnly = false,
+  disabled,
 }) => {
   const [showPassword, setShowPassword] = useState(true);
   return (
@@ -35,11 +36,12 @@ const Input = ({
               errors?.[name] && touched?.[name] && `border-red-400/50 `
             } rounded-[14px] text-sm  border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4
           outline-none focus:outline-none  w-full ${
-            readOnly && "cursor-not-allowed opacity-60"
+            (readOnly || disabled) && "cursor-not-allowed opacity-60"
           }`,
             className
           )}
           placeholder={placeholder}
+          disabled={disabled}
         />
         {errors?.[name] && touched?.[name] && (
           <span
