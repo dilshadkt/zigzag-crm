@@ -32,6 +32,7 @@ import ProjectDetailLayout from "./layouts/projectDetail";
 import Unauthorized from "./pages/Unauthorized";
 import WithRoleAcess from "./components/withRoleAccess";
 import EditProject from "./pages/editProject";
+import EmployeeDetails from "./pages/employeeDetails/EmployeeDetails";
 
 function App() {
   const dispatch = useDispatch();
@@ -103,6 +104,7 @@ function App() {
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />
+            <Route path="employees/:employeeId" element={<EmployeeDetails />} />
             <Route path="messenger" element={<Messenger />} />
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />

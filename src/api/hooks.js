@@ -139,7 +139,8 @@ export const useUpdateProject = (projectId, handleSuccess) => {
 export const useGetTaskTimeLogs = (taskId) => {
   return useQuery({
     queryKey: ["taskTimeLogs", taskId],
-    queryFn: () => apiClient.get(`/time-logs/task/${taskId}`).then((res) => res.data),
+    queryFn: () =>
+      apiClient.get(`/time-logs/task/${taskId}`).then((res) => res.data),
     enabled: !!taskId,
   });
 };
@@ -147,7 +148,8 @@ export const useGetTaskTimeLogs = (taskId) => {
 export const useCreateTimeLog = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (timeLogData) => apiClient.post("/time-logs", timeLogData).then((res) => res.data),
+    mutationFn: (timeLogData) =>
+      apiClient.post("/time-logs", timeLogData).then((res) => res.data),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["taskTimeLogs", variables.taskId]);
     },
@@ -162,5 +164,34 @@ export const useUpdateTaskOrder = (projectId) => {
       // Invalidate project details to refresh the task list
       queryClient.invalidateQueries(["projectDetails", projectId]);
     },
+  });
+};
+
+export const useGetEmployeeProjects = (employeeId) => {
+  return useQuery({
+    queryKey: ["employeeProjects", employeeId],
+    queryFn: () =>
+      apiClient.get(`/projects/employee/${employeeId}`).then((res) => res.data),
+  });
+};
+
+export const useGetEmployee = (employeeId) => {
+  return useQuery({
+    queryKey: ["employee", employeeId],
+    queryFn: () =>
+      apiClient.get(`/employee/${employeeId}`).then((res) => res.data),
+    enabled: !!employeeId,
+  });
+};
+
+export const useGetEmployeeTeams = (employeeId, projectId) => {
+  return useQuery({
+    queryKey: ["employeeTeams", employeeId, projectId],
+    queryFn: () =>
+      apiClient
+        .get(`/teams/employee/${employeeId}`, {
+          params: { projectId },
+        })
+        .then((res) => res.data),
   });
 };

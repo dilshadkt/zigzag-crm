@@ -53,5 +53,8 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     validationSchema,
     onSubmit,
   });
-  return formik;
+  return {
+    ...formik,
+    formik, // Return the formik instance
+  };
 };

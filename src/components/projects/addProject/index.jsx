@@ -173,6 +173,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                 setFieldValue={setFieldValue}
                 errors={errors}
                 touched={touched}
+                isEditMode={isEditMode}
               />
             </div>
           )}

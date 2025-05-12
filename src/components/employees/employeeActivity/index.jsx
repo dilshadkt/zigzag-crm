@@ -1,12 +1,17 @@
 import React from "react";
 import Progress from "../../shared/progress";
 import ActivityCard from "../activityCard";
+import { useNavigate } from "react-router-dom";
 
 const EmployeeActivity = ({ employees }) => {
+  const navigate = useNavigate();
+  const handleNavigateToEmployee = (employee) => {
+    navigate(`/employees/${employee._id}`);
+  };
   return (
-    <div className="w-full h-full gap-7 grid grid-cols-4">
+    <div className="w-full h-full gap-5 grid grid-cols-4">
       {employees?.map((employee, index) => (
-        <ActivityCard key={index} employee={employee} />
+        <ActivityCard key={index} employee={employee} onClick={() => handleNavigateToEmployee(employee)} />
       ))}
     </div>
   );

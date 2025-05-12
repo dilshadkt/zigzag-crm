@@ -1,8 +1,9 @@
 import React from "react";
 import Progress from "../../shared/progress";
 
-const ActivityCard = ({ employee }) => {
-  console.log(employee)
+const ActivityCard = ({ employee ,onClick }) => {
+  
+  
   const genereteBgColor = (value) => {
     if (value > 50) {
       return "#F4F9FD";
@@ -13,7 +14,7 @@ const ActivityCard = ({ employee }) => {
     }
   };
   return (
-    <div className="h-[320px] p-2 gap-y-6 flex flex-col bg-white rounded-3xl">
+    <div onClick={onClick} className="h-[320px] cursor-pointer p-2 gap-y-6 flex flex-col bg-white rounded-3xl">
       <div
         style={{
           background: genereteBgColor(employee?.progress_value),

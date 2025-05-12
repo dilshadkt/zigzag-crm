@@ -5,7 +5,7 @@ import PrimaryButton from "../../shared/buttons/primaryButton";
 import Progress from "../../shared/progress";
 import * as Yup from "yup";
 import { useFormik } from "formik";
-const UserProfile = ({ user }) => {
+const UserProfile = ({ user, disableEdit }) => {
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Initial form values from the user object
@@ -36,12 +36,14 @@ rounded-3xl  flex flex-col "
           <div className="relative">
             <Progress size={54} currentValue={75} />
             <img
-              src={user?.profileImage}
+              src={user?.profile}
               alt=""
-              className="absolute top-0 left-0 right-0 bottom-0 w-full h-full  object-cover rounded-full"
+              className="absolute top-0 left-0 right-0
+              scale-85 bottom-0 w-full h-full  object-cover rounded-full"
             />
           </div>
           <PrimaryButton
+            disable={disableEdit}
             onclick={() => setIsEditMode(!isEditMode)}
             icon={"/icons/edit.svg"}
             className={`${isEditMode ? `bg-[#3F8CFF]` : `bg-[#F4F9FD]`}`}

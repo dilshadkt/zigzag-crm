@@ -34,7 +34,7 @@ const Calender = () => {
         <PrimaryButton
           icon={"/icons/add.svg"}
           title={"Add Event"}
-          className={"mt-3"}
+          className={"mt-3 text-white"}
         />
       </div>
       <div className="w-full h-full flex flex-col  mt-3 overflow-hidden  bg-white rounded-3xl">

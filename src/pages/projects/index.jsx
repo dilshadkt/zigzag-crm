@@ -27,11 +27,11 @@ const Prjects = () => {
   // Mutation
   const addProject = useAddProject();
 
-  const handleAddProject = async (values) => {
-    console.log(values);
+  const handleAddProject = async (values,{ resetForm }) => {
     try {
       await addProject.mutateAsync(values);
       setShowModalProject(false);
+      resetForm()
     } catch (error) {
       console.error(error);
     }

@@ -51,9 +51,11 @@ const DatePicker = ({
   // Handle date selection
   const handleDateChange = (e) => {
     const newDate = e.target.value;
-    setSelectedDate(newDate);
+    // Ensure we have a valid date string in ISO format
+    const formattedDate = newDate ? new Date(newDate).toISOString().split('T')[0] : '';
+    setSelectedDate(formattedDate);
     if (onChange) {
-      onChange({ target: { name, value: newDate } }); // Mimic event object for Formik
+      onChange({ target: { name, value: formattedDate } }); // Mimic event object for Formik
     }
     setIsMenuOpen(false);
   };
