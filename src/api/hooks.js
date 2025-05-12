@@ -11,6 +11,7 @@ import {
   updateTaskById,
   updateTaskOrder,
 } from "./service";
+
 // Customers
 export const useCustomers = () =>
   useQuery({
@@ -43,11 +44,23 @@ export const useProjectDetails = (projectId) => {
   });
 };
 //empoyee
-export const useEmpoyees = () => {
+export const useEmpoyees = (page = 1, filters = null) => {
   return useQuery({
-    queryKey: ["employees"],
-    queryFn: () =>
-      apiClient.get("/employee").then((res) => res.data?.employees),
+    queryKey: ["employees", page, filters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "10",
+      });
+
+      if (filters) {
+        params.append("filters", JSON.stringify(filters));
+      }
+
+      const response = await apiClient.get(`/employee?${params.toString()}`);
+      return response.data;
+    },
+    keepPreviousData: true,
   });
 };
 // task

@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
+import { uploadSingleFile } from "../../../api/service";
 
 const ThumbImage = ({ onSelect }) => {
   const [thumImg, setThumImg] = useState(0);
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   // Set default image on component mount
@@ -12,50 +14,47 @@ const ThumbImage = ({ onSelect }) => {
   }, []);
 
   // Handle image selection from local device
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setUploadedImage({ file, preview: imageUrl });
-      setThumImg(-1);
-      if (onSelect) {
-        onSelect({ file, preview: imageUrl });
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await uploadSingleFile(formData);
+        
+        if (response.success) {
+          const imageUrl = response.fileUrl;
+          setUploadedImage({ file, preview: imageUrl });
+          setThumImg(-1);
+          if (onSelect) {
+            onSelect(imageUrl);
+          }
+        } else {
+          throw new Error(response.message || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        // Fallback to local preview if upload fails
+        const imageUrl = URL.createObjectURL(file);
+        setUploadedImage({ file, preview: imageUrl });
+        setThumImg(-1);
+        if (onSelect) {
+          onSelect(imageUrl);
+        }
+      } finally {
+        setIsUploading(false);
       }
     }
   };
 
   // Handle image selection from predefined thumbnails
-  const handleThumbnailClick = async (index) => {
+  const handleThumbnailClick = (index) => {
     setThumImg(index);
-
-    try {
-      // Create a file object from the existing thumbnail
-      const imageUrl = `/image/projects/icon${index + 1}.png`;
-
-      // Fetch the image to create a File object
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
-      // Create a File object from the blob
-      const filename = `icon${index + 1}.png`;
-      const file = new File([blob], filename, { type: blob.type });
-
-      // Create the same object structure as for uploaded files
-      const imageObject = {
-        file,
-        preview: imageUrl,
-      };
-
-      if (onSelect) {
-        onSelect(imageObject);
-      }
-    } catch (error) {
-      console.error("Error creating file object from thumbnail:", error);
-
-      // Fallback: still pass the image URL if fetch fails
-      if (onSelect) {
-        onSelect(`/image/projects/icon${index + 1}.png`);
-      }
+    const imageUrl = `/image/projects/icon${index + 1}.png`;
+    
+    if (onSelect) {
+      onSelect(imageUrl);
     }
   };
 
@@ -86,12 +85,16 @@ const ThumbImage = ({ onSelect }) => {
 
         {/* Upload image from local device */}
         <div
-          onClick={() => fileInputRef.current.click()}
+          onClick={() => !isUploading && fileInputRef.current.click()}
           className={`${
             thumImg === -1 && `border-dashed border-2 p-[1px] border-blue-400`
-          } w-full h-[53px] bg-[#F4F9FD] rounded-[10px] flexCenter flex flex-col overflow-hidden gap-y-2 cursor-pointer`}
+          } w-full h-[53px] bg-[#F4F9FD] rounded-[10px] flexCenter flex flex-col overflow-hidden gap-y-2 cursor-pointer relative`}
         >
-          {uploadedImage ? (
+          {isUploading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            </div>
+          ) : uploadedImage ? (
             <img
               src={uploadedImage.preview}
               alt="Uploaded"

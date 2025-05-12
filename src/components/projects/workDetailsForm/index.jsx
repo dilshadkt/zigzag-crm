@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 
 const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
@@ -7,6 +7,8 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
     name: "",
     count: 0,
   });
+  const formRef = useRef(null);
+
   // Handle change for main work types
   const handleWorkDetailChange = (workType, field, value) => {
     const updatedWorkDetails = { ...values.workDetails };
@@ -34,6 +36,14 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
     setFieldValue("workDetails", updatedWorkDetails);
     setNewWorkType({ name: "", count: 0 });
     setShowOtherWorkType(false);
+  };
+
+  const handleShowOtherWorkType = () => {
+    setShowOtherWorkType(true);
+    // Add a small delay to ensure the form is rendered before scrolling
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   // Remove a work type from the "other" array
@@ -170,7 +180,7 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
           <h6 className="font-medium text-sm">Other Work Types</h6>
           <PrimaryButton
             title="Add Type"
-            onclick={() => setShowOtherWorkType(true)}
+            onclick={handleShowOtherWorkType}
             className="text-white px-3 py-1.5 text-sm"
           />
         </div>
@@ -179,15 +189,11 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
         <div className="grid grid-cols-2 gap-4">
           {values.workDetails?.other?.map((item, index) => (
             <div key={index} className="border p-3 rounded-lg border-gray-200 bg-white shadow-sm relative">
-              <button
-                type="button"
-                onClick={() => handleRemoveOtherWorkType(index)}
-                className="absolute right-2 top-2 text-red-500 p-1 text-sm"
-              >
-                ✕
-              </button>
+           
               <div className="flex items-center justify-between">
                 <h6 className="font-medium text-sm">{item.name}</h6>
+                <div className="flex items-center gap-2">
+
                 <input
                   name={`other-${index}-count`}
                   type="number"
@@ -201,7 +207,15 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
                   }}
                   placeholder="Count"
                   className="w-24 px-2 py-1 border rounded border-gray-200 text-gray-600"
-                />
+                  />
+                   <button
+                type="button"
+                onClick={() => handleRemoveOtherWorkType(index)}
+                className=" cursor-pointer text-red-500 p-1 text-sm"
+                >
+                ✕
+              </button>
+                </div>
               </div>
             </div>
           ))}
@@ -210,7 +224,7 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
 
       {/* Add new work type form */}
       {showOtherWorkType && (
-        <div className="border p-4 rounded-lg border-gray-200 bg-gray-50 mt-4">
+        <div ref={formRef} className="border p-4 rounded-lg border-gray-200 bg-gray-50 mt-4">
           <h6 className="font-medium text-sm mb-3">Add New Work Type</h6>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <input
@@ -220,7 +234,7 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
                 setNewWorkType({ ...newWorkType, name: e.target.value })
               }
               placeholder="Work type name"
-              className="px-2 py-1 border rounded"
+              className="p-2 border border-gray-200 rounded"
             />
             <input
               name="new-work-type-count"
@@ -233,7 +247,7 @@ const WorkDetailsForm = ({ values, setFieldValue, errors, touched }) => {
                 })
               }
               placeholder="Number of items"
-              className="px-2 py-1 border rounded"
+              className="px-2 py-1 border border-gray-200 rounded"
             />
           </div>
           <div className="flex justify-end gap-2">

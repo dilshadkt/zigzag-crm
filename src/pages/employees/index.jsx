@@ -8,13 +8,19 @@ import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Header from "../../components/shared/header";
 import PageNavigator from "../../components/shared/navigator/pageNavigator";
 import { useQueryClient } from "@tanstack/react-query";
+import FilterMenu from "../../components/employees/FilterMenu";
 
 const Employees = () => {
   const [stat, setStat] = useState("list");
   const [showAddEmployee, setShowAddEmployee] = useState(false);
-  const { data: employees } = useEmpoyees();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeFilters, setActiveFilters] = useState(null);
+  const { data } = useEmpoyees(currentPage, activeFilters);
+  const employees = data?.employees || [];
+  const pagination = data?.pagination || { total: 0, page: 1, totalPages: 1 };
   const { mutate } = useAddEmployee();
   const queryClient = useQueryClient();
+  const [showFilter, setShowFilter] = useState(false);
 
   const handleCreateEmployee = (values, { resetForm, setSubmitting }) => {
     mutate(values, {
@@ -30,6 +36,15 @@ const Employees = () => {
     });
   };
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleFilterChange = (filters) => {
+    setActiveFilters(filters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
   const renderStat = () => {
     if (stat === "list") {
       return <EmployeeList employees={employees} />;
@@ -37,11 +52,12 @@ const Employees = () => {
       return <EmployeeActivity employees={employees} />;
     }
   };
+
   return (
     <section className="flex flex-col h-full gap-y-3">
       {/* header  */}
       <div className="flexBetween ">
-        <Header>Employees ({employees?.length})</Header>
+        <Header>Employees ({pagination.total})</Header>
         <ButtonToggle
           setValue={setStat}
           value={stat}
@@ -50,7 +66,8 @@ const Employees = () => {
         <div className="flexEnd gap-x-5">
           <PrimaryButton
             icon={"/icons/filter.svg"}
-            className={"bg-white px-2 mt-3"}
+            className={"bg-white px-2 mt-3 hover:bg-gray-50 transition-colors"}
+            onclick={() => setShowFilter(true)}
           />
           <PrimaryButton
             icon={"/icons/add.svg"}
@@ -65,13 +82,22 @@ const Employees = () => {
         {renderStat()}
       </div>
       <div className="flexEnd">
-        <PageNavigator />
+        <PageNavigator 
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={handlePageChange}
+        />
       </div>
       {/* Add Employee */}
       <CreateEmployee
         isOpen={showAddEmployee}
         handleClose={() => setShowAddEmployee(false)}
         onSubmit={handleCreateEmployee}
+      />
+      <FilterMenu 
+        isOpen={showFilter} 
+        setShowModalFilter={setShowFilter}
+        onFilterChange={handleFilterChange}
       />
     </section>
   );

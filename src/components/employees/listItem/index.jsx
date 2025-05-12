@@ -1,7 +1,6 @@
 import React from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import UserProfile from "../../shared/profile";
-
 const ListItem = ({ employee }) => {
   return (
     <div className=" rounded-3xl bg-white py-5 px-7 grid grid-cols-3">
@@ -9,7 +8,7 @@ const ListItem = ({ employee }) => {
         user={{
           name: employee?.name,
           email: employee?.email,
-          profile: employee?.profileImage,
+          profile: employee?.profile ,
         }}
       />
       <div className="grid grid-cols-3">
@@ -19,7 +18,7 @@ const ListItem = ({ employee }) => {
         </div>
         <div className="flex flex-col gap-y-1">
           <h5 className="text-sm text-[#91929E]">Birthday</h5>
-          <span>{employee?.dob || "-----"}</span>
+          <span>{employee?.birthday || "-----"}</span>
         </div>
         <div className="flex flex-col gap-y-1">
           <h5 className="text-sm text-[#91929E]">Full age</h5>

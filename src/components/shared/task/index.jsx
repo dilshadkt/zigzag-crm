@@ -3,8 +3,15 @@ import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 
+const priorityColors = {
+  low: "#00D097", // green
+  medium: "#FFBD21", // yellow
+  high: "#FF4D4F", // red
+};
+
 const Task = ({ task, onClick, isBoardView, projectId, index, onDragStart, onDragOver, onDrop }) => {
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
+  const priorityColor = priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
@@ -51,7 +58,7 @@ const Task = ({ task, onClick, isBoardView, projectId, index, onDragStart, onDra
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex items-center gap-1 text-[#FFBD21]">
+              <div className="flex items-center gap-1" style={{ color: priorityColor }}>
                 <IoArrowUpOutline className="text-sm" />
                 <span className="text-xs font-medium">{task?.priority}</span>
               </div>
@@ -98,7 +105,7 @@ const Task = ({ task, onClick, isBoardView, projectId, index, onDragStart, onDra
         </div>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Priority</span>
-          <div className="flexStart gap-x-1 text-[#FFBD21]">
+          <div className="flexStart gap-x-1" style={{ color: priorityColor }}>
             <IoArrowUpOutline className="text-lg " />
             <span className="text-xs font-medium">{task?.priority}</span>
           </div>

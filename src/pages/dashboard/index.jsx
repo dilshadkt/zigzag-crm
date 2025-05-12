@@ -11,9 +11,26 @@ import { useAuth } from "../../hooks/useAuth";
 const Dashboard = () => {
   const { companyId } = useAuth();
   const { data: projects } = useCompanyProjects(companyId);
+  const { user } = useAuth();
+  console.log(user);
+  
+  const today = new Date();
+  const lastMonth = new Date(today);
+  lastMonth.setMonth(today.getMonth() - 1);
+  
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const dateRange = `${formatDate(lastMonth)} - ${formatDate(today)}`;
+
   return (
     <section className="flex flex-col">
-      <span className="text-[#7D8592]">Welcome back, Evan!</span>
+      <span className="text-[#7D8592]">Welcome back, {user?.firstName} !</span>
       <div className="flexBetween ">
         <Header>Dashboard</Header>
         <div
@@ -21,7 +38,7 @@ const Dashboard = () => {
          rounded-[14px] w-fit bg-[#E6EDF5]"
         >
           <img src="/icons/calender.svg" alt="" className="w-5" />
-          <span>Nov 16, 2020 - Dec 16, 2020</span>
+          <span>{dateRange}</span>
         </div>
       </div>
       <div className="w-full grid grid-cols-7 gap-x-6 mt-5">

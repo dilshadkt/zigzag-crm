@@ -1,16 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useEmpoyees } from "../../../api/hooks";
+import debounce from "lodash/debounce";
 
 const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState(
     defaultSelectedEmployee || []
   );
-  const { data: employeesList, isLoading } = useEmpoyees();
+
+  // Debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      setDebouncedSearchTerm(value);
+    }, 500),
+    []
+  );
+
+  const { data: employeesData, isLoading } = useEmpoyees(1, 100, debouncedSearchTerm);
+  const employeesList = employeesData?.employees || [];
+
   // Filter employees based on search term
-  const filteredEmployees = employeesList?.filter((employee) =>
+  const filteredEmployees = employeesList.filter((employee) =>
     employee?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee?.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee?.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -18,7 +31,9 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
 
   // Handle search input change
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSearch(value);
     setShowDropdown(true);
   };
 
@@ -37,15 +52,12 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
   const handleAddClick = () => {
     setShowDropdown(false);
     setSearchTerm("");
+    setDebouncedSearchTerm("");
   };
 
   useEffect(() => {
     onChange(selectedEmployees);
   }, [selectedEmployees]);
-
-  if (isLoading) {
-    return <h2>Loading ....</h2>;
-  }
 
   return (
     <div className="flex relative flex-col gap-y-2 min-h-60">
@@ -64,7 +76,9 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
           {/* Dropdown Results */}
           {showDropdown && searchTerm && (
             <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {filteredEmployees?.length > 0 ? (
+              {isLoading ? (
+                <div className="p-3 text-gray-500">Loading...</div>
+              ) : filteredEmployees?.length > 0 ? (
                 filteredEmployees.map((employee) => (
                   <div
                     key={employee._id}

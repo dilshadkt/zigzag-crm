@@ -9,6 +9,7 @@ import FileAndLinkUpload from "../../shared/fileUpload";
 import AddEmployee from "../addEmployee";
 import WorkDetailsForm from "../workDetailsForm";
 import SocialMediaForm from "../socialMediaForm";
+import ThumbImage from "../thumbImage";
 
 const AddProject = ({
   setShowModalProject,
@@ -57,7 +58,6 @@ const AddProject = ({
         return false;
     }
   };
-console.log(values.teams)
   return (
     <div
       className="fixed z-[1000] left-0 right-0 top-0 bottom-0
@@ -148,6 +148,9 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                 />
               </div>
               <div className="col-span-2 h-full overflow-y-auto flex flex-col pr-4">
+                <ThumbImage
+                  onSelect={(thmbImg) => setFieldValue("thumbImg", thmbImg)}
+                />
                 <FileAndLinkUpload
                   initialFiles={values?.attachments?.filter(
                     (file) => file?.type !== "link"

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Input from "../../shared/Field/input";
 import Description from "../../shared/Field/description";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 
 const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
   const [showOtherPlatform, setShowOtherPlatform] = useState(false);
+  const addPlatformFormRef = useRef(null);
   const [newPlatform, setNewPlatform] = useState({
     platform: "",
     manage: false,
@@ -14,6 +15,20 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
 
   // Standard platforms
   const platforms = ["instagram", "facebook", "youtube", "linkedin", "twitter"];
+
+  // Initialize socialMedia if undefined
+  useEffect(() => {
+    if (!values.socialMedia) {
+      setFieldValue("socialMedia", {
+        instagram: { manage: false, handle: "", notes: "" },
+        facebook: { manage: false, handle: "", notes: "" },
+        youtube: { manage: false, handle: "", notes: "" },
+        linkedin: { manage: false, handle: "", notes: "" },
+        twitter: { manage: false, handle: "", notes: "" },
+        other: [],
+      });
+    }
+  }, [values.socialMedia, setFieldValue]);
 
   // Handle toggle for manage checkbox
   const handleToggleManage = (platform) => {
@@ -39,6 +54,18 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
     setFieldValue("socialMedia", updatedSocialMedia);
   };
 
+  // Handle showing the add platform form with scroll
+  const handleShowAddPlatform = () => {
+    setShowOtherPlatform(true);
+    // Use setTimeout to ensure the form is rendered before scrolling
+    setTimeout(() => {
+      addPlatformFormRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
+  };
+
   // Add new platform to the "other" array
   const handleAddOtherPlatform = () => {
     if (!newPlatform.platform) return;
@@ -60,18 +87,6 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
     updatedSocialMedia.other.splice(index, 1);
     setFieldValue("socialMedia", updatedSocialMedia);
   };
-
-  // Initialize socialMedia if undefined
-  if (!values.socialMedia) {
-    values.socialMedia = {
-      instagram: { manage: false, handle: "", notes: "" },
-      facebook: { manage: false, handle: "", notes: "" },
-      youtube: { manage: false, handle: "", notes: "" },
-      linkedin: { manage: false, handle: "", notes: "" },
-      twitter: { manage: false, handle: "", notes: "" },
-      other: [],
-    };
-  }
 
   return (
     <div className="flex flex-col gap-y-6 ">
@@ -102,15 +117,20 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
 
             {values.socialMedia?.[platform]?.manage && (
               <>
-                <Input
-                  name={`${platform}-handle`}
-                  title="Handle/Username"
-                  value={values.socialMedia?.[platform]?.handle || ""}
-                  onchange={(e) =>
-                    handlePlatformChange(platform, "handle", e.target.value)
-                  }
-                  placeholder={`@${platform}handle`}
-                />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Handle/Username
+                  </label>
+                  <input
+                    type="text"
+                    value={values.socialMedia?.[platform]?.handle || ""}
+                    onChange={(e) =>
+                      handlePlatformChange(platform, "handle", e.target.value)
+                    }
+                    placeholder={`@${platform}handle`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
                 <Description
                   name={`${platform}-notes`}
                   title="Notes"
@@ -135,7 +155,7 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
           <h6 className="font-medium text-gray-600">Other Platforms</h6>
           <PrimaryButton
             title="Add Platform"
-            onclick={() => setShowOtherPlatform(true)}
+            onclick={handleShowAddPlatform}
             className="text-white px-4 py-2"
           />
         </div>
@@ -178,17 +198,22 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
 
             {item.manage && (
               <>
-                <Input
-                  name={`other-${index}-handle`}
-                  title="Handle/Username"
-                  value={item.handle || ""}
-                  onchange={(e) => {
-                    const updatedSocialMedia = { ...values.socialMedia };
-                    updatedSocialMedia.other[index].handle = e.target.value;
-                    setFieldValue("socialMedia", updatedSocialMedia);
-                  }}
-                  placeholder="@handle"
-                />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Handle/Username
+                  </label>
+                  <input
+                    type="text"
+                    value={item.handle || ""}
+                    onChange={(e) => {
+                      const updatedSocialMedia = { ...values.socialMedia };
+                      updatedSocialMedia.other[index].handle = e.target.value;
+                      setFieldValue("socialMedia", updatedSocialMedia);
+                    }}
+                    placeholder="@handle"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
                 <Description
                   name={`other-${index}-notes`}
                   title="Notes"
@@ -208,7 +233,7 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
 
       {/* Add new platform form */}
       {showOtherPlatform && (
-        <div className="border p-4 rounded-lg border-gray-200 bg-gray-50">
+        <div ref={addPlatformFormRef} className="border p-4 rounded-lg border-gray-200 bg-gray-50">
           <h6 className="font-medium text-sm text-gray-600 mb-2">
             Add New Platform
           </h6>
@@ -242,15 +267,20 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
 
             {newPlatform.manage && (
               <>
-                <Input
-                  name="new-platform-handle"
-                  title="Handle/Username"
-                  value={newPlatform.handle}
-                  onchange={(e) =>
-                    setNewPlatform({ ...newPlatform, handle: e.target.value })
-                  }
-                  placeholder="@handle"
-                />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Handle/Username
+                  </label>
+                  <input
+                    type="text"
+                    value={newPlatform.handle}
+                    onChange={(e) =>
+                      setNewPlatform({ ...newPlatform, handle: e.target.value })
+                    }
+                    placeholder="@handle"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
                 <Description
                   name="new-platform-notes"
                   title="Notes"

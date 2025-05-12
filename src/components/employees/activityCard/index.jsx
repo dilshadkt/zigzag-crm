@@ -32,12 +32,12 @@ const ActivityCard = ({ employee }) => {
           <div
             className="absolute top-0
 left-0 right-0 bottom-0 w-full h-full rounded-full
-flexCenter overflow-hidden "
+flexCenter overflow-hidden w-6 h-6 scale-85 "
           >
             <img
               src={employee?.profile || `/image/dummy/avatar1.svg`}
               alt=""
-              className="w-full h-full object-cover scale-92"
+              className="w-full h-full object-cover "
             />
           </div>
         </div>
