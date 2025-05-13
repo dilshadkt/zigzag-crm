@@ -11,6 +11,7 @@ import {
   updateTaskById,
   updateTaskOrder,
 } from "./service";
+import { format } from "date-fns";
 
 // Customers
 export const useCustomers = () =>
@@ -19,14 +20,13 @@ export const useCustomers = () =>
     queryFn: () => apiClient.get("/customers").then((res) => res.data),
   });
 
-export const useCompanyProjects = (companyId) => {
+export const useCompanyProjects = (companyId, limit = 0) => {
   return useQuery({
-    queryKey: ["companyProjects", companyId],
+    queryKey: ["companyProjects", companyId, limit],
     queryFn: () =>
       apiClient
-        .get(`/projects/company/${companyId}`)
+        .get(`/projects/company/${companyId}${limit ? `?limit=${limit}` : ""}`)
         .then((res) => res.data?.projects),
-
     enabled: !!companyId,
   });
 };
@@ -192,6 +192,16 @@ export const useGetEmployeeTeams = (employeeId, projectId) => {
         .get(`/teams/employee/${employeeId}`, {
           params: { projectId },
         })
+        .then((res) => res.data),
+  });
+};
+
+export const useGetProjectsDueThisMonth = (date = new Date()) => {
+  return useQuery({
+    queryKey: ["projectsDueThisMonth", format(date, "yyyy-MM")],
+    queryFn: () =>
+      apiClient
+        .get(`/projects/due-this-month?date=${format(date, "yyyy-MM-dd")}`)
         .then((res) => res.data),
   });
 };

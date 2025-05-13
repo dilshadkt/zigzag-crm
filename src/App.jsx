@@ -33,6 +33,8 @@ import Unauthorized from "./pages/Unauthorized";
 import WithRoleAcess from "./components/withRoleAccess";
 import EditProject from "./pages/editProject";
 import EmployeeDetails from "./pages/employeeDetails/EmployeeDetails";
+import ProjectsAnalytics from "./pages/projectAnalytics";
+import ProjectAnalyticsDetails from "./pages/ProjectAnalyticsDetails";
 
 function App() {
   const dispatch = useDispatch();
@@ -93,6 +95,11 @@ function App() {
               }
             />
             <Route path="projects" element={<Prjects />} />
+            <Route path="projects-analytics" element={<ProjectsAnalytics />} />
+            <Route
+              path="projects-analytics/:projectId"
+              element={<ProjectAnalyticsDetails />}
+            />
             <Route
               path="projects/:projectName"
               element={<ProjectDetailLayout />}
@@ -100,7 +107,10 @@ function App() {
               <Route index element={<ProjectDetails />} />
               <Route path=":taskId" element={<TaskDetails />} />
             </Route>
-            <Route path="projects/:projectName/edit" element={<EditProject />} />
+            <Route
+              path="projects/:projectName/edit"
+              element={<EditProject />}
+            />
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />

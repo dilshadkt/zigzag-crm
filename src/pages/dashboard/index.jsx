@@ -11,9 +11,8 @@ import ProjectCard from "../../components/shared/projectCard";
 
 const Dashboard = () => {
   const { companyId } = useAuth();
-  const { data: projects } = useCompanyProjects(companyId);
+  const { data: projects } = useCompanyProjects(companyId, 3);
   const { user } = useAuth();
-  console.log(user);
 
   const today = new Date();
   const lastMonth = new Date(today);
@@ -53,7 +52,7 @@ const Dashboard = () => {
           <div className="flexBetween">
             <h4 className="font-semibold text-lg text-gray-800">Projects</h4>
             <Link
-              to={"/projects"}
+              to={"/projects-analytics"}
               className="text-[#3F8CFF] text-sm cursor-pointer flexStart gap-x-2"
             >
               <span>View all</span>
@@ -61,9 +60,8 @@ const Dashboard = () => {
             </Link>
           </div>
           {/* project list section  */}
-
           <div className=" flex flex-col h-full gap-y-3 mt-3">
-            {projects?.slice(0, 3).map((project, index) => (
+            {projects?.map((project, index) => (
               <ProjectCard key={project?._id} project={project} />
             ))}
           </div>

@@ -1,15 +1,28 @@
 import React from "react";
 import { IoArrowUpOutline } from "react-icons/io5";
+import Progress from "../progress";
 
-const ProjectCard = ({ project, onClick }) => {
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const ProjectCard = ({ project, onClick, viewMore = false }) => {
   return (
     <div
       key={project?._id}
       className="flex flex-col cursor-pointer   h-fit "
       onClick={onClick}
     >
-      <div className="bg-white   rounded-3xl grid grid-cols-2">
-        <div className="p-4  py-5 h-full flex gap-y-4 flex-col border-r border-[#E4E6E8] ">
+      <div className={`bg-white   rounded-3xl grid grid-cols-2`}>
+        <div
+          className="p-4  py-5 h-full flex gap-y-4 flex-col border-r 
+       relative border-[#E4E6E8] "
+        >
           <div className="flexStart  gap-x-3.5">
             <div className="w-12 h-12 rounded-2xl overflow-hidden">
               <img
@@ -26,15 +39,40 @@ const ProjectCard = ({ project, onClick }) => {
             </div>
           </div>
           <div className="flexBetween">
-            <div className="flexStart gap-x-2">
-              <img src="/icons/calender2.svg" alt="" className="w-5" />
-              <span className="text-xs text-[#7D8592]">
-                Created Sep 12, 2020
-              </span>
+            <div className="flexStart gap-x-4">
+              <div className="flexStart gap-x-2">
+                <img src="/icons/calender2.svg" alt="" className="w-5" />
+                <span className="text-xs text-[#7D8592]">
+                  Created {formatDate(project?.createdAt)}
+                </span>
+              </div>
+              {viewMore && (
+                <div className="flexStart gap-x-2">
+                  <img src="/icons/calender2.svg" alt="" className="w-5" />
+                  <span className="text-xs text-[#7D8592]">
+                    Ended {formatDate(project?.endDate)}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flexEnd text-[#FFBD21] text-xs gap-x-2 pr-2">
               <IoArrowUpOutline className="text-lg" />
-              <span>{project?.status}</span>
+              <span>{project?.periority}</span>
+            </div>
+          </div>
+          <div className="absolute  right-5 top-5 w-fit">
+            <div className="relative">
+              <Progress
+                size={48}
+                strokeWidth={3}
+                currentValue={project?.progress}
+              />
+              <span
+                className="text-xs absolute top-1/2 left-1/2 -translate-x-1/2
+               -translate-y-1/2 text-gray-500 font-semibold"
+              >
+                {project?.progress}%
+              </span>
             </div>
           </div>
         </div>
