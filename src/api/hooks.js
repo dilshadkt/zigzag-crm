@@ -10,6 +10,7 @@ import {
   updateProject,
   updateTaskById,
   updateTaskOrder,
+  deleteProject,
 } from "./service";
 import { format } from "date-fns";
 
@@ -203,5 +204,17 @@ export const useGetProjectsDueThisMonth = (date = new Date()) => {
       apiClient
         .get(`/projects/due-this-month?date=${format(date, "yyyy-MM-dd")}`)
         .then((res) => res.data),
+  });
+};
+
+export const useDeleteProject = (onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteProject"],
+    mutationFn: (projectId) => deleteProject(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["companyProjects"]);
+      if (onSuccess) onSuccess();
+    },
   });
 };

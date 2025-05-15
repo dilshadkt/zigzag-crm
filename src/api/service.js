@@ -109,5 +109,12 @@ export const addProject = (projectDetails) => {
 };
 
 export const updateTaskOrder = async (taskId, newOrder) => {
-  return apiClient.put(`/tasks/${taskId}/order`, { newOrder }).then((res) => res.data);
+  return apiClient
+    .put(`/tasks/${taskId}/order`, { newOrder })
+    .then((res) => res.data);
+};
+
+export const deleteProject = async (projectId) => {
+  const response = await apiClient.delete(`/projects/${projectId}`);
+  return response.data;
 };

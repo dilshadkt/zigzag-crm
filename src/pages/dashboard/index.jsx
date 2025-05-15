@@ -61,9 +61,17 @@ const Dashboard = () => {
           </div>
           {/* project list section  */}
           <div className=" flex flex-col h-full gap-y-3 mt-3">
-            {projects?.map((project, index) => (
-              <ProjectCard key={project?._id} project={project} />
-            ))}
+            {projects?.length > 0 ? (
+              projects.map((project, index) => (
+                <ProjectCard key={project?._id} project={project} />
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 text-center">
+                  No projects available
+                </p>
+              </div>
+            )}
           </div>
         </div>
         {/* activity stream */}

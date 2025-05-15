@@ -1,6 +1,29 @@
 import Header from "../../../components/shared/header";
+import { useDeleteProject } from "../../../api/hooks";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const ProjectHeader = ({ project }) => {
+  const navigate = useNavigate();
+  const deleteProjectMutation = useDeleteProject(() => {
+    toast.success("Project deleted successfully");
+    navigate("/projects-analytics");
+  });
+
+  const handleDelete = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this project? This action cannot be undone."
+      )
+    ) {
+      try {
+        await deleteProjectMutation.mutateAsync(project._id);
+      } catch (error) {
+        toast.error(error.message || "Failed to delete project");
+      }
+    }
+  };
+
   return (
     <div className="bg-white rounded-t-4xl">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
@@ -18,7 +41,7 @@ const ProjectHeader = ({ project }) => {
               <p className="text-xs text-gray-500">{project?.description}</p>
             </div>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2">
             <span
               className={`px-2 py-0.5 rounded-full text-xs font-medium 
               ${
@@ -50,6 +73,15 @@ const ProjectHeader = ({ project }) => {
                 project?.priority?.slice(1)}{" "}
               Priority
             </span>
+            <button
+              onClick={handleDelete}
+              disabled={deleteProjectMutation.isLoading}
+              className="ml-4 px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deleteProjectMutation.isLoading
+                ? "Deleting..."
+                : "Delete Project"}
+            </button>
           </div>
         </div>
       </div>
