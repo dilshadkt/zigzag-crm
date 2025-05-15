@@ -83,10 +83,20 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
               errors={errors}
               touched={touched}
               name={"position"}
-              value="Design"
+              value="Digital marketer"
               onChange={handleChange}
               title="Position"
-              options={["Design", "Content", "Editing"]}
+              options={[
+                "Digital marketer",
+                "Graphic designer",
+                "Video Grapher",
+                "Content creator",
+                "Cordinator",
+                "Intern",
+                "Accountent",
+                "Hr",
+                "Tele caller",
+              ]}
             />
             <Select
               errors={errors}
