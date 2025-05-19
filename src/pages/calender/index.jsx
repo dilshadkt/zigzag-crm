@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { useGetProjectsDueThisMonth } from "../../api/hooks";
-
+import { useNavigate } from "react-router-dom";
 // Priority color mapping for visual distinction
 const priorityColors = {
   low: {
@@ -51,6 +51,7 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { data: projectsData, isLoading } =
     useGetProjectsDueThisMonth(currentDate);
+  const navigate = useNavigate();
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -194,6 +195,9 @@ const Calendar = () => {
 
                       return (
                         <div
+                          onClick={() => {
+                            navigate(`/projects-analytics/${project?._id}`);
+                          }}
                           key={idx}
                           className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${colorStyle.border} border 
                           rounded-md px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all 

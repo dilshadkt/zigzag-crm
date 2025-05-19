@@ -26,7 +26,11 @@ export const useCompanyProjects = (companyId, limit = 0) => {
     queryKey: ["companyProjects", companyId, limit],
     queryFn: () =>
       apiClient
-        .get(`/projects/company/${companyId}${limit ? `?limit=${limit}` : ""}`)
+        .get(
+          `/projects/company/${companyId}${
+            limit ? `?limit=${limit}` : ""
+          }?active=true`
+        )
         .then((res) => res.data?.projects),
     enabled: !!companyId,
   });
@@ -36,7 +40,9 @@ export const useProjectDetails = (projectId) => {
   return useQuery({
     queryKey: ["projectDetails", projectId],
     queryFn: () =>
-      apiClient.get(`/projects/${projectId}`).then((res) => res.data?.project),
+      apiClient
+        .get(`/projects/${projectId}?active=true`)
+        .then((res) => res.data?.project),
     enabled: !!projectId,
     staleTime: 1000 * 60 * 2, // 5 minutes (Prevents frequent refetches)
     cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
@@ -172,7 +178,9 @@ export const useGetEmployeeProjects = (employeeId) => {
   return useQuery({
     queryKey: ["employeeProjects", employeeId],
     queryFn: () =>
-      apiClient.get(`/projects/employee/${employeeId}`).then((res) => res.data),
+      apiClient
+        .get(`/projects/employee/${employeeId}?active=true`)
+        .then((res) => res.data),
   });
 };
 
@@ -202,7 +210,12 @@ export const useGetProjectsDueThisMonth = (date = new Date()) => {
     queryKey: ["projectsDueThisMonth", format(date, "yyyy-MM")],
     queryFn: () =>
       apiClient
-        .get(`/projects/due-this-month?date=${format(date, "yyyy-MM-dd")}`)
+        .get(
+          `/projects/due-this-month?date=${format(
+            date,
+            "yyyy-MM-dd"
+          )}&active=true`
+        )
         .then((res) => res.data),
   });
 };
@@ -214,7 +227,87 @@ export const useDeleteProject = (onSuccess) => {
     mutationFn: (projectId) => deleteProject(projectId),
     onSuccess: () => {
       queryClient.invalidateQueries(["companyProjects"]);
+      queryClient.invalidateQueries(["projectDetails"]);
       if (onSuccess) onSuccess();
+    },
+  });
+};
+
+// Position Management Hooks
+export const useGetPositions = (companyId) => {
+  return useQuery({
+    queryKey: ["positions", companyId],
+    queryFn: () =>
+      apiClient
+        .get(`/companies/${companyId}/positions`)
+        .then((res) => res.data),
+    enabled: !!companyId,
+  });
+};
+
+export const useGetPosition = (companyId, positionId) => {
+  return useQuery({
+    queryKey: ["position", companyId, positionId],
+    queryFn: () =>
+      apiClient
+        .get(`/companies/${companyId}/positions/${positionId}`)
+        .then((res) => res.data),
+    enabled: !!companyId && !!positionId,
+  });
+};
+
+export const useCreatePosition = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createPosition"],
+    mutationFn: (positionData) =>
+      apiClient
+        .post(`/companies/${companyId}/positions`, positionData)
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["positions", companyId]);
+    },
+  });
+};
+
+export const useUpdatePosition = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updatePosition"],
+    mutationFn: ({ id, ...positionData }) =>
+      apiClient
+        .put(`/companies/${companyId}/positions/${id}`, positionData)
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["positions", companyId]);
+    },
+  });
+};
+
+export const useDeletePosition = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deletePosition"],
+    mutationFn: (id) =>
+      apiClient
+        .delete(`/companies/${companyId}/positions/${id}`)
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["positions", companyId]);
+    },
+  });
+};
+
+export const useRestorePosition = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["restorePosition"],
+    mutationFn: (id) =>
+      apiClient
+        .patch(`/companies/${companyId}/positions/${id}/restore`)
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["positions", companyId]);
     },
   });
 };

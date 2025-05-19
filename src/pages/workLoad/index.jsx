@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/shared/header";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Navigator from "../../components/shared/navigator";
@@ -8,6 +8,7 @@ import Progress from "../../components/shared/progress";
 
 const WorkLoad = () => {
   const { data } = useEmpoyees(1);
+  const navigate = useNavigate();
   const employees = data?.employees || [];
 
   return (
@@ -19,8 +20,11 @@ const WorkLoad = () => {
       <div className="grid grid-cols-4 gap-4">
         {employees.map((employee, index) => (
           <div
+            onClick={() => {
+              navigate(`/employees/${employee._id}`);
+            }}
             key={employee._id || index}
-            className="flex flex-col items-center rounded-3xl bg-white p-4 py-4"
+            className="flex flex-col items-center cursor-pointer rounded-3xl bg-white p-4 py-4"
           >
             <div className="relative">
               <Progress

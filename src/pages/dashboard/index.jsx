@@ -4,7 +4,7 @@ import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import WorkLoad from "../../components/dashboard/workload";
 import NearestEvents from "../../components/dashboard/workload/events";
 import { IoArrowUpOutline } from "react-icons/io5";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCompanyProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import ProjectCard from "../../components/shared/projectCard";
@@ -13,6 +13,7 @@ const Dashboard = () => {
   const { companyId } = useAuth();
   const { data: projects } = useCompanyProjects(companyId, 3);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const today = new Date();
   const lastMonth = new Date(today);
@@ -63,7 +64,13 @@ const Dashboard = () => {
           <div className=" flex flex-col h-full gap-y-3 mt-3">
             {projects?.length > 0 ? (
               projects.map((project, index) => (
-                <ProjectCard key={project?._id} project={project} />
+                <ProjectCard
+                  key={project?._id}
+                  project={project}
+                  onClick={() => {
+                    navigate(`/projects-analytics/${project?._id}`);
+                  }}
+                />
               ))
             ) : (
               <div className="flex items-center justify-center h-full">

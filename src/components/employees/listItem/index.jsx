@@ -1,14 +1,17 @@
 import React from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import UserProfile from "../../shared/profile";
-const ListItem = ({ employee }) => {
+const ListItem = ({ employee, onClick }) => {
   return (
-    <div className=" rounded-3xl bg-white py-5 px-7 grid grid-cols-3">
+    <div
+      className=" rounded-3xl bg-white py-5 px-7 grid grid-cols-3 cursor-pointer"
+      onClick={onClick}
+    >
       <UserProfile
         user={{
           name: employee?.name,
           email: employee?.email,
-          profile: employee?.profile ,
+          profile: employee?.profile,
         }}
       />
       <div className="grid grid-cols-3">

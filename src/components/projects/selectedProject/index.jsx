@@ -53,9 +53,13 @@ rounded-3xl  flex flex-col  p-4"
             <span className="text-sm text-[#91929E]">Reporter </span>
             <div className="flexStart gap-x-3 ">
               <div className="w-6 h-6 rounded-full overflow-hidden flexCenter">
-                <img src="/image/photo.png" alt="" />
+                <img
+                  src={currentProject?.creator?.profileImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <span>Evan Yates</span>
+              <span>{currentProject?.creator?.firstName}</span>
             </div>
           </div>
           {currentProject?.teams?.length > 0 && (
@@ -94,8 +98,8 @@ rounded-3xl  flex flex-col  p-4"
             <span className="text-sm text-[#91929E]">Priority </span>
             <div className="flexStart gap-x-2  text-[#FFBD21]">
               <IoArrowUpOutline className="text-lg " />
-              <span className="text-sm font-medium">
-                {currentProject?.periority}
+              <span className="text-sm capitalize font-medium">
+                {currentProject?.priority}
               </span>
             </div>
           </div>

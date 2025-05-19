@@ -5,6 +5,7 @@ import { BiSolidPlane } from "react-icons/bi";
 import { HiUsers } from "react-icons/hi2";
 import { FaSignalMessenger } from "react-icons/fa6";
 import { GoFileDirectoryFill } from "react-icons/go";
+import { IoIosSettings } from "react-icons/io";
 
 export const SIDE_MENU = [
   {
@@ -56,6 +57,13 @@ export const SIDE_MENU = [
   //   path: "/infoPortal",
   //   access: ["admin"],
   // },
+  {
+    id: 8,
+    title: "Settings",
+    icon: IoIosSettings,
+    path: "/settings",
+    access: ["admin"],
+  },
 ];
 
 export const USERS = [

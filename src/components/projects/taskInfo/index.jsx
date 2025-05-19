@@ -10,23 +10,30 @@ const TaskInfo = ({ taskDetails }) => {
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
 
-  const { data: timeLogData, isLoading, error } = useGetTaskTimeLogs(taskDetails?._id);
+  const {
+    data: timeLogData,
+    isLoading,
+    error,
+  } = useGetTaskTimeLogs(taskDetails?._id);
   const createTimeLog = useCreateTimeLog();
 
   const handleLogTime = () => {
     if (!duration || !description) return;
 
-    createTimeLog.mutate({
-      taskId: taskDetails._id,
-      duration: parseInt(duration),
-      description
-    }, {
-      onSuccess: () => {
-        setIsModalOpen(false);
-        setDuration("");
-        setDescription("");
+    createTimeLog.mutate(
+      {
+        taskId: taskDetails._id,
+        duration: parseInt(duration),
+        description,
+      },
+      {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          setDuration("");
+          setDescription("");
+        },
       }
-    });
+    );
   };
 
   const formatTime = (minutes) => {
@@ -37,7 +44,9 @@ const TaskInfo = ({ taskDetails }) => {
   };
 
   const totalTime = timeLogData?.data?.totalTime || 0;
-  const progress = taskDetails?.timeEstimate ? (totalTime / (taskDetails.timeEstimate * 60)) * 100 : 0;
+  const progress = taskDetails?.timeEstimate
+    ? (totalTime / (taskDetails.timeEstimate * 60)) * 100
+    : 0;
 
   return (
     <div className="col-span-1 bg-white rounded-3xl px-2 justify-between py-5 flex flex-col">
@@ -45,12 +54,16 @@ const TaskInfo = ({ taskDetails }) => {
         <div className="gap-y-3 flex flex-col mx-3">
           <h4 className="font-medium">Task Info</h4>
           <div className="flex flex-col gap-y-2">
-            <span className="text-sm text-[#91929E]">Reporter</span>
+            <span className="text-sm text-[#91929E]">Created By</span>
             <div className="flexStart gap-x-3">
               <div className="w-6 h-6 rounded-full overflow-hidden">
-                <img src="/image/photo.png" alt="" />
+                <img
+                  src={taskDetails?.creator?.profileImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <span>Evan Yates</span>
+              <span>{taskDetails?.creator?.firstName}</span>
             </div>
           </div>
           <div className="flex flex-col gap-y-2">
@@ -86,9 +99,12 @@ const TaskInfo = ({ taskDetails }) => {
               <div className="flexStart gap-x-3 my-3">
                 <Progress size={33} strokeWidth={2} currentValue={progress} />
                 <div className="flex flex-col">
-                  <span className="text-sm">{formatTime(totalTime)} logged</span>
+                  <span className="text-sm">
+                    {formatTime(totalTime)} logged
+                  </span>
                   <span className="text-xs text-[#91929E]">
-                    Original Estimate {formatTime(taskDetails?.timeEstimate * 60)}
+                    Original Estimate{" "}
+                    {formatTime(taskDetails?.timeEstimate * 60)}
                   </span>
                 </div>
               </div>

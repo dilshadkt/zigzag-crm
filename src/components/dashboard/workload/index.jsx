@@ -1,12 +1,13 @@
 import React from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEmpoyees } from "../../../api/hooks";
 import Progress from "../../shared/progress";
 
 const WorkLoad = () => {
   const { data, isLoading } = useEmpoyees(1);
   const employees = data?.employees?.slice(0, 8) || [];
+  const navigate = useNavigate();
 
   return (
     <div className="px-4 col-span-5 h-[470px] bg-white pb-3 pt-5 flex flex-col rounded-3xl">
@@ -33,8 +34,11 @@ const WorkLoad = () => {
         <div className="w-full h-full grid grid-cols-4 gap-3 mt-3">
           {employees.map((employee, index) => (
             <div
+              onClick={() => {
+                navigate(`/employees/${employee._id}`);
+              }}
               key={employee._id || index}
-              className="flex flex-col items-center rounded-3xl bg-[#F4F9FD] p-4 py-4"
+              className="flex flex-col items-center rounded-3xl bg-[#F4F9FD] p-4 py-4 cursor-pointer"
             >
               <div className="relative">
                 <Progress

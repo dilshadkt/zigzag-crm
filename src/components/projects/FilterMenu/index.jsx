@@ -6,18 +6,20 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
   const [filters, setFilters] = useState({
     dateRange: {
       startDate: null,
-      endDate: null
+      endDate: null,
     },
     status: [],
     priority: [],
-    assignee: []
+    assignee: [],
   });
 
   const handleFilterChange = (filterType, value) => {
     const newFilters = { ...filters };
     if (Array.isArray(filters[filterType])) {
       if (filters[filterType].includes(value)) {
-        newFilters[filterType] = filters[filterType].filter(item => item !== value);
+        newFilters[filterType] = filters[filterType].filter(
+          (item) => item !== value
+        );
       } else {
         newFilters[filterType] = [...filters[filterType], value];
       }
@@ -45,9 +47,9 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
         </div>
 
         <div className="px-7 pb-5 pt-4 border-b border-[#E4E6E8]/80">
-          <DatePicker 
-            title="Date Range" 
-            onChange={(dates) => handleFilterChange('dateRange', dates)}
+          <DatePicker
+            title="Date Range"
+            onChange={(dates) => handleFilterChange("dateRange", dates)}
           />
         </div>
 
@@ -55,15 +57,22 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
         <div className="px-7 py-5 border-b border-[#E4E6E8]/80 flex flex-col">
           <h5 className="text-sm font-medium text-[#7D8592] mb-4">Status</h5>
           <div className="flex flex-col gap-y-3">
-            {['Todo', 'In Progress', 'Completed'].map((status) => (
-              <label key={status} className="flex items-center space-x-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
+            {["Todo", "In Progress", "Completed"].map((status) => (
+              <label
+                key={status}
+                className="flex items-center space-x-3 cursor-pointer group"
+              >
+                <input
+                  type="checkbox"
                   className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all duration-200"
                   checked={filters.status.includes(status.toLowerCase())}
-                  onChange={() => handleFilterChange('status', status.toLocaleLowerCase())}
+                  onChange={() =>
+                    handleFilterChange("status", status.toLocaleLowerCase())
+                  }
                 />
-                <span className="text-gray-700 text-sm font-medium group-hover:text-blue-600 transition-colors">{status}</span>
+                <span className="text-gray-700 text-sm font-medium group-hover:text-blue-600 transition-colors">
+                  {status}
+                </span>
               </label>
             ))}
           </div>
@@ -73,15 +82,20 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
         <div className="px-7 py-5 border-b border-[#E4E6E8]/80 flex flex-col">
           <h5 className="text-sm font-medium text-[#7D8592] mb-4">Priority</h5>
           <div className="flex flex-col gap-y-3">
-            {['High', 'Medium', 'Low'].map((priority) => (
-              <label key={priority} className="flex items-center space-x-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
+            {["High", "Medium", "Low"].map((priority) => (
+              <label
+                key={priority}
+                className="flex items-center space-x-3 cursor-pointer group"
+              >
+                <input
+                  type="checkbox"
                   className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all duration-200"
                   checked={filters.priority.includes(priority)}
-                  onChange={() => handleFilterChange('priority', priority)}
+                  onChange={() => handleFilterChange("priority", priority)}
                 />
-                <span className="text-gray-700 text-sm font-medium group-hover:text-blue-600 transition-colors">{priority}</span>
+                <span className="text-gray-700 text-sm font-medium group-hover:text-blue-600 transition-colors">
+                  {priority}
+                </span>
               </label>
             ))}
           </div>
@@ -96,7 +110,7 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
                   dateRange: { startDate: null, endDate: null },
                   status: [],
                   priority: [],
-                  assignee: []
+                  assignee: [],
                 });
                 onFilterChange?.(null);
               }}
