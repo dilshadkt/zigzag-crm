@@ -220,15 +220,16 @@ export const useGetProjectsDueThisMonth = (date = new Date()) => {
   });
 };
 
-export const useDeleteProject = (onSuccess) => {
+export const useDeleteProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["deleteProject"],
-    mutationFn: (projectId) => deleteProject(projectId),
+    mutationFn: (projectId) =>
+      apiClient.delete(`/projects/${projectId}`).then((res) => res.data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["companyProjects"]);
+      // Invalidate all project-related queries
       queryClient.invalidateQueries(["projectDetails"]);
-      if (onSuccess) onSuccess();
+      queryClient.invalidateQueries(["companyProjects"]);
     },
   });
 };
@@ -308,6 +309,20 @@ export const useRestorePosition = (companyId) => {
         .then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(["positions", companyId]);
+    },
+  });
+};
+
+export const useDeleteTask = (projectId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteTask"],
+    mutationFn: (taskId) =>
+      apiClient.delete(`/tasks/${taskId}`).then((res) => res.data),
+    onSuccess: () => {
+      // Invalidate both task and project queries to refresh the data
+      queryClient.invalidateQueries(["projectDetails"]);
+      if (onSuccess) onSuccess();
     },
   });
 };

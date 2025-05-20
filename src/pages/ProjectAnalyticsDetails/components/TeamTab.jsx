@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 const TeamTab = ({ project }) => {
+  const navigate = useNavigate();
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
       <div className="px-4 py-4 sm:px-6">
@@ -12,7 +15,11 @@ const TeamTab = ({ project }) => {
       <div className="border-t border-gray-200">
         <ul className="divide-y divide-gray-200">
           {project?.teams?.map((member) => (
-            <li key={member._id} className="px-4 py-3 sm:px-6">
+            <li
+              onClick={() => navigate(`/employees/${member._id}`)}
+              key={member._id}
+              className="px-4 py-3 sm:px-6"
+            >
               <div className="flex items-center">
                 <div className="flex-shrink-0 h-10 w-10">
                   <img

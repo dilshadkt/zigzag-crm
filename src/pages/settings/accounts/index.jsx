@@ -70,7 +70,7 @@ const Account = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full overflow-y-auto h-full flex flex-col">
       <div className="flex  justify-between items-center mb-2">
         <h2 className="text-lg font-semibold text-gray-800">
           Position Management

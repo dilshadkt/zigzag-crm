@@ -23,7 +23,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[1000] overflow-y-auto">
       {/* Backdrop with reduced opacity */}
       <div
         className="fixed inset-0 bg-black/20 bg-opacity-30 
@@ -33,8 +33,10 @@ const Modal = ({ isOpen, onClose, title, children }) => {
       />
 
       {/* Modal container with enhanced styling */}
-      <div className="flex min-h-full items-center justify-center p-4 
-      text-center sm:p-0">
+      <div
+        className="flex min-h-full items-center justify-center p-4 
+      text-center sm:p-0"
+      >
         <div
           className="relative transform overflow-hidden rounded-2xl 
           bg-white px-4 pb-4 pt-5 text-left 
@@ -70,4 +72,4 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-export default Modal; 
+export default Modal;

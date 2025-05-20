@@ -2,13 +2,21 @@ import React, { useState } from "react";
 import { IoArrowUpOutline } from "react-icons/io5";
 import Progress from "../../shared/progress";
 import PrimaryButton from "../../shared/buttons/primaryButton";
-import { useGetTaskTimeLogs, useCreateTimeLog } from "../../../api/hooks";
+import {
+  useGetTaskTimeLogs,
+  useCreateTimeLog,
+  useDeleteTask,
+} from "../../../api/hooks";
 import Modal from "../../shared/modal";
+import { formatDate } from "../../../lib/dateUtils";
+import { useNavigate } from "react-router-dom";
 
-const TaskInfo = ({ taskDetails }) => {
+const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
+  const navigate = useNavigate();
 
   const {
     data: timeLogData,
@@ -16,6 +24,7 @@ const TaskInfo = ({ taskDetails }) => {
     error,
   } = useGetTaskTimeLogs(taskDetails?._id);
   const createTimeLog = useCreateTimeLog();
+  const deleteTask = useDeleteTask(taskDetails?.project, onTaskDeleted);
 
   const handleLogTime = () => {
     if (!duration || !description) return;
@@ -36,6 +45,15 @@ const TaskInfo = ({ taskDetails }) => {
     );
   };
 
+  const handleDeleteTask = () => {
+    deleteTask.mutate(taskDetails._id, {
+      onSuccess: () => {
+        setIsDeleteModalOpen(false);
+        navigate("/projects");
+      },
+    });
+  };
+
   const formatTime = (minutes) => {
     if (!minutes) return "0h 0m";
     const hours = Math.floor(minutes / 60);
@@ -49,22 +67,29 @@ const TaskInfo = ({ taskDetails }) => {
     : 0;
 
   return (
-    <div className="col-span-1 bg-white rounded-3xl px-2 justify-between py-5 flex flex-col">
+    <div
+      className="col-span-1 bg-white rounded-3xl px-2 
+    overflow-y-auto justify-between py-5 flex flex-col"
+    >
       <div>
         <div className="gap-y-3 flex flex-col mx-3">
           <h4 className="font-medium">Task Info</h4>
           <div className="flex flex-col gap-y-2">
-            <span className="text-sm text-[#91929E]">Created By</span>
-            <div className="flexStart gap-x-3">
-              <div className="w-6 h-6 rounded-full overflow-hidden">
-                <img
-                  src={taskDetails?.creator?.profileImage}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span>{taskDetails?.creator?.firstName}</span>
-            </div>
+            {taskDetails?.creator && (
+              <>
+                <span className="text-sm text-[#91929E]">Created By</span>
+                <div className="flexStart gap-x-3">
+                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                    <img
+                      src={taskDetails?.creator?.profileImage}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span>{taskDetails?.creator?.firstName}</span>
+                </div>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-y-2">
             <span className="text-sm text-[#91929E]">Assigned</span>
@@ -120,15 +145,25 @@ const TaskInfo = ({ taskDetails }) => {
         <div className="gap-y-3 mt-1 flex flex-col mx-3">
           <div className="flex flex-col gap-y-1">
             <span className="text-sm text-[#91929E]">Dead Line</span>
-            <span className="text-sm text-[#0A1629]">Feb 23, 2020</span>
+            <span className="text-sm text-[#0A1629]">
+              {formatDate(taskDetails?.dueDate)}
+            </span>
           </div>
         </div>
       </div>
-      <div className="flexStart px-3">
+      <div className="flexStart px-3 gap-x-2">
         <img src="/icons/calender2.svg" alt="" className="w-4" />
-        <span className="text-sm text-[#7D8592]">Created May 28, 2020</span>
+        <span className="text-sm text-[#7D8592]">
+          Created {formatDate(taskDetails?.createdAt)}
+        </span>
       </div>
-
+      <div className="mt-4 px-3">
+        <PrimaryButton
+          title="Remove Task"
+          className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
+          onclick={() => setIsDeleteModalOpen(true)}
+        />
+      </div>
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -179,6 +214,33 @@ const TaskInfo = ({ taskDetails }) => {
               className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Log Time
+            </button>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Task"
+      >
+        <div className="flex flex-col gap-6">
+          <p className="text-gray-700">
+            Are you sure you want to delete this task? This action cannot be
+            undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteTask}
+              disabled={deleteTask.isLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              {deleteTask.isLoading ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>

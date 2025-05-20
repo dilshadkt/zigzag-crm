@@ -1,10 +1,15 @@
 import { CheckCircle, AlertTriangle, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const TasksTab = ({ project, formatDate }) => {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div
+          onClick={() => navigate(`/projects/${project.name}`)}
+          className="bg-white overflow-hidden shadow rounded-lg"
+        >
           <div className="px-4 py-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-green-100 rounded-md p-2">
@@ -23,7 +28,10 @@ const TasksTab = ({ project, formatDate }) => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div
+          onClick={() => navigate(`/projects/${project.name}`)}
+          className="bg-white overflow-hidden shadow rounded-lg"
+        >
           <div className="px-4 py-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-yellow-100 rounded-md p-2">
@@ -43,7 +51,10 @@ const TasksTab = ({ project, formatDate }) => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
+        <div
+          onClick={() => navigate(`/projects/${project.name}`)}
+          className="bg-white overflow-hidden shadow rounded-lg"
+        >
           <div className="px-4 py-4 sm:p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 bg-blue-100 rounded-md p-2">

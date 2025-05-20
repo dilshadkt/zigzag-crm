@@ -1,13 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { IoArrowUpOutline } from "react-icons/io5";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useNavigate } from "react-router-dom";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
+import { useDeleteProject } from "../../../api/hooks";
+import Modal from "../../shared/modal";
 
 const SelectedProject = ({ currentProject }) => {
   const navigate = useNavigate();
   const { isCompany } = useAuth();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const deleteProject = useDeleteProject();
 
   const formatedDate = (isoDate) => {
     const date = new Date(isoDate);
@@ -22,6 +26,15 @@ const SelectedProject = ({ currentProject }) => {
   const handleEditClick = () => {
     const projectId = currentProject?._id;
     navigate(`/projects/${projectId}/edit`);
+  };
+
+  const handleDeleteProject = () => {
+    deleteProject.mutate(currentProject._id, {
+      onSuccess: () => {
+        setIsDeleteModalOpen(false);
+        navigate("/projects");
+      },
+    });
   };
 
   return (
@@ -50,18 +63,23 @@ rounded-3xl  flex flex-col  p-4"
         </div>
         <div className="flex flex-col gap-y-5 mt-1">
           <div className="flex flex-col gap-y-2">
-            <span className="text-sm text-[#91929E]">Reporter </span>
-            <div className="flexStart gap-x-3 ">
-              <div className="w-6 h-6 rounded-full overflow-hidden flexCenter">
-                <img
-                  src={currentProject?.creator?.profileImage}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+            {currentProject?.creator && (
+              <div className="flex flex-col gap-y-2">
+                <span className="text-sm text-[#91929E]">Reporter </span>
+                <div className="flexStart gap-x-3 ">
+                  <div className="w-6 h-6 rounded-full overflow-hidden flexCenter">
+                    <img
+                      src={currentProject?.creator?.profileImage}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span>{currentProject?.creator?.firstName}</span>
+                </div>
               </div>
-              <span>{currentProject?.creator?.firstName}</span>
-            </div>
+            )}
           </div>
+
           {currentProject?.teams?.length > 0 && (
             <div className="flex flex-col gap-y-2">
               <span className="text-sm text-[#91929E]">Team </span>
@@ -113,7 +131,7 @@ rounded-3xl  flex flex-col  p-4"
             <div className="flexStart gap-x-2">
               <img src="/icons/fillCalender.svg" alt="" className="w-4" />
               <span className="text-sm text-[#91929E]">
-                Created May 28, 2020{" "}
+                Created {formatedDate(currentProject?.createdAt)}
               </span>
             </div>
             <FileAndLinkUpload
@@ -126,9 +144,42 @@ rounded-3xl  flex flex-col  p-4"
                 (file) => file.type === "link"
               )}
             />
+            <PrimaryButton
+              title="Remove Project"
+              className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
+              onclick={() => setIsDeleteModalOpen(true)}
+            />
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Project"
+      >
+        <div className="flex flex-col gap-6">
+          <p className="text-gray-700">
+            Are you sure you want to delete this project? This action cannot be
+            undone and will also delete all associated tasks.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteProject}
+              disabled={deleteProject.isLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              {deleteProject.isLoading ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
