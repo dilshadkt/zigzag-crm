@@ -14,6 +14,7 @@ const TaskOverView = () => {
   const { activeProject: selectProject } = useProject();
   const { data: taskDetails, isLoading } = useGetTaskById(taskId);
   const { mutate } = useUpdateTaskById(taskId, () => setShowModalTask(false));
+
   const handleTaskEdit = async (values, { setSubmitting }) => {
     try {
       const updatedValues = { ...values };
@@ -49,6 +50,7 @@ const TaskOverView = () => {
       <TaskInfo taskDetails={taskDetails} />
       {/* add task modal  */}
       <AddTask
+        isEdit={true}
         isOpen={showModalTask}
         onSubmit={handleTaskEdit}
         isLoading={isLoading}

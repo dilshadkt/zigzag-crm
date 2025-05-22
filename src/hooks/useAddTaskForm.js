@@ -9,7 +9,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
     periority: defaultValue?.priority || "",
-    assignedTo: defaultValue?.assignedTo?.firstName || "",
+    assignedTo: defaultValue?.assignedTo?._id || "",
     description: defaultValue?.description || "",
   };
   const validationSchema = Yup.object().shape({
@@ -25,6 +25,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     initialValues,
     validationSchema,
     onSubmit,
+    enableReinitialize: true,
   });
   return formik;
 };

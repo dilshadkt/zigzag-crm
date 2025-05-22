@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import PrimaryButton from "../buttons/primaryButton";
 import FileAttachments from "../FileAttachement";
 import LinkAttachement from "../LinkAttachement";
@@ -17,16 +17,16 @@ const FileAndLinkUpload = ({
   const fileInputRef = useRef(null);
   const linkInputRef = useRef(null);
 
-  // Sync internal state with initialFiles and initialLinks
+  // Sync internal state with initialFiles and initialLinks only when they actually change
   useEffect(() => {
-    if (initialFiles) {
-      setFiles(initialFiles);
+    if (JSON.stringify(initialFiles) !== JSON.stringify(files)) {
+      setFiles(initialFiles || []);
     }
   }, [initialFiles]);
 
   useEffect(() => {
-    if (initialLinks) {
-      setLinks(initialLinks);
+    if (JSON.stringify(initialLinks) !== JSON.stringify(links)) {
+      setLinks(initialLinks || []);
     }
   }, [initialLinks]);
 
@@ -91,12 +91,12 @@ const FileAndLinkUpload = ({
     setLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Combine files and links into the desired schema
-  useEffect(() => {
+  // Memoize the onChange callback to prevent unnecessary re-renders
+  const handleChange = useCallback(() => {
     const attachements = [
       ...files?.map((file) => ({
         file: file.file,
-        preview: file.preview, // Use the preview URL for files
+        preview: file.preview,
         title: file.title,
         type: file.type,
         dateTime: file.dateTime,
@@ -107,6 +107,11 @@ const FileAndLinkUpload = ({
       onChange(attachements);
     }
   }, [files, links, onChange]);
+
+  // Only call handleChange when files or links actually change
+  useEffect(() => {
+    handleChange();
+  }, [files, links]);
 
   return (
     <div className="w-full  flex flex-col gap-y-3 max-w-2xl mx-auto">

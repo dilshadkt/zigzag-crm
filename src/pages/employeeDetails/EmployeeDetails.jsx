@@ -65,7 +65,7 @@ const EmployeeDetails = () => {
           user={{
             name: `${employee.firstName} ${employee.lastName}`,
             email: employee.email,
-            profile: employee.profileImage,
+            profileImage: employee.profileImage,
             phoneNumber: employee.phoneNumber,
             position: employee.position,
             level: employee.level,

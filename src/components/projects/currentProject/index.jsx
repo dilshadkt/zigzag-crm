@@ -42,7 +42,7 @@ const CurrentProject = ({ projects, selectProject }) => {
               {project?.name}
             </h4>
             <Link
-              to={`/projects/Medical-app`}
+              to={`/projects/${project?.name}`}
               className="flexStart hover:underline w-fit cursor-pointer gap-x-1 text-[#3F8CFF]"
             >
               <span className="text-sm"> View details</span>

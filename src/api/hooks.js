@@ -220,6 +220,17 @@ export const useGetProjectsDueThisMonth = (date = new Date()) => {
   });
 };
 
+export const useGetTasksDueThisMonth = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+
+  return useQuery({
+    queryKey: ["tasksDueThisMonth", format(date, "yyyy-MM")],
+    queryFn: () =>
+      apiClient.get(`/tasks/month/${year}/${month}`).then((res) => res.data),
+  });
+};
+
 export const useDeleteProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -324,5 +335,18 @@ export const useDeleteTask = (projectId, onSuccess) => {
       queryClient.invalidateQueries(["projectDetails"]);
       if (onSuccess) onSuccess();
     },
+  });
+};
+
+export const useGetEmployeeBirthdays = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+
+  return useQuery({
+    queryKey: ["employeeBirthdays", format(date, "yyyy-MM")],
+    queryFn: () =>
+      apiClient
+        .get(`/employee/birthdays/${year}/${month}`)
+        .then((res) => res.data),
   });
 };

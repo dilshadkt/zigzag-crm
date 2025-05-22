@@ -2,11 +2,25 @@ import React from "react";
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { useUpdateTaskOrder } from "../../../api/hooks";
+import { formatDate } from "../../../lib/dateUtils";
 
 const priorityColors = {
   low: "#00D097", // green
   medium: "#FFBD21", // yellow
   high: "#FF4D4F", // red
+};
+
+const getProgressValue = (status) => {
+  switch (status?.toLowerCase()) {
+    case "todo":
+      return 20;
+    case "in-progress":
+      return 50;
+    case "completed":
+      return 100;
+    default:
+      return 0;
+  }
 };
 
 const Task = ({
@@ -22,6 +36,7 @@ const Task = ({
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
   const priorityColor =
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
+  const progressValue = getProgressValue(task?.status);
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
@@ -79,7 +94,7 @@ const Task = ({
                 <span className="text-xs font-medium">{task?.priority}</span>
               </div>
             </div>
-            <Progress size={24} strokeWidth={2} currentValue={100} />
+            <Progress size={24} strokeWidth={2} currentValue={progressValue} />
           </div>
         </div>
       </div>
@@ -105,8 +120,8 @@ const Task = ({
           <h4>{task?.timeEstimate}h</h4>
         </div>
         <div className="flex flex-col gap-y-1">
-          <span className="text-sm text-[#91929E]">Spent Time</span>
-          <h4>1d 2h</h4>
+          <span className="text-sm text-[#91929E]">Due Date</span>
+          <h4 className="text-sm font-medium">{formatDate(task?.dueDate)}</h4>
         </div>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Assignee</span>
@@ -134,7 +149,7 @@ flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
         >
           {task?.status}
         </span>
-        <Progress size={30} strokeWidth={2} currentValue={100} />
+        <Progress size={30} strokeWidth={2} currentValue={progressValue} />
       </div>
     </div>
   );

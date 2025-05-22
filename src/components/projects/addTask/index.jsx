@@ -16,6 +16,7 @@ const AddTask = ({
   isLoading = false,
   onSubmit,
   projectData,
+  isEdit = false,
 }) => {
   const handleClose = () => {
     resetForm();
@@ -28,62 +29,62 @@ const AddTask = ({
   // Get task group options from project work details
   const getTaskGroupOptions = () => {
     if (!projectData?.workDetails) return [];
-    
+
     const options = [];
     const workDetails = projectData.workDetails;
-    
+
     // Add main work types
     if (workDetails.reels?.count > 0) {
       options.push({
         label: `Reels (${workDetails.reels.count} remaining)`,
-        value: "reels"
+        value: "reels",
       });
     }
     if (workDetails.poster?.count > 0) {
       options.push({
         label: `Poster (${workDetails.poster.count} remaining)`,
-        value: "poster"
+        value: "poster",
       });
     }
     if (workDetails.motionPoster?.count > 0) {
       options.push({
         label: `Motion Poster (${workDetails.motionPoster.count} remaining)`,
-        value: "motionPoster"
+        value: "motionPoster",
       });
     }
     if (workDetails.shooting?.count > 0) {
       options.push({
         label: `Shooting (${workDetails.shooting.count} remaining)`,
-        value: "shooting"
+        value: "shooting",
       });
     }
     if (workDetails.motionGraphics?.count > 0) {
       options.push({
         label: `Motion Graphics (${workDetails.motionGraphics.count} remaining)`,
-        value: "motionGraphics"
+        value: "motionGraphics",
       });
     }
-    
+
     // Add other work types
     if (workDetails.other?.length > 0) {
-      workDetails.other.forEach(item => {
+      workDetails.other.forEach((item) => {
         if (item.count > 0) {
           options.push({
             label: `${item.name} (${item.count} remaining)`,
-            value: item.name
+            value: item.name,
           });
         }
       });
     }
-    
+
     return options;
   };
 
   const taskGroupOptions = getTaskGroupOptions();
-  const isTaskGroupSelected = values.taskGroup && values.taskGroup !== "Select task group";
+  const isTaskGroupSelected =
+    values.taskGroup && values.taskGroup !== "Select task group";
 
   if (!isOpen) return null;
-
   return (
     <div
       className="fixed left-0 right-0 top-0 bottom-0
@@ -102,7 +103,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
           <>
             <div className="w-full h-full flex flex-col overflow-y-auto">
               <h4 className="text-lg pb-2 font-medium sticky top-0 bg-white z-20">
-                Add Task
+                {isEdit ? "Edit Task" : "Add Task"}
               </h4>
               <form
                 action=" "
@@ -120,6 +121,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   options={taskGroupOptions}
                   defaultValue="Select task group"
                   required
+                  disabled={isEdit}
                 />
                 <Input
                   placeholder="Task Name"
@@ -168,11 +170,23 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   touched={touched}
                   name={"assignedTo"}
                   selectedValue={values?.assignedTo}
-                  options={teams?.map((user) => ({
-                    label: `${user.firstName} (${user.position})`,
-                    value: user._id
-                  })) || []}
-                  defaultValue={values?.assignedTo || "Select Assignee"}
+                  options={
+                    teams?.map((user) => ({
+                      label: `${user.firstName} (${user.position})`,
+                      value: user._id,
+                    })) || []
+                  }
+                  defaultValue={
+                    teams?.find((user) => user._id === values?.assignedTo)
+                      ? `${
+                          teams.find((user) => user._id === values?.assignedTo)
+                            .firstName
+                        } (${
+                          teams.find((user) => user._id === values?.assignedTo)
+                            .position
+                        })`
+                      : "Select Assignee"
+                  }
                   disabled={!isTaskGroupSelected}
                 />
                 <Description
@@ -198,8 +212,8 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     disabled={!isTaskGroupSelected}
                   />
                   <div className="flexEnd">
-                    <PrimaryButton 
-                      type="submit" 
+                    <PrimaryButton
+                      type="submit"
                       title="Save Task"
                       disabled={!isTaskGroupSelected}
                     />

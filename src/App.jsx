@@ -35,6 +35,9 @@ import EditProject from "./pages/editProject";
 import EmployeeDetails from "./pages/employeeDetails/EmployeeDetails";
 import ProjectsAnalytics from "./pages/projectAnalytics";
 import ProjectAnalyticsDetails from "./pages/ProjectAnalyticsDetails";
+import Company from "./pages/settings/company";
+import Notification from "./pages/settings/notification";
+import Safety from "./pages/settings/safety";
 
 function App() {
   const dispatch = useDispatch();
@@ -121,9 +124,9 @@ function App() {
             <Route path="workload" element={<WorkLoad />} />
             <Route path="settings" element={<SettingsLayout />}>
               <Route path="account" element={<Account />} />
-              <Route path="notifications" element={<Account />} />
-              <Route path="company" element={<Account />} />
-              <Route path="safety" element={<Account />} />
+              <Route path="notifications" element={<Notification />} />
+              <Route path="company" element={<Company />} />
+              <Route path="safety" element={<Safety />} />
             </Route>
           </Route>
           <Route path="/auth" element={<AuthLayout />}>

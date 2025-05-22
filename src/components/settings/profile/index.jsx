@@ -7,7 +7,6 @@ import * as Yup from "yup";
 import { useFormik } from "formik";
 const UserProfile = ({ user, disableEdit }) => {
   const [isEditMode, setIsEditMode] = useState(false);
-
   // Initial form values from the user object
   const initialValues = {
     position: user?.position || "",
@@ -36,7 +35,7 @@ rounded-3xl  flex flex-col "
           <div className="relative">
             <Progress size={54} currentValue={75} />
             <img
-              src={user?.profile}
+              src={user?.profileImage}
               alt=""
               className="absolute top-0 left-0 right-0
               scale-85 bottom-0 w-full h-full  object-cover rounded-full"
