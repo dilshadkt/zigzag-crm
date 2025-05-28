@@ -10,8 +10,11 @@ import {
 import Modal from "../../shared/modal";
 import { formatDate } from "../../../lib/dateUtils";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../hooks/useAuth";
 
 const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [duration, setDuration] = useState("");
@@ -158,11 +161,13 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
         </span>
       </div>
       <div className="mt-4 px-3">
-        <PrimaryButton
-          title="Remove Task"
-          className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
-          onclick={() => setIsDeleteModalOpen(true)}
-        />
+        {!isEmployee && (
+          <PrimaryButton
+            title="Remove Task"
+            className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
+            onclick={() => setIsDeleteModalOpen(true)}
+          />
+        )}
       </div>
       <Modal
         isOpen={isModalOpen}

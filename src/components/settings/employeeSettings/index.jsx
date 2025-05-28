@@ -45,7 +45,6 @@ const EmployeeSettings = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="flexBetween mb-5">
-        <h2 className="text-xl font-semibold text-gray-800">My Workspace</h2>
         <div className="flex bg-[#E6EDF5] rounded-full p-1">
           {["Overview", "Projects", "Teams", "Vacations"].map((item, index) => (
             <button

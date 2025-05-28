@@ -9,7 +9,8 @@ import Modal from "../../shared/modal";
 
 const SelectedProject = ({ currentProject }) => {
   const navigate = useNavigate();
-  const { isCompany } = useAuth();
+  const { isCompany, user } = useAuth();
+  const isEmployee = user?.role === "employee";
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const deleteProject = useDeleteProject();
 
@@ -144,11 +145,13 @@ rounded-3xl  flex flex-col  p-4"
                 (file) => file.type === "link"
               )}
             />
-            <PrimaryButton
-              title="Remove Project"
-              className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
-              onclick={() => setIsDeleteModalOpen(true)}
-            />
+            {!isEmployee && (
+              <PrimaryButton
+                title="Remove Project"
+                className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
+                onclick={() => setIsDeleteModalOpen(true)}
+              />
+            )}
           </div>
         </div>
       </div>

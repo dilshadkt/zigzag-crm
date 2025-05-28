@@ -19,6 +19,7 @@ import {
   useGetEmployeeBirthdays,
 } from "../../api/hooks";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 // Priority color mapping for visual distinction
 const priorityColors = {
   low: {
@@ -88,6 +89,8 @@ const MAX_ITEMS_PER_DAY = 3;
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
   const [expandedDay, setExpandedDay] = useState(null);
   const { data: projectsData, isLoading: projectsLoading } =
     useGetProjectsDueThisMonth(currentDate);
@@ -337,11 +340,13 @@ const Calendar = () => {
     <section className="flex flex-col h-full gap-y-2">
       <div className="flexBetween">
         <Header>Calendar</Header>
-        <PrimaryButton
-          icon={"/icons/add.svg"}
-          title={"Add Event"}
-          className={"mt-3 text-white"}
-        />
+        {!isEmployee && (
+          <PrimaryButton
+            icon={"/icons/add.svg"}
+            title={"Add Event"}
+            className={"mt-3 text-white"}
+          />
+        )}
       </div>
       <div
         className="w-full h-full flex flex-col mt-3 overflow-hidden bg-white

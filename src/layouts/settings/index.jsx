@@ -31,16 +31,18 @@ const SettingsLayout = () => {
 
         {/* Settings info page  */}
         <div className="flex-1 overflow-hidden  gap-y-5  flex flex-col">
-          <div className="flexStart gap-x-3 ">
-            <FaArrowLeft className=" text-[#3F8CFF] text-lg hover:scale-85 cursor-pointer " />
-            <h4 className="text-lg font-medium">
-              {isEmployee ? "My Workspace" : "Settings"}
-            </h4>
-          </div>
+          {!isEmployee && (
+            <div className="flexStart gap-x-3 ">
+              <FaArrowLeft className=" text-[#3F8CFF] text-lg hover:scale-85 cursor-pointer " />
+              <h4 className="text-lg font-medium">
+                {isEmployee ? "My Workspace" : "Settings"}
+              </h4>
+            </div>
+          )}
 
           {isEmployee ? (
             // Employee view - show employee-specific content
-            <div className="flex-1 bg-white p-5 overflow-y-auto flex flex-col h-full rounded-3xl">
+            <div className="flex-1 bg-gray-50 p-5 overflow-y-auto flex flex-col h-full rounded-3xl">
               <EmployeeSettings />
             </div>
           ) : (

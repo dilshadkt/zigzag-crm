@@ -34,7 +34,7 @@ export const SIDE_MENU = [
     title: "Vacations",
     icon: BiSolidPlane,
     path: "/vacations",
-    access: ["admin", "employee"],
+    access: ["admin"],
   },
   {
     id: 5,
@@ -43,13 +43,13 @@ export const SIDE_MENU = [
     path: "/employees",
     access: ["admin"],
   },
-  // {
-  //   id: 6,
-  //   title: "Messenger",
-  //   icon: FaSignalMessenger,
-  //   path: "/messenger",
-  //   access: ["admin"],
-  // },
+  {
+    id: 6,
+    title: "Messenger",
+    icon: FaSignalMessenger,
+    path: "/messenger",
+    access: ["admin", "employee"],
+  },
   // {
   //   id: 7,
   //   title: "Info Portal",
