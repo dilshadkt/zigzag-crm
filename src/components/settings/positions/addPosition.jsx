@@ -61,18 +61,67 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
 
   if (!isOpen) return null;
 
+  const routeOptions = [
+    { value: "/", label: "Dashboard", icon: "🏠" },
+    { value: "/projects", label: "Projects", icon: "📁" },
+    { value: "/tasks", label: "Tasks", icon: "✅" },
+    { value: "/team", label: "Team", icon: "👥" },
+    { value: "/reports", label: "Reports", icon: "📊" },
+    { value: "/settings", label: "Settings", icon: "⚙️" },
+    { value: "/calender", label: "Calendar", icon: "📅" },
+    { value: "/vacations", label: "Vacations", icon: "🏖️" },
+  ];
+
   return (
-    <div className="fixed left-0 right-0 top-0 bottom-0 bg-[#2155A3]/15 py-3 px-3 z-50 flexEnd">
-      <div className="w-[400px] bg-white rounded-3xl flex flex-col py-7 h-full">
-        <div className="flexBetween px-7 border-b border-[#E4E6E8]/80 pb-4">
-          <h4 className="text-lg font-medium text-gray-800">
-            {initialValues ? "Edit Position" : "Add New Position"}
-          </h4>
-          <PrimaryButton
-            icon={"/icons/cancel.svg"}
-            className={"bg-[#F4F9FD] hover:bg-gray-100 transition-colors"}
-            onclick={() => handleClose(() => {})}
-          />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {initialValues ? "Edit Position" : "Add New Position"}
+              </h2>
+              <p className="text-xs text-gray-600">
+                {initialValues
+                  ? "Update position details and permissions"
+                  : "Create a new position with specific permissions"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => handleClose(() => {})}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
 
         <Formik
@@ -90,97 +139,215 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
           }}
         >
           {({ errors, touched, isSubmitting, values, setFieldValue }) => (
-            <Form className="flex flex-col flex-1">
-              <div className="px-7 py-5 border-b border-[#E4E6E8]/80">
-                <h5 className="text-sm font-medium text-[#7D8592] mb-4">
-                  Position Details
-                </h5>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    Position Name
-                  </label>
-                  <Field
-                    type="text"
-                    name="name"
-                    className="appearance-none border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Enter position name"
-                  />
-                  {errors.name && touched.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="px-7 py-5 border-b border-[#E4E6E8]/80 flex-1 overflow-y-auto">
-                <h5 className="text-sm font-medium text-[#7D8592] mb-4">
-                  Allowed Routes
-                </h5>
-                <div className="flex flex-col gap-y-3">
-                  {[
-                    "/",
-                    "/projects",
-                    "/tasks",
-                    "/team",
-                    "/reports",
-                    "/settings",
-                    "/calender",
-                    "/vacations",
-                  ].map((route) => (
-                    <label
-                      key={route}
-                      className="flex items-center space-x-3 cursor-pointer group"
-                    >
-                      <Field
-                        type="checkbox"
-                        name="allowedRoutes"
-                        value={route}
-                        checked={values.allowedRoutes.includes(route)}
-                        onChange={(e) => {
-                          const newRoutes = e.target.checked
-                            ? [...values.allowedRoutes, route]
-                            : values.allowedRoutes.filter((r) => r !== route);
-                          setFieldValue("allowedRoutes", newRoutes);
-                        }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all duration-200"
-                      />
-                      <span className="text-gray-700 text-sm font-medium group-hover:text-blue-600 transition-colors">
-                        {route === "/"
-                          ? "Dashboard"
-                          : route.slice(1).charAt(0).toUpperCase() +
-                            route.slice(2)}
-                      </span>
+            <Form className="flex flex-col flex-1 overflow-hidden">
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Position Name Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Position Details
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-700">
+                      Position Name *
                     </label>
-                  ))}
+                    <Field
+                      type="text"
+                      name="name"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                      placeholder="e.g. Senior Developer, Marketing Manager"
+                    />
+                    {errors.name && touched.name && (
+                      <p className="text-red-500 text-xs flex items-center space-x-1">
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>{errors.name}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Permissions Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Access Permissions
+                      </h3>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {values.allowedRoutes.length} selected
+                    </span>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <p className="text-xs text-gray-600 mb-3">
+                      Select which areas this position can access
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-2">
+                      {routeOptions.map((route) => (
+                        <label
+                          key={route.value}
+                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all cursor-pointer group"
+                        >
+                          <Field
+                            type="checkbox"
+                            name="allowedRoutes"
+                            value={route.value}
+                            checked={values.allowedRoutes.includes(route.value)}
+                            onChange={(e) => {
+                              const newRoutes = e.target.checked
+                                ? [...values.allowedRoutes, route.value]
+                                : values.allowedRoutes.filter(
+                                    (r) => r !== route.value
+                                  );
+                              setFieldValue("allowedRoutes", newRoutes);
+                            }}
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 transition-all"
+                          />
+                          <span className="text-lg">{route.icon}</span>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+                              {route.label}
+                            </span>
+                            <p className="text-xs text-gray-500">
+                              {route.value === "/"
+                                ? "Main dashboard and overview"
+                                : route.value === "/projects"
+                                ? "Project management and tracking"
+                                : route.value === "/tasks"
+                                ? "Task creation and management"
+                                : route.value === "/team"
+                                ? "Team member management"
+                                : route.value === "/reports"
+                                ? "Analytics and reporting"
+                                : route.value === "/settings"
+                                ? "System configuration"
+                                : route.value === "/calender"
+                                ? "Schedule and events"
+                                : "Time-off management"}
+                            </p>
+                          </div>
+                          {values.allowedRoutes.includes(route.value) && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary */}
+                {values.allowedRoutes.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <h4 className="text-xs font-semibold text-blue-900">
+                        Permission Summary
+                      </h4>
+                    </div>
+                    <p className="text-xs text-blue-700">
+                      This position will have access to{" "}
+                      <strong>{values.allowedRoutes.length}</strong> area
+                      {values.allowedRoutes.length !== 1 ? "s" : ""} of the
+                      system.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div className="px-7 py-5 mt-auto">
-                <div className="flex gap-3">
+              {/* Footer */}
+              <div className="p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex space-x-3">
                   <button
                     type="button"
                     onClick={() => handleClose(() => {})}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={isCreating || isUpdating || isSubmitting}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-70"
+                    disabled={
+                      isCreating ||
+                      isUpdating ||
+                      isSubmitting ||
+                      !values.name.trim()
+                    }
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
                     {isCreating || isUpdating ? (
-                      <span className="flex items-center justify-center">
-                        <img
-                          src="/icons/loading.svg"
-                          alt="Loading"
-                          className="w-5 h-5 mr-2"
-                        />
-                        {initialValues ? "Updating..." : "Creating..."}
+                      <span className="flex items-center justify-center space-x-2">
+                        <svg
+                          className="w-4 h-4 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span>
+                          {initialValues ? "Updating..." : "Creating..."}
+                        </span>
                       </span>
-                    ) : initialValues ? (
-                      "Update Position"
                     ) : (
-                      "Create Position"
+                      <span className="flex items-center justify-center space-x-2">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        <span>
+                          {initialValues
+                            ? "Update Position"
+                            : "Create Position"}
+                        </span>
+                      </span>
                     )}
                   </button>
                 </div>

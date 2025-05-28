@@ -10,7 +10,7 @@ const WorkLoad = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="px-4 col-span-5 h-[470px] bg-white pb-3 pt-5 flex flex-col rounded-3xl">
+    <div className="px-4 col-span-5 h-fit bg-white pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Workload</h4>
         {employees.length > 0 && (

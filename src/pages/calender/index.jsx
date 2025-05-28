@@ -334,7 +334,7 @@ const Calendar = () => {
   };
 
   return (
-    <section className="flex flex-col h-full gap-y-3">
+    <section className="flex flex-col h-full gap-y-2">
       <div className="flexBetween">
         <Header>Calendar</Header>
         <PrimaryButton
@@ -343,23 +343,26 @@ const Calendar = () => {
           className={"mt-3 text-white"}
         />
       </div>
-      <div className="w-full h-full flex flex-col mt-3 overflow-hidden bg-white rounded-3xl shadow-sm">
+      <div
+        className="w-full h-full flex flex-col mt-3 overflow-hidden bg-white
+       rounded-3xl "
+      >
         {/* Calendar Header */}
-        <div className="min-h-[72px] flexCenter border-b border-[#E6EBF5]">
+        <div className="min-h-[48px] flexCenter border-b border-[#E6EBF5]">
           <div className="flexCenter gap-x-8">
             <button
               onClick={handlePrevMonth}
-              className="h-8 w-8 rounded-full hover:bg-gray-100 flexCenter transition-all duration-200"
+              className="h-8 w-8 rounded-full cursor-pointer hover:bg-gray-100 flexCenter transition-all duration-200"
               disabled={isLoading}
             >
               <IoArrowUpOutline className="-rotate-90 text-xl text-[#3F8CFF]" />
             </button>
-            <span className="text-lg w-[200px] flexCenter font-medium">
+            <span className=" w-[200px] flexCenter font-medium">
               {format(firstDay, "MMMM yyyy")}
             </span>
             <button
               onClick={handleNextMonth}
-              className="h-8 w-8 rounded-full hover:bg-gray-100 flexCenter transition-all duration-200"
+              className="h-8 w-8 rounded-full cursor-pointer hover:bg-gray-100 flexCenter transition-all duration-200"
               disabled={isLoading}
             >
               <IoArrowUpOutline className="rotate-90 text-xl text-[#3F8CFF]" />

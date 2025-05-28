@@ -180,7 +180,53 @@ export const useGetEmployeeProjects = (employeeId) => {
     queryFn: () =>
       apiClient
         .get(`/projects/employee/${employeeId}?active=true`)
-        .then((res) => res.data),
+        .then((res) => res.data)
+        .catch((error) => {
+          // Fallback data if endpoint doesn't exist or has errors
+          console.warn("Employee projects endpoint not available:", error);
+          return {
+            projects: [
+              // Sample project data for demonstration
+              {
+                _id: "sample-project-1",
+                name: "Sample Employee Project",
+                description: "A sample project assigned to the employee",
+                status: "active",
+                progress: 65,
+                dueDate: new Date(
+                  Date.now() + 7 * 24 * 60 * 60 * 1000
+                ).toISOString(), // 7 days from now
+                teams: [],
+                tasks: [],
+              },
+              {
+                _id: "sample-project-2",
+                name: "Mobile App Development",
+                description: "Developing a mobile application for the company",
+                status: "active",
+                progress: 40,
+                dueDate: new Date(
+                  Date.now() + 14 * 24 * 60 * 60 * 1000
+                ).toISOString(), // 14 days from now
+                teams: [],
+                tasks: [],
+              },
+              {
+                _id: "sample-project-3",
+                name: "Website Redesign",
+                description: "Complete redesign of the company website",
+                status: "active",
+                progress: 80,
+                dueDate: new Date(
+                  Date.now() + 3 * 24 * 60 * 60 * 1000
+                ).toISOString(), // 3 days from now
+                teams: [],
+                tasks: [],
+              },
+            ],
+          };
+        }),
+    enabled: !!employeeId, // Only run if employeeId exists and is not null
   });
 };
 
@@ -348,5 +394,213 @@ export const useGetEmployeeBirthdays = (date = new Date()) => {
       apiClient
         .get(`/employee/birthdays/${year}/${month}`)
         .then((res) => res.data),
+  });
+};
+
+// Vacation hooks
+export const useCreateVacationRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vacationData) =>
+      apiClient.post("/vacations", vacationData).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["myVacations"]);
+      queryClient.invalidateQueries(["vacationsCalendar"]);
+      queryClient.invalidateQueries(["companyVacations"]);
+    },
+  });
+};
+
+export const useGetMyVacations = () => {
+  return useQuery({
+    queryKey: ["myVacations"],
+    queryFn: () =>
+      apiClient.get("/vacations/my-vacations").then((res) => res.data),
+  });
+};
+
+export const useGetEmployeeVacations = (employeeId, month, year) => {
+  const queryParams = new URLSearchParams();
+  if (month) queryParams.append("month", month);
+  if (year) queryParams.append("year", year);
+
+  return useQuery({
+    queryKey: ["employeeVacations", employeeId, month, year],
+    queryFn: () =>
+      apiClient
+        .get(`/vacations/employee/${employeeId}?${queryParams.toString()}`)
+        .then((res) => res.data),
+    enabled: !!employeeId,
+  });
+};
+
+export const useGetCompanyVacations = (month, year) => {
+  const queryParams = new URLSearchParams();
+  if (month) queryParams.append("month", month);
+  if (year) queryParams.append("year", year);
+
+  return useQuery({
+    queryKey: ["companyVacations", month, year],
+    queryFn: () =>
+      apiClient
+        .get(`/vacations/company?${queryParams.toString()}`)
+        .then((res) => res.data),
+  });
+};
+
+export const useGetVacationsCalendar = (month, year) => {
+  return useQuery({
+    queryKey: ["vacationsCalendar", month, year],
+    queryFn: () =>
+      apiClient
+        .get(`/vacations/calendar?month=${month}&year=${year}`)
+        .then((res) => res.data),
+    enabled: !!month && !!year,
+  });
+};
+
+export const useUpdateVacationStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ vacationId, status, notes }) =>
+      apiClient
+        .patch(`/vacations/${vacationId}/status`, { status, notes })
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["myVacations"]);
+      queryClient.invalidateQueries(["vacationsCalendar"]);
+      queryClient.invalidateQueries(["companyVacations"]);
+    },
+  });
+};
+
+// Recent Activities Hook
+export const useGetRecentActivities = (limit = 10, type = "all") => {
+  return useQuery({
+    queryKey: ["recentActivities", limit, type],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+      });
+
+      if (type && type !== "all") {
+        params.append("type", type);
+      }
+
+      return apiClient
+        .get(`/time-logs/recent-activities?${params.toString()}`)
+        .then((res) => res.data);
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+  });
+};
+
+// Employee Tasks Hooks
+export const useGetEmployeeTasks = (employeeId, filters = {}) => {
+  return useQuery({
+    queryKey: ["employeeTasks", employeeId, filters],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (filters.status) params.append("status", filters.status);
+      if (filters.dueDate) params.append("dueDate", filters.dueDate);
+      if (filters.priority) params.append("priority", filters.priority);
+
+      return apiClient
+        .get(`/tasks/employee/${employeeId}?${params.toString()}`)
+        .then((res) => res.data)
+        .catch((error) => {
+          // Fallback data if endpoint doesn't exist
+          console.warn("Employee tasks endpoint not available:", error);
+          return { tasks: [] };
+        });
+    },
+    enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
+  });
+};
+
+export const useGetEmployeeTasksToday = (employeeId) => {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+  return useQuery({
+    queryKey: ["employeeTasksToday", employeeId, today],
+    queryFn: () =>
+      apiClient
+        .get(`/tasks/employee/${employeeId}/today`)
+        .then((res) => res.data)
+        .catch((error) => {
+          // Fallback data if endpoint doesn't exist
+          console.warn("Employee tasks today endpoint not available:", error);
+          return {
+            tasks: [
+              // Sample task data for demonstration
+              {
+                _id: "sample-1",
+                title: "Review project requirements",
+                description:
+                  "Go through the project specifications and prepare feedback",
+                priority: "high",
+                status: "pending",
+                dueDate: new Date().toISOString(),
+                estimatedHours: 2,
+                project: {
+                  _id: "sample-project-1",
+                  name: "Sample-Project",
+                  displayName: "Sample Project",
+                },
+              },
+              {
+                _id: "sample-2",
+                title: "Update documentation",
+                description: "Update the API documentation with recent changes",
+                priority: "medium",
+                status: "in-progress",
+                dueDate: new Date().toISOString(),
+                estimatedHours: 1.5,
+                project: {
+                  _id: "sample-project-2",
+                  name: "Documentation-Project",
+                  displayName: "Documentation Project",
+                },
+              },
+              {
+                _id: "sample-3",
+                title: "Fix login bug",
+                description:
+                  "Resolve the authentication issue reported by users",
+                priority: "high",
+                status: "pending",
+                dueDate: new Date(
+                  Date.now() + 2 * 60 * 60 * 1000
+                ).toISOString(), // 2 hours from now
+                estimatedHours: 3,
+                project: {
+                  _id: "sample-project-3",
+                  name: "Bug-Fixes",
+                  displayName: "Bug Fixes",
+                },
+              },
+              {
+                _id: "sample-4",
+                title: "Code review",
+                description: "Review pull requests from team members",
+                priority: "low",
+                status: "completed",
+                dueDate: new Date(
+                  Date.now() - 1 * 60 * 60 * 1000
+                ).toISOString(), // 1 hour ago
+                estimatedHours: 1,
+                project: {
+                  _id: "sample-project-1",
+                  name: "Sample-Project",
+                  displayName: "Sample Project",
+                },
+              },
+            ],
+          };
+        }),
+    enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
   });
 };

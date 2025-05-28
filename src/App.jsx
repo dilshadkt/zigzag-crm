@@ -92,7 +92,7 @@ function App() {
             <Route
               index
               element={
-                <WithRoleAcess allowedRoles={["company-admin"]}>
+                <WithRoleAcess allowedRoles={["company-admin", "employee"]}>
                   <Dashboard />
                 </WithRoleAcess>
               }

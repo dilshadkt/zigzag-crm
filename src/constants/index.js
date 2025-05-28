@@ -13,7 +13,7 @@ export const SIDE_MENU = [
     title: "Dashboard",
     icon: TbLayoutDashboardFilled,
     path: "/",
-    access: ["admin"],
+    access: ["admin", "employee"],
   },
   {
     id: 2,
@@ -62,7 +62,7 @@ export const SIDE_MENU = [
     title: "Settings",
     icon: IoIosSettings,
     path: "/settings",
-    access: ["admin"],
+    access: ["admin", "employee"],
   },
 ];
 

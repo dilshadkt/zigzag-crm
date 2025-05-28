@@ -14,18 +14,26 @@ const Select = ({
   selectedValue,
   touched,
   disabled,
+  placeholder,
 }) => {
-  const [selected, setSelected] = useState(defaultValue || (options[0]?.label || options[0]));
+  const [selected, setSelected] = useState(() => {
+    if (value) return value;
+    if (defaultValue) return defaultValue;
+    if (placeholder) return placeholder;
+    return `Select ${title}`;
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false); // TOGGLE MENU
   const menuRef = useRef();
 
   // Update selected value when `value` prop changes
   useEffect(() => {
-    if (value !== undefined) {
-      onChange({ target: { name, value } });
+    if (value !== undefined && value !== "") {
       setSelected(value);
+    } else if (value === "" || value === null || value === undefined) {
+      // Reset to placeholder when value is empty
+      setSelected(placeholder || `Select ${title}`);
     }
-  }, [value]);
+  }, [value, placeholder, title]);
 
   // CLOSE MENU WHILE CLICK OUTSIDE
   useEffect(() => {
@@ -42,9 +50,9 @@ const Select = ({
 
   // Handle option selection
   const handleSelect = (item) => {
-    const selectedValue = typeof item === 'object' ? item.value : item;
-    const displayValue = typeof item === 'object' ? item.label : item;
-    
+    const selectedValue = typeof item === "object" ? item.value : item;
+    const displayValue = typeof item === "object" ? item.label : item;
+
     setSelected(displayValue);
     if (onChange) {
       onChange({ target: { name, value: selectedValue } }); // Mimic event object for Formik
@@ -54,11 +62,15 @@ const Select = ({
 
   // Helper function to get display value
   const getDisplayValue = (item) => {
-    if (typeof item === 'object' && item !== null) {
+    if (typeof item === "object" && item !== null) {
       return item.label;
     }
     return item;
   };
+
+  // Check if current selection is a placeholder
+  const isPlaceholder =
+    !value || value === "" || selected === (placeholder || `Select ${title}`);
 
   return (
     <div className="flex flex-col gap-y-[7px]">
@@ -68,12 +80,14 @@ const Select = ({
       <div
         onClick={() => !disabled && setIsMenuOpen(!isMenuOpen)}
         className={clsx(
-          `rounded-[14px]  text-sm border-2 text-[#7D8592] w-full border-[#D8E0F0]/80 py-[10px] px-4
+          `rounded-[14px]  text-sm border-2 w-full border-[#D8E0F0]/80 py-[10px] px-4
           outline-none focus:outline-none relative cursor-pointer`,
           className,
           {
             "border-red-400/50": errors?.[name] && touched?.[name], // Add error border
             "opacity-50 cursor-not-allowed": disabled, // Add disabled styling
+            "text-[#7D8592]": isPlaceholder, // Placeholder styling
+            "text-gray-900": !isPlaceholder, // Selected value styling
           }
         )}
       >
@@ -85,14 +99,11 @@ const Select = ({
             className="absolute w-full rounded-2xl bg-white border-2 border-[#D8E0F0]/80 shadow-sm
            left-0 right-0 mt-5 py-2 z-40"
           >
-            {defaultValue && (
-              <li className="px-4 py-2 cursor-none">{defaultValue}</li>
-            )}
             {options.map((item, index) => (
               <li
                 key={index}
                 onClick={() => handleSelect(item)}
-                className="px-4 py-2 capitalize hover:bg-blue-50"
+                className="px-4 py-2 capitalize hover:bg-blue-50 cursor-pointer"
               >
                 {getDisplayValue(item)}
               </li>

@@ -4,8 +4,20 @@ import PrimaryButton from "../../shared/buttons/primaryButton";
 import Input from "../../shared/Field/input";
 import Select from "../../shared/Field/select";
 import { useAddEmpoloyeeForm } from "../../../hooks/useAddEmpoloyeeForm";
+import { useGetPositions } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 
 const CreateEmployee = ({ isOpen, handleClose, onSubmit }) => {
+  const { user } = useAuth();
+  const companyId = user?.company;
+
+  // Fetch positions dynamically
+  const {
+    data: positionsData,
+    isLoading: positionsLoading,
+    error: positionsError,
+  } = useGetPositions(companyId);
+
   const {
     values,
     handleChange,
@@ -15,7 +27,20 @@ const CreateEmployee = ({ isOpen, handleClose, onSubmit }) => {
     touched,
     isSubmitting,
   } = useAddEmpoloyeeForm({}, onSubmit);
+
+  // Extract position names from the API response
+  const positionOptions = React.useMemo(() => {
+    if (positionsLoading) return ["Loading positions..."];
+    if (positionsError) return ["Error loading positions"];
+    if (!positionsData?.positions?.length) return ["No positions available"];
+
+    return positionsData.positions
+      .filter((pos) => pos.isActive)
+      .map((position) => position.name);
+  }, [positionsData, positionsLoading, positionsError]);
+
   if (!isOpen) return null;
+
   return (
     <div
       className="fixed w-full h-full bg-[#2155A3]/15
@@ -79,32 +104,45 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
               touched={touched}
               value={values}
             />
-            <Select
-              errors={errors}
-              touched={touched}
-              name={"position"}
-              value="Digital marketer"
-              onChange={handleChange}
-              title="Position"
-              options={[
-                "Digital marketer",
-                "Graphic designer",
-                "Video Grapher",
-                "Content creator",
-                "Cordinator",
-                "Intern",
-                "Accountent",
-                "Hr",
-                "Tele caller",
-              ]}
-            />
+            <div className="flex flex-col gap-y-[7px]">
+              <Select
+                errors={errors}
+                touched={touched}
+                name={"position"}
+                value={values.position || ""}
+                onChange={handleChange}
+                title="Position"
+                placeholder="Select Position"
+                selectedValue={values.position[0]}
+                options={positionOptions}
+                disabled={
+                  positionsLoading ||
+                  positionsError ||
+                  !positionsData?.positions?.length
+                }
+              />
+              {positionsError && (
+                <p className="text-xs text-red-500 px-2">
+                  Failed to load positions. Please try refreshing the page.
+                </p>
+              )}
+              {!positionsLoading &&
+                !positionsError &&
+                !positionsData?.positions?.length && (
+                  <p className="text-xs text-amber-600 px-2">
+                    No positions found. Please create positions first in
+                    Settings → Company → Position Management.
+                  </p>
+                )}
+            </div>
             <Select
               errors={errors}
               name={"level"}
               touched={touched}
-              value={"Low"}
+              value={values.level || ""}
               onChange={handleChange}
-              title="Experince Level"
+              title="Experience Level"
+              placeholder="Select Experience Level"
               options={["Low", "Medium", "High"]}
             />
 
@@ -113,7 +151,8 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
                 <PrimaryButton
                   // loading={isSubmitting}
                   type="submit"
-                  title="Save Task"
+                  title="Save Employee"
+                  disabled={isSubmitting || positionsLoading}
                 />
               </div>
             </div>

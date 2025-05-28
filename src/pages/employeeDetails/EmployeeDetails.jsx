@@ -8,11 +8,13 @@ import {
   useGetEmployee,
   useGetEmployeeProjects,
   useGetEmployeeTeams,
+  useGetEmployeeVacations,
 } from "../../api/hooks";
 import Dropdown from "../../components/shared/dropdown";
 import EmployeeCard from "../../components/shared/employeeCard";
 import Progress from "../../components/shared/progress";
 import LeaveCard from "../../components/shared/LeaveCard";
+import { format } from "date-fns";
 
 const EmployeeDetails = () => {
   const { employeeId } = useParams();
@@ -77,7 +79,7 @@ const EmployeeDetails = () => {
         <div className="flex-1 flex flex-col gap-y-5">
           <div className="flexBetween">
             <div className="flex bg-[#E6EDF5] rounded-full p-1">
-              {["Projects", "Teams", "Vaccations"].map((item, index) => (
+              {["Projects", "Teams", "Vacations"].map((item, index) => (
                 <button
                   key={index}
                   onClick={() => setActivePage(item)}
@@ -107,7 +109,9 @@ const EmployeeDetails = () => {
               <Projects projects={projects} isLoading={isLoadingProjects} />
             )}
             {activePage === "Teams" && <Teams teams={teamsData?.teams || []} />}
-            {activePage === "Vaccations" && <Vaccations vaccations={[]} />}
+            {activePage === "Vacations" && (
+              <Vacations employeeId={employeeId} />
+            )}
           </div>
         </div>
       </div>
@@ -179,17 +183,40 @@ const Teams = ({ teams }) => {
   );
 };
 
-const Vaccations = ({ vaccations }) => {
-  if (!vaccations?.length === 0) {
+const Vacations = ({ employeeId }) => {
+  const [currentDate] = useState(new Date());
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  const { data, isLoading } = useGetEmployeeVacations(
+    employeeId,
+    currentMonth,
+    currentYear
+  );
+
+  if (isLoading) {
     return (
-      <div
-        className="text-center w-full h-full flex items-center 
-      justify-center text-gray-500"
-      >
-        No vaccations found for this employee
+      <div className="flex items-center justify-center h-full">
+        <div className="w-8 h-8 border-4 border-[#E6EBF5] border-t-[#3F8CFF] rounded-full animate-spin"></div>
       </div>
     );
   }
+
+  if (!data) {
+    return (
+      <div className="text-center w-full h-full flex items-center justify-center text-gray-500">
+        No vacation data found for this employee
+      </div>
+    );
+  }
+
+  const { summary, vacations } = data;
+
+  // Calculate vacation limits - these would ideally come from a company policy setting
+  const vacationLimit = 16;
+  const sickLeaveLimit = 12;
+  const remoteWorkLimit = 50;
+
   return (
     <div className="flex flex-col w-full h-full overflow-y-auto">
       <div className="grid grid-cols-3 gap-5">
@@ -198,20 +225,21 @@ const Vaccations = ({ vaccations }) => {
             <div className="flex items-center w-fit relative justify-start">
               <Progress
                 size={62}
-                currentValue={12}
-                target={16}
+                currentValue={vacationLimit - (summary?.vacation || 0)}
+                target={vacationLimit}
                 DefaultPathColor="#15C0E6"
               />
               <span
                 className="absolute w-fit h-fit m-auto top-0 left-0 right-0 bottom-0
                flexCenter text-2xl font-semibold text-[#15C0E6]"
               >
-                12
+                {vacationLimit - (summary?.vacation || 0)}
               </span>
             </div>
             <h4 className="mt-3 mb-1 font-semibold text-gray-800">Vacation</h4>
             <p className="text-xs text-gray-400 font-medium">
-              12/16 days available
+              {vacationLimit - (summary?.vacation || 0)}/{vacationLimit} days
+              available
             </p>
           </div>
         </div>
@@ -220,22 +248,23 @@ const Vaccations = ({ vaccations }) => {
             <div className="flex items-center w-fit relative justify-start">
               <Progress
                 size={62}
-                currentValue={6}
-                target={12}
+                currentValue={sickLeaveLimit - (summary?.sick_leave || 0)}
+                target={sickLeaveLimit}
                 DefaultPathColor="#F65160"
               />
               <span
                 className="absolute w-fit h-fit m-auto top-0 left-0 right-0 bottom-0
                flexCenter text-2xl font-semibold text-[#F65160]"
               >
-                6
+                {sickLeaveLimit - (summary?.sick_leave || 0)}
               </span>
             </div>
             <h4 className="mt-3 mb-1 font-semibold text-gray-800">
               Sick Leave
             </h4>
             <p className="text-xs text-gray-400 font-medium">
-              6/12 days available
+              {sickLeaveLimit - (summary?.sick_leave || 0)}/{sickLeaveLimit}{" "}
+              days available
             </p>
           </div>
         </div>
@@ -244,29 +273,56 @@ const Vaccations = ({ vaccations }) => {
             <div className="flex items-center w-fit relative justify-start">
               <Progress
                 size={62}
-                currentValue={42}
-                target={50}
+                currentValue={remoteWorkLimit - (summary?.remote_work || 0)}
+                target={remoteWorkLimit}
                 DefaultPathColor="#6D5DD3"
               />
               <span
                 className="absolute w-fit h-fit m-auto top-0 left-0 right-0 bottom-0
                flexCenter text-2xl font-semibold text-[#6D5DD3]"
               >
-                42
+                {remoteWorkLimit - (summary?.remote_work || 0)}
               </span>
             </div>
             <h4 className="mt-3 mb-1 font-semibold text-gray-800">
               Work Remotely
             </h4>
             <p className="text-xs text-gray-400 font-medium">
-              42/50 days available
+              {remoteWorkLimit - (summary?.remote_work || 0)}/{remoteWorkLimit}{" "}
+              days available
             </p>
           </div>
         </div>
       </div>
-      <h3 className="text-lg font-bold mt-5 text-gray-800">My Requests</h3>
-      <div className="w-full h-full flex flex-col overflow-y-auto mt-3">
-        <LeaveCard />
+      <h3 className="text-lg font-bold mt-5 mb-3 text-gray-800">
+        Vacation Requests
+      </h3>
+      <div className="w-full h-full overflow-y-auto">
+        {vacations && vacations.length > 0 ? (
+          vacations.map((vacation) => (
+            <LeaveCard
+              key={vacation._id}
+              request={{
+                id: vacation._id,
+                type: vacation.type,
+                status: vacation.status,
+                startDate: vacation.startDate,
+                endDate: vacation.endDate,
+                duration: vacation.durationDays,
+                reason: vacation.reason,
+                project: vacation.project?.name,
+                createdAt: vacation.createdAt,
+                approvedBy: vacation.approvedBy
+                  ? `${vacation.approvedBy.firstName} ${vacation.approvedBy.lastName}`
+                  : null,
+              }}
+            />
+          ))
+        ) : (
+          <div className="bg-white h-full flexCenter rounded-3xl p-6 text-center text-gray-500">
+            No vacation requests found
+          </div>
+        )}
       </div>
     </div>
   );
