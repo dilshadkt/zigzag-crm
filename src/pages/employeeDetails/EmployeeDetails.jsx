@@ -15,9 +15,12 @@ import EmployeeCard from "../../components/shared/employeeCard";
 import Progress from "../../components/shared/progress";
 import LeaveCard from "../../components/shared/LeaveCard";
 import { format } from "date-fns";
+import { useAuth } from "../../hooks/useAuth";
 
 const EmployeeDetails = () => {
   const { employeeId } = useParams();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "company-admin";
   const [activePage, setActivePage] = useState("Projects");
   const [selectedProject, setSelectedProject] = useState("");
   const { data: employeeData, isLoading: isLoadingEmployee } =
@@ -73,8 +76,10 @@ const EmployeeDetails = () => {
             level: employee.level,
             gender: employee.gender,
             dob: employee.dob,
+            firstName: employee.firstName,
           }}
-          disableEdit={true}
+          disableEdit={!isAdmin}
+          employeeId={employeeId}
         />
         <div className="flex-1 flex flex-col gap-y-5">
           <div className="flexBetween">

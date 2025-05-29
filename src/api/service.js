@@ -59,7 +59,16 @@ export const updateProject = async (updatedData, projectId) => {
   return data;
 };
 
-export const updatedProfile = async (updatedData) => {
+export const updatedProfile = async (updatedData, employeeId = null) => {
+  // If employeeId is provided, add it to the data
+  if (employeeId) {
+    if (updatedData instanceof FormData) {
+      updatedData.append("employeeId", employeeId);
+    } else {
+      updatedData = { ...updatedData, employeeId };
+    }
+  }
+
   const headers = {
     "Content-Type":
       updatedData instanceof FormData
@@ -71,6 +80,7 @@ export const updatedProfile = async (updatedData) => {
   });
   return data;
 };
+
 export const createTask = async (taskData, projectId) => {
   // api formated data
   const data = {

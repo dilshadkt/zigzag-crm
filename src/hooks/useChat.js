@@ -25,6 +25,13 @@ export const useChat = () => {
   // Socket event handlers (defined first to avoid hoisting issues)
   const handleNewMessage = useCallback(
     (message) => {
+      console.log("📨 Received message via socket:", {
+        id: message._id || message.id,
+        content: (message.content || message.message)?.substring(0, 30) + "...",
+        conversationId: message.conversationId || message.conversation,
+        sender: message.sender?._id || message.sender?.id || message.sender,
+      });
+
       // Ensure we use the correct conversation ID
       const conversationId = message.conversationId || message.conversation;
 
@@ -41,8 +48,8 @@ export const useChat = () => {
           const recentOptimisticMessage = conversationMessages.find(
             (msg) =>
               msg.isPending &&
-              msg.message === message.content &&
-              Math.abs(new Date() - new Date(msg.timestamp)) < 10000 // Within 10 seconds
+              msg.message === (message.content || message.message) &&
+              Math.abs(new Date() - new Date(msg.timestamp)) < 30000 // Within 30 seconds
           );
 
           if (recentOptimisticMessage) {
@@ -63,20 +70,36 @@ export const useChat = () => {
           }
         }
 
-        // Check if message already exists (prevent other types of duplicates)
-        const messageExists = conversationMessages.some(
-          (msg) =>
-            msg.id === (message._id || message.id) ||
-            (msg.message === message.content &&
-              Math.abs(new Date(msg.timestamp) - new Date(message.createdAt)) <
-                5000)
-        );
+        // Enhanced duplicate detection
+        const messageContent = message.content || message.message;
+        const messageId = message._id || message.id;
+        const messageTime = new Date(message.createdAt || message.timestamp);
+
+        const messageExists = conversationMessages.some((msg) => {
+          // Check by ID first (most reliable)
+          if (msg.id === messageId) {
+            console.log("🚫 Duplicate detected by ID:", messageId);
+            return true;
+          }
+
+          // Check by content and time (for messages without proper IDs)
+          const msgContent = msg.message || msg.content;
+          const msgTime = new Date(msg.timestamp || msg.createdAt);
+          const timeDiff = Math.abs(msgTime - messageTime);
+
+          if (msgContent === messageContent && timeDiff < 5000) {
+            console.log("🚫 Duplicate detected by content+time:", {
+              content: messageContent?.substring(0, 20) + "...",
+              timeDiff: timeDiff + "ms",
+            });
+            return true;
+          }
+
+          return false;
+        });
 
         if (messageExists) {
-          console.log(
-            "Message already exists, skipping duplicate:",
-            message._id || message.id
-          );
+          console.log("Message already exists, skipping duplicate:", messageId);
           return prev;
         }
 
@@ -85,7 +108,10 @@ export const useChat = () => {
           [message],
           currentUserId
         )[0];
-        console.log("📨 Adding new message from socket:", transformedMessage);
+        console.log("✅ Adding new message from socket:", {
+          id: transformedMessage.id,
+          content: transformedMessage.message?.substring(0, 30) + "...",
+        });
 
         return {
           ...prev,
@@ -115,8 +141,8 @@ export const useChat = () => {
 
             return {
               ...conv,
-              lastMessage: message.content,
-              lastMessageTime: message.createdAt,
+              lastMessage: message.content || message.message,
+              lastMessageTime: message.createdAt || message.timestamp,
               unreadCount: newUnreadCount,
               unread: newUnreadCount, // Keep both for compatibility
             };
@@ -291,25 +317,98 @@ export const useChat = () => {
 
   // Load messages for a conversation
   const loadMessages = async (conversationId) => {
-    if (messages[conversationId]) {
+    // Check if messages are already loaded and not empty
+    if (messages[conversationId] && messages[conversationId].length > 0) {
+      console.log(
+        "📋 Messages already loaded for conversation:",
+        conversationId
+      );
       return; // Already loaded
     }
 
+    // Check if we're already loading this conversation
+    if (loadMessages._loading && loadMessages._loading.has(conversationId)) {
+      console.log(
+        "⏳ Already loading messages for conversation:",
+        conversationId
+      );
+      return;
+    }
+
+    // Initialize loading tracker if it doesn't exist
+    if (!loadMessages._loading) {
+      loadMessages._loading = new Set();
+    }
+    loadMessages._loading.add(conversationId);
+
     try {
+      console.log("📥 Loading messages for conversation:", conversationId);
       const result = await chatService.getMessages(conversationId);
       if (result.success) {
+        const rawMessages = result.data.messages || [];
+        console.log(`📦 Raw messages from API: ${rawMessages.length}`);
+
+        // Deduplicate messages before transformation
+        const uniqueMessages = [];
+        const seenIds = new Set();
+        const seenContentTime = new Set();
+
+        rawMessages.forEach((msg) => {
+          const messageId = msg._id || msg.id;
+          const messageContent = msg.content || msg.message;
+          const messageTime = new Date(
+            msg.createdAt || msg.timestamp
+          ).getTime();
+          const contentTimeKey = `${messageContent}_${messageTime}`;
+
+          // Skip if we've seen this exact ID
+          if (seenIds.has(messageId)) {
+            console.log("🚫 Skipping duplicate message by ID:", messageId);
+            return;
+          }
+
+          // Skip if we've seen this exact content and time combination
+          if (seenContentTime.has(contentTimeKey)) {
+            console.log(
+              "🚫 Skipping duplicate message by content+time:",
+              contentTimeKey
+            );
+            return;
+          }
+
+          seenIds.add(messageId);
+          seenContentTime.add(contentTimeKey);
+          uniqueMessages.push(msg);
+        });
+
+        console.log(
+          `📦 Unique messages after deduplication: ${uniqueMessages.length}`
+        );
+
         const transformedMessages = transformMessageData(
-          result.data.messages || [],
+          uniqueMessages,
           currentUserId
+        );
+
+        console.log(
+          `📦 Loaded ${transformedMessages.length} messages for conversation:`,
+          conversationId
         );
 
         setMessages((prev) => ({
           ...prev,
           [conversationId]: transformedMessages,
         }));
+      } else {
+        console.error("❌ Failed to load messages:", result.message);
+        setError("Failed to load messages");
       }
     } catch (err) {
+      console.error("❌ Error loading messages:", err);
       setError("Failed to load messages");
+    } finally {
+      // Remove from loading tracker
+      loadMessages._loading?.delete(conversationId);
     }
   };
 

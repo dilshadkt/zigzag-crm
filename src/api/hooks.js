@@ -87,11 +87,32 @@ export const useCreateTask = (handleClose, projectId) => {
   });
 };
 
-export const useUpdateProfile = (handleSuccess) => {
+export const useUpdateProfile = (handleSuccess, employeeId = null) => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationKey: ["updateProfile"],
-    mutationFn: (updatedData) => updatedProfile(updatedData),
-    onSuccess: () => handleSuccess(),
+    mutationKey: ["updateProfile", employeeId],
+    mutationFn: (updatedData) => updatedProfile(updatedData, employeeId),
+    onSuccess: (data, variables) => {
+      // Invalidate all employee-related queries
+      queryClient.invalidateQueries(["employee"]);
+      queryClient.invalidateQueries(["employees"]);
+
+      // If we have the updated employee data, update the specific employee cache
+      if (data?.employee?._id) {
+        queryClient.setQueryData(["employee", data.employee._id], data);
+        // Also invalidate the specific employee query to ensure fresh data
+        queryClient.invalidateQueries(["employee", data.employee._id]);
+      }
+
+      // Invalidate auth-related queries that might contain user profile data
+      queryClient.invalidateQueries(["auth"]);
+      queryClient.invalidateQueries(["user"]);
+
+      // Call the success handler if provided
+      if (handleSuccess) {
+        handleSuccess(data);
+      }
+    },
   });
 };
 
@@ -602,5 +623,28 @@ export const useGetEmployeeTasksToday = (employeeId) => {
     enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+};
+
+export const useDeleteEmployee = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteEmployee"],
+    mutationFn: (employeeId) =>
+      apiClient.delete(`/employee/${employeeId}`).then((res) => res.data),
+    onSuccess: () => {
+      // Invalidate all employee-related queries
+      queryClient.invalidateQueries(["employees"]);
+      queryClient.invalidateQueries(["employee"]);
+      queryClient.invalidateQueries(["employeeProjects"]);
+      queryClient.invalidateQueries(["employeeTeams"]);
+      queryClient.invalidateQueries(["employeeVacations"]);
+      queryClient.invalidateQueries(["employeeTasks"]);
+      queryClient.invalidateQueries(["employeeTasksToday"]);
+      queryClient.invalidateQueries(["employeeBirthdays"]);
+      // Also invalidate project queries as team members might have changed
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["companyProjects"]);
+    },
   });
 };

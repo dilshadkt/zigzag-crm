@@ -18,6 +18,31 @@ const ChatWindow = ({
   onlineUsers = [],
   loading = false,
 }) => {
+  // Debug logging to track message rendering
+  React.useEffect(() => {
+    if (selectedConversation && messages.length > 0) {
+      console.log(
+        `🎨 ChatWindow rendering ${messages.length} messages for conversation:`,
+        selectedConversation.name
+      );
+      console.log(
+        "📋 Message IDs:",
+        messages.map((m) => ({
+          id: m.id,
+          content: m.message?.substring(0, 20) + "...",
+          isPending: m.isPending,
+        }))
+      );
+
+      // Check for duplicate IDs
+      const messageIds = messages.map((m) => m.id);
+      const uniqueIds = [...new Set(messageIds)];
+      if (messageIds.length !== uniqueIds.length) {
+        console.warn("⚠️ DUPLICATE MESSAGE IDs DETECTED:", messageIds);
+      }
+    }
+  }, [selectedConversation, messages]);
+
   if (!selectedConversation) {
     return (
       <div className="col-span-3 overflow-y-auto flex flex-col">
