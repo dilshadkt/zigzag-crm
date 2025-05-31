@@ -27,6 +27,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask }) => {
             <StatusButton taskDetails={taskDetails} />
           </div>
           <p className="text-gray-600 mt-2">{taskDetails?.description}</p>
+          {taskDetails?.copyOfDescription && (
+            <div className="mt-4">
+              <h5 className="text-sm font-medium text-[#91929E] uppercase mb-2">
+                Copy of Description
+              </h5>
+              <p className="text-gray-600">{taskDetails?.copyOfDescription}</p>
+            </div>
+          )}
           <FileAndLinkUpload
             disable={true}
             fileClassName={"grid grid-cols-3 gap-3"}
