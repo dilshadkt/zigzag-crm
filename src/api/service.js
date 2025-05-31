@@ -86,6 +86,7 @@ export const createTask = async (taskData, projectId) => {
   const data = {
     title: taskData?.title,
     description: taskData?.description,
+    copyOfDescription: taskData?.copyOfDescription,
     project: `${projectId}`,
     attachments: taskData?.attachments,
     assignedTo: taskData?.assignee,

@@ -10,6 +10,7 @@ import { useCompanyProjects, useGetEmployeeProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import ProjectCard from "../../components/shared/projectCard";
 import EmployeeProgressStats from "../../components/dashboard/employeeProgressStats";
+import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(() =>
@@ -19,6 +20,7 @@ const EmployeeWorkDetails = lazy(() =>
 const Dashboard = () => {
   const { companyId, user } = useAuth();
   const isEmployee = user?.role === "employee";
+  const isCompanyAdmin = user?.role === "company-admin";
 
   // Fetch projects based on user role
   const { data: companyProjects } = useCompanyProjects(
@@ -63,6 +65,16 @@ const Dashboard = () => {
           <span>{dateRange}</span>
         </div>
       </div>
+
+      {/* Progress Stats Section - Show different components based on user role */}
+      <div className="w-full grid grid-cols-7 gap-x-6 mt-5">
+        {isEmployee ? (
+          <EmployeeProgressStats />
+        ) : isCompanyAdmin ? (
+          <CompanyProgressStats />
+        ) : null}
+      </div>
+
       <div className="w-full grid grid-cols-7 gap-x-6 mt-5">
         {/* work load section or employee work details */}
         {isEmployee ? (
@@ -78,11 +90,6 @@ const Dashboard = () => {
       </div>
 
       {/* Employee Progress Statistics - Only for employees */}
-      {isEmployee && (
-        <div className="w-full grid grid-cols-7 gap-x-6 mt-5">
-          <EmployeeProgressStats />
-        </div>
-      )}
 
       <div
         className={`w-full grid gap-x-6 mt-5 ${

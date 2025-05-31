@@ -20,7 +20,6 @@ const ProjectDetailLayout = () => {
   const { isCompany } = useAuth();
 
   const handleSubmit = async (values) => {
-  
     const updatedValues = { ...values };
     const { assignedTo, ...restValues } = updatedValues;
     updatedValues.assignee = assignedTo;

@@ -10,6 +10,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     dueDate: defaultValue?.dueDate || "",
     periority: defaultValue?.priority || "",
     assignedTo: defaultValue?.assignedTo?._id || "",
+    copyOfDescription: defaultValue?.copyOfDescription || "",
     description: defaultValue?.description || "",
   };
   const validationSchema = Yup.object().shape({
@@ -19,6 +20,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     dueDate: Yup.string().required("Due date is required"),
     periority: Yup.string().required("Periority is required"),
     assignedTo: Yup.string().required("Assignee is required"),
+    copyOfDescription: Yup.string().required("Copy of description is required"),
     description: Yup.string().required("Description is required"),
   });
   const formik = useFormik({

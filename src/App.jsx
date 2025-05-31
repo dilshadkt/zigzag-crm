@@ -11,6 +11,7 @@ import Events from "./pages/events";
 import WorkLoad from "./pages/workLoad";
 import ProjectDetails from "./pages/projectDetail";
 import TaskDetails from "./pages/taskDetails";
+import CompanyTasks from "./pages/companyTasks";
 import SettingsLayout from "./layouts/settings";
 import Account from "./pages/settings/accounts";
 import AuthLayout from "./layouts/auth";
@@ -122,6 +123,14 @@ function App() {
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />
             <Route path="workload" element={<WorkLoad />} />
+            <Route
+              path="company-tasks"
+              element={
+                <WithRoleAcess allowedRoles={["company-admin"]}>
+                  <CompanyTasks />
+                </WithRoleAcess>
+              }
+            />
             <Route path="settings" element={<SettingsLayout />}>
               <Route path="account" element={<Account />} />
               <Route path="notifications" element={<Notification />} />

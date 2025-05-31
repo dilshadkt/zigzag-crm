@@ -193,6 +193,16 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   errors={errors}
                   onChange={handleChange}
                   touched={touched}
+                  name={"copyOfDescription"}
+                  value={values}
+                  title="Copy of Description"
+                  placeholder="Add copy of description"
+                  disabled={!isTaskGroupSelected}
+                />
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
                   name={"description"}
                   value={values}
                   title="Description"

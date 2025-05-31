@@ -626,6 +626,143 @@ export const useGetEmployeeTasksToday = (employeeId) => {
   });
 };
 
+// Company Statistics Hook - for admin dashboard overview
+export const useGetCompanyStats = (companyId) => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+
+  return useQuery({
+    queryKey: ["companyStats", companyId, currentYear, currentMonth],
+    queryFn: async () => {
+      try {
+        // Fetch multiple endpoints in parallel for company overview
+        const [companyTasks, projectsThisMonth, allProjects, allEmployees] =
+          await Promise.all([
+            apiClient.get("/tasks/company/all").then((res) => res.data),
+            apiClient.get("/projects/due-this-month").then((res) => res.data),
+            apiClient
+              .get(`/projects/company/${companyId}`)
+              .then((res) => res.data),
+            apiClient.get("/employee").then((res) => res.data),
+          ]);
+
+        // Get task statistics from the new endpoint
+        const taskStats = companyTasks?.statistics || {
+          total: 0,
+          completed: 0,
+          inProgress: 0,
+          pending: 0,
+          overdue: 0,
+          completionRate: 0,
+          priorityDistribution: { high: 0, medium: 0, low: 0 },
+        };
+
+        // Calculate project statistics
+        const allProjectsData = allProjects?.projects || [];
+        const totalProjects = allProjectsData.length;
+        const projectsThisMonthData = projectsThisMonth?.projects || [];
+        const projectsDueThisMonth = projectsThisMonthData.length;
+
+        // Calculate employee statistics
+        const employeesData = allEmployees?.employees || [];
+        const totalEmployees = employeesData.length;
+        const activeEmployees = employeesData.filter(
+          (emp) => emp.active !== false
+        ).length;
+
+        // Calculate project progress average
+        const projectProgressAvg =
+          allProjectsData.length > 0
+            ? Math.round(
+                allProjectsData.reduce(
+                  (sum, project) => sum + (project.progress || 0),
+                  0
+                ) / allProjectsData.length
+              )
+            : 0;
+
+        return {
+          tasks: {
+            total: taskStats.total,
+            completed: taskStats.completed,
+            inProgress: taskStats.inProgress,
+            pending: taskStats.pending,
+            overdue: taskStats.overdue,
+            completionRate: taskStats.completionRate,
+          },
+          projects: {
+            total: totalProjects,
+            dueThisMonth: projectsDueThisMonth,
+            averageProgress: projectProgressAvg,
+          },
+          employees: {
+            total: totalEmployees,
+            active: activeEmployees,
+          },
+          overview: {
+            taskCompletionRate: taskStats.completionRate,
+            projectProgressAvg,
+            workloadDistribution: taskStats.priorityDistribution,
+          },
+        };
+      } catch (error) {
+        console.error("Error fetching company stats:", error);
+        // Return fallback data
+        return {
+          tasks: {
+            total: 0,
+            completed: 0,
+            inProgress: 0,
+            pending: 0,
+            overdue: 0,
+            completionRate: 0,
+          },
+          projects: {
+            total: 0,
+            dueThisMonth: 0,
+            averageProgress: 0,
+          },
+          employees: {
+            total: 0,
+            active: 0,
+          },
+          overview: {
+            taskCompletionRate: 0,
+            projectProgressAvg: 0,
+            workloadDistribution: {
+              high: 0,
+              medium: 0,
+              low: 0,
+            },
+          },
+        };
+      }
+    },
+    enabled: !!companyId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+};
+
+// Get All Company Tasks Hook - uses the new dedicated endpoint
+export const useGetAllCompanyTasks = (companyId) => {
+  return useQuery({
+    queryKey: ["allCompanyTasks", companyId],
+    queryFn: () =>
+      apiClient.get("/tasks/company/all").then((res) => {
+        return {
+          tasks: res.data.tasks || [],
+          statistics: res.data.statistics || {},
+          totalCount: res.data.tasks?.length || 0,
+        };
+      }),
+    enabled: !!companyId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 10, // 10 minutes
+  });
+};
+
 export const useDeleteEmployee = () => {
   const queryClient = useQueryClient();
   return useMutation({
