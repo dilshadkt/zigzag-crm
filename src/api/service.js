@@ -129,3 +129,63 @@ export const deleteProject = async (projectId) => {
   const response = await apiClient.delete(`/projects/${projectId}`);
   return response.data;
 };
+
+// SubTask API functions
+export const createSubTask = async (subTaskData) => {
+  try {
+    const response = await apiClient.post("/subtasks", {
+      title: subTaskData.title,
+      description: subTaskData.description,
+      parentTaskId: subTaskData.parentTaskId,
+      assignedTo: subTaskData.assignedTo,
+      priority: subTaskData.priority,
+      startDate: subTaskData.startDate,
+      dueDate: subTaskData.dueDate,
+      timeEstimate: subTaskData.timeEstimate,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating subtask:", error);
+    throw error;
+  }
+};
+
+export const getSubTasksByParentTask = async (parentTaskId) => {
+  try {
+    const response = await apiClient.get(`/subtasks/parent/${parentTaskId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching subtasks:", error);
+    throw error;
+  }
+};
+
+export const getSubTaskById = async (subTaskId) => {
+  try {
+    const response = await apiClient.get(`/subtasks/${subTaskId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching subtask:", error);
+    throw error;
+  }
+};
+
+export const updateSubTaskById = async (subTaskId, updateData) => {
+  try {
+    const response = await apiClient.put(`/subtasks/${subTaskId}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating subtask:", error);
+    throw error;
+  }
+};
+
+export const deleteSubTask = async (subTaskId) => {
+  try {
+    const response = await apiClient.delete(`/subtasks/${subTaskId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting subtask:", error);
+    throw error;
+  }
+};

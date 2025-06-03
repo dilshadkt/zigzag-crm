@@ -2,6 +2,7 @@ import React from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Description from "../../shared/Field/description";
 import Select from "../../shared/Field/select";
+import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
 import Input from "../../shared/Field/input";
 import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
@@ -84,6 +85,13 @@ const AddTask = ({
   const isTaskGroupSelected =
     values.taskGroup && values.taskGroup !== "Select task group";
 
+  const recurringOptions = [
+    { label: "Don't repeat", value: "none" },
+    { label: "Daily", value: "daily" },
+    { label: "Weekly", value: "weekly" },
+    { label: "Monthly", value: "monthly" },
+  ];
+
   if (!isOpen) return null;
   return (
     <div
@@ -163,32 +171,111 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   options={["Low", "Medium", "High"]}
                   disabled={!isTaskGroupSelected}
                 />
-                <Select
-                  title="Assignee"
+                <MultiSelect
+                  title="Assignees"
                   errors={errors}
                   onChange={handleChange}
                   touched={touched}
                   name={"assignedTo"}
-                  selectedValue={values?.assignedTo}
+                  value={values?.assignedTo || []}
                   options={
                     teams?.map((user) => ({
                       label: `${user.firstName} (${user.position})`,
                       value: user._id,
                     })) || []
                   }
-                  defaultValue={
-                    teams?.find((user) => user._id === values?.assignedTo)
-                      ? `${
-                          teams.find((user) => user._id === values?.assignedTo)
-                            .firstName
-                        } (${
-                          teams.find((user) => user._id === values?.assignedTo)
-                            .position
-                        })`
-                      : "Select Assignee"
-                  }
+                  placeholder="Select Assignees"
                   disabled={!isTaskGroupSelected}
                 />
+
+                {/* Recurring Task Section */}
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h5 className="text-sm font-medium text-gray-700 mb-3">
+                    Task Recurring
+                  </h5>
+
+                  <Select
+                    errors={errors}
+                    name={"recurringPattern"}
+                    touched={touched}
+                    value={values.recurringPattern || "none"}
+                    onChange={handleChange}
+                    title="Repeat"
+                    options={recurringOptions}
+                    disabled={!isTaskGroupSelected}
+                  />
+
+                  {values.recurringPattern &&
+                    values.recurringPattern !== "none" && (
+                      <div className="space-y-4 mt-4">
+                        <Input
+                          placeholder="1"
+                          title={`Every ${
+                            values.recurringPattern === "daily"
+                              ? "X days"
+                              : values.recurringPattern === "weekly"
+                              ? "X weeks"
+                              : "X months"
+                          }`}
+                          errors={errors}
+                          name={"recurringInterval"}
+                          onchange={handleChange}
+                          touched={touched}
+                          value={values}
+                          disabled={!isTaskGroupSelected}
+                          type="number"
+                          min="1"
+                        />
+
+                        <div className="grid gap-x-4 grid-cols-2">
+                          <DatePicker
+                            title="End Date (Optional)"
+                            errors={errors}
+                            value={values.recurringEndDate}
+                            onChange={handleChange}
+                            touched={touched}
+                            name={"recurringEndDate"}
+                            disabled={!isTaskGroupSelected}
+                          />
+                          <Input
+                            placeholder="10"
+                            title="Max Recurrences (Optional)"
+                            errors={errors}
+                            name={"maxRecurrences"}
+                            onchange={handleChange}
+                            touched={touched}
+                            value={values}
+                            disabled={!isTaskGroupSelected}
+                            type="number"
+                            min="1"
+                          />
+                        </div>
+
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="text-sm text-blue-800">
+                            <strong>📅 Recurring Schedule:</strong>
+                            <br />
+                            This task will repeat every{" "}
+                            {values.recurringInterval || 1}{" "}
+                            {values.recurringPattern === "daily" &&
+                              (values.recurringInterval > 1 ? "days" : "day")}
+                            {values.recurringPattern === "weekly" &&
+                              (values.recurringInterval > 1 ? "weeks" : "week")}
+                            {values.recurringPattern === "monthly" &&
+                              (values.recurringInterval > 1
+                                ? "months"
+                                : "month")}
+                            {values.recurringEndDate &&
+                              ` until ${values.recurringEndDate}`}
+                            {values.maxRecurrences &&
+                              ` for a maximum of ${values.maxRecurrences} times`}
+                            .
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                </div>
+
                 <Description
                   errors={errors}
                   onChange={handleChange}

@@ -13,6 +13,7 @@ import {
 } from "date-fns";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { FaGift } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
 import {
   useGetProjectsDueThisMonth,
   useGetTasksDueThisMonth,
@@ -85,13 +86,14 @@ const defaultColor = {
 };
 
 // Maximum number of items to display per day before showing a "more" indicator
-const MAX_ITEMS_PER_DAY = 3;
+const MAX_ITEMS_PER_DAY = 2;
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { user } = useAuth();
   const isEmployee = user?.role === "employee";
-  const [expandedDay, setExpandedDay] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDayData, setSelectedDayData] = useState(null);
   const { data: projectsData, isLoading: projectsLoading } =
     useGetProjectsDueThisMonth(currentDate);
   const { data: tasksData, isLoading: tasksLoading } =
@@ -183,13 +185,23 @@ const Calendar = () => {
       : text;
   };
 
-  // Toggle expanded view for a day
-  const toggleExpandDay = (date) => {
-    if (expandedDay && isSameDay(expandedDay, date)) {
-      setExpandedDay(null);
-    } else {
-      setExpandedDay(date);
-    }
+  // Open modal with events for selected day
+  const openEventsModal = (date) => {
+    const { projects, tasks, birthdays } = getItemsForDate(date);
+    setSelectedDayData({
+      date,
+      projects,
+      tasks,
+      birthdays,
+      formattedDate: format(date, "EEEE, MMMM d, yyyy"),
+    });
+    setModalOpen(true);
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedDayData(null);
   };
 
   // Day name headers for the calendar
@@ -198,7 +210,7 @@ const Calendar = () => {
   const isLoading = projectsLoading || tasksLoading || birthdaysLoading;
 
   // Render a project item in the calendar
-  const renderProjectItem = (project, idx) => {
+  const renderProjectItem = (project, idx, isModal = false) => {
     const colorStyle = getProjectStyle(project.priority);
     const progress = project.progress || 0;
     const hasThumb = project.thumbImg && project.thumbImg.trim() !== "";
@@ -213,7 +225,7 @@ const Calendar = () => {
           colorStyle.text
         } ${colorStyle.border} border 
         rounded-md cursor-pointer hover:shadow-sm transition-all 
-        duration-200 relative overflow-hidden`}
+        duration-200 relative overflow-hidden ${isModal ? "mb-2" : ""}`}
         title={`${project.name} (${
           project.priority || "medium"
         } priority) - ${progress}% complete`}
@@ -239,7 +251,9 @@ const Calendar = () => {
               />
             </div>
             <div className="flex-1 px-1.5 py-1 flex items-center justify-between">
-              <span className="truncate">{truncateText(project.name)}</span>
+              <span className="truncate">
+                {isModal ? project.name : truncateText(project.name)}
+              </span>
               <span className="text-xs font-semibold ml-1">{progress}%</span>
             </div>
           </div>
@@ -248,7 +262,9 @@ const Calendar = () => {
             <span
               className={`h-2 w-2 rounded-full ${colorStyle.dot} flex-shrink-0`}
             ></span>
-            <span className="truncate">{truncateText(project.name)}</span>
+            <span className="truncate">
+              {isModal ? project.name : truncateText(project.name)}
+            </span>
             <span className="text-xs font-semibold ml-auto">{progress}%</span>
           </div>
         )}
@@ -257,7 +273,7 @@ const Calendar = () => {
   };
 
   // Render a task item in the calendar
-  const renderTaskItem = (task, idx) => {
+  const renderTaskItem = (task, idx, isModal = false) => {
     const colorStyle = getTaskStyle(task);
     const statusText =
       {
@@ -272,9 +288,11 @@ const Calendar = () => {
           navigate(`/projects/${task.project?.name}/${task?._id}`);
         }}
         key={`task-${idx}`}
-        className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${colorStyle.border} border 
+        className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${
+          colorStyle.border
+        } border 
         rounded-md px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all 
-        duration-200 relative overflow-hidden mt-1`}
+        duration-200 relative overflow-hidden mt-1 ${isModal ? "mb-2" : ""}`}
         title={`Task: ${task.title} (${
           task.priority || "medium"
         } priority) - Status: ${statusText} - Project: ${task.project?.name}`}
@@ -283,17 +301,24 @@ const Calendar = () => {
           <span
             className={`h-2 w-2 rounded-full ${colorStyle.dot} flex-shrink-0`}
           ></span>
-          <span className="truncate flex-1">{truncateText(task.title)}</span>
+          <span className="truncate flex-1">
+            {isModal ? task.title : truncateText(task.title)}
+          </span>
           <span className="text-xs italic opacity-75 ml-auto">
             {statusText}
           </span>
         </div>
+        {isModal && task.project?.name && (
+          <div className="text-xs opacity-60 mt-1 ml-3">
+            Project: {task.project.name}
+          </div>
+        )}
       </div>
     );
   };
 
   // Render a birthday item in the calendar
-  const renderBirthdayItem = (employee, idx) => {
+  const renderBirthdayItem = (employee, idx, isModal = false) => {
     // Get first letter of name for avatar fallback
     const firstLetter = employee.firstName
       ? employee.firstName.charAt(0).toUpperCase()
@@ -302,9 +327,11 @@ const Calendar = () => {
     return (
       <div
         key={`birthday-${idx}`}
-        className={`text-xs ${birthdayColors.bg} ${birthdayColors.text} ${birthdayColors.border} border 
+        className={`text-xs ${birthdayColors.bg} ${birthdayColors.text} ${
+          birthdayColors.border
+        } border 
         rounded-md cursor-pointer hover:shadow-sm transition-all 
-        duration-200 relative overflow-hidden mt-1`}
+        duration-200 relative overflow-hidden mt-1 ${isModal ? "mb-2" : ""}`}
         title={`Happy ${employee.age}th Birthday to ${employee.firstName} ${
           employee.lastName || ""
         }!`}
@@ -329,8 +356,89 @@ const Calendar = () => {
             <FaGift className="absolute -bottom-1 -right-1 text-[10px] text-purple-500" />
           </div>
           <span className="truncate flex-1">
-            {truncateText(`${employee.firstName}'s Birthday!`)}
+            {isModal
+              ? `${employee.firstName} ${employee.lastName || ""}'s Birthday!`
+              : truncateText(`${employee.firstName}'s Birthday!`)}
           </span>
+          {isModal && employee.age && (
+            <span className="text-xs opacity-60">{employee.age} years old</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Modal component
+  const EventsModal = () => {
+    if (!modalOpen || !selectedDayData) return null;
+
+    const { projects, tasks, birthdays, formattedDate } = selectedDayData;
+    const totalEvents = projects.length + tasks.length + birthdays.length;
+
+    return (
+      <div className="fixed inset-0 bg-black/45 bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Events for {formattedDate}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {totalEvents} event{totalEvents !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <button
+              onClick={closeModal}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <IoClose className="text-xl text-gray-500" />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
+            {/* Birthdays Section */}
+            {birthdays.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <FaGift className="text-purple-500" />
+                  Birthdays ({birthdays.length})
+                </h4>
+                {birthdays.map((birthday, idx) =>
+                  renderBirthdayItem(birthday, idx, true)
+                )}
+              </div>
+            )}
+
+            {/* Projects Section */}
+            {projects.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Project Deadlines ({projects.length})
+                </h4>
+                {projects.map((project, idx) =>
+                  renderProjectItem(project, idx, true)
+                )}
+              </div>
+            )}
+
+            {/* Tasks Section */}
+            {tasks.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Task Due Dates ({tasks.length})
+                </h4>
+                {tasks.map((task, idx) => renderTaskItem(task, idx, true))}
+              </div>
+            )}
+
+            {totalEvents === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No events scheduled for this day
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -394,13 +502,6 @@ const Calendar = () => {
               key={index}
               className={`min-h-[120px] border border-[#E6EBF5] relative p-1
                 ${isToday(item.fullDate) ? "bg-blue-50" : ""}
-                ${
-                  expandedDay &&
-                  item.fullDate &&
-                  isSameDay(expandedDay, item.fullDate)
-                    ? "z-10"
-                    : ""
-                }
               `}
             >
               {/* Date Number */}
@@ -419,7 +520,7 @@ const Calendar = () => {
 
               {/* Projects, Tasks and Birthdays for this date */}
               {item?.fullDate && (
-                <div className="mt-8 flex flex-col gap-1 pr-1">
+                <div className=" w-[85%] flex flex-col gap-1 pr-1">
                   {isLoading ? (
                     <div className="animate-pulse">
                       <div className="h-6 bg-gray-200 rounded-md mb-1"></div>
@@ -433,15 +534,13 @@ const Calendar = () => {
                       );
                       const totalItems =
                         projects.length + tasks.length + birthdays.length;
-                      const isExpanded =
-                        expandedDay && isSameDay(expandedDay, item.fullDate);
 
-                      // Determine which items to display
-                      const itemsToShow = isExpanded
-                        ? totalItems
-                        : Math.min(totalItems, MAX_ITEMS_PER_DAY);
-                      const hasMore =
-                        totalItems > MAX_ITEMS_PER_DAY && !isExpanded;
+                      // Show only up to MAX_ITEMS_PER_DAY items
+                      const itemsToShow = Math.min(
+                        totalItems,
+                        MAX_ITEMS_PER_DAY
+                      );
+                      const hasMore = totalItems > MAX_ITEMS_PER_DAY;
 
                       // Combine and sort all items (showing birthdays first, then projects, then tasks)
                       const displayItems = [
@@ -479,22 +578,11 @@ const Calendar = () => {
                           {/* Show "more" indicator if needed */}
                           {hasMore && (
                             <div
-                              onClick={() => toggleExpandDay(item.fullDate)}
+                              onClick={() => openEventsModal(item.fullDate)}
                               className="text-xs bg-gray-100 text-gray-700 rounded-md px-2 py-1.5 mt-1 
                                         cursor-pointer hover:bg-gray-200 text-center font-medium"
                             >
                               +{totalItems - MAX_ITEMS_PER_DAY} more
-                            </div>
-                          )}
-
-                          {/* Show "show less" if expanded */}
-                          {isExpanded && (
-                            <div
-                              onClick={() => setExpandedDay(null)}
-                              className="text-xs bg-gray-100 text-gray-700 rounded-md px-2 py-1 mt-1 
-                                        cursor-pointer hover:bg-gray-200 text-center"
-                            >
-                              Show less
                             </div>
                           )}
                         </>
@@ -508,7 +596,8 @@ const Calendar = () => {
         </div>
       </div>
 
-      {/* Day detail modal/popup could be added here if needed */}
+      {/* Events Modal */}
+      <EventsModal />
     </section>
   );
 };

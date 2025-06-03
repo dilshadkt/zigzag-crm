@@ -11,6 +11,11 @@ import {
   updateTaskById,
   updateTaskOrder,
   deleteProject,
+  createSubTask,
+  getSubTasksByParentTask,
+  getSubTaskById,
+  updateSubTaskById,
+  deleteSubTask,
 } from "./service";
 import { format } from "date-fns";
 
@@ -782,6 +787,62 @@ export const useDeleteEmployee = () => {
       // Also invalidate project queries as team members might have changed
       queryClient.invalidateQueries(["projectDetails"]);
       queryClient.invalidateQueries(["companyProjects"]);
+    },
+  });
+};
+
+// SubTask Hooks
+export const useCreateSubTask = (parentTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createSubTask"],
+    mutationFn: (subTaskData) => createSubTask(subTaskData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
+      queryClient.invalidateQueries(["getTaskById", parentTaskId]);
+    },
+  });
+};
+
+export const useGetSubTasksByParentTask = (parentTaskId) => {
+  return useQuery({
+    queryKey: ["subTasksByParentTask", parentTaskId],
+    queryFn: () => getSubTasksByParentTask(parentTaskId),
+    select: (data) => data?.subTasks || [],
+    enabled: !!parentTaskId,
+  });
+};
+
+export const useGetSubTaskById = (subTaskId) => {
+  return useQuery({
+    queryKey: ["getSubTaskById", subTaskId],
+    queryFn: () => getSubTaskById(subTaskId),
+    select: (data) => data?.subTask,
+    enabled: !!subTaskId,
+  });
+};
+
+export const useUpdateSubTaskById = (subTaskId, parentTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateSubTaskById", subTaskId],
+    mutationFn: (updateData) => updateSubTaskById(subTaskId, updateData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["getSubTaskById", subTaskId]);
+      queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
+      queryClient.invalidateQueries(["getTaskById", parentTaskId]);
+    },
+  });
+};
+
+export const useDeleteSubTask = (parentTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteSubTask"],
+    mutationFn: (subTaskId) => deleteSubTask(subTaskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
+      queryClient.invalidateQueries(["getTaskById", parentTaskId]);
     },
   });
 };

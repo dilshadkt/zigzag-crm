@@ -265,9 +265,37 @@ const CompanyTasks = () => {
                   <div className="flex items-center gap-6 text-sm text-gray-500">
                     <div className="flex items-center gap-2">
                       <FiUser className="w-4 h-4" />
-                      <span>
-                        {task.assignedTo?.firstName} {task.assignedTo?.lastName}
-                      </span>
+                      {task.assignedTo?.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-1">
+                            {task.assignedTo.slice(0, 2).map((user, index) => (
+                              <div
+                                key={user._id || index}
+                                className="w-5 h-5 rounded-full overflow-hidden border border-white"
+                                title={`${user.firstName} ${user.lastName}`}
+                              >
+                                <img
+                                  src={user?.profileImage}
+                                  alt={user?.firstName}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <span>
+                            {task.assignedTo
+                              .slice(0, 2)
+                              .map(
+                                (user) => `${user.firstName} ${user.lastName}`
+                              )
+                              .join(", ")}
+                            {task.assignedTo.length > 2 &&
+                              ` +${task.assignedTo.length - 2} more`}
+                          </span>
+                        </div>
+                      ) : (
+                        <span>Unassigned</span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">

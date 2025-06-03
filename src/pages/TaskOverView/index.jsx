@@ -45,6 +45,7 @@ const TaskOverView = () => {
       <TaskDetails
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}
+        teams={taskDetails?.teams}
       />
       {/* task info  */}
       <TaskInfo taskDetails={taskDetails} />

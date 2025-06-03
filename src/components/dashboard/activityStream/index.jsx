@@ -164,6 +164,7 @@ const ActivityStream = () => {
   }
 
   const activities = activitiesData?.data || [];
+  console.log(activities);
 
   return (
     <div className="flex mt-5 h-[450px] flex-col relative col-span-2 mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
@@ -205,14 +206,14 @@ const ActivityStream = () => {
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="22" fill="%23E5E7EB"/><text x="22" y="28" text-anchor="middle" font-size="16" font-family="Arial" fill="%236B7280">${activity.user.firstName.charAt(
-                          0
-                        )}</text></svg>`;
+                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="22" fill="%23E5E7EB"/><text x="22" y="28" text-anchor="middle" font-size="16" font-family="Arial" fill="%236B7280">${
+                          activity.user.firstName?.charAt(0) || "?"
+                        }</text></svg>`;
                       }}
                     />
                   ) : (
                     <span className="text-gray-600 font-medium text-lg">
-                      {activity.user.firstName.charAt(0)}
+                      {activity.user.firstName?.charAt(0) || "?"}
                     </span>
                   )}
                 </div>

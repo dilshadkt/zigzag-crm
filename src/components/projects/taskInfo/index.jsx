@@ -20,7 +20,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const navigate = useNavigate();
-
   const {
     data: timeLogData,
     isLoading,
@@ -28,7 +27,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   } = useGetTaskTimeLogs(taskDetails?._id);
   const createTimeLog = useCreateTimeLog();
   const deleteTask = useDeleteTask(taskDetails?.project, onTaskDeleted);
-
+  console.log(taskDetails);
   const handleLogTime = () => {
     if (!duration || !description) return;
 
@@ -82,30 +81,60 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
               <>
                 <span className="text-sm text-[#91929E]">Created By</span>
                 <div className="flexStart gap-x-3">
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                  <div className="w-6 h-6 rounded-full bg-gray-300 overflow-hidden">
                     <img
                       src={taskDetails?.creator?.profileImage}
                       alt=""
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <span>{taskDetails?.creator?.firstName}</span>
+                  <span>{taskDetails?.creator?.name}</span>
                 </div>
               </>
             )}
           </div>
           <div className="flex flex-col gap-y-2">
             <span className="text-sm text-[#91929E]">Assigned</span>
-            <div className="flexStart gap-x-3">
-              <div className="w-6 h-6 rounded-full overflow-hidden">
-                <img
-                  src={taskDetails?.assignedTo?.profileImage}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+            {taskDetails?.assignedTo?.length > 0 ? (
+              <div className="flex -space-x-2">
+                {taskDetails.assignedTo.slice(0, 4).map((user, index) => (
+                  <div
+                    key={user._id || index}
+                    className="w-8 h-8 rounded-full overflow-hidden border-2 border-white relative z-10 hover:z-20 transition-all duration-200 hover:scale-110"
+                    title={`${user?.firstName} ${user?.lastName || ""}`}
+                    style={{ zIndex: taskDetails.assignedTo.length - index }}
+                  >
+                    <img
+                      src={user?.profileImage}
+                      alt={user?.firstName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+                {taskDetails.assignedTo.length > 4 && (
+                  <div
+                    className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 text-xs flexCenter font-medium text-gray-600 relative z-10 hover:z-20 transition-all duration-200 hover:scale-110"
+                    title={`+${
+                      taskDetails.assignedTo.length - 4
+                    } more: ${taskDetails.assignedTo
+                      .slice(4)
+                      .map((user) => user.firstName)
+                      .join(", ")}`}
+                  >
+                    +{taskDetails.assignedTo.length - 4}
+                  </div>
+                )}
               </div>
-              <span>{taskDetails?.assignedTo?.firstName}</span>
-            </div>
+            ) : (
+              <div className="flex">
+                <div className="w-8 h-8 rounded-full bg-gray-200 flexCenter border-2 border-white">
+                  <span className="text-xs text-gray-500">?</span>
+                </div>
+                <span className="text-gray-500 text-sm ml-2 self-center">
+                  Unassigned
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-y-2">
             <span className="text-sm text-[#91929E]">Priority</span>

@@ -135,7 +135,35 @@ const TasksTab = ({ project, formatDate }) => {
                       {task.dueDate ? formatDate(task.dueDate) : "No due date"}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
-                      {task.assignedTo?.firstName || "Unassigned"}
+                      {task.assignedTo?.length > 0 ? (
+                        <div className="flex items-center space-x-1">
+                          <div className="flex -space-x-1">
+                            {task.assignedTo.slice(0, 2).map((user, index) => (
+                              <div
+                                key={user._id || index}
+                                className="w-5 h-5 rounded-full overflow-hidden border border-white"
+                                title={user.firstName}
+                              >
+                                <img
+                                  src={user?.profileImage}
+                                  alt={user?.firstName}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <span className="text-xs">
+                            {task.assignedTo
+                              .slice(0, 2)
+                              .map((user) => user.firstName)
+                              .join(", ")}
+                            {task.assignedTo.length > 2 &&
+                              ` +${task.assignedTo.length - 2}`}
+                          </span>
+                        </div>
+                      ) : (
+                        "Unassigned"
+                      )}
                     </td>
                   </tr>
                 ))}

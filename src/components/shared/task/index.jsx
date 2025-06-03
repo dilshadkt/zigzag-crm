@@ -79,13 +79,33 @@ const Task = ({
           </h4>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 overflow-hidden rounded-full">
-                <img
-                  src={task?.assignedTo?.profileImage}
-                  alt={task?.assignedTo?.firstName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {/* Multiple assignees display */}
+              {task?.assignedTo?.length > 0 ? (
+                <div className="flex -space-x-1">
+                  {task.assignedTo.slice(0, 3).map((user, index) => (
+                    <div
+                      key={user._id || index}
+                      className="w-6 h-6 overflow-hidden rounded-full border-2 border-white"
+                      title={user.firstName}
+                    >
+                      <img
+                        src={user?.profileImage}
+                        alt={user?.firstName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                  {task.assignedTo.length > 3 && (
+                    <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 text-xs flexCenter font-medium text-gray-600">
+                      +{task.assignedTo.length - 3}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gray-200 flexCenter">
+                  <span className="text-xs text-gray-500">?</span>
+                </div>
+              )}
               <div
                 className="flex items-center gap-1"
                 style={{ color: priorityColor }}
@@ -124,15 +144,35 @@ const Task = ({
           <h4 className="text-sm font-medium">{formatDate(task?.dueDate)}</h4>
         </div>
         <div className="flex flex-col gap-y-1">
-          <span className="text-sm text-[#91929E]">Assignee</span>
-
-          <div className="w-6 h-6 overflow-hidden rounded-full  flexCenter">
-            <img
-              src={task?.assignedTo?.profileImage}
-              alt={task?.assignedTo?.firstName}
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <span className="text-sm text-[#91929E]">Assignees</span>
+          {task?.assignedTo?.length > 0 ? (
+            <div className="flex items-center gap-1">
+              <div className="flex -space-x-1">
+                {task.assignedTo.slice(0, 2).map((user, index) => (
+                  <div
+                    key={user._id || index}
+                    className="w-6 h-6 overflow-hidden rounded-full border border-white"
+                    title={user.firstName}
+                  >
+                    <img
+                      src={user?.profileImage}
+                      alt={user?.firstName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+              {task.assignedTo.length > 2 && (
+                <span className="text-xs text-gray-500">
+                  +{task.assignedTo.length - 2}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-gray-200 flexCenter">
+              <span className="text-xs text-gray-500">?</span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Priority</span>
