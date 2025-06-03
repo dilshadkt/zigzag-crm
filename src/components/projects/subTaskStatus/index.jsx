@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 
-const SubTaskStatusButton = ({ subTask, parentTaskId }) => {
+const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
 
@@ -24,6 +24,8 @@ const SubTaskStatusButton = ({ subTask, parentTaskId }) => {
   );
 
   const handleStatusChange = async (newStatus) => {
+    if (!canEdit) return;
+
     try {
       await updateSubTaskMutation.mutateAsync({ status: newStatus });
       setIsOpen(false);
@@ -35,18 +37,19 @@ const SubTaskStatusButton = ({ subTask, parentTaskId }) => {
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => canEdit && setIsOpen(!isOpen)}
         className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
           currentStatus?.color || "bg-gray-100 text-gray-800"
-        }`}
-        disabled={updateSubTaskMutation.isLoading}
+        } ${!canEdit ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+        disabled={updateSubTaskMutation.isLoading || !canEdit}
+        title={!canEdit ? "You can only edit subtasks assigned to you" : ""}
       >
         {updateSubTaskMutation.isLoading
           ? "Updating..."
           : currentStatus?.label || "To Do"}
       </button>
 
-      {isOpen && (
+      {isOpen && canEdit && (
         <>
           <div
             className="fixed inset-0 z-10"

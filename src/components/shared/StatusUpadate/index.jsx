@@ -26,7 +26,7 @@ const statusColors = {
   },
 };
 
-const StatusButton = ({ taskDetails }) => {
+const StatusButton = ({ taskDetails, disabled = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const buttonRef = useRef(null);
   const { mutate } = useUpdateTaskById(taskDetails._id, () =>
@@ -51,6 +51,8 @@ const StatusButton = ({ taskDetails }) => {
 
   // Handle status update
   const handleStatusUpdate = (status) => {
+    if (disabled) return;
+
     if (taskDetails?.status !== status) {
       mutate({ status });
     }
@@ -65,10 +67,17 @@ const StatusButton = ({ taskDetails }) => {
     <div className="relative inline-block" ref={buttonRef}>
       {/* Button */}
       <button
-        onClick={() => setMenuOpen((prev) => !prev)}
+        onClick={() => !disabled && setMenuOpen((prev) => !prev)}
         className={`text-xs font-medium flex items-center justify-between gap-x-2 px-4 h-8
-                   ${colorScheme.text} ${colorScheme.bg} cursor-pointer rounded-lg
-                   border ${colorScheme.border} ${colorScheme.hover} transition-all`}
+                   ${colorScheme.text} ${colorScheme.bg} rounded-lg
+                   border ${colorScheme.border} transition-all
+                   ${
+                     disabled
+                       ? "opacity-60 cursor-not-allowed"
+                       : `cursor-pointer ${colorScheme.hover}`
+                   }`}
+        disabled={disabled}
+        title={disabled ? "You can only edit tasks assigned to you" : ""}
       >
         <span className="capitalize">{taskDetails?.status}</span>
         <IoIosArrowDown
@@ -79,7 +88,7 @@ const StatusButton = ({ taskDetails }) => {
       </button>
 
       {/* Dropdown Menu */}
-      {menuOpen && (
+      {menuOpen && !disabled && (
         <div
           className="absolute right-0 top-full mt-2 w-32
                      bg-white shadow-md border border-gray-200 rounded-lg z-10"

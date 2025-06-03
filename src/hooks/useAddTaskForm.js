@@ -7,6 +7,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
     title: defaultValue?.title || "",
     taskGroup: defaultValue?.taskGroup || "",
+    extraTaskWorkType: defaultValue?.extraTaskWorkType || "",
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
     periority: defaultValue?.priority || "",
@@ -28,6 +29,11 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
   const validationSchema = Yup.object().shape({
     title: Yup.string().required("Name is required"),
     taskGroup: Yup.string().required("Task group is required"),
+    extraTaskWorkType: Yup.string().when("taskGroup", {
+      is: "extraTask",
+      then: (schema) => schema.required("Extra task work type is required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
     startDate: Yup.string().required("Start date is required"),
     dueDate: Yup.string().required("Due date is required"),
     periority: Yup.string().required("Priority is required"),

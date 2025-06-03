@@ -21,13 +21,20 @@ const ProjectDetailLayout = () => {
 
   const handleSubmit = async (values) => {
     const updatedValues = { ...values };
-    const { assignedTo, ...restValues } = updatedValues;
-    updatedValues.assignee = assignedTo;
+
+    // Handle assignee field mapping
+    if (updatedValues.assignedTo) {
+      updatedValues.assignee = updatedValues.assignedTo;
+      delete updatedValues.assignedTo;
+    }
+
+    // Process attachments
     const proccesedValue = await processAttachments(
       values?.attachments,
       uploadSingleFile
     );
     updatedValues.attachments = proccesedValue;
+
     mutate(updatedValues);
   };
 

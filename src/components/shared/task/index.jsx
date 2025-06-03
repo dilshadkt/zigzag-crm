@@ -1,6 +1,7 @@
 import React from "react";
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
+import { BsPlusCircleFill } from "react-icons/bs";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import { formatDate } from "../../../lib/dateUtils";
 
@@ -37,6 +38,7 @@ const Task = ({
   const priorityColor =
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
   const progressValue = getProgressValue(task?.status);
+  const isExtraTask = task?.taskGroup === "extraTask";
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
@@ -71,12 +73,42 @@ const Task = ({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={() => handleClick()}
-        className="bg-white p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md transition-shadow"
+        className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md transition-shadow relative ${
+          isExtraTask
+            ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
+            : "bg-white"
+        }`}
       >
+        {/* Extra Task Badge */}
+        {isExtraTask && (
+          <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-1">
+            <BsPlusCircleFill className="text-xs" />
+          </div>
+        )}
+
         <div className="flex flex-col gap-3">
-          <h4 className="font-medium text-gray-800 line-clamp-2">
-            {task?.title}
-          </h4>
+          <div className="flex items-start justify-between">
+            <h4
+              className={`font-medium line-clamp-2 ${
+                isExtraTask ? "text-purple-800" : "text-gray-800"
+              }`}
+            >
+              {task?.title}
+            </h4>
+            {isExtraTask && (
+              <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium ml-2">
+                Extra
+              </span>
+            )}
+          </div>
+
+          {/* Extra Task Work Type */}
+          {isExtraTask && task?.extraTaskWorkType && (
+            <div className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded capitalize">
+              📌 {task.extraTaskWorkType} work
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {/* Multiple assignees display */}
@@ -128,11 +160,37 @@ const Task = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onClick={() => handleClick()}
-      className="grid grid-cols-10 cursor-pointer gap-x-3 px-5 bg-white py-5 rounded-3xl"
+      className={`grid grid-cols-10 cursor-pointer gap-x-3 px-5 py-5 rounded-3xl relative ${
+        isExtraTask
+          ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
+          : "bg-white"
+      }`}
     >
+      {/* Extra Task Badge for List View */}
+      {isExtraTask && (
+        <div className="absolute -top-1 -right-1 bg-purple-500 text-white rounded-full p-1">
+          <BsPlusCircleFill className="text-xs" />
+        </div>
+      )}
+
       <div className="col-span-3 gap-y-1 flex flex-col">
-        <span className="text-sm text-[#91929E]">Task Name</span>
-        <h4>{task?.title}</h4>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-[#91929E]">Task Name</span>
+          {isExtraTask && (
+            <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
+              Extra
+            </span>
+          )}
+        </div>
+        <h4 className={isExtraTask ? "text-purple-800 font-medium" : ""}>
+          {task?.title}
+        </h4>
+        {/* Extra Task Work Type in List View */}
+        {isExtraTask && task?.extraTaskWorkType && (
+          <div className="text-xs text-purple-600 mt-1">
+            📌 {task.extraTaskWorkType} work
+          </div>
+        )}
       </div>
       <div className="col-span-5  grid grid-cols-4">
         <div className="flex flex-col gap-y-1">

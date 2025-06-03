@@ -78,12 +78,55 @@ const AddTask = ({
       });
     }
 
+    // Always add Extra Task option
+    options.push({
+      label: "Extra Task",
+      value: "extraTask",
+    });
+
+    return options;
+  };
+
+  // Get extra task work type options
+  const getExtraTaskWorkTypeOptions = () => {
+    if (!projectData?.workDetails) return [];
+
+    const options = [];
+    const workDetails = projectData.workDetails;
+
+    // Add all work types as options for extra tasks
+    options.push({ label: "Reels", value: "reels" });
+    options.push({ label: "Poster", value: "poster" });
+    options.push({ label: "Motion Poster", value: "motionPoster" });
+    options.push({ label: "Shooting", value: "shooting" });
+    options.push({ label: "Motion Graphics", value: "motionGraphics" });
+
+    // Add other work types
+    if (workDetails.other?.length > 0) {
+      workDetails.other.forEach((item) => {
+        options.push({
+          label: item.name,
+          value: item.name,
+        });
+      });
+    }
+
+    // Add general option
+    options.push({ label: "General Extra Task", value: "general" });
+
     return options;
   };
 
   const taskGroupOptions = getTaskGroupOptions();
+  const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
   const isTaskGroupSelected =
     values.taskGroup && values.taskGroup !== "Select task group";
+  const isExtraTaskSelected = values.taskGroup === "extraTask";
+  const isExtraTaskWorkTypeSelected = isExtraTaskSelected
+    ? values.extraTaskWorkType &&
+      values.extraTaskWorkType !== "Select work type"
+    : true;
+  const isFormEnabled = isTaskGroupSelected && isExtraTaskWorkTypeSelected;
 
   const recurringOptions = [
     { label: "Don't repeat", value: "none" },
@@ -131,6 +174,25 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   required
                   disabled={isEdit}
                 />
+
+                {/* Extra Task Work Type Selection */}
+                {isExtraTaskSelected && (
+                  <Select
+                    errors={errors}
+                    touched={touched}
+                    name={"extraTaskWorkType"}
+                    selectedValue={
+                      values?.extraTaskWorkType || "Select work type"
+                    }
+                    value={values?.extraTaskWorkType || "Select work type"}
+                    onChange={handleChange}
+                    title="Extra Task Work Type"
+                    options={extraTaskWorkTypeOptions}
+                    defaultValue="Select work type"
+                    required
+                  />
+                )}
+
                 <Input
                   placeholder="Task Name"
                   title="Task Name"
@@ -139,7 +201,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onchange={handleChange}
                   touched={touched}
                   value={values}
-                  disabled={!isTaskGroupSelected}
+                  disabled={!isFormEnabled}
                 />
                 <div className="grid gap-x-4 grid-cols-2">
                   <DatePicker
@@ -149,7 +211,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     name={"startDate"}
                     title="Estimate"
                     touched={touched}
-                    disabled={!isTaskGroupSelected}
+                    disabled={!isFormEnabled}
                   />
                   <DatePicker
                     title="Dead Line"
@@ -158,7 +220,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     onChange={handleChange}
                     touched={touched}
                     name={"dueDate"}
-                    disabled={!isTaskGroupSelected}
+                    disabled={!isFormEnabled}
                   />
                 </div>
                 <Select
@@ -169,7 +231,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={handleChange}
                   title="Priority"
                   options={["Low", "Medium", "High"]}
-                  disabled={!isTaskGroupSelected}
+                  disabled={!isFormEnabled}
                 />
                 <MultiSelect
                   title="Assignees"
@@ -185,7 +247,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     })) || []
                   }
                   placeholder="Select Assignees"
-                  disabled={!isTaskGroupSelected}
+                  disabled={!isFormEnabled}
                 />
 
                 {/* Recurring Task Section */}
@@ -202,7 +264,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     onChange={handleChange}
                     title="Repeat"
                     options={recurringOptions}
-                    disabled={!isTaskGroupSelected}
+                    disabled={!isFormEnabled}
                   />
 
                   {values.recurringPattern &&
@@ -222,7 +284,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                           onchange={handleChange}
                           touched={touched}
                           value={values}
-                          disabled={!isTaskGroupSelected}
+                          disabled={!isFormEnabled}
                           type="number"
                           min="1"
                         />
@@ -235,7 +297,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                             onChange={handleChange}
                             touched={touched}
                             name={"recurringEndDate"}
-                            disabled={!isTaskGroupSelected}
+                            disabled={!isFormEnabled}
                           />
                           <Input
                             placeholder="10"
@@ -245,7 +307,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                             onchange={handleChange}
                             touched={touched}
                             value={values}
-                            disabled={!isTaskGroupSelected}
+                            disabled={!isFormEnabled}
                             type="number"
                             min="1"
                           />
@@ -282,9 +344,9 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   touched={touched}
                   name={"copyOfDescription"}
                   value={values}
-                  title="Copy of Description"
+                  title="Content for Description"
                   placeholder="Add copy of description"
-                  disabled={!isTaskGroupSelected}
+                  disabled={!isFormEnabled}
                 />
                 <Description
                   errors={errors}
@@ -292,9 +354,9 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   touched={touched}
                   name={"description"}
                   value={values}
-                  title="Description"
+                  title="Description for publishing"
                   placeholder="Add some description of the task"
-                  disabled={!isTaskGroupSelected}
+                  disabled={!isFormEnabled}
                 />
                 <div>
                   <FileAndLinkUpload
@@ -306,13 +368,13 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       (file) => file.type === "link"
                     )}
                     onChange={(files) => (values.attachments = files)}
-                    disabled={!isTaskGroupSelected}
+                    disabled={!isFormEnabled}
                   />
                   <div className="flexEnd">
                     <PrimaryButton
                       type="submit"
                       title="Save Task"
-                      disabled={!isTaskGroupSelected}
+                      disabled={!isFormEnabled}
                     />
                   </div>
                 </div>

@@ -94,6 +94,13 @@ export const createTask = async (taskData, projectId) => {
     dueDate: taskData?.dueDate,
     startDate: taskData?.startDate,
     taskGroup: taskData?.taskGroup,
+    extraTaskWorkType: taskData?.extraTaskWorkType,
+    // Recurring task fields
+    isRecurring: taskData?.isRecurring,
+    recurringPattern: taskData?.recurringPattern,
+    recurringInterval: taskData?.recurringInterval,
+    recurringEndDate: taskData?.recurringEndDate,
+    maxRecurrences: taskData?.maxRecurrences,
   };
   const response = await apiClient.post("/tasks", data);
   return response;

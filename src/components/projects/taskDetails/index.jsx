@@ -12,8 +12,16 @@ import {
 } from "../../../api/hooks";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
-  const { isCompany } = useAuth();
+  const { isCompany, user } = useAuth();
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
+
+  // Check if current user is assigned to this task
+  const isAssignedToTask = taskDetails?.assignedTo?.some(
+    (assignedUser) => assignedUser._id === user?.id
+  );
+
+  // Employees can only edit tasks assigned to them, company admins can edit any task
+  const canEditTask = isCompany || isAssignedToTask;
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
@@ -78,13 +86,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
           <h4 className="text-lg font-medium">Task Details</h4>
           <div className="flex gap-2">
             <PrimaryButton
-              disable={!isCompany}
+              disable={!canEditTask}
               className={"bg-[#3F8CFF] text-white"}
               title="Add Subtask"
               onclick={() => setShowSubTaskModal(true)}
             />
             <PrimaryButton
-              disable={!isCompany}
+              disable={!canEditTask}
               className={"bg-white "}
               icon={"/icons/edit.svg"}
               onclick={() => setShowModalTask(true)}
@@ -98,7 +106,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
             </span>
             <div className="flexBetween">
               <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
-              <StatusButton taskDetails={taskDetails} />
+              <StatusButton taskDetails={taskDetails} disabled={!canEditTask} />
             </div>
 
             {/* Recurring Task Info */}
@@ -262,101 +270,110 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
 
               {subTasks.length > 0 ? (
                 <div className="space-y-3">
-                  {subTasks.map((subtask) => (
-                    <div
-                      key={subtask._id}
-                      className="bg-gray-50 rounded-2xl p-4 relative group"
-                    >
-                      <div className="flexBetween mb-2">
-                        <h6 className="font-medium text-gray-800">
-                          {subtask.title}
-                        </h6>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              subtask.priority === "High"
-                                ? "bg-red-100 text-red-800"
-                                : subtask.priority === "Medium"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {subtask.priority}
-                          </span>
-                          <SubTaskStatusButton
-                            subTask={subtask}
-                            parentTaskId={taskDetails?._id}
-                          />
-                          {isCompany && (
-                            <button
-                              onClick={() => handleDeleteSubTask(subtask._id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-700 p-1"
-                              title="Delete subtask"
+                  {subTasks.map((subtask) => {
+                    // Check if current user is assigned to this subtask
+                    const isAssignedToSubTask = subtask.assignedTo?.some(
+                      (assignedUser) => assignedUser._id === user?.id
+                    );
+
+                    return (
+                      <div
+                        key={subtask._id}
+                        className="bg-gray-50 rounded-2xl p-4 relative group"
+                      >
+                        <div className="flexBetween mb-2">
+                          <h6 className="font-medium text-gray-800">
+                            {subtask.title}
+                          </h6>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                subtask.priority === "High"
+                                  ? "bg-red-100 text-red-800"
+                                  : subtask.priority === "Medium"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
+                              {subtask.priority}
+                            </span>
+                            <SubTaskStatusButton
+                              subTask={subtask}
+                              parentTaskId={taskDetails?._id}
+                              canEdit={isCompany || isAssignedToSubTask}
+                            />
+                            {/* Only company admins can delete subtasks */}
+                            {isCompany && (
+                              <button
+                                onClick={() => handleDeleteSubTask(subtask._id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-700 p-1"
+                                title="Delete subtask"
                               >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
-                          )}
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      {subtask.description && (
-                        <p className="text-sm text-gray-600 mb-2">
-                          {subtask.description}
-                        </p>
-                      )}
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <span>Assigned to:</span>
-                          {subtask.assignedTo?.length > 0 ? (
-                            <div className="flex items-center gap-1">
-                              <div className="flex -space-x-1">
-                                {subtask.assignedTo
-                                  .slice(0, 2)
-                                  .map((user, index) => (
-                                    <div
-                                      key={user._id || index}
-                                      className="w-4 h-4 overflow-hidden rounded-full border border-white"
-                                      title={user.firstName}
-                                    >
-                                      <img
-                                        src={user?.profileImage}
-                                        alt={user?.firstName}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                  ))}
+                        {subtask.description && (
+                          <p className="text-sm text-gray-600 mb-2">
+                            {subtask.description}
+                          </p>
+                        )}
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <span>Assigned to:</span>
+                            {subtask.assignedTo?.length > 0 ? (
+                              <div className="flex items-center gap-1">
+                                <div className="flex -space-x-1">
+                                  {subtask.assignedTo
+                                    .slice(0, 2)
+                                    .map((user, index) => (
+                                      <div
+                                        key={user._id || index}
+                                        className="w-4 h-4 overflow-hidden rounded-full border border-white"
+                                        title={user.firstName}
+                                      >
+                                        <img
+                                          src={user?.profileImage}
+                                          alt={user?.firstName}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                    ))}
+                                </div>
+                                <span>
+                                  {subtask.assignedTo
+                                    .slice(0, 2)
+                                    .map((user) => user.firstName)
+                                    .join(", ")}
+                                  {subtask.assignedTo.length > 2 &&
+                                    ` +${subtask.assignedTo.length - 2} more`}
+                                </span>
                               </div>
-                              <span>
-                                {subtask.assignedTo
-                                  .slice(0, 2)
-                                  .map((user) => user.firstName)
-                                  .join(", ")}
-                                {subtask.assignedTo.length > 2 &&
-                                  ` +${subtask.assignedTo.length - 2} more`}
-                              </span>
-                            </div>
-                          ) : (
-                            <span>Unassigned</span>
-                          )}
+                            ) : (
+                              <span>Unassigned</span>
+                            )}
+                          </div>
+                          <span>
+                            Due:{" "}
+                            {subtask.dueDate
+                              ? new Date(subtask.dueDate).toLocaleDateString()
+                              : "No date"}
+                          </span>
                         </div>
-                        <span>
-                          Due:{" "}
-                          {subtask.dueDate
-                            ? new Date(subtask.dueDate).toLocaleDateString()
-                            : "No date"}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">

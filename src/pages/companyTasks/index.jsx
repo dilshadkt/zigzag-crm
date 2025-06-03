@@ -13,6 +13,11 @@ import {
   FiPlay,
   FiPause,
   FiCheckCircle,
+  FiSearch,
+  FiFilter,
+  FiX,
+  FiChevronDown,
+  FiChevronUp,
 } from "react-icons/fi";
 
 const CompanyTasks = () => {
@@ -25,40 +30,210 @@ const CompanyTasks = () => {
   const { data: allTasksData, isLoading } = useGetAllCompanyTasks(companyId);
   const [filteredTasks, setFilteredTasks] = useState([]);
 
+  // Super filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [superFilters, setSuperFilters] = useState({
+    search: "",
+    status: [],
+    priority: [],
+    assignedTo: [],
+    project: [],
+    dateRange: {
+      start: "",
+      end: "",
+    },
+    sortBy: "dueDate", // Options: 'dueDate', 'priority', 'status', 'title', 'createdAt'
+    sortOrder: "asc", // 'asc' or 'desc'
+  });
+
+  // Get unique filter options from tasks
+  const getFilterOptions = () => {
+    if (!allTasksData?.tasks) return { users: [], projects: [] };
+
+    const users = [];
+    const projects = [];
+    const userIds = new Set();
+    const projectIds = new Set();
+
+    allTasksData.tasks.forEach((task) => {
+      task.assignedTo?.forEach((user) => {
+        if (!userIds.has(user._id)) {
+          userIds.add(user._id);
+          users.push(user);
+        }
+      });
+
+      if (task.project && !projectIds.has(task.project._id)) {
+        projectIds.add(task.project._id);
+        projects.push(task.project);
+      }
+    });
+
+    return { users, projects };
+  };
+
   useEffect(() => {
     if (allTasksData?.tasks) {
-      const today = new Date();
-      let filtered = [];
+      let filtered = [...allTasksData.tasks];
 
+      // Apply URL-based filter first
+      const today = new Date();
       switch (filter) {
         case "overdue":
-          filtered = allTasksData.tasks.filter((task) => {
+          filtered = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
             return dueDate < today && task.status !== "completed";
           });
           break;
         case "in-progress":
-          filtered = allTasksData.tasks.filter(
-            (task) => task.status === "in-progress"
-          );
+          filtered = filtered.filter((task) => task.status === "in-progress");
           break;
         case "pending":
-          filtered = allTasksData.tasks.filter(
-            (task) => task.status === "pending"
-          );
+          filtered = filtered.filter((task) => task.status === "pending");
           break;
         case "completed":
-          filtered = allTasksData.tasks.filter(
-            (task) => task.status === "completed"
-          );
+          filtered = filtered.filter((task) => task.status === "completed");
           break;
-        default:
-          filtered = allTasksData.tasks; // Show all tasks if no filter
+        // No default case - show all tasks for 'all' or no filter
       }
+
+      // Apply super filters
+      if (superFilters.search) {
+        filtered = filtered.filter(
+          (task) =>
+            task.title
+              .toLowerCase()
+              .includes(superFilters.search.toLowerCase()) ||
+            task.description
+              ?.toLowerCase()
+              .includes(superFilters.search.toLowerCase())
+        );
+      }
+
+      if (superFilters.status.length > 0) {
+        filtered = filtered.filter((task) =>
+          superFilters.status.includes(task.status)
+        );
+      }
+
+      if (superFilters.priority.length > 0) {
+        filtered = filtered.filter((task) =>
+          superFilters.priority.includes(task.priority)
+        );
+      }
+
+      if (superFilters.assignedTo.length > 0) {
+        filtered = filtered.filter((task) =>
+          task.assignedTo?.some((user) =>
+            superFilters.assignedTo.includes(user._id)
+          )
+        );
+      }
+
+      if (superFilters.project.length > 0) {
+        filtered = filtered.filter(
+          (task) =>
+            task.project && superFilters.project.includes(task.project._id)
+        );
+      }
+
+      if (superFilters.dateRange.start) {
+        const startDate = new Date(superFilters.dateRange.start);
+        filtered = filtered.filter((task) => {
+          const taskDate = new Date(task.dueDate);
+          return taskDate >= startDate;
+        });
+      }
+
+      if (superFilters.dateRange.end) {
+        const endDate = new Date(superFilters.dateRange.end);
+        filtered = filtered.filter((task) => {
+          const taskDate = new Date(task.dueDate);
+          return taskDate <= endDate;
+        });
+      }
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+
+        switch (superFilters.sortBy) {
+          case "title":
+            aValue = a.title.toLowerCase();
+            bValue = b.title.toLowerCase();
+            break;
+          case "priority":
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            aValue = priorityOrder[a.priority] || 0;
+            bValue = priorityOrder[b.priority] || 0;
+            break;
+          case "status":
+            const statusOrder = { pending: 1, "in-progress": 2, completed: 3 };
+            aValue = statusOrder[a.status] || 0;
+            bValue = statusOrder[b.status] || 0;
+            break;
+          case "createdAt":
+            aValue = new Date(a.createdAt);
+            bValue = new Date(b.createdAt);
+            break;
+          default: // dueDate
+            aValue = new Date(a.dueDate);
+            bValue = new Date(b.dueDate);
+        }
+
+        if (superFilters.sortOrder === "desc") {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        } else {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        }
+      });
 
       setFilteredTasks(filtered);
     }
-  }, [allTasksData, filter]);
+  }, [allTasksData, filter, superFilters]);
+
+  const handleFilterChange = (key, value) => {
+    setSuperFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleMultiSelectFilter = (key, value) => {
+    setSuperFilters((prev) => ({
+      ...prev,
+      [key]: prev[key].includes(value)
+        ? prev[key].filter((item) => item !== value)
+        : [...prev[key], value],
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setSuperFilters({
+      search: "",
+      status: [],
+      priority: [],
+      assignedTo: [],
+      project: [],
+      dateRange: { start: "", end: "" },
+      sortBy: "dueDate",
+      sortOrder: "asc",
+    });
+  };
+
+  const hasActiveFilters = () => {
+    return (
+      superFilters.search ||
+      superFilters.status.length > 0 ||
+      superFilters.priority.length > 0 ||
+      superFilters.assignedTo.length > 0 ||
+      superFilters.project.length > 0 ||
+      superFilters.dateRange.start ||
+      superFilters.dateRange.end ||
+      superFilters.sortBy !== "dueDate" ||
+      superFilters.sortOrder !== "asc"
+    );
+  };
 
   const getFilterTitle = () => {
     switch (filter) {
@@ -206,6 +381,7 @@ const CompanyTasks = () => {
 
   const FilterIcon = getFilterIcon();
   const emptyState = getEmptyStateMessage();
+  const { users, projects } = getFilterOptions();
 
   return (
     <section className="flex flex-col">
@@ -216,6 +392,217 @@ const CompanyTasks = () => {
           <FilterIcon className="w-5 h-5" />
           <span className="font-medium">{filteredTasks.length} tasks</span>
         </div>
+      </div>
+
+      {/* Super Filter Panel */}
+      <div className="bg-white rounded-xl mb-6 border border-gray-200">
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+              >
+                <FiFilter className="w-5 h-5" />
+                <span className="font-medium">Advanced Filters</span>
+                {showFilters ? (
+                  <FiChevronUp className="w-4 h-4" />
+                ) : (
+                  <FiChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              {hasActiveFilters() && (
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  Filters Active
+                </span>
+              )}
+            </div>
+            {hasActiveFilters() && (
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+              >
+                <FiX className="w-4 h-4" />
+                Clear All
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="p-4 space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search tasks by title or description..."
+                value={superFilters.search}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Status Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <div className="space-y-2">
+                  {["pending", "in-progress", "completed"].map((status) => (
+                    <label key={status} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={superFilters.status.includes(status)}
+                        onChange={() =>
+                          handleMultiSelectFilter("status", status)
+                        }
+                        className="mr-2 rounded"
+                      />
+                      <span className="text-sm capitalize">
+                        {status.replace("-", " ")}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Priority Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <div className="space-y-2">
+                  {["high", "medium", "low"].map((priority) => (
+                    <label key={priority} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={superFilters.priority.includes(priority)}
+                        onChange={() =>
+                          handleMultiSelectFilter("priority", priority)
+                        }
+                        className="mr-2 rounded"
+                      />
+                      <span className="text-sm capitalize">{priority}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Assigned To Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assigned To
+                </label>
+                <div className="max-h-32 overflow-y-auto space-y-2">
+                  {users.map((user) => (
+                    <label key={user._id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={superFilters.assignedTo.includes(user._id)}
+                        onChange={() =>
+                          handleMultiSelectFilter("assignedTo", user._id)
+                        }
+                        className="mr-2 rounded"
+                      />
+                      <span className="text-sm">
+                        {user.firstName} {user.lastName}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Project Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Project
+                </label>
+                <div className="max-h-32 overflow-y-auto space-y-2">
+                  {projects.map((project) => (
+                    <label key={project._id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={superFilters.project.includes(project._id)}
+                        onChange={() =>
+                          handleMultiSelectFilter("project", project._id)
+                        }
+                        className="mr-2 rounded"
+                      />
+                      <span className="text-sm">{project.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Range Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Due Date Range
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="date"
+                    value={superFilters.dateRange.start}
+                    onChange={(e) =>
+                      handleFilterChange("dateRange", {
+                        ...superFilters.dateRange,
+                        start: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    placeholder="Start date"
+                  />
+                  <input
+                    type="date"
+                    value={superFilters.dateRange.end}
+                    onChange={(e) =>
+                      handleFilterChange("dateRange", {
+                        ...superFilters.dateRange,
+                        end: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    placeholder="End date"
+                  />
+                </div>
+              </div>
+
+              {/* Sort Options */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sort By
+                </label>
+                <div className="space-y-2">
+                  <select
+                    value={superFilters.sortBy}
+                    onChange={(e) =>
+                      handleFilterChange("sortBy", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="dueDate">Due Date</option>
+                    <option value="title">Title</option>
+                    <option value="priority">Priority</option>
+                    <option value="status">Status</option>
+                    <option value="createdAt">Created Date</option>
+                  </select>
+                  <select
+                    value={superFilters.sortOrder}
+                    onChange={(e) =>
+                      handleFilterChange("sortOrder", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {filteredTasks.length === 0 ? (
