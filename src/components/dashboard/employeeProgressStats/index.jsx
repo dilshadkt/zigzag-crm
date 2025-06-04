@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetEmployeeTasks } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import {
@@ -10,6 +11,7 @@ import {
 
 const EmployeeProgressStats = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
     user?._id ? user._id : null
   );
@@ -34,6 +36,31 @@ const EmployeeProgressStats = () => {
   const completionRate =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  // Function to handle stats card clicks
+  const handleStatsClick = (statType) => {
+    switch (statType) {
+      case "total":
+        navigate("/my-tasks"); // Show all employee tasks
+        break;
+      case "completed":
+        navigate("/my-tasks?filter=completed");
+        break;
+      case "in-progress":
+        navigate("/my-tasks?filter=in-progress");
+        break;
+      case "pending":
+        navigate("/my-tasks?filter=pending");
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Function to handle overdue tasks click
+  const handleOverdueTasksClick = () => {
+    navigate("/my-tasks?filter=overdue");
+  };
+
   const stats = [
     {
       title: "Total Tasks",
@@ -42,6 +69,7 @@ const EmployeeProgressStats = () => {
       color: "bg-blue-500",
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
+      onClick: () => handleStatsClick("total"),
     },
     {
       title: "Completed",
@@ -50,6 +78,7 @@ const EmployeeProgressStats = () => {
       color: "bg-green-500",
       bgColor: "bg-green-50",
       textColor: "text-green-600",
+      onClick: () => handleStatsClick("completed"),
     },
     {
       title: "In Progress",
@@ -58,6 +87,7 @@ const EmployeeProgressStats = () => {
       color: "bg-yellow-500",
       bgColor: "bg-yellow-50",
       textColor: "text-yellow-600",
+      onClick: () => handleStatsClick("in-progress"),
     },
     {
       title: "Pending",
@@ -66,6 +96,7 @@ const EmployeeProgressStats = () => {
       color: "bg-orange-500",
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
+      onClick: () => handleStatsClick("pending"),
     },
   ];
 
@@ -112,14 +143,15 @@ const EmployeeProgressStats = () => {
         </div>
       </div>
 
-      {/* Task Statistics - Now in horizontal grid */}
+      {/* Task Statistics - Now in horizontal grid with click handlers */}
       <div className="grid grid-cols-4 gap-4 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div
               key={index}
-              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center`}
+              onClick={stat.onClick}
+              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105 group relative overflow-hidden`}
             >
               <div className={`${stat.color} p-3 rounded-lg mb-3`}>
                 <Icon className="w-6 h-6 text-white" />
@@ -139,20 +171,28 @@ const EmployeeProgressStats = () => {
                   ? `${Math.round((stat.value / totalTasks) * 100)}% waiting`
                   : "Tasks assigned"}
               </p>
+              {/* Hover indicator */}
+              <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <span className="text-xs text-gray-400">→</span>
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Overdue Tasks Alert - Now positioned at the bottom */}
+      {/* Overdue Tasks Alert - Now positioned at the bottom with click handler */}
       {overdueTasks > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4">
+        <div
+          onClick={handleOverdueTasksClick}
+          className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4 cursor-pointer hover:bg-red-100 transition-colors duration-200"
+        >
           <div className="flex items-center justify-center gap-2">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-sm font-medium text-red-700">
               {overdueTasks} overdue task{overdueTasks > 1 ? "s" : ""} - Please
               review and update these tasks
             </span>
+            <span className="text-xs text-red-600 ml-2">→ Click to view</span>
           </div>
         </div>
       )}

@@ -12,6 +12,7 @@ import WorkLoad from "./pages/workLoad";
 import ProjectDetails from "./pages/projectDetail";
 import TaskDetails from "./pages/taskDetails";
 import CompanyTasks from "./pages/companyTasks";
+import MyTasks from "./pages/myTasks";
 import SettingsLayout from "./layouts/settings";
 import Account from "./pages/settings/accounts";
 import AuthLayout from "./layouts/auth";
@@ -132,6 +133,14 @@ function App() {
               element={
                 <WithRoleAcess allowedRoles={["company-admin"]}>
                   <CompanyTasks />
+                </WithRoleAcess>
+              }
+            />
+            <Route
+              path="my-tasks"
+              element={
+                <WithRoleAcess allowedRoles={["employee"]}>
+                  <MyTasks />
                 </WithRoleAcess>
               }
             />
