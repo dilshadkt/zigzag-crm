@@ -196,3 +196,248 @@ export const deleteSubTask = async (subTaskId) => {
     throw error;
   }
 };
+
+// SubTask Attachment API functions
+export const addSubTaskAttachments = async (subTaskId, attachments) => {
+  try {
+    const formData = new FormData();
+    attachments.forEach((file, index) => {
+      formData.append(`attachments`, file);
+    });
+
+    const response = await apiClient.post(
+      `/subtasks/${subTaskId}/attachments`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding subtask attachments:", error);
+    throw error;
+  }
+};
+
+export const removeSubTaskAttachment = async (subTaskId, attachmentId) => {
+  try {
+    const response = await apiClient.delete(
+      `/subtasks/${subTaskId}/attachments/${attachmentId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error removing subtask attachment:", error);
+    throw error;
+  }
+};
+
+// Notification API functions
+export const getUserNotifications = async (limit = 10) => {
+  try {
+    const response = await apiClient.get(`/notifications?limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    throw error;
+  }
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const response = await apiClient.patch(
+      `/notifications/${notificationId}/read`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    throw error;
+  }
+};
+
+export const markAllNotificationsAsRead = async () => {
+  try {
+    const response = await apiClient.patch("/notifications/read-all");
+    return response.data;
+  } catch (error) {
+    console.error("Error marking all notifications as read:", error);
+    throw error;
+  }
+};
+
+export const getUnreadNotificationCount = async () => {
+  try {
+    const response = await apiClient.get("/notifications/unread-count");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching unread notification count:", error);
+    throw error;
+  }
+};
+
+////////////  STICKY NOTES SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+
+// Create a new sticky note
+export const createStickyNote = async (noteData) => {
+  try {
+    const response = await apiClient.post("/sticky-notes", noteData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating sticky note:", error);
+    throw error;
+  }
+};
+
+// Get all user's sticky notes
+export const getUserStickyNotes = async (options = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    if (options.isArchived !== undefined)
+      params.append("isArchived", options.isArchived);
+    if (options.priority) params.append("priority", options.priority);
+    if (options.sortBy) params.append("sortBy", options.sortBy);
+    if (options.sortOrder) params.append("sortOrder", options.sortOrder);
+    if (options.limit) params.append("limit", options.limit);
+    if (options.skip) params.append("skip", options.skip);
+    if (options.tags) {
+      if (Array.isArray(options.tags)) {
+        options.tags.forEach((tag) => params.append("tags", tag));
+      } else {
+        params.append("tags", options.tags);
+      }
+    }
+
+    const response = await apiClient.get(`/sticky-notes?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching sticky notes:", error);
+    throw error;
+  }
+};
+
+// Get a specific sticky note by ID
+export const getStickyNoteById = async (noteId) => {
+  try {
+    const response = await apiClient.get(`/sticky-notes/${noteId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching sticky note:", error);
+    throw error;
+  }
+};
+
+// Update a sticky note
+export const updateStickyNote = async (noteId, updateData) => {
+  try {
+    const response = await apiClient.put(`/sticky-notes/${noteId}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating sticky note:", error);
+    throw error;
+  }
+};
+
+// Delete a sticky note
+export const deleteStickyNote = async (noteId) => {
+  try {
+    const response = await apiClient.delete(`/sticky-notes/${noteId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting sticky note:", error);
+    throw error;
+  }
+};
+
+// Update sticky note positions (for drag and drop)
+export const updateStickyNotePositions = async (noteIds) => {
+  try {
+    const response = await apiClient.put("/sticky-notes/positions", {
+      noteIds,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating sticky note positions:", error);
+    throw error;
+  }
+};
+
+// Archive/Unarchive a sticky note
+export const toggleArchiveStickyNote = async (noteId) => {
+  try {
+    const response = await apiClient.put(`/sticky-notes/${noteId}/archive`);
+    return response.data;
+  } catch (error) {
+    console.error("Error toggling sticky note archive:", error);
+    throw error;
+  }
+};
+
+// Set reminder for a sticky note
+export const setStickyNoteReminder = async (noteId, reminderDate) => {
+  try {
+    const response = await apiClient.put(`/sticky-notes/${noteId}/reminder`, {
+      reminderDate,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error setting sticky note reminder:", error);
+    throw error;
+  }
+};
+
+// Clear reminder for a sticky note
+export const clearStickyNoteReminder = async (noteId) => {
+  try {
+    const response = await apiClient.delete(`/sticky-notes/${noteId}/reminder`);
+    return response.data;
+  } catch (error) {
+    console.error("Error clearing sticky note reminder:", error);
+    throw error;
+  }
+};
+
+// Get archived sticky notes
+export const getArchivedStickyNotes = async (options = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    if (options.sortBy) params.append("sortBy", options.sortBy);
+    if (options.sortOrder) params.append("sortOrder", options.sortOrder);
+    if (options.limit) params.append("limit", options.limit);
+    if (options.skip) params.append("skip", options.skip);
+
+    const response = await apiClient.get(
+      `/sticky-notes/archived?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching archived sticky notes:", error);
+    throw error;
+  }
+};
+
+// Get sticky notes with active reminders
+export const getStickyNotesWithReminders = async () => {
+  try {
+    const response = await apiClient.get("/sticky-notes/reminders");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching sticky notes with reminders:", error);
+    throw error;
+  }
+};
+
+// Bulk delete sticky notes
+export const bulkDeleteStickyNotes = async (noteIds) => {
+  try {
+    const response = await apiClient.post("/sticky-notes/bulk-delete", {
+      noteIds,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error bulk deleting sticky notes:", error);
+    throw error;
+  }
+};

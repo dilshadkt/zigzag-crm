@@ -16,6 +16,25 @@ import {
   getSubTaskById,
   updateSubTaskById,
   deleteSubTask,
+  addSubTaskAttachments,
+  removeSubTaskAttachment,
+  getUserNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  getUnreadNotificationCount,
+  // Sticky Notes imports
+  createStickyNote,
+  getUserStickyNotes,
+  getStickyNoteById,
+  updateStickyNote,
+  deleteStickyNote,
+  updateStickyNotePositions,
+  toggleArchiveStickyNote,
+  setStickyNoteReminder,
+  clearStickyNoteReminder,
+  getArchivedStickyNotes,
+  getStickyNotesWithReminders,
+  bulkDeleteStickyNotes,
 } from "./service";
 import { format } from "date-fns";
 
@@ -843,6 +862,341 @@ export const useDeleteSubTask = (parentTaskId) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
       queryClient.invalidateQueries(["getTaskById", parentTaskId]);
+    },
+  });
+};
+
+export const useAddSubTaskAttachments = (subTaskId, parentTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["addSubTaskAttachments", subTaskId],
+    mutationFn: (attachments) => addSubTaskAttachments(subTaskId, attachments),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["getSubTaskById", subTaskId]);
+      queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
+    },
+  });
+};
+
+export const useRemoveSubTaskAttachment = (subTaskId, parentTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["removeSubTaskAttachment", subTaskId],
+    mutationFn: (attachmentId) =>
+      removeSubTaskAttachment(subTaskId, attachmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["getSubTaskById", subTaskId]);
+      queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
+    },
+  });
+};
+
+// Notification Hooks
+export const useGetNotifications = (limit = 10) => {
+  return useQuery({
+    queryKey: ["notifications", limit],
+    queryFn: () => {
+      // Fallback data while API is being developed
+      const mockNotifications = [
+        {
+          _id: "1",
+          type: "task_assigned",
+          title: "New Task Assigned",
+          message:
+            "You have been assigned to 'Review project requirements' in Mobile App Development",
+          data: {
+            taskId: "task_1",
+            taskTitle: "Review project requirements",
+            projectName: "Mobile App Development",
+            assignedBy: {
+              name: "John Smith",
+              profileImage: "/image/photo.png",
+            },
+          },
+          read: false,
+          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        },
+        {
+          _id: "2",
+          type: "message",
+          title: "New Message",
+          message: "Emily Tyler sent you a message in Research project",
+          data: {
+            senderId: "emp_1",
+            senderName: "Emily Tyler",
+            senderImage: "/image/photo.png",
+            conversationId: "conv_1",
+            messagePreview:
+              "Can we schedule a meeting to discuss the project timeline?",
+          },
+          read: false,
+          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+        },
+        {
+          _id: "3",
+          type: "task_updated",
+          title: "Task Status Updated",
+          message: "Task 'Update documentation' has been marked as completed",
+          data: {
+            taskId: "task_2",
+            taskTitle: "Update documentation",
+            projectName: "Documentation Project",
+            updatedBy: {
+              name: "Sarah Wilson",
+              profileImage: "/image/photo.png",
+            },
+            oldStatus: "in-progress",
+            newStatus: "completed",
+          },
+          read: false,
+          createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+        },
+        {
+          _id: "4",
+          type: "deadline_reminder",
+          title: "Deadline Reminder",
+          message: "Task 'Fix login bug' is due in 2 hours",
+          data: {
+            taskId: "task_3",
+            taskTitle: "Fix login bug",
+            projectName: "Bug Fixes",
+            dueDate: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          },
+          read: true,
+          createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
+        },
+        {
+          _id: "5",
+          type: "project_update",
+          title: "Project Status Update",
+          message: "Website Redesign project progress updated to 85%",
+          data: {
+            projectId: "proj_1",
+            projectName: "Website Redesign",
+            oldProgress: 80,
+            newProgress: 85,
+            updatedBy: {
+              name: "Mike Johnson",
+              profileImage: "/image/photo.png",
+            },
+          },
+          read: true,
+          createdAt: new Date(
+            Date.now() - 1 * 24 * 60 * 60 * 1000
+          ).toISOString(), // 1 day ago
+        },
+        {
+          _id: "6",
+          type: "comment",
+          title: "New Comment",
+          message: "Alex Brown commented on your task 'Code review'",
+          data: {
+            taskId: "task_4",
+            taskTitle: "Code review",
+            projectName: "Sample Project",
+            commentBy: {
+              name: "Alex Brown",
+              profileImage: "/image/photo.png",
+            },
+            commentPreview:
+              "Great work on the implementation! Just a few minor suggestions...",
+          },
+          read: true,
+          createdAt: new Date(
+            Date.now() - 2 * 24 * 60 * 60 * 1000
+          ).toISOString(), // 2 days ago
+        },
+      ];
+
+      return getUserNotifications(limit).catch(() => ({
+        notifications: mockNotifications.slice(0, limit),
+        totalCount: mockNotifications.length,
+        unreadCount: mockNotifications.filter((n) => !n.read).length,
+      }));
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+  });
+};
+
+export const useGetUnreadNotificationCount = () => {
+  return useQuery({
+    queryKey: ["unreadNotificationCount"],
+    queryFn: () => {
+      return getUnreadNotificationCount().catch(() => ({ count: 3 }));
+    },
+    staleTime: 1000 * 60 * 1, // 1 minute
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
+  });
+};
+
+export const useMarkNotificationAsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["markNotificationAsRead"],
+    mutationFn: (notificationId) => markNotificationAsRead(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notifications"]);
+      queryClient.invalidateQueries(["unreadNotificationCount"]);
+    },
+  });
+};
+
+export const useMarkAllNotificationsAsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["markAllNotificationsAsRead"],
+    mutationFn: () => markAllNotificationsAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notifications"]);
+      queryClient.invalidateQueries(["unreadNotificationCount"]);
+    },
+  });
+};
+
+////////////  STICKY NOTES HOOKS ⚠️⚠️⚠️⚠️⚠️ ////////////////////
+
+// Get all sticky notes for the current user
+export const useGetStickyNotes = (options = {}) => {
+  return useQuery({
+    queryKey: ["stickyNotes", options],
+    queryFn: () => getUserStickyNotes(options),
+    select: (data) => data?.stickyNotes || [],
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchOnWindowFocus: false,
+  });
+};
+
+// Create a new sticky note
+export const useCreateStickyNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createStickyNote"],
+    mutationFn: (noteData) => createStickyNote(noteData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+    },
+  });
+};
+
+// Get a specific sticky note by ID
+export const useGetStickyNoteById = (noteId) => {
+  return useQuery({
+    queryKey: ["stickyNote", noteId],
+    queryFn: () => getStickyNoteById(noteId),
+    select: (data) => data?.stickyNote,
+    enabled: !!noteId,
+  });
+};
+
+// Update a sticky note
+export const useUpdateStickyNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateStickyNote"],
+    mutationFn: ({ noteId, updateData }) =>
+      updateStickyNote(noteId, updateData),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+      queryClient.invalidateQueries(["stickyNote", variables.noteId]);
+    },
+  });
+};
+
+// Delete a sticky note
+export const useDeleteStickyNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteStickyNote"],
+    mutationFn: (noteId) => deleteStickyNote(noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+    },
+  });
+};
+
+// Update sticky note positions (for drag and drop)
+export const useUpdateStickyNotePositions = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateStickyNotePositions"],
+    mutationFn: (noteIds) => updateStickyNotePositions(noteIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+    },
+  });
+};
+
+// Archive/Unarchive a sticky note
+export const useToggleArchiveStickyNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["toggleArchiveStickyNote"],
+    mutationFn: (noteId) => toggleArchiveStickyNote(noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+      queryClient.invalidateQueries(["archivedStickyNotes"]);
+    },
+  });
+};
+
+// Set reminder for a sticky note
+export const useSetStickyNoteReminder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["setStickyNoteReminder"],
+    mutationFn: ({ noteId, reminderDate }) =>
+      setStickyNoteReminder(noteId, reminderDate),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+      queryClient.invalidateQueries(["stickyNote", variables.noteId]);
+      queryClient.invalidateQueries(["stickyNotesWithReminders"]);
+    },
+  });
+};
+
+// Clear reminder for a sticky note
+export const useClearStickyNoteReminder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["clearStickyNoteReminder"],
+    mutationFn: (noteId) => clearStickyNoteReminder(noteId),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["stickyNotes"]);
+      queryClient.invalidateQueries(["stickyNote", variables]);
+      queryClient.invalidateQueries(["stickyNotesWithReminders"]);
+    },
+  });
+};
+
+// Get archived sticky notes
+export const useGetArchivedStickyNotes = (options = {}) => {
+  return useQuery({
+    queryKey: ["archivedStickyNotes", options],
+    queryFn: () => getArchivedStickyNotes(options),
+    select: (data) => data?.stickyNotes || [],
+  });
+};
+
+// Get sticky notes with active reminders
+export const useGetStickyNotesWithReminders = () => {
+  return useQuery({
+    queryKey: ["stickyNotesWithReminders"],
+    queryFn: () => getStickyNotesWithReminders(),
+    select: (data) => data?.stickyNotes || [],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+};
+
+// Bulk delete sticky notes
+export const useBulkDeleteStickyNotes = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["bulkDeleteStickyNotes"],
+    mutationFn: (noteIds) => bulkDeleteStickyNotes(noteIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["stickyNotes"]);
     },
   });
 };

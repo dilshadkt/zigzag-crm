@@ -5,15 +5,18 @@ import { useAuth } from "../../../hooks/useAuth";
 import StatusButton from "../../shared/StatusUpadate";
 import AddSubTask from "../addSubTask";
 import SubTaskStatusButton from "../subTaskStatus";
+import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import {
   useCreateSubTask,
   useGetSubTasksByParentTask,
   useDeleteSubTask,
+  useUpdateSubTaskById,
 } from "../../../api/hooks";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const { isCompany, user } = useAuth();
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
+  const [editingSubTask, setEditingSubTask] = useState(null);
 
   // Check if current user is assigned to this task
   const isAssignedToTask = taskDetails?.assignedTo?.some(
@@ -30,20 +33,31 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   // Create subtask mutation
   const createSubTaskMutation = useCreateSubTask(taskDetails?._id);
 
+  // Update subtask mutation
+  const updateSubTaskMutation = useUpdateSubTaskById(
+    editingSubTask?._id,
+    taskDetails?._id
+  );
+
   // Delete subtask mutation
   const deleteSubTaskMutation = useDeleteSubTask(taskDetails?._id);
 
   const handleSubTaskSubmit = async (subTaskData) => {
     try {
-      const finalSubTaskData = {
-        ...subTaskData,
-        parentTaskId: taskDetails._id,
-      };
-
-      await createSubTaskMutation.mutateAsync(finalSubTaskData);
-      setShowSubTaskModal(false);
+      if (editingSubTask) {
+        // Update existing subtask
+        await updateSubTaskMutation.mutateAsync(subTaskData);
+      } else {
+        // Create new subtask
+        const finalSubTaskData = {
+          ...subTaskData,
+          parentTaskId: taskDetails._id,
+        };
+        await createSubTaskMutation.mutateAsync(finalSubTaskData);
+      }
+      handleCloseSubTaskModal();
     } catch (error) {
-      console.error("Error creating subtask:", error);
+      console.error("Error saving subtask:", error);
     }
   };
 
@@ -55,6 +69,21 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
         console.error("Error deleting subtask:", error);
       }
     }
+  };
+
+  const handleEditSubTask = (subTask) => {
+    setEditingSubTask(subTask);
+    setShowSubTaskModal(true);
+  };
+
+  const handleCloseSubTaskModal = () => {
+    setShowSubTaskModal(false);
+    setEditingSubTask(null);
+  };
+
+  const handleAddSubTask = () => {
+    setEditingSubTask(null);
+    setShowSubTaskModal(true);
   };
 
   const getRecurringPatternText = (pattern, interval) => {
@@ -89,7 +118,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
               disable={!canEditTask}
               className={"bg-[#3F8CFF] text-white"}
               title="Add Subtask"
-              onclick={() => setShowSubTaskModal(true)}
+              onclick={handleAddSubTask}
             />
             <PrimaryButton
               disable={!canEditTask}
@@ -302,6 +331,22 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                               parentTaskId={taskDetails?._id}
                               canEdit={isCompany || isAssignedToSubTask}
                             />
+                            {/* Edit button for admins and assigned users */}
+                            {(isCompany || isAssignedToSubTask) && (
+                              <button
+                                onClick={() => handleEditSubTask(subtask)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
+                                title="Edit subtask"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                              </button>
+                            )}
                             {/* Only company admins can delete subtasks */}
                             {isCompany && (
                               <button
@@ -371,6 +416,11 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                               : "No date"}
                           </span>
                         </div>
+                        <SubTaskAttachments
+                          subTask={subtask}
+                          parentTaskId={taskDetails?._id}
+                          canEdit={isCompany || isAssignedToSubTask}
+                        />
                       </div>
                     );
                   })}
@@ -419,11 +469,17 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
       {/* Add Subtask Modal */}
       <AddSubTask
         isOpen={showSubTaskModal}
-        setShowSubTaskModal={setShowSubTaskModal}
+        setShowSubTaskModal={handleCloseSubTaskModal}
         teams={teams}
         onSubmit={handleSubTaskSubmit}
         parentTaskId={taskDetails?._id}
-        isLoading={createSubTaskMutation.isLoading}
+        isLoading={
+          editingSubTask
+            ? updateSubTaskMutation.isLoading
+            : createSubTaskMutation.isLoading
+        }
+        isEdit={!!editingSubTask}
+        initialValues={editingSubTask}
       />
     </>
   );

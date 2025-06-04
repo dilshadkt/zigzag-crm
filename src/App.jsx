@@ -39,6 +39,8 @@ import ProjectAnalyticsDetails from "./pages/ProjectAnalyticsDetails";
 import Company from "./pages/settings/company";
 import Notification from "./pages/settings/notification";
 import Safety from "./pages/settings/safety";
+import NotificationsPage from "./pages/notifications";
+import StickyNotes from "./pages/stickyNotes";
 
 function App() {
   const dispatch = useDispatch();
@@ -99,6 +101,8 @@ function App() {
               }
             />
             <Route path="projects" element={<Prjects />} />
+            <Route path="sticky-notes" element={<StickyNotes />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="projects-analytics" element={<ProjectsAnalytics />} />
             <Route
               path="projects-analytics/:projectId"
