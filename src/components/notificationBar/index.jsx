@@ -173,12 +173,16 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
                   >
                     {notification.data?.senderImage ||
                     notification.data?.assignedBy?.profileImage ||
-                    notification.data?.updatedBy?.profileImage ? (
+                    notification.data?.updatedBy?.profileImage ||
+                    notification.data?.submittedBy?.profileImage ||
+                    notification.data?.approvedBy?.profileImage ? (
                       <img
                         src={
                           notification.data?.senderImage ||
                           notification.data?.assignedBy?.profileImage ||
-                          notification.data?.updatedBy?.profileImage
+                          notification.data?.updatedBy?.profileImage ||
+                          notification.data?.submittedBy?.profileImage ||
+                          notification.data?.approvedBy?.profileImage
                         }
                         alt=""
                         className="w-full h-full object-cover"
@@ -227,6 +231,34 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
                       </span>
                     </div>
                   )}
+
+                  {notification.type === "task_updated" &&
+                    notification.data?.reviewRequired && (
+                      <div className="flex items-center gap-x-2 mt-1">
+                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                          👀 Needs Review
+                        </span>
+                        {notification.data?.isSubTask && (
+                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                            Subtask
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                  {notification.type === "task_updated" &&
+                    notification.data?.approved && (
+                      <div className="flex items-center gap-x-2 mt-1">
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                          ✅ Approved
+                        </span>
+                        {notification.data?.isSubTask && (
+                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                            Subtask
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                   {notification.type === "message" &&
                     notification.data?.messagePreview && (

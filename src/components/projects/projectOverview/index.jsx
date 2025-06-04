@@ -8,11 +8,63 @@ import list from "../../../assets/icons/list.svg";
 import board from "../../../assets/icons/board.svg";
 import { updateTaskById } from "../../../api/service";
 import { useUpdateTaskOrder } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 
-const DraggableTask = ({ task, isBoardView, onClick, projectId, index }) => {
+// Status configuration
+const statusConfig = {
+  todo: {
+    title: "Active Tasks",
+    color: "bg-orange-100 text-orange-800",
+    allowedForAll: true,
+  },
+  "in-progress": {
+    title: "In Progress",
+    color: "bg-blue-100 text-blue-800",
+    allowedForAll: true,
+  },
+  completed: {
+    title: "Completed",
+    color: "bg-green-100 text-green-800",
+    allowedForAll: true,
+  },
+  "on-review": {
+    title: "On Review",
+    color: "bg-purple-100 text-purple-800",
+    allowedForAll: true,
+  },
+  "on-hold": {
+    title: "On Hold",
+    color: "bg-yellow-100 text-yellow-800",
+    allowedForAll: false,
+  },
+  "re-work": {
+    title: "Re-work",
+    color: "bg-red-100 text-red-800",
+    allowedForAll: false,
+  },
+  approved: {
+    title: "Approved",
+    color: "bg-emerald-100 text-emerald-800",
+    allowedForAll: false,
+  },
+};
+
+const DraggableTask = ({
+  task,
+  isBoardView,
+  onClick,
+  projectId,
+  index,
+  canDrag,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragStart = (e) => {
+    if (!canDrag) {
+      e.preventDefault();
+      return;
+    }
+
     e.dataTransfer.setData(
       "application/json",
       JSON.stringify({
@@ -36,13 +88,16 @@ const DraggableTask = ({ task, isBoardView, onClick, projectId, index }) => {
 
   return (
     <div
-      draggable={true}
+      draggable={canDrag}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className="cursor-grab active:cursor-grabbing transition-opacity duration-200 ease-out"
+      className={`transition-opacity duration-200 ease-out ${
+        canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+      }`}
       style={{
         opacity: isDragging ? 0.7 : 1,
       }}
+      title={!canDrag ? "You can only move tasks assigned to you" : ""}
     >
       <Task
         task={task}
@@ -55,12 +110,18 @@ const DraggableTask = ({ task, isBoardView, onClick, projectId, index }) => {
   );
 };
 
-const DropZone = ({ onDrop, position, status, isVisible }) => {
+const DropZone = ({ onDrop, position, status, isVisible, canDrop }) => {
   const [isOver, setIsOver] = useState(false);
 
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!canDrop) {
+      e.dataTransfer.dropEffect = "none";
+      return;
+    }
+
     e.dataTransfer.dropEffect = "move";
     setIsOver(true);
   };
@@ -75,6 +136,8 @@ const DropZone = ({ onDrop, position, status, isVisible }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsOver(false);
+
+    if (!canDrop) return;
 
     const taskDataString = e.dataTransfer.getData("application/json");
     if (taskDataString) {
@@ -92,7 +155,11 @@ const DropZone = ({ onDrop, position, status, isVisible }) => {
   return (
     <div
       className={`h-2 transition-all duration-200 ease-out ${
-        isOver ? "bg-blue-300 rounded-full mx-2" : "bg-transparent"
+        isOver && canDrop
+          ? "bg-blue-300 rounded-full mx-2"
+          : canDrop
+          ? "bg-transparent"
+          : "bg-red-200 rounded-full mx-2"
       }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -101,7 +168,15 @@ const DropZone = ({ onDrop, position, status, isVisible }) => {
   );
 };
 
-const Droppable = ({ id, title, children, onDrop, tasks }) => {
+const Droppable = ({
+  id,
+  title,
+  children,
+  onDrop,
+  tasks,
+  canDrop,
+  isCompany,
+}) => {
   const [isOver, setIsOver] = useState(false);
   const [draggedTask, setDraggedTask] = useState(null);
 
@@ -109,6 +184,11 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
     e.preventDefault();
     const taskData = e.dataTransfer.types.includes("application/json");
     if (taskData) {
+      if (!canDrop) {
+        e.dataTransfer.dropEffect = "none";
+        return;
+      }
+
       e.dataTransfer.dropEffect = "move";
       setIsOver(true);
 
@@ -142,6 +222,8 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
     setIsOver(false);
     setDraggedTask(null);
 
+    if (!canDrop) return;
+
     const taskDataString = e.dataTransfer.getData("application/json");
     if (taskDataString) {
       try {
@@ -157,12 +239,16 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
   // Convert children to array if it's not already
   const childrenArray = React.Children.toArray(children);
 
+  const config = statusConfig[id];
+
   return (
     <div
-      className={`flex-1 min-w-[300px] rounded-lg p-4 transition-all duration-200 ease-out
+      className={`flex-shrink-0 w-80 rounded-lg p-4 transition-all duration-200 ease-out
                   ${
-                    isOver
+                    isOver && canDrop
                       ? "bg-blue-50 border-2 border-blue-300"
+                      : isOver && !canDrop
+                      ? "bg-red-50 border-2 border-red-300"
                       : "bg-gray-50 border-2 border-transparent"
                   }`}
       onDragOver={handleDragOver}
@@ -170,16 +256,27 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
       onDrop={handleDrop}
       data-droppable-id={id}
     >
-      <div className="font-medium text-gray-800 mb-4 bg-gray-200 text-sm text-center font-medium sticky top-0 z-50 py-2 px-4 rounded-lg">
+      <div
+        className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${
+          config?.color || "bg-gray-200 text-gray-800"
+        }`}
+      >
         {title}
+        {!canDrop && !isCompany && (
+          <div className="text-xs mt-1 opacity-70">Admin only</div>
+        )}
       </div>
-      <div className="space-y-1 min-h-[200px]" data-droppable-id={id}>
+      <div
+        className="space-y-1 min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
+        data-droppable-id={id}
+      >
         {/* Drop zone at the beginning */}
         <DropZone
           onDrop={onDrop}
           position={0}
           status={id}
           isVisible={isOver && draggedTask?.sourceStatus !== id}
+          canDrop={canDrop}
         />
 
         {childrenArray.map((child, index) => (
@@ -191,6 +288,7 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
               position={index + 1}
               status={id}
               isVisible={isOver}
+              canDrop={canDrop}
             />
           </React.Fragment>
         ))}
@@ -202,6 +300,7 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
             position={0}
             status={id}
             isVisible={isOver}
+            canDrop={canDrop}
           />
         )}
       </div>
@@ -217,6 +316,15 @@ const ProjectOverView = ({ currentProject }) => {
   const [activeFilters, setActiveFilters] = useState(null);
   const [isBoardView, setIsBoardView] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
+  const { isCompany, user } = useAuth();
+
+  // Employee allowed statuses
+  const employeeAllowedStatuses = [
+    "todo",
+    "in-progress",
+    "completed",
+    "on-review",
+  ];
 
   // Filter task based on the process and active filters
   const filterTasks = (tasks) => {
@@ -256,20 +364,42 @@ const ProjectOverView = ({ currentProject }) => {
     });
   };
 
-  const activeTasks =
-    filterTasks(
-      currentProject?.tasks?.filter((task) => task?.status === "todo")
-    ) || [];
+  // Group tasks by status with filtering applied
+  const tasksByStatus = {
+    todo:
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "todo")
+      ) || [],
+    "in-progress":
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "in-progress")
+      ) || [],
+    completed:
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "completed")
+      ) || [],
+    "on-review":
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "on-review")
+      ) || [],
+    "on-hold":
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "on-hold")
+      ) || [],
+    "re-work":
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "re-work")
+      ) || [],
+    approved:
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "approved")
+      ) || [],
+  };
 
-  const progressTasks =
-    filterTasks(
-      currentProject?.tasks?.filter((task) => task?.status === "in-progress")
-    ) || [];
-
-  const completedTasks =
-    filterTasks(
-      currentProject?.tasks?.filter((task) => task?.status === "completed")
-    ) || [];
+  // Legacy task arrays for backward compatibility
+  const activeTasks = tasksByStatus.todo;
+  const progressTasks = tasksByStatus["in-progress"];
+  const completedTasks = tasksByStatus.completed;
 
   const handleNavigateToTask = (task) => {
     navigate(`/projects/${projectName}/${task?._id}`);
@@ -277,6 +407,27 @@ const ProjectOverView = ({ currentProject }) => {
 
   const handleFilterChange = (filters) => {
     setActiveFilters(filters);
+  };
+
+  const canUserDragTask = (task) => {
+    if (isCompany) return true;
+
+    // Check if user is assigned to this task
+    return task.assignedTo?.some(
+      (assignedUser) => assignedUser._id === user?.id
+    );
+  };
+
+  const canUserDropInStatus = (status) => {
+    if (isCompany) return true;
+
+    // Employee can only drop in their allowed statuses
+    return employeeAllowedStatuses.includes(status);
+  };
+
+  // Function to refresh project data
+  const handleRefresh = () => {
+    queryClient.invalidateQueries(["project", projectName]);
   };
 
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
@@ -298,6 +449,19 @@ const ProjectOverView = ({ currentProject }) => {
 
   const handleTaskDrop = async (taskData, targetStatus, targetPosition) => {
     const { taskId, sourceStatus, sourceIndex } = taskData;
+
+    // Check if user can drop in target status
+    if (!canUserDropInStatus(targetStatus)) {
+      alert("You don't have permission to move tasks to this status.");
+      return;
+    }
+
+    // Check if user can drag the task
+    const task = currentProject?.tasks?.find((t) => t._id === taskId);
+    if (!canUserDragTask(task)) {
+      alert("You can only move tasks assigned to you.");
+      return;
+    }
 
     // Optimistically update the UI immediately with simplified logic
     queryClient.setQueryData(["project", projectName], (oldData) => {
@@ -324,12 +488,7 @@ const ProjectOverView = ({ currentProject }) => {
     try {
       if (sourceStatus === targetStatus) {
         // Same column reordering
-        const targetTasks =
-          sourceStatus === "todo"
-            ? activeTasks
-            : sourceStatus === "in-progress"
-            ? progressTasks
-            : completedTasks;
+        const targetTasks = tasksByStatus[targetStatus];
 
         const reorderedTasks = [...targetTasks];
         const [movedTask] = reorderedTasks.splice(sourceIndex, 1);
@@ -377,6 +536,11 @@ const ProjectOverView = ({ currentProject }) => {
         <h3 className="text-lg font-medium text-gray-800">Tasks</h3>
         <div className="flex gap-2">
           <PrimaryButton
+            icon={"/icons/refresh.svg"}
+            className={"bg-white hover:bg-gray-50 transition-colors"}
+            onclick={handleRefresh}
+          />
+          <PrimaryButton
             icon={!isBoardView ? list : board}
             className={"bg-white hover:bg-gray-50 transition-colors"}
             onclick={() => setIsBoardView(!isBoardView)}
@@ -390,84 +554,51 @@ const ProjectOverView = ({ currentProject }) => {
       </div>
 
       {isBoardView ? (
-        <div className="flex gap-4 h-full mt-4 overflow-x-auto pb-4">
-          <Droppable
-            id="todo"
-            title="Active Tasks"
-            onDrop={handleTaskDrop}
-            tasks={activeTasks}
-          >
-            {activeTasks.length > 0 ? (
-              activeTasks.map((task, index) => (
-                <DraggableTask
-                  key={task._id}
-                  task={task}
-                  isBoardView={true}
-                  onClick={handleNavigateToTask}
-                  projectId={currentProject?._id}
-                  index={index}
-                />
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                No active tasks
-              </div>
-            )}
-          </Droppable>
+        <div className="flex gap-4 h-full mt-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          {Object.entries(statusConfig).map(([status, config]) => {
+            const canDrop = canUserDropInStatus(status);
+            const tasks = tasksByStatus[status] || [];
 
-          <Droppable
-            id="in-progress"
-            title="In Progress"
-            onDrop={handleTaskDrop}
-            tasks={progressTasks}
-          >
-            {progressTasks.length > 0 ? (
-              progressTasks.map((task, index) => (
-                <DraggableTask
-                  key={task._id}
-                  task={task}
-                  isBoardView={true}
-                  onClick={handleNavigateToTask}
-                  projectId={currentProject?._id}
-                  index={index}
-                />
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                No in-progress tasks
-              </div>
-            )}
-          </Droppable>
-
-          <Droppable
-            id="completed"
-            title="Completed"
-            onDrop={handleTaskDrop}
-            tasks={completedTasks}
-          >
-            {completedTasks.length > 0 ? (
-              completedTasks.map((task, index) => (
-                <DraggableTask
-                  key={task._id}
-                  task={task}
-                  isBoardView={true}
-                  onClick={handleNavigateToTask}
-                  projectId={currentProject?._id}
-                  index={index}
-                />
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                No completed tasks
-              </div>
-            )}
-          </Droppable>
+            return (
+              <Droppable
+                key={status}
+                id={status}
+                title={config.title}
+                onDrop={handleTaskDrop}
+                tasks={tasks}
+                canDrop={canDrop}
+                isCompany={isCompany}
+              >
+                {tasks.length > 0 ? (
+                  tasks.map((task, index) => (
+                    <DraggableTask
+                      key={task._id}
+                      task={task}
+                      isBoardView={true}
+                      onClick={handleNavigateToTask}
+                      projectId={currentProject?._id}
+                      index={index}
+                      canDrag={canUserDragTask(task)}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4 text-sm">
+                    No {config.title.toLowerCase()}
+                  </div>
+                )}
+              </Droppable>
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col h-full gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
           {renderListSection("Active Tasks", activeTasks)}
           {renderListSection("Progress", progressTasks)}
           {renderListSection("Completed", completedTasks)}
+          {renderListSection("On Review", tasksByStatus["on-review"])}
+          {renderListSection("On Hold", tasksByStatus["on-hold"])}
+          {renderListSection("Re-work", tasksByStatus["re-work"])}
+          {renderListSection("Approved", tasksByStatus["approved"])}
         </div>
       )}
 

@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useUpdateSubTaskById } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 
 const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
+  const { isCompany } = useAuth();
 
-  const statusOptions = [
+  // Status options for employees
+  const employeeStatusOptions = [
     { value: "todo", label: "To Do", color: "bg-gray-100 text-gray-800" },
     {
       value: "in-progress",
@@ -17,7 +20,50 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
       label: "Completed",
       color: "bg-green-100 text-green-800",
     },
+    {
+      value: "on-review",
+      label: "On Review",
+      color: "bg-purple-100 text-purple-800",
+    },
   ];
+
+  // Status options for company admins (all options)
+  const adminStatusOptions = [
+    { value: "todo", label: "To Do", color: "bg-gray-100 text-gray-800" },
+    {
+      value: "in-progress",
+      label: "In Progress",
+      color: "bg-blue-100 text-blue-800",
+    },
+    {
+      value: "completed",
+      label: "Completed",
+      color: "bg-green-100 text-green-800",
+    },
+    {
+      value: "on-review",
+      label: "On Review",
+      color: "bg-purple-100 text-purple-800",
+    },
+    {
+      value: "on-hold",
+      label: "On Hold",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      value: "re-work",
+      label: "Re-work",
+      color: "bg-red-100 text-red-800",
+    },
+    {
+      value: "approved",
+      label: "Approved",
+      color: "bg-emerald-100 text-emerald-800",
+    },
+  ];
+
+  // Get status options based on user role
+  const statusOptions = isCompany ? adminStatusOptions : employeeStatusOptions;
 
   const currentStatus = statusOptions.find(
     (status) => status.value === subTask.status

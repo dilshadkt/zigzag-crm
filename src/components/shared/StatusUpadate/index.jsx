@@ -1,8 +1,19 @@
 import React, { useState, useRef } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { useUpdateTaskById } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 
-const statusOptions = ["todo", "in-progress", "completed"];
+// Status options for different user roles
+const employeeStatusOptions = ["todo", "in-progress", "completed", "on-review"];
+const adminStatusOptions = [
+  "todo",
+  "in-progress",
+  "completed",
+  "on-review",
+  "on-hold",
+  "re-work",
+  "approved",
+];
 
 // Define color schemes for each status
 const statusColors = {
@@ -24,14 +35,42 @@ const statusColors = {
     border: "border-green-200",
     hover: "hover:bg-green-100",
   },
+  "on-review": {
+    text: "text-purple-500",
+    bg: "bg-purple-50",
+    border: "border-purple-200",
+    hover: "hover:bg-purple-100",
+  },
+  "on-hold": {
+    text: "text-yellow-500",
+    bg: "bg-yellow-50",
+    border: "border-yellow-200",
+    hover: "hover:bg-yellow-100",
+  },
+  "re-work": {
+    text: "text-red-500",
+    bg: "bg-red-50",
+    border: "border-red-200",
+    hover: "hover:bg-red-100",
+  },
+  approved: {
+    text: "text-emerald-500",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    hover: "hover:bg-emerald-100",
+  },
 };
 
 const StatusButton = ({ taskDetails, disabled = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const buttonRef = useRef(null);
+  const { isCompany } = useAuth();
   const { mutate } = useUpdateTaskById(taskDetails._id, () =>
     setMenuOpen(false)
   );
+
+  // Get status options based on user role
+  const statusOptions = isCompany ? adminStatusOptions : employeeStatusOptions;
 
   // Close menu when clicking outside
   const handleClickOutside = (event) => {
