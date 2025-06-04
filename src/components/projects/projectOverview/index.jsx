@@ -299,47 +299,58 @@ const ProjectOverView = ({ currentProject }) => {
   const handleTaskDrop = async (taskData, targetStatus, targetPosition) => {
     const { taskId, sourceStatus, sourceIndex } = taskData;
 
-    // Get the target task list
-    let targetTasks;
-    switch (targetStatus) {
-      case "todo":
-        targetTasks = [...activeTasks];
-        break;
-      case "in-progress":
-        targetTasks = [...progressTasks];
-        break;
-      case "completed":
-        targetTasks = [...completedTasks];
-        break;
-      default:
-        return;
-    }
+    // Optimistically update the UI immediately with simplified logic
+    queryClient.setQueryData(["project", projectName], (oldData) => {
+      if (!oldData || !oldData.tasks) return oldData;
 
-    // If moving within the same column, handle reordering
-    if (sourceStatus === targetStatus) {
-      // Remove from source position and insert at target position
-      const [movedTask] = targetTasks.splice(sourceIndex, 1);
-      const adjustedPosition =
-        targetPosition > sourceIndex ? targetPosition - 1 : targetPosition;
-      targetTasks.splice(adjustedPosition, 0, movedTask);
-
-      // Update order for all affected tasks
-      targetTasks.forEach((task, index) => {
-        updateOrder({ taskId: task._id, newOrder: index });
-      });
-    } else {
-      // Moving between columns
-      // Update task status and position
-      await handleTaskUpdate(taskId, targetStatus, targetPosition);
-
-      // Update order for tasks in target column
-      targetTasks.forEach((task, index) => {
-        const newOrder = index >= targetPosition ? index + 1 : index;
-        updateOrder({ taskId: task._id, newOrder });
+      // Create a new tasks array with the updated task
+      const updatedTasks = oldData.tasks.map((task) => {
+        if (task._id === taskId) {
+          return {
+            ...task,
+            status: targetStatus,
+          };
+        }
+        return task;
       });
 
-      // Set order for the moved task
-      updateOrder({ taskId, newOrder: targetPosition });
+      return {
+        ...oldData,
+        tasks: updatedTasks,
+      };
+    });
+
+    // Background API call
+    try {
+      if (sourceStatus === targetStatus) {
+        // Same column reordering
+        const targetTasks =
+          sourceStatus === "todo"
+            ? activeTasks
+            : sourceStatus === "in-progress"
+            ? progressTasks
+            : completedTasks;
+
+        const reorderedTasks = [...targetTasks];
+        const [movedTask] = reorderedTasks.splice(sourceIndex, 1);
+        const adjustedPosition =
+          targetPosition > sourceIndex ? targetPosition - 1 : targetPosition;
+        reorderedTasks.splice(adjustedPosition, 0, movedTask);
+
+        // Update order for affected tasks
+        reorderedTasks.forEach((task, index) => {
+          updateOrder({ taskId: task._id, newOrder: index });
+        });
+      } else {
+        // Different column - update status
+        await handleTaskUpdate(taskId, targetStatus, targetPosition);
+      }
+    } catch (error) {
+      console.error("Failed to update task:", error);
+
+      // Revert optimistic update
+      queryClient.invalidateQueries(["project", projectName]);
+      alert("Failed to update task. Please try again.");
     }
   };
 

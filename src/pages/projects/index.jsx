@@ -15,6 +15,7 @@ import { useProject } from "../../hooks/useProject";
 import { setActiveProject } from "../../store/slice/projectSlice";
 import FilterMenu from "../../components/projects/FilterMenu";
 import NoTask from "../../components/projects/noTask";
+import ProjectsShimmer from "../../components/projects/ProjectsShimmer";
 
 const Prjects = () => {
   const { companyId } = useAuth();
@@ -23,15 +24,14 @@ const Prjects = () => {
   const { data: projects, isSuccess } = useCompanyProjects(companyId);
   const { data: activeProject, isLoading } = useProjectDetails(selectProject);
 
-
   // Mutation
   const addProject = useAddProject();
 
-  const handleAddProject = async (values,{ resetForm }) => {
+  const handleAddProject = async (values, { resetForm }) => {
     try {
       await addProject.mutateAsync(values);
       setShowModalProject(false);
-      resetForm()
+      resetForm();
     } catch (error) {
       console.error(error);
     }
@@ -45,7 +45,7 @@ const Prjects = () => {
 
   const hasNoProject = projects?.length === 0;
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <ProjectsShimmer />;
 
   const activeTasks = activeProject?.tasks?.filter(
     (task) => task?.status === "todo"
@@ -93,7 +93,6 @@ const Prjects = () => {
 
       {/* add project modal */}
       <AddProject
-      
         isOpen={showModalProject}
         setShowModalProject={setShowModalProject}
         onSubmit={handleAddProject}
