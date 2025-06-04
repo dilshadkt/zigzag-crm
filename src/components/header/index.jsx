@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import NotificationBar from "../notificationBar";
 import { Link } from "react-router-dom";
@@ -7,15 +8,44 @@ import {
   useGetUnreadNotificationCount,
   useGetStickyNotes,
 } from "../../api/hooks";
-import { IoDocumentTextOutline } from "react-icons/io5";
+import { IoDocumentTextOutline, IoTimeOutline } from "react-icons/io5";
+import { syncTimer, updateTimer } from "../../store/slice/timerSlice";
 
 const DashboardHeader = () => {
   const [isNotifyMenuOpen, setNotifyMenuOpen] = useState(false);
   const { user } = useAuth();
+  const dispatch = useDispatch();
   const { data: unreadData } = useGetUnreadNotificationCount();
   const { data: stickyNotes = [] } = useGetStickyNotes();
   const unreadCount = unreadData?.count || 0;
   const stickyNotesCount = stickyNotes.length || 0;
+
+  // Get timer state from Redux
+  const { remainingTime, isRunning } = useSelector((state) => state.timer);
+
+  // Sync timer state on component mount
+  useEffect(() => {
+    dispatch(syncTimer());
+  }, [dispatch]);
+
+  // Update timer display when running
+  useEffect(() => {
+    let interval;
+    if (isRunning && remainingTime > 0) {
+      interval = setInterval(() => {
+        dispatch(updateTimer());
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, remainingTime, dispatch]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   return (
     <div className="flexBetween">
@@ -41,6 +71,26 @@ const DashboardHeader = () => {
             <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
               {stickyNotesCount > 9 ? "9+" : stickyNotesCount}
             </span>
+          )}
+        </Link>
+        <Link
+          to="/timer"
+          className={`flexCenter cursor-pointer rounded-[14px] bg-white relative transition-all ${
+            isRunning ? "px-3 h-12" : "w-12 h-12"
+          }`}
+        >
+          {isRunning ? (
+            <div className="flex items-center gap-2">
+              <IoTimeOutline className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-mono font-medium text-blue-600">
+                {formatTime(remainingTime)}
+              </span>
+            </div>
+          ) : (
+            <IoTimeOutline className="w-5 h-5 text-gray-600" />
+          )}
+          {isRunning && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
           )}
         </Link>
         <button
