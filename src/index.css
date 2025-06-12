@@ -99,6 +99,37 @@ body {
   overflow: -moz-scrollbars-none; /* Older Firefox (optional fallback) */
 }
 
+/* Custom horizontal scrollbar for project details */
+.project-details-scroll {
+  overflow-y: hidden;
+  overflow-x: auto;
+}
+
+.project-details-scroll::-webkit-scrollbar {
+  display: block;
+  height: 6px;
+}
+
+.project-details-scroll::-webkit-scrollbar-track {
+  background: #f4f9fd;
+  border-radius: 3px;
+}
+
+.project-details-scroll::-webkit-scrollbar-thumb {
+  background: #e6edf5;
+  border-radius: 3px;
+}
+
+.project-details-scroll::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Firefox specific styles for project details */
+.project-details-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #e6edf5 #f4f9fd;
+}
+
 .element {
   border: 2px solid; /* Set border width */
   border-image: linear-gradient(to right, #ff7e5f, #feb47b) 1;

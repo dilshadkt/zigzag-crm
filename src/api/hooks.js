@@ -35,6 +35,19 @@ import {
   getArchivedStickyNotes,
   getStickyNotesWithReminders,
   bulkDeleteStickyNotes,
+  // Attendance imports
+  clockIn,
+  clockOut,
+  startBreak,
+  endBreak,
+  getCurrentAttendanceStatus,
+  getEmployeeAttendanceHistory,
+  getDailyAttendanceReport,
+  getAttendanceSummary,
+  getAttendanceAnalytics,
+  updateAttendanceRecord,
+  approveAttendance,
+  deleteAttendanceRecord,
 } from "./service";
 import { format } from "date-fns";
 
@@ -1199,4 +1212,296 @@ export const useBulkDeleteStickyNotes = () => {
       queryClient.invalidateQueries(["stickyNotes"]);
     },
   });
+};
+
+////////////  ATTENDANCE HOOKS ⚠️⚠️⚠️⚠️⚠️ ////////////////////
+
+// Clock in - Start attendance
+export const useClockIn = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["clockIn"],
+    mutationFn: (attendanceData) => clockIn(attendanceData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["attendanceStatus"]);
+      queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["dailyAttendanceReport"]);
+    },
+  });
+};
+
+// Clock out - End attendance
+export const useClockOut = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["clockOut"],
+    mutationFn: (clockOutData) => clockOut(clockOutData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["attendanceStatus"]);
+      queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["dailyAttendanceReport"]);
+    },
+  });
+};
+
+// Start break
+export const useStartBreak = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["startBreak"],
+    mutationFn: (breakData) => startBreak(breakData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["attendanceStatus"]);
+    },
+  });
+};
+
+// End break
+export const useEndBreak = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["endBreak"],
+    mutationFn: () => endBreak(),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["attendanceStatus"]);
+    },
+  });
+};
+
+// Get current attendance status
+export const useGetCurrentAttendanceStatus = () => {
+  return useQuery({
+    queryKey: ["attendanceStatus"],
+    queryFn: () => getCurrentAttendanceStatus(),
+    staleTime: 1000 * 60 * 1, // 1 minute
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
+    refetchOnWindowFocus: true,
+  });
+};
+
+// Get employee attendance history
+export const useGetEmployeeAttendanceHistory = (
+  employeeId,
+  queryParams = {}
+) => {
+  return useQuery({
+    queryKey: ["employeeAttendanceHistory", employeeId, queryParams],
+    queryFn: () => getEmployeeAttendanceHistory(employeeId, queryParams),
+    enabled: !!employeeId,
+    keepPreviousData: true,
+  });
+};
+
+// Get daily attendance report (Admin only)
+export const useGetDailyAttendanceReport = (date = null) => {
+  return useQuery({
+    queryKey: ["dailyAttendanceReport", date],
+    queryFn: () => getDailyAttendanceReport(date),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+};
+
+// Get attendance summary (Admin only)
+export const useGetAttendanceSummary = (queryParams, enabled = true) => {
+  return useQuery({
+    queryKey: ["attendanceSummary", queryParams],
+    queryFn: () => getAttendanceSummary(queryParams),
+    enabled: enabled && !!queryParams?.startDate && !!queryParams?.endDate,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+// Get attendance analytics (Admin only)
+export const useGetAttendanceAnalytics = (period = "month") => {
+  return useQuery({
+    queryKey: ["attendanceAnalytics", period],
+    queryFn: () => getAttendanceAnalytics(period),
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Refetch every 15 minutes
+  });
+};
+
+// Update attendance record (Admin only)
+export const useUpdateAttendanceRecord = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateAttendanceRecord"],
+    mutationFn: ({ attendanceId, updateData }) =>
+      updateAttendanceRecord(attendanceId, updateData),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["dailyAttendanceReport"]);
+      queryClient.invalidateQueries(["attendanceSummary"]);
+      queryClient.invalidateQueries(["attendanceAnalytics"]);
+
+      // If this is today's attendance, also update current status
+      const today = new Date().toDateString();
+      const recordDate = new Date(data.attendance?.date).toDateString();
+      if (today === recordDate) {
+        queryClient.invalidateQueries(["attendanceStatus"]);
+      }
+    },
+  });
+};
+
+// Approve/Reject attendance (Admin only)
+export const useApproveAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["approveAttendance"],
+    mutationFn: ({ attendanceId, approvalData }) =>
+      approveAttendance(attendanceId, approvalData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["dailyAttendanceReport"]);
+      queryClient.invalidateQueries(["attendanceSummary"]);
+      queryClient.invalidateQueries(["attendanceAnalytics"]);
+    },
+  });
+};
+
+// Delete attendance record (Admin only)
+export const useDeleteAttendanceRecord = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteAttendanceRecord"],
+    mutationFn: (attendanceId) => deleteAttendanceRecord(attendanceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["dailyAttendanceReport"]);
+      queryClient.invalidateQueries(["attendanceSummary"]);
+      queryClient.invalidateQueries(["attendanceAnalytics"]);
+      queryClient.invalidateQueries(["attendanceStatus"]);
+    },
+  });
+};
+
+// Custom hook for managing attendance state
+export const useAttendanceManager = () => {
+  const { data: currentStatus, isLoading: statusLoading } =
+    useGetCurrentAttendanceStatus();
+  const clockInMutation = useClockIn();
+  const clockOutMutation = useClockOut();
+  const startBreakMutation = useStartBreak();
+  const endBreakMutation = useEndBreak();
+
+  const isShiftActive =
+    currentStatus?.attendance?.status === "checked-in" ||
+    currentStatus?.attendance?.status === "break";
+
+  const isOnBreak = currentStatus?.attendance?.status === "break";
+
+  const shiftStartTime = currentStatus?.attendance?.clockInTime
+    ? new Date(currentStatus.attendance.clockInTime)
+    : null;
+
+  const handleClockIn = async (locationData = {}, deviceInfo = {}) => {
+    // Prevent multiple simultaneous calls
+    if (clockInMutation.isPending) {
+      console.log("Clock in already in progress, ignoring request");
+      return { success: false, message: "Clock in already in progress" };
+    }
+
+    try {
+      const attendanceData = {
+        location: locationData,
+        deviceInfo: {
+          browser: navigator.userAgent,
+          device: "Web",
+          ...deviceInfo,
+        },
+      };
+
+      console.log("Executing clock in mutation with data:", attendanceData);
+      const result = await clockInMutation.mutateAsync(attendanceData);
+      console.log("Clock in mutation result:", result);
+      return result;
+    } catch (error) {
+      console.error("Failed to clock in:", error);
+      throw error;
+    }
+  };
+
+  const handleClockOut = async (locationData = {}, workDescription = "") => {
+    // Prevent multiple simultaneous calls
+    if (clockOutMutation.isPending) {
+      console.log("Clock out already in progress, ignoring request");
+      return { success: false, message: "Clock out already in progress" };
+    }
+
+    try {
+      const clockOutData = {
+        location: locationData,
+        workDescription,
+      };
+
+      console.log("Executing clock out mutation with data:", clockOutData);
+      const result = await clockOutMutation.mutateAsync(clockOutData);
+      console.log("Clock out mutation result:", result);
+      return result;
+    } catch (error) {
+      console.error("Failed to clock out:", error);
+      throw error;
+    }
+  };
+
+  const handleStartBreak = async (reason = "") => {
+    // Prevent multiple simultaneous calls
+    if (startBreakMutation.isPending) {
+      console.log("Start break already in progress, ignoring request");
+      return { success: false, message: "Start break already in progress" };
+    }
+
+    try {
+      const result = await startBreakMutation.mutateAsync({ reason });
+      return result;
+    } catch (error) {
+      console.error("Failed to start break:", error);
+      throw error;
+    }
+  };
+
+  const handleEndBreak = async () => {
+    // Prevent multiple simultaneous calls
+    if (endBreakMutation.isPending) {
+      console.log("End break already in progress, ignoring request");
+      return { success: false, message: "End break already in progress" };
+    }
+
+    try {
+      const result = await endBreakMutation.mutateAsync();
+      return result;
+    } catch (error) {
+      console.error("Failed to end break:", error);
+      throw error;
+    }
+  };
+
+  return {
+    // Status data
+    currentStatus: currentStatus?.attendance,
+    isShiftActive,
+    isOnBreak,
+    shiftStartTime,
+    statusLoading,
+
+    // Actions
+    handleClockIn,
+    handleClockOut,
+    handleStartBreak,
+    handleEndBreak,
+
+    // Loading states
+    isClockingIn: clockInMutation.isPending,
+    isClockingOut: clockOutMutation.isPending,
+    isStartingBreak: startBreakMutation.isPending,
+    isEndingBreak: endBreakMutation.isPending,
+
+    // Error states
+    clockInError: clockInMutation.error,
+    clockOutError: clockOutMutation.error,
+    startBreakError: startBreakMutation.error,
+    endBreakError: endBreakMutation.error,
+  };
 };

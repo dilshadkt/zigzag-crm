@@ -432,12 +432,189 @@ export const getStickyNotesWithReminders = async () => {
 // Bulk delete sticky notes
 export const bulkDeleteStickyNotes = async (noteIds) => {
   try {
-    const response = await apiClient.post("/sticky-notes/bulk-delete", {
-      noteIds,
+    const response = await apiClient.delete("/sticky-notes/bulk", {
+      data: { noteIds },
     });
     return response.data;
   } catch (error) {
     console.error("Error bulk deleting sticky notes:", error);
+    throw error;
+  }
+};
+
+////////////  ATTENDANCE SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+
+// Clock in - Start attendance
+export const clockIn = async (attendanceData) => {
+  try {
+    const response = await apiClient.post(
+      "/attendance/clock-in",
+      attendanceData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error clocking in:", error);
+    throw error;
+  }
+};
+
+// Clock out - End attendance
+export const clockOut = async (clockOutData) => {
+  try {
+    const response = await apiClient.post(
+      "/attendance/clock-out",
+      clockOutData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error clocking out:", error);
+    throw error;
+  }
+};
+
+// Start break
+export const startBreak = async (breakData = {}) => {
+  try {
+    const response = await apiClient.post("/attendance/break/start", breakData);
+    return response.data;
+  } catch (error) {
+    console.error("Error starting break:", error);
+    throw error;
+  }
+};
+
+// End break
+export const endBreak = async () => {
+  try {
+    const response = await apiClient.post("/attendance/break/end");
+    return response.data;
+  } catch (error) {
+    console.error("Error ending break:", error);
+    throw error;
+  }
+};
+
+// Get current attendance status
+export const getCurrentAttendanceStatus = async () => {
+  try {
+    const response = await apiClient.get("/attendance/status");
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance status:", error);
+    throw error;
+  }
+};
+
+// Get employee attendance history
+export const getEmployeeAttendanceHistory = async (
+  employeeId,
+  queryParams = {}
+) => {
+  try {
+    const params = new URLSearchParams();
+
+    // Add query parameters
+    if (queryParams.page) params.append("page", queryParams.page);
+    if (queryParams.limit) params.append("limit", queryParams.limit);
+    if (queryParams.startDate)
+      params.append("startDate", queryParams.startDate);
+    if (queryParams.endDate) params.append("endDate", queryParams.endDate);
+
+    const response = await apiClient.get(
+      `/attendance/employee/${employeeId}?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance history:", error);
+    throw error;
+  }
+};
+
+// Get daily attendance report (Admin only)
+export const getDailyAttendanceReport = async (date = null) => {
+  try {
+    const params = new URLSearchParams();
+    if (date) params.append("date", date);
+
+    const response = await apiClient.get(
+      `/attendance/daily-report?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting daily report:", error);
+    throw error;
+  }
+};
+
+// Get attendance summary (Admin only)
+export const getAttendanceSummary = async (queryParams) => {
+  try {
+    const params = new URLSearchParams();
+
+    if (queryParams.startDate)
+      params.append("startDate", queryParams.startDate);
+    if (queryParams.endDate) params.append("endDate", queryParams.endDate);
+    if (queryParams.employeeId)
+      params.append("employeeId", queryParams.employeeId);
+
+    const response = await apiClient.get(
+      `/attendance/summary?${params.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance summary:", error);
+    throw error;
+  }
+};
+
+// Get attendance analytics (Admin only)
+export const getAttendanceAnalytics = async (period = "month") => {
+  try {
+    const response = await apiClient.get(
+      `/attendance/analytics?period=${period}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error getting attendance analytics:", error);
+    throw error;
+  }
+};
+
+// Update attendance record (Admin only)
+export const updateAttendanceRecord = async (attendanceId, updateData) => {
+  try {
+    const response = await apiClient.put(
+      `/attendance/${attendanceId}`,
+      updateData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating attendance:", error);
+    throw error;
+  }
+};
+
+// Approve/Reject attendance (Admin only)
+export const approveAttendance = async (attendanceId, approvalData) => {
+  try {
+    const response = await apiClient.put(
+      `/attendance/${attendanceId}/approve`,
+      approvalData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error approving attendance:", error);
+    throw error;
+  }
+};
+
+// Delete attendance record (Admin only)
+export const deleteAttendanceRecord = async (attendanceId) => {
+  try {
+    const response = await apiClient.delete(`/attendance/${attendanceId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting attendance:", error);
     throw error;
   }
 };

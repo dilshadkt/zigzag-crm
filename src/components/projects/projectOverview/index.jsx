@@ -243,7 +243,8 @@ const Droppable = ({
 
   return (
     <div
-      className={`flex-shrink-0 w-80 rounded-lg p-4 transition-all duration-200 ease-out
+      className={`flex-shrink-0 w-80 rounded-lg p-4  transition-all
+         duration-200 ease-out
                   ${
                     isOver && canDrop
                       ? "bg-blue-50 border-2 border-blue-300"
@@ -257,7 +258,7 @@ const Droppable = ({
       data-droppable-id={id}
     >
       <div
-        className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${
+        className={`font-medium text-sm text-center  py-2 px-4 rounded-lg mb-4 ${
           config?.color || "bg-gray-200 text-gray-800"
         }`}
       >
@@ -267,7 +268,7 @@ const Droppable = ({
         )}
       </div>
       <div
-        className="space-y-1 min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
+        className="space-y-1 min-h-[200px] pb-6 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
         data-droppable-id={id}
       >
         {/* Drop zone at the beginning */}
@@ -554,7 +555,10 @@ const ProjectOverView = ({ currentProject }) => {
       </div>
 
       {isBoardView ? (
-        <div className="flex gap-4 h-full mt-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div
+          className="flex gap-4     h-full mt-4 overflow-x-auto pb-2
+         scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 project-details-scroll"
+        >
           {Object.entries(statusConfig).map(([status, config]) => {
             const canDrop = canUserDropInStatus(status);
             const tasks = tasksByStatus[status] || [];
@@ -591,7 +595,7 @@ const ProjectOverView = ({ currentProject }) => {
           })}
         </div>
       ) : (
-        <div className="flex flex-col h-full gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
+        <div className="flex flex-col h-full pb-5 gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
           {renderListSection("Active Tasks", activeTasks)}
           {renderListSection("Progress", progressTasks)}
           {renderListSection("Completed", completedTasks)}
