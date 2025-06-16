@@ -238,7 +238,7 @@ export const useGetEmployeeProjects = (employeeId) => {
     queryFn: () =>
       apiClient
         .get(`/projects/employee/${employeeId}?active=true`)
-        .then((res) => res.data)
+        .then((res) => res.data?.projects)
         .catch((error) => {
           // Fallback data if endpoint doesn't exist or has errors
           console.warn("Employee projects endpoint not available:", error);

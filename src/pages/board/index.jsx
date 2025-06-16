@@ -367,7 +367,6 @@ const Board = () => {
       </div>
     );
   }
-
   return (
     <div className="col-span-4 overflow-hidden flex flex-col">
       {/* Header */}

@@ -4,6 +4,7 @@ import {
   useAddProject,
   useCompanyProjects,
   useProjectDetails,
+  useGetEmployeeProjects,
 } from "../../api/hooks";
 import AddProject from "../../components/projects/addProject";
 import AddTask from "../../components/projects/addTask";
@@ -18,10 +19,24 @@ import NoTask from "../../components/projects/noTask";
 import ProjectsShimmer from "../../components/projects/ProjectsShimmer";
 
 const Prjects = () => {
-  const { companyId } = useAuth();
+  const { companyId, user } = useAuth();
   const { activeProject: selectProject } = useProject();
   const dispatch = useDispatch();
-  const { data: projects, isSuccess } = useCompanyProjects(companyId);
+
+  // Use different hooks based on user role
+  const { data: companyProjects, isSuccess: isCompanySuccess } =
+    useCompanyProjects(user?.role === "company-admin" ? companyId : null);
+  const { data: employeeProjects, isSuccess: isEmployeeSuccess } =
+    useGetEmployeeProjects(user?.role !== "company-admin" ? user?._id : null);
+
+  // Combine the results based on user role
+  const projects =
+    user?.role === "company-admin"
+      ? companyProjects
+      : employeeProjects?.projects;
+  const isSuccess =
+    user?.role === "company-admin" ? isCompanySuccess : isEmployeeSuccess;
+
   const { data: activeProject, isLoading } = useProjectDetails(selectProject);
 
   // Mutation
@@ -36,14 +51,18 @@ const Prjects = () => {
       console.error(error);
     }
   };
+
   useEffect(() => {
-    dispatch(setActiveProject(projects?.[0]?._id));
-  }, [isSuccess]);
+    if (isSuccess && projects?.length > 0) {
+      dispatch(setActiveProject(projects[0]?._id));
+    }
+  }, [isSuccess, projects]);
+
   const [showModalProject, setShowModalProject] = useState(false);
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [showModalTask, setShowModalTask] = useState(false);
 
-  const hasNoProject = projects?.length === 0;
+  const hasNoProject = !projects || projects.length === 0;
 
   if (isLoading) return <ProjectsShimmer />;
 
@@ -61,9 +80,9 @@ const Prjects = () => {
     <section className="flex flex-col h-full gap-y-3">
       <ProjectHeading setShowModalProject={setShowModalProject} />
       {hasNoProject ? (
-        <NoTask>There are no Project</NoTask>
+        <NoTask>There are no Projects</NoTask>
       ) : (
-        <div className="w-full h-full  overflow-hidden gap-x-5  grid grid-cols-5">
+        <div className="w-full h-full overflow-hidden gap-x-5 grid grid-cols-5">
           {/* current project section  */}
           <CurrentProject projects={projects} selectProject={selectProject} />
           {/* project detail page  */}
