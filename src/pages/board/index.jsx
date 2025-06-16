@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useGetEmployeeTasks } from "../../api/hooks";
+import { useGetEmployeeTasks, useGetAllCompanyTasks } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateTaskById } from "../../api/service";
 import { useUpdateTaskOrder } from "../../api/hooks";
 import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
-import { useGetEmployeeProjects } from "../../api/hooks";
+import { useGetEmployeeProjects, useCompanyProjects } from "../../api/hooks";
 
 // Status configuration
 const statusConfig = {
@@ -237,13 +237,28 @@ const Board = () => {
   const queryClient = useQueryClient();
   const [selectedProject, setSelectedProject] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
-  const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
-    user?._id ? user._id : null
-  );
-  const { data: projectsData } = useGetEmployeeProjects(user?._id);
-  const { mutate: updateOrder } = useUpdateTaskOrder();
 
-  const tasks = employeeTasksData?.tasks || [];
+  // Use different hooks based on user role
+  const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
+    useGetEmployeeTasks(user?.role !== "company-admin" ? user?._id : null);
+
+  const { data: companyTasksData, isLoading: isLoadingCompanyTasks } =
+    useGetAllCompanyTasks(
+      user?.role === "company-admin" ? user?.company : null
+    );
+
+  // Use different project hooks based on user role
+  const { data: projectsData } =
+    user?.role === "company-admin"
+      ? useCompanyProjects(user?.company)
+      : useGetEmployeeProjects(user?._id);
+  const { mutate: updateOrder } = useUpdateTaskOrder();
+  // Get tasks based on user role
+  const tasks =
+    user?.role === "company-admin"
+      ? companyTasksData?.tasks || []
+      : employeeTasksData?.tasks || [];
+
   const projects = projectsData?.projects || [];
 
   // Filter tasks based on selected project and priority
@@ -340,7 +355,7 @@ const Board = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoadingEmployeeTasks || isLoadingCompanyTasks) {
     return (
       <div className="animate-pulse">
         <div className="h-6 bg-gray-200 rounded mb-4 w-1/4"></div>
@@ -366,7 +381,7 @@ const Board = () => {
               className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
             >
               <option value="all">All Projects</option>
-              {projects.map((project) => (
+              {projectsData?.projects?.map((project) => (
                 <option key={project._id} value={project._id}>
                   {project.name}
                 </option>
