@@ -14,6 +14,7 @@ import TaskDetails from "./pages/taskDetails";
 import CompanyTasks from "./pages/companyTasks";
 import MyTasks from "./pages/myTasks";
 import TodayTasks from "./pages/todayTasks";
+import Board from "./pages/board";
 import SettingsLayout from "./layouts/settings";
 import Account from "./pages/settings/accounts";
 import AuthLayout from "./layouts/auth";
@@ -150,9 +151,17 @@ function App() {
             <Route
               path="today-tasks"
               element={
-                // <WithRoleAcess allowedRoles={["employee"]}>
-                <TodayTasks />
-                // </WithRoleAcess>
+                <WithRoleAcess allowedRoles={["employee"]}>
+                  <TodayTasks />
+                </WithRoleAcess>
+              }
+            />
+            <Route
+              path="board"
+              element={
+                <WithRoleAcess allowedRoles={["employee"]}>
+                  <Board />
+                </WithRoleAcess>
               }
             />
             <Route path="settings" element={<SettingsLayout />}>

@@ -1,5 +1,7 @@
 import { TbLayoutDashboardFilled } from "react-icons/tb";
 import { IoLayers } from "react-icons/io5";
+import { GrClipboard } from "react-icons/gr";
+
 import { FaCalendar } from "react-icons/fa";
 import { BiSolidPlane } from "react-icons/bi";
 import { HiUsers } from "react-icons/hi2";
@@ -7,62 +9,81 @@ import { FaSignalMessenger } from "react-icons/fa6";
 import { GoFileDirectoryFill } from "react-icons/go";
 import { IoIosSettings } from "react-icons/io";
 
+import {
+  FiHome,
+  FiCalendar,
+  FiUsers,
+  FiMessageSquare,
+  FiInfo,
+  FiSettings,
+  FiClipboard,
+  FiClock,
+  FiLayout,
+} from "react-icons/fi";
+
 export const SIDE_MENU = [
   {
     id: 1,
     title: "Dashboard",
-    icon: TbLayoutDashboardFilled,
+    icon: FiHome,
     path: "/",
-    access: ["admin", "employee"],
+    access: ["company-admin", "employee"],
   },
   {
     id: 2,
     title: "Projects",
-    icon: IoLayers,
+    icon: FiClipboard,
     path: "/projects",
-    access: ["admin", "employee"],
+    access: ["company-admin", "employee"],
   },
   {
     id: 3,
-    title: "Calender",
-    icon: FaCalendar,
-    path: "/calender",
-    access: ["admin"],
+    title: "Board",
+    icon: FiLayout,
+    path: "/board",
+    access: ["employee"],
   },
   {
     id: 4,
+    title: "Calendar",
+    icon: FiCalendar,
+    path: "/calender",
+    access: ["company-admin", "employee"],
+  },
+  {
+    id: 5,
     title: "Vacations",
     icon: BiSolidPlane,
     path: "/vacations",
     access: ["admin"],
   },
   {
-    id: 5,
+    id: 6,
     title: "Employees",
-    icon: HiUsers,
+    icon: FiUsers,
     path: "/employees",
-    access: ["admin"],
+    access: ["company-admin"],
   },
   {
-    id: 6,
+    id: 7,
     title: "Messenger",
-    icon: FaSignalMessenger,
+    icon: FiMessageSquare,
     path: "/messenger",
-    access: ["admin", "employee"],
+    access: ["company-admin", "employee"],
   },
-  // {
-  //   id: 7,
-  //   title: "Info Portal",
-  //   icon: GoFileDirectoryFill,
-  //   path: "/infoPortal",
-  //   access: ["admin"],
-  // },
   {
     id: 8,
+    title: "Info Portal",
+    icon: FiInfo,
+    path: "/infoPortal",
+    access: ["company-admin", "employee"],
+  },
+  {
+    id: 9,
     title: "Settings",
-    icon: IoIosSettings,
+    icon: FiSettings,
     path: "/settings",
-    access: ["admin", "employee"],
+    access: ["company-admin", "employee"],
   },
 ];
 
