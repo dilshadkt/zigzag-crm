@@ -381,7 +381,7 @@ const Board = () => {
               className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
             >
               <option value="all">All Projects</option>
-              {projectsData?.projects?.map((project) => (
+              {projectsData?.map((project) => (
                 <option key={project._id} value={project._id}>
                   {project.name}
                 </option>

@@ -68,7 +68,7 @@ export const useCompanyProjects = (companyId, limit = 0) => {
             limit ? `?limit=${limit}` : ""
           }?active=true`
         )
-        .then((res) => res.data),
+        .then((res) => res.data?.projects),
     enabled: !!companyId,
   });
 };
