@@ -234,7 +234,6 @@ const CompanyProgressStats = () => {
       )}
 
       {/* Show tasks based on URL filter */}
-      <CompanyTasks />
     </div>
   );
 };
