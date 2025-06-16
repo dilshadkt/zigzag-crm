@@ -359,7 +359,7 @@ const CompanyTasks = () => {
 
   const handleTaskClick = (task) => {
     // Navigate to task details within project context
-    navigate(`/projects/${task.project?.name}/${task._id}`);
+    navigate(`/projects/${task.project?._id}/${task._id}`);
   };
 
   if (isLoading) {

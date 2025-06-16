@@ -71,13 +71,13 @@ export const SIDE_MENU = [
     path: "/messenger",
     access: ["company-admin", "employee"],
   },
-  {
-    id: 8,
-    title: "Info Portal",
-    icon: FiInfo,
-    path: "/infoPortal",
-    access: ["company-admin", "employee"],
-  },
+  // {
+  //   id: 8,
+  //   title: "Info Portal",
+  //   icon: FiInfo,
+  //   path: "/infoPortal",
+  //   access: ["company-admin", "employee"],
+  // },
   {
     id: 9,
     title: "Settings",

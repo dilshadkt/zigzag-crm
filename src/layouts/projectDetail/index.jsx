@@ -7,17 +7,19 @@ import ProjectOverView from "../../components/projects/projectOverview";
 import AddTask from "../../components/projects/addTask";
 import { useProject } from "../../hooks/useProject";
 import { useCreateTask, useProjectDetails } from "../../api/hooks";
-import { Outlet } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import { processAttachments } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
 import { useAuth } from "../../hooks/useAuth";
 
 const ProjectDetailLayout = () => {
-  const { activeProject } = useProject();
-  const { data } = useProjectDetails(activeProject);
+  // const { activeProject } = useProject();
+  const { projectName } = useParams();
+  const { data } = useProjectDetails(projectName);
   const [showModalTask, setShowModalTask] = useState(false);
   const { mutate } = useCreateTask(() => setShowModalTask(false), data?._id);
   const { isCompany } = useAuth();
+  // console.log(activeProject);
 
   const handleSubmit = async (values) => {
     const updatedValues = { ...values };

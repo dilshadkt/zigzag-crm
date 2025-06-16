@@ -159,9 +159,9 @@ function App() {
             <Route
               path="board"
               element={
-                <WithRoleAcess allowedRoles={["employee"]}>
-                  <Board />
-                </WithRoleAcess>
+                // <WithRoleAcess allowedRoles={["employee"]}>
+                <Board />
+                // </WithRoleAcess>
               }
             />
             <Route path="settings" element={<SettingsLayout />}>

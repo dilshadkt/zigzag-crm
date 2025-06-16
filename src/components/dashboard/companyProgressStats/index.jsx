@@ -20,7 +20,6 @@ const CompanyProgressStats = () => {
 
   // Function to handle overdue tasks click
   const handleOverdueTasksClick = () => {
-    // Navigate to overdue tasks page
     navigate("/company-tasks?filter=overdue");
   };
 
@@ -31,7 +30,7 @@ const CompanyProgressStats = () => {
         navigate("/projects-analytics");
         break;
       case "tasks":
-        navigate("/company-tasks"); // Show all tasks
+        navigate("/company-tasks");
         break;
       case "in-progress":
         navigate("/company-tasks?filter=in-progress");
@@ -50,7 +49,7 @@ const CompanyProgressStats = () => {
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded mb-4"></div>
           <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
             ))}
           </div>
@@ -68,7 +67,6 @@ const CompanyProgressStats = () => {
       color: "bg-blue-500",
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
-      progress: companyStats?.projects?.averageProgress || 0,
       onClick: () => handleStatsClick("projects"),
     },
     {
@@ -79,7 +77,6 @@ const CompanyProgressStats = () => {
       color: "bg-purple-500",
       bgColor: "bg-purple-50",
       textColor: "text-purple-600",
-      progress: companyStats?.tasks?.completionRate || 0,
       onClick: () => handleStatsClick("tasks"),
     },
     {
@@ -90,14 +87,6 @@ const CompanyProgressStats = () => {
       color: "bg-green-500",
       bgColor: "bg-green-50",
       textColor: "text-green-600",
-      progress:
-        companyStats?.employees?.total > 0
-          ? Math.round(
-              (companyStats?.employees?.active /
-                companyStats?.employees?.total) *
-                100
-            )
-          : 100,
       onClick: () => handleStatsClick("employees"),
     },
     {
@@ -108,15 +97,27 @@ const CompanyProgressStats = () => {
       color: "bg-orange-500",
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
-      progress:
-        companyStats?.tasks?.total > 0
-          ? Math.round(
-              ((companyStats?.tasks?.inProgress || 0) /
-                companyStats?.tasks?.total) *
-                100
-            )
-          : 0,
       onClick: () => handleStatsClick("in-progress"),
+    },
+    {
+      title: "Overdue Tasks",
+      value: companyStats?.tasks?.overdue || 0,
+      subtitle: "Need attention",
+      icon: FiAlertCircle,
+      color: "bg-red-500",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600",
+      onClick: handleOverdueTasksClick,
+    },
+    {
+      title: "Today's Tasks",
+      value: companyStats?.tasks?.today || 0,
+      subtitle: "Due today",
+      icon: FiCheckCircle,
+      color: "bg-indigo-500",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600",
+      onClick: () => navigate("/company-tasks?filter=today"),
     },
   ];
 
@@ -159,14 +160,14 @@ const CompanyProgressStats = () => {
       </div>
 
       {/* Company Statistics Grid */}
-      <div className="grid grid-cols-4 gap-4 flex-1 mb-4">
+      <div className="grid grid-cols-6 gap-4 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div
               key={index}
               onClick={stat.onClick}
-              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105 group`}
+              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105 group relative overflow-hidden`}
             >
               <div className={`${stat.color} p-3 rounded-lg mb-3`}>
                 <Icon className="w-6 h-6 text-white" />
@@ -177,17 +178,7 @@ const CompanyProgressStats = () => {
               <p className="text-sm font-medium text-gray-700 mb-1">
                 {stat.title}
               </p>
-              <p className="text-xs text-gray-500 mb-2">{stat.subtitle}</p>
-              {/* Mini progress indicator */}
-              <div className="w-full bg-white bg-opacity-50 rounded-full h-1">
-                <div
-                  className={`${stat.color.replace(
-                    "bg-",
-                    "bg-opacity-70 bg-"
-                  )} h-1 rounded-full transition-all duration-300`}
-                  style={{ width: `${stat.progress}%` }}
-                ></div>
-              </div>
+              <p className="text-xs text-gray-500">{stat.subtitle}</p>
               {/* Hover indicator */}
               <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <span className="text-xs text-gray-400">→</span>
@@ -199,7 +190,7 @@ const CompanyProgressStats = () => {
 
       {/* Workload Distribution */}
       {totalWorkload > 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mt-2">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mt-4">
           <div className="flex items-center justify-between mb-3">
             <h5 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <FiBarChart2 className="w-4 h-4" />
@@ -240,38 +231,6 @@ const CompanyProgressStats = () => {
           </div>
         </div>
       )}
-
-      {/* Overdue Tasks Alert */}
-      {(companyStats?.tasks?.overdue || 0) > 0 && (
-        <div
-          onClick={handleOverdueTasksClick}
-          className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4 cursor-pointer hover:bg-red-100 transition-colors duration-200"
-        >
-          <div className="flex items-center justify-center gap-2">
-            <FiAlertCircle className="w-5 h-5 text-red-500" />
-            <span className="text-sm font-medium text-red-700">
-              {companyStats.tasks.overdue} overdue task
-              {companyStats.tasks.overdue > 1 ? "s" : ""} require attention
-            </span>
-            <span className="text-xs text-red-600 ml-2">→ Click to view</span>
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {(companyStats?.tasks?.total || 0) === 0 &&
-        (companyStats?.projects?.total || 0) === 0 && (
-          <div className="text-center py-8">
-            <div className="text-gray-400 text-4xl mb-3">🏢</div>
-            <h3 className="text-lg font-medium text-gray-500 mb-2">
-              Welcome to your company dashboard
-            </h3>
-            <p className="text-gray-500 text-sm">
-              Company statistics will appear here once projects and tasks are
-              created.
-            </p>
-          </div>
-        )}
     </div>
   );
 };

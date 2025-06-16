@@ -19,9 +19,12 @@ const Sidebar = () => {
     navigate("/auth/signin");
   };
   return (
-    <section className="flex flex-col min-w-[220px] my-3 ml-3 justify-between rounded-[24px] bg-white h-full p-3">
+    <section
+      className="flex flex-col min-w-[220px]  my-3 ml-3 justify-between
+     rounded-[24px] bg-white p-3"
+    >
       <div className="flex flex-col">
-        <div className="h-[70px] flexCenter "></div>
+        <div className="h-[40px] flexCenter "></div>
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.map((item, index) => (
             <li
