@@ -53,10 +53,10 @@ const Prjects = () => {
   };
 
   useEffect(() => {
-    if (isSuccess && projects?.length > 0) {
+    if (isSuccess && projects?.length > 0 && !selectProject) {
       dispatch(setActiveProject(projects[0]?._id));
     }
-  }, [isSuccess, projects]);
+  }, [isSuccess, projects, selectProject]);
 
   const [showModalProject, setShowModalProject] = useState(false);
   const [showModalFilter, setShowModalFilter] = useState(false);
