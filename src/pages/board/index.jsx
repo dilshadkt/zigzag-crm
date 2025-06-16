@@ -7,6 +7,7 @@ import { useUpdateTaskOrder } from "../../api/hooks";
 import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
 import { useGetEmployeeProjects, useCompanyProjects } from "../../api/hooks";
+import { useNavigate } from "react-router-dom";
 
 // Status configuration
 const statusConfig = {
@@ -235,6 +236,7 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
 const Board = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
 
@@ -468,8 +470,7 @@ const Board = () => {
                     task={task}
                     index={index}
                     onClick={(task) => {
-                      // Handle task click - you can implement task details view here
-                      console.log("Task clicked:", task);
+                      navigate(`/projects/${task.project._id}/${task._id}`);
                     }}
                   />
                 ))
