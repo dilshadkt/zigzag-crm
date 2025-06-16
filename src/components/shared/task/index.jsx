@@ -88,13 +88,20 @@ const Task = ({
 
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between">
-            <h4
-              className={`font-medium line-clamp-2 ${
-                isExtraTask ? "text-purple-800" : "text-gray-800"
-              }`}
-            >
-              {task?.title}
-            </h4>
+            <div className="flex flex-col gap-1">
+              <h4
+                className={`font-medium line-clamp-2 ${
+                  isExtraTask ? "text-purple-800" : "text-gray-800"
+                }`}
+              >
+                {task?.title}
+              </h4>
+              {task?.project && (
+                <span className="text-xs text-gray-500">
+                  📋 {task.project.name || task.project.displayName}
+                </span>
+              )}
+            </div>
             {isExtraTask && (
               <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium ml-2">
                 Extra

@@ -9,7 +9,7 @@ const DashboardLayout = () => {
       <Sidebar />
       <section className="w-full gap-y-6 h-full overflow-auto flex flex-col p-3  ">
         <DashboardHeader />
-        <div className="px-1 w-full h-full overflow-hidden ">
+        <div className="px-1 w-full h-full overflow-auto ">
           <Outlet />
         </div>
       </section>

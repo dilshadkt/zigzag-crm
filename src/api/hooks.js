@@ -563,6 +563,7 @@ export const useGetEmployeeTasks = (employeeId, filters = {}) => {
       if (filters.status) params.append("status", filters.status);
       if (filters.dueDate) params.append("dueDate", filters.dueDate);
       if (filters.priority) params.append("priority", filters.priority);
+      if (filters.projectId) params.append("projectId", filters.projectId);
 
       return apiClient
         .get(`/tasks/employee/${employeeId}?${params.toString()}`)

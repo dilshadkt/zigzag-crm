@@ -6,6 +6,7 @@ import { updateTaskById } from "../../api/service";
 import { useUpdateTaskOrder } from "../../api/hooks";
 import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
+import { useGetEmployeeProjects } from "../../api/hooks";
 
 // Status configuration
 const statusConfig = {
@@ -234,22 +235,46 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
 const Board = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedProject, setSelectedProject] = useState("all");
+  const [selectedPriority, setSelectedPriority] = useState("all");
   const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
     user?._id ? user._id : null
   );
+  const { data: projectsData } = useGetEmployeeProjects(user?._id);
   const { mutate: updateOrder } = useUpdateTaskOrder();
 
   const tasks = employeeTasksData?.tasks || [];
+  const projects = projectsData?.projects || [];
+
+  // Filter tasks based on selected project and priority
+  const filteredTasks = tasks.filter((task) => {
+    const projectMatch =
+      selectedProject === "all" || task.project?._id === selectedProject;
+    const priorityMatch =
+      selectedPriority === "all" ||
+      task.priority?.toLowerCase() === selectedPriority.toLowerCase();
+    return projectMatch && priorityMatch;
+  });
+
+  const handleProjectChange = (e) => {
+    setSelectedProject(e.target.value);
+  };
+
+  const handlePriorityChange = (e) => {
+    setSelectedPriority(e.target.value);
+  };
 
   // Group tasks by status
   const tasksByStatus = {
-    todo: tasks.filter((task) => task.status === "todo"),
-    "in-progress": tasks.filter((task) => task.status === "in-progress"),
-    completed: tasks.filter((task) => task.status === "completed"),
-    "on-review": tasks.filter((task) => task.status === "on-review"),
-    "on-hold": tasks.filter((task) => task.status === "on-hold"),
-    "re-work": tasks.filter((task) => task.status === "re-work"),
-    approved: tasks.filter((task) => task.status === "approved"),
+    todo: filteredTasks.filter((task) => task.status === "todo"),
+    "in-progress": filteredTasks.filter(
+      (task) => task.status === "in-progress"
+    ),
+    completed: filteredTasks.filter((task) => task.status === "completed"),
+    "on-review": filteredTasks.filter((task) => task.status === "on-review"),
+    "on-hold": filteredTasks.filter((task) => task.status === "on-hold"),
+    "re-work": filteredTasks.filter((task) => task.status === "re-work"),
+    approved: filteredTasks.filter((task) => task.status === "approved"),
   };
 
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
@@ -333,12 +358,70 @@ const Board = () => {
       {/* Header */}
       <div className="flexBetween">
         <Header>Task Board</Header>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
+          <div className="relative">
+            <select
+              value={selectedProject}
+              onChange={handleProjectChange}
+              className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
+            >
+              <option value="all">All Projects</option>
+              {projects.map((project) => (
+                <option key={project._id} value={project._id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div className="relative">
+            <select
+              value={selectedPriority}
+              onChange={handlePriorityChange}
+              className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
+            >
+              <option value="all">All Priorities</option>
+              <option value="high">High Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
+
           <button
             onClick={() =>
               queryClient.invalidateQueries(["employeeTasks", user?._id])
             }
-            className="p-2 bg-white hover:bg-gray-50 transition-colors rounded-lg"
+            className="p-2 bg-white hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
           >
             <img src="/icons/refresh.svg" alt="Refresh" className="w-5 h-5" />
           </button>
@@ -347,24 +430,33 @@ const Board = () => {
 
       {/* Board View */}
       <div
-        className="flex  h-[calc(100vh-180px)] mt-4 overflow-x-auto 
+        className="flex h-[calc(100vh-180px)] mt-4 overflow-x-auto 
       pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
        project-details-scroll"
       >
         {Object.entries(statusConfig).map(([status, config]) => {
           const tasks = tasksByStatus[status] || [];
+          const taskCount = tasks.length;
 
           return (
             <Droppable
               key={status}
               id={status}
-              title={config.title}
+              title={`${config.title} (${taskCount})`}
               onDrop={handleTaskDrop}
               tasks={tasks}
             >
               {tasks.length > 0 ? (
                 tasks.map((task, index) => (
-                  <DraggableTask key={task._id} task={task} index={index} />
+                  <DraggableTask
+                    key={task._id}
+                    task={task}
+                    index={index}
+                    onClick={(task) => {
+                      // Handle task click - you can implement task details view here
+                      console.log("Task clicked:", task);
+                    }}
+                  />
                 ))
               ) : (
                 <div className="text-center text-gray-500 py-4 text-sm">
