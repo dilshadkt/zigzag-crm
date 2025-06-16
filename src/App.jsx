@@ -13,6 +13,7 @@ import ProjectDetails from "./pages/projectDetail";
 import TaskDetails from "./pages/taskDetails";
 import CompanyTasks from "./pages/companyTasks";
 import MyTasks from "./pages/myTasks";
+import TodayTasks from "./pages/todayTasks";
 import SettingsLayout from "./layouts/settings";
 import Account from "./pages/settings/accounts";
 import AuthLayout from "./layouts/auth";
@@ -144,6 +145,14 @@ function App() {
                 <WithRoleAcess allowedRoles={["employee"]}>
                   <MyTasks />
                 </WithRoleAcess>
+              }
+            />
+            <Route
+              path="today-tasks"
+              element={
+                // <WithRoleAcess allowedRoles={["employee"]}>
+                <TodayTasks />
+                // </WithRoleAcess>
               }
             />
             <Route path="settings" element={<SettingsLayout />}>

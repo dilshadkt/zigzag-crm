@@ -33,6 +33,17 @@ const EmployeeProgressStats = () => {
     return dueDate < today && task.status !== "completed";
   }).length;
 
+  // Calculate today's tasks
+  const todayTasks = tasks.filter((task) => {
+    const dueDate = new Date(task.dueDate);
+    const today = new Date();
+    return (
+      dueDate.getDate() === today.getDate() &&
+      dueDate.getMonth() === today.getMonth() &&
+      dueDate.getFullYear() === today.getFullYear()
+    );
+  }).length;
+
   const completionRate =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -72,6 +83,15 @@ const EmployeeProgressStats = () => {
       onClick: () => handleStatsClick("total"),
     },
     {
+      title: "Today's Tasks",
+      value: todayTasks,
+      icon: FiClock,
+      color: "bg-purple-500",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600",
+      onClick: () => navigate("/today-tasks"),
+    },
+    {
       title: "Completed",
       value: completedTasks,
       icon: FiCheckCircle,
@@ -97,6 +117,15 @@ const EmployeeProgressStats = () => {
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
       onClick: () => handleStatsClick("pending"),
+    },
+    {
+      title: "Overdue",
+      value: overdueTasks,
+      icon: FiAlertCircle,
+      color: "bg-red-500",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600",
+      onClick: handleOverdueTasksClick,
     },
   ];
 
@@ -144,7 +173,7 @@ const EmployeeProgressStats = () => {
       </div>
 
       {/* Task Statistics - Now in horizontal grid with click handlers */}
-      <div className="grid grid-cols-4 gap-4 flex-1">
+      <div className="grid grid-cols-6 gap-4 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
