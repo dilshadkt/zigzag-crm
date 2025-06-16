@@ -12,6 +12,7 @@ import {
   FiAlertCircle,
   FiBarChart2,
 } from "react-icons/fi";
+import CompanyTasks from "../../../pages/companyTasks";
 
 const CompanyProgressStats = () => {
   const { companyId } = useAuth();
@@ -117,7 +118,7 @@ const CompanyProgressStats = () => {
       color: "bg-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
-      onClick: () => navigate("/company-tasks?filter=today"),
+      onClick: () => navigate("/company-today-tasks"),
     },
   ];
 
@@ -231,6 +232,9 @@ const CompanyProgressStats = () => {
           </div>
         </div>
       )}
+
+      {/* Show tasks based on URL filter */}
+      <CompanyTasks />
     </div>
   );
 };

@@ -20,11 +20,12 @@ import {
   FiChevronUp,
 } from "react-icons/fi";
 
-const CompanyTasks = () => {
+const CompanyTasks = ({ filter: propFilter }) => {
   const { user, companyId } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const filter = searchParams.get("filter"); // Can be: 'overdue', 'in-progress', 'pending', 'completed'
+  const urlFilter = searchParams.get("filter"); // Can be: 'overdue', 'in-progress', 'pending', 'completed'
+  const filter = propFilter || urlFilter; // Use prop filter if provided, otherwise use URL filter
 
   // Get all company tasks and filter based on URL parameter
   const { data: allTasksData, isLoading } = useGetAllCompanyTasks(companyId);
@@ -93,6 +94,17 @@ const CompanyTasks = () => {
           break;
         case "completed":
           filtered = filtered.filter((task) => task.status === "completed");
+          break;
+        case "today":
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            return (
+              dueDate.getDate() === today.getDate() &&
+              dueDate.getMonth() === today.getMonth() &&
+              dueDate.getFullYear() === today.getFullYear() &&
+              task.status !== "completed"
+            );
+          });
           break;
         // No default case - show all tasks for 'all' or no filter
       }
@@ -245,6 +257,8 @@ const CompanyTasks = () => {
         return "Pending Tasks";
       case "completed":
         return "Completed Tasks";
+      case "today":
+        return "Today's Tasks";
       default:
         return "All Tasks";
     }

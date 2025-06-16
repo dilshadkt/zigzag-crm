@@ -1,7 +1,11 @@
 import React from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
+import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { setActiveProject } from "../../../store/slice/projectSlice";
 const CurrentProject = ({ projects, selectProject }) => {
+  const dispatch = useDispatch();
+
   return (
     <div
       className="col-span-1 bg-white overflow-hidden text-[#0A1629]
@@ -21,6 +25,9 @@ const CurrentProject = ({ projects, selectProject }) => {
         {/* project card  */}
         {projects?.map((project, index) => (
           <div
+            onClick={() => {
+              dispatch(setActiveProject(project?._id));
+            }}
             key={index}
             className={`${
               selectProject === project?._id && `bg-[#F4F9FD]`

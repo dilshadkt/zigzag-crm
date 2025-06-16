@@ -348,7 +348,7 @@ const ProjectDetails = ({
   };
 
   const handleNavigateTask = (task) => {
-    navigate(`/projects/${projectName}/${task?._id}`);
+    navigate(`/projects/${activeProject._id}/${task?._id}`);
   };
 
   const canUserDragTask = (task) => {

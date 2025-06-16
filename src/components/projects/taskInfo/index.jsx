@@ -27,7 +27,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   } = useGetTaskTimeLogs(taskDetails?._id);
   const createTimeLog = useCreateTimeLog();
   const deleteTask = useDeleteTask(taskDetails?.project, onTaskDeleted);
-  console.log(taskDetails);
   const handleLogTime = () => {
     if (!duration || !description) return;
 

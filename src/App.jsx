@@ -141,6 +141,14 @@ function App() {
               }
             />
             <Route
+              path="company-today-tasks"
+              element={
+                <WithRoleAcess allowedRoles={["company-admin"]}>
+                  <CompanyTasks filter="today" />
+                </WithRoleAcess>
+              }
+            />
+            <Route
               path="my-tasks"
               element={
                 <WithRoleAcess allowedRoles={["employee"]}>
