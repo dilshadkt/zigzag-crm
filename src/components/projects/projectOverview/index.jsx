@@ -309,7 +309,7 @@ const Droppable = ({
   );
 };
 
-const ProjectOverView = ({ currentProject }) => {
+const ProjectOverView = ({ currentProject, onRefresh }) => {
   const { projectName } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -318,7 +318,7 @@ const ProjectOverView = ({ currentProject }) => {
   const [isBoardView, setIsBoardView] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
   const { isCompany, user } = useAuth();
-
+  console.log(currentProject);
   // Employee allowed statuses
   const employeeAllowedStatuses = [
     "todo",
@@ -428,7 +428,9 @@ const ProjectOverView = ({ currentProject }) => {
 
   // Function to refresh project data
   const handleRefresh = () => {
-    queryClient.invalidateQueries(["project", projectName]);
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
@@ -440,7 +442,9 @@ const ProjectOverView = ({ currentProject }) => {
 
       await updateTaskById(taskId, updateData);
       // Invalidate and refetch the project data to update the UI
-      queryClient.invalidateQueries(["project", projectName]);
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error("Failed to update task:", error);
       // Provide feedback to the user
@@ -509,7 +513,9 @@ const ProjectOverView = ({ currentProject }) => {
       console.error("Failed to update task:", error);
 
       // Revert optimistic update
-      queryClient.invalidateQueries(["project", projectName]);
+      if (onRefresh) {
+        onRefresh();
+      }
       alert("Failed to update task. Please try again.");
     }
   };

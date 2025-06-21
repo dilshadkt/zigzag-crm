@@ -73,20 +73,41 @@ export const useCompanyProjects = (companyId, limit = 0) => {
   });
 };
 
-export const useProjectDetails = (projectId) => {
+export const useProjectDetails = (projectId, monthKey = null) => {
   return useQuery({
-    queryKey: ["projectDetails", projectId],
-    queryFn: () =>
-      apiClient
-        .get(`/projects/${projectId}?active=true`)
-        .then((res) => res.data?.project),
+    queryKey: ["projectDetails", projectId, monthKey],
+    queryFn: () => {
+      const url = monthKey
+        ? `/projects/${projectId}?monthKey=${monthKey}`
+        : `/projects/${projectId}`;
+      return apiClient.get(url).then((res) => res.data?.project);
+    },
     enabled: !!projectId,
-    staleTime: 1000 * 60 * 2, // 5 minutes (Prevents frequent refetches)
+    staleTime: 1000 * 60 * 2, // 2 minutes (Prevents frequent refetches)
     cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
     refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
     refetchOnReconnect: false, // Prevents refetch when network reconnects
   });
 };
+
+// New hook for fetching project tasks separately
+export const useProjectTasks = (projectId, monthKey = null) => {
+  return useQuery({
+    queryKey: ["projectTasks", projectId, monthKey],
+    queryFn: () => {
+      const url = monthKey
+        ? `/projects/${projectId}/tasks?monthKey=${monthKey}`
+        : `/projects/${projectId}/tasks`;
+      return apiClient.get(url).then((res) => res.data?.tasks || []);
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 1, // 1 minute (Tasks change more frequently)
+    cacheTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+};
+
 //empoyee
 export const useEmpoyees = (page = 1, filters = null) => {
   return useQuery({

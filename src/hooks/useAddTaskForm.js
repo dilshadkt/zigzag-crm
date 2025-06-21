@@ -8,6 +8,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     title: defaultValue?.title || "",
     taskGroup: defaultValue?.taskGroup || "",
     extraTaskWorkType: defaultValue?.extraTaskWorkType || "",
+    taskMonth: defaultValue?.taskMonth || "",
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
     periority: defaultValue?.priority || "",
@@ -34,6 +35,9 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
       then: (schema) => schema.required("Extra task work type is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
+    taskMonth: Yup.string()
+      .required("Task month is required")
+      .matches(/^\d{4}-\d{2}$/, "Task month must be in YYYY-MM format"),
     startDate: Yup.string().required("Start date is required"),
     dueDate: Yup.string().required("Due date is required"),
     periority: Yup.string().required("Priority is required"),

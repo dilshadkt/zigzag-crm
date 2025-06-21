@@ -1,14 +1,18 @@
 import React from "react";
-import { useProjectDetails } from "../../api/hooks";
 import ProjectOverView from "../../components/projects/projectOverview";
-import { useProject } from "../../hooks/useProject";
-import { useAuth } from "../../hooks/useAuth";
+import { useOutletContext } from "react-router-dom";
 
 const ProjectDetails = () => {
-  const { activeProject } = useProject();
-  const { data } = useProjectDetails(activeProject);
+  // Get data passed from the layout via Outlet context
+  const { projectData, selectedMonth, refetchTasks } = useOutletContext();
 
-  return <ProjectOverView currentProject={data} />;
+  return (
+    <ProjectOverView
+      currentProject={projectData}
+      selectedMonth={selectedMonth}
+      onRefresh={refetchTasks}
+    />
+  );
 };
 
 export default ProjectDetails;

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { format } from "date-fns";
 import {
   useAddProject,
   useCompanyProjects,
   useProjectDetails,
+  useProjectTasks,
   useGetEmployeeProjects,
+  useCreateTask,
 } from "../../api/hooks";
 import AddProject from "../../components/projects/addProject";
 import AddTask from "../../components/projects/addTask";
@@ -17,11 +20,18 @@ import { setActiveProject } from "../../store/slice/projectSlice";
 import FilterMenu from "../../components/projects/FilterMenu";
 import NoTask from "../../components/projects/noTask";
 import ProjectsShimmer from "../../components/projects/ProjectsShimmer";
+import { processAttachments } from "../../lib/attachmentUtils";
+import { uploadSingleFile } from "../../api/service";
 
 const Prjects = () => {
   const { companyId, user } = useAuth();
   const { activeProject: selectProject } = useProject();
   const dispatch = useDispatch();
+
+  // Month selection state - default to current month
+  const [selectedMonth, setSelectedMonth] = useState(
+    format(new Date(), "yyyy-MM")
+  );
 
   // Use different hooks based on user role
   const { data: companyProjects, isSuccess: isCompanySuccess } =
@@ -37,10 +47,28 @@ const Prjects = () => {
   const isSuccess =
     user?.role === "company-admin" ? isCompanySuccess : isEmployeeSuccess;
 
-  const { data: activeProject, isLoading } = useProjectDetails(selectProject);
+  // Use separate hooks for project details and tasks
+  const { data: activeProject, isLoading: projectLoading } =
+    useProjectDetails(selectProject);
+  const { data: projectTasks, isLoading: tasksLoading } = useProjectTasks(
+    selectProject,
+    selectedMonth
+  );
+
+  // Combine project data with tasks
+  const projectWithTasks = activeProject
+    ? {
+        ...activeProject,
+        tasks: projectTasks || [],
+      }
+    : null;
 
   // Mutation
   const addProject = useAddProject();
+  const createTask = useCreateTask(
+    () => setShowModalTask(false),
+    selectProject
+  );
 
   const handleAddProject = async (values, { resetForm }) => {
     try {
@@ -50,6 +78,25 @@ const Prjects = () => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleAddTask = async (values) => {
+    const updatedValues = { ...values };
+
+    // Handle assignee field mapping
+    if (updatedValues.assignedTo) {
+      updatedValues.assignee = updatedValues.assignedTo;
+      delete updatedValues.assignedTo;
+    }
+
+    // Process attachments
+    const processedValue = await processAttachments(
+      values?.attachments,
+      uploadSingleFile
+    );
+    updatedValues.attachments = processedValue;
+
+    createTask.mutate(updatedValues);
   };
 
   useEffect(() => {
@@ -63,22 +110,29 @@ const Prjects = () => {
   const [showModalTask, setShowModalTask] = useState(false);
 
   const hasNoProject = !projects || projects.length === 0;
+  const isLoading = projectLoading || tasksLoading;
 
   if (isLoading) return <ProjectsShimmer />;
 
-  const activeTasks = activeProject?.tasks?.filter(
+  const activeTasks = projectWithTasks?.tasks?.filter(
     (task) => task?.status === "todo"
   );
-  const progressTasks = activeProject?.tasks?.filter(
+  const progressTasks = projectWithTasks?.tasks?.filter(
     (task) => task?.status === "in-progress"
   );
-  const completedTasks = activeProject?.tasks?.filter(
+  const completedTasks = projectWithTasks?.tasks?.filter(
     (task) => task?.status === "completed"
   );
 
   return (
     <section className="flex flex-col h-full gap-y-3">
-      <ProjectHeading setShowModalProject={setShowModalProject} />
+      <ProjectHeading
+        setShowModalProject={setShowModalProject}
+        selectedMonth={selectedMonth}
+        onMonthChange={setSelectedMonth}
+        setShowModalTask={setShowModalTask}
+        activeProject={projectWithTasks}
+      />
       {hasNoProject ? (
         <NoTask>There are no Projects</NoTask>
       ) : (
@@ -87,7 +141,7 @@ const Prjects = () => {
           <CurrentProject projects={projects} selectProject={selectProject} />
           {/* project detail page  */}
           <ProjectDetails
-            activeProject={activeProject || projects}
+            activeProject={projectWithTasks || projects}
             activeTasks={activeTasks}
             completedTasks={completedTasks}
             progressTasks={progressTasks}
@@ -108,6 +162,14 @@ const Prjects = () => {
         setShowModalTask={setShowModalTask}
         selectedProject={selectProject}
         assignee={activeProject?.teams}
+        projectData={activeProject}
+        teams={activeProject?.teams}
+        monthWorkDetails={activeProject?.workDetails?.find(
+          (wd) => wd.month === selectedMonth
+        )}
+        onSubmit={handleAddTask}
+        isLoading={createTask.isPending}
+        selectedMonth={selectedMonth}
       />
 
       {/* add project modal */}

@@ -10,6 +10,7 @@ import AddEmployee from "../addEmployee";
 import WorkDetailsForm from "../workDetailsForm";
 import SocialMediaForm from "../socialMediaForm";
 import ThumbImage from "../thumbImage";
+import MonthlyWorkDetailsForm from "../monthlyWorkDetailsForm";
 
 const AddProject = ({
   setShowModalProject,
@@ -41,19 +42,28 @@ const AddProject = ({
 
   const onFormSubmit = (e) => {
     e.preventDefault();
-    if (activeTab === 'socialMedia') {
+    if (activeTab === "socialMedia") {
       handleSubmit(e);
     }
   };
 
   const hasErrors = (tabId) => {
     switch (tabId) {
-      case 'basic':
-        return Object.keys(errors).some(key => ['name', 'startDate', 'endDate', 'periority', 'description', 'teams'].includes(key));
-      case 'workDetails':
-        return Object.keys(errors).some(key => ['workDetails'].includes(key));
-      case 'socialMedia':
-        return Object.keys(errors).some(key => ['socialMedia'].includes(key));
+      case "basic":
+        return Object.keys(errors).some((key) =>
+          [
+            "name",
+            "startDate",
+            "endDate",
+            "periority",
+            "description",
+            "teams",
+          ].includes(key)
+        );
+      case "workDetails":
+        return Object.keys(errors).some((key) => ["workDetails"].includes(key));
+      case "socialMedia":
+        return Object.keys(errors).some((key) => ["socialMedia"].includes(key));
       default:
         return false;
     }
@@ -168,13 +178,25 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
           {/* Work Details Tab */}
           {activeTab === "workDetails" && (
             <div className="col-span-5 overflow-y-auto pr-4">
-              <WorkDetailsForm
-                values={values}
-                setFieldValue={setFieldValue}
-                errors={errors}
-                touched={touched}
-                isEditMode={isEditMode}
-              />
+              {isEditMode ? (
+                <MonthlyWorkDetailsForm
+                  values={values}
+                  setFieldValue={setFieldValue}
+                  errors={errors}
+                  touched={touched}
+                  isEditMode={isEditMode}
+                  projectStartDate={values.startDate}
+                  projectEndDate={values.endDate}
+                />
+              ) : (
+                <WorkDetailsForm
+                  values={values}
+                  setFieldValue={setFieldValue}
+                  errors={errors}
+                  touched={touched}
+                  isEditMode={isEditMode}
+                />
+              )}
             </div>
           )}
 

@@ -18,6 +18,8 @@ const AddTask = ({
   onSubmit,
   projectData,
   isEdit = false,
+  monthWorkDetails,
+  selectedMonth,
 }) => {
   const handleClose = () => {
     resetForm();
@@ -26,13 +28,26 @@ const AddTask = ({
 
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
+  console.log(projectData);
 
-  // Get task group options from project work details
+  // Set default taskMonth if not provided
+  React.useEffect(() => {
+    if (selectedMonth && !values.taskMonth) {
+      handleChange({
+        target: {
+          name: "taskMonth",
+          value: selectedMonth,
+        },
+      });
+    }
+  }, [selectedMonth, values.taskMonth, handleChange]);
+
+  // Get task group options from monthWorkDetails if available, else from projectData.workDetails
   const getTaskGroupOptions = () => {
-    if (!projectData?.workDetails) return [];
+    const workDetails = monthWorkDetails || projectData?.workDetails;
+    if (!workDetails) return [];
 
     const options = [];
-    const workDetails = projectData.workDetails;
 
     // Add main work types
     if (workDetails.reels?.count > 0) {
@@ -89,12 +104,10 @@ const AddTask = ({
 
   // Get extra task work type options
   const getExtraTaskWorkTypeOptions = () => {
-    if (!projectData?.workDetails) return [];
+    const workDetails = monthWorkDetails || projectData?.workDetails;
+    if (!workDetails) return [];
 
     const options = [];
-    const workDetails = projectData.workDetails;
-
-    // Add all work types as options for extra tasks
     options.push({ label: "Reels", value: "reels" });
     options.push({ label: "Poster", value: "poster" });
     options.push({ label: "Motion Poster", value: "motionPoster" });

@@ -31,7 +31,7 @@ export const SIDE_MENU = [
   },
   {
     id: 2,
-    title: "Projects",
+    title: "Clients",
     icon: FiClipboard,
     path: "/projects",
     access: ["company-admin", "employee"],

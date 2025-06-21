@@ -8,6 +8,8 @@ import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
 import { useGetEmployeeProjects, useCompanyProjects } from "../../api/hooks";
 import { useNavigate } from "react-router-dom";
+import MonthSelector from "../../components/shared/MonthSelector";
+import { getCurrentMonthKey } from "../../lib/dateUtils";
 
 // Status configuration
 const statusConfig = {
@@ -239,6 +241,7 @@ const Board = () => {
   const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
 
   // Use different hooks based on user role
   const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
@@ -255,6 +258,7 @@ const Board = () => {
       ? useCompanyProjects(user?.company)
       : useGetEmployeeProjects(user?._id);
   const { mutate: updateOrder } = useUpdateTaskOrder();
+
   // Get tasks based on user role
   const tasks =
     user?.role === "company-admin"
@@ -264,14 +268,18 @@ const Board = () => {
   const projects =
     user?.role === "company-admin" ? projectsData : projectsData.projects;
 
-  // Filter tasks based on selected project and priority
+  // Filter tasks based on selected project, priority, and month
   const filteredTasks = tasks.filter((task) => {
     const projectMatch =
       selectedProject === "all" || task.project?._id === selectedProject;
     const priorityMatch =
       selectedPriority === "all" ||
       task.priority?.toLowerCase() === selectedPriority.toLowerCase();
-    return projectMatch && priorityMatch;
+
+    // Filter by month - use the taskMonth field directly
+    const monthMatch = task.taskMonth === selectedMonth;
+
+    return projectMatch && priorityMatch && monthMatch;
   });
 
   const handleProjectChange = (e) => {
@@ -280,6 +288,10 @@ const Board = () => {
 
   const handlePriorityChange = (e) => {
     setSelectedPriority(e.target.value);
+  };
+
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
   };
 
   // Group tasks by status
@@ -376,6 +388,10 @@ const Board = () => {
       <div className="flexBetween">
         <Header>Task Board</Header>
         <div className="flex gap-3">
+          <MonthSelector
+            selectedMonth={selectedMonth}
+            onMonthChange={handleMonthChange}
+          />
           <div className="relative">
             <select
               value={selectedProject}

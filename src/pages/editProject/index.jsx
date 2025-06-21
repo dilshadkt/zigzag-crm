@@ -9,14 +9,15 @@ const EditProject = () => {
   const { projectName } = useParams();
   const navigate = useNavigate();
   const { data: currentProject } = useProjectDetails(projectName);
+  console.log(currentProject);
   const { mutate } = useUpdateProject(currentProject?._id, () => {
     navigate(`/projects/${projectName}`);
   });
   const handleEditProject = async (values, { setSubmitting }) => {
     try {
-      const updatedValues = { 
+      const updatedValues = {
         ...values,
-        teams: values.teams.map(team => team._id)
+        teams: values.teams.map((team) => team._id),
       };
       mutate(updatedValues);
     } catch (error) {
@@ -47,14 +48,19 @@ const EditProject = () => {
             assignee: currentProject?.teams || "",
             description: currentProject?.description || "",
             attachments: currentProject?.attachments,
-            teams: currentProject?.teams.map((team) => ({_id: team._id, name: team.firstName, position: team.position, email: team.email})),
+            teams: currentProject?.teams.map((team) => ({
+              _id: team._id,
+              name: team.firstName,
+              position: team.position,
+              email: team.email,
+            })),
             workDetails: currentProject?.workDetails || {
               reels: { count: 0, completed: 0 },
               poster: { count: 0, completed: 0 },
               motionPoster: { count: 0, completed: 0 },
               shooting: { count: 0, completed: 0 },
               motionGraphics: { count: 0, completed: 0 },
-              other: []
+              other: [],
             },
             socialMedia: currentProject?.socialMedia || {
               instagram: { manage: false, handle: "", notes: "" },
@@ -62,8 +68,8 @@ const EditProject = () => {
               youtube: { manage: false, handle: "", notes: "" },
               linkedin: { manage: false, handle: "", notes: "" },
               twitter: { manage: false, handle: "", notes: "" },
-              other: []
-            }
+              other: [],
+            },
           }}
         />
       </div>
@@ -71,4 +77,4 @@ const EditProject = () => {
   );
 };
 
-export default EditProject; 
+export default EditProject;
