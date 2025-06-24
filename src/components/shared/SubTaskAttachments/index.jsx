@@ -73,6 +73,8 @@ const SubTaskAttachments = ({ subTask, parentTaskId, canEdit = false }) => {
   };
 
   const attachments = subTask.attachments || [];
+  const MAX_ATTACHMENTS = 4;
+  const isAttachmentLimitReached = attachments.length >= MAX_ATTACHMENTS;
 
   return (
     <>
@@ -81,38 +83,49 @@ const SubTaskAttachments = ({ subTask, parentTaskId, canEdit = false }) => {
           <span className="text-xs text-gray-500">
             Attachments ({attachments.length})
           </span>
-          {canEdit && (
-            <div className="flex items-center gap-1">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                multiple
-                accept="image/*,application/pdf,.doc,.docx,video/*,audio/*"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || isAddingAttachment}
-                className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Add attachments"
-              >
-                {isUploading || isAddingAttachment ? (
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
-                ) : (
-                  <svg
-                    className="w-3 h-3"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </button>
+
+          <div className="flex items-center gap-1">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              multiple
+              accept="image/*,application/pdf,.doc,.docx,video/*,audio/*"
+              disabled={isAttachmentLimitReached}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={
+                isUploading || isAddingAttachment || isAttachmentLimitReached
+              }
+              className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                isAttachmentLimitReached
+                  ? `Maximum ${MAX_ATTACHMENTS} attachments allowed`
+                  : "Add attachments"
+              }
+            >
+              {isUploading || isAddingAttachment ? (
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+              ) : (
+                <svg
+                  className="w-3 h-3"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+          {isAttachmentLimitReached && (
+            <div className="text-xs text-red-500 mt-1">
+              Maximum {MAX_ATTACHMENTS} attachments allowed.
             </div>
           )}
         </div>

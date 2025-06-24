@@ -310,7 +310,7 @@ const Droppable = ({
 };
 
 const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
-  const { projectName } = useParams();
+  const { projectId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
@@ -415,7 +415,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const completedTasks = tasksByStatus.completed;
 
   const handleNavigateToTask = (task) => {
-    navigate(`/projects/${projectName}/${task?._id}`);
+    navigate(`/projects/${projectId}/${task?._id}`);
   };
 
   const handleFilterChange = (filters) => {
@@ -481,7 +481,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
     }
 
     // Optimistically update the UI immediately with simplified logic
-    queryClient.setQueryData(["project", projectName], (oldData) => {
+    queryClient.setQueryData(["project", projectId], (oldData) => {
       if (!oldData || !oldData.tasks) return oldData;
 
       // Create a new tasks array with the updated task

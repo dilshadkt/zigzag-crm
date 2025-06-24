@@ -21,6 +21,7 @@ const TodayTasks = () => {
       dueDate.getFullYear() === today.getFullYear()
     );
   });
+  console.log(todayTasks);
 
   if (isLoading) {
     return (

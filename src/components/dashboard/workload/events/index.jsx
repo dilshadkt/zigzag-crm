@@ -51,6 +51,7 @@ const NearestEvents = () => {
           priority: task.priority,
           status: task.status,
           id: task._id,
+          projectId: task.project?._id,
           projectName: task.project?.name,
           data: task,
         });
@@ -190,7 +191,7 @@ const NearestEvents = () => {
                 if (event.type === "project") {
                   window.location.href = `/projects-analytics/${event.id}`;
                 } else if (event.type === "task") {
-                  window.location.href = `/projects/${event.projectName}/${event.id}`;
+                  window.location.href = `/projects/${event.projectId}/${event.id}`;
                 }
               }}
             >

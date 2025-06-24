@@ -100,7 +100,7 @@ const NotificationsPage = () => {
       case "comment":
         if (notification.data?.taskId) {
           navigate(
-            `/projects/${notification.data.projectName}/${notification.data.taskId}`
+            `/projects/${notification.data.projectId}/${notification.data.taskId}`
           );
         }
         break;

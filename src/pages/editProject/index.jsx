@@ -6,11 +6,11 @@ import { useUpdateProject } from "../../api/hooks";
 import Navigator from "../../components/shared/navigator";
 
 const EditProject = () => {
-  const { projectName } = useParams();
+  const { projectId } = useParams();
   const navigate = useNavigate();
-  const { data: currentProject } = useProjectDetails(projectName);
+  const { data: currentProject } = useProjectDetails(projectId);
   const { mutate } = useUpdateProject(currentProject?._id, () => {
-    navigate(`/projects/${projectName}`);
+    navigate(`/projects/${projectId}`);
   });
   const handleEditProject = async (values, { setSubmitting }) => {
     try {
@@ -32,10 +32,10 @@ const EditProject = () => {
   return (
     <div className="w-full h-full bg-[#F4F9FD] p-5">
       <div className="max-w-[1149px] mx-auto">
-        <Navigator path={`/projects/${projectName}`} title="Back to Project" />
+        <Navigator path={`/projects/${projectId}`} title="Back to Project" />
         <AddProject
           isOpen={true}
-          setShowModalProject={() => navigate(`/projects/${projectName}`)}
+          setShowModalProject={() => navigate(`/projects/${projectId}`)}
           isEditMode={true}
           onSubmit={handleEditProject}
           initialValues={{

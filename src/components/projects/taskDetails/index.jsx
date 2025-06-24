@@ -25,7 +25,6 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
 
   // Employees can only edit tasks assigned to them, company admins can edit any task
   const canEditTask = isCompany || isAssignedToTask;
-
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
     useGetSubTasksByParentTask(taskDetails?._id);
@@ -115,13 +114,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
           <h4 className="text-lg font-medium">Task Details</h4>
           <div className="flex gap-2">
             <PrimaryButton
-              disable={!canEditTask}
+              disable={canEditTask}
               className={"bg-[#3F8CFF] text-white"}
               title="Add Subtask"
               onclick={handleAddSubTask}
             />
             <PrimaryButton
-              disable={!canEditTask}
+              disable={canEditTask}
               className={"bg-white "}
               icon={"/icons/edit.svg"}
               onclick={() => setShowModalTask(true)}
@@ -326,13 +325,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                             >
                               {subtask.priority}
                             </span>
+
                             <SubTaskStatusButton
                               subTask={subtask}
                               parentTaskId={taskDetails?._id}
                               canEdit={isCompany || isAssignedToSubTask}
                             />
                             {/* Edit button for admins and assigned users */}
-                            {(isCompany || isAssignedToSubTask) && (
+                            {!(isCompany || isAssignedToSubTask) && (
                               <button
                                 onClick={() => handleEditSubTask(subtask)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
@@ -419,7 +419,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                         <SubTaskAttachments
                           subTask={subtask}
                           parentTaskId={taskDetails?._id}
-                          canEdit={isCompany || isAssignedToSubTask}
+                          canEdit={!(isCompany || isAssignedToSubTask)}
                         />
                       </div>
                     );

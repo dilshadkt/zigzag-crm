@@ -1,8 +1,11 @@
 import React from "react";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const TaskList = ({ tasks }) => {
+  const navigate = useNavigate();
+
   const getStatusColor = (status) => {
     switch (status) {
       case "completed":
@@ -29,12 +32,19 @@ const TaskList = ({ tasks }) => {
     }
   };
 
+  const handleTaskClick = (task) => {
+    if (task.project?._id && task._id) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {tasks.map((task) => (
         <div
           key={task._id}
-          className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+          className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+          onClick={() => handleTaskClick(task)}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">

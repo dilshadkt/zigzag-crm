@@ -122,7 +122,7 @@ const Dashboard = () => {
                   project={project}
                   onClick={() => {
                     if (user?.role === "employee") {
-                      navigate(`/projects/${project?.name}`);
+                      navigate(`/projects/${project?._id}`);
                     } else {
                       navigate(`/projects-analytics/${project?._id}`);
                     }

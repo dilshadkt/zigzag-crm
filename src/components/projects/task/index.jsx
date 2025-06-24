@@ -4,10 +4,10 @@ import { IoArrowUpOutline } from "react-icons/io5";
 import { Link, useParams } from "react-router-dom";
 
 const ProjectTask = ({ task }) => {
-  const { projectName } = useParams();
+  const { projectId } = useParams();
   return (
     <Link
-      to={`/projects/${projectName}/${task?._id}`}
+      to={`/projects/${projectId}/${task?._id}`}
       className="grid  hover:bg-blue-50 cursor-pointer grid-cols-10 gap-x-3 px-5 bg-white py-5 rounded-3xl"
     >
       <div className="col-span-3 gap-y-1 flex flex-col">

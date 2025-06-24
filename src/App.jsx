@@ -113,17 +113,11 @@ function App() {
               path="projects-analytics/:projectId"
               element={<ProjectAnalyticsDetails />}
             />
-            <Route
-              path="projects/:projectName"
-              element={<ProjectDetailLayout />}
-            >
+            <Route path="projects/:projectId" element={<ProjectDetailLayout />}>
               <Route index element={<ProjectDetails />} />
               <Route path=":taskId" element={<TaskDetails />} />
             </Route>
-            <Route
-              path="projects/:projectName/edit"
-              element={<EditProject />}
-            />
+            <Route path="projects/:projectId/edit" element={<EditProject />} />
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />

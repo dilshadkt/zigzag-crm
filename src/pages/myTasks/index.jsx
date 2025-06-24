@@ -329,7 +329,7 @@ const MyTasks = () => {
   };
 
   const handleTaskClick = (task) => {
-    navigate(`/projects/${task.project.name}/${task._id}`);
+    navigate(`/projects/${task.project._id}/${task._id}`);
   };
 
   const filterOptions = getFilterOptions();

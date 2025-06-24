@@ -20,12 +20,12 @@ import { getCurrentMonthKey } from "../../lib/dateUtils";
 
 const ProjectDetailLayout = () => {
   // const { activeProject } = useProject();
-  const { projectName } = useParams();
+  const { projectId } = useParams();
   const [showModalTask, setShowModalTask] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
 
-  const { data: projectData } = useProjectDetails(projectName, {
-    enabled: !!projectName,
+  const { data: projectData } = useProjectDetails(projectId, {
+    enabled: !!projectId,
   });
   const { data: tasksData, refetch: refetchTasks } = useProjectTasks(
     projectData?._id,
