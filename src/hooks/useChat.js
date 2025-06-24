@@ -25,13 +25,6 @@ export const useChat = () => {
   // Socket event handlers (defined first to avoid hoisting issues)
   const handleNewMessage = useCallback(
     (message) => {
-      console.log("📨 Received message via socket:", {
-        id: message._id || message.id,
-        content: (message.content || message.message)?.substring(0, 30) + "...",
-        conversationId: message.conversationId || message.conversation,
-        sender: message.sender?._id || message.sender?.id || message.sender,
-      });
-
       // Ensure we use the correct conversation ID
       const conversationId = message.conversationId || message.conversation;
 
@@ -53,9 +46,6 @@ export const useChat = () => {
           );
 
           if (recentOptimisticMessage) {
-            console.log(
-              "🔄 Replacing optimistic message with real message from socket"
-            );
             // Replace the optimistic message with the real one
             const transformedMessage = transformMessageData(
               [message],
@@ -78,7 +68,6 @@ export const useChat = () => {
         const messageExists = conversationMessages.some((msg) => {
           // Check by ID first (most reliable)
           if (msg.id === messageId) {
-            console.log("🚫 Duplicate detected by ID:", messageId);
             return true;
           }
 
@@ -88,10 +77,6 @@ export const useChat = () => {
           const timeDiff = Math.abs(msgTime - messageTime);
 
           if (msgContent === messageContent && timeDiff < 5000) {
-            console.log("🚫 Duplicate detected by content+time:", {
-              content: messageContent?.substring(0, 20) + "...",
-              timeDiff: timeDiff + "ms",
-            });
             return true;
           }
 
@@ -99,7 +84,6 @@ export const useChat = () => {
         });
 
         if (messageExists) {
-          console.log("Message already exists, skipping duplicate:", messageId);
           return prev;
         }
 
@@ -108,10 +92,6 @@ export const useChat = () => {
           [message],
           currentUserId
         )[0];
-        console.log("✅ Adding new message from socket:", {
-          id: transformedMessage.id,
-          content: transformedMessage.message?.substring(0, 30) + "...",
-        });
 
         return {
           ...prev,

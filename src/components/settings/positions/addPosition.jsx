@@ -16,8 +16,6 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
   const { mutate: updatePosition, isLoading: isUpdating } =
     useUpdatePosition(companyId);
 
-  console.log(initialValues);
-
   const handleSubmit = (values, { resetForm }) => {
     const positionData = {
       ...values,

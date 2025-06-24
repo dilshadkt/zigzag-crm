@@ -162,7 +162,6 @@ const DashboardHeader = () => {
   const markAttendance = async () => {
     // Prevent multiple API calls
     if (isProcessingAttendance || isClockingIn) {
-      console.log("Already processing attendance, skipping...");
       return;
     }
 
@@ -173,12 +172,9 @@ const DashboardHeader = () => {
       const location = await getUserLocation();
       const deviceInfo = getDeviceInfo();
 
-      console.log("Calling clock in API...");
       const result = await handleClockIn(location, deviceInfo);
 
       if (result.success) {
-        console.log("Clock in successful:", result);
-
         // Auto-close modal after successful clock in
         setTimeout(() => {
           setAttendanceMenuOpen(false);
@@ -203,7 +199,6 @@ const DashboardHeader = () => {
   const endShift = async () => {
     // Prevent multiple API calls
     if (isClockingOut) {
-      console.log("Already clocking out, skipping...");
       return;
     }
 
@@ -212,11 +207,9 @@ const DashboardHeader = () => {
       const location = await getUserLocation();
       const workDescription = "Completed daily tasks"; // You can make this configurable
 
-      console.log("Calling clock out API...");
       const result = await handleClockOut(location, workDescription);
 
       if (result.success) {
-        console.log("Clock out successful:", result);
         setShowEndShiftMenu(false);
       }
     } catch (error) {

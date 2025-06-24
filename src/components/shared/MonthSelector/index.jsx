@@ -1,29 +1,78 @@
 import React, { useState, useEffect } from "react";
 import { format, subMonths, addMonths } from "date-fns";
 
-const MonthSelector = ({ selectedMonth, onMonthChange, className = "" }) => {
+const MonthSelector = ({
+  selectedMonth,
+  onMonthChange,
+  className = "",
+  activeProject = null,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Default to current month if no month is selected
   const currentDate = selectedMonth ? new Date(selectedMonth) : new Date();
 
+  // Get available months from activeProject workDetails
+  const getAvailableMonths = () => {
+    if (
+      !activeProject ||
+      !activeProject.workDetails ||
+      !Array.isArray(activeProject.workDetails)
+    ) {
+      return [];
+    }
+
+    return activeProject.workDetails.map((workDetail) => workDetail.month);
+  };
+
+  const availableMonths = getAvailableMonths();
+
   // Set default month on component mount
   useEffect(() => {
     if (!selectedMonth) {
-      const currentMonthKey = format(new Date(), "yyyy-MM");
-      onMonthChange(currentMonthKey);
+      // If we have available months, select the first one
+      if (availableMonths.length > 0) {
+        onMonthChange(availableMonths[0]);
+      } else {
+        // Fallback to current month if no work details
+        const currentMonthKey = format(new Date(), "yyyy-MM");
+        onMonthChange(currentMonthKey);
+      }
+    } else if (
+      availableMonths.length > 0 &&
+      !availableMonths.includes(selectedMonth)
+    ) {
+      // If selected month is not available, automatically select the first available month
+      onMonthChange(availableMonths[0]);
     }
-  }, [selectedMonth, onMonthChange]);
+  }, [selectedMonth, onMonthChange, availableMonths]);
 
-  const months = [];
-  for (let i = -6; i <= 6; i++) {
-    const date = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + i,
-      1
-    );
-    months.push(date);
-  }
+  // Generate months list based on available months or fallback to default range
+  const getMonthsList = () => {
+    if (availableMonths.length > 0) {
+      // Use only available months from workDetails
+      return availableMonths
+        .map((monthStr) => {
+          const [year, month] = monthStr.split("-");
+          return new Date(parseInt(year), parseInt(month) - 1, 1);
+        })
+        .sort((a, b) => a - b); // Sort chronologically
+    } else {
+      // Fallback to default range when no project is selected
+      const months = [];
+      for (let i = -6; i <= 6; i++) {
+        const date = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + i,
+          1
+        );
+        months.push(date);
+      }
+      return months;
+    }
+  };
+
+  const months = getMonthsList();
 
   const handleMonthSelect = (month) => {
     const monthKey = format(month, "yyyy-MM");
@@ -32,21 +81,56 @@ const MonthSelector = ({ selectedMonth, onMonthChange, className = "" }) => {
   };
 
   const goToPreviousMonth = () => {
-    const newDate = subMonths(currentDate, 1);
-    const monthKey = format(newDate, "yyyy-MM");
-    onMonthChange(monthKey);
+    if (availableMonths.length > 0) {
+      // Find current index and go to previous available month
+      const currentIndex = availableMonths.indexOf(selectedMonth);
+      if (currentIndex > 0) {
+        onMonthChange(availableMonths[currentIndex - 1]);
+      }
+    } else {
+      // Fallback behavior
+      const newDate = subMonths(currentDate, 1);
+      const monthKey = format(newDate, "yyyy-MM");
+      onMonthChange(monthKey);
+    }
   };
 
   const goToNextMonth = () => {
-    const newDate = addMonths(currentDate, 1);
-    const monthKey = format(newDate, "yyyy-MM");
-    onMonthChange(monthKey);
+    if (availableMonths.length > 0) {
+      // Find current index and go to next available month
+      const currentIndex = availableMonths.indexOf(selectedMonth);
+      if (currentIndex < availableMonths.length - 1) {
+        onMonthChange(availableMonths[currentIndex + 1]);
+      }
+    } else {
+      // Fallback behavior
+      const newDate = addMonths(currentDate, 1);
+      const monthKey = format(newDate, "yyyy-MM");
+      onMonthChange(monthKey);
+    }
   };
 
   const goToCurrentMonth = () => {
-    const monthKey = format(new Date(), "yyyy-MM");
-    onMonthChange(monthKey);
+    const currentMonthKey = format(new Date(), "yyyy-MM");
+    // Only go to current month if it's available in the project
+    if (
+      availableMonths.length === 0 ||
+      availableMonths.includes(currentMonthKey)
+    ) {
+      onMonthChange(currentMonthKey);
+    }
   };
+
+  // Check if navigation buttons should be disabled
+  const canGoPrevious =
+    availableMonths.length > 0
+      ? availableMonths.indexOf(selectedMonth) > 0
+      : true;
+
+  const canGoNext =
+    availableMonths.length > 0
+      ? availableMonths.indexOf(selectedMonth) < availableMonths.length - 1
+      : true;
 
   return (
     <div className={`relative ${className}`}>
@@ -71,6 +155,12 @@ const MonthSelector = ({ selectedMonth, onMonthChange, className = "" }) => {
         <span className="font-medium">
           {selectedMonth ? format(currentDate, "MMMM yyyy") : "Select Month"}
         </span>
+        {availableMonths.length > 0 && (
+          <span className="text-xs text-gray-500 bg-gray-100 px-1 rounded">
+            {availableMonths.length} month
+            {availableMonths.length !== 1 ? "s" : ""}
+          </span>
+        )}
         <svg
           className={`w-4 h-4 transition-transform ${
             isOpen ? "rotate-180" : ""
@@ -98,7 +188,12 @@ const MonthSelector = ({ selectedMonth, onMonthChange, className = "" }) => {
           <div className="flex items-center justify-between p-3 border-b border-gray-200">
             <button
               onClick={goToPreviousMonth}
-              className="p-1 hover:bg-gray-100 rounded"
+              disabled={!canGoPrevious}
+              className={`p-1 rounded ${
+                canGoPrevious
+                  ? "hover:bg-gray-100"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
             >
               <svg
                 className="w-4 h-4"
@@ -119,7 +214,12 @@ const MonthSelector = ({ selectedMonth, onMonthChange, className = "" }) => {
             </span>
             <button
               onClick={goToNextMonth}
-              className="p-1 hover:bg-gray-100 rounded"
+              disabled={!canGoNext}
+              className={`p-1 rounded ${
+                canGoNext
+                  ? "hover:bg-gray-100"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
             >
               <svg
                 className="w-4 h-4"
@@ -150,20 +250,29 @@ const MonthSelector = ({ selectedMonth, onMonthChange, className = "" }) => {
           {/* Month list */}
           <div className="max-h-48 overflow-y-auto">
             {months.map((month, index) => {
-              const isSelected = selectedMonth === format(month, "yyyy-MM");
-              const isCurrentMonth =
-                format(month, "yyyy-MM") === format(new Date(), "yyyy-MM");
+              const monthKey = format(month, "yyyy-MM");
+              const isSelected = selectedMonth === monthKey;
+              const isCurrentMonth = monthKey === format(new Date(), "yyyy-MM");
+              const isAvailable =
+                availableMonths.length === 0 ||
+                availableMonths.includes(monthKey);
 
               return (
                 <button
                   key={index}
                   onClick={() => handleMonthSelect(month)}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
+                  disabled={!isAvailable}
+                  className={`w-full text-left px-3 py-2 text-sm ${
                     isSelected ? "bg-blue-50 text-blue-600 font-medium" : ""
-                  } ${isCurrentMonth ? "font-semibold" : ""}`}
+                  } ${isCurrentMonth ? "font-semibold" : ""} ${
+                    isAvailable
+                      ? "hover:bg-gray-50"
+                      : "opacity-50 cursor-not-allowed"
+                  }`}
                 >
                   {format(month, "MMMM yyyy")}
                   {isCurrentMonth && !isSelected && " (Current)"}
+                  {!isAvailable && " (No data)"}
                 </button>
               );
             })}

@@ -1,13 +1,6 @@
 import React from "react";
 
 const MessageBubble = React.memo(({ message }) => {
-  console.log("🎨 Rendering message:", {
-    id: message.id,
-    isOwn: message.isOwn,
-    sender: message.sender,
-    content: message.message,
-  });
-
   return (
     <div
       className={`flex w-full mb-4 ${

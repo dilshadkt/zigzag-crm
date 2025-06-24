@@ -9,7 +9,6 @@ const EditProject = () => {
   const { projectName } = useParams();
   const navigate = useNavigate();
   const { data: currentProject } = useProjectDetails(projectName);
-  console.log(currentProject);
   const { mutate } = useUpdateProject(currentProject?._id, () => {
     navigate(`/projects/${projectName}`);
   });

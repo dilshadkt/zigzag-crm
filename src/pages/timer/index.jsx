@@ -51,9 +51,7 @@ const Timer = () => {
 
   const playTimerSound = () => {
     if (audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.log("Could not play timer sound:", error);
-      });
+      audioRef.current.play().catch((error) => {});
     }
   };
 

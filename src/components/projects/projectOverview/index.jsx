@@ -309,7 +309,7 @@ const Droppable = ({
   );
 };
 
-const ProjectOverView = ({ currentProject, onRefresh }) => {
+const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const { projectName } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -318,7 +318,19 @@ const ProjectOverView = ({ currentProject, onRefresh }) => {
   const [isBoardView, setIsBoardView] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
   const { isCompany, user } = useAuth();
-  console.log(currentProject);
+
+  // Check if current month has work details
+  const hasWorkDetailsForCurrentMonth = () => {
+    if (!currentProject?.workDetails || !selectedMonth) return false;
+    return currentProject.workDetails.some((wd) => wd.month === selectedMonth);
+  };
+
+  // Get available months for this project
+  const getAvailableMonths = () => {
+    if (!currentProject?.workDetails) return [];
+    return currentProject.workDetails.map((wd) => wd.month).sort();
+  };
+
   // Employee allowed statuses
   const employeeAllowedStatuses = [
     "todo",
@@ -559,6 +571,62 @@ const ProjectOverView = ({ currentProject, onRefresh }) => {
           />
         </div>
       </div>
+
+      {/* Show message if current month has no work details */}
+      {!hasWorkDetailsForCurrentMonth() && currentProject?.workDetails && (
+        <div className="mt-4 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-lg font-medium text-blue-800 mb-2">
+                No Work Details for{" "}
+                {selectedMonth
+                  ? new Date(selectedMonth + "-01").toLocaleDateString(
+                      "en-US",
+                      { month: "long", year: "numeric" }
+                    )
+                  : "Current Month"}
+              </h4>
+              <p className="text-blue-700 mb-3">
+                This project doesn't have work details scheduled for the
+                selected month. The project is scheduled for the following
+                months:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {getAvailableMonths().map((month) => (
+                  <span
+                    key={month}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                  >
+                    {new Date(month + "-01").toLocaleDateString("en-US", {
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                ))}
+              </div>
+              <p className="text-blue-600 text-sm mt-3">
+                Please select a month with work details from the month selector
+                above to view tasks.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isBoardView ? (
         <div

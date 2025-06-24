@@ -31,7 +31,6 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
   const isAdmin = currentUser?.role === "company-admin";
   const isOwnProfile =
     currentUser?._id === employeeId || currentUser?._id === user?._id;
-  console.log(isEmployeePage);
   const showDeleteButton = isEmployeePage && isAdmin && !isOwnProfile;
 
   // Determine which employeeId to use for updates
@@ -121,14 +120,6 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
           phoneNumber: values.mobile,
           skype: values.skype,
         };
-
-        console.log("Profile update:", {
-          isOwnProfile,
-          targetEmployeeId,
-          currentUserId: currentUser?._id,
-          employeeId,
-          updateData,
-        });
 
         await updateProfileMutation.mutateAsync(updateData);
       } catch (error) {

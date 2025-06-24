@@ -52,7 +52,9 @@ const DatePicker = ({
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     // Ensure we have a valid date string in ISO format
-    const formattedDate = newDate ? new Date(newDate).toISOString().split('T')[0] : '';
+    const formattedDate = newDate
+      ? new Date(newDate).toISOString().split("T")[0]
+      : "";
     setSelectedDate(formattedDate);
     if (onChange) {
       onChange({ target: { name, value: formattedDate } }); // Mimic event object for Formik
@@ -71,7 +73,9 @@ const DatePicker = ({
           className={clsx(
             `rounded-[14px] text-sm border-2 text-[#7D8592] w-full border-[#D8E0F0]/80 py-[10px] px-4
             outline-none focus:outline-none relative  ${
-              (readOnly || disabled) ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+              readOnly || disabled
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer"
             }`,
             className,
             {

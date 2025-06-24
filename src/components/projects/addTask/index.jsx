@@ -28,11 +28,10 @@ const AddTask = ({
 
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
-  console.log(projectData);
 
   // Set default taskMonth if not provided
   React.useEffect(() => {
-    if (selectedMonth && !values.taskMonth) {
+    if (selectedMonth) {
       handleChange({
         target: {
           name: "taskMonth",
@@ -40,7 +39,7 @@ const AddTask = ({
         },
       });
     }
-  }, [selectedMonth, values.taskMonth, handleChange]);
+  }, [selectedMonth, handleChange]);
 
   // Get task group options from monthWorkDetails if available, else from projectData.workDetails
   const getTaskGroupOptions = () => {
@@ -169,11 +168,47 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               <h4 className="text-lg pb-2 font-medium sticky top-0 bg-white z-20">
                 {isEdit ? "Edit Task" : "Add Task"}
               </h4>
+
+              {/* Month indicator */}
+              {selectedMonth && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-800">
+                      Creating task for:{" "}
+                      {new Date(selectedMonth + "-01").toLocaleDateString(
+                        "en-US",
+                        { month: "long", year: "numeric" }
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <form
                 action=" "
                 onSubmit={handleSubmit}
                 className="mt-3 flex flex-col gap-y-4"
               >
+                {/* Hidden input for taskMonth */}
+                <input
+                  type="hidden"
+                  name="taskMonth"
+                  value={selectedMonth || ""}
+                />
+
                 <Select
                   errors={errors}
                   touched={touched}

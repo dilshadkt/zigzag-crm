@@ -40,7 +40,6 @@ const ProjectDetailLayout = () => {
   }, projectData?._id);
 
   const { isCompany } = useAuth();
-  // console.log(activeProject);
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
@@ -78,6 +77,7 @@ const ProjectDetailLayout = () => {
             <MonthSelector
               selectedMonth={selectedMonth}
               onMonthChange={handleMonthChange}
+              activeProject={projectData}
             />
           )}
           <PrimaryButton

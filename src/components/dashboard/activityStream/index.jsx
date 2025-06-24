@@ -164,7 +164,6 @@ const ActivityStream = () => {
   }
 
   const activities = activitiesData?.data || [];
-  console.log(activities);
 
   return (
     <div className="flex mt-5 h-[450px] flex-col relative col-span-2 mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
@@ -307,7 +306,6 @@ const ActivityStream = () => {
           className="absolute text-sm text-[#3F8CFF] bottom-3 cursor-pointer left-0 right-0 mx-auto hover:underline"
           onClick={() => {
             // You can implement a modal or navigate to a full activity page
-            console.log("View more activities");
           }}
         >
           View more ({activitiesData?.total || activities.length} total)

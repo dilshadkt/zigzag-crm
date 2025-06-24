@@ -20,6 +20,7 @@ const ProjectHeading = ({
           selectedMonth={selectedMonth}
           onMonthChange={onMonthChange}
           className="mt-3"
+          activeProject={activeProject}
         />
         <PrimaryButton
           disable={!isCompany}

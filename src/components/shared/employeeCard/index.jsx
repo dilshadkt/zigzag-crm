@@ -1,7 +1,6 @@
 import Progress from "../progress";
 
 const EmployeeCard = ({ employee, index, className }) => {
-  console.log(employee);
   return (
     <div
       key={employee._id || index}

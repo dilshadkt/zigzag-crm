@@ -21,19 +21,6 @@ const ChatWindow = ({
   // Debug logging to track message rendering
   React.useEffect(() => {
     if (selectedConversation && messages.length > 0) {
-      console.log(
-        `🎨 ChatWindow rendering ${messages.length} messages for conversation:`,
-        selectedConversation.name
-      );
-      console.log(
-        "📋 Message IDs:",
-        messages.map((m) => ({
-          id: m.id,
-          content: m.message?.substring(0, 20) + "...",
-          isPending: m.isPending,
-        }))
-      );
-
       // Check for duplicate IDs
       const messageIds = messages.map((m) => m.id);
       const uniqueIds = [...new Set(messageIds)];
