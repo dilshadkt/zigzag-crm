@@ -25,6 +25,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
 
   // Employees can only edit tasks assigned to them, company admins can edit any task
   const canEditTask = isCompany || isAssignedToTask;
+
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
     useGetSubTasksByParentTask(taskDetails?._id);
@@ -114,13 +115,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
           <h4 className="text-lg font-medium">Task Details</h4>
           <div className="flex gap-2">
             <PrimaryButton
-              disable={canEditTask}
+              disable={!isCompany}
               className={"bg-[#3F8CFF] text-white"}
               title="Add Subtask"
               onclick={handleAddSubTask}
             />
             <PrimaryButton
-              disable={canEditTask}
+              disable={!isCompany}
               className={"bg-white "}
               icon={"/icons/edit.svg"}
               onclick={() => setShowModalTask(true)}
