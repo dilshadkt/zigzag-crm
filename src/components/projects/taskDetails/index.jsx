@@ -333,7 +333,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                               canEdit={isCompany || isAssignedToSubTask}
                             />
                             {/* Edit button for admins and assigned users */}
-                            {!(isCompany || isAssignedToSubTask) && (
+                            {isCompany && (
                               <button
                                 onClick={() => handleEditSubTask(subtask)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
