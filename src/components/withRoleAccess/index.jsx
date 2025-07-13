@@ -18,7 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 //   return WithRoleAccess;
 // };
 
-function WithRoleAcess({ children, allowedRoles }) {
+function WithRoleAcess({ children, allowedRoles, allowedRoutes }) {
   const { user } = useAuth();
   const location = useLocation();
 
@@ -26,8 +26,27 @@ function WithRoleAcess({ children, allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  // Check role-based access if allowedRoles is provided
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Check route-based access if allowedRoutes is provided and user has position details
+  if (allowedRoutes && user.positionDetails?.allowedRoutes) {
+    const currentPath = location.pathname;
+    const hasRouteAccess = user.positionDetails.allowedRoutes.some(route => {
+      // Handle exact matches and wildcard routes
+      if (route === "*" || route === "/") return true;
+      if (route.endsWith("*")) {
+        const routePrefix = route.slice(0, -1);
+        return currentPath.startsWith(routePrefix);
+      }
+      return currentPath === route;
+    });
+
+    if (!hasRouteAccess) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return children;

@@ -9,6 +9,7 @@ import {
   useGetEmployeeProjects,
   useGetEmployeeTeams,
   useGetEmployeeVacations,
+  useGetEmployeeSubTasks,
 } from "../../api/hooks";
 import Dropdown from "../../components/shared/dropdown";
 import EmployeeCard from "../../components/shared/employeeCard";
@@ -16,6 +17,199 @@ import Progress from "../../components/shared/progress";
 import LeaveCard from "../../components/shared/LeaveCard";
 import { format } from "date-fns";
 import { useAuth } from "../../hooks/useAuth";
+import {
+  FiClock,
+  FiAlertCircle,
+  FiUser,
+  FiCalendar,
+  FiFlag,
+  FiPlay,
+  FiPause,
+  FiCheckCircle,
+} from "react-icons/fi";
+
+// SubTasks component definition
+const Tasks = ({ employeeId }) => {
+  const navigate = useNavigate();
+  const { data: subTasksData, isLoading } = useGetEmployeeSubTasks(employeeId);
+
+  const getPriorityColor = (priority) => {
+    switch (priority?.toLowerCase()) {
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "todo":
+        return "bg-gray-100 text-gray-800";
+      case "in-progress":
+        return "bg-blue-100 text-blue-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "on-review":
+        return "bg-purple-100 text-purple-800";
+      case "on-hold":
+        return "bg-orange-100 text-orange-800";
+      case "re-work":
+        return "bg-red-100 text-red-800";
+      case "approved":
+        return "bg-emerald-100 text-emerald-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "No due date";
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy");
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+
+  const getDaysOverdue = (dueDate) => {
+    if (!dueDate) return 0;
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = today - due;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const handleTaskClick = (subTask) => {
+    // Navigate to project detail page with task and subtask IDs
+    navigate(`/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="w-8 h-8 border-4 border-[#E6EBF5] border-t-[#3F8CFF] rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!subTasksData?.subTasks || subTasksData.subTasks.length === 0) {
+    return (
+      <div className="text-center w-full h-full flex items-center justify-center text-gray-500">
+        <div>
+          <div className="text-gray-400 text-6xl mb-4">📋</div>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">
+            No subtasks assigned
+          </h3>
+          <p className="text-gray-500">
+            This employee doesn't have any subtasks assigned yet.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col w-full h-full overflow-y-auto">
+      <div className="rounded-lg  ">
+        <div className="divide-y flex flex-col  gap-y-2 divide-gray-200">
+          {subTasksData.subTasks.map((subTask) => {
+            const isOverdue =
+              new Date(subTask.dueDate) < new Date() &&
+              subTask.status !== "completed";
+            const daysOverdue = isOverdue ? getDaysOverdue(subTask.dueDate) : 0;
+
+            return (
+              <div
+                key={subTask._id}
+                onClick={() => handleTaskClick(subTask)}
+                className="p-4 bg-white  hover:bg-gray-50 cursor-pointer
+                rounded-xl border  border-gray-200 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {subTask.title}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
+                            subTask.priority
+                          )}`}
+                        >
+                          {subTask.priority}
+                        </span>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                            subTask.status
+                          )}`}
+                        >
+                          {subTask.status.replace("-", " ")}
+                        </span>
+                      </div>
+                    </div>
+
+                    {subTask.description && (
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                        {subTask.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      {subTask.project && (
+                        <div className="flex items-center gap-1">
+                          <FiFlag className="w-4 h-4" />
+                          <span>{subTask.project.name}</span>
+                        </div>
+                      )}
+                      {subTask.parentTask && (
+                        <div className="flex items-center gap-1">
+                          <FiUser className="w-4 h-4" />
+                          <span>Parent: {subTask.parentTask.title}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <FiCalendar className="w-4 h-4" />
+                        <span>Due {formatDate(subTask.dueDate)}</span>
+                        {isOverdue && (
+                          <span className="text-red-600 font-medium">
+                            ({daysOverdue} day{daysOverdue > 1 ? "s" : ""}{" "}
+                            overdue)
+                          </span>
+                        )}
+                      </div>
+                      {subTask.timeEstimate && (
+                        <div className="flex items-center gap-1">
+                          <FiClock className="w-4 h-4" />
+                          <span>{subTask.timeEstimate}h</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 ml-4">
+                    {subTask.assignedTo && subTask.assignedTo.length > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <FiUser className="w-4 h-4" />
+                        <span>{subTask.assignedTo.length}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const EmployeeDetails = () => {
   const { employeeId } = useParams();
@@ -31,9 +225,11 @@ const EmployeeDetails = () => {
     employeeId,
     selectedProject
   );
+  const { data: subTasksData } = useGetEmployeeSubTasks(employeeId);
 
   const employee = employeeData?.employee;
   const projects = projectsData?.projects || [];
+  const subTasksCount = subTasksData?.subTasks?.length || 0;
 
   useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
@@ -84,7 +280,7 @@ const EmployeeDetails = () => {
         <div className="flex-1 flex flex-col gap-y-5">
           <div className="flexBetween">
             <div className="flex bg-[#E6EDF5] rounded-full p-1">
-              {["Projects", "Teams", "Vacations"].map((item, index) => (
+              {["Projects", "Teams", "Tasks", "Vacations"].map((item, index) => (
                 <button
                   key={index}
                   onClick={() => setActivePage(item)}
@@ -93,9 +289,15 @@ const EmployeeDetails = () => {
                       ? `bg-[#3F8CFF] text-white`
                       : `bg-[#E6EDF5] text-[#0A1629]`
                   } text-sm py-2 px-8 
-                  cursor-pointer rounded-full font-medium`}
+                  cursor-pointer flex  gap-x-1 rounded-full font-medium relative`}
                 >
                   {item}
+                  {item === "Tasks" && subTasksCount > 0 && (
+                    <span className=" -top-0 -right-2 bg-white text-gray-600
+                     text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {subTasksCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -114,6 +316,7 @@ const EmployeeDetails = () => {
               <Projects projects={projects} isLoading={isLoadingProjects} />
             )}
             {activePage === "Teams" && <Teams teams={teamsData?.teams || []} />}
+            {activePage === "Tasks" && <Tasks employeeId={employeeId} />}
             {activePage === "Vacations" && (
               <Vacations employeeId={employeeId} />
             )}

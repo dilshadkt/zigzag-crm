@@ -453,6 +453,8 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
       }
 
       await updateTaskById(taskId, updateData);
+      console.log(`Task ${taskId} status updated to ${newStatus}`);
+      
       // Invalidate and refetch the project data to update the UI
       if (onRefresh) {
         onRefresh();

@@ -266,7 +266,9 @@ const Board = () => {
       : employeeTasksData?.tasks || [];
 
   const projects =
-    user?.role === "company-admin" ? projectsData : projectsData.projects;
+    user?.role === "company-admin" 
+      ? projectsData || [] 
+      : projectsData?.projects || [];
 
   // Filter tasks based on selected project, priority, and month
   const filteredTasks = tasks.filter((task) => {

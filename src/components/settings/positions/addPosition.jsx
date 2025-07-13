@@ -60,14 +60,12 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
   if (!isOpen) return null;
 
   const routeOptions = [
-    { value: "/", label: "Dashboard", icon: "🏠" },
-    { value: "/projects", label: "Projects", icon: "📁" },
-    { value: "/tasks", label: "Tasks", icon: "✅" },
-    { value: "/team", label: "Team", icon: "👥" },
-    { value: "/reports", label: "Reports", icon: "📊" },
-    { value: "/settings", label: "Settings", icon: "⚙️" },
-    { value: "/calender", label: "Calendar", icon: "📅" },
-    { value: "/vacations", label: "Vacations", icon: "🏖️" },
+    { value: "projects", label: "Projects", icon: "📁" },
+    { value: "team", label: "Team", icon: "👥" },
+    { value: "calender", label: "Calendar", icon: "📅" },
+    { value: "vacations", label: "Vacations", icon: "🏖️" },
+    { value: "employees", label: "Employees", icon: "👥" },
+    { value: "messenger", label: "Messenger", icon: "💬" },
   ];
 
   return (
@@ -192,8 +190,13 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                      <p className="text-xs text-blue-700">
+                        <strong>Note:</strong> Dashboard, Board, and Settings are always accessible to all users and don't need to be selected here.
+                      </p>
+                    </div>
                     <p className="text-xs text-gray-600 mb-3">
-                      Select which areas this position can access
+                      Select which additional areas this position can access
                     </p>
 
                     <div className="grid grid-cols-1 gap-2">
@@ -223,21 +226,21 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                               {route.label}
                             </span>
                             <p className="text-xs text-gray-500">
-                              {route.value === "/"
-                                ? "Main dashboard and overview"
-                                : route.value === "/projects"
+                              {route.value === "projects"
                                 ? "Project management and tracking"
-                                : route.value === "/tasks"
+                                : route.value === "tasks"
                                 ? "Task creation and management"
-                                : route.value === "/team"
+                                : route.value === "team"
                                 ? "Team member management"
-                                : route.value === "/reports"
+                                : route.value === "reports"
                                 ? "Analytics and reporting"
-                                : route.value === "/settings"
-                                ? "System configuration"
-                                : route.value === "/calender"
+                                : route.value === "calender"
                                 ? "Schedule and events"
-                                : "Time-off management"}
+                                : route.value === "vacations"
+                                ? "Time-off management"
+                                : route.value === "employees"
+                                ? "Employee management"
+                                : "Messaging and communication"}
                             </p>
                           </div>
                           {values.allowedRoutes.includes(route.value) && (

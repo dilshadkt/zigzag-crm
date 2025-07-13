@@ -4,16 +4,53 @@ import { SIDE_MENU } from "../../constants";
 import { useLocation, useNavigate } from "react-router-dom";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import { useAuth } from "../../hooks/useAuth";
+import { useRouteAccess } from "../../hooks/useRouteAccess";
 const Sidebar = () => {
   const { user } = useAuth();
-  const filteredSidebar =
-    user?.role === "employee"
-      ? SIDE_MENU.filter((item) => item.access.includes("employee"))
-      : SIDE_MENU;
+  const { hasAccessToRoute, userPosition } = useRouteAccess();
+  // Filter sidebar items based on user's position allowed routes
+  const filteredSidebar = SIDE_MENU.filter((item) => {
+    // Company admins have full access to all menu items
+    if (user?.role === "company-admin") {
+      return true;
+    }
+    
+    // Dashboard, Board, and Settings are always accessible to everyone
+    if (item.routeKey === "dashboard" || item.routeKey === "board" || item.routeKey === "settings") {
+      return true;
+    }
+    
+    // For other users, check if the routeKey is in their allowed routes
+    const allowedRoutes = userPosition?.allowedRoutes || [];
+    return allowedRoutes.includes(item.routeKey);
+  });
+
+  // Debug information (can be removed in production)
+  const debugInfo = {
+    userRole: user?.role,
+    userPosition: userPosition?.name,
+    allowedRoutes: userPosition?.allowedRoutes || [],
+    totalMenuItems: SIDE_MENU.length,
+    accessibleItems: filteredSidebar.length
+  };
+  console.log(debugInfo)
+  
+  // Additional debug for each menu item
+  if (user?.role !== "company-admin") {
+    console.log("Menu item access details:");
+    SIDE_MENU.forEach(item => {
+      const allowedRoutes = userPosition?.allowedRoutes || [];
+      const isAlwaysAccessible = item.routeKey === "dashboard" || item.routeKey === "board" || item.routeKey === "settings";
+      const hasRouteAccess = allowedRoutes.includes(item.routeKey);
+      const hasAccess = isAlwaysAccessible || hasRouteAccess;
+      console.log(`${item.title}: routeKey=${item.routeKey}, alwaysAccessible=${isAlwaysAccessible}, hasRouteAccess=${hasRouteAccess}, hasAccess=${hasAccess}, path=${item.path}`);
+    });
+  }
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   const handleLogout = () => {
     navigate("/auth/signin");
@@ -26,29 +63,58 @@ const Sidebar = () => {
       <div className="flex flex-col">
         <div className="h-[40px] flexCenter "></div>
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
-          {filteredSidebar.map((item, index) => (
-            <li
-              key={index}
-              onClick={() => navigate(item.path)}
-              className={` relative cursor-pointer px-2 py-[10px] flexStart
-      gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
-        pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
-      }`}
-            >
-              <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
-              <span
-                className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
-        transition-all duration-300 text-[15px]"
+          {filteredSidebar.length > 0 ? (
+            filteredSidebar.map((item, index) => (
+              <li
+                key={index}
+                onClick={() => navigate(item.path)}
+                className={` relative cursor-pointer px-2 py-[10px] flexStart
+        gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
+          pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
+        }`}
               >
-                {item.title}
-              </span>
-              <span
-                className="absolute hidden group-hover:block
-        -right-2.5 h-full w-1 bg-[#3F8CFF]"
-              ></span>
+                <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
+                <span
+                  className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
+          transition-all duration-300 text-[15px]"
+                >
+                  {item.title}
+                </span>
+                <span
+                  className="absolute hidden group-hover:block
+          -right-2.5 h-full w-1 bg-[#3F8CFF]"
+                ></span>
+              </li>
+            ))
+          ) : (
+            <li className="px-2 py-[10px] flexStart gap-x-3.5 rounded-[10px] text-[#7D8592] text-[13px]">
+              <span>No accessible menu items</span>
             </li>
-          ))}
+          )}
         </ul>
+        
+        {/* Debug Panel (Development Only) */}
+        {/* {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-2 bg-gray-100 rounded-lg">
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-xs text-gray-600 hover:text-gray-800 mb-2"
+            >
+              {showDebug ? 'Hide Debug' : 'Show Debug'}
+            </button>
+            {showDebug && (
+              <div className="text-xs text-gray-600 space-y-1">
+                <div>Role: {debugInfo.userRole}</div>
+                <div>Position: {debugInfo.userPosition || 'None'}</div>
+                <div>Allowed Routes: {debugInfo.allowedRoutes.length}</div>
+                <div>Menu Items: {debugInfo.accessibleItems}/{debugInfo.totalMenuItems}</div>
+                <div className="text-[10px] mt-1">
+                  Routes: {debugInfo.allowedRoutes.join(', ')}
+                </div>
+              </div>
+            )}
+          </div>
+        )} */}
       </div>
 
       <div className="flex flex-col">

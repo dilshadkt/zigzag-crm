@@ -6,15 +6,42 @@ import Input from "../../components/shared/Field/input";
 import DatePicker from "../../components/shared/Field/date";
 import { FaArrowLeft } from "react-icons/fa";
 import { SETTINGS } from "../../constants";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useRouteAccess } from "../../hooks/useRouteAccess";
 import UserProfile from "../../components/settings/profile";
 import EmployeeSettings from "../../components/settings/employeeSettings";
 
 const SettingsLayout = () => {
   const [selected, setSelected] = useState(SETTINGS[0].id);
   const { user } = useAuth();
+  const { hasAccessToRoute } = useRouteAccess();
+  const location = useLocation();
   const isEmployee = user?.role === "employee";
+
+  // Filter settings based on user's route access
+  const accessibleSettings = SETTINGS.filter(setting => {
+    const fullPath = `/settings/${setting.path}`;
+    return hasAccessToRoute(fullPath);
+  });
+
+  // Update selected setting based on current location
+  React.useEffect(() => {
+    const currentPath = location.pathname;
+    const currentSetting = accessibleSettings.find(setting => 
+      currentPath === `/settings/${setting.path}`
+    );
+    if (currentSetting) {
+      setSelected(currentSetting.id);
+    } else if (accessibleSettings.length > 0) {
+      setSelected(accessibleSettings[0].id);
+    }
+  }, [location.pathname, accessibleSettings]);
+
+  // If no settings are accessible, redirect to unauthorized
+  if (accessibleSettings.length === 0) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   return (
     <section className="flex flex-col h-full gap-y-3">
@@ -49,38 +76,44 @@ const SettingsLayout = () => {
             // Admin view - show regular settings
             <div className=" flex h-full  gap-x-5">
               <div className="w-[250px] rounded-3xl bg-white p-2 flex flex-col gap-y-1  pt-5">
-                {SETTINGS.map((setting, index) => (
-                  <Link
-                    to={`/settings/${setting.path}`}
-                    key={index}
-                    onClick={() => setSelected(setting.id)}
-                    className={`flexStart px-4 group text-[#7D8592] 
-                rounded-xl py-[10px] relative mr-1 ${
-                  selected === setting.id && `bg-[#F4F9FD]`
-                } hover:bg-[#F4F9FD] gap-x-3`}
-                  >
-                    <setting.icon
-                      className={` ${
-                        selected === setting.id && `text-[#3F8CFF]`
-                      }
-                       group-hover:text-[#3F8CFF] text-lg`}
-                    />
-                    <span
-                      className={`group-hover:text-gray-800 group-hover:translate-x-1
-                transition-all duration-300 text-[15px] ${
-                  selected === setting.id && `text-[#3F8CFF]`
-                }`}
+                {accessibleSettings.length > 0 ? (
+                  accessibleSettings.map((setting, index) => (
+                    <Link
+                      to={`/settings/${setting.path}`}
+                      key={index}
+                      onClick={() => setSelected(setting.id)}
+                      className={`flexStart px-4 group text-[#7D8592] 
+                  rounded-xl py-[10px] relative mr-1 ${
+                    selected === setting.id && `bg-[#F4F9FD]`
+                  } hover:bg-[#F4F9FD] gap-x-3`}
                     >
-                      {setting.title}
-                    </span>
-                    <div
-                      className={`absolute h-full bg-[#3F8CFF] w-1 
-                 ${
-                   setting.id === selected ? `block` : `hidden`
-                 } -right-[11px] rounded-full top-0 bottom-0`}
-                    ></div>
-                  </Link>
-                ))}
+                      <setting.icon
+                        className={` ${
+                          selected === setting.id && `text-[#3F8CFF]`
+                        }
+                         group-hover:text-[#3F8CFF] text-lg`}
+                      />
+                      <span
+                        className={`group-hover:text-gray-800 group-hover:translate-x-1
+                  transition-all duration-300 text-[15px] ${
+                    selected === setting.id && `text-[#3F8CFF]`
+                  }`}
+                      >
+                        {setting.title}
+                      </span>
+                      <div
+                        className={`absolute h-full bg-[#3F8CFF] w-1 
+                   ${
+                     setting.id === selected ? `block` : `hidden`
+                   } -right-[11px] rounded-full top-0 bottom-0`}
+                      ></div>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-center text-gray-500 text-sm">
+                    No accessible settings
+                  </div>
+                )}
               </div>
               <div
                 className="flex-1 bg-white p-5 overflow-y-auto flex flex-col h-full

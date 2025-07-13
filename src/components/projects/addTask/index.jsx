@@ -6,8 +6,9 @@ import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
 import Input from "../../shared/Field/input";
 import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
-import { useCreateTask } from "../../../api/hooks";
+import { useCreateTask, useGetTaskFlows } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
+import { useAuth } from "../../../hooks/useAuth";
 
 const AddTask = ({
   isOpen,
@@ -21,6 +22,12 @@ const AddTask = ({
   monthWorkDetails,
   selectedMonth,
 }) => {
+  const { user } = useAuth();
+  const companyId = user?.company;
+  
+  // Fetch task flows for the company
+  const { data: taskFlowsData } = useGetTaskFlows(companyId);
+  const taskFlows = taskFlowsData || [];
   const handleClose = () => {
     resetForm();
     setShowModalTask(false);
@@ -40,6 +47,27 @@ const AddTask = ({
       });
     }
   }, [selectedMonth, handleChange]);
+
+  // Handle task flow selection
+  React.useEffect(() => {
+    if (values.taskFlow && taskFlows.length > 0) {
+      const selectedFlow = taskFlows.find(flow => flow._id === values.taskFlow);
+      if (selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0) {
+        // Get all assignees from the flow steps
+        const flowAssignees = selectedFlow.flows
+          .map(step => step.assignee?._id || step.assignee)
+          .filter(assigneeId => assigneeId);
+        
+        // Update the assignedTo field with flow assignees
+        handleChange({
+          target: {
+            name: "assignedTo",
+            value: flowAssignees,
+          },
+        });
+      }
+    }
+  }, [values.taskFlow, taskFlows, handleChange]);
 
   // Get task group options from monthWorkDetails if available, else from projectData.workDetails
   const getTaskGroupOptions = () => {
@@ -101,6 +129,26 @@ const AddTask = ({
     return options;
   };
 
+  // Get task flow options
+  const getTaskFlowOptions = () => {
+    const options = [
+      { label: "No Task Flow", value: "" }
+    ];
+    
+    if (taskFlows && taskFlows.length > 0) {
+      taskFlows.forEach((flow) => {
+        if (flow.isActive) {
+          options.push({
+            label: flow.name,
+            value: flow._id,
+          });
+        }
+      });
+    }
+    
+    return options;
+  };
+
   // Get extra task work type options
   const getExtraTaskWorkTypeOptions = () => {
     const workDetails = monthWorkDetails || projectData?.workDetails;
@@ -130,6 +178,7 @@ const AddTask = ({
   };
 
   const taskGroupOptions = getTaskGroupOptions();
+  const taskFlowOptions = getTaskFlowOptions();
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
   const isTaskGroupSelected =
     values.taskGroup && values.taskGroup !== "Select task group";
@@ -222,6 +271,64 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   required
                   disabled={isEdit}
                 />
+
+                {/* Task Flow Selection */}
+                <Select
+                  errors={errors}
+                  touched={touched}
+                  name={"taskFlow"}
+                  selectedValue={values?.taskFlow || ""}
+                  value={values?.taskFlow || ""}
+                  onChange={handleChange}
+                  title="Task Flow (Optional)"
+                  options={taskFlowOptions}
+                  defaultValue=""
+                  disabled={!isFormEnabled}
+                />
+
+                {/* Task Flow Preview */}
+                {values.taskFlow && taskFlows.length > 0 && (() => {
+                  const selectedFlow = taskFlows.find(flow => flow._id === values.taskFlow);
+                  return selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0 ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg
+                          className="w-4 h-4 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium text-blue-800">
+                          Task Flow: {selectedFlow.name}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {selectedFlow.flows.map((step, index) => (
+                          <div key={index} className="flex items-center gap-2 text-xs text-blue-700">
+                            <span className="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-medium">
+                              {index + 1}
+                            </span>
+                            <span>{step.taskName}</span>
+                            <span className="text-blue-600">→</span>
+                            <span className="font-medium">
+                              {step.assignee?.name || `${step.assignee?.firstName || ''} ${step.assignee?.lastName || ''}`.trim()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 text-xs text-blue-600">
+                        Assignees will be automatically set based on this flow.
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
 
                 {/* Extra Task Work Type Selection */}
                 {isExtraTaskSelected && (

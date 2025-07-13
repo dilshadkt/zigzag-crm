@@ -22,7 +22,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const isAssignedToTask = taskDetails?.assignedTo?.some(
     (assignedUser) => assignedUser._id === user?.id
   );
-
+console.log(taskDetails)
   // Employees can only edit tasks assigned to them, company admins can edit any task
   const canEditTask = isCompany || isAssignedToTask;
 
@@ -481,6 +481,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
         }
         isEdit={!!editingSubTask}
         initialValues={editingSubTask}
+        projectData={taskDetails.project} // <-- Pass projectData here
       />
     </>
   );

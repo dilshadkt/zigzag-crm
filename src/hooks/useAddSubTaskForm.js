@@ -15,6 +15,9 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
         : [defaultValue.assignedTo._id || defaultValue.assignedTo]
       : [],
     description: defaultValue?.description || "",
+    copyOfDescription: defaultValue?.copyOfDescription || "",
+    ideas: defaultValue?.ideas || "",
+    publishUrls: defaultValue?.publishUrls || {},
     parentTaskId: defaultValue?.parentTaskId || "",
   };
 
@@ -25,6 +28,9 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     priority: Yup.string().required("Priority is required"),
     assignedTo: Yup.array().min(1, "At least one assignee is required"),
     description: Yup.string(),
+    copyOfDescription: Yup.string(),
+    ideas: Yup.string(),
+    publishUrls: Yup.object(),
   });
 
   const formik = useFormik({

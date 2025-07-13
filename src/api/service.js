@@ -96,6 +96,7 @@ export const createTask = async (taskData, projectId) => {
     taskGroup: taskData?.taskGroup,
     extraTaskWorkType: taskData?.extraTaskWorkType,
     taskMonth: taskData?.taskMonth,
+    taskFlow: taskData?.taskFlow, // Pass the selected task flow ID
     // Recurring task fields
     isRecurring: taskData?.isRecurring,
     recurringPattern: taskData?.recurringPattern,
@@ -616,6 +617,63 @@ export const deleteAttendanceRecord = async (attendanceId) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting attendance:", error);
+    throw error;
+  }
+};
+
+////////////  TASK FLOW SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+
+// Get all task flows for a company
+export const getTaskFlows = async (companyId) => {
+  try {
+    const response = await apiClient.get(`/companies/${companyId}/task-flows`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching task flows:", error);
+    throw error;
+  }
+};
+
+// Create a new task flow
+export const createTaskFlow = async (companyId, taskFlowData) => {
+  try {
+    const response = await apiClient.post(`/companies/${companyId}/task-flows`, taskFlowData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating task flow:", error);
+    throw error;
+  }
+};
+
+// Update a task flow
+export const updateTaskFlow = async (companyId, taskFlowId, taskFlowData) => {
+  try {
+    const response = await apiClient.put(`/companies/${companyId}/task-flows/${taskFlowId}`, taskFlowData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating task flow:", error);
+    throw error;
+  }
+};
+
+// Delete a task flow (soft delete)
+export const deleteTaskFlow = async (companyId, taskFlowId) => {
+  try {
+    const response = await apiClient.delete(`/companies/${companyId}/task-flows/${taskFlowId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting task flow:", error);
+    throw error;
+  }
+};
+
+// Restore a task flow
+export const restoreTaskFlow = async (companyId, taskFlowId) => {
+  try {
+    const response = await apiClient.patch(`/companies/${companyId}/task-flows/${taskFlowId}/restore`);
+    return response.data;
+  } catch (error) {
+    console.error("Error restoring task flow:", error);
     throw error;
   }
 };

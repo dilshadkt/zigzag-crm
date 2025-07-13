@@ -28,12 +28,17 @@ const Select = ({
   // Update selected value when `value` prop changes
   useEffect(() => {
     if (value !== undefined && value !== "") {
-      setSelected(value);
+      // Find the label for the current value
+      const found = options?.find(
+        (item) =>
+          (typeof item === "object" ? item.value : item) === value
+      );
+      setSelected(found ? (typeof found === "object" ? found.label : found) : value);
     } else if (value === "" || value === null || value === undefined) {
       // Reset to placeholder when value is empty
       setSelected(placeholder || `Select ${title}`);
     }
-  }, [value, placeholder, title]);
+  }, [value, options, placeholder, title]);
 
   // CLOSE MENU WHILE CLICK OUTSIDE
   useEffect(() => {

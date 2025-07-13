@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import DashboardLayout from "./layouts/dashboard";
 import Dashboard from "./pages/dashboard";
 import Calender from "./pages/calender";
@@ -13,6 +13,8 @@ import ProjectDetails from "./pages/projectDetail";
 import TaskDetails from "./pages/taskDetails";
 import CompanyTasks from "./pages/companyTasks";
 import MyTasks from "./pages/myTasks";
+import MySubTasks from "./pages/mySubTasks";
+import MyProjects from "./pages/myProjects";
 import TodayTasks from "./pages/todayTasks";
 import Board from "./pages/board";
 import SettingsLayout from "./layouts/settings";
@@ -35,6 +37,7 @@ import MobileNumberInput from "./pages/welcome/mobile";
 import ProjectDetailLayout from "./layouts/projectDetail";
 import Unauthorized from "./pages/Unauthorized";
 import WithRoleAcess from "./components/withRoleAccess";
+import RouteAccess from "./components/withRoleAccess/RouteAccess";
 import EditProject from "./pages/editProject";
 import EmployeeDetails from "./pages/employeeDetails/EmployeeDetails";
 import ProjectsAnalytics from "./pages/projectAnalytics";
@@ -45,6 +48,7 @@ import Safety from "./pages/settings/safety";
 import NotificationsPage from "./pages/notifications";
 import StickyNotes from "./pages/stickyNotes";
 import Timer from "./pages/timer";
+import ActivityStreamPage from "./pages/activityStream";
 
 function App() {
   const dispatch = useDispatch();
@@ -99,15 +103,51 @@ function App() {
             <Route
               index
               element={
-                <WithRoleAcess allowedRoles={["company-admin", "employee"]}>
+                <RouteAccess>
                   <Dashboard />
-                </WithRoleAcess>
+                </RouteAccess>
               }
             />
-            <Route path="projects" element={<Prjects />} />
-            <Route path="sticky-notes" element={<StickyNotes />} />
-            <Route path="timer" element={<Timer />} />
-            <Route path="notifications" element={<NotificationsPage />} />
+            <Route 
+              path="projects" 
+              element={
+                <RouteAccess>
+                  <Prjects />
+                </RouteAccess>
+              } 
+            />
+            <Route 
+              path="sticky-notes" 
+              element={
+                <RouteAccess>
+                  <StickyNotes />
+                </RouteAccess>
+              } 
+            />
+            <Route 
+              path="timer" 
+              element={
+                <RouteAccess>
+                  <Timer />
+                </RouteAccess>
+              } 
+            />
+            <Route 
+              path="notifications" 
+              element={
+                <RouteAccess>
+                  <NotificationsPage />
+                </RouteAccess>
+              } 
+            />
+            <Route 
+              path="activity-stream" 
+              element={
+                <RouteAccess>
+                  <ActivityStreamPage />
+                </RouteAccess>
+              } 
+            />
             <Route path="projects-analytics" element={<ProjectsAnalytics />} />
             <Route
               path="projects-analytics/:projectId"
@@ -151,10 +191,34 @@ function App() {
               }
             />
             <Route
+              path="my-subtasks"
+              element={
+                <WithRoleAcess allowedRoles={["employee"]}>
+                  <MySubTasks />
+                </WithRoleAcess>
+              }
+            />
+            <Route
+              path="my-projects"
+              element={
+                <WithRoleAcess allowedRoles={["employee"]}>
+                  <MyProjects />
+                </WithRoleAcess>
+              }
+            />
+            <Route
               path="today-tasks"
               element={
                 <WithRoleAcess allowedRoles={["employee"]}>
                   <TodayTasks />
+                </WithRoleAcess>
+              }
+            />
+            <Route
+              path="today-subtasks"
+              element={
+                <WithRoleAcess allowedRoles={["employee"]}>
+                  <MySubTasks filter="today" />
                 </WithRoleAcess>
               }
             />
@@ -166,11 +230,52 @@ function App() {
                 // </WithRoleAcess>
               }
             />
-            <Route path="settings" element={<SettingsLayout />}>
-              <Route path="account" element={<Account />} />
-              <Route path="notifications" element={<Notification />} />
-              <Route path="company" element={<Company />} />
-              <Route path="safety" element={<Safety />} />
+            <Route 
+              path="settings" 
+              element={
+                <RouteAccess>
+                  <SettingsLayout />
+                </RouteAccess>
+              }
+            >
+              <Route 
+                index 
+                element={
+                  <Navigate to="account" replace />
+                } 
+              />
+              <Route 
+                path="account" 
+                element={
+                  <RouteAccess>
+                    <Account />
+                  </RouteAccess>
+                } 
+              />
+              <Route 
+                path="notifications" 
+                element={
+                  <RouteAccess>
+                    <Notification />
+                  </RouteAccess>
+                } 
+              />
+              <Route 
+                path="company" 
+                element={
+                  <RouteAccess>
+                    <Company />
+                  </RouteAccess>
+                } 
+              />
+              <Route 
+                path="safety" 
+                element={
+                  <RouteAccess>
+                    <Safety />
+                  </RouteAccess>
+                } 
+              />
             </Route>
           </Route>
           <Route path="/auth" element={<AuthLayout />}>

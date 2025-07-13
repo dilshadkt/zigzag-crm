@@ -48,8 +48,69 @@ import {
   updateAttendanceRecord,
   approveAttendance,
   deleteAttendanceRecord,
+  // Task Flow imports
+  getTaskFlows,
+  createTaskFlow,
+  updateTaskFlow,
+  deleteTaskFlow,
+  restoreTaskFlow,
 } from "./service";
 import { format } from "date-fns";
+
+// Task Flow hooks
+
+export const useGetTaskFlows = (companyId) => {
+  return useQuery({
+    queryKey: ["taskFlows", companyId],
+    queryFn: () => getTaskFlows(companyId),
+    enabled: !!companyId,
+    select: (data) => data?.taskFlows || [],
+  });
+};
+
+export const useCreateTaskFlow = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskFlowData) => createTaskFlow(companyId, taskFlowData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["taskFlows", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useUpdateTaskFlow = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskFlowId, taskFlowData }) => updateTaskFlow(companyId, taskFlowId, taskFlowData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["taskFlows", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useDeleteTaskFlow = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskFlowId) => deleteTaskFlow(companyId, taskFlowId),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["taskFlows", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useRestoreTaskFlow = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskFlowId) => restoreTaskFlow(companyId, taskFlowId),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["taskFlows", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
 
 // Customers
 export const useCustomers = () =>
@@ -570,8 +631,11 @@ export const useGetRecentActivities = (limit = 10, type = "all") => {
         .get(`/time-logs/recent-activities?${params.toString()}`)
         .then((res) => res.data);
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    staleTime: 1000 * 60 * 1, // 1 minute (reduced for more frequent updates)
+    refetchInterval: 1000 * 60 * 3, // Refetch every 3 minutes (more frequent)
+    refetchOnWindowFocus: true, // Refetch when window gains focus (tab switching)
+    refetchOnReconnect: true, // Refetch when network reconnects
+    refetchOnMount: true, // Refetch when component mounts
   });
 };
 
@@ -599,6 +663,7 @@ export const useGetEmployeeTasks = (employeeId, filters = {}) => {
   });
 };
 
+// Get tasks assigned to an employee that are due today
 export const useGetEmployeeTasksToday = (employeeId) => {
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
@@ -679,6 +744,134 @@ export const useGetEmployeeTasksToday = (employeeId) => {
             ],
           };
         }),
+    enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+};
+
+// Get all subtasks assigned to a specific employee
+export const useGetEmployeeSubTasks = (employeeId, filters = {}) => {
+  return useQuery({
+    queryKey: ["employeeSubTasks", employeeId, filters],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (filters.status) params.append("status", filters.status);
+      if (filters.dueDate) params.append("dueDate", filters.dueDate);
+      if (filters.priority) params.append("priority", filters.priority);
+
+      return apiClient
+        .get(`/subtasks/employee/${employeeId}?${params.toString()}`)
+        .then((res) => res.data)
+        .catch((error) => {
+          // Fallback data if endpoint doesn't exist
+          console.warn("Employee subtasks endpoint not available:", error);
+          return { subTasks: [] };
+        });
+    },
+    enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
+  });
+};
+
+// Get subtasks assigned to an employee that are due today
+export const useGetEmployeeSubTasksToday = (employeeId) => {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+  return useQuery({
+    queryKey: ["employeeSubTasksToday", employeeId, today],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.append("dueDate", today);
+
+      return apiClient
+        .get(`/subtasks/employee/${employeeId}?${params.toString()}`)
+        .then((res) => res.data)
+        .catch((error) => {
+          // Fallback data if endpoint doesn't exist
+          console.warn("Employee subtasks today endpoint not available:", error);
+          return {
+            subTasks: [
+              // Sample subtask data for demonstration
+              {
+                _id: "sample-subtask-1",
+                title: "Review subtask requirements",
+                description: "Go through the subtask specifications and prepare feedback",
+                priority: "High",
+                status: "todo",
+                dueDate: new Date().toISOString(),
+                timeEstimate: 2,
+                project: {
+                  _id: "sample-project-1",
+                  name: "Sample-Project",
+                  displayName: "Sample Project",
+                },
+                parentTask: {
+                  _id: "sample-task-1",
+                  title: "Sample Parent Task",
+                },
+              },
+              {
+                _id: "sample-subtask-2",
+                title: "Update subtask documentation",
+                description: "Update the subtask documentation with recent changes",
+                priority: "Medium",
+                status: "in-progress",
+                dueDate: new Date().toISOString(),
+                timeEstimate: 1.5,
+                project: {
+                  _id: "sample-project-2",
+                  name: "Documentation-Project",
+                  displayName: "Documentation Project",
+                },
+                parentTask: {
+                  _id: "sample-task-2",
+                  title: "Documentation Task",
+                },
+              },
+              {
+                _id: "sample-subtask-3",
+                title: "Fix subtask bug",
+                description: "Resolve the subtask issue reported by users",
+                priority: "High",
+                status: "todo",
+                dueDate: new Date(
+                  Date.now() + 2 * 60 * 60 * 1000
+                ).toISOString(), // 2 hours from now
+                timeEstimate: 3,
+                project: {
+                  _id: "sample-project-3",
+                  name: "Bug-Fixes",
+                  displayName: "Bug Fixes",
+                },
+                parentTask: {
+                  _id: "sample-task-3",
+                  title: "Bug Fix Task",
+                },
+              },
+              {
+                _id: "sample-subtask-4",
+                title: "Subtask code review",
+                description: "Review subtask pull requests from team members",
+                priority: "Low",
+                status: "completed",
+                dueDate: new Date(
+                  Date.now() - 1 * 60 * 60 * 1000
+                ).toISOString(), // 1 hour ago
+                timeEstimate: 1,
+                project: {
+                  _id: "sample-project-1",
+                  name: "Sample-Project",
+                  displayName: "Sample Project",
+                },
+                parentTask: {
+                  _id: "sample-task-1",
+                  title: "Sample Parent Task",
+                },
+              },
+            ],
+          };
+        });
+    },
     enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
@@ -1526,4 +1719,16 @@ export const useAttendanceManager = () => {
     startBreakError: startBreakMutation.error,
     endBreakError: endBreakMutation.error,
   };
+};
+
+// Get project social media details
+export const useGetProjectSocialMedia = (projectId) => {
+  return useQuery({
+    queryKey: ["projectSocialMedia", projectId],
+    queryFn: () =>
+      apiClient.get(`/projects/${projectId}/social-media`).then((res) => res.data),
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 10, // 10 minutes
+  });
 };

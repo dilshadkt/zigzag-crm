@@ -7,6 +7,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
     title: defaultValue?.title || "",
     taskGroup: defaultValue?.taskGroup || "",
+    taskFlow: defaultValue?.taskFlow || "",
     extraTaskWorkType: defaultValue?.extraTaskWorkType || "",
     taskMonth: defaultValue?.taskMonth || "",
     startDate: defaultValue?.startDate || "",
@@ -42,8 +43,8 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     dueDate: Yup.string().required("Due date is required"),
     periority: Yup.string().required("Priority is required"),
     assignedTo: Yup.array().min(1, "At least one assignee is required"),
-    copyOfDescription: Yup.string().required("Copy of description is required"),
-    description: Yup.string().required("Description is required"),
+    copyOfDescription: Yup.string(),
+    description: Yup.string(),
     // Recurring validations
     recurringPattern: Yup.string().oneOf([
       "none",

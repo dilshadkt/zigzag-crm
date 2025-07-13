@@ -51,26 +51,26 @@ flexCenter overflow-hidden w-6 h-6 scale-85 "
       <div className="w-full h-full grid grid-cols-3  gap-x-3 px-2">
         <div className="flex flex-col items-center">
           <span className="text-[26px] font-medium">
-            {employee?.backlog_tasks}
+            {employee?.backlog_subtasks}
           </span>
           <span className="text-sm text-[#91929E] text-center">
-            Backlog tasks
+            Backlog subtasks
           </span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-[26px] font-medium">
-            {employee?.tasks_in_progress}
+            {employee?.subtasks_in_progress}
           </span>
           <span className="text-sm text-[#91929E] text-center">
-            Tasks In Progress
+            Subtasks In Progress
           </span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-[26px] font-medium">
-            {employee?.tasks_in_review}
+            {employee?.subtasks_in_review}
           </span>
           <span className="text-sm text-[#91929E] text-center">
-            Tasks In Review
+            Subtasks In Review
           </span>
         </div>
       </div>

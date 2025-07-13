@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetEmployeeTasks } from "../../../api/hooks";
+import { useGetEmployeeSubTasks } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   FiTrendingUp,
@@ -12,30 +12,30 @@ import {
 const EmployeeProgressStats = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
+  const { data: employeeSubTasksData, isLoading } = useGetEmployeeSubTasks(
     user?._id ? user._id : null
   );
 
-  const tasks = employeeTasksData?.tasks || [];
+  const subTasks = employeeSubTasksData?.subTasks || [];
 
-  // Calculate task statistics
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(
-    (task) => task.status === "completed"
+  // Calculate subtask statistics
+  const totalSubTasks = subTasks.length;
+  const completedSubTasks = subTasks.filter(
+    (subTask) => subTask.status === "completed"
   ).length;
-  const inProgressTasks = tasks.filter(
-    (task) => task.status === "in-progress"
+  const inProgressSubTasks = subTasks.filter(
+    (subTask) => subTask.status === "in-progress"
   ).length;
-  const pendingTasks = tasks.filter((task) => task.status === "pending").length;
-  const overdueTasks = tasks.filter((task) => {
-    const dueDate = new Date(task.dueDate);
+  const pendingSubTasks = subTasks.filter((subTask) => subTask.status === "todo").length;
+  const overdueSubTasks = subTasks.filter((subTask) => {
+    const dueDate = new Date(subTask.dueDate);
     const today = new Date();
-    return dueDate < today && task.status !== "completed";
+    return dueDate < today && subTask.status !== "completed";
   }).length;
 
-  // Calculate today's tasks
-  const todayTasks = tasks.filter((task) => {
-    const dueDate = new Date(task.dueDate);
+  // Calculate today's subtasks
+  const todaySubTasks = subTasks.filter((subTask) => {
+    const dueDate = new Date(subTask.dueDate);
     const today = new Date();
     return (
       dueDate.getDate() === today.getDate() &&
@@ -45,37 +45,37 @@ const EmployeeProgressStats = () => {
   }).length;
 
   const completionRate =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0;
 
   // Function to handle stats card clicks
   const handleStatsClick = (statType) => {
     switch (statType) {
       case "total":
-        navigate("/my-tasks"); // Show all employee tasks
+        navigate("/my-subtasks"); // Show all employee subtasks
         break;
       case "completed":
-        navigate("/my-tasks?filter=completed");
+        navigate("/my-subtasks?filter=completed");
         break;
       case "in-progress":
-        navigate("/my-tasks?filter=in-progress");
+        navigate("/my-subtasks?filter=in-progress");
         break;
       case "pending":
-        navigate("/my-tasks?filter=pending");
+        navigate("/my-subtasks?filter=pending");
         break;
       default:
         break;
     }
   };
 
-  // Function to handle overdue tasks click
-  const handleOverdueTasksClick = () => {
-    navigate("/my-tasks?filter=overdue");
+  // Function to handle overdue subtasks click
+  const handleOverdueSubTasksClick = () => {
+    navigate("/my-subtasks?filter=overdue");
   };
 
   const stats = [
     {
       title: "Total Tasks",
-      value: totalTasks,
+      value: totalSubTasks,
       icon: FiTrendingUp,
       color: "bg-blue-500",
       bgColor: "bg-blue-50",
@@ -84,16 +84,16 @@ const EmployeeProgressStats = () => {
     },
     {
       title: "Today's Tasks",
-      value: todayTasks,
+      value: todaySubTasks,
       icon: FiClock,
       color: "bg-purple-500",
       bgColor: "bg-purple-50",
       textColor: "text-purple-600",
-      onClick: () => navigate("/today-tasks"),
+      onClick: () => navigate("/today-subtasks"),
     },
     {
       title: "Completed",
-      value: completedTasks,
+      value: completedSubTasks,
       icon: FiCheckCircle,
       color: "bg-green-500",
       bgColor: "bg-green-50",
@@ -102,7 +102,7 @@ const EmployeeProgressStats = () => {
     },
     {
       title: "In Progress",
-      value: inProgressTasks,
+      value: inProgressSubTasks,
       icon: FiClock,
       color: "bg-yellow-500",
       bgColor: "bg-yellow-50",
@@ -111,7 +111,7 @@ const EmployeeProgressStats = () => {
     },
     {
       title: "Pending",
-      value: pendingTasks,
+      value: pendingSubTasks,
       icon: FiAlertCircle,
       color: "bg-orange-500",
       bgColor: "bg-orange-50",
@@ -120,12 +120,12 @@ const EmployeeProgressStats = () => {
     },
     {
       title: "Overdue",
-      value: overdueTasks,
+      value: overdueSubTasks,
       icon: FiAlertCircle,
       color: "bg-red-500",
       bgColor: "bg-red-50",
       textColor: "text-red-600",
-      onClick: handleOverdueTasksClick,
+      onClick: handleOverdueSubTasksClick,
     },
   ];
 
@@ -147,21 +147,21 @@ const EmployeeProgressStats = () => {
   return (
     <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween mb-4">
-        <h4 className="font-semibold text-lg text-gray-800">My Progress</h4>
+        <h4 className="font-semibold text-lg text-gray-800">My Subtask Progress</h4>
         <div className="flex items-center gap-2">
           <div className="text-2xl font-bold text-blue-600">
             {completionRate}%
           </div>
-          <div className="text-xs text-gray-500">Complete</div>
+          <div className="text-xs text-gray-500">Subtask Completion</div>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="mb-6">
         <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>Overall Progress</span>
+          <span>Subtask Completion Rate</span>
           <span>
-            {completedTasks} of {totalTasks} tasks
+            {completedSubTasks} of {totalSubTasks} subtasks completed
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -172,7 +172,7 @@ const EmployeeProgressStats = () => {
         </div>
       </div>
 
-      {/* Task Statistics - Now in horizontal grid with click handlers */}
+      {/* Subtask Statistics - Now in horizontal grid with click handlers */}
       <div className="grid grid-cols-6 gap-4 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
@@ -192,13 +192,13 @@ const EmployeeProgressStats = () => {
                 {stat.title}
               </p>
               <p className="text-xs text-gray-500">
-                {stat.title === "Completed" && totalTasks > 0
-                  ? `${Math.round((stat.value / totalTasks) * 100)}% of total`
-                  : stat.title === "In Progress" && totalTasks > 0
-                  ? `${Math.round((stat.value / totalTasks) * 100)}% active`
-                  : stat.title === "Pending" && totalTasks > 0
-                  ? `${Math.round((stat.value / totalTasks) * 100)}% waiting`
-                  : "Tasks assigned"}
+                {stat.title === "Completed" && totalSubTasks > 0
+                  ? `${Math.round((stat.value / totalSubTasks) * 100)}% of total`
+                  : stat.title === "In Progress" && totalSubTasks > 0
+                  ? `${Math.round((stat.value / totalSubTasks) * 100)}% active`
+                  : stat.title === "Pending" && totalSubTasks > 0
+                  ? `${Math.round((stat.value / totalSubTasks) * 100)}% waiting`
+                  : "Subtasks assigned"}
               </p>
               {/* Hover indicator */}
               <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -209,17 +209,17 @@ const EmployeeProgressStats = () => {
         })}
       </div>
 
-      {/* Overdue Tasks Alert - Now positioned at the bottom with click handler */}
-      {overdueTasks > 0 && (
+      {/* Overdue Subtasks Alert - Now positioned at the bottom with click handler */}
+      {overdueSubTasks > 0 && (
         <div
-          onClick={handleOverdueTasksClick}
+          onClick={handleOverdueSubTasksClick}
           className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4 cursor-pointer hover:bg-red-100 transition-colors duration-200"
         >
           <div className="flex items-center justify-center gap-2">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-sm font-medium text-red-700">
-              {overdueTasks} overdue task{overdueTasks > 1 ? "s" : ""} - Please
-              review and update these tasks
+              {overdueSubTasks} overdue subtask{overdueSubTasks > 1 ? "s" : ""} - Please
+              review and update these subtasks
             </span>
             <span className="text-xs text-red-600 ml-2">→ Click to view</span>
           </div>
@@ -227,14 +227,14 @@ const EmployeeProgressStats = () => {
       )}
 
       {/* Quick Actions */}
-      {totalTasks === 0 && (
+      {totalSubTasks === 0 && (
         <div className="text-center py-8">
           <div className="text-gray-400 text-4xl mb-3">📊</div>
           <h3 className="text-lg font-medium text-gray-500 mb-2">
-            No tasks assigned yet
+            No subtasks assigned yet
           </h3>
           <p className="text-gray-500 text-sm">
-            Your task statistics will appear here once tasks are assigned.
+            Your subtask statistics will appear here once subtasks are assigned.
           </p>
         </div>
       )}
