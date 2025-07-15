@@ -80,7 +80,8 @@ const Prjects = () => {
     }
   };
 
-  const handleAddTask = async (values) => {
+  const handleAddTask = async (values, { resetForm }) => {
+  
     const updatedValues = { ...values };
 
     // Handle assignee field mapping
@@ -96,7 +97,11 @@ const Prjects = () => {
     );
     updatedValues.attachments = processedValue;
 
-    createTask.mutate(updatedValues);
+    createTask.mutate(updatedValues, {
+      onSuccess: () => {
+        resetForm();
+      },
+    });
   };
 
   useEffect(() => {
@@ -167,7 +172,7 @@ const Prjects = () => {
         monthWorkDetails={activeProject?.workDetails?.find(
           (wd) => wd.month === selectedMonth
         )}
-        onSubmit={handleAddTask}
+        onSubmit={(values, helpers) => handleAddTask(values, helpers)}
         isLoading={createTask.isPending}
         selectedMonth={selectedMonth}
       />

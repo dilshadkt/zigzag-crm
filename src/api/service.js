@@ -96,7 +96,7 @@ export const createTask = async (taskData, projectId) => {
     taskGroup: taskData?.taskGroup,
     extraTaskWorkType: taskData?.extraTaskWorkType,
     taskMonth: taskData?.taskMonth,
-    taskFlow: taskData?.taskFlow, // Pass the selected task flow ID
+    // taskFlow will be conditionally added below
     // Recurring task fields
     isRecurring: taskData?.isRecurring,
     recurringPattern: taskData?.recurringPattern,
@@ -104,6 +104,9 @@ export const createTask = async (taskData, projectId) => {
     recurringEndDate: taskData?.recurringEndDate,
     maxRecurrences: taskData?.maxRecurrences,
   };
+  if (taskData?.taskFlow) {
+    data.taskFlow = taskData.taskFlow; // Only add if present
+  }
   const response = await apiClient.post("/tasks", data);
   return response;
 };

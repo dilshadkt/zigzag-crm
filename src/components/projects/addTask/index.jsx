@@ -57,12 +57,13 @@ const AddTask = ({
         const flowAssignees = selectedFlow.flows
           .map(step => step.assignee?._id || step.assignee)
           .filter(assigneeId => assigneeId);
-        
-        // Update the assignedTo field with flow assignees
+        // Remove duplicates
+        const uniqueAssignees = Array.from(new Set(flowAssignees));
+        // Update the assignedTo field with unique flow assignees
         handleChange({
           target: {
             name: "assignedTo",
-            value: flowAssignees,
+            value: uniqueAssignees,
           },
         });
       }

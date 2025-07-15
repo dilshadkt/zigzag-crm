@@ -198,7 +198,7 @@ export const useCreateTask = (handleClose, projectId) => {
     mutationFn: (taskData) => createTask(taskData, projectId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["projectDetails", projectId],
+        queryKey: ["projectTasks", projectId],
       });
       handleClose();
       // toast.success('Target set successfully!');
