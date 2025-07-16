@@ -96,6 +96,7 @@ export const createTask = async (taskData, projectId) => {
     taskGroup: taskData?.taskGroup,
     extraTaskWorkType: taskData?.extraTaskWorkType,
     taskMonth: taskData?.taskMonth,
+    
     // taskFlow will be conditionally added below
     // Recurring task fields
     isRecurring: taskData?.isRecurring,

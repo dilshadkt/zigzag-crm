@@ -12,7 +12,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     taskMonth: defaultValue?.taskMonth || "",
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
-    periority: defaultValue?.priority || "",
+    periority: defaultValue?.priority || "Low",
     assignedTo: defaultValue?.assignedTo
       ? Array.isArray(defaultValue.assignedTo)
         ? defaultValue.assignedTo.map((user) => user._id || user)

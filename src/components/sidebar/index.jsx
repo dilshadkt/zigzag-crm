@@ -33,7 +33,6 @@ const Sidebar = () => {
     totalMenuItems: SIDE_MENU.length,
     accessibleItems: filteredSidebar.length
   };
-  console.log(debugInfo)
   
   // Additional debug for each menu item
   if (user?.role !== "company-admin") {
@@ -61,7 +60,7 @@ const Sidebar = () => {
      rounded-[24px] bg-white p-3"
     >
       <div className="flex flex-col">
-        <div className="h-[40px] flexCenter "></div>
+        {/* <div className="h-[40px] flexCenter "></div> */}
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
             filteredSidebar.map((item, index) => (

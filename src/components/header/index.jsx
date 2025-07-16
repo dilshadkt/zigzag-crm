@@ -371,7 +371,7 @@ const DashboardHeader = () => {
             />
           </div>
           <Link
-            to={"/settings/account"}
+            to={"/settings"}
             className="flexStart gap-x-3.5 cursor-pointer"
           >
             <span className="text-sm font-medium ">{user?.firstName}</span>

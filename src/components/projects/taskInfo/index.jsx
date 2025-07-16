@@ -46,6 +46,8 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
     );
   };
 
+  console.log(taskDetails?.assignedTo)
+
   const handleDeleteTask = () => {
     deleteTask.mutate(taskDetails._id, {
       onSuccess: () => {

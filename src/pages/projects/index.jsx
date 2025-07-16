@@ -81,14 +81,9 @@ const Prjects = () => {
   };
 
   const handleAddTask = async (values, { resetForm }) => {
-  
     const updatedValues = { ...values };
-
-    // Handle assignee field mapping
-    if (updatedValues.assignedTo) {
-      updatedValues.assignee = updatedValues.assignedTo;
-      delete updatedValues.assignedTo;
-    }
+    updatedValues.creator = user?._id
+   
 
     // Process attachments
     const processedValue = await processAttachments(
@@ -96,7 +91,7 @@ const Prjects = () => {
       uploadSingleFile
     );
     updatedValues.attachments = processedValue;
-
+    
     createTask.mutate(updatedValues, {
       onSuccess: () => {
         resetForm();

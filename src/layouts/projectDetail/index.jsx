@@ -49,8 +49,9 @@ const ProjectDetailLayout = () => {
     (wd) => wd.month === selectedMonth
   );
 
-  const handleSubmit = async (values) => {
-    const updatedValues = { ...values };
+  const handleSubmit = async (values,{ resetForm }) => {
+    try {
+      const updatedValues = { ...values };
 
     // Handle assignee field mapping
     if (updatedValues.assignedTo) {
@@ -65,6 +66,11 @@ const ProjectDetailLayout = () => {
     updatedValues.attachments = proccesedValue;
 
     mutate(updatedValues);
+    resetForm()
+    } catch (error) {
+      console.error(error)
+    }
+    
   };
 
   return (

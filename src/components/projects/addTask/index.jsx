@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Description from "../../shared/Field/description";
 import Select from "../../shared/Field/select";
@@ -24,7 +24,6 @@ const AddTask = ({
 }) => {
   const { user } = useAuth();
   const companyId = user?.company;
-  
   // Fetch task flows for the company
   const { data: taskFlowsData } = useGetTaskFlows(companyId);
   const taskFlows = taskFlowsData || [];
@@ -35,9 +34,8 @@ const AddTask = ({
 
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
-
   // Set default taskMonth if not provided
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedMonth) {
       handleChange({
         target: {
@@ -46,10 +44,11 @@ const AddTask = ({
         },
       });
     }
-  }, [selectedMonth, handleChange]);
+  }, [values.startDate,values.dueDate]);
+
 
   // Handle task flow selection
-  React.useEffect(() => {
+  useEffect(() => {
     if (values.taskFlow && taskFlows.length > 0) {
       const selectedFlow = taskFlows.find(flow => flow._id === values.taskFlow);
       if (selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0) {
@@ -178,6 +177,7 @@ const AddTask = ({
     return options;
   };
 
+  console.log(values)
   const taskGroupOptions = getTaskGroupOptions();
   const taskFlowOptions = getTaskFlowOptions();
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
@@ -383,7 +383,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   errors={errors}
                   name={"periority"}
                   touched={touched}
-                  value={"Low"}
+                  value={values?.periority || "Low"}
                   onChange={handleChange}
                   title="Priority"
                   options={["Low", "Medium", "High"]}
