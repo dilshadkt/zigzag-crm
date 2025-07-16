@@ -215,7 +215,7 @@ const EmployeeDetails = () => {
   const { employeeId } = useParams();
   const { user } = useAuth();
   const isAdmin = user?.role === "company-admin";
-  const [activePage, setActivePage] = useState("Projects");
+  const [activePage, setActivePage] = useState(isAdmin ? "Overview" : "Projects");
   const [selectedProject, setSelectedProject] = useState("");
   const { data: employeeData, isLoading: isLoadingEmployee } =
     useGetEmployee(employeeId);
@@ -229,7 +229,8 @@ const EmployeeDetails = () => {
 
   const employee = employeeData?.employee;
   const projects = projectsData?.projects || [];
-  const subTasksCount = subTasksData?.subTasks?.length || 0;
+  const subTasks = subTasksData?.subTasks || [];
+  const subTasksCount = subTasks.length;
 
   useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
@@ -258,6 +259,127 @@ const EmployeeDetails = () => {
     );
   }
 
+  // Overview component for admin
+  const Overview = ({ subTasks }) => {
+    const totalSubTasks = subTasks.length;
+    const completedSubTasks = subTasks.filter((subTask) => subTask.status === "completed").length;
+    const inProgressSubTasks = subTasks.filter((subTask) => subTask.status === "in-progress").length;
+    const pendingSubTasks = subTasks.filter((subTask) => subTask.status === "todo").length;
+    const overdueSubTasks = subTasks.filter((subTask) => {
+      const dueDate = new Date(subTask.dueDate);
+      const today = new Date();
+      return dueDate < today && subTask.status !== "completed";
+    }).length;
+    const todaySubTasks = subTasks.filter((subTask) => {
+      if (!subTask.dueDate) return false;
+      const dueDate = new Date(subTask.dueDate);
+      const today = new Date();
+      return (
+        dueDate.getDate() === today.getDate() &&
+        dueDate.getMonth() === today.getMonth() &&
+        dueDate.getFullYear() === today.getFullYear()
+      );
+    }).length;
+    const completionRate = totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0;
+
+    return (
+      <div className="space-y-6">
+        <div className="flexBetween mb-4">
+          <h4 className="font-semibold text-lg text-gray-800">Task Progress</h4>
+          <div className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-blue-600">{completionRate}%</div>
+            <div className="text-xs text-gray-500">Task Completion</div>
+          </div>
+        </div>
+        {/* Progress Bar */}
+        <div className="mb-6">
+          <div className="flex justify-between text-xs text-gray-500 mb-2">
+            <span>Subtask Completion Rate</span>
+            <span>
+              {completedSubTasks} of {totalSubTasks} tasks completed
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${completionRate}%` }}
+            ></div>
+          </div>
+        </div>
+        {/* Subtask Statistics */}
+        <div className="grid grid-cols-6 gap-4 flex-1">
+          <StatCard title="Total task" value={totalSubTasks} color="blue" />
+          <StatCard title="Today's tasks" value={todaySubTasks} color="purple" />
+          <StatCard title="Completed" value={completedSubTasks} color="green" percent={totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0} />
+          <StatCard title="In Progress" value={inProgressSubTasks} color="yellow" percent={totalSubTasks > 0 ? Math.round((inProgressSubTasks / totalSubTasks) * 100) : 0} />
+          <StatCard title="Pending" value={pendingSubTasks} color="orange" percent={totalSubTasks > 0 ? Math.round((pendingSubTasks / totalSubTasks) * 100) : 0} />
+          <StatCard title="Overdue" value={overdueSubTasks} color="red" />
+        </div>
+        {/* Overdue Subtasks Alert */}
+        {overdueSubTasks > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4">
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-sm font-medium text-red-700">
+                {overdueSubTasks} overdue subtask{overdueSubTasks > 1 ? "s" : ""} - Please review and update these subtasks
+              </span>
+            </div>
+          </div>
+        )}
+        {/* No Subtasks Message */}
+        {totalSubTasks === 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-400 text-4xl mb-3">📊</div>
+            <h3 className="text-lg font-medium text-gray-500 mb-2">
+              No subtasks assigned yet
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Subtask statistics will appear here once subtasks are assigned.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // StatCard component for Overview
+  const StatCard = ({ title, value, color, percent }) => {
+    const colorMap = {
+      blue: {
+        bg: "bg-blue-50",
+        text: "text-blue-600",
+      },
+      purple: {
+        bg: "bg-purple-50",
+        text: "text-purple-600",
+      },
+      green: {
+        bg: "bg-green-50",
+        text: "text-green-600",
+      },
+      yellow: {
+        bg: "bg-yellow-50",
+        text: "text-yellow-600",
+      },
+      orange: {
+        bg: "bg-orange-50",
+        text: "text-orange-600",
+      },
+      red: {
+        bg: "bg-red-50",
+        text: "text-red-600",
+      },
+    };
+    return (
+      <div className={`${colorMap[color].bg} rounded-xl p-4 text-center`}>
+        <div className={`text-2xl font-bold ${colorMap[color].text}`}>{value}</div>
+        <div className="text-sm text-gray-600">{title}</div>
+        {typeof percent === "number" && (
+          <div className="text-xs text-gray-400 mt-1">{percent}%</div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <section className="flex flex-col h-full gap-y-3">
       <Header>Employee's Profile</Header>
@@ -280,7 +402,13 @@ const EmployeeDetails = () => {
         <div className="flex-1 flex flex-col gap-y-5">
           <div className="flexBetween">
             <div className="flex bg-[#E6EDF5] rounded-full p-1">
-              {["Projects", "Teams", "Tasks", "Vacations"].map((item, index) => (
+              {[
+                ...(isAdmin ? ["Overview"] : []),
+                "Projects",
+                "Teams",
+                "Tasks",
+                "Vacations",
+              ].map((item, index) => (
                 <button
                   key={index}
                   onClick={() => setActivePage(item)}
@@ -312,6 +440,9 @@ const EmployeeDetails = () => {
             )}
           </div>
           <div className="w-full h-full overflow-y-auto">
+            {activePage === "Overview" && isAdmin && (
+              <Overview subTasks={subTasks} />
+            )}
             {activePage === "Projects" && (
               <Projects projects={projects} isLoading={isLoadingProjects} />
             )}
