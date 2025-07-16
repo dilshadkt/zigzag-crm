@@ -501,7 +501,7 @@ const Board = () => {
 
           <button
             onClick={() => setShowModalTask(true)}
-            className="h-fit p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
+            className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
           >
             + Add Task
           </button>
