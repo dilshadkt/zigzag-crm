@@ -21,6 +21,7 @@ const AddTask = ({
   isEdit = false,
   monthWorkDetails,
   selectedMonth,
+  projects = [], // <-- add default empty array
 }) => {
   const { user } = useAuth();
   const companyId = user?.company;
@@ -190,6 +191,12 @@ const AddTask = ({
     : true;
   const isFormEnabled = isTaskGroupSelected && isExtraTaskWorkTypeSelected;
 
+  // Add project select options
+  const projectOptions = [
+    { label: "No Project", value: "" },
+    ...projects.map((p) => ({ label: p.name, value: p._id })),
+  ];
+
   const recurringOptions = [
     { label: "Don't repeat", value: "none" },
     { label: "Daily", value: "daily" },
@@ -218,6 +225,22 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               <h4 className="text-lg pb-2 font-medium sticky top-0 bg-white z-20">
                 {isEdit ? "Edit Task" : "Add Task"}
               </h4>
+
+              {/* Project selection for board usage */}
+              {projects.length > 0 && (
+                <Select
+                  errors={errors}
+                  touched={touched}
+                  name={"project"}
+                  selectedValue={values?.project || ""}
+                  value={values?.project || ""}
+                  onChange={handleChange}
+                  title="Project"
+                  options={projectOptions}
+                  defaultValue=""
+                  required={false}
+                />
+              )}
 
               {/* Month indicator */}
               {selectedMonth && (

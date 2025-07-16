@@ -10,6 +10,7 @@ import { useGetEmployeeProjects, useCompanyProjects } from "../../api/hooks";
 import { useNavigate } from "react-router-dom";
 import MonthSelector from "../../components/shared/MonthSelector";
 import { getCurrentMonthKey } from "../../lib/dateUtils";
+import AddTask from "../../components/projects/addTask";
 
 // Status configuration
 const statusConfig = {
@@ -242,6 +243,8 @@ const Board = () => {
   const [selectedProject, setSelectedProject] = useState("all");
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
+  const [selectedAssignee, setSelectedAssignee] = useState("all");
+  const [showModalTask, setShowModalTask] = useState(false);
 
   // Use different hooks based on user role
   const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
@@ -270,18 +273,32 @@ const Board = () => {
       ? projectsData || [] 
       : projectsData?.projects || [];
 
-  // Filter tasks based on selected project, priority, and month
+  // Extract unique assignees from tasks
+  const assignees = React.useMemo(() => {
+    const users = {};
+    tasks.forEach(task => {
+      (task.assignedTo || []).forEach(user => {
+        if (user && user._id) {
+          users[user._id] = user;
+        }
+      });
+    });
+    return Object.values(users);
+  }, [tasks]);
+
+  // Filter tasks based on selected project, priority, month, and assignee
   const filteredTasks = tasks.filter((task) => {
     const projectMatch =
       selectedProject === "all" || task.project?._id === selectedProject;
     const priorityMatch =
       selectedPriority === "all" ||
       task.priority?.toLowerCase() === selectedPriority.toLowerCase();
-
-    // Filter by month - use the taskMonth field directly
     const monthMatch = task.taskMonth === selectedMonth;
+    const assigneeMatch =
+      selectedAssignee === "all" ||
+      (task.assignedTo && task.assignedTo.some(user => user._id === selectedAssignee));
 
-    return projectMatch && priorityMatch && monthMatch;
+    return projectMatch && priorityMatch && monthMatch && assigneeMatch;
   });
 
   const handleProjectChange = (e) => {
@@ -294,6 +311,16 @@ const Board = () => {
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
+  };
+
+  const handleAddTask = async (values, { resetForm }) => {
+    // If no project selected, set project to null
+    const payload = { ...values, project: values.project || null };
+    // You may want to add other required fields here
+    // Call your create task mutation here (implement as needed)
+    // Example: await createTask.mutateAsync(payload);
+    setShowModalTask(false);
+    resetForm();
   };
 
   // Group tasks by status
@@ -452,11 +479,37 @@ const Board = () => {
             </div>
           </div>
 
+          <div className="relative">
+            <select
+              value={selectedAssignee}
+              onChange={e => setSelectedAssignee(e.target.value)}
+              className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
+            >
+              <option value="all">All Assignees</option>
+              {assignees.map(user => (
+                <option key={user._id} value={user._id}>
+                  {(user.firstName || user.lastName) ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : user.email}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowModalTask(true)}
+            className="h-fit p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
+          >
+            + Add Task
+          </button>
           <button
             onClick={() =>
               queryClient.invalidateQueries(["employeeTasks", user?._id])
             }
-            className="p-2 bg-white hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
+            className="p-2 bg-white h-fit hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
           >
             <img src="/icons/refresh.svg" alt="Refresh" className="w-5 h-5" />
           </button>
@@ -501,6 +554,14 @@ const Board = () => {
           );
         })}
       </div>
+      <AddTask
+        isOpen={showModalTask}
+        setShowModalTask={setShowModalTask}
+        projects={projects}
+        onSubmit={handleAddTask}
+        teams={[]}
+        // You may want to pass other props as needed
+      />
     </div>
   );
 };
