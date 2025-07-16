@@ -315,10 +315,7 @@ const Company = () => {
 
               {/* Content Section */}
       <div className="flex-1  overflow-y-auto min-h-[500px]  max-h-[300px] ">
-        {/* Debug Info */}
-        <div className="bg-yellow-100 p-2 mb-2 text-xs">
-          Debug: Positions count: {positions?.positions?.length || 0}, Loading: {isLoading ? 'true' : 'false'}
-        </div>
+      
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-full bg-white rounded-xl border border-gray-200 shadow-sm">
             <img

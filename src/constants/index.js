@@ -353,28 +353,28 @@ import { BsBuildings } from "react-icons/bs";
 import { AiOutlineSafety } from "react-icons/ai";
 
 export const SETTINGS = [
-  {
-    id: 1,
-    title: "Account",
-    icon: FaRegUser,
-    path: "account",
-  },
-  {
-    id: 2,
-    title: "Notifications",
-    icon: IoIosNotificationsOutline,
-    path: "notifications",
-  },
+  // {
+  //   id: 1,
+  //   title: "Account",
+  //   icon: FaRegUser,
+  //   path: "account",
+  // },
+  // {
+  //   id: 2,
+  //   title: "Notifications",
+  //   icon: IoIosNotificationsOutline,
+  //   path: "notifications",
+  // },
   {
     id: 3,
     title: "My Company",
     icon: BsBuildings,
     path: "company",
   },
-  {
-    id: 4,
-    title: "Safety",
-    icon: AiOutlineSafety,
-    path: "safety",
-  },
+  // {
+  //   id: 4,
+  //   title: "Safety",
+  //   icon: AiOutlineSafety,
+  //   path: "safety",
+  // },
 ];

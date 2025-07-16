@@ -108,45 +108,45 @@ function App() {
                 </RouteAccess>
               }
             />
-            <Route 
-              path="projects" 
+            <Route
+              path="projects"
               element={
                 <RouteAccess>
                   <Prjects />
                 </RouteAccess>
-              } 
+              }
             />
-            <Route 
-              path="sticky-notes" 
+            <Route
+              path="sticky-notes"
               element={
                 <RouteAccess>
                   <StickyNotes />
                 </RouteAccess>
-              } 
+              }
             />
-            <Route 
-              path="timer" 
+            <Route
+              path="timer"
               element={
                 <RouteAccess>
                   <Timer />
                 </RouteAccess>
-              } 
+              }
             />
-            <Route 
-              path="notifications" 
+            <Route
+              path="notifications"
               element={
                 <RouteAccess>
                   <NotificationsPage />
                 </RouteAccess>
-              } 
+              }
             />
-            <Route 
-              path="activity-stream" 
+            <Route
+              path="activity-stream"
               element={
                 <RouteAccess>
                   <ActivityStreamPage />
                 </RouteAccess>
-              } 
+              }
             />
             <Route path="projects-analytics" element={<ProjectsAnalytics />} />
             <Route
@@ -230,51 +230,47 @@ function App() {
                 // </WithRoleAcess>
               }
             />
-            <Route 
-              path="settings" 
+            <Route
+              path="settings"
               element={
                 <RouteAccess>
                   <SettingsLayout />
                 </RouteAccess>
               }
             >
-              <Route 
-                index 
-                element={
-                  <Navigate to="account" replace />
-                } 
-              />
-              <Route 
-                path="account" 
+              <Route index element={<Navigate to={"/settings/company"} />} />
+              <Route index element={<Navigate to="account" replace />} />
+              <Route
+                path="account"
                 element={
                   <RouteAccess>
                     <Account />
                   </RouteAccess>
-                } 
+                }
               />
-              <Route 
-                path="notifications" 
+              <Route
+                path="notifications"
                 element={
                   <RouteAccess>
                     <Notification />
                   </RouteAccess>
-                } 
+                }
               />
-              <Route 
-                path="company" 
+              <Route
+                path="company"
                 element={
                   <RouteAccess>
                     <Company />
                   </RouteAccess>
-                } 
+                }
               />
-              <Route 
-                path="safety" 
+              <Route
+                path="safety"
                 element={
                   <RouteAccess>
                     <Safety />
                   </RouteAccess>
-                } 
+                }
               />
             </Route>
           </Route>
