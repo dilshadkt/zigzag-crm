@@ -445,23 +445,14 @@ const Calendar = () => {
   };
 
   return (
-    <section className="flex flex-col h-full gap-y-2">
-      <div className="flexBetween">
-        <Header>Calendar</Header>
-        {!isEmployee && (
-          <PrimaryButton
-            icon={"/icons/add.svg"}
-            title={"Add Event"}
-            className={"mt-3 text-white"}
-          />
-        )}
-      </div>
+    <section className="flex flex-col h-full ">
+     
       <div
-        className="w-full h-full flex flex-col mt-3 overflow-hidden bg-white
+        className="w-full h-full flex flex-col  overflow-hidden bg-white
        rounded-3xl "
       >
         {/* Calendar Header */}
-        <div className="min-h-[48px] flexCenter border-b border-[#E6EBF5]">
+        <div className="min-h-[48px] relative flexCenter border-b border-[#E6EBF5]">
           <div className="flexCenter gap-x-8">
             <button
               onClick={handlePrevMonth}

@@ -49,6 +49,7 @@ import NotificationsPage from "./pages/notifications";
 import StickyNotes from "./pages/stickyNotes";
 import Timer from "./pages/timer";
 import ActivityStreamPage from "./pages/activityStream";
+import EmployeeSubTasks from "./pages/employeeSubTasks/EmployeeSubTasks";
 
 function App() {
   const dispatch = useDispatch();
@@ -162,6 +163,7 @@ function App() {
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />
             <Route path="employees/:employeeId" element={<EmployeeDetails />} />
+            <Route path="employees/:employeeId/subtasks" element={<EmployeeSubTasks />} />
             <Route path="messenger" element={<Messenger />} />
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />

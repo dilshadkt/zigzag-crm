@@ -261,6 +261,7 @@ const EmployeeDetails = () => {
 
   // Overview component for admin
   const Overview = ({ subTasks }) => {
+    const navigate = useNavigate();
     const totalSubTasks = subTasks.length;
     const completedSubTasks = subTasks.filter((subTask) => subTask.status === "completed").length;
     const inProgressSubTasks = subTasks.filter((subTask) => subTask.status === "in-progress").length;
@@ -281,6 +282,32 @@ const EmployeeDetails = () => {
       );
     }).length;
     const completionRate = totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0;
+
+    // Navigation handlers for stat cards
+    const handleStatsClick = (statType) => {
+      switch (statType) {
+        case "total":
+          navigate(`/employees/${employeeId}/subtasks`);
+          break;
+        case "completed":
+          navigate(`/employees/${employeeId}/subtasks?filter=completed`);
+          break;
+        case "in-progress":
+          navigate(`/employees/${employeeId}/subtasks?filter=in-progress`);
+          break;
+        case "pending":
+          navigate(`/employees/${employeeId}/subtasks?filter=pending`);
+          break;
+        case "today":
+          navigate(`/employees/${employeeId}/subtasks?filter=today`);
+          break;
+        case "overdue":
+          navigate(`/employees/${employeeId}/subtasks?filter=overdue`);
+          break;
+        default:
+          break;
+      }
+    };
 
     return (
       <div className="space-y-6">
@@ -308,12 +335,12 @@ const EmployeeDetails = () => {
         </div>
         {/* Subtask Statistics */}
         <div className="grid grid-cols-6 gap-4 flex-1">
-          <StatCard title="Total task" value={totalSubTasks} color="blue" />
-          <StatCard title="Today's tasks" value={todaySubTasks} color="purple" />
-          <StatCard title="Completed" value={completedSubTasks} color="green" percent={totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0} />
-          <StatCard title="In Progress" value={inProgressSubTasks} color="yellow" percent={totalSubTasks > 0 ? Math.round((inProgressSubTasks / totalSubTasks) * 100) : 0} />
-          <StatCard title="Pending" value={pendingSubTasks} color="orange" percent={totalSubTasks > 0 ? Math.round((pendingSubTasks / totalSubTasks) * 100) : 0} />
-          <StatCard title="Overdue" value={overdueSubTasks} color="red" />
+          <StatCard title="Total task" value={totalSubTasks} color="blue" onClick={() => handleStatsClick("total")} />
+          <StatCard title="Today's tasks" value={todaySubTasks} color="purple" onClick={() => handleStatsClick("today")} />
+          <StatCard title="Completed" value={completedSubTasks} color="green" percent={totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0} onClick={() => handleStatsClick("completed")} />
+          <StatCard title="In Progress" value={inProgressSubTasks} color="yellow" percent={totalSubTasks > 0 ? Math.round((inProgressSubTasks / totalSubTasks) * 100) : 0} onClick={() => handleStatsClick("in-progress")} />
+          <StatCard title="Pending" value={pendingSubTasks} color="orange" percent={totalSubTasks > 0 ? Math.round((pendingSubTasks / totalSubTasks) * 100) : 0} onClick={() => handleStatsClick("pending")} />
+          <StatCard title="Overdue" value={overdueSubTasks} color="red" onClick={() => handleStatsClick("overdue")} />
         </div>
         {/* Overdue Subtasks Alert */}
         {overdueSubTasks > 0 && (
@@ -342,7 +369,7 @@ const EmployeeDetails = () => {
   };
 
   // StatCard component for Overview
-  const StatCard = ({ title, value, color, percent }) => {
+  const StatCard = ({ title, value, color, percent, onClick }) => {
     const colorMap = {
       blue: {
         bg: "bg-blue-50",
@@ -370,7 +397,10 @@ const EmployeeDetails = () => {
       },
     };
     return (
-      <div className={`${colorMap[color].bg} rounded-xl p-4 text-center`}>
+      <div
+        className={`${colorMap[color].bg} rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105`}
+        onClick={onClick}
+      >
         <div className={`text-2xl font-bold ${colorMap[color].text}`}>{value}</div>
         <div className="text-sm text-gray-600">{title}</div>
         {typeof percent === "number" && (
