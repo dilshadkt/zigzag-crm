@@ -1,0 +1,734 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useGetTasksOnReview } from "../../api/hooks";
+import { useAuth } from "../../hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import socketService from "../../services/socketService";
+import Header from "../../components/shared/header";
+import Navigator from "../../components/shared/navigator";
+import {
+  FiClock,
+  FiAlertCircle,
+  FiUser,
+  FiCalendar,
+  FiFlag,
+  FiPlay,
+  FiPause,
+  FiCheckCircle,
+  FiSearch,
+  FiFilter,
+  FiX,
+  FiChevronDown,
+  FiChevronUp,
+  FiArrowLeft,
+  FiEye,
+} from "react-icons/fi";
+
+const TaskOnReview = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filter = searchParams.get("filter");
+
+  // Get all tasks on review across the company
+  const {
+    data: tasksOnReviewData,
+    isLoading,
+    refetch,
+    error,
+  } = useGetTasksOnReview({
+    page: 1,
+    limit: 100,
+    sortBy: "dueDate",
+    sortOrder: "asc",
+  });
+
+  const [filteredTasks, setFilteredTasks] = useState([]);
+
+  // Auto-refresh when component mounts
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  // Listen for real-time task status changes
+  useEffect(() => {
+    const handleTaskStatusChange = (data) => {
+      console.log("📋 Task status changed in task-on-review:", data);
+
+      // If a task was moved to "on-review", refresh the task list
+      if (data.newStatus === "on-review") {
+        console.log("🔄 Refreshing task list due to new task on review");
+        refetch();
+
+        // Show a toast notification for new task on review
+        if (data.updatedBy && data.updatedBy._id !== user?._id) {
+          // Only show notification if it wasn't the current user who moved the task
+          const notification = document.createElement("div");
+          notification.className =
+            "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full";
+          notification.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div>
+                <div class="font-medium">New Task on Review</div>
+                <div class="text-sm opacity-90">"${data.taskTitle}" moved to review by ${data.updatedBy.name}</div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(notification);
+
+          // Animate in
+          setTimeout(() => {
+            notification.classList.remove("translate-x-full");
+          }, 100);
+
+          // Remove after 5 seconds
+          setTimeout(() => {
+            notification.classList.add("translate-x-full");
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 300);
+          }, 5000);
+        }
+      }
+      // If a task was moved away from "on-review", also refresh to remove it
+      else if (data.oldStatus === "on-review") {
+        console.log("🔄 Refreshing task list due to task moved from review");
+        refetch();
+      }
+    };
+
+    const handleNewNotification = (data) => {
+      console.log("🔔 New notification in task-on-review:", data);
+      // Refresh if it's a task-related notification
+      if (data.type === "task_review" || data.type === "task_updated") {
+        refetch();
+        // Also invalidate the tasks on review query
+        queryClient.invalidateQueries(["tasksOnReview"]);
+      }
+    };
+
+    // Set up socket listeners
+    socketService.onTaskStatusChange(handleTaskStatusChange);
+    socketService.onNewNotification(handleNewNotification);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socketService.offTaskStatusChange(handleTaskStatusChange);
+      socketService.offNewNotification(handleNewNotification);
+    };
+  }, [refetch]);
+
+  // Filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    search: "",
+    priority: [],
+    project: [],
+    dateRange: {
+      start: "",
+      end: "",
+    },
+    sortBy: "dueDate",
+    sortOrder: "asc",
+  });
+
+  // Get unique filter options from tasks
+  const getFilterOptions = () => {
+    if (!tasksOnReviewData?.tasks) return { projects: [] };
+
+    const projects = [];
+    const projectIds = new Set();
+
+    tasksOnReviewData.tasks.forEach((task) => {
+      if (task.project && !projectIds.has(task.project._id)) {
+        projectIds.add(task.project._id);
+        projects.push(task.project);
+      }
+    });
+
+    return { projects };
+  };
+
+  useEffect(() => {
+    if (tasksOnReviewData?.tasks) {
+      console.log(
+        "🔍 All tasks on review from API:",
+        tasksOnReviewData.tasks.length
+      );
+      console.log(
+        "🔍 Task details:",
+        tasksOnReviewData.tasks.map((t) => ({
+          id: t._id,
+          title: t.title,
+          status: t.status,
+          assignedTo:
+            t.assignedTo && t.assignedTo.length > 0
+              ? t.assignedTo
+                  .map((user) => `${user.firstName} ${user.lastName}`)
+                  .join(", ")
+              : "Unassigned",
+          project: t.project?.name,
+        }))
+      );
+
+      // All tasks from this API are already on review status
+      let filtered = [...tasksOnReviewData.tasks];
+
+      console.log("🔍 Tasks after filtering:", filtered.length);
+      console.log(
+        "🔍 Filtered tasks:",
+        filtered.map((t) => ({ id: t._id, title: t.title, status: t.status }))
+      );
+
+      // Apply URL-based filter
+      const today = new Date();
+      switch (filter) {
+        case "overdue":
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            return dueDate < today;
+          });
+          break;
+        case "today":
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            const todayStart = new Date(today);
+            todayStart.setHours(0, 0, 0, 0);
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+            return dueDate >= todayStart && dueDate <= todayEnd;
+          });
+          break;
+        case "this-week":
+          const weekStart = new Date(today);
+          weekStart.setDate(today.getDate() - today.getDay());
+          weekStart.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          weekEnd.setHours(23, 59, 59, 999);
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            return dueDate >= weekStart && dueDate <= weekEnd;
+          });
+          break;
+      }
+
+      // Apply additional filters
+      if (filters.search) {
+        filtered = filtered.filter(
+          (task) =>
+            task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+            task.description
+              ?.toLowerCase()
+              .includes(filters.search.toLowerCase())
+        );
+      }
+
+      if (filters.priority.length > 0) {
+        filtered = filtered.filter((task) =>
+          filters.priority.includes(task.priority)
+        );
+      }
+
+      if (filters.project.length > 0) {
+        filtered = filtered.filter(
+          (task) => task.project && filters.project.includes(task.project._id)
+        );
+      }
+
+      if (filters.dateRange.start) {
+        const startDate = new Date(filters.dateRange.start);
+        filtered = filtered.filter((task) => {
+          const taskDate = new Date(task.dueDate);
+          return taskDate >= startDate;
+        });
+      }
+
+      if (filters.dateRange.end) {
+        const endDate = new Date(filters.dateRange.end);
+        filtered = filtered.filter((task) => {
+          const taskDate = new Date(task.dueDate);
+          return taskDate <= endDate;
+        });
+      }
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+
+        switch (filters.sortBy) {
+          case "title":
+            aValue = a.title.toLowerCase();
+            bValue = b.title.toLowerCase();
+            break;
+          case "priority":
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            aValue = priorityOrder[a.priority] || 0;
+            bValue = priorityOrder[b.priority] || 0;
+            break;
+          case "createdAt":
+            aValue = new Date(a.createdAt);
+            bValue = new Date(b.createdAt);
+            break;
+          default: // dueDate
+            aValue = new Date(a.dueDate);
+            bValue = new Date(b.dueDate);
+        }
+
+        if (filters.sortOrder === "desc") {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        } else {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        }
+      });
+
+      setFilteredTasks(filtered);
+    }
+  }, [tasksOnReviewData, filter, filters]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleMultiSelectFilter = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: prev[key].includes(value)
+        ? prev[key].filter((item) => item !== value)
+        : [...prev[key], value],
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      search: "",
+      priority: [],
+      project: [],
+      dateRange: { start: "", end: "" },
+      sortBy: "dueDate",
+      sortOrder: "asc",
+    });
+  };
+
+  const hasActiveFilters = () => {
+    return (
+      filters.search ||
+      filters.priority.length > 0 ||
+      filters.project.length > 0 ||
+      filters.dateRange.start ||
+      filters.dateRange.end
+    );
+  };
+
+  const getFilterTitle = () => {
+    switch (filter) {
+      case "overdue":
+        return "Overdue Tasks on Review";
+      case "today":
+        return "Today's Tasks on Review";
+      case "this-week":
+        return "This Week's Tasks on Review";
+      default:
+        return "Tasks on Review";
+    }
+  };
+
+  const getFilterIcon = () => {
+    switch (filter) {
+      case "overdue":
+        return FiAlertCircle;
+      case "today":
+        return FiCalendar;
+      case "this-week":
+        return FiClock;
+      default:
+        return FiEye;
+    }
+  };
+
+  const getFilterColor = () => {
+    switch (filter) {
+      case "overdue":
+        return "text-red-500";
+      case "today":
+        return "text-blue-500";
+      case "this-week":
+        return "text-green-500";
+      default:
+        return "text-purple-500";
+    }
+  };
+
+  const getEmptyStateMessage = () => {
+    if (isLoading) return "Loading tasks...";
+
+    if (filteredTasks.length === 0) {
+      if (filter) {
+        return `No tasks on review found for ${filter.replace("-", " ")}`;
+      }
+      return "No tasks are currently in review status";
+    }
+
+    return "";
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "high":
+        return "text-red-500 bg-red-50";
+      case "medium":
+        return "text-yellow-500 bg-yellow-50";
+      case "low":
+        return "text-green-500 bg-green-50";
+      default:
+        return "text-gray-500 bg-gray-50";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getDaysOverdue = (dueDate) => {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = today - due;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const handleTaskClick = (task) => {
+    if (task.project?._id) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
+    } else {
+      navigate(`/tasks/${task._id}`);
+    }
+  };
+
+  const { projects } = getFilterOptions();
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flexCenter">
+        <img src="/icons/loading.svg" alt="" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      <Header />
+      <div className="flex flex-1 overflow-hidden">
+        <Navigator />
+        <div className="flex-1 overflow-y-auto">
+          <div className="">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-white shadow-sm`}>
+                  {React.createElement(getFilterIcon(), {
+                    className: `w-6 h-6 ${getFilterColor()}`,
+                  })}
+                </div>
+                <div>
+                  <h1 className="text-2xl font-semibold text-gray-900">
+                    {getFilterTitle()}
+                  </h1>
+                  <p className="text-gray-500">
+                    {filteredTasks.length} task
+                    {filteredTasks.length !== 1 ? "s" : ""} on review
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Filter Toggle */}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <FiFilter className="w-4 h-4" />
+                  Filters
+                  {hasActiveFilters() && (
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  )}
+                  {showFilters ? (
+                    <FiChevronUp className="w-4 h-4" />
+                  ) : (
+                    <FiChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* Refresh Button */}
+                <button
+                  onClick={() => {
+                    refetch();
+                  }}
+                  className="p-2 bg-white hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
+                  title="Refresh tasks"
+                >
+                  <img
+                    src="/icons/refresh.svg"
+                    alt="Refresh"
+                    className="w-5 h-5"
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Filters */}
+            {showFilters && (
+              <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Search */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Search
+                    </label>
+                    <div className="relative">
+                      <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        placeholder="Search tasks..."
+                        value={filters.search}
+                        onChange={(e) =>
+                          handleFilterChange("search", e.target.value)
+                        }
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Priority
+                    </label>
+                    <div className="space-y-2">
+                      {["high", "medium", "low"].map((priority) => (
+                        <label key={priority} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={filters.priority.includes(priority)}
+                            onChange={() =>
+                              handleMultiSelectFilter("priority", priority)
+                            }
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700 capitalize">
+                            {priority}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Project */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Project
+                    </label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {projects.map((project) => (
+                        <label key={project._id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={filters.project.includes(project._id)}
+                            onChange={() =>
+                              handleMultiSelectFilter("project", project._id)
+                            }
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700 truncate">
+                            {project.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sort */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sort By
+                    </label>
+                    <select
+                      value={filters.sortBy}
+                      onChange={(e) =>
+                        handleFilterChange("sortBy", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="dueDate">Due Date</option>
+                      <option value="priority">Priority</option>
+                      <option value="title">Title</option>
+                      <option value="createdAt">Created Date</option>
+                    </select>
+                    <button
+                      onClick={() =>
+                        handleFilterChange(
+                          "sortOrder",
+                          filters.sortOrder === "asc" ? "desc" : "asc"
+                        )
+                      }
+                      className="mt-2 w-full px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                    >
+                      {filters.sortOrder === "asc"
+                        ? "↑ Ascending"
+                        : "↓ Descending"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                {hasActiveFilters() && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={clearAllFilters}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      <FiX className="w-4 h-4" />
+                      Clear all filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Debug: Show all tasks on review */}
+            {tasksOnReviewData?.tasks && tasksOnReviewData.tasks.length > 0 && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h4 className="font-medium text-green-800 mb-2">
+                  Tasks On Review ({tasksOnReviewData.tasks.length})
+                </h4>
+                <div className="space-y-2">
+                  {tasksOnReviewData.tasks.map((task) => (
+                    <div key={task._id} className="text-sm text-green-700">
+                      • {task.title} - Assigned to:{" "}
+                      {task.assignedTo && task.assignedTo.length > 0
+                        ? task.assignedTo
+                            .map((user) => `${user.firstName} ${user.lastName}`)
+                            .join(", ")
+                        : "Unassigned"}{" "}
+                      - Project: {task.project?.name || "No Project"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tasks List */}
+            <div className="space-y-4">
+              {filteredTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FiEye className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No tasks on review
+                  </h3>
+                  <p className="text-gray-500">{getEmptyStateMessage()}</p>
+                </div>
+              ) : (
+                filteredTasks.map((task) => (
+                  <div
+                    key={task._id}
+                    onClick={() => handleTaskClick(task)}
+                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {task.title}
+                          </h3>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
+                              task.priority
+                            )}`}
+                          >
+                            {task.priority}
+                          </span>
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                            In Review
+                          </span>
+                        </div>
+
+                        {task.description && (
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                            {task.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          {task.assignedTo && task.assignedTo.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              <FiUser className="w-4 h-4" />
+                              <span>
+                                Assigned to:{" "}
+                                {task.assignedTo
+                                  .map(
+                                    (user) =>
+                                      `${user.firstName} ${user.lastName}`
+                                  )
+                                  .join(", ")}
+                              </span>
+                            </div>
+                          )}
+
+                          {task.project && (
+                            <div className="flex items-center gap-1">
+                              <FiFlag className="w-4 h-4" />
+                              <span>Project: {task.project.name}</span>
+                            </div>
+                          )}
+
+                          {task.creator && (
+                            <div className="flex items-center gap-1">
+                              <FiUser className="w-4 h-4" />
+                              <span>
+                                Created by: {task.creator.firstName}{" "}
+                                {task.creator.lastName}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1">
+                            <FiCalendar className="w-4 h-4" />
+                            <span>Due: {formatDate(task.dueDate)}</span>
+                            {new Date(task.dueDate) < new Date() && (
+                              <span className="text-red-500 ml-1">
+                                ({getDaysOverdue(task.dueDate)} days overdue)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TaskOnReview;

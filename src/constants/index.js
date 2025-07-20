@@ -72,13 +72,13 @@ export const SIDE_MENU = [
     path: "/messenger",
     routeKey: "messenger",
   },
-  // {
-  //   id: 8,
-  //   title: "Activity Stream",
-  //   icon: FiActivity,
-  //   path: "/activity-stream",
-  //   routeKey: "activity-stream",
-  // },
+  {
+    id: 8,
+    title: "Task on Review",
+    icon: FiActivity,
+    path: "/task-on-review",
+    routeKey: "task-on-review",
+  },
   // {
   //   id: 9,
   //   title: "Info Portal",

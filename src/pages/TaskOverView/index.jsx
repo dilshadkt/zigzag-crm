@@ -60,6 +60,7 @@ const TaskOverView = () => {
         teams={taskDetails?.teams}
         initialValues={taskDetails}
         selectedMonth={taskDetails?.taskMonth}
+        showProjectSelection={false}
       />
     </section>
   );

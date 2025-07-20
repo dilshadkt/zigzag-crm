@@ -73,6 +73,15 @@ class SocketService {
       console.log("👁️ Messages read:", data);
     });
 
+    // Add task status change events
+    this.socket.on("task_status_changed", (data) => {
+      console.log("📋 Task status changed via socket:", data);
+    });
+
+    this.socket.on("new_notification", (data) => {
+      console.log("🔔 New notification received via socket:", data);
+    });
+
     return this.socket;
   }
 
@@ -149,6 +158,34 @@ class SocketService {
       console.error("🔗 Socket exists:", !!this.socket);
       console.error("🔗 Is connected:", this.isConnected);
       console.error("🔗 Socket connected:", this.socket?.connected);
+    }
+  }
+
+  // Listen for task status changes
+  onTaskStatusChange(callback) {
+    if (this.socket) {
+      this.socket.on("task_status_changed", callback);
+    }
+  }
+
+  // Listen for new notifications
+  onNewNotification(callback) {
+    if (this.socket) {
+      this.socket.on("new_notification", callback);
+    }
+  }
+
+  // Remove task status change listener
+  offTaskStatusChange(callback) {
+    if (this.socket) {
+      this.socket.off("task_status_changed", callback);
+    }
+  }
+
+  // Remove notification listener
+  offNewNotification(callback) {
+    if (this.socket) {
+      this.socket.off("new_notification", callback);
     }
   }
 

@@ -3,6 +3,7 @@ import { useAddEmployee, useEmpoyees } from "../../api/hooks";
 import CreateEmployee from "../../components/employees/addEmployee";
 import EmployeeActivity from "../../components/employees/employeeActivity";
 import EmployeeList from "../../components/employees/employeeList";
+import NoEmployees from "../../components/employees/noEmployees";
 import ButtonToggle from "../../components/shared/buttons/buttonToggle";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Header from "../../components/shared/header";
@@ -46,6 +47,10 @@ const Employees = () => {
   };
 
   const renderStat = () => {
+    if (employees.length === 0) {
+      return <NoEmployees>There are no Employees</NoEmployees>;
+    }
+
     if (stat === "list") {
       return <EmployeeList employees={employees} />;
     } else {
@@ -82,7 +87,7 @@ const Employees = () => {
         {renderStat()}
       </div>
       <div className="flexEnd">
-        <PageNavigator 
+        <PageNavigator
           currentPage={currentPage}
           totalPages={pagination.totalPages}
           onPageChange={handlePageChange}
@@ -94,8 +99,8 @@ const Employees = () => {
         handleClose={() => setShowAddEmployee(false)}
         onSubmit={handleCreateEmployee}
       />
-      <FilterMenu 
-        isOpen={showFilter} 
+      <FilterMenu
+        isOpen={showFilter}
         setShowModalFilter={setShowFilter}
         onFilterChange={handleFilterChange}
       />

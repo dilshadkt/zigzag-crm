@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   useGetEmployeeTasks,
   useGetAllCompanyTasks,
@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateTaskById } from "../../api/service";
+import socketService from "../../services/socketService";
 import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
 import { useNavigate } from "react-router-dom";
@@ -278,6 +279,78 @@ const Board = () => {
     user?.role === "company-admin"
       ? companyTasksData?.tasks || []
       : employeeTasksData?.tasks || [];
+
+  // Listen for real-time task status changes
+  useEffect(() => {
+    const handleTaskStatusChange = (data) => {
+      console.log("📋 Task status changed in board:", data);
+
+      // Refresh the appropriate query based on user role
+      if (user?.role === "company-admin") {
+        queryClient.invalidateQueries(["companyTasks", user?.company]);
+      } else {
+        queryClient.invalidateQueries(["employeeTasks", user?._id]);
+      }
+
+      // Also invalidate tasks on review query when status changes to/from "on-review"
+      if (data.newStatus === "on-review" || data.oldStatus === "on-review") {
+        queryClient.invalidateQueries(["tasksOnReview"]);
+      }
+
+      // Show a toast notification for task status changes
+      if (data.updatedBy && data.updatedBy._id !== user?._id) {
+        // Only show notification if it wasn't the current user who changed the status
+        const notification = document.createElement("div");
+        notification.className =
+          "fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full";
+        notification.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div>
+              <div class="font-medium">Task Status Updated</div>
+              <div class="text-sm opacity-90">"${data.taskTitle}" moved to ${data.newStatus} by ${data.updatedBy.name}</div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+          notification.classList.remove("translate-x-full");
+        }, 100);
+
+        // Remove after 5 seconds
+        setTimeout(() => {
+          notification.classList.add("translate-x-full");
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 300);
+        }, 5000);
+      }
+    };
+
+    const handleNewNotification = (data) => {
+      console.log("🔔 New notification in board:", data);
+      // Refresh if it's a task-related notification
+      if (data.type === "task_review" || data.type === "task_updated") {
+        if (user?.role === "company-admin") {
+          queryClient.invalidateQueries(["companyTasks", user?.company]);
+        } else {
+          queryClient.invalidateQueries(["employeeTasks", user?._id]);
+        }
+      }
+    };
+
+    // Set up socket listeners
+    socketService.onTaskStatusChange(handleTaskStatusChange);
+    socketService.onNewNotification(handleNewNotification);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socketService.offTaskStatusChange(handleTaskStatusChange);
+      socketService.offNewNotification(handleNewNotification);
+    };
+  }, [queryClient, user?.role, user?.company, user?._id]);
 
   const projects =
     user?.role === "company-admin"
@@ -582,12 +655,12 @@ const Board = () => {
             </div>
           </div>
 
-            <button
-              onClick={() => setShowModalTask(true)}
-              className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
-            >
-              + Add Task
-            </button>
+          <button
+            onClick={() => setShowModalTask(true)}
+            className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
+          >
+            + Add Task
+          </button>
           <button
             onClick={() => {
               if (user?.role === "company-admin") {
@@ -654,6 +727,7 @@ const Board = () => {
         teams={assignees}
         selectedMonth={selectedMonth}
         isLoading={isCreatingTask}
+        showProjectSelection={true}
         // You may want to pass other props as needed
       />
     </div>

@@ -59,6 +59,7 @@ const TaskDetailPage = () => {
         teams={taskDetails?.teams}
         initialValues={taskDetails}
         selectedMonth={taskDetails?.taskMonth}
+        showProjectSelection={false}
       />
     </section>
   );

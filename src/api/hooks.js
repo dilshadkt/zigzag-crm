@@ -23,6 +23,8 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   getUnreadNotificationCount,
+  uploadSingleFile,
+  getTasksOnReview,
   // Sticky Notes imports
   createStickyNote,
   getUserStickyNotes,
@@ -257,6 +259,19 @@ export const useUpdateProfile = (handleSuccess, employeeId = null) => {
       if (handleSuccess) {
         handleSuccess(data);
       }
+    },
+  });
+};
+
+// New hook for uploading profile images
+export const useUploadProfileImage = (onSuccess, onError) => {
+  return useMutation({
+    mutationFn: (file) => uploadSingleFile(file),
+    onSuccess: (data) => {
+      if (onSuccess) onSuccess(data);
+    },
+    onError: (error) => {
+      if (onError) onError(error);
     },
   });
 };
@@ -914,7 +929,6 @@ export const useGetCompanyStats = (companyId) => {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
-
   return useQuery({
     queryKey: ["companyStats", companyId, currentYear, currentMonth],
     queryFn: async () => {
@@ -923,13 +937,20 @@ export const useGetCompanyStats = (companyId) => {
         const [companyTasks, projectsThisMonth, allProjects, allEmployees] =
           await Promise.all([
             apiClient.get("/tasks/company/all").then((res) => res.data),
-            apiClient.get("/projects/due-this-month").then((res) => res.data),
+            apiClient
+              .get(
+                `/projects/due-this-month?date=${format(
+                  new Date(),
+                  "yyyy-MM-dd"
+                )}&active=true`
+              )
+              .then((res) => res.data),
             apiClient
               .get(`/projects/company/${companyId}`)
               .then((res) => res.data),
             apiClient.get("/employee").then((res) => res.data),
           ]);
-
+        console.log(companyTasks, "companyTasks");
         // Get task statistics from the new endpoint
         const taskStats = companyTasks?.statistics || {
           total: 0,
@@ -943,7 +964,10 @@ export const useGetCompanyStats = (companyId) => {
 
         // Calculate project statistics
         const allProjectsData = allProjects?.projects || [];
-        const totalProjects = allProjectsData.length;
+        const activeProjects = allProjectsData.filter(
+          (project) => project.active !== false
+        );
+        const totalProjects = activeProjects.length;
         const projectsThisMonthData = projectsThisMonth?.projects || [];
         const projectsDueThisMonth = projectsThisMonthData.length;
 
@@ -956,12 +980,12 @@ export const useGetCompanyStats = (companyId) => {
 
         // Calculate project progress average
         const projectProgressAvg =
-          allProjectsData.length > 0
+          activeProjects.length > 0
             ? Math.round(
-                allProjectsData.reduce(
+                activeProjects.reduce(
                   (sum, project) => sum + (project.progress || 0),
                   0
-                ) / allProjectsData.length
+                ) / activeProjects.length
               )
             : 0;
 
@@ -1005,6 +1029,7 @@ export const useGetCompanyStats = (companyId) => {
             total: 0,
             dueThisMonth: 0,
             averageProgress: 0,
+            active: 0,
           },
           employees: {
             total: 0,
@@ -1023,8 +1048,11 @@ export const useGetCompanyStats = (companyId) => {
       }
     },
     enabled: !!companyId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+    staleTime: 1000 * 30, // 30 seconds
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 };
 
@@ -1043,6 +1071,23 @@ export const useGetAllCompanyTasks = (companyId) => {
     enabled: !!companyId,
     staleTime: 1000 * 60 * 5, // 5 minutes
     cacheTime: 1000 * 60 * 10, // 10 minutes
+  });
+};
+
+// Get Tasks On Review Hook - for the task-on-review page
+export const useGetTasksOnReview = (filters = {}) => {
+  return useQuery({
+    queryKey: ["tasksOnReview", filters],
+    queryFn: () => getTasksOnReview(filters),
+    staleTime: 1000 * 60 * 2, // 2 minutes (frequent updates for real-time)
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnReconnect: true, // Refetch when network reconnects
+    select: (data) => ({
+      tasks: data?.tasks || [],
+      pagination: data?.pagination || {},
+      statistics: data?.statistics || {},
+    }),
   });
 };
 

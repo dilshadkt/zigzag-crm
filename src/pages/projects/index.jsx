@@ -48,11 +48,10 @@ const Prjects = () => {
     user?.role === "company-admin" ? isCompanySuccess : isEmployeeSuccess;
 
   // Use separate hooks for project details and tasks
-  const { data: activeProject, isLoading: projectLoading } = useProjectDetails(
-    selectProject || undefined
-  );
+  const { data: activeProject, isLoading: projectLoading } =
+    useProjectDetails(selectProject);
   const { data: projectTasks, isLoading: tasksLoading } = useProjectTasks(
-    selectProject || undefined,
+    selectProject,
     selectedMonth
   );
 
@@ -170,6 +169,7 @@ const Prjects = () => {
         onSubmit={(values, helpers) => handleAddTask(values, helpers)}
         isLoading={createTask.isPending}
         selectedMonth={selectedMonth}
+        showProjectSelection={false}
       />
 
       {/* add project modal */}

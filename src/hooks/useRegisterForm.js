@@ -21,8 +21,12 @@ export const useRegisterForm = (currentStep, setCurrentStep) => {
   const validationSchema = [
     Yup.object().shape({
       phone: Yup.number().required("Phone Number is required"),
-      email: Yup.string().required("Email is required"),
-      password: Yup.string().required("Password is required"),
+      email: Yup.string()
+        .email("Invalid email format")
+        .required("Email is required"),
+      password: Yup.string()
+        .min(6, "Password must be at least 6 characters")
+        .required("Password is required"),
     }),
     Yup.object().shape({
       service: Yup.string().required("Field is required"),
@@ -34,13 +38,15 @@ export const useRegisterForm = (currentStep, setCurrentStep) => {
       teamSize: Yup.string().required("Team size is required"),
     }),
     Yup.object().shape({
-      membersEmail: Yup.string().email(),
+      membersEmail: Yup.string().email("Invalid email format"),
     }),
   ];
 
   const formik = useFormik({
     initialValues: initialValue,
     validationSchema: validationSchema[currentStep - 1],
+    validateOnChange: true,
+    validateOnBlur: true,
     onSubmit: async (values) => {
       if (currentStep >= 4) {
         const { success } = await register(values);
@@ -53,5 +59,43 @@ export const useRegisterForm = (currentStep, setCurrentStep) => {
     },
   });
 
-  return formik;
+  // Function to check if current step is valid
+  const isCurrentStepValid = () => {
+    const currentSchema = validationSchema[currentStep - 1];
+    if (!currentSchema) return true;
+
+    try {
+      currentSchema.validateSync(formik.values, { abortEarly: false });
+      return true;
+    } catch (validationErrors) {
+      return false;
+    }
+  };
+
+  // Function to get required fields for current step
+  const getRequiredFieldsForStep = () => {
+    const stepFields = {
+      1: ["phone", "email", "password"],
+      2: ["service", "describe"],
+      3: ["companyName", "businessDirection", "teamSize"],
+      4: [], // Step 4 is optional
+    };
+    return stepFields[currentStep] || [];
+  };
+
+  // Function to check if all required fields for current step are filled
+  const areRequiredFieldsFilled = () => {
+    const requiredFields = getRequiredFieldsForStep();
+    return requiredFields.every((field) => {
+      const value = formik.values[field];
+      return value && value.toString().trim() !== "";
+    });
+  };
+
+  return {
+    ...formik,
+    isCurrentStepValid,
+    areRequiredFieldsFilled,
+    getRequiredFieldsForStep,
+  };
 };

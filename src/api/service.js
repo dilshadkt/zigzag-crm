@@ -173,6 +173,29 @@ export const updateTaskById = async (taskId, updatedData) => {
   return data;
 };
 
+export const getTasksOnReview = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    // Add filters to query parameters
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.priority) params.append("priority", filters.priority);
+    if (filters.projectId) params.append("projectId", filters.projectId);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+
+    const { data } = await apiClient.get(
+      `/tasks/on-review?${params.toString()}`
+    );
+    return data;
+  } catch (error) {
+    console.error("Error fetching tasks on review:", error);
+    throw error;
+  }
+};
+
 export const createEmployee = async (employeeData) => {
   const { data } = await apiClient.post("/employee", employeeData);
   return data;

@@ -27,6 +27,7 @@ const AddTask = ({
   monthWorkDetails,
   selectedMonth,
   projects = [], // <-- add default empty array
+  showProjectSelection = false, // <-- new prop to control project selection visibility
 }) => {
   const { user } = useAuth();
   const companyId = user?.company;
@@ -343,18 +344,20 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               </h4>
 
               {/* Project selection for board usage */}
-              <Select
-                errors={errors}
-                touched={touched}
-                name={"project"}
-                selectedValue={values?.project || ""}
-                value={values?.project || ""}
-                onChange={handleChange}
-                title="Project"
-                options={projectOptions}
-                defaultValue=""
-                required={false}
-              />
+              {showProjectSelection && (
+                <Select
+                  errors={errors}
+                  touched={touched}
+                  name={"project"}
+                  selectedValue={values?.project || ""}
+                  value={values?.project || ""}
+                  onChange={handleChange}
+                  title="Project"
+                  options={projectOptions}
+                  defaultValue=""
+                  required={false}
+                />
+              )}
 
               {/* Month indicator */}
               {selectedMonth && (

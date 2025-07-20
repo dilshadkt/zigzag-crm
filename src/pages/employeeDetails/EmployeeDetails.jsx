@@ -87,7 +87,9 @@ const Tasks = ({ employeeId }) => {
 
   const handleTaskClick = (subTask) => {
     // Navigate to project detail page with task and subtask IDs
-    navigate(`/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`);
+    navigate(
+      `/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`
+    );
   };
 
   if (isLoading) {
@@ -119,9 +121,25 @@ const Tasks = ({ employeeId }) => {
       <div className="rounded-lg  ">
         <div className="divide-y flex flex-col  gap-y-2 divide-gray-200">
           {subTasksData.subTasks.map((subTask) => {
-            const isOverdue =
-              new Date(subTask.dueDate) < new Date() &&
-              subTask.status !== "completed";
+            const isOverdue = (() => {
+              const dueDate = new Date(subTask.dueDate);
+              const today = new Date();
+
+              // Reset time to start of day for accurate date comparison
+              const dueDateOnly = new Date(
+                dueDate.getFullYear(),
+                dueDate.getMonth(),
+                dueDate.getDate()
+              );
+              const todayOnly = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate()
+              );
+
+              // Task is overdue if due date has passed AND task is not completed
+              return dueDateOnly < todayOnly && subTask.status !== "completed";
+            })();
             const daysOverdue = isOverdue ? getDaysOverdue(subTask.dueDate) : 0;
 
             return (
@@ -215,7 +233,9 @@ const EmployeeDetails = () => {
   const { employeeId } = useParams();
   const { user } = useAuth();
   const isAdmin = user?.role === "company-admin";
-  const [activePage, setActivePage] = useState(isAdmin ? "Overview" : "Projects");
+  const [activePage, setActivePage] = useState(
+    isAdmin ? "Overview" : "Projects"
+  );
   const [selectedProject, setSelectedProject] = useState("");
   const { data: employeeData, isLoading: isLoadingEmployee } =
     useGetEmployee(employeeId);
@@ -263,13 +283,33 @@ const EmployeeDetails = () => {
   const Overview = ({ subTasks }) => {
     const navigate = useNavigate();
     const totalSubTasks = subTasks.length;
-    const completedSubTasks = subTasks.filter((subTask) => subTask.status === "completed").length;
-    const inProgressSubTasks = subTasks.filter((subTask) => subTask.status === "in-progress").length;
-    const pendingSubTasks = subTasks.filter((subTask) => subTask.status === "todo").length;
+    const completedSubTasks = subTasks.filter(
+      (subTask) => subTask.status === "completed"
+    ).length;
+    const inProgressSubTasks = subTasks.filter(
+      (subTask) => subTask.status === "in-progress"
+    ).length;
+    const pendingSubTasks = subTasks.filter(
+      (subTask) => subTask.status === "todo"
+    ).length;
     const overdueSubTasks = subTasks.filter((subTask) => {
       const dueDate = new Date(subTask.dueDate);
       const today = new Date();
-      return dueDate < today && subTask.status !== "completed";
+
+      // Reset time to start of day for accurate date comparison
+      const dueDateOnly = new Date(
+        dueDate.getFullYear(),
+        dueDate.getMonth(),
+        dueDate.getDate()
+      );
+      const todayOnly = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+
+      // Task is overdue if due date has passed AND task is not completed
+      return dueDateOnly < todayOnly && subTask.status !== "completed";
     }).length;
     const todaySubTasks = subTasks.filter((subTask) => {
       if (!subTask.dueDate) return false;
@@ -281,7 +321,10 @@ const EmployeeDetails = () => {
         dueDate.getFullYear() === today.getFullYear()
       );
     }).length;
-    const completionRate = totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0;
+    const completionRate =
+      totalSubTasks > 0
+        ? Math.round((completedSubTasks / totalSubTasks) * 100)
+        : 0;
 
     // Navigation handlers for stat cards
     const handleStatsClick = (statType) => {
@@ -314,7 +357,9 @@ const EmployeeDetails = () => {
         <div className="flexBetween mb-4">
           <h4 className="font-semibold text-lg text-gray-800">Task Progress</h4>
           <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-blue-600">{completionRate}%</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {completionRate}%
+            </div>
             <div className="text-xs text-gray-500">Task Completion</div>
           </div>
         </div>
@@ -335,19 +380,66 @@ const EmployeeDetails = () => {
         </div>
         {/* Subtask Statistics */}
         <div className="grid grid-cols-6 gap-4 flex-1">
-          <StatCard title="Total task" value={totalSubTasks} color="blue" onClick={() => handleStatsClick("total")} />
-          <StatCard title="Today's tasks" value={todaySubTasks} color="purple" onClick={() => handleStatsClick("today")} />
-          <StatCard title="Completed" value={completedSubTasks} color="green" percent={totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0} onClick={() => handleStatsClick("completed")} />
-          <StatCard title="In Progress" value={inProgressSubTasks} color="yellow" percent={totalSubTasks > 0 ? Math.round((inProgressSubTasks / totalSubTasks) * 100) : 0} onClick={() => handleStatsClick("in-progress")} />
-          <StatCard title="Pending" value={pendingSubTasks} color="orange" percent={totalSubTasks > 0 ? Math.round((pendingSubTasks / totalSubTasks) * 100) : 0} onClick={() => handleStatsClick("pending")} />
-          <StatCard title="Overdue" value={overdueSubTasks} color="red" onClick={() => handleStatsClick("overdue")} />
+          <StatCard
+            title="Total task"
+            value={totalSubTasks}
+            color="blue"
+            onClick={() => handleStatsClick("total")}
+          />
+          <StatCard
+            title="Today's tasks"
+            value={todaySubTasks}
+            color="purple"
+            onClick={() => handleStatsClick("today")}
+          />
+          <StatCard
+            title="Completed"
+            value={completedSubTasks}
+            color="green"
+            percent={
+              totalSubTasks > 0
+                ? Math.round((completedSubTasks / totalSubTasks) * 100)
+                : 0
+            }
+            onClick={() => handleStatsClick("completed")}
+          />
+          <StatCard
+            title="In Progress"
+            value={inProgressSubTasks}
+            color="yellow"
+            percent={
+              totalSubTasks > 0
+                ? Math.round((inProgressSubTasks / totalSubTasks) * 100)
+                : 0
+            }
+            onClick={() => handleStatsClick("in-progress")}
+          />
+          <StatCard
+            title="Pending"
+            value={pendingSubTasks}
+            color="orange"
+            percent={
+              totalSubTasks > 0
+                ? Math.round((pendingSubTasks / totalSubTasks) * 100)
+                : 0
+            }
+            onClick={() => handleStatsClick("pending")}
+          />
+          <StatCard
+            title="Overdue"
+            value={overdueSubTasks}
+            color="red"
+            onClick={() => handleStatsClick("overdue")}
+          />
         </div>
         {/* Overdue Subtasks Alert */}
         {overdueSubTasks > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4">
             <div className="flex items-center justify-center gap-2">
               <span className="text-sm font-medium text-red-700">
-                {overdueSubTasks} overdue subtask{overdueSubTasks > 1 ? "s" : ""} - Please review and update these subtasks
+                {overdueSubTasks} overdue subtask
+                {overdueSubTasks > 1 ? "s" : ""} - Please review and update
+                these subtasks
               </span>
             </div>
           </div>
@@ -401,7 +493,9 @@ const EmployeeDetails = () => {
         className={`${colorMap[color].bg} rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105`}
         onClick={onClick}
       >
-        <div className={`text-2xl font-bold ${colorMap[color].text}`}>{value}</div>
+        <div className={`text-2xl font-bold ${colorMap[color].text}`}>
+          {value}
+        </div>
         <div className="text-sm text-gray-600">{title}</div>
         {typeof percent === "number" && (
           <div className="text-xs text-gray-400 mt-1">{percent}%</div>
@@ -451,8 +545,10 @@ const EmployeeDetails = () => {
                 >
                   {item}
                   {item === "Tasks" && subTasksCount > 0 && (
-                    <span className=" -top-0 -right-2 bg-white text-gray-600
-                     text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span
+                      className=" -top-0 -right-2 bg-white text-gray-600
+                     text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                    >
                       {subTasksCount}
                     </span>
                   )}

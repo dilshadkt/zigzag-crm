@@ -114,6 +114,7 @@ const ProjectDetailLayout = () => {
           monthWorkDetails={monthWorkDetails}
           projectData={projectData}
           selectedMonth={selectedMonth}
+          showProjectSelection={false}
         />
       </div>
     </section>

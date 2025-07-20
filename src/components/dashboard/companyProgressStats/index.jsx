@@ -16,9 +16,22 @@ import CompanyTasks from "../../../pages/companyTasks";
 
 const CompanyProgressStats = () => {
   const { companyId } = useAuth();
-  const { data: companyStats, isLoading } = useGetCompanyStats(companyId);
+  const {
+    data: companyStats,
+    isLoading,
+    refetch,
+  } = useGetCompanyStats(companyId);
   const navigate = useNavigate();
 
+  // Refetch data when component mounts and when window gains focus
+  React.useEffect(() => {
+    const handleFocus = () => {
+      refetch();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [refetch]);
   // Function to handle overdue tasks click
   const handleOverdueTasksClick = () => {
     navigate("/company-tasks?filter=overdue");

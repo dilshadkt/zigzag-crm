@@ -26,11 +26,27 @@ const EmployeeProgressStats = () => {
   const inProgressSubTasks = subTasks.filter(
     (subTask) => subTask.status === "in-progress"
   ).length;
-  const pendingSubTasks = subTasks.filter((subTask) => subTask.status === "todo").length;
+  const pendingSubTasks = subTasks.filter(
+    (subTask) => subTask.status === "todo"
+  ).length;
   const overdueSubTasks = subTasks.filter((subTask) => {
     const dueDate = new Date(subTask.dueDate);
     const today = new Date();
-    return dueDate < today && subTask.status !== "completed";
+
+    // Reset time to start of day for accurate date comparison
+    const dueDateOnly = new Date(
+      dueDate.getFullYear(),
+      dueDate.getMonth(),
+      dueDate.getDate()
+    );
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+
+    // Task is overdue if due date has passed AND task is not completed
+    return dueDateOnly < todayOnly && subTask.status !== "completed";
   }).length;
 
   // Calculate today's subtasks
@@ -45,7 +61,9 @@ const EmployeeProgressStats = () => {
   }).length;
 
   const completionRate =
-    totalSubTasks > 0 ? Math.round((completedSubTasks / totalSubTasks) * 100) : 0;
+    totalSubTasks > 0
+      ? Math.round((completedSubTasks / totalSubTasks) * 100)
+      : 0;
 
   // Function to handle stats card clicks
   const handleStatsClick = (statType) => {
@@ -147,7 +165,9 @@ const EmployeeProgressStats = () => {
   return (
     <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween mb-4">
-        <h4 className="font-semibold text-lg text-gray-800">My Subtask Progress</h4>
+        <h4 className="font-semibold text-lg text-gray-800">
+          My Subtask Progress
+        </h4>
         <div className="flex items-center gap-2">
           <div className="text-2xl font-bold text-blue-600">
             {completionRate}%
@@ -193,7 +213,9 @@ const EmployeeProgressStats = () => {
               </p>
               <p className="text-xs text-gray-500">
                 {stat.title === "Completed" && totalSubTasks > 0
-                  ? `${Math.round((stat.value / totalSubTasks) * 100)}% of total`
+                  ? `${Math.round(
+                      (stat.value / totalSubTasks) * 100
+                    )}% of total`
                   : stat.title === "In Progress" && totalSubTasks > 0
                   ? `${Math.round((stat.value / totalSubTasks) * 100)}% active`
                   : stat.title === "Pending" && totalSubTasks > 0
@@ -218,8 +240,8 @@ const EmployeeProgressStats = () => {
           <div className="flex items-center justify-center gap-2">
             <FiAlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-sm font-medium text-red-700">
-              {overdueSubTasks} overdue subtask{overdueSubTasks > 1 ? "s" : ""} - Please
-              review and update these subtasks
+              {overdueSubTasks} overdue subtask{overdueSubTasks > 1 ? "s" : ""}{" "}
+              - Please review and update these subtasks
             </span>
             <span className="text-xs text-red-600 ml-2">→ Click to view</span>
           </div>

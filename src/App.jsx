@@ -30,6 +30,7 @@ import { useEffect, useState } from "react";
 import { validateSession } from "./api/service";
 import { ProtectedRoute } from "./components/protectedRoute";
 import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
+import socketService from "./services/socketService";
 import WelcomeHome from "./pages/welcome/home";
 import WelcomeLayout from "./layouts/welcome";
 import GetStart from "./pages/welcome/getStart";
@@ -53,6 +54,7 @@ import Timer from "./pages/timer";
 import ActivityStreamPage from "./pages/activityStream";
 import EmployeeSubTasks from "./pages/employeeSubTasks/EmployeeSubTasks";
 import TaskDetailPage from "./pages/taskDetail";
+import TaskOnReview from "./pages/taskOnReview";
 
 function App() {
   const dispatch = useDispatch();
@@ -72,8 +74,16 @@ function App() {
             companyId: user?.company,
           })
         );
+
+        // Initialize socket connection after successful authentication
+        const token = localStorage.getItem("token");
+        if (token) {
+          socketService.connect(token);
+        }
       } catch (error) {
         dispatch(logout());
+        // Disconnect socket on logout
+        socketService.disconnect();
       } finally {
         dispatch(setLoading(false)); // Set loading to false
 
@@ -174,6 +184,7 @@ function App() {
               element={<EmployeeSubTasks />}
             />
             <Route path="messenger" element={<Messenger />} />
+            <Route path="task-on-review" element={<TaskOnReview />} />
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />
             <Route path="workload" element={<WorkLoad />} />
