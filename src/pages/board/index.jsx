@@ -582,14 +582,12 @@ const Board = () => {
             </div>
           </div>
 
-          {assignees.length > 0 && (
             <button
               onClick={() => setShowModalTask(true)}
               className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
             >
               + Add Task
             </button>
-          )}
           <button
             onClick={() => {
               if (user?.role === "company-admin") {
