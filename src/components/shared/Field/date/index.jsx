@@ -17,6 +17,7 @@ const DatePicker = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value || "");
   const menuRef = useRef();
+  const inputRef = useRef();
 
   // Update selected date when value prop changes
   useEffect(() => {
@@ -59,7 +60,34 @@ const DatePicker = ({
     if (onChange) {
       onChange({ target: { name, value: formattedDate } }); // Mimic event object for Formik
     }
-    setIsMenuOpen(false);
+    // Don't close the menu immediately to allow for month/year navigation
+  };
+
+  // Handle input click to prevent menu from closing
+  const handleInputClick = (e) => {
+    e.stopPropagation();
+  };
+
+  // Handle input focus to prevent menu from closing
+  const handleInputFocus = (e) => {
+    e.stopPropagation();
+  };
+
+  // Handle input blur with delay to allow for navigation
+  const handleInputBlur = (e) => {
+    // Add a small delay to allow for month/year navigation clicks
+    setTimeout(() => {
+      if (!menuRef?.current?.contains(document.activeElement)) {
+        setIsMenuOpen(false);
+      }
+    }, 100);
+  };
+
+  // Handle keydown events
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setIsMenuOpen(false);
+    }
   };
 
   return (
@@ -92,14 +120,29 @@ const DatePicker = ({
             ref={menuRef}
             className="absolute w-full rounded-2xl bg-white border-2 border-[#D8E0F0]/80 shadow-sm
             left-0 right-0 mt-2 p-4 z-40"
+            onKeyDown={handleKeyDown}
           >
             <input
+              ref={inputRef}
               type="date"
               value={selectedDate}
               onChange={handleDateChange}
+              onClick={handleInputClick}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               className="w-full rounded-lg text-sm border border-[#D8E0F0] py-2 px-3
               outline-none focus:outline-none focus:border-blue-400"
             />
+            <div className="mt-3 flex justify-between items-center text-xs text-gray-500">
+              <span>Click arrows to navigate months/years</span>
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-blue-500 hover:text-blue-700 font-medium"
+              >
+                Done
+              </button>
+            </div>
           </div>
         )}
         {errors?.[name] && touched?.[name] && (
