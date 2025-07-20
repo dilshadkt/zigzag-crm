@@ -35,6 +35,7 @@ import GetStart from "./pages/welcome/getStart";
 import ProfileImageUpload from "./pages/welcome/profile";
 import MobileNumberInput from "./pages/welcome/mobile";
 import ProjectDetailLayout from "./layouts/projectDetail";
+import TaskDetailLayout from "./layouts/taskDetail";
 import Unauthorized from "./pages/Unauthorized";
 import WithRoleAcess from "./components/withRoleAccess";
 import RouteAccess from "./components/withRoleAccess/RouteAccess";
@@ -50,6 +51,7 @@ import StickyNotes from "./pages/stickyNotes";
 import Timer from "./pages/timer";
 import ActivityStreamPage from "./pages/activityStream";
 import EmployeeSubTasks from "./pages/employeeSubTasks/EmployeeSubTasks";
+import TaskDetailPage from "./pages/taskDetail";
 
 function App() {
   const dispatch = useDispatch();
@@ -159,11 +161,17 @@ function App() {
               <Route path=":taskId" element={<TaskDetails />} />
             </Route>
             <Route path="projects/:projectId/edit" element={<EditProject />} />
+            <Route path="tasks/:taskId" element={<TaskDetailLayout />}>
+              <Route index element={<TaskDetailPage />} />
+            </Route>
             <Route path="calender" element={<Calender />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />
             <Route path="employees/:employeeId" element={<EmployeeDetails />} />
-            <Route path="employees/:employeeId/subtasks" element={<EmployeeSubTasks />} />
+            <Route
+              path="employees/:employeeId/subtasks"
+              element={<EmployeeSubTasks />}
+            />
             <Route path="messenger" element={<Messenger />} />
             <Route path="infoPortal" element={<InfoPortal />} />
             <Route path="events" element={<Events />} />

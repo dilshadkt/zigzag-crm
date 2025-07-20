@@ -372,8 +372,12 @@ const CompanyTasks = ({ filter: propFilter }) => {
   };
 
   const handleTaskClick = (task) => {
-    // Navigate to task details within project context
-    navigate(`/projects/${task.project?._id}/${task._id}`);
+    if (task.project) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
+    } else {
+      // For tasks without project, navigate to task details directly
+      navigate(`/tasks/${task._id}`);
+    }
   };
 
   if (isLoading) {

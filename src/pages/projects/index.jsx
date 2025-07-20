@@ -82,8 +82,7 @@ const Prjects = () => {
 
   const handleAddTask = async (values, { resetForm }) => {
     const updatedValues = { ...values };
-    updatedValues.creator = user?._id
-   
+    updatedValues.creator = user?._id;
 
     // Process attachments
     const processedValue = await processAttachments(
@@ -91,7 +90,7 @@ const Prjects = () => {
       uploadSingleFile
     );
     updatedValues.attachments = processedValue;
-    
+
     createTask.mutate(updatedValues, {
       onSuccess: () => {
         resetForm();

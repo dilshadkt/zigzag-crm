@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Description from "../../shared/Field/description";
 import Select from "../../shared/Field/select";
@@ -6,7 +6,12 @@ import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
 import Input from "../../shared/Field/input";
 import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
-import { useCreateTask, useGetTaskFlows } from "../../../api/hooks";
+import {
+  useCreateTask,
+  useGetTaskFlows,
+  useProjectDetails,
+  useEmpoyees,
+} from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -28,6 +33,7 @@ const AddTask = ({
   // Fetch task flows for the company
   const { data: taskFlowsData } = useGetTaskFlows(companyId);
   const taskFlows = taskFlowsData || [];
+
   const handleClose = () => {
     resetForm();
     setShowModalTask(false);
@@ -35,6 +41,29 @@ const AddTask = ({
 
   const { values, touched, errors, handleChange, handleSubmit, resetForm } =
     useAddTaskForm(initialValues, onSubmit);
+
+  // Track selected project separately to avoid hook dependency issues
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    initialValues?.project || ""
+  );
+
+  // Fetch project details when a project is selected
+  const { data: selectedProjectData } = useProjectDetails(
+    selectedProjectId || null,
+    {
+      enabled: !!selectedProjectId && selectedProjectId !== "",
+    }
+  );
+
+  // Fetch all employees when "Other" project is selected (for board view)
+  const { data: allEmployeesData, isLoading: isLoadingEmployees } = useEmpoyees(
+    1,
+    null,
+    {
+      enabled: selectedProjectId === "other",
+    }
+  );
+
   // Set default taskMonth if not provided
   useEffect(() => {
     if (selectedMonth) {
@@ -45,18 +74,41 @@ const AddTask = ({
         },
       });
     }
-  }, [values.startDate,values.dueDate]);
+  }, [values.startDate, values.dueDate]);
 
+  // Update selectedProjectId when values.project changes
+  useEffect(() => {
+    setSelectedProjectId(values?.project || "");
+  }, [values?.project]);
+  // Reset task group when project changes
+  useEffect(() => {
+    if (values.project !== initialValues?.project) {
+      handleChange({
+        target: {
+          name: "taskGroup",
+          value: "Select task group",
+        },
+      });
+      handleChange({
+        target: {
+          name: "extraTaskWorkType",
+          value: "Select work type",
+        },
+      });
+    }
+  }, [values.project, initialValues?.project, handleChange]);
 
   // Handle task flow selection
   useEffect(() => {
     if (values.taskFlow && taskFlows.length > 0) {
-      const selectedFlow = taskFlows.find(flow => flow._id === values.taskFlow);
+      const selectedFlow = taskFlows.find(
+        (flow) => flow._id === values.taskFlow
+      );
       if (selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0) {
         // Get all assignees from the flow steps
         const flowAssignees = selectedFlow.flows
-          .map(step => step.assignee?._id || step.assignee)
-          .filter(assigneeId => assigneeId);
+          .map((step) => step.assignee?._id || step.assignee)
+          .filter((assigneeId) => assigneeId);
         // Remove duplicates
         const uniqueAssignees = Array.from(new Set(flowAssignees));
         // Update the assignedTo field with unique flow assignees
@@ -70,9 +122,22 @@ const AddTask = ({
     }
   }, [values.taskFlow, taskFlows, handleChange]);
 
-  // Get task group options from monthWorkDetails if available, else from projectData.workDetails
+  // Get task group options from selected project's work details
   const getTaskGroupOptions = () => {
-    const workDetails = monthWorkDetails || projectData?.workDetails;
+    // Use selected project data if available, otherwise fall back to monthWorkDetails or projectData
+    let workDetails = null;
+
+    if (selectedProjectData && selectedProjectId) {
+      // Find the work details for the selected month from the selected project
+      const projectMonthWorkDetails = selectedProjectData.workDetails?.find(
+        (wd) => wd.month === selectedMonth
+      );
+      workDetails = projectMonthWorkDetails;
+    } else {
+      // Fallback to provided work details
+      workDetails = monthWorkDetails || projectData?.workDetails;
+    }
+
     if (!workDetails) return [];
 
     const options = [];
@@ -132,10 +197,8 @@ const AddTask = ({
 
   // Get task flow options
   const getTaskFlowOptions = () => {
-    const options = [
-      { label: "No Task Flow", value: "" }
-    ];
-    
+    const options = [{ label: "No Task Flow", value: "" }];
+
     if (taskFlows && taskFlows.length > 0) {
       taskFlows.forEach((flow) => {
         if (flow.isActive) {
@@ -146,13 +209,26 @@ const AddTask = ({
         }
       });
     }
-    
+
     return options;
   };
 
-  // Get extra task work type options
+  // Get extra task work type options based on selected project
   const getExtraTaskWorkTypeOptions = () => {
-    const workDetails = monthWorkDetails || projectData?.workDetails;
+    // Use selected project data if available, otherwise fall back to monthWorkDetails or projectData
+    let workDetails = null;
+
+    if (selectedProjectData && selectedProjectId) {
+      // Find the work details for the selected month from the selected project
+      const projectMonthWorkDetails = selectedProjectData.workDetails?.find(
+        (wd) => wd.month === selectedMonth
+      );
+      workDetails = projectMonthWorkDetails;
+    } else {
+      // Fallback to provided work details
+      workDetails = monthWorkDetails || projectData?.workDetails;
+    }
+
     if (!workDetails) return [];
 
     const options = [];
@@ -178,10 +254,47 @@ const AddTask = ({
     return options;
   };
 
-  console.log(values)
+  // Get assignee options based on selected project
+  const getAssigneeOptions = () => {
+    if (
+      selectedProjectData &&
+      selectedProjectId &&
+      selectedProjectId !== "other"
+    ) {
+      // Use project teams if available
+      return (
+        selectedProjectData.teams?.map((user) => ({
+          label: `${user.firstName} (${user.position})`,
+          value: user._id,
+        })) || []
+      );
+    } else if (selectedProjectId === "other" && allEmployeesData?.employees) {
+      // Use all company employees when "Other" is selected
+      return (
+        allEmployeesData.employees?.map((user) => ({
+          label: `${user.name} (${user.position})`,
+          value: user._id,
+        })) || []
+      );
+    } else {
+      // Fallback to provided teams prop
+      return (
+        teams?.map((user) => ({
+          label: `${user.firstName} (${user.position})`,
+          value: user._id,
+        })) || []
+      );
+    }
+  };
+
+  console.log(values);
   const taskGroupOptions = getTaskGroupOptions();
   const taskFlowOptions = getTaskFlowOptions();
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
+
+  // Check if "Other" project is selected
+  const isOtherProjectSelected = selectedProjectId === "other";
+
   const isTaskGroupSelected =
     values.taskGroup && values.taskGroup !== "Select task group";
   const isExtraTaskSelected = values.taskGroup === "extraTask";
@@ -189,12 +302,15 @@ const AddTask = ({
     ? values.extraTaskWorkType &&
       values.extraTaskWorkType !== "Select work type"
     : true;
-  const isFormEnabled = isTaskGroupSelected && isExtraTaskWorkTypeSelected;
+  const isFormEnabled =
+    isOtherProjectSelected ||
+    (isTaskGroupSelected && isExtraTaskWorkTypeSelected);
 
   // Add project select options
   const projectOptions = [
     { label: "No Project", value: "" },
     ...projects.map((p) => ({ label: p.name, value: p._id })),
+    { label: "Other", value: "other" },
   ];
 
   const recurringOptions = [
@@ -270,6 +386,85 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 </div>
               )}
 
+              {/* Project work details indicator */}
+              {selectedProjectData &&
+                selectedProjectId &&
+                selectedProjectId !== "other" && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium text-green-800">
+                        Using work details from: {selectedProjectData.name}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+              {/* Other project indicator */}
+              {isOtherProjectSelected && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-yellow-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-yellow-800">
+                      Creating task for external project - task group and flow
+                      fields are hidden
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* All employees indicator for "Other" project */}
+              {isOtherProjectSelected && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-green-800">
+                      {isLoadingEmployees
+                        ? "Loading company employees..."
+                        : `All company employees available for assignment (${
+                            allEmployeesData?.employees?.length || 0
+                          } employees)`}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <form
                 action=" "
                 onSubmit={handleSubmit}
@@ -282,94 +477,112 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={selectedMonth || ""}
                 />
 
-                <Select
-                  errors={errors}
-                  touched={touched}
-                  name={"taskGroup"}
-                  selectedValue={values?.taskGroup || "Select task group"}
-                  value={values?.taskGroup || "Select task group"}
-                  onChange={handleChange}
-                  title="Task Group"
-                  options={taskGroupOptions}
-                  defaultValue="Select task group"
-                  required
-                  disabled={isEdit}
-                />
+                {/* Only show task group and task flow if not "Other" project */}
+                {!isOtherProjectSelected && (
+                  <>
+                    <Select
+                      errors={errors}
+                      touched={touched}
+                      name={"taskGroup"}
+                      selectedValue={values?.taskGroup || "Select task group"}
+                      value={values?.taskGroup || "Select task group"}
+                      onChange={handleChange}
+                      title="Task Group"
+                      options={taskGroupOptions}
+                      defaultValue="Select task group"
+                      required
+                      disabled={isEdit}
+                    />
 
-                {/* Task Flow Selection */}
-                <Select
-                  errors={errors}
-                  touched={touched}
-                  name={"taskFlow"}
-                  selectedValue={values?.taskFlow || ""}
-                  value={values?.taskFlow || ""}
-                  onChange={handleChange}
-                  title="Task Flow (Optional)"
-                  options={taskFlowOptions}
-                  defaultValue=""
-                  disabled={!isFormEnabled}
-                />
+                    {/* Task Flow Selection */}
+                    <Select
+                      errors={errors}
+                      touched={touched}
+                      name={"taskFlow"}
+                      selectedValue={values?.taskFlow || ""}
+                      value={values?.taskFlow || ""}
+                      onChange={handleChange}
+                      title="Task Flow (Optional)"
+                      options={taskFlowOptions}
+                      defaultValue=""
+                      disabled={!isFormEnabled}
+                    />
 
-                {/* Task Flow Preview */}
-                {values.taskFlow && taskFlows.length > 0 && (() => {
-                  const selectedFlow = taskFlows.find(flow => flow._id === values.taskFlow);
-                  return selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0 ? (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg
-                          className="w-4 h-4 text-blue-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                          />
-                        </svg>
-                        <span className="text-sm font-medium text-blue-800">
-                          Task Flow: {selectedFlow.name}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {selectedFlow.flows.map((step, index) => (
-                          <div key={index} className="flex items-center gap-2 text-xs text-blue-700">
-                            <span className="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-medium">
-                              {index + 1}
-                            </span>
-                            <span>{step.taskName}</span>
-                            <span className="text-blue-600">→</span>
-                            <span className="font-medium">
-                              {step.assignee?.name || `${step.assignee?.firstName || ''} ${step.assignee?.lastName || ''}`.trim()}
-                            </span>
+                    {/* Task Flow Preview */}
+                    {values.taskFlow &&
+                      taskFlows.length > 0 &&
+                      (() => {
+                        const selectedFlow = taskFlows.find(
+                          (flow) => flow._id === values.taskFlow
+                        );
+                        return selectedFlow &&
+                          selectedFlow.flows &&
+                          selectedFlow.flows.length > 0 ? (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg
+                                className="w-4 h-4 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                />
+                              </svg>
+                              <span className="text-sm font-medium text-blue-800">
+                                Task Flow: {selectedFlow.name}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {selectedFlow.flows.map((step, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 text-xs text-blue-700"
+                                >
+                                  <span className="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-medium">
+                                    {index + 1}
+                                  </span>
+                                  <span>{step.taskName}</span>
+                                  <span className="text-blue-600">→</span>
+                                  <span className="font-medium">
+                                    {step.assignee?.name ||
+                                      `${step.assignee?.firstName || ""} ${
+                                        step.assignee?.lastName || ""
+                                      }`.trim()}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-2 text-xs text-blue-600">
+                              Assignees will be automatically set based on this
+                              flow and will override any manual selections.
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                      <div className="mt-2 text-xs text-blue-600">
-                        Assignees will be automatically set based on this flow.
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
+                        ) : null;
+                      })()}
 
-                {/* Extra Task Work Type Selection */}
-                {isExtraTaskSelected && (
-                  <Select
-                    errors={errors}
-                    touched={touched}
-                    name={"extraTaskWorkType"}
-                    selectedValue={
-                      values?.extraTaskWorkType || "Select work type"
-                    }
-                    value={values?.extraTaskWorkType || "Select work type"}
-                    onChange={handleChange}
-                    title="Extra Task Work Type"
-                    options={extraTaskWorkTypeOptions}
-                    defaultValue="Select work type"
-                    required
-                  />
+                    {/* Extra Task Work Type Selection */}
+                    {isExtraTaskSelected && (
+                      <Select
+                        errors={errors}
+                        touched={touched}
+                        name={"extraTaskWorkType"}
+                        selectedValue={
+                          values?.extraTaskWorkType || "Select work type"
+                        }
+                        value={values?.extraTaskWorkType || "Select work type"}
+                        onChange={handleChange}
+                        title="Extra Task Work Type"
+                        options={extraTaskWorkTypeOptions}
+                        defaultValue="Select work type"
+                        required
+                      />
+                    )}
+                  </>
                 )}
 
                 <Input
@@ -380,7 +593,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onchange={handleChange}
                   touched={touched}
                   value={values}
-                  disabled={!isFormEnabled}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <div className="grid gap-x-4 grid-cols-2">
                   <DatePicker
@@ -390,7 +603,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     name={"startDate"}
                     title="Estimate"
                     touched={touched}
-                    disabled={!isFormEnabled}
+                    disabled={!isFormEnabled && !isOtherProjectSelected}
                   />
                   <DatePicker
                     title="Dead Line"
@@ -399,7 +612,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     onChange={handleChange}
                     touched={touched}
                     name={"dueDate"}
-                    disabled={!isFormEnabled}
+                    disabled={!isFormEnabled && !isOtherProjectSelected}
                   />
                 </div>
                 <Select
@@ -410,7 +623,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={handleChange}
                   title="Priority"
                   options={["Low", "Medium", "High"]}
-                  disabled={!isFormEnabled}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <MultiSelect
                   title="Assignees"
@@ -419,14 +632,16 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   touched={touched}
                   name={"assignedTo"}
                   value={values?.assignedTo || []}
-                  options={
-                    teams?.map((user) => ({
-                      label: `${user.firstName} (${user.position})`,
-                      value: user._id,
-                    })) || []
+                  options={getAssigneeOptions()}
+                  placeholder={
+                    isOtherProjectSelected && isLoadingEmployees
+                      ? "Loading employees..."
+                      : "Select Assignees"
                   }
-                  placeholder="Select Assignees"
-                  disabled={!isFormEnabled}
+                  disabled={
+                    (!isFormEnabled && !isOtherProjectSelected) ||
+                    (isOtherProjectSelected && isLoadingEmployees)
+                  }
                 />
 
                 {/* Recurring Task Section */}
@@ -443,7 +658,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     onChange={handleChange}
                     title="Repeat"
                     options={recurringOptions}
-                    disabled={!isFormEnabled}
+                    disabled={!isFormEnabled && !isOtherProjectSelected}
                   />
 
                   {values.recurringPattern &&
@@ -463,7 +678,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                           onchange={handleChange}
                           touched={touched}
                           value={values}
-                          disabled={!isFormEnabled}
+                          disabled={!isFormEnabled && !isOtherProjectSelected}
                           type="number"
                           min="1"
                         />
@@ -476,7 +691,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                             onChange={handleChange}
                             touched={touched}
                             name={"recurringEndDate"}
-                            disabled={!isFormEnabled}
+                            disabled={!isFormEnabled && !isOtherProjectSelected}
                           />
                           <Input
                             placeholder="10"
@@ -486,7 +701,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                             onchange={handleChange}
                             touched={touched}
                             value={values}
-                            disabled={!isFormEnabled}
+                            disabled={!isFormEnabled && !isOtherProjectSelected}
                             type="number"
                             min="1"
                           />
@@ -525,7 +740,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={values}
                   title="Content for Description"
                   placeholder="Add copy of description"
-                  disabled={!isFormEnabled}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <Description
                   errors={errors}
@@ -535,7 +750,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={values}
                   title="Description for publishing"
                   placeholder="Add some description of the task"
-                  disabled={!isFormEnabled}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <div>
                   <FileAndLinkUpload
@@ -547,13 +762,13 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       (file) => file.type === "link"
                     )}
                     onChange={(files) => (values.attachments = files)}
-                    disabled={!isFormEnabled}
+                    disabled={!isFormEnabled && !isOtherProjectSelected}
                   />
                   <div className="flexEnd">
                     <PrimaryButton
                       type="submit"
                       title="Save Task"
-                      disabled={!isFormEnabled}
+                      disabled={!isFormEnabled && !isOtherProjectSelected}
                     />
                   </div>
                 </div>

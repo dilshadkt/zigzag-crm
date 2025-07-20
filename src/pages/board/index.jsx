@@ -1,16 +1,23 @@
 import React, { useState } from "react";
-import { useGetEmployeeTasks, useGetAllCompanyTasks } from "../../api/hooks";
+import {
+  useGetEmployeeTasks,
+  useGetAllCompanyTasks,
+  useCreateTaskFromBoard,
+  useUpdateTaskOrder,
+  useGetEmployeeProjects,
+  useCompanyProjects,
+} from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateTaskById } from "../../api/service";
-import { useUpdateTaskOrder } from "../../api/hooks";
 import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
-import { useGetEmployeeProjects, useCompanyProjects } from "../../api/hooks";
 import { useNavigate } from "react-router-dom";
 import MonthSelector from "../../components/shared/MonthSelector";
 import { getCurrentMonthKey } from "../../lib/dateUtils";
 import AddTask from "../../components/projects/addTask";
+import { uploadSingleFile } from "../../api/service";
+import { processAttachments } from "../../lib/attachmentUtils";
 
 // Status configuration
 const statusConfig = {
@@ -261,6 +268,10 @@ const Board = () => {
       ? useCompanyProjects(user?.company)
       : useGetEmployeeProjects(user?._id);
   const { mutate: updateOrder } = useUpdateTaskOrder();
+  const { mutate: createTask, isLoading: isCreatingTask } =
+    useCreateTaskFromBoard(() => {
+      setShowModalTask(false);
+    });
 
   // Get tasks based on user role
   const tasks =
@@ -269,15 +280,15 @@ const Board = () => {
       : employeeTasksData?.tasks || [];
 
   const projects =
-    user?.role === "company-admin" 
-      ? projectsData || [] 
+    user?.role === "company-admin"
+      ? projectsData || []
       : projectsData?.projects || [];
 
   // Extract unique assignees from tasks
   const assignees = React.useMemo(() => {
     const users = {};
-    tasks.forEach(task => {
-      (task.assignedTo || []).forEach(user => {
+    tasks.forEach((task) => {
+      (task.assignedTo || []).forEach((user) => {
         if (user && user._id) {
           users[user._id] = user;
         }
@@ -288,15 +299,27 @@ const Board = () => {
 
   // Filter tasks based on selected project, priority, month, and assignee
   const filteredTasks = tasks.filter((task) => {
-    const projectMatch =
-      selectedProject === "all" || task.project?._id === selectedProject;
+    // Handle project filtering - include board tasks when "all" is selected
+    let projectMatch = false;
+    if (selectedProject === "all") {
+      // Show all tasks including board tasks (project: null) and project tasks
+      projectMatch = true;
+    } else if (selectedProject === "other") {
+      // Show only board tasks (project: null) when "other" is selected
+      projectMatch = !task.project;
+    } else {
+      // Show tasks for specific project
+      projectMatch = task.project?._id === selectedProject;
+    }
+
     const priorityMatch =
       selectedPriority === "all" ||
       task.priority?.toLowerCase() === selectedPriority.toLowerCase();
     const monthMatch = task.taskMonth === selectedMonth;
     const assigneeMatch =
       selectedAssignee === "all" ||
-      (task.assignedTo && task.assignedTo.some(user => user._id === selectedAssignee));
+      (task.assignedTo &&
+        task.assignedTo.some((user) => user._id === selectedAssignee));
 
     return projectMatch && priorityMatch && monthMatch && assigneeMatch;
   });
@@ -314,13 +337,42 @@ const Board = () => {
   };
 
   const handleAddTask = async (values, { resetForm }) => {
-    // If no project selected, set project to null
-    const payload = { ...values, project: values.project || null };
-    // You may want to add other required fields here
-    // Call your create task mutation here (implement as needed)
-    // Example: await createTask.mutateAsync(payload);
-    setShowModalTask(false);
-    resetForm();
+    try {
+      const updatedValues = { ...values };
+      updatedValues.creator = user?._id;
+
+      // Process attachments if any
+      if (values?.attachments && values.attachments.length > 0) {
+        const processedAttachments = await processAttachments(
+          values.attachments,
+          uploadSingleFile
+        );
+        updatedValues.attachments = processedAttachments;
+      }
+
+      // Handle project field
+      if (values.project === "other" || !values.project) {
+        updatedValues.project = null;
+        // Remove project-specific fields for "Other" project
+        delete updatedValues.taskGroup;
+        delete updatedValues.extraTaskWorkType;
+        delete updatedValues.taskFlow;
+      }
+
+      // Create the task
+      createTask(updatedValues, {
+        onSuccess: () => {
+          resetForm();
+        },
+        onError: (error) => {
+          console.error("Failed to create task:", error);
+          alert("Failed to create task. Please try again.");
+        },
+      });
+    } catch (error) {
+      console.error("Error processing task data:", error);
+      alert("Failed to process task data. Please try again.");
+    }
   };
 
   // Group tasks by status
@@ -344,7 +396,11 @@ const Board = () => {
       }
 
       await updateTaskById(taskId, updateData);
-      queryClient.invalidateQueries(["employeeTasks", user?._id]);
+      if (user?.role === "company-admin") {
+        queryClient.invalidateQueries(["companyTasks", user?.company]);
+      } else {
+        queryClient.invalidateQueries(["employeeTasks", user?._id]);
+      }
     } catch (error) {
       console.error("Failed to update task:", error);
       alert("Failed to update task status. Please try again.");
@@ -354,8 +410,13 @@ const Board = () => {
   const handleTaskDrop = async (taskData, targetStatus, targetPosition) => {
     const { taskId, sourceStatus, sourceIndex } = taskData;
 
-    // Optimistically update the UI
-    queryClient.setQueryData(["employeeTasks", user?._id], (oldData) => {
+    // Optimistically update the UI based on user role
+    const queryKey =
+      user?.role === "company-admin"
+        ? ["companyTasks", user?.company]
+        : ["employeeTasks", user?._id];
+
+    queryClient.setQueryData(queryKey, (oldData) => {
       if (!oldData || !oldData.tasks) return oldData;
 
       const updatedTasks = oldData.tasks.map((task) => {
@@ -394,7 +455,11 @@ const Board = () => {
       }
     } catch (error) {
       console.error("Failed to update task:", error);
-      queryClient.invalidateQueries(["employeeTasks", user?._id]);
+      if (user?.role === "company-admin") {
+        queryClient.invalidateQueries(["companyTasks", user?.company]);
+      } else {
+        queryClient.invalidateQueries(["employeeTasks", user?._id]);
+      }
       alert("Failed to update task. Please try again.");
     }
   };
@@ -433,6 +498,7 @@ const Board = () => {
                   {project.name}
                 </option>
               ))}
+              <option value="other">Other Tasks</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
               <svg
@@ -482,19 +548,31 @@ const Board = () => {
           <div className="relative">
             <select
               value={selectedAssignee}
-              onChange={e => setSelectedAssignee(e.target.value)}
+              onChange={(e) => setSelectedAssignee(e.target.value)}
               className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
             >
               <option value="all">All Assignees</option>
-              {assignees.map(user => (
+              {assignees.map((user) => (
                 <option key={user._id} value={user._id}>
-                  {(user.firstName || user.lastName) ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : user.email}
+                  {user.firstName || user.lastName
+                    ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                    : user.email}
                 </option>
               ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </div>
@@ -506,9 +584,13 @@ const Board = () => {
             + Add Task
           </button>
           <button
-            onClick={() =>
-              queryClient.invalidateQueries(["employeeTasks", user?._id])
-            }
+            onClick={() => {
+              if (user?.role === "company-admin") {
+                queryClient.invalidateQueries(["companyTasks", user?.company]);
+              } else {
+                queryClient.invalidateQueries(["employeeTasks", user?._id]);
+              }
+            }}
             className="p-2 bg-white h-fit hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
           >
             <img src="/icons/refresh.svg" alt="Refresh" className="w-5 h-5" />
@@ -541,7 +623,12 @@ const Board = () => {
                     task={task}
                     index={index}
                     onClick={(task) => {
-                      navigate(`/projects/${task.project._id}/${task._id}`);
+                      if (task.project) {
+                        navigate(`/projects/${task.project._id}/${task._id}`);
+                      } else {
+                        // For board tasks without project, navigate to task details directly
+                        navigate(`/tasks/${task._id}`);
+                      }
                     }}
                   />
                 ))
@@ -559,7 +646,9 @@ const Board = () => {
         setShowModalTask={setShowModalTask}
         projects={projects}
         onSubmit={handleAddTask}
-        teams={[]}
+        teams={assignees}
+        selectedMonth={selectedMonth}
+        isLoading={isCreatingTask}
         // You may want to pass other props as needed
       />
     </div>

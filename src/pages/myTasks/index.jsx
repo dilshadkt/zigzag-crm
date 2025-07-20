@@ -329,7 +329,12 @@ const MyTasks = () => {
   };
 
   const handleTaskClick = (task) => {
-    navigate(`/projects/${task.project._id}/${task._id}`);
+    if (task.project) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
+    } else {
+      // For tasks without project, navigate to task details directly
+      navigate(`/tasks/${task._id}`);
+    }
   };
 
   const filterOptions = getFilterOptions();

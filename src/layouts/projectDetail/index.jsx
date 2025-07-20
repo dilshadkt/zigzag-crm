@@ -49,28 +49,27 @@ const ProjectDetailLayout = () => {
     (wd) => wd.month === selectedMonth
   );
 
-  const handleSubmit = async (values,{ resetForm }) => {
+  const handleSubmit = async (values, { resetForm }) => {
     try {
       const updatedValues = { ...values };
 
-    // Handle assignee field mapping
-    if (updatedValues.assignedTo) {
-      updatedValues.assignedTo = [updatedValues.assignedTo];
-    }
+      // Handle assignee field mapping
+      if (updatedValues.assignedTo) {
+        updatedValues.assignedTo = [updatedValues.assignedTo];
+      }
 
-    // Process attachments
-    const proccesedValue = await processAttachments(
-      values?.attachments,
-      uploadSingleFile
-    );
-    updatedValues.attachments = proccesedValue;
+      // Process attachments
+      const proccesedValue = await processAttachments(
+        values?.attachments,
+        uploadSingleFile
+      );
+      updatedValues.attachments = proccesedValue;
 
-    mutate(updatedValues);
-    resetForm()
+      mutate(updatedValues);
+      resetForm();
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-    
   };
 
   return (

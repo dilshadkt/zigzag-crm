@@ -86,6 +86,13 @@ const Task = ({
           </div>
         )}
 
+        {/* Board Task Badge */}
+        {task?.isBoardTask && !task?.project && !isExtraTask && (
+          <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+            <span className="text-xs">🎯</span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
@@ -96,11 +103,13 @@ const Task = ({
               >
                 {task?.title}
               </h4>
-              {task?.project && (
+              {task?.project ? (
                 <span className="text-xs text-gray-500">
                   📋 {task.project.name || task.project.displayName}
                 </span>
-              )}
+              ) : task?.isBoardTask ? (
+                <span className="text-xs text-blue-500">🎯 Board Task</span>
+              ) : null}
             </div>
             {isExtraTask && (
               <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium ml-2">
@@ -180,12 +189,24 @@ const Task = ({
         </div>
       )}
 
+      {/* Board Task Badge for List View */}
+      {task?.isBoardTask && !task?.project && !isExtraTask && (
+        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-1">
+          <span className="text-xs">🎯</span>
+        </div>
+      )}
+
       <div className="col-span-3 gap-y-1 flex flex-col">
         <div className="flex items-center gap-2">
           <span className="text-sm text-[#91929E]">Task Name</span>
           {isExtraTask && (
             <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
               Extra
+            </span>
+          )}
+          {task?.isBoardTask && !task?.project && (
+            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
+              Board
             </span>
           )}
         </div>

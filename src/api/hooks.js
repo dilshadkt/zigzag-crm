@@ -5,6 +5,7 @@ import {
   addProject,
   createEmployee,
   createTask,
+  createTaskFromBoard,
   getTaskById,
   updatedProfile,
   updateProject,
@@ -56,6 +57,7 @@ import {
   restoreTaskFlow,
 } from "./service";
 import { format } from "date-fns";
+import { useAuth } from "../hooks/useAuth";
 
 // Task Flow hooks
 
@@ -82,7 +84,8 @@ export const useCreateTaskFlow = (companyId, onSuccess) => {
 export const useUpdateTaskFlow = (companyId, onSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskFlowId, taskFlowData }) => updateTaskFlow(companyId, taskFlowId, taskFlowData),
+    mutationFn: ({ taskFlowId, taskFlowData }) =>
+      updateTaskFlow(companyId, taskFlowId, taskFlowData),
     onSuccess: (...args) => {
       queryClient.invalidateQueries(["taskFlows", companyId]);
       if (onSuccess) onSuccess(...args);
@@ -202,6 +205,26 @@ export const useCreateTask = (handleClose, projectId) => {
       });
       handleClose();
       // toast.success('Target set successfully!');
+    },
+  });
+};
+
+export const useCreateTaskFromBoard = (handleClose) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationKey: ["createTaskFromBoard"],
+    mutationFn: (taskData) => createTaskFromBoard(taskData),
+    onSuccess: () => {
+      // Invalidate relevant queries based on user role
+      if (user?.role === "company-admin") {
+        queryClient.invalidateQueries(["companyTasks", user?.company]);
+      } else {
+        queryClient.invalidateQueries(["employeeTasks", user?._id]);
+      }
+      handleClose();
+      // toast.success('Task created successfully!');
     },
   });
 };
@@ -788,14 +811,18 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
         .then((res) => res.data)
         .catch((error) => {
           // Fallback data if endpoint doesn't exist
-          console.warn("Employee subtasks today endpoint not available:", error);
+          console.warn(
+            "Employee subtasks today endpoint not available:",
+            error
+          );
           return {
             subTasks: [
               // Sample subtask data for demonstration
               {
                 _id: "sample-subtask-1",
                 title: "Review subtask requirements",
-                description: "Go through the subtask specifications and prepare feedback",
+                description:
+                  "Go through the subtask specifications and prepare feedback",
                 priority: "High",
                 status: "todo",
                 dueDate: new Date().toISOString(),
@@ -813,7 +840,8 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
               {
                 _id: "sample-subtask-2",
                 title: "Update subtask documentation",
-                description: "Update the subtask documentation with recent changes",
+                description:
+                  "Update the subtask documentation with recent changes",
                 priority: "Medium",
                 status: "in-progress",
                 dueDate: new Date().toISOString(),
@@ -1726,7 +1754,9 @@ export const useGetProjectSocialMedia = (projectId) => {
   return useQuery({
     queryKey: ["projectSocialMedia", projectId],
     queryFn: () =>
-      apiClient.get(`/projects/${projectId}/social-media`).then((res) => res.data),
+      apiClient
+        .get(`/projects/${projectId}/social-media`)
+        .then((res) => res.data),
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5, // 5 minutes
     cacheTime: 1000 * 60 * 10, // 10 minutes

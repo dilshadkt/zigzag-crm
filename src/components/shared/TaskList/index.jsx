@@ -35,6 +35,9 @@ const TaskList = ({ tasks }) => {
   const handleTaskClick = (task) => {
     if (task.project?._id && task._id) {
       navigate(`/projects/${task.project._id}/${task._id}`);
+    } else if (task._id) {
+      // For tasks without project, navigate to task details directly
+      navigate(`/tasks/${task._id}`);
     }
   };
 

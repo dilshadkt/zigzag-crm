@@ -96,7 +96,7 @@ export const createTask = async (taskData, projectId) => {
     taskGroup: taskData?.taskGroup,
     extraTaskWorkType: taskData?.extraTaskWorkType,
     taskMonth: taskData?.taskMonth,
-    
+
     // taskFlow will be conditionally added below
     // Recurring task fields
     isRecurring: taskData?.isRecurring,
@@ -108,6 +108,57 @@ export const createTask = async (taskData, projectId) => {
   if (taskData?.taskFlow) {
     data.taskFlow = taskData.taskFlow; // Only add if present
   }
+  const response = await apiClient.post("/tasks", data);
+  return response;
+};
+
+export const createTaskFromBoard = async (taskData) => {
+  // api formated data for board view
+  const data = {
+    title: taskData?.title,
+    description: taskData?.description,
+    copyOfDescription: taskData?.copyOfDescription,
+    attachments: taskData?.attachments,
+    assignedTo: taskData?.assignedTo,
+    priority: taskData?.periority,
+    dueDate: taskData?.dueDate,
+    startDate: taskData?.startDate,
+    taskMonth: taskData?.taskMonth,
+
+    // Board-specific fields
+    isBoardTask: true,
+    sourceProject: taskData?.project || null,
+
+    // Recurring task fields
+    isRecurring: taskData?.isRecurring,
+    recurringPattern: taskData?.recurringPattern,
+    recurringInterval: taskData?.recurringInterval,
+    recurringEndDate: taskData?.recurringEndDate,
+    maxRecurrences: taskData?.maxRecurrences,
+  };
+
+  // Handle project field based on selection
+  if (
+    taskData?.project &&
+    taskData.project !== "other" &&
+    taskData.project !== ""
+  ) {
+    data.project = taskData.project;
+    // Add project-specific fields only if project is selected
+    if (taskData?.taskGroup) {
+      data.taskGroup = taskData.taskGroup;
+    }
+    if (taskData?.extraTaskWorkType) {
+      data.extraTaskWorkType = taskData.extraTaskWorkType;
+    }
+    if (taskData?.taskFlow) {
+      data.taskFlow = taskData.taskFlow;
+    }
+  } else {
+    // For "Other" project or no project, set project to null
+    data.project = null;
+  }
+
   const response = await apiClient.post("/tasks", data);
   return response;
 };
@@ -641,7 +692,10 @@ export const getTaskFlows = async (companyId) => {
 // Create a new task flow
 export const createTaskFlow = async (companyId, taskFlowData) => {
   try {
-    const response = await apiClient.post(`/companies/${companyId}/task-flows`, taskFlowData);
+    const response = await apiClient.post(
+      `/companies/${companyId}/task-flows`,
+      taskFlowData
+    );
     return response.data;
   } catch (error) {
     console.error("Error creating task flow:", error);
@@ -652,7 +706,10 @@ export const createTaskFlow = async (companyId, taskFlowData) => {
 // Update a task flow
 export const updateTaskFlow = async (companyId, taskFlowId, taskFlowData) => {
   try {
-    const response = await apiClient.put(`/companies/${companyId}/task-flows/${taskFlowId}`, taskFlowData);
+    const response = await apiClient.put(
+      `/companies/${companyId}/task-flows/${taskFlowId}`,
+      taskFlowData
+    );
     return response.data;
   } catch (error) {
     console.error("Error updating task flow:", error);
@@ -663,7 +720,9 @@ export const updateTaskFlow = async (companyId, taskFlowId, taskFlowData) => {
 // Delete a task flow (soft delete)
 export const deleteTaskFlow = async (companyId, taskFlowId) => {
   try {
-    const response = await apiClient.delete(`/companies/${companyId}/task-flows/${taskFlowId}`);
+    const response = await apiClient.delete(
+      `/companies/${companyId}/task-flows/${taskFlowId}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error deleting task flow:", error);
@@ -674,7 +733,9 @@ export const deleteTaskFlow = async (companyId, taskFlowId) => {
 // Restore a task flow
 export const restoreTaskFlow = async (companyId, taskFlowId) => {
   try {
-    const response = await apiClient.patch(`/companies/${companyId}/task-flows/${taskFlowId}/restore`);
+    const response = await apiClient.patch(
+      `/companies/${companyId}/task-flows/${taskFlowId}/restore`
+    );
     return response.data;
   } catch (error) {
     console.error("Error restoring task flow:", error);
