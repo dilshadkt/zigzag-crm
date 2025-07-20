@@ -93,7 +93,7 @@ export const SIDE_MENU = [
   //   path: "/events",
   //   routeKey: "events",
   // },
- 
+
   {
     id: 20,
     title: "Settings",
@@ -353,12 +353,12 @@ import { BsBuildings } from "react-icons/bs";
 import { AiOutlineSafety } from "react-icons/ai";
 
 export const SETTINGS = [
-  // {
-  //   id: 1,
-  //   title: "Account",
-  //   icon: FaRegUser,
-  //   path: "account",
-  // },
+  {
+    id: 1,
+    title: "Account",
+    icon: FaRegUser,
+    path: "account",
+  },
   // {
   //   id: 2,
   //   title: "Notifications",

@@ -299,6 +299,9 @@ const Board = () => {
 
   // Filter tasks based on selected project, priority, month, and assignee
   const filteredTasks = tasks.filter((task) => {
+    // Only show active tasks
+    const isActive = task.active !== false; // Show tasks that are active or don't have active field
+
     // Handle project filtering - include board tasks when "all" is selected
     let projectMatch = false;
     if (selectedProject === "all") {
@@ -321,7 +324,9 @@ const Board = () => {
       (task.assignedTo &&
         task.assignedTo.some((user) => user._id === selectedAssignee));
 
-    return projectMatch && priorityMatch && monthMatch && assigneeMatch;
+    return (
+      isActive && projectMatch && priorityMatch && monthMatch && assigneeMatch
+    );
   });
 
   const handleProjectChange = (e) => {
@@ -577,12 +582,14 @@ const Board = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => setShowModalTask(true)}
-            className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
-          >
-            + Add Task
-          </button>
+          {assignees.length > 0 && (
+            <button
+              onClick={() => setShowModalTask(true)}
+              className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
+            >
+              + Add Task
+            </button>
+          )}
           <button
             onClick={() => {
               if (user?.role === "company-admin") {

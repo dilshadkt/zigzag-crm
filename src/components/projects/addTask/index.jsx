@@ -343,20 +343,18 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               </h4>
 
               {/* Project selection for board usage */}
-              {projects.length > 0 && (
-                <Select
-                  errors={errors}
-                  touched={touched}
-                  name={"project"}
-                  selectedValue={values?.project || ""}
-                  value={values?.project || ""}
-                  onChange={handleChange}
-                  title="Project"
-                  options={projectOptions}
-                  defaultValue=""
-                  required={false}
-                />
-              )}
+              <Select
+                errors={errors}
+                touched={touched}
+                name={"project"}
+                selectedValue={values?.project || ""}
+                value={values?.project || ""}
+                onChange={handleChange}
+                title="Project"
+                options={projectOptions}
+                defaultValue=""
+                required={false}
+              />
 
               {/* Month indicator */}
               {selectedMonth && (

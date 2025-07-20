@@ -48,10 +48,11 @@ const Prjects = () => {
     user?.role === "company-admin" ? isCompanySuccess : isEmployeeSuccess;
 
   // Use separate hooks for project details and tasks
-  const { data: activeProject, isLoading: projectLoading } =
-    useProjectDetails(selectProject);
+  const { data: activeProject, isLoading: projectLoading } = useProjectDetails(
+    selectProject || undefined
+  );
   const { data: projectTasks, isLoading: tasksLoading } = useProjectTasks(
-    selectProject,
+    selectProject || undefined,
     selectedMonth
   );
 

@@ -8,7 +8,7 @@ import Navigator from "../../components/shared/navigator";
 const EditProject = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { data: currentProject } = useProjectDetails(projectId);
+  const { data: currentProject } = useProjectDetails(projectId || undefined);
   const { mutate } = useUpdateProject(currentProject?._id, () => {
     navigate(`/projects/${projectId}`);
   });

@@ -20,7 +20,7 @@ const SettingsLayout = () => {
   const isEmployee = user?.role === "employee";
 
   // Filter settings based on user's route access
-  const accessibleSettings = SETTINGS.filter(setting => {
+  const accessibleSettings = SETTINGS.filter((setting) => {
     const fullPath = `/settings/${setting.path}`;
     return hasAccessToRoute(fullPath);
   });
@@ -28,8 +28,8 @@ const SettingsLayout = () => {
   // Update selected setting based on current location
   React.useEffect(() => {
     const currentPath = location.pathname;
-    const currentSetting = accessibleSettings.find(setting => 
-      currentPath === `/settings/${setting.path}`
+    const currentSetting = accessibleSettings.find(
+      (setting) => currentPath === `/settings/${setting.path}`
     );
     if (currentSetting) {
       setSelected(currentSetting.id);
@@ -44,7 +44,7 @@ const SettingsLayout = () => {
   }
 
   return (
-    <section className="flex flex-col h-full gap-y-3">
+    <section className="flex flex-col  h-full gap-y-3">
       <div className="flexBetween ">
         <Header>{isEmployee ? "My Profile" : "Settings"}</Header>
         <PrimaryButton
@@ -57,7 +57,7 @@ const SettingsLayout = () => {
         <UserProfile user={user} />
 
         {/* Settings info page  */}
-        <div className="flex-1 overflow-hidden  gap-y-5  flex flex-col">
+        <div className="flex-1 overflow-y-auto h-full  gap-y-2  flex flex-col">
           {!isEmployee && (
             <div className="flexStart gap-x-3 ">
               <FaArrowLeft className=" text-[#3F8CFF] text-lg hover:scale-85 cursor-pointer " />
@@ -74,8 +74,11 @@ const SettingsLayout = () => {
             </div>
           ) : (
             // Admin view - show regular settings
-            <div className=" flex h-full  gap-x-5">
-              <div className="w-[250px] rounded-3xl bg-white p-2 flex flex-col gap-y-1  pt-5">
+            <div className=" flex h-full overflow-y-auto  gap-x-5">
+              <div
+                className="w-[250px] rounded-3xl
+               bg-white p-2 flex flex-col gap-y-1  pt-5"
+              >
                 {accessibleSettings.length > 0 ? (
                   accessibleSettings.map((setting, index) => (
                     <Link
@@ -116,7 +119,8 @@ const SettingsLayout = () => {
                 )}
               </div>
               <div
-                className="flex-1 bg-white p-5 overflow-y-auto flex flex-col h-full
+                className="flex-1 bg-white p-5 overflow-hidden
+                 flex flex-col h-full
                rounded-3xl"
               >
                 <Outlet />

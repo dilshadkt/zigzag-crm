@@ -10,7 +10,9 @@ import SocialTab from "./components/SocialTab";
 
 const ProjectAnalyticsDetails = () => {
   const { projectId } = useParams();
-  const { data: project, isLoading } = useProjectDetails(projectId);
+  const { data: project, isLoading } = useProjectDetails(
+    projectId || undefined
+  );
   const [activeTab, setActiveTab] = useState("overview");
 
   if (isLoading) {

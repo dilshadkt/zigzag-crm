@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import DashboardLayout from "./layouts/dashboard";
 import Dashboard from "./pages/dashboard";
 import Calender from "./pages/calender";
@@ -307,6 +308,30 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            duration: 3000,
+            style: {
+              background: "#10B981",
+              color: "#fff",
+            },
+          },
+          error: {
+            duration: 4000,
+            style: {
+              background: "#EF4444",
+              color: "#fff",
+            },
+          },
+        }}
+      />
     </>
   );
 }

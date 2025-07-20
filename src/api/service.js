@@ -742,3 +742,34 @@ export const restoreTaskFlow = async (companyId, taskFlowId) => {
     throw error;
   }
 };
+
+// Company-wide delete operations
+export const deleteAllCompanyTasks = async () => {
+  try {
+    const response = await apiClient.delete("/tasks/company/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting all company tasks:", error);
+    throw error;
+  }
+};
+
+export const deleteAllCompanyProjects = async () => {
+  try {
+    const response = await apiClient.delete("/projects/company/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting all company projects:", error);
+    throw error;
+  }
+};
+
+export const deleteAllCompanyEmployees = async () => {
+  try {
+    const response = await apiClient.delete("/employee/company/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting all company employees:", error);
+    throw error;
+  }
+};

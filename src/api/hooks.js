@@ -55,6 +55,9 @@ import {
   updateTaskFlow,
   deleteTaskFlow,
   restoreTaskFlow,
+  deleteAllCompanyTasks,
+  deleteAllCompanyProjects,
+  deleteAllCompanyEmployees,
 } from "./service";
 import { format } from "date-fns";
 import { useAuth } from "../hooks/useAuth";
@@ -1616,6 +1619,61 @@ export const useDeleteAttendanceRecord = () => {
       queryClient.invalidateQueries(["attendanceSummary"]);
       queryClient.invalidateQueries(["attendanceAnalytics"]);
       queryClient.invalidateQueries(["attendanceStatus"]);
+    },
+  });
+};
+
+// Company-wide delete hooks
+export const useDeleteAllCompanyTasks = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteAllCompanyTasks"],
+    mutationFn: () => deleteAllCompanyTasks(),
+    onSuccess: () => {
+      // Invalidate all task-related queries
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["companyProjects"]);
+      queryClient.invalidateQueries(["employeeTasks"]);
+      queryClient.invalidateQueries(["employeeTasksToday"]);
+      queryClient.invalidateQueries(["tasksDueInMonth"]);
+      queryClient.invalidateQueries(["companyTasks"]);
+    },
+  });
+};
+
+export const useDeleteAllCompanyProjects = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteAllCompanyProjects"],
+    mutationFn: () => deleteAllCompanyProjects(),
+    onSuccess: () => {
+      // Invalidate all project-related queries
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["companyProjects"]);
+      queryClient.invalidateQueries(["employeeProjects"]);
+      queryClient.invalidateQueries(["projectAnalytics"]);
+    },
+  });
+};
+
+export const useDeleteAllCompanyEmployees = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["deleteAllCompanyEmployees"],
+    mutationFn: () => deleteAllCompanyEmployees(),
+    onSuccess: () => {
+      // Invalidate all employee-related queries
+      queryClient.invalidateQueries(["employees"]);
+      queryClient.invalidateQueries(["employee"]);
+      queryClient.invalidateQueries(["employeeProjects"]);
+      queryClient.invalidateQueries(["employeeTeams"]);
+      queryClient.invalidateQueries(["employeeVacations"]);
+      queryClient.invalidateQueries(["employeeTasks"]);
+      queryClient.invalidateQueries(["employeeTasksToday"]);
+      queryClient.invalidateQueries(["employeeBirthdays"]);
+      // Also invalidate project queries as team members might have changed
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["companyProjects"]);
     },
   });
 };
