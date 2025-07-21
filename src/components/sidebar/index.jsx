@@ -14,12 +14,16 @@ const Sidebar = () => {
     if (user?.role === "company-admin") {
       return true;
     }
-    
+
     // Dashboard, Board, and Settings are always accessible to everyone
-    if (item.routeKey === "dashboard" || item.routeKey === "board" || item.routeKey === "settings") {
+    if (
+      item.routeKey === "dashboard" ||
+      item.routeKey === "board" ||
+      item.routeKey === "settings"
+    ) {
       return true;
     }
-    
+
     // For other users, check if the routeKey is in their allowed routes
     const allowedRoutes = userPosition?.allowedRoutes || [];
     return allowedRoutes.includes(item.routeKey);
@@ -31,18 +35,23 @@ const Sidebar = () => {
     userPosition: userPosition?.name,
     allowedRoutes: userPosition?.allowedRoutes || [],
     totalMenuItems: SIDE_MENU.length,
-    accessibleItems: filteredSidebar.length
+    accessibleItems: filteredSidebar.length,
   };
-  
+
   // Additional debug for each menu item
   if (user?.role !== "company-admin") {
     console.log("Menu item access details:");
-    SIDE_MENU.forEach(item => {
+    SIDE_MENU.forEach((item) => {
       const allowedRoutes = userPosition?.allowedRoutes || [];
-      const isAlwaysAccessible = item.routeKey === "dashboard" || item.routeKey === "board" || item.routeKey === "settings";
+      const isAlwaysAccessible =
+        item.routeKey === "dashboard" ||
+        item.routeKey === "board" ||
+        item.routeKey === "settings";
       const hasRouteAccess = allowedRoutes.includes(item.routeKey);
       const hasAccess = isAlwaysAccessible || hasRouteAccess;
-      console.log(`${item.title}: routeKey=${item.routeKey}, alwaysAccessible=${isAlwaysAccessible}, hasRouteAccess=${hasRouteAccess}, hasAccess=${hasAccess}, path=${item.path}`);
+      console.log(
+        `${item.title}: routeKey=${item.routeKey}, alwaysAccessible=${isAlwaysAccessible}, hasRouteAccess=${hasRouteAccess}, hasAccess=${hasAccess}, path=${item.path}`
+      );
     });
   }
 
@@ -91,7 +100,7 @@ const Sidebar = () => {
             </li>
           )}
         </ul>
-        
+
         {/* Debug Panel (Development Only) */}
         {/* {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 p-2 bg-gray-100 rounded-lg">
