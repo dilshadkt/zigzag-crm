@@ -339,12 +339,37 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                     return (
                       <div
                         key={subtask._id}
-                        className="bg-gray-50 rounded-2xl p-4 relative group"
+                        className={`rounded-2xl p-4 relative group transition-all duration-200 ${
+                          isAssignedToSubTask
+                            ? "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300"
+                            : "bg-gray-50 hover:bg-gray-100"
+                        }`}
                       >
                         <div className="flexBetween mb-2">
-                          <h6 className="font-medium text-gray-800">
-                            {subtask.title}
-                          </h6>
+                          <div className="flex items-center gap-2">
+                            <h6 className="font-medium text-gray-800">
+                              {subtask.title}
+                            </h6>
+                            {isAssignedToSubTask && (
+                              <span
+                                className="px-2 py-1 bg-blue-100 text-blue-500 text-xs font-medium 
+                              rounded-full flex items-center gap-1"
+                              >
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                Assigned to me
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2">
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
