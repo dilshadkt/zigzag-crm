@@ -61,6 +61,9 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     validationSchema,
     onSubmit,
     enableReinitialize: true,
+    validateOnMount: false,
+    validateOnChange: true,
+    validateOnBlur: true,
   });
 
   return formik;

@@ -17,12 +17,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const { isCompany, user } = useAuth();
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState(null);
+  const [expandedSubTasks, setExpandedSubTasks] = useState(new Set());
 
   // Check if current user is assigned to this task
   const isAssignedToTask = taskDetails?.assignedTo?.some(
     (assignedUser) => assignedUser._id === user?.id
   );
-console.log(taskDetails)
   // Employees can only edit tasks assigned to them, company admins can edit any task
   const canEditTask = isCompany || isAssignedToTask;
 
@@ -84,6 +84,29 @@ console.log(taskDetails)
   const handleAddSubTask = () => {
     setEditingSubTask(null);
     setShowSubTaskModal(true);
+  };
+
+  // Check if subtask has additional content to show
+  const hasAdditionalContent = (subtask) => {
+    return (
+      subtask.description ||
+      subtask.copyOfDescription ||
+      subtask.ideas ||
+      (subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0)
+    );
+  };
+
+  // Toggle expanded state for a subtask
+  const toggleSubTaskExpanded = (subtaskId) => {
+    setExpandedSubTasks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(subtaskId)) {
+        newSet.delete(subtaskId);
+      } else {
+        newSet.add(subtaskId);
+      }
+      return newSet;
+    });
   };
 
   const getRecurringPatternText = (pattern, interval) => {
@@ -218,11 +241,19 @@ console.log(taskDetails)
                 </div>
               </div>
             )}
-
-            <p className="text-gray-600 mt-2">{taskDetails?.description}</p>
             {taskDetails?.copyOfDescription && (
               <div className="mt-4">
-                <h5 className="text-sm font-medium text-[#91929E] uppercase mb-2">
+                <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
+                  Content For Description
+                </h5>
+                <p className="text-gray-600">
+                  {taskDetails?.copyOfDescription}
+                </p>
+              </div>
+            )}
+            {taskDetails?.copyOfDescription && (
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                   Copy of Description
                 </h5>
                 <p className="text-gray-600">
@@ -370,11 +401,173 @@ console.log(taskDetails)
                             )}
                           </div>
                         </div>
+                        {/* Basic description (always shown) */}
                         {subtask.description && (
                           <p className="text-sm text-gray-600 mb-2">
                             {subtask.description}
                           </p>
                         )}
+
+                        {/* Show More button and expanded content */}
+                        {hasAdditionalContent(subtask) && (
+                          <>
+                            <button
+                              onClick={() => toggleSubTaskExpanded(subtask._id)}
+                              className="text-xs text-blue-600 hover:text-blue-800 mb-2 flex items-center gap-1 transition-colors"
+                            >
+                              {expandedSubTasks.has(subtask._id) ? (
+                                <>
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Show Less
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Show More
+                                </>
+                              )}
+                            </button>
+
+                            {/* Expanded content */}
+                            {expandedSubTasks.has(subtask._id) && (
+                              <div className="mb-3 p-3 bg-white rounded-lg border border-gray-200 space-y-3">
+                                {/* Content for Description */}
+                                {subtask.copyOfDescription && (
+                                  <div>
+                                    <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                      <svg
+                                        className="w-3 h-3 text-blue-600"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                      Content for Description
+                                    </h6>
+                                    <p className="text-xs text-gray-600">
+                                      {subtask.copyOfDescription}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Description for Publishing */}
+                                {subtask.description && (
+                                  <div>
+                                    <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                      <svg
+                                        className="w-3 h-3 text-green-600"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                      Description for Publishing
+                                    </h6>
+                                    <p className="text-xs text-gray-600">
+                                      {subtask.description}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Ideas */}
+                                {subtask.ideas && (
+                                  <div>
+                                    <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                      <svg
+                                        className="w-3 h-3 text-yellow-600"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                      Ideas
+                                    </h6>
+                                    <p className="text-xs text-gray-600">
+                                      {subtask.ideas}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Publish URLs */}
+                                {subtask.publishUrls &&
+                                  Object.keys(subtask.publishUrls).length >
+                                    0 && (
+                                    <div>
+                                      <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                        <svg
+                                          className="w-3 h-3 text-purple-600"
+                                          fill="currentColor"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5a2 2 0 11-2.828 2.828l-1.5 1.5a4 4 0 105.656 5.656l1.5-1.5a1 1 0 001.414-1.414l-1.5-1.5a2 2 0 112.828-2.828l1.5 1.5z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                        Publish URLs
+                                      </h6>
+                                      <div className="space-y-1">
+                                        {Object.entries(
+                                          subtask.publishUrls
+                                        ).map(([platform, url]) => (
+                                          <div
+                                            key={platform}
+                                            className="flex items-center justify-between"
+                                          >
+                                            <span className="text-xs text-gray-600 capitalize">
+                                              {platform}:
+                                            </span>
+                                            <a
+                                              href={url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs text-blue-600 hover:text-blue-800 truncate ml-2"
+                                            >
+                                              {url}
+                                            </a>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            )}
+                          </>
+                        )}
+
                         <div className="flex justify-between text-xs text-gray-500">
                           <div className="flex items-center gap-1">
                             <span>Assigned to:</span>
@@ -420,7 +613,7 @@ console.log(taskDetails)
                         <SubTaskAttachments
                           subTask={subtask}
                           parentTaskId={taskDetails?._id}
-                          canEdit={!(isCompany || isAssignedToSubTask)}
+                          canEdit={isCompany || isAssignedToSubTask}
                         />
                       </div>
                     );

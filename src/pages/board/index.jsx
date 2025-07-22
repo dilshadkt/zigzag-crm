@@ -18,7 +18,7 @@ import MonthSelector from "../../components/shared/MonthSelector";
 import { getCurrentMonthKey } from "../../lib/dateUtils";
 import AddTask from "../../components/projects/addTask";
 import { uploadSingleFile } from "../../api/service";
-import { processAttachments } from "../../lib/attachmentUtils";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 
 // Status configuration
 const statusConfig = {
@@ -416,7 +416,7 @@ const Board = () => {
 
   const handleAddTask = async (values, { resetForm }) => {
     try {
-      const updatedValues = { ...values };
+      const updatedValues = cleanTaskData(values);
       updatedValues.creator = user?._id;
 
       // Process attachments if any

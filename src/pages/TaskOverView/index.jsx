@@ -6,7 +6,7 @@ import AddTask from "../../components/projects/addTask";
 import TaskDetails from "../../components/projects/taskDetails";
 import TaskInfo from "../../components/projects/taskInfo";
 import { useProject } from "../../hooks/useProject";
-import { processAttachments } from "../../lib/attachmentUtils";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 
 const TaskOverView = () => {
   const { taskId } = useParams();
@@ -17,7 +17,8 @@ const TaskOverView = () => {
 
   const handleTaskEdit = async (values, { setSubmitting }) => {
     try {
-      const updatedValues = { ...values };
+      const updatedValues = cleanTaskData(values);
+
       const proccesedValue = await processAttachments(
         values?.attachments,
         uploadSingleFile

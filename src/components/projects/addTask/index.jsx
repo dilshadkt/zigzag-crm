@@ -40,17 +40,51 @@ const AddTask = ({
     setShowModalTask(false);
   };
 
-  const { values, touched, errors, handleChange, handleSubmit, resetForm } =
-    useAddTaskForm(initialValues, onSubmit);
+  // Prepare initial values for the form
+  const prepareInitialValues = () => {
+    if (!initialValues) return {};
+
+    return {
+      title: initialValues.title || "",
+      taskGroup: initialValues.taskGroup || "",
+      taskFlow: initialValues.taskFlow || "",
+      extraTaskWorkType: initialValues.extraTaskWorkType || "",
+      taskMonth: initialValues.taskMonth || selectedMonth || "",
+      startDate: initialValues.startDate || "",
+      dueDate: initialValues.dueDate || "",
+      periority: initialValues.priority || "Low",
+      assignedTo: initialValues.assignedTo
+        ? Array.isArray(initialValues.assignedTo)
+          ? initialValues.assignedTo.map((user) => user._id || user)
+          : [initialValues.assignedTo._id || initialValues.assignedTo]
+        : [],
+      copyOfDescription: initialValues.copyOfDescription || "",
+      description: initialValues.description || "",
+      isRecurring: initialValues.isRecurring || false,
+      recurringPattern: initialValues.recurringPattern || "none",
+      recurringInterval: initialValues.recurringInterval || 1,
+      recurringEndDate: initialValues.recurringEndDate || "",
+      maxRecurrences: initialValues.maxRecurrences || "",
+    };
+  };
+
+  const {
+    values,
+    touched,
+    errors,
+    handleChange,
+    handleSubmit,
+    resetForm,
+    setFieldValue,
+  } = useAddTaskForm(prepareInitialValues(), onSubmit);
 
   // Track selected project separately to avoid hook dependency issues
   const [selectedProjectId, setSelectedProjectId] = useState(
-    initialValues?.project || ""
+    initialValues?.project._id || ""
   );
-
   // Fetch project details when a project is selected
   const { data: selectedProjectData } = useProjectDetails(
-    selectedProjectId || null,
+    initialValues?.project._id || null,
     {
       enabled: !!selectedProjectId && selectedProjectId !== "",
     }
@@ -67,37 +101,23 @@ const AddTask = ({
 
   // Set default taskMonth if not provided
   useEffect(() => {
-    if (selectedMonth) {
-      handleChange({
-        target: {
-          name: "taskMonth",
-          value: selectedMonth,
-        },
-      });
+    if (selectedMonth && !values.taskMonth) {
+      setFieldValue("taskMonth", selectedMonth);
     }
-  }, [values.startDate, values.dueDate]);
+  }, [selectedMonth, values.taskMonth, setFieldValue]);
 
   // Update selectedProjectId when values.project changes
   useEffect(() => {
     setSelectedProjectId(values?.project || "");
   }, [values?.project]);
-  // Reset task group when project changes
+
+  // Reset task group when project changes (only for new tasks, not edits)
   useEffect(() => {
-    if (values.project !== initialValues?.project) {
-      handleChange({
-        target: {
-          name: "taskGroup",
-          value: "Select task group",
-        },
-      });
-      handleChange({
-        target: {
-          name: "extraTaskWorkType",
-          value: "Select work type",
-        },
-      });
+    if (!isEdit && values.project !== initialValues?.project) {
+      setFieldValue("taskGroup", "");
+      setFieldValue("extraTaskWorkType", "");
     }
-  }, [values.project, initialValues?.project, handleChange]);
+  }, [values.project, initialValues?.project, setFieldValue, isEdit]);
 
   // Handle task flow selection
   useEffect(() => {
@@ -113,15 +133,26 @@ const AddTask = ({
         // Remove duplicates
         const uniqueAssignees = Array.from(new Set(flowAssignees));
         // Update the assignedTo field with unique flow assignees
-        handleChange({
-          target: {
-            name: "assignedTo",
-            value: uniqueAssignees,
-          },
-        });
+        setFieldValue("assignedTo", uniqueAssignees);
       }
     }
-  }, [values.taskFlow, taskFlows, handleChange]);
+  }, [values.taskFlow, taskFlows, setFieldValue]);
+
+  // Initialize form when modal opens for editing
+  useEffect(() => {
+    if (isOpen && isEdit && initialValues) {
+      // Set project ID for editing
+      setSelectedProjectId(initialValues.project || "");
+
+      // Ensure all fields are properly set
+      const preparedValues = prepareInitialValues();
+      Object.keys(preparedValues).forEach((key) => {
+        if (preparedValues[key] !== undefined && preparedValues[key] !== null) {
+          setFieldValue(key, preparedValues[key]);
+        }
+      });
+    }
+  }, [isOpen, isEdit, initialValues, setFieldValue]);
 
   // Get task group options from selected project's work details
   const getTaskGroupOptions = () => {
@@ -593,7 +624,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   name={"title"}
                   onchange={handleChange}
                   touched={touched}
-                  value={values}
+                  value={values?.title || ""}
                   disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <div className="grid gap-x-4 grid-cols-2">
@@ -678,7 +709,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                           name={"recurringInterval"}
                           onchange={handleChange}
                           touched={touched}
-                          value={values}
+                          value={values?.recurringInterval || ""}
                           disabled={!isFormEnabled && !isOtherProjectSelected}
                           type="number"
                           min="1"
@@ -701,7 +732,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                             name={"maxRecurrences"}
                             onchange={handleChange}
                             touched={touched}
-                            value={values}
+                            value={values?.maxRecurrences || ""}
                             disabled={!isFormEnabled && !isOtherProjectSelected}
                             type="number"
                             min="1"
@@ -738,7 +769,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={handleChange}
                   touched={touched}
                   name={"copyOfDescription"}
-                  value={values}
+                  value={values?.copyOfDescription || ""}
                   title="Content for Description"
                   placeholder="Add copy of description"
                   disabled={!isFormEnabled && !isOtherProjectSelected}
@@ -748,7 +779,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={handleChange}
                   touched={touched}
                   name={"description"}
-                  value={values}
+                  value={values?.description || ""}
                   title="Description for publishing"
                   placeholder="Add some description of the task"
                   disabled={!isFormEnabled && !isOtherProjectSelected}
@@ -756,13 +787,17 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 <div>
                   <FileAndLinkUpload
                     fileClassName={"grid grid-cols-3 gap-3"}
-                    initialFiles={initialValues?.attachments.filter(
-                      (file) => file.type !== "link"
-                    )}
-                    initialLinks={initialValues?.attachments.filter(
-                      (file) => file.type === "link"
-                    )}
-                    onChange={(files) => (values.attachments = files)}
+                    initialFiles={
+                      initialValues?.attachments?.filter(
+                        (file) => file.type !== "link"
+                      ) || []
+                    }
+                    initialLinks={
+                      initialValues?.attachments?.filter(
+                        (file) => file.type === "link"
+                      ) || []
+                    }
+                    onChange={(files) => setFieldValue("attachments", files)}
                     disabled={!isFormEnabled && !isOtherProjectSelected}
                   />
                   <div className="flexEnd">

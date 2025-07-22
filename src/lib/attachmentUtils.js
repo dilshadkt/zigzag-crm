@@ -27,3 +27,28 @@ export const processAttachments = async (attachments, uploadSingleFile) => {
 
   return processedAttachments;
 };
+
+/**
+ * Clean up task data by removing empty string values for ObjectId fields
+ * @param {Object} taskData - The task data to clean
+ * @returns {Object} - Cleaned task data
+ */
+export const cleanTaskData = (taskData) => {
+  const cleanedData = { ...taskData };
+
+  // Remove empty string values for ObjectId fields
+  const objectIdFields = [
+    "taskFlow",
+    "extraTaskWorkType",
+    "maxRecurrences",
+    "recurringEndDate",
+  ];
+
+  objectIdFields.forEach((field) => {
+    if (cleanedData[field] === "") {
+      delete cleanedData[field];
+    }
+  });
+
+  return cleanedData;
+};

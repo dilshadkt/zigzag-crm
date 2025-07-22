@@ -20,7 +20,7 @@ import { setActiveProject } from "../../store/slice/projectSlice";
 import FilterMenu from "../../components/projects/FilterMenu";
 import NoTask from "../../components/projects/noTask";
 import ProjectsShimmer from "../../components/projects/ProjectsShimmer";
-import { processAttachments } from "../../lib/attachmentUtils";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
 
 const Prjects = () => {
@@ -81,7 +81,7 @@ const Prjects = () => {
   };
 
   const handleAddTask = async (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = cleanTaskData(values);
     updatedValues.creator = user?._id;
 
     // Process attachments

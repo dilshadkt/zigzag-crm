@@ -12,7 +12,7 @@ import {
   useProjectTasks,
 } from "../../api/hooks";
 import { Outlet, useParams, useOutletContext } from "react-router-dom";
-import { processAttachments } from "../../lib/attachmentUtils";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
 import { useAuth } from "../../hooks/useAuth";
 import MonthSelector from "../../components/shared/MonthSelector";
@@ -51,7 +51,7 @@ const ProjectDetailLayout = () => {
 
   const handleSubmit = async (values, { resetForm }) => {
     try {
-      const updatedValues = { ...values };
+      const updatedValues = cleanTaskData(values);
 
       // Handle assignee field mapping
       if (updatedValues.assignedTo) {
