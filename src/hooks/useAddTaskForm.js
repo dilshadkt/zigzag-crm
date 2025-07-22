@@ -6,6 +6,7 @@ import { uploadSingleFile } from "../api/service";
 export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
     title: defaultValue?.title || "",
+    project: defaultValue?.project || null,
     taskGroup: defaultValue?.taskGroup || "",
     taskFlow: defaultValue?.taskFlow || "",
     extraTaskWorkType: defaultValue?.extraTaskWorkType || "",
@@ -30,9 +31,18 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
 
   const validationSchema = Yup.object().shape({
     title: Yup.string().required("Name is required"),
-    taskGroup: Yup.string().required("Task group is required"),
-    extraTaskWorkType: Yup.string().when("taskGroup", {
-      is: "extraTask",
+    project: Yup.string().nullable(),
+    taskGroup: Yup.string().when("project", {
+      is: (project) => project && project !== "" && project !== "other",
+      then: (schema) => schema.required("Task group is required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+    extraTaskWorkType: Yup.string().when(["taskGroup", "project"], {
+      is: (taskGroup, project) =>
+        taskGroup === "extraTask" &&
+        project &&
+        project !== "" &&
+        project !== "other",
       then: (schema) => schema.required("Extra task work type is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
@@ -56,10 +66,20 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     maxRecurrences: Yup.number().min(1, "Must be at least 1 recurrence"),
   });
 
+  const handleSubmit = (values, formikBag) => {
+    // Convert empty string project to null before submitting
+    const processedValues = {
+      ...values,
+      project: values.project === "" ? null : values.project,
+    };
+
+    onSubmit(processedValues, formikBag);
+  };
+
   const formik = useFormik({
     initialValues,
     validationSchema,
-    onSubmit,
+    onSubmit: handleSubmit,
     enableReinitialize: true,
     validateOnMount: false,
     validateOnChange: true,

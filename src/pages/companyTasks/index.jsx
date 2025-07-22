@@ -95,6 +95,9 @@ const CompanyTasks = ({ filter: propFilter }) => {
         case "completed":
           filtered = filtered.filter((task) => task.status === "completed");
           break;
+        case "approved":
+          filtered = filtered.filter((task) => task.status === "approved");
+          break;
         case "today":
           filtered = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
@@ -257,6 +260,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "Pending Tasks";
       case "completed":
         return "Completed Tasks";
+      case "approved":
+        return "Approved Tasks";
       case "today":
         return "Today's Tasks";
       default:
@@ -274,6 +279,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return FiPause;
       case "completed":
         return FiCheckCircle;
+      case "approved":
+        return FiCheckCircle;
       default:
         return FiFlag;
     }
@@ -289,6 +296,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-orange-600";
       case "completed":
         return "text-green-600";
+      case "approved":
+        return "text-teal-600";
       default:
         return "text-gray-600";
     }
@@ -320,6 +329,12 @@ const CompanyTasks = ({ filter: propFilter }) => {
           title: "No completed tasks yet",
           message: "Complete some tasks to see them here.",
         };
+      case "approved":
+        return {
+          emoji: "✅",
+          title: "No approved tasks yet",
+          message: "Tasks that have been approved will appear here.",
+        };
       default:
         return {
           emoji: "📋",
@@ -350,6 +365,10 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-blue-600 bg-blue-50 border-blue-200";
       case "completed":
         return "text-green-600 bg-green-50 border-green-200";
+      case "approved":
+        return "text-teal-600 bg-teal-50 border-teal-200";
+      case "on-review":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }

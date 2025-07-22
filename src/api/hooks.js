@@ -197,6 +197,23 @@ export const useEmpoyees = (page = 1, filters = null) => {
     keepPreviousData: true,
   });
 };
+
+// Hook to get all employees (for tasks without projects)
+export const useGetAllEmployees = (enabled = true) => {
+  return useQuery({
+    queryKey: ["allEmployees"],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "1000", // Large limit to get all employees
+      });
+
+      const response = await apiClient.get(`/employee?${params.toString()}`);
+      return response.data;
+    },
+    enabled,
+  });
+};
 // task
 
 export const useCreateTask = (handleClose, projectId) => {
@@ -957,6 +974,8 @@ export const useGetCompanyStats = (companyId) => {
           completed: 0,
           inProgress: 0,
           pending: 0,
+          onReview: 0,
+          approved: 0,
           overdue: 0,
           completionRate: 0,
           priorityDistribution: { high: 0, medium: 0, low: 0 },
@@ -995,6 +1014,8 @@ export const useGetCompanyStats = (companyId) => {
             completed: taskStats.completed,
             inProgress: taskStats.inProgress,
             pending: taskStats.pending,
+            onReview: taskStats.onReview,
+            approved: taskStats.approved,
             overdue: taskStats.overdue,
             completionRate: taskStats.completionRate,
           },
@@ -1022,6 +1043,8 @@ export const useGetCompanyStats = (companyId) => {
             completed: 0,
             inProgress: 0,
             pending: 0,
+            onReview: 0,
+            approved: 0,
             overdue: 0,
             completionRate: 0,
           },

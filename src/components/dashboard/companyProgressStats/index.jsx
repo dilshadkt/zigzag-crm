@@ -49,6 +49,9 @@ const CompanyProgressStats = () => {
       case "in-progress":
         navigate("/company-tasks?filter=in-progress");
         break;
+      case "approved":
+        navigate("/company-tasks?filter=approved");
+        break;
       case "employees":
         navigate("/employees");
         break;
@@ -62,8 +65,8 @@ const CompanyProgressStats = () => {
       <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-8 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
             ))}
           </div>
@@ -112,6 +115,26 @@ const CompanyProgressStats = () => {
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
       onClick: () => handleStatsClick("in-progress"),
+    },
+    {
+      title: "On Review",
+      value: companyStats?.tasks?.onReview || 0,
+      subtitle: "Awaiting approval",
+      icon: FiBarChart2,
+      color: "bg-yellow-500",
+      bgColor: "bg-yellow-50",
+      textColor: "text-yellow-600",
+      onClick: () => navigate("/task-on-review"),
+    },
+    {
+      title: "Approved Tasks",
+      value: companyStats?.tasks?.approved || 0,
+      subtitle: "Ready to proceed",
+      icon: FiCheckCircle,
+      color: "bg-teal-500",
+      bgColor: "bg-teal-50",
+      textColor: "text-teal-600",
+      onClick: () => navigate("/company-tasks?filter=approved"),
     },
     {
       title: "Overdue Tasks",
@@ -174,7 +197,7 @@ const CompanyProgressStats = () => {
       </div>
 
       {/* Company Statistics Grid */}
-      <div className="grid grid-cols-6 gap-4 flex-1">
+      <div className="grid grid-cols-8 gap-4 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (

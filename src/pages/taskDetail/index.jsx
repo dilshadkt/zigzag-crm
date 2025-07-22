@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useGetTaskById, useUpdateTaskById } from "../../api/hooks";
+import {
+  useGetTaskById,
+  useUpdateTaskById,
+  useGetAllEmployees,
+  useCompanyProjects,
+} from "../../api/hooks";
+import { useAuth } from "../../hooks/useAuth";
 import { uploadSingleFile } from "../../api/service";
 import AddTask from "../../components/projects/addTask";
 import TaskDetails from "../../components/projects/taskDetails";
@@ -9,9 +15,24 @@ import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 
 const TaskDetailPage = () => {
   const { taskId } = useParams();
+  const { user } = useAuth();
   const [showModalTask, setShowModalTask] = useState(false);
   const { data: taskDetails, isLoading } = useGetTaskById(taskId);
   const { mutate } = useUpdateTaskById(taskId, () => setShowModalTask(false));
+
+  // Check if task has a project
+  const hasProject = !!taskDetails?.project;
+
+  // Fetch all employees if task doesn't have a project
+  const { data: allEmployeesData } = useGetAllEmployees(!hasProject);
+
+  // Fetch all projects for project selection
+  const { data: projectsData } = useCompanyProjects(user?.company);
+
+  // Get teams based on whether task has a project or not
+  const teams = hasProject
+    ? taskDetails?.teams
+    : allEmployeesData?.employees || [];
 
   const handleTaskEdit = async (values, { setSubmitting }) => {
     try {
@@ -56,11 +77,11 @@ const TaskDetailPage = () => {
         onSubmit={handleTaskEdit}
         isLoading={isLoading}
         setShowModalTask={setShowModalTask}
-        selectedProject={taskDetails?.project?._id}
-        teams={taskDetails?.teams}
+        teams={teams}
         initialValues={taskDetails}
         selectedMonth={taskDetails?.taskMonth}
-        showProjectSelection={false}
+        showProjectSelection={!hasProject} // Enable project selection for tasks without projects
+        projects={projectsData || []}
       />
     </section>
   );

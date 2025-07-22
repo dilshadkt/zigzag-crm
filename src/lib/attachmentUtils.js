@@ -50,5 +50,10 @@ export const cleanTaskData = (taskData) => {
     }
   });
 
+  // Handle project field - convert empty string to null
+  if (cleanedData.project === "") {
+    cleanedData.project = null;
+  }
+
   return cleanedData;
 };

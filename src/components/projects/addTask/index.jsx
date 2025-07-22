@@ -10,7 +10,7 @@ import {
   useCreateTask,
   useGetTaskFlows,
   useProjectDetails,
-  useEmpoyees,
+  useGetAllEmployees,
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
@@ -46,6 +46,7 @@ const AddTask = ({
 
     return {
       title: initialValues.title || "",
+      project: initialValues.project?._id || initialValues.project || null,
       taskGroup: initialValues.taskGroup || "",
       taskFlow: initialValues.taskFlow || "",
       extraTaskWorkType: initialValues.extraTaskWorkType || "",
@@ -80,24 +81,23 @@ const AddTask = ({
 
   // Track selected project separately to avoid hook dependency issues
   const [selectedProjectId, setSelectedProjectId] = useState(
-    initialValues?.project._id || ""
+    initialValues?.project?._id || initialValues?.project || ""
   );
   // Fetch project details when a project is selected
   const { data: selectedProjectData } = useProjectDetails(
-    initialValues?.project._id || null,
+    initialValues?.project?._id || null,
     {
       enabled: !!selectedProjectId && selectedProjectId !== "",
     }
   );
 
-  // Fetch all employees when "Other" project is selected (for board view)
-  const { data: allEmployeesData, isLoading: isLoadingEmployees } = useEmpoyees(
-    1,
-    null,
-    {
-      enabled: selectedProjectId === "other",
-    }
-  );
+  // Fetch all employees when "Other" project is selected or no project is selected (for board view and tasks without projects)
+  const { data: allEmployeesData, isLoading: isLoadingEmployees } =
+    useGetAllEmployees(
+      selectedProjectId === "other" ||
+        selectedProjectId === "" ||
+        selectedProjectId === null
+    );
 
   // Set default taskMonth if not provided
   useEffect(() => {
@@ -142,7 +142,9 @@ const AddTask = ({
   useEffect(() => {
     if (isOpen && isEdit && initialValues) {
       // Set project ID for editing
-      setSelectedProjectId(initialValues.project || "");
+      setSelectedProjectId(
+        initialValues.project?._id || initialValues.project || ""
+      );
 
       // Ensure all fields are properly set
       const preparedValues = prepareInitialValues();
@@ -300,8 +302,13 @@ const AddTask = ({
           value: user._id,
         })) || []
       );
-    } else if (selectedProjectId === "other" && allEmployeesData?.employees) {
-      // Use all company employees when "Other" is selected
+    } else if (
+      (selectedProjectId === "other" ||
+        selectedProjectId === "" ||
+        selectedProjectId === null) &&
+      allEmployeesData?.employees
+    ) {
+      // Use all company employees when "Other" is selected or no project is selected
       return (
         allEmployeesData.employees?.map((user) => ({
           label: `${user.name} (${user.position})`,
@@ -319,13 +326,15 @@ const AddTask = ({
     }
   };
 
-  console.log(values);
+  console.log(errors);
   const taskGroupOptions = getTaskGroupOptions();
   const taskFlowOptions = getTaskFlowOptions();
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
 
-  // Check if "Other" project is selected
+  // Check if "Other" project is selected or no project is selected
   const isOtherProjectSelected = selectedProjectId === "other";
+  const isNoProjectSelected =
+    selectedProjectId === "" || selectedProjectId === null;
 
   const isTaskGroupSelected =
     values.taskGroup && values.taskGroup !== "Select task group";
@@ -336,11 +345,12 @@ const AddTask = ({
     : true;
   const isFormEnabled =
     isOtherProjectSelected ||
+    isNoProjectSelected ||
     (isTaskGroupSelected && isExtraTaskWorkTypeSelected);
 
   // Add project select options
   const projectOptions = [
-    { label: "No Project", value: "" },
+    { label: "No Project", value: null },
     ...projects.map((p) => ({ label: p.name, value: p._id })),
     { label: "Other", value: "other" },
   ];
@@ -469,8 +479,33 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 </div>
               )}
 
-              {/* All employees indicator for "Other" project */}
-              {isOtherProjectSelected && (
+              {/* No project indicator */}
+              {isNoProjectSelected && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-800">
+                      Creating board task - task group and flow fields are
+                      hidden
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* All employees indicator for "Other" project or no project */}
+              {(isOtherProjectSelected || isNoProjectSelected) && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <svg
@@ -509,8 +544,8 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={selectedMonth || ""}
                 />
 
-                {/* Only show task group and task flow if not "Other" project */}
-                {!isOtherProjectSelected && (
+                {/* Only show task group and task flow if not "Other" project and not "no project" */}
+                {!isOtherProjectSelected && !isNoProjectSelected && (
                   <>
                     <Select
                       errors={errors}
@@ -522,7 +557,6 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       title="Task Group"
                       options={taskGroupOptions}
                       defaultValue="Select task group"
-                      required
                       disabled={isEdit}
                     />
 
@@ -611,7 +645,6 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                         title="Extra Task Work Type"
                         options={extraTaskWorkTypeOptions}
                         defaultValue="Select work type"
-                        required
                       />
                     )}
                   </>
@@ -666,13 +699,17 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={values?.assignedTo || []}
                   options={getAssigneeOptions()}
                   placeholder={
-                    isOtherProjectSelected && isLoadingEmployees
+                    (isOtherProjectSelected || isNoProjectSelected) &&
+                    isLoadingEmployees
                       ? "Loading employees..."
                       : "Select Assignees"
                   }
                   disabled={
-                    (!isFormEnabled && !isOtherProjectSelected) ||
-                    (isOtherProjectSelected && isLoadingEmployees)
+                    (!isFormEnabled &&
+                      !isOtherProjectSelected &&
+                      !isNoProjectSelected) ||
+                    ((isOtherProjectSelected || isNoProjectSelected) &&
+                      isLoadingEmployees)
                   }
                 />
 
