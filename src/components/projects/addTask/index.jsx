@@ -480,7 +480,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               )}
 
               {/* No project indicator */}
-              {isNoProjectSelected && (
+              {/* {isNoProjectSelected && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <svg
@@ -502,10 +502,10 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     </span>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* All employees indicator for "Other" project or no project */}
-              {(isOtherProjectSelected || isNoProjectSelected) && (
+              {/* {(isOtherProjectSelected || isNoProjectSelected) && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <svg
@@ -530,7 +530,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     </span>
                   </div>
                 </div>
-              )}
+              )} */}
 
               <form
                 action=" "
@@ -544,8 +544,11 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   value={selectedMonth || ""}
                 />
 
-                {/* Only show task group and task flow if not "Other" project and not "no project" */}
-                {!isOtherProjectSelected && !isNoProjectSelected && (
+                {/* Show task group and task flow if:
+                    1. Not "Other" project AND not "no project" 
+                    2. OR we're in project context (showProjectSelection is false) */}
+                {((!isOtherProjectSelected && !isNoProjectSelected) ||
+                  !showProjectSelection) && (
                   <>
                     <Select
                       errors={errors}
