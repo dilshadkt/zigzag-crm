@@ -43,7 +43,6 @@ const TaskOnReview = () => {
     sortBy: "dueDate",
     sortOrder: "asc",
   });
-
   const [filteredTasks, setFilteredTasks] = useState([]);
 
   // Auto-refresh when component mounts
@@ -328,13 +327,13 @@ const TaskOnReview = () => {
   const getFilterTitle = () => {
     switch (filter) {
       case "overdue":
-        return "Overdue Tasks on Review";
+        return "Overdue Tasks & Subtasks on Review";
       case "today":
-        return "Today's Tasks on Review";
+        return "Today's Tasks & Subtasks on Review";
       case "this-week":
-        return "This Week's Tasks on Review";
+        return "This Week's Tasks & Subtasks on Review";
       default:
-        return "Tasks on Review";
+        return "Tasks & Subtasks on Review";
     }
   };
 
@@ -365,13 +364,16 @@ const TaskOnReview = () => {
   };
 
   const getEmptyStateMessage = () => {
-    if (isLoading) return "Loading tasks...";
+    if (isLoading) return "Loading tasks and subtasks...";
 
     if (filteredTasks.length === 0) {
       if (filter) {
-        return `No tasks on review found for ${filter.replace("-", " ")}`;
+        return `No tasks or subtasks on review found for ${filter.replace(
+          "-",
+          " "
+        )}`;
       }
-      return "No tasks are currently in review status";
+      return "No tasks or subtasks are currently in review status";
     }
 
     return "";
@@ -407,10 +409,20 @@ const TaskOnReview = () => {
   };
 
   const handleTaskClick = (task) => {
-    if (task.project?._id) {
-      navigate(`/projects/${task.project._id}/${task._id}`);
+    if (task.type === "subtask") {
+      // For subtasks, navigate to the parent task detail page
+      if (task.parentTask?._id) {
+        navigate(`/tasks/${task.parentTask._id}?subtask=${task._id}`);
+      } else if (task.project?._id) {
+        navigate(`/projects/${task.project._id}?subtask=${task._id}`);
+      }
     } else {
-      navigate(`/tasks/${task._id}`);
+      // For regular tasks
+      if (task.project?._id) {
+        navigate(`/projects/${task.project._id}/${task._id}`);
+      } else {
+        navigate(`/tasks/${task._id}`);
+      }
     }
   };
 
@@ -444,8 +456,13 @@ const TaskOnReview = () => {
                     {getFilterTitle()}
                   </h1>
                   <p className="text-gray-500">
-                    {filteredTasks.length} task
+                    {filteredTasks.length} item
                     {filteredTasks.length !== 1 ? "s" : ""} on review
+                    {tasksOnReviewData?.statistics && (
+                      <span className="ml-2 text-sm">
+                        ({tasksOnReviewData.statistics.total} total)
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -474,7 +491,7 @@ const TaskOnReview = () => {
                     refetch();
                   }}
                   className="p-2 bg-white hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
-                  title="Refresh tasks"
+                  title="Refresh tasks and subtasks"
                 >
                   <img
                     src="/icons/refresh.svg"
@@ -634,7 +651,7 @@ const TaskOnReview = () => {
                     <FiEye className="w-8 h-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No tasks on review
+                    No tasks or subtasks on review
                   </h3>
                   <p className="text-gray-500">{getEmptyStateMessage()}</p>
                 </div>
@@ -660,6 +677,15 @@ const TaskOnReview = () => {
                           </span>
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
                             In Review
+                          </span>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              task.type === "subtask"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {task.type === "subtask" ? "Subtask" : "Task"}
                           </span>
                         </div>
 
@@ -689,6 +715,13 @@ const TaskOnReview = () => {
                             <div className="flex items-center gap-1">
                               <FiFlag className="w-4 h-4" />
                               <span>Project: {task.project.name}</span>
+                            </div>
+                          )}
+
+                          {task.type === "subtask" && task.parentTask && (
+                            <div className="flex items-center gap-1">
+                              <FiArrowLeft className="w-4 h-4" />
+                              <span>Parent: {task.parentTask.title}</span>
                             </div>
                           )}
 
