@@ -30,7 +30,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
   // Get all company tasks and filter based on URL parameter
   const { data: allTasksData, isLoading } = useGetAllCompanyTasks(companyId);
   const [filteredTasks, setFilteredTasks] = useState([]);
-
+  console.log(allTasksData);
   // Super filter states
   const [showFilters, setShowFilters] = useState(false);
   const [superFilters, setSuperFilters] = useState({
@@ -391,11 +391,14 @@ const CompanyTasks = ({ filter: propFilter }) => {
   };
 
   const handleTaskClick = (task) => {
+    // If task has a parentTask, use the parent task's ID for navigation
+    const taskIdToUse = task.parentTask ? task.parentTask._id : task._id;
+
     if (task.project) {
-      navigate(`/projects/${task.project._id}/${task._id}`);
+      navigate(`/projects/${task.project._id}/${taskIdToUse}`);
     } else {
       // For tasks without project, navigate to task details directly
-      navigate(`/tasks/${task._id}`);
+      navigate(`/tasks/${taskIdToUse}`);
     }
   };
 

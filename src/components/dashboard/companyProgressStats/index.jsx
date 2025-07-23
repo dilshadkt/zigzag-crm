@@ -22,7 +22,6 @@ const CompanyProgressStats = () => {
     refetch,
   } = useGetCompanyStats(companyId);
   const navigate = useNavigate();
-
   // Refetch data when component mounts and when window gains focus
   React.useEffect(() => {
     const handleFocus = () => {

@@ -1085,8 +1085,9 @@ export const useGetAllCompanyTasks = (companyId) => {
     queryKey: ["allCompanyTasks", companyId],
     queryFn: () =>
       apiClient.get("/tasks/company/all").then((res) => {
+        console.log(res.data, "res.data");
         return {
-          tasks: res.data.tasks || [],
+          tasks: [...res.data.tasks, ...res.data.subTasks] || [],
           statistics: res.data.statistics || {},
           totalCount: res.data.tasks?.length || 0,
         };
