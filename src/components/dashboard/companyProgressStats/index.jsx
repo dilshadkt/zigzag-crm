@@ -12,7 +12,6 @@ import {
   FiAlertCircle,
   FiBarChart2,
 } from "react-icons/fi";
-import CompanyTasks from "../../../pages/companyTasks";
 
 const CompanyProgressStats = () => {
   const { companyId } = useAuth();
@@ -22,6 +21,7 @@ const CompanyProgressStats = () => {
     refetch,
   } = useGetCompanyStats(companyId);
   const navigate = useNavigate();
+
   // Refetch data when component mounts and when window gains focus
   React.useEffect(() => {
     const handleFocus = () => {

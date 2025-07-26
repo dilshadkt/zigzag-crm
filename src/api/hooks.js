@@ -967,7 +967,6 @@ export const useGetCompanyStats = (companyId) => {
               .then((res) => res.data),
             apiClient.get("/employee").then((res) => res.data),
           ]);
-        console.log(companyTasks, "companyTasks");
         // Get task statistics from the new endpoint
         const taskStats = companyTasks?.statistics || {
           total: 0,
@@ -977,6 +976,7 @@ export const useGetCompanyStats = (companyId) => {
           onReview: 0,
           approved: 0,
           overdue: 0,
+          today: 0,
           completionRate: 0,
           priorityDistribution: { high: 0, medium: 0, low: 0 },
         };
@@ -1017,6 +1017,7 @@ export const useGetCompanyStats = (companyId) => {
             onReview: taskStats.onReview,
             approved: taskStats.approved,
             overdue: taskStats.overdue,
+            today: taskStats.today,
             completionRate: taskStats.completionRate,
           },
           projects: {

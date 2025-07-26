@@ -30,7 +30,6 @@ const CompanyTasks = ({ filter: propFilter }) => {
   // Get all company tasks and filter based on URL parameter
   const { data: allTasksData, isLoading } = useGetAllCompanyTasks(companyId);
   const [filteredTasks, setFilteredTasks] = useState([]);
-  console.log(allTasksData);
   // Super filter states
   const [showFilters, setShowFilters] = useState(false);
   const [superFilters, setSuperFilters] = useState({
