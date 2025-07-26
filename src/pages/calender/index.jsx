@@ -285,7 +285,7 @@ const Calendar = () => {
     return (
       <div
         onClick={() => {
-          navigate(`/projects/${task.project?.name}/${task?._id}`);
+          navigate(`/projects/${task.project?._id}/${task?._id}`);
         }}
         key={`task-${idx}`}
         className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${
@@ -446,7 +446,6 @@ const Calendar = () => {
 
   return (
     <section className="flex flex-col h-full ">
-     
       <div
         className="w-full h-full flex flex-col  overflow-hidden bg-white
        rounded-3xl "
