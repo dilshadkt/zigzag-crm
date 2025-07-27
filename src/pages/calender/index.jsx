@@ -98,10 +98,10 @@ const Calendar = () => {
     useGetProjectsDueThisMonth(currentDate);
   const { data: tasksData, isLoading: tasksLoading } =
     useGetTasksDueThisMonth(currentDate);
+  console.log(tasksData);
   const { data: birthdaysData, isLoading: birthdaysLoading } =
     useGetEmployeeBirthdays(currentDate);
   const navigate = useNavigate();
-
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const firstDay = startOfMonth(currentDate);
@@ -183,6 +183,22 @@ const Calendar = () => {
     return text.length > maxLength
       ? `${text.substring(0, maxLength)}...`
       : text;
+  };
+
+  // Handle task navigation based on parent task logic
+  const handleTaskNavigation = (task) => {
+    let projectId;
+    let taskId;
+
+    if (task.parentTask) {
+      projectId = task.project;
+      taskId = task.parentTask._id;
+    } else {
+      projectId = task.project?._id;
+      taskId = task._id;
+    }
+
+    navigate(`/projects/${projectId}/${taskId}`);
   };
 
   // Open modal with events for selected day
@@ -284,9 +300,7 @@ const Calendar = () => {
 
     return (
       <div
-        onClick={() => {
-          navigate(`/projects/${task.project?._id}/${task?._id}`);
-        }}
+        onClick={() => handleTaskNavigation(task)}
         key={`task-${idx}`}
         className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${
           colorStyle.border
