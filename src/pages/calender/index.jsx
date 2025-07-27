@@ -14,6 +14,8 @@ import {
 import { IoArrowUpOutline } from "react-icons/io5";
 import { FaGift } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import { FaFilter } from "react-icons/fa";
+import { MdTask, MdFolder } from "react-icons/md";
 import {
   useGetProjectsDueThisMonth,
   useGetTasksDueThisMonth,
@@ -94,6 +96,12 @@ const Calendar = () => {
   const isEmployee = user?.role === "employee";
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState(null);
+  // Filter state for showing/hiding different event types
+  const [eventFilters, setEventFilters] = useState({
+    tasks: true,
+    projects: true,
+    birthdays: true,
+  });
   const { data: projectsData, isLoading: projectsLoading } =
     useGetProjectsDueThisMonth(currentDate);
   const { data: tasksData, isLoading: tasksLoading } =
@@ -136,25 +144,28 @@ const Calendar = () => {
   const getItemsForDate = (date) => {
     if (!date) return { projects: [], tasks: [], birthdays: [] };
 
-    const projects = projectsData?.projects
-      ? projectsData.projects.filter((project) =>
-          isSameDay(new Date(project.endDate), date)
-        )
-      : [];
+    const projects =
+      eventFilters.projects && projectsData?.projects
+        ? projectsData.projects.filter((project) =>
+            isSameDay(new Date(project.endDate), date)
+          )
+        : [];
 
-    const tasks = tasksData?.tasks
-      ? tasksData.tasks.filter((task) =>
-          isSameDay(new Date(task.dueDate), date)
-        )
-      : [];
+    const tasks =
+      eventFilters.tasks && tasksData?.tasks
+        ? tasksData.tasks.filter((task) =>
+            isSameDay(new Date(task.dueDate), date)
+          )
+        : [];
 
     // Get employee birthdays for this date
-    const birthdays = birthdaysData?.birthdays
-      ? birthdaysData.birthdays.filter((birthday) => {
-          const dobDate = new Date(birthday.dob);
-          return dobDate.getDate() === date.getDate();
-        })
-      : [];
+    const birthdays =
+      eventFilters.birthdays && birthdaysData?.birthdays
+        ? birthdaysData.birthdays.filter((birthday) => {
+            const dobDate = new Date(birthday.dob);
+            return dobDate.getDate() === date.getDate();
+          })
+        : [];
 
     return { projects, tasks, birthdays };
   };
@@ -199,6 +210,14 @@ const Calendar = () => {
     }
 
     navigate(`/projects/${projectId}/${taskId}`);
+  };
+
+  // Toggle event filter
+  const toggleEventFilter = (filterType) => {
+    setEventFilters((prev) => ({
+      ...prev,
+      [filterType]: !prev[filterType],
+    }));
   };
 
   // Open modal with events for selected day
@@ -483,6 +502,53 @@ const Calendar = () => {
               disabled={isLoading}
             >
               <IoArrowUpOutline className="rotate-90 text-xl text-[#3F8CFF]" />
+            </button>
+          </div>
+
+          {/* Event Type Filters */}
+          <div className="flex items-center gap-2 ml-auto mr-4">
+            <span className="text-xs text-gray-500 font-medium">Show:</span>
+
+            {/* Tasks Filter */}
+            <button
+              onClick={() => toggleEventFilter("tasks")}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                eventFilters.tasks
+                  ? "bg-blue-100 text-blue-700 border border-blue-200"
+                  : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+              }`}
+              title="Toggle Tasks"
+            >
+              <MdTask className="text-sm" />
+              Tasks
+            </button>
+
+            {/* Projects Filter */}
+            <button
+              onClick={() => toggleEventFilter("projects")}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                eventFilters.projects
+                  ? "bg-amber-100 text-amber-700 border border-amber-200"
+                  : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+              }`}
+              title="Toggle Projects"
+            >
+              <MdFolder className="text-sm" />
+              Projects
+            </button>
+
+            {/* Birthdays Filter */}
+            <button
+              onClick={() => toggleEventFilter("birthdays")}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                eventFilters.birthdays
+                  ? "bg-purple-100 text-purple-700 border border-purple-200"
+                  : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+              }`}
+              title="Toggle Birthdays"
+            >
+              <FaGift className="text-sm" />
+              Events
             </button>
           </div>
         </div>
