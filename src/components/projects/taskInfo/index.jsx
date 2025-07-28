@@ -46,8 +46,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
     );
   };
 
-  console.log(taskDetails?.assignedTo)
-
   const handleDeleteTask = () => {
     deleteTask.mutate(taskDetails._id, {
       onSuccess: () => {
@@ -105,11 +103,21 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
                     title={`${user?.firstName} ${user?.lastName || ""}`}
                     style={{ zIndex: taskDetails.assignedTo.length - index }}
                   >
-                    <img
-                      src={user?.profileImage}
-                      alt={user?.firstName}
-                      className="w-full h-full object-cover"
-                    />
+                    {!user?.profileImage ? (
+                      <span
+                        className="w-full h-full flexCenter text-[10px] 
+                        bg-black uppercase
+                      text-white font-semibold rounded-full"
+                      >
+                        {user?.firstName?.slice(0, 1)}
+                      </span>
+                    ) : (
+                      <img
+                        src={user?.profileImage}
+                        alt={user?.firstName}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
                 ))}
                 {taskDetails.assignedTo.length > 4 && (

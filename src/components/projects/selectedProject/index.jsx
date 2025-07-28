@@ -89,7 +89,7 @@ rounded-3xl  flex flex-col  p-4"
                   <div
                     key={team?._id}
                     className="w-6 h-6 group cursor-pointer relative  rounded-full hover:scale-150
-                    transition-all duration-300  flexCenter border border-white"
+                    transition-all duration-300  bg-black text-white flexCenter border border-white"
                     style={{
                       marginLeft: index > 0 ? "-8px" : "0",
                     }}
@@ -102,11 +102,15 @@ rounded-3xl  flex flex-col  p-4"
                     >
                       {team?.firstName}
                     </div>
-                    <img
-                      src={team?.profileImage}
-                      alt={team?.firstName}
-                      className="w-full h-full rounded-full object-cover"
-                    />
+                    {team?.profileImage ? (
+                      <img
+                        src={team?.profileImage}
+                        alt={team?.firstName}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      team?.firstName?.slice(0, 1)
+                    )}
                   </div>
                 ))}
               </div>
