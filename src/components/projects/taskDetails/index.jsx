@@ -251,14 +251,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                 </p>
               </div>
             )}
-            {taskDetails?.copyOfDescription && (
+            {taskDetails?.description && (
               <div className="mt-4">
                 <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                   Copy of Description
                 </h5>
-                <p className="text-gray-600">
-                  {taskDetails?.copyOfDescription}
-                </p>
+                <p className="text-gray-600">{taskDetails?.description}</p>
               </div>
             )}
 
