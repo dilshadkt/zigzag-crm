@@ -484,8 +484,8 @@ const Calendar = () => {
        rounded-3xl "
       >
         {/* Calendar Header */}
-        <div className="min-h-[48px] relative flexCenter border-b border-[#E6EBF5]">
-          <div className="flexCenter ml-5 gap-x-8">
+        <div className="min-h-[48px] relative flexEnd border-b border-[#E6EBF5]">
+          <div className="flexCenter absolute mx-auto inset-0 ml-5 gap-x-8">
             <button
               onClick={handlePrevMonth}
               className="h-8 w-8 rounded-full cursor-pointer hover:bg-gray-100 flexCenter transition-all duration-200"

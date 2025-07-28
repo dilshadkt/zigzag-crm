@@ -58,10 +58,17 @@ const StickyNote = ({
   };
 
   // Use the color from props if available, otherwise use a default
-  const noteColor =
-    color && backgroundColors[color]
-      ? backgroundColors[color]
-      : backgroundColors.yellow; // default color
+  const noteColor = (() => {
+    if (!color) return backgroundColors.yellow;
+
+    // If color is already a full class name (e.g., "bg-yellow-50")
+    if (color.startsWith("bg-")) {
+      return color;
+    }
+
+    // If color is a simple name (e.g., "yellow"), map it to full class name
+    return backgroundColors[color] || backgroundColors.yellow;
+  })();
 
   // Close dropdown when clicking outside
   useEffect(() => {

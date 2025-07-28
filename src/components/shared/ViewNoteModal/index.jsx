@@ -23,10 +23,17 @@ const ViewNoteModal = ({ note, isOpen, onClose, onEdit, onDelete }) => {
     orange: "bg-orange-50",
   };
 
-  const noteColor =
-    note.color && backgroundColors[note.color]
-      ? backgroundColors[note.color]
-      : backgroundColors.yellow;
+  const noteColor = (() => {
+    if (!note.color) return backgroundColors.yellow;
+
+    // If color is already a full class name (e.g., "bg-yellow-50")
+    if (note.color.startsWith("bg-")) {
+      return note.color;
+    }
+
+    // If color is a simple name (e.g., "yellow"), map it to full class name
+    return backgroundColors[note.color] || backgroundColors.yellow;
+  })();
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {

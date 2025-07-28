@@ -2,18 +2,45 @@ import React, { useState, useEffect } from "react";
 import { IoArrowUpOutline } from "react-icons/io5";
 
 const NoteForm = ({ note, onSave, onCancel, isLoading = false }) => {
+  // Available color options that match the backend schema
+  const availableColors = [
+    "bg-yellow-50",
+    "bg-pink-50",
+    "bg-blue-50",
+    "bg-green-50",
+    "bg-purple-50",
+    "bg-orange-50",
+  ];
+
+  // Function to get a random color
+  const getRandomColor = () => {
+    const randomIndex = Math.floor(Math.random() * availableColors.length);
+    return availableColors[randomIndex];
+  };
+
   const [formData, setFormData] = useState({
     title: "",
     desc: "",
     priority: "medium",
+    color: getRandomColor(), // Automatically assign random color for new notes
   });
 
   useEffect(() => {
     if (note) {
+      // For editing existing notes, use the existing color or default to yellow
       setFormData({
         title: note.title || "",
         desc: note.desc || "",
         priority: note.priority || "medium",
+        color: note.color || "bg-yellow-50",
+      });
+    } else {
+      // For new notes, assign a new random color
+      setFormData({
+        title: "",
+        desc: "",
+        priority: "medium",
+        color: getRandomColor(),
       });
     }
   }, [note]);
@@ -31,7 +58,13 @@ const NoteForm = ({ note, onSave, onCancel, isLoading = false }) => {
     if (formData.title.trim() && !isLoading) {
       onSave(formData);
       if (!note) {
-        setFormData({ title: "", desc: "", priority: "medium" });
+        // Reset form with a new random color for the next note
+        setFormData({
+          title: "",
+          desc: "",
+          priority: "medium",
+          color: getRandomColor(),
+        });
       }
     }
   };
@@ -84,17 +117,9 @@ const NoteForm = ({ note, onSave, onCancel, isLoading = false }) => {
               key={option.value}
               className={`cursor-pointer rounded-2xl p-3 border-2 transition-all duration-200 flexCenter gap-x-2 ${
                 formData.priority === option.value
-                  ? "border-current bg-opacity-10"
+                  ? "border-blue-400 bg-blue-50"
                   : "border-gray-200 hover:border-gray-300"
-              } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-              style={{
-                color:
-                  formData.priority === option.value ? option.color : "#7D8592",
-                backgroundColor:
-                  formData.priority === option.value
-                    ? `${option.color}15`
-                    : "transparent",
-              }}
+              }`}
             >
               <input
                 type="radio"
@@ -102,11 +127,16 @@ const NoteForm = ({ note, onSave, onCancel, isLoading = false }) => {
                 value={option.value}
                 checked={formData.priority === option.value}
                 onChange={handleChange}
-                disabled={isLoading}
                 className="sr-only"
+                disabled={isLoading}
               />
-              <IoArrowUpOutline className="text-sm" />
-              <span className="text-sm font-medium">{option.label}</span>
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: option.color }}
+              ></div>
+              <span className="text-sm font-medium capitalize">
+                {option.label}
+              </span>
             </label>
           ))}
         </div>
