@@ -35,9 +35,7 @@ apiClient.interceptors.response.use(
       // Clear the token
       // window.location.href = "/auth/signin"; // Redirect to login page
     }
-    return Promise.reject(
-      error.response?.data?.message || "Something went wrong"
-    );
+    return Promise.reject(error || "Something went wrong");
   }
 );
 

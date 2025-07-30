@@ -241,6 +241,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                 </div>
               </div>
             )}
+            {taskDetails?.task_description && (
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
+                  Task Description
+                </h5>
+                <p className="text-gray-600">{taskDetails?.task_description}</p>
+              </div>
+            )}
             {taskDetails?.copyOfDescription && (
               <div className="mt-4">
                 <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">

@@ -62,7 +62,7 @@ const TaskDetailPage = () => {
   }
 
   return (
-    <section className="col-span-4 overflow-hidden grid grid-cols-4">
+    <section className="col-span-4 h-full grid grid-cols-4">
       <TaskDetails
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}

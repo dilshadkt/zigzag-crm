@@ -46,6 +46,7 @@ const AddTask = ({
 
     return {
       title: initialValues.title || "",
+      task_description: initialValues.task_description || "",
       project: initialValues.project?._id || initialValues.project || null,
       taskGroup: initialValues.taskGroup || "",
       taskFlow: initialValues.taskFlow || "",
@@ -661,6 +662,16 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onchange={handleChange}
                   touched={touched}
                   value={values?.title || ""}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"task_description"}
+                  value={values?.task_description || ""}
+                  title="Task Description"
+                  placeholder="Add task description"
                   disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <div className="grid gap-x-4 grid-cols-2">

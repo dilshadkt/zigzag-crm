@@ -6,6 +6,7 @@ import { uploadSingleFile } from "../api/service";
 export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
     title: defaultValue?.title || "",
+    task_description: defaultValue?.task_description || "",
     project: defaultValue?.project || null,
     taskGroup: defaultValue?.taskGroup || "",
     taskFlow: defaultValue?.taskFlow || "",
@@ -31,6 +32,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
 
   const validationSchema = Yup.object().shape({
     title: Yup.string().required("Name is required"),
+    task_description: Yup.string(),
     project: Yup.string().nullable(),
     taskGroup: Yup.string().when("project", {
       is: (project) => project && project !== "" && project !== "other",

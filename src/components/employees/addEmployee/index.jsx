@@ -54,6 +54,14 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
           <h4 className="text-lg font-medium sticky top-0 bg-white z-30 pb-2">
             Add Employee
           </h4>
+
+          {/* Display general error message */}
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{errors.general}</p>
+            </div>
+          )}
+
           <form
             action=" "
             onSubmit={handleSubmit}
@@ -149,7 +157,7 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
             <div>
               <div className="flexEnd">
                 <PrimaryButton
-                  // loading={isSubmitting}
+                  loading={isSubmitting}
                   type="submit"
                   title="Save Employee"
                   disabled={isSubmitting || positionsLoading}

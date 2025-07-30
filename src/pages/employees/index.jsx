@@ -23,7 +23,10 @@ const Employees = () => {
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
 
-  const handleCreateEmployee = (values, { resetForm, setSubmitting }) => {
+  const handleCreateEmployee = (
+    values,
+    { resetForm, setSubmitting, setErrors }
+  ) => {
     mutate(values, {
       onSuccess: () => {
         queryClient.invalidateQueries(["employees"]);
@@ -31,8 +34,32 @@ const Employees = () => {
         setShowAddEmployee(false);
         setSubmitting(false);
       },
-      onError: () => {
+      onError: (error) => {
         setSubmitting(false);
+
+        // Handle server-side validation errors
+        if (error?.response?.data) {
+          const { message, field, errors } = error.response.data;
+
+          // Handle field-specific errors
+          if (field) {
+            setErrors({ [field]: message });
+          } else if (errors && Array.isArray(errors)) {
+            // Handle multiple validation errors
+            const serverErrors = {};
+            errors.forEach((err) => {
+              serverErrors[err.field] = err.message;
+            });
+            setErrors(serverErrors);
+          } else {
+            // Handle general error message
+            setErrors({ general: message || "Failed to create employee" });
+          }
+        } else {
+          setErrors({
+            general: "Failed to create employee. Please try again.",
+          });
+        }
       },
     });
   };
