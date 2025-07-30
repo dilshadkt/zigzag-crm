@@ -79,7 +79,6 @@ const AddTask = ({
     resetForm,
     setFieldValue,
   } = useAddTaskForm(prepareInitialValues(), onSubmit);
-
   // Track selected project separately to avoid hook dependency issues
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialValues?.project?._id || initialValues?.project || ""
@@ -327,7 +326,6 @@ const AddTask = ({
     }
   };
 
-  console.log(errors);
   const taskGroupOptions = getTaskGroupOptions();
   const taskFlowOptions = getTaskFlowOptions();
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();

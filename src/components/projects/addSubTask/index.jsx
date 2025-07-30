@@ -39,7 +39,6 @@ const AddSubTask = ({
       ? projectId
       : null
   );
-  console.log(socialMediaData);
 
   // Use projectData if available, otherwise use fetched social media data
   const effectiveProjectData = projectData?.socialMedia
