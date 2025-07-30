@@ -5,7 +5,7 @@ import {
 } from "../api/hooks";
 import { isSameDay } from "date-fns";
 
-export const useCalendarData = (currentDate, eventFilters) => {
+export const useCalendarData = (currentDate, eventFilters, assignerFilter) => {
   const { data: projectsData, isLoading: projectsLoading } =
     useGetProjectsDueThisMonth(currentDate);
   const { data: tasksData, isLoading: tasksLoading } =
@@ -26,12 +26,24 @@ export const useCalendarData = (currentDate, eventFilters) => {
           )
         : [];
 
-    // Filter tasks based on subtask filter
+    // Filter tasks based on subtask filter and assigner filter
     let allTasks = [];
     if (tasksData?.tasks) {
       allTasks = tasksData.tasks.filter((task) =>
         isSameDay(new Date(task.dueDate), date)
       );
+
+      // Apply assigner filter if selected
+      if (assignerFilter) {
+        allTasks = allTasks.filter((task) => {
+          if (!task.assignedTo || !Array.isArray(task.assignedTo)) {
+            return false;
+          }
+          return task.assignedTo.some(
+            (assignee) => assignee._id === assignerFilter
+          );
+        });
+      }
     }
 
     // Separate parent tasks and subtasks

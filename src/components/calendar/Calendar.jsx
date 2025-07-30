@@ -24,6 +24,7 @@ const Calendar = () => {
     projects: true,
     birthdays: true,
   });
+  const [assignerFilter, setAssignerFilter] = useState(null);
 
   const { user } = useAuth();
   const isEmployee = user?.role === "employee";
@@ -31,9 +32,10 @@ const Calendar = () => {
   // Custom hook to manage calendar data
   const { calendarData, isLoading } = useCalendarData(
     currentDate,
-    eventFilters
+    eventFilters,
+    assignerFilter
   );
-
+  console.log(calendarData, "calendar data");
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
@@ -67,10 +69,16 @@ const Calendar = () => {
     }));
   };
 
+  // Handle assigner filter change
+  const handleAssignerFilterChange = (assignerId) => {
+    setAssignerFilter(assignerId);
+  };
+
   // Open modal with events for selected day
   const openEventsModal = (date) => {
     const { projects, tasks, subtasks, birthdays } =
       calendarData.getItemsForDate(date);
+
     setSelectedDayData({
       date,
       projects,
@@ -108,6 +116,9 @@ const Calendar = () => {
           <EventFilters
             eventFilters={eventFilters}
             onToggleFilter={toggleEventFilter}
+            assignerFilter={assignerFilter}
+            onAssignerFilterChange={handleAssignerFilterChange}
+            calendarData={calendarData}
           />
         </div>
         {/* Calendar Grid */}

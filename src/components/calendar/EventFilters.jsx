@@ -1,10 +1,144 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaGift } from "react-icons/fa";
-import { MdTask, MdFolder, MdSubdirectoryArrowRight } from "react-icons/md";
+import {
+  MdTask,
+  MdFolder,
+  MdSubdirectoryArrowRight,
+  MdPerson,
+} from "react-icons/md";
+import { IoChevronDown } from "react-icons/io5";
 
-const EventFilters = ({ eventFilters, onToggleFilter }) => {
+const EventFilters = ({
+  eventFilters,
+  onToggleFilter,
+  assignerFilter,
+  onAssignerFilterChange,
+  calendarData,
+}) => {
+  const [isAssignerDropdownOpen, setIsAssignerDropdownOpen] = useState(false);
+  const [assigners, setAssigners] = useState([]);
+  const dropdownRef = useRef(null);
+
+  // Extract unique assigners from tasks data
+  useEffect(() => {
+    if (calendarData?.tasksData?.tasks) {
+      const uniqueAssigners = new Map();
+
+      calendarData.tasksData.tasks.forEach((task) => {
+        if (task.assignedTo && Array.isArray(task.assignedTo)) {
+          task.assignedTo.forEach((assignee) => {
+            if (assignee._id && assignee.name) {
+              uniqueAssigners.set(assignee._id, {
+                id: assignee._id,
+                name: assignee.name,
+                avatar: assignee?.avatar || "",
+              });
+            }
+          });
+        }
+      });
+
+      setAssigners(Array.from(uniqueAssigners.values()));
+    }
+  }, [calendarData?.tasksData?.tasks]);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsAssignerDropdownOpen(false);
+      }
+    };
+
+    if (isAssignerDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAssignerDropdownOpen]);
+
+  const handleAssignerSelect = (assignerId) => {
+    onAssignerFilterChange(assignerId);
+    setIsAssignerDropdownOpen(false);
+  };
+
+  const getSelectedAssignerName = () => {
+    if (!assignerFilter) return "All Assigners";
+    const selectedAssigner = assigners.find((a) => a.id === assignerFilter);
+    return selectedAssigner ? selectedAssigner.name : "All Assigners";
+  };
+
   return (
     <div className="flex items-center gap-2 ml-auto mr-4">
+      {/* Assigner Filter Dropdown */}
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setIsAssignerDropdownOpen(!isAssignerDropdownOpen)}
+          className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+          title="Filter by Assigner"
+        >
+          <MdPerson className="text-sm" />
+          <span className="max-w-32 truncate">{getSelectedAssignerName()}</span>
+          <IoChevronDown
+            className={`text-xs transition-transform duration-200 ${
+              isAssignerDropdownOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {/* Dropdown Menu */}
+        {isAssignerDropdownOpen && (
+          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+            <div className="py-1">
+              {/* All Assigners Option */}
+              <button
+                onClick={() => handleAssignerSelect(null)}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${
+                  !assignerFilter ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                }`}
+              >
+                All Assigners
+              </button>
+
+              {/* Divider */}
+              <div className="border-t border-gray-100 my-1"></div>
+
+              {/* Individual Assigners */}
+              {assigners.map((assigner) => (
+                <button
+                  key={assigner.id}
+                  onClick={() => handleAssignerSelect(assigner.id)}
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${
+                    assignerFilter === assigner.id
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700"
+                  }`}
+                >
+                  {assigner?.avatar === "/api/placeholder/32/32" ? (
+                    <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center">
+                      {assigner?.name?.charAt(0)}
+                    </div>
+                  ) : (
+                    <img
+                      src={assigner?.avatar}
+                      alt={assigner.name}
+                      className="w-5 h-5 rounded-full"
+                    />
+                  )}
+
+                  <span className="truncate">{assigner.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-6 bg-gray-300"></div>
+
       {/* Tasks Filter */}
       <button
         onClick={() => onToggleFilter("tasks")}
