@@ -132,10 +132,10 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
       } priority) - Status: ${statusText} - Project: ${task.project?.name}`}
     >
       <div className="flex items-center justify-between gap-1.5 relative z-10">
-        <div className="flexStart gap-x-2">
+        <div className="flexStart gap-x-1">
           {!showExtraDetails ? (
             <span
-              className={`h-2 w-2 rounded-full ${colorStyle.dot} flex-shrink-0`}
+              className={`h-[6px] w-[6px] rounded-full ${colorStyle.dot} flex-shrink-0`}
             ></span>
           ) : (
             <span
@@ -157,7 +157,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
                   showExtraDetails && `uppercase`
                 } `}
               >
-                {truncateText(task.title)}
+                {truncateText(task.title, 8)}
               </span>
               {showExtraDetails && task?.parentTask && (
                 <span className="text-[10px] text-gray-500 font-medium capitalize bg-gray-200 px-1 rounded-sm flexCenter">
@@ -174,7 +174,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
         </div>
 
         <div className="flex flex-col  items-end">
-          <span className="text-xs italic opacity-75 ml-auto">
+          <span className="text-[10px] italic opacity-75 ml-auto">
             {statusText}
           </span>
           {showExtraDetails && (
@@ -219,12 +219,12 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
       title={`Subtask: ${subtask.title} - Status: ${statusText} - Parent: ${subtask.parentTask?.title} - Project: ${subtask.project?.name}`}
     >
       <div className="flex items-center justify-between gap-1.5 relative z-10">
-        <div className="flexStart gap-x-2">
+        <div className="flexStart gap-x-1">
           {!showExtraDetails ? (
             <div className="flex items-center gap-1">
               {/* <MdSubdirectoryArrowRight className="text-green-600 text-sm" /> */}
               <span
-                className={`h-2 w-2 rounded-full ${colorStyle.dot} flex-shrink-0`}
+                className={`h-[6px] w-[6px] rounded-full ${colorStyle.dot} flex-shrink-0`}
               ></span>
             </div>
           ) : (
@@ -247,7 +247,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
                   showExtraDetails && `uppercase`
                 } `}
               >
-                {truncateText(subtask.title)}
+                {truncateText(subtask.title, 10)}
               </span>
               {showExtraDetails && (
                 <span className="text-[10px] text-green-600 font-medium capitalize bg-green-100 px-1 rounded-sm flexCenter">
@@ -269,7 +269,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
         </div>
 
         <div className="flex flex-col items-end">
-          <span className="text-xs italic opacity-75 ml-auto">
+          <span className="text-[10px] italic opacity-75 ml-auto">
             {statusText}
           </span>
           {showExtraDetails && (

@@ -10,7 +10,6 @@ export const useCalendarData = (currentDate, eventFilters) => {
     useGetProjectsDueThisMonth(currentDate);
   const { data: tasksData, isLoading: tasksLoading } =
     useGetTasksDueThisMonth(currentDate);
-  console.log(tasksData);
   const { data: birthdaysData, isLoading: birthdaysLoading } =
     useGetEmployeeBirthdays(currentDate);
 
