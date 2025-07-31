@@ -19,26 +19,29 @@ import { useEmpoyees } from "../../../api/hooks";
 const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   const [name, setName] = useState(taskFlow?.name || "");
   const [flows, setFlows] = useState(
-    taskFlow?.flows?.length > 0 
-      ? taskFlow.flows.map(flow => ({
+    taskFlow?.flows?.length > 0
+      ? taskFlow.flows.map((flow) => ({
           taskName: flow.taskName || "",
-          assignee: flow.assignee?._id || flow.assignee || ""
+          assignee: flow.assignee?._id || flow.assignee || "",
         }))
       : [{ taskName: "", assignee: "" }]
   );
   const { data: employeesData } = useEmpoyees(1);
   const employees = employeesData?.employees || [];
-  
+
   // Available task types for dropdown
-  const taskTypes = ["content", "design", "publish", "campaign"];
-  
-  console.log('Employees data:', employeesData);
-  console.log('Employees array:', employees);
-  console.log('Company ID:', companyId);
-  console.log('TaskFlow for edit:', taskFlow);
+  const taskTypes = [
+    "content",
+    "design",
+    "publish",
+    "campaign",
+    "motion",
+    "video editing",
+    "video shooting",
+  ];
 
   const createTaskFlow = useCreateTaskFlow(companyId, () => {
-    console.log('Task flow created successfully');
+    console.log("Task flow created successfully");
     // Reset form
     setName("");
     setFlows([{ taskName: "", assignee: "" }]);
@@ -46,16 +49,16 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   });
 
   const updateTaskFlow = useUpdateTaskFlow(companyId, () => {
-    console.log('Task flow updated successfully');
+    console.log("Task flow updated successfully");
     onClose();
   });
 
   // Add error handling
   if (createTaskFlow.error) {
-    console.error('Task flow creation error:', createTaskFlow.error);
+    console.error("Task flow creation error:", createTaskFlow.error);
   }
   if (updateTaskFlow.error) {
-    console.error('Task flow update error:', updateTaskFlow.error);
+    console.error("Task flow update error:", updateTaskFlow.error);
   }
 
   const handleFlowChange = (idx, field, value) => {
@@ -63,30 +66,32 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
       prev.map((f, i) => (i === idx ? { ...f, [field]: value } : f))
     );
   };
-  const addFlow = () => setFlows((prev) => [...prev, { taskName: "", assignee: "" }]);
-  const removeFlow = (idx) => setFlows((prev) => prev.filter((_, i) => i !== idx));
+  const addFlow = () =>
+    setFlows((prev) => [...prev, { taskName: "", assignee: "" }]);
+  const removeFlow = (idx) =>
+    setFlows((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Submit clicked:', { name, flows, companyId, taskFlow });
-    
+    console.log("Submit clicked:", { name, flows, companyId, taskFlow });
+
     if (!name.trim()) {
-      console.log('Name is empty');
+      console.log("Name is empty");
       return;
     }
-    
-    if (flows.some(f => !f.taskName.trim() || !f.assignee)) {
-      console.log('Some flows are incomplete:', flows);
+
+    if (flows.some((f) => !f.taskName.trim() || !f.assignee)) {
+      console.log("Some flows are incomplete:", flows);
       return;
     }
-    
-    console.log('Submitting task flow:', { name, flows });
-    
+
+    console.log("Submitting task flow:", { name, flows });
+
     if (taskFlow) {
       // Update existing task flow
-      updateTaskFlow.mutate({ 
-        taskFlowId: taskFlow._id, 
-        taskFlowData: { name, flows } 
+      updateTaskFlow.mutate({
+        taskFlowId: taskFlow._id,
+        taskFlowData: { name, flows },
       });
     } else {
       // Create new task flow
@@ -98,15 +103,24 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 bg-opacity-30">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
-        <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600" onClick={onClose}>&times;</button>
-        <h2 className="text-lg font-bold mb-4">{taskFlow ? 'Edit Task Flow' : 'Add New Task Flow'}</h2>
+        <button
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+          onClick={onClose}
+        >
+          &times;
+        </button>
+        <h2 className="text-lg font-bold mb-4">
+          {taskFlow ? "Edit Task Flow" : "Add New Task Flow"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium mb-1">Task Flow Name</label>
+            <label className="block text-xs font-medium mb-1">
+              Task Flow Name
+            </label>
             <input
               className="w-full border rounded px-2 py-1 text-sm"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
@@ -118,12 +132,18 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                   <select
                     className="border rounded px-2 py-1 text-xs flex-1"
                     value={flow.taskName}
-                    onChange={e => handleFlowChange(idx, "taskName", e.target.value)}
+                    onChange={(e) =>
+                      handleFlowChange(idx, "taskName", e.target.value)
+                    }
                     required
                   >
                     <option value="">Select Task Type</option>
-                    {taskTypes.map(taskType => (
-                      <option key={taskType} value={taskType} className="text-gray-800 capitalize">
+                    {taskTypes.map((taskType) => (
+                      <option
+                        key={taskType}
+                        value={taskType}
+                        className="text-gray-800 capitalize"
+                      >
                         {taskType}
                       </option>
                     ))}
@@ -131,21 +151,39 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                   <select
                     className="border rounded px-2 py-1 text-xs flex-1"
                     value={flow.assignee}
-                    onChange={e => handleFlowChange(idx, "assignee", e.target.value)}
+                    onChange={(e) =>
+                      handleFlowChange(idx, "assignee", e.target.value)
+                    }
                     required
                   >
                     <option value="">Select Assignee</option>
-                    {employees.map(emp => (
-                      <option key={emp._id} value={emp._id} className="text-gray-800">
+                    {employees.map((emp) => (
+                      <option
+                        key={emp._id}
+                        value={emp._id}
+                        className="text-gray-800"
+                      >
                         {emp.name}
                       </option>
                     ))}
                   </select>
                   {flows.length > 1 && (
-                    <button type="button" className="text-red-500 px-2" onClick={() => removeFlow(idx)}>-</button>
+                    <button
+                      type="button"
+                      className="text-red-500 px-2"
+                      onClick={() => removeFlow(idx)}
+                    >
+                      -
+                    </button>
                   )}
                   {idx === flows.length - 1 && (
-                    <button type="button" className="text-green-500 px-2" onClick={addFlow}>+</button>
+                    <button
+                      type="button"
+                      className="text-green-500 px-2"
+                      onClick={addFlow}
+                    >
+                      +
+                    </button>
                   )}
                 </div>
               ))}
@@ -153,7 +191,10 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
           </div>
           {(createTaskFlow.error || updateTaskFlow.error) && (
             <div className="text-red-500 text-xs">
-              Error: {(createTaskFlow.error || updateTaskFlow.error)?.response?.data?.message || (createTaskFlow.error || updateTaskFlow.error)?.message}
+              Error:{" "}
+              {(createTaskFlow.error || updateTaskFlow.error)?.response?.data
+                ?.message ||
+                (createTaskFlow.error || updateTaskFlow.error)?.message}
             </div>
           )}
           <div className="flex justify-end">
@@ -162,10 +203,11 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
               className="bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 text-xs disabled:opacity-50"
               disabled={createTaskFlow.isLoading || updateTaskFlow.isLoading}
             >
-              {createTaskFlow.isLoading || updateTaskFlow.isLoading 
-                ? "Saving..." 
-                : taskFlow ? "Update Task Flow" : "Save Task Flow"
-              }
+              {createTaskFlow.isLoading || updateTaskFlow.isLoading
+                ? "Saving..."
+                : taskFlow
+                ? "Update Task Flow"
+                : "Save Task Flow"}
             </button>
           </div>
         </form>
@@ -180,19 +222,26 @@ const Company = () => {
   const { user } = useAuth();
   const companyId = user?.company;
 
-  const { data: positions, isLoading, error: positionsError } = useGetPositions(companyId);
-  console.log('Positions data:', positions);
-  console.log('Positions loading:', isLoading);
-  console.log('Positions error:', positionsError);
-  console.log('Company ID:', companyId);
+  const {
+    data: positions,
+    isLoading,
+    error: positionsError,
+  } = useGetPositions(companyId);
+  console.log("Positions data:", positions);
+  console.log("Positions loading:", isLoading);
+  console.log("Positions error:", positionsError);
+  console.log("Company ID:", companyId);
   const { mutate: deletePosition } = useDeletePosition(companyId);
   const { mutate: restorePosition } = useRestorePosition(companyId);
   const [showTaskFlowModal, setShowTaskFlowModal] = useState(false);
   const [selectedTaskFlow, setSelectedTaskFlow] = useState(null);
-  const { data: taskFlows, isLoading: isTaskFlowsLoading, error: taskFlowsError } = useGetTaskFlows(companyId);
+  const {
+    data: taskFlows,
+    isLoading: isTaskFlowsLoading,
+    error: taskFlowsError,
+  } = useGetTaskFlows(companyId);
   const { mutate: deleteTaskFlow } = useDeleteTaskFlow(companyId);
   const { mutate: restoreTaskFlow } = useRestoreTaskFlow(companyId);
-  
 
   const handleEdit = (position) => {
     setSelectedPosition(position);
@@ -288,7 +337,7 @@ const Company = () => {
       {/* <div className="px-2 py-2">
         <PositionAccessInfo />
       </div> */}
-      
+
       {/* Header Section */}
       <div className="  mb-2 px-2 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -313,9 +362,8 @@ const Company = () => {
         </div>
       </div>
 
-              {/* Content Section */}
+      {/* Content Section */}
       <div className="flex-1  overflow-y-auto min-h-[500px]  max-h-[300px] ">
-      
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-full bg-white rounded-xl border border-gray-200 shadow-sm">
             <img
@@ -358,7 +406,11 @@ const Company = () => {
 
             {/* Scrollable Table Body */}
             <div className="flex-1 overflow-y-auto">
-              {console.log('Rendering table with positions:', positions?.positions?.length, 'positions')}
+              {console.log(
+                "Rendering table with positions:",
+                positions?.positions?.length,
+                "positions"
+              )}
               {/* Debug: Show positions count */}
               <div className="bg-blue-100 p-2 text-xs">
                 Found {positions?.positions?.length || 0} positions to display
@@ -569,10 +621,14 @@ const Company = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-lg font-bold text-gray-900">Task Flow</h1>
-            <p className="mt-0.5 text-xs text-gray-600">Define and manage your company task flows</p>
+            <p className="mt-0.5 text-xs text-gray-600">
+              Define and manage your company task flows
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-xs text-gray-500">{taskFlows ? taskFlows.length : 0} flows</div>
+            <div className="text-xs text-gray-500">
+              {taskFlows ? taskFlows.length : 0} flows
+            </div>
             <PrimaryButton
               title="Add New Task Flow"
               className="text-xs text-white px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow"
@@ -584,99 +640,120 @@ const Company = () => {
           {isTaskFlowsLoading ? (
             <div className="text-xs text-gray-500">Loading task flows...</div>
           ) : taskFlowsError ? (
-            <div className="text-xs text-red-500">Error loading task flows: {taskFlowsError.message}</div>
+            <div className="text-xs text-red-500">
+              Error loading task flows: {taskFlowsError.message}
+            </div>
           ) : !taskFlows || taskFlows.length === 0 ? (
-            <div className="text-xs text-gray-500">No task flows found. Add your first task flow.</div>
+            <div className="text-xs text-gray-500">
+              No task flows found. Add your first task flow.
+            </div>
           ) : (
             <div className="divide-y divide-gray-200 bg-white rounded-xl border border-gray-200 shadow-sm">
-              {taskFlows && taskFlows.map((flow) => (
-                <div key={flow._id} className="px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-sm text-gray-900">{flow.name}</div>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {flow.flows && flow.flows.map((step, idx) => (
-                          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                            {step.taskName} → {step.assignee?.name || `${step.assignee?.firstName || ''} ${step.assignee?.lastName || ''}`.trim()}
-                          </span>
-                        ))}
+              {taskFlows &&
+                taskFlows.map((flow) => (
+                  <div key={flow._id} className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-sm text-gray-900">
+                          {flow.name}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {flow.flows &&
+                            flow.flows.map((step, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100"
+                              >
+                                {step.taskName} →{" "}
+                                {step.assignee?.name ||
+                                  `${step.assignee?.firstName || ""} ${
+                                    step.assignee?.lastName || ""
+                                  }`.trim()}
+                              </span>
+                            ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${flow.isActive ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"}`}>
-                        {flow.isActive ? "Active" : "Inactive"}
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        {flow.isActive && (
-                          <button
-                            onClick={() => handleEditTaskFlow(flow)}
-                            className="inline-flex items-center p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors duration-150"
-                            title="Edit task flow"
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            flow.isActive
+                              ? "bg-green-100 text-green-800 border border-green-200"
+                              : "bg-red-100 text-red-800 border border-red-200"
+                          }`}
+                        >
+                          {flow.isActive ? "Active" : "Inactive"}
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          {flow.isActive && (
+                            <button
+                              onClick={() => handleEditTaskFlow(flow)}
+                              className="inline-flex items-center p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors duration-150"
+                              title="Edit task flow"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                        {flow.isActive ? (
-                          <button
-                            onClick={() => handleDeleteTaskFlow(flow)}
-                            className="inline-flex items-center p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-150"
-                            title="Delete task flow"
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                          {flow.isActive ? (
+                            <button
+                              onClick={() => handleDeleteTaskFlow(flow)}
+                              className="inline-flex items-center p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-150"
+                              title="Delete task flow"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleRestoreTaskFlow(flow)}
-                            className="inline-flex items-center p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-150"
-                            title="Restore task flow"
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleRestoreTaskFlow(flow)}
+                              className="inline-flex items-center p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-150"
+                              title="Restore task flow"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                          </button>
-                        )}
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
-          
+
           {/* Task Flow Footer */}
           {taskFlows && taskFlows.length > 0 && (
             <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
@@ -695,10 +772,10 @@ const Company = () => {
         </div>
       </div>
       {showTaskFlowModal && (
-        <TaskFlowModal 
-          isOpen={showTaskFlowModal} 
-          onClose={handleTaskFlowModalClose} 
-          companyId={companyId} 
+        <TaskFlowModal
+          isOpen={showTaskFlowModal}
+          onClose={handleTaskFlowModalClose}
+          companyId={companyId}
           taskFlow={selectedTaskFlow}
         />
       )}
