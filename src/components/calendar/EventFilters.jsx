@@ -13,11 +13,16 @@ const EventFilters = ({
   onToggleFilter,
   assignerFilter,
   onAssignerFilterChange,
+  projectFilter,
+  onProjectFilterChange,
   calendarData,
 }) => {
   const [isAssignerDropdownOpen, setIsAssignerDropdownOpen] = useState(false);
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [assigners, setAssigners] = useState([]);
-  const dropdownRef = useRef(null);
+  const [projects, setProjects] = useState([]);
+  const assignerDropdownRef = useRef(null);
+  const projectDropdownRef = useRef(null);
 
   // Extract unique assigners from tasks data
   useEffect(() => {
@@ -42,10 +47,104 @@ const EventFilters = ({
     }
   }, [calendarData?.tasksData?.tasks]);
 
-  // Click outside handler
+  // Extract unique projects from tasks data
+  useEffect(() => {
+    const uniqueProjects = new Map();
+
+    // Extract projects from tasks data
+    if (calendarData?.tasksData?.tasks) {
+      console.log(
+        "Tasks data for project extraction:",
+        calendarData.tasksData.tasks
+      );
+
+      calendarData.tasksData.tasks.forEach((task) => {
+        console.log("Task project data:", task.project);
+
+        // Check for different possible project data structures
+        if (task.project) {
+          const projectId = task.project._id || task.project.id;
+          const projectName =
+            task.project.title || task.project.name || task.project.projectName;
+          const projectColor = task.project.color || "#3B82F6";
+
+          if (projectId && projectName) {
+            uniqueProjects.set(projectId, {
+              id: projectId,
+              name: projectName,
+              color: projectColor,
+            });
+          }
+        }
+      });
+    }
+
+    // Also extract projects from projectsData
+    if (calendarData?.projectsData?.projects) {
+      console.log("Projects data:", calendarData.projectsData.projects);
+
+      calendarData.projectsData.projects.forEach((project) => {
+        console.log("Project data:", project);
+
+        const projectId = project._id || project.id;
+        const projectName =
+          project.title || project.name || project.projectName;
+        const projectColor = project.color || "#3B82F6";
+
+        if (projectId && projectName) {
+          uniqueProjects.set(projectId, {
+            id: projectId,
+            name: projectName,
+            color: projectColor,
+          });
+        }
+      });
+    }
+
+    // If no projects found in tasks, try to extract from the entire tasksData structure
+    if (uniqueProjects.size === 0 && calendarData?.tasksData) {
+      console.log(
+        "No projects found in tasks, checking entire tasksData structure"
+      );
+      console.log("Full tasksData:", calendarData.tasksData);
+
+      // Look for any project-related data in the tasksData
+      if (calendarData.tasksData.projects) {
+        calendarData.tasksData.projects.forEach((project) => {
+          const projectId = project._id || project.id;
+          const projectName =
+            project.title || project.name || project.projectName;
+          const projectColor = project.color || "#3B82F6";
+
+          if (projectId && projectName) {
+            uniqueProjects.set(projectId, {
+              id: projectId,
+              name: projectName,
+              color: projectColor,
+            });
+          }
+        });
+      }
+    }
+
+    console.log(
+      "Final extracted projects:",
+      Array.from(uniqueProjects.values())
+    );
+    setProjects(Array.from(uniqueProjects.values()));
+  }, [
+    calendarData?.tasksData?.tasks,
+    calendarData?.projectsData?.projects,
+    calendarData?.tasksData,
+  ]);
+
+  // Click outside handler for assigner dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        assignerDropdownRef.current &&
+        !assignerDropdownRef.current.contains(event.target)
+      ) {
         setIsAssignerDropdownOpen(false);
       }
     };
@@ -59,9 +158,34 @@ const EventFilters = ({
     };
   }, [isAssignerDropdownOpen]);
 
+  // Click outside handler for project dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        projectDropdownRef.current &&
+        !projectDropdownRef.current.contains(event.target)
+      ) {
+        setIsProjectDropdownOpen(false);
+      }
+    };
+
+    if (isProjectDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProjectDropdownOpen]);
+
   const handleAssignerSelect = (assignerId) => {
     onAssignerFilterChange(assignerId);
     setIsAssignerDropdownOpen(false);
+  };
+
+  const handleProjectSelect = (projectId) => {
+    onProjectFilterChange(projectId);
+    setIsProjectDropdownOpen(false);
   };
 
   const getSelectedAssignerName = () => {
@@ -70,10 +194,16 @@ const EventFilters = ({
     return selectedAssigner ? selectedAssigner.name : "All Assigners";
   };
 
+  const getSelectedProjectName = () => {
+    if (!projectFilter) return "All Projects";
+    const selectedProject = projects.find((p) => p.id === projectFilter);
+    return selectedProject ? selectedProject.name : "All Projects";
+  };
+
   return (
     <div className="flex items-center gap-2 ml-auto mr-4">
       {/* Assigner Filter Dropdown */}
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative" ref={assignerDropdownRef}>
         <button
           onClick={() => setIsAssignerDropdownOpen(!isAssignerDropdownOpen)}
           className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
@@ -88,7 +218,7 @@ const EventFilters = ({
           />
         </button>
 
-        {/* Dropdown Menu */}
+        {/* Assigner Dropdown Menu */}
         {isAssignerDropdownOpen && (
           <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
             <div className="py-1">
@@ -131,6 +261,68 @@ const EventFilters = ({
                   <span className="truncate">{assigner.name}</span>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Project Filter Dropdown */}
+      <div className="relative" ref={projectDropdownRef}>
+        <button
+          onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+          className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+          title="Filter by Project"
+        >
+          <MdFolder className="text-sm" />
+          <span className="max-w-32 truncate">{getSelectedProjectName()}</span>
+          <IoChevronDown
+            className={`text-xs transition-transform duration-200 ${
+              isProjectDropdownOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {/* Project Dropdown Menu */}
+        {isProjectDropdownOpen && (
+          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+            <div className="py-1">
+              {/* All Projects Option */}
+              <button
+                onClick={() => handleProjectSelect(null)}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${
+                  !projectFilter ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                }`}
+              >
+                All Projects
+              </button>
+
+              {/* Divider */}
+              <div className="border-t border-gray-100 my-1"></div>
+
+              {/* Individual Projects */}
+              {projects.length > 0 ? (
+                projects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => handleProjectSelect(project.id)}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${
+                      projectFilter === project.id
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: project.color }}
+                    ></div>
+                    <span className="truncate">{project.name}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-xs text-gray-500">
+                  No projects found
+                </div>
+              )}
             </div>
           </div>
         )}

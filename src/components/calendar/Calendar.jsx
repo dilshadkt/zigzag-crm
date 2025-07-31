@@ -25,6 +25,7 @@ const Calendar = () => {
     birthdays: true,
   });
   const [assignerFilter, setAssignerFilter] = useState(null);
+  const [projectFilter, setProjectFilter] = useState(null);
 
   const { user } = useAuth();
   const isEmployee = user?.role === "employee";
@@ -33,7 +34,8 @@ const Calendar = () => {
   const { calendarData, isLoading } = useCalendarData(
     currentDate,
     eventFilters,
-    assignerFilter
+    assignerFilter,
+    projectFilter
   );
   console.log(calendarData, "calendar data");
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -72,6 +74,11 @@ const Calendar = () => {
   // Handle assigner filter change
   const handleAssignerFilterChange = (assignerId) => {
     setAssignerFilter(assignerId);
+  };
+
+  // Handle project filter change
+  const handleProjectFilterChange = (projectId) => {
+    setProjectFilter(projectId);
   };
 
   // Open modal with events for selected day
@@ -118,6 +125,8 @@ const Calendar = () => {
             onToggleFilter={toggleEventFilter}
             assignerFilter={assignerFilter}
             onAssignerFilterChange={handleAssignerFilterChange}
+            projectFilter={projectFilter}
+            onProjectFilterChange={handleProjectFilterChange}
             calendarData={calendarData}
           />
         </div>

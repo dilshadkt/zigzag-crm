@@ -14,6 +14,7 @@ import {
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
+import { AiOutlineConsoleSql } from "react-icons/ai";
 
 const AddTask = ({
   isOpen,
@@ -39,7 +40,7 @@ const AddTask = ({
     resetForm();
     setShowModalTask(false);
   };
-
+  console.log(selectedMonth, "selected month");
   // Prepare initial values for the form
   const prepareInitialValues = () => {
     if (!initialValues) return {};
@@ -51,7 +52,7 @@ const AddTask = ({
       taskGroup: initialValues.taskGroup || "",
       taskFlow: initialValues.taskFlow || "",
       extraTaskWorkType: initialValues.extraTaskWorkType || "",
-      taskMonth: initialValues.taskMonth || selectedMonth || "",
+      taskMonth: isEdit ? selectedMonth : initialValues.selectedMonth || "",
       startDate: initialValues.startDate || "",
       dueDate: initialValues.dueDate || "",
       periority: initialValues.priority || "Low",
