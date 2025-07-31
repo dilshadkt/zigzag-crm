@@ -29,7 +29,7 @@ const Description = ({
       <div className="relative">
         <textarea
           name={name}
-          value={value}
+          value={value?.[name]}
           onChange={handleChange}
           rows={rows}
           maxLength={maxLength}

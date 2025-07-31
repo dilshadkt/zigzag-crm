@@ -478,59 +478,6 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 </div>
               )}
 
-              {/* No project indicator */}
-              {/* {isNoProjectSelected && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-blue-800">
-                      Creating board task - task group and flow fields are
-                      hidden
-                    </span>
-                  </div>
-                </div>
-              )} */}
-
-              {/* All employees indicator for "Other" project or no project */}
-              {/* {(isOtherProjectSelected || isNoProjectSelected) && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-green-800">
-                      {isLoadingEmployees
-                        ? "Loading company employees..."
-                        : `All company employees available for assignment (${
-                            allEmployeesData?.employees?.length || 0
-                          } employees)`}
-                    </span>
-                  </div>
-                </div>
-              )} */}
-
               <form
                 action=" "
                 onSubmit={handleSubmit}
@@ -659,7 +606,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   name={"title"}
                   onchange={handleChange}
                   touched={touched}
-                  value={values?.title || ""}
+                  value={values}
                   disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
                 <Description
@@ -667,7 +614,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={handleChange}
                   touched={touched}
                   name={"task_description"}
-                  value={values?.task_description || ""}
+                  value={values}
                   title="Task Description"
                   placeholder="Add task description"
                   disabled={!isFormEnabled && !isOtherProjectSelected}

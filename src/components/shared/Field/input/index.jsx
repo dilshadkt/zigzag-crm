@@ -26,7 +26,7 @@ const Input = ({
         <input
           readOnly={readOnly}
           name={name}
-          value={value}
+          value={value?.[name]}
           onChange={onchange}
           type={
             type === "password" ? (showPassword ? "password" : "text") : type
