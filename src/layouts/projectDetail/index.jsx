@@ -74,7 +74,7 @@ const ProjectDetailLayout = () => {
 
   return (
     <section className="flex flex-col h-full gap-y-1">
-      <Navigator path={"/projects"} title={"Back to Projects"} />
+      <Navigator />
       <div className="flexBetween   mb-2">
         <Header>{projectData?.name}</Header>
         <div className="flex items-center  gap-x-4">

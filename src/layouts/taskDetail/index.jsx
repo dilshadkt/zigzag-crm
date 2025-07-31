@@ -5,7 +5,7 @@ import { Outlet } from "react-router-dom";
 const TaskDetailLayout = () => {
   return (
     <section className="flex flex-col  h-full gap-y-1">
-      <Navigator title={"Back to Board"} />
+      <Navigator />
       <div className="w-full h-full flex flex-col overflow-hidden">
         <Outlet />
       </div>
