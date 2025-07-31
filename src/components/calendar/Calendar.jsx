@@ -37,7 +37,7 @@ const Calendar = () => {
     assignerFilter,
     projectFilter
   );
-  console.log(calendarData, "calendar data");
+
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 

@@ -40,7 +40,6 @@ const AddTask = ({
     resetForm();
     setShowModalTask(false);
   };
-  console.log(selectedMonth, "selected month");
   // Prepare initial values for the form
   const prepareInitialValues = () => {
     if (!initialValues) return {};
@@ -80,18 +79,33 @@ const AddTask = ({
     resetForm,
     setFieldValue,
   } = useAddTaskForm(prepareInitialValues(), onSubmit);
+
   // Track selected project separately to avoid hook dependency issues
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialValues?.project?._id || initialValues?.project || ""
   );
+
+  // Debug selectedProjectId changes
+  useEffect(() => {
+    console.log("SelectedProjectId changed:", selectedProjectId);
+  }, [selectedProjectId]);
   // Fetch project details when a project is selected
-  const { data: selectedProjectData } = useProjectDetails(
-    initialValues?.project?._id || null,
+  const {
+    data: selectedProjectData,
+    isLoading: isLoadingProjectDetails,
+    error: projectDetailsError,
+  } = useProjectDetails(
+    selectedProjectId && selectedProjectId !== "other"
+      ? selectedProjectId
+      : null,
     {
-      enabled: !!selectedProjectId && selectedProjectId !== "",
+      enabled:
+        !!selectedProjectId &&
+        selectedProjectId !== "" &&
+        selectedProjectId !== "other",
     }
   );
-
+  console.log(selectedProjectData);
   // Fetch all employees when "Other" project is selected or no project is selected (for board view and tasks without projects)
   const { data: allEmployeesData, isLoading: isLoadingEmployees } =
     useGetAllEmployees(
@@ -109,6 +123,7 @@ const AddTask = ({
 
   // Update selectedProjectId when values.project changes
   useEffect(() => {
+    console.log("Project value changed:", values?.project);
     setSelectedProjectId(values?.project || "");
   }, [values?.project]);
 
@@ -162,7 +177,11 @@ const AddTask = ({
     // Use selected project data if available, otherwise fall back to monthWorkDetails or projectData
     let workDetails = null;
 
-    if (selectedProjectData && selectedProjectId) {
+    if (
+      selectedProjectData &&
+      selectedProjectId &&
+      selectedProjectId !== "other"
+    ) {
       // Find the work details for the selected month from the selected project
       const projectMonthWorkDetails = selectedProjectData.workDetails?.find(
         (wd) => wd.month === selectedMonth
@@ -173,7 +192,10 @@ const AddTask = ({
       workDetails = monthWorkDetails || projectData?.workDetails;
     }
 
-    if (!workDetails) return [];
+    if (!workDetails) {
+      console.log("No work details found for project:", selectedProjectId);
+      return [];
+    }
 
     const options = [];
 
@@ -253,7 +275,11 @@ const AddTask = ({
     // Use selected project data if available, otherwise fall back to monthWorkDetails or projectData
     let workDetails = null;
 
-    if (selectedProjectData && selectedProjectId) {
+    if (
+      selectedProjectData &&
+      selectedProjectId &&
+      selectedProjectId !== "other"
+    ) {
       // Find the work details for the selected month from the selected project
       const projectMonthWorkDetails = selectedProjectData.workDetails?.find(
         (wd) => wd.month === selectedMonth
@@ -402,7 +428,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
 
               {/* Month indicator */}
               {selectedMonth && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-2 mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <svg
                       className="w-4 h-4 text-blue-600"
@@ -429,7 +455,57 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               )}
 
               {/* Project work details indicator */}
-              {selectedProjectData &&
+              {isLoadingProjectDetails &&
+                selectedProjectId &&
+                selectedProjectId !== "other" && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-blue-600 animate-spin"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium text-blue-800">
+                        Loading project details...
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+              {projectDetailsError &&
+                selectedProjectId &&
+                selectedProjectId !== "other" && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-red-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium text-red-800">
+                        Failed to load project details. Please try again.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+              {/* {selectedProjectData &&
                 selectedProjectId &&
                 selectedProjectId !== "other" && (
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -452,7 +528,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       </span>
                     </div>
                   </div>
-                )}
+                )} */}
 
               {/* Other project indicator */}
               {isOtherProjectSelected && (
@@ -505,9 +581,13 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       value={values?.taskGroup || "Select task group"}
                       onChange={handleChange}
                       title="Task Group"
-                      options={taskGroupOptions}
+                      options={
+                        isLoadingProjectDetails
+                          ? [{ label: "Loading...", value: "" }]
+                          : taskGroupOptions
+                      }
                       defaultValue="Select task group"
-                      disabled={isEdit}
+                      disabled={isEdit || isLoadingProjectDetails}
                     />
 
                     {/* Task Flow Selection */}
@@ -593,8 +673,13 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                         value={values?.extraTaskWorkType || "Select work type"}
                         onChange={handleChange}
                         title="Extra Task Work Type"
-                        options={extraTaskWorkTypeOptions}
+                        options={
+                          isLoadingProjectDetails
+                            ? [{ label: "Loading...", value: "" }]
+                            : extraTaskWorkTypeOptions
+                        }
                         defaultValue="Select work type"
+                        disabled={isLoadingProjectDetails}
                       />
                     )}
                   </>

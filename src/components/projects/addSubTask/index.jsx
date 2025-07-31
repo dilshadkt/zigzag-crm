@@ -10,6 +10,7 @@ import { useAddSubTaskForm } from "../../../hooks/useAddSubTaskForm";
 import { useGetProjectSocialMedia } from "../../../api/hooks";
 
 const AddSubTask = ({
+  isAssignee = false,
   isOpen,
   setShowSubTaskModal,
   teams,
@@ -61,7 +62,12 @@ const AddSubTask = ({
 
   return (
     <div className="fixed left-0 right-0 top-0 bottom-0 bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter">
-      <div className="p-10 bg-white pt-12 px-12 flex flex-col rounded-3xl max-w-[584px] w-full h-full relative">
+      <div
+        className={`p-10 bg-white pt-12 px-12 flex flex-col
+        rounded-3xl max-w-[584px] w-full ${
+          isAssignee ? `` : `h-full`
+        } relative`}
+      >
         {isLoading && (
           <div className="h-full flexCenter">
             <img src="/icons/loading.svg" alt="" className="w-20" />
@@ -78,16 +84,18 @@ const AddSubTask = ({
                 onSubmit={handleSubmit}
                 className="mt-3 flex flex-col gap-y-4 h-full"
               >
-                <Input
-                  placeholder="Subtask Name"
-                  title="Subtask Name"
-                  errors={errors}
-                  name="title"
-                  onchange={handleChange}
-                  touched={touched}
-                  value={values}
-                  disabled={isLoading}
-                />
+                {!isAssignee && (
+                  <Input
+                    placeholder="Subtask Name"
+                    title="Subtask Name"
+                    errors={errors}
+                    name="title"
+                    onchange={handleChange}
+                    touched={touched}
+                    value={values}
+                    disabled={isLoading}
+                  />
+                )}
 
                 {/* Show extra fields if subtask is 'content' */}
                 {values.title === "content" && (
@@ -161,6 +169,9 @@ const AddSubTask = ({
                       </svg>
                       <span className="text-sm font-medium text-gray-700">
                         Publish URLs
+                      </span>
+                      <span className="text-xs text-gray-600 bg-gray-200 py-0.5 px-3 rounded-full">
+                        Configured url will be here{" "}
                       </span>
                     </div>
 
@@ -349,34 +360,36 @@ const AddSubTask = ({
                     disabled={isLoading}
                   />
                 </div>
-
-                <Select
-                  errors={errors}
-                  name="priority"
-                  touched={touched}
-                  value={values.priority || "Low"}
-                  onChange={handleChange}
-                  title="Priority"
-                  options={["Low", "Medium", "High"]}
-                  disabled={isLoading}
-                />
-
-                <MultiSelect
-                  title="Assignees"
-                  errors={errors}
-                  onChange={handleChange}
-                  touched={touched}
-                  name="assignedTo"
-                  value={values?.assignedTo || []}
-                  options={
-                    teams?.map((user) => ({
-                      label: `${user.firstName} (${user.position})`,
-                      value: user._id,
-                    })) || []
-                  }
-                  placeholder="Select Assignees"
-                  disabled={isLoading}
-                />
+                {!isAssignee && (
+                  <Select
+                    errors={errors}
+                    name="priority"
+                    touched={touched}
+                    value={values.priority || "Low"}
+                    onChange={handleChange}
+                    title="Priority"
+                    options={["Low", "Medium", "High"]}
+                    disabled={isLoading}
+                  />
+                )}
+                {!isAssignee && (
+                  <MultiSelect
+                    title="Assignees"
+                    errors={errors}
+                    onChange={handleChange}
+                    touched={touched}
+                    name="assignedTo"
+                    value={values?.assignedTo || []}
+                    options={
+                      teams?.map((user) => ({
+                        label: `${user.firstName} (${user.position})`,
+                        value: user._id,
+                      })) || []
+                    }
+                    placeholder="Select Assignees"
+                    disabled={isLoading}
+                  />
+                )}
 
                 <div className="mt-auto pt-4">
                   <div className="flexEnd">

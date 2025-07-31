@@ -152,10 +152,10 @@ export const useProjectDetails = (projectId, monthKey = null) => {
       return apiClient.get(url).then((res) => res.data?.project);
     },
     enabled: !!projectId,
-    staleTime: 1000 * 60 * 2, // 2 minutes (Prevents frequent refetches)
-    cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
-    refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
-    refetchOnReconnect: false, // Prevents refetch when network reconnects
+    // staleTime: 1000 * 60 * 2, // 2 minutes (Prevents frequent refetches)
+    // cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
+    // refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
+    // refetchOnReconnect: false, // Prevents refetch when network reconnects
   });
 };
 
@@ -322,11 +322,16 @@ export const useAddEmployee = (handleClose) => {
 /////////////  PROJECT SECTION ⚠️⚠️⚠️⚠️⚠️ ////////////////////
 
 // Add PROJECT
-export const useAddProject = () =>
-  useMutation({
+export const useAddProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
     mutationKey: ["addProject"],
     mutationFn: (projectDetails) => addProject(projectDetails),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["companyProjects"]);
+    },
   });
+};
 
 export const useUpdateProject = (projectId, handleSuccess) => {
   const queryClient = useQueryClient();

@@ -21,15 +21,16 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
 
   // Check if current user is assigned to this task
   const isAssignedToTask = taskDetails?.assignedTo?.some(
-    (assignedUser) => assignedUser._id === user?.id
+    (assignedUser) => assignedUser._id === user?._id
   );
+
   // Employees can only edit tasks assigned to them, company admins can edit any task
   const canEditTask = isCompany || isAssignedToTask;
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
     useGetSubTasksByParentTask(taskDetails?._id);
-
+  console.log(subTasks);
   // Create subtask mutation
   const createSubTaskMutation = useCreateSubTask(taskDetails?._id);
 
@@ -395,7 +396,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                               canEdit={isCompany || isAssignedToSubTask}
                             />
                             {/* Edit button for admins and assigned users */}
-                            {isCompany && (
+                            {(isCompany || isAssignedToSubTask) && (
                               <button
                                 onClick={() => handleEditSubTask(subtask)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
@@ -694,6 +695,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
       {/* Add Subtask Modal */}
       <AddSubTask
         isOpen={showSubTaskModal}
+        isAssignee={isAssignedToTask}
         setShowSubTaskModal={handleCloseSubTaskModal}
         teams={teams}
         onSubmit={handleSubTaskSubmit}

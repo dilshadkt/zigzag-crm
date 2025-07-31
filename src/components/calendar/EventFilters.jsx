@@ -7,6 +7,7 @@ import {
   MdPerson,
 } from "react-icons/md";
 import { IoChevronDown } from "react-icons/io5";
+import { useAuth } from "../../hooks/useAuth";
 
 const EventFilters = ({
   eventFilters,
@@ -23,7 +24,8 @@ const EventFilters = ({
   const [projects, setProjects] = useState([]);
   const assignerDropdownRef = useRef(null);
   const projectDropdownRef = useRef(null);
-
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
   // Extract unique assigners from tasks data
   useEffect(() => {
     if (calendarData?.tasksData?.tasks) {
@@ -203,68 +205,74 @@ const EventFilters = ({
   return (
     <div className="flex items-center gap-2 ml-auto mr-4">
       {/* Assigner Filter Dropdown */}
-      <div className="relative" ref={assignerDropdownRef}>
-        <button
-          onClick={() => setIsAssignerDropdownOpen(!isAssignerDropdownOpen)}
-          className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
-          title="Filter by Assigner"
-        >
-          <MdPerson className="text-sm" />
-          <span className="max-w-32 truncate">{getSelectedAssignerName()}</span>
-          <IoChevronDown
-            className={`text-xs transition-transform duration-200 ${
-              isAssignerDropdownOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
+      {!isEmployee && (
+        <div className="relative" ref={assignerDropdownRef}>
+          <button
+            onClick={() => setIsAssignerDropdownOpen(!isAssignerDropdownOpen)}
+            className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+            title="Filter by Assigner"
+          >
+            <MdPerson className="text-sm" />
+            <span className="max-w-32 truncate">
+              {getSelectedAssignerName()}
+            </span>
+            <IoChevronDown
+              className={`text-xs transition-transform duration-200 ${
+                isAssignerDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
 
-        {/* Assigner Dropdown Menu */}
-        {isAssignerDropdownOpen && (
-          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
-            <div className="py-1">
-              {/* All Assigners Option */}
-              <button
-                onClick={() => handleAssignerSelect(null)}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${
-                  !assignerFilter ? "bg-blue-50 text-blue-700" : "text-gray-700"
-                }`}
-              >
-                All Assigners
-              </button>
-
-              {/* Divider */}
-              <div className="border-t border-gray-100 my-1"></div>
-
-              {/* Individual Assigners */}
-              {assigners.map((assigner) => (
+          {/* Assigner Dropdown Menu */}
+          {isAssignerDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div className="py-1">
+                {/* All Assigners Option */}
                 <button
-                  key={assigner.id}
-                  onClick={() => handleAssignerSelect(assigner.id)}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${
-                    assignerFilter === assigner.id
+                  onClick={() => handleAssignerSelect(null)}
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${
+                    !assignerFilter
                       ? "bg-blue-50 text-blue-700"
                       : "text-gray-700"
                   }`}
                 >
-                  {assigner?.avatar === "/api/placeholder/32/32" ? (
-                    <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center">
-                      {assigner?.name?.charAt(0)}
-                    </div>
-                  ) : (
-                    <img
-                      src={assigner?.avatar}
-                      alt={assigner.name}
-                      className="w-5 h-5 rounded-full"
-                    />
-                  )}
-
-                  <span className="truncate">{assigner.name}</span>
+                  All Assigners
                 </button>
-              ))}
+
+                {/* Divider */}
+                <div className="border-t border-gray-100 my-1"></div>
+
+                {/* Individual Assigners */}
+                {assigners.map((assigner) => (
+                  <button
+                    key={assigner.id}
+                    onClick={() => handleAssignerSelect(assigner.id)}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${
+                      assignerFilter === assigner.id
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {assigner?.avatar === "/api/placeholder/32/32" ? (
+                      <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center">
+                        {assigner?.name?.charAt(0)}
+                      </div>
+                    ) : (
+                      <img
+                        src={assigner?.avatar}
+                        alt={assigner.name}
+                        className="w-5 h-5 rounded-full"
+                      />
+                    )}
+
+                    <span className="truncate">{assigner.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Project Filter Dropdown */}
       <div className="relative" ref={projectDropdownRef}>
