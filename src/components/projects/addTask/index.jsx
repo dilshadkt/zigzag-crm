@@ -40,6 +40,7 @@ const AddTask = ({
     resetForm();
     setShowModalTask(false);
   };
+
   // Prepare initial values for the form
   const prepareInitialValues = () => {
     if (!initialValues) return {};
@@ -106,7 +107,7 @@ const AddTask = ({
         selectedProjectId !== "other",
     }
   );
-  console.log(selectedProjectData);
+  console.log(selectedMonth);
   // Fetch all employees when "Other" project is selected or no project is selected (for board view and tasks without projects)
   const { data: allEmployeesData, isLoading: isLoadingEmployees } =
     useGetAllEmployees(
@@ -117,7 +118,8 @@ const AddTask = ({
 
   // Set default taskMonth if not provided
   useEffect(() => {
-    if (selectedMonth && !values.taskMonth) {
+    // if (selectedMonth && !values.taskMonth) {
+    if (selectedMonth) {
       setFieldValue("taskMonth", selectedMonth);
     }
   }, [selectedMonth, values.taskMonth, setFieldValue]);
@@ -159,6 +161,7 @@ const AddTask = ({
   useEffect(() => {
     if (isOpen && isEdit && initialValues) {
       // Set project ID for editing
+
       setSelectedProjectId(
         initialValues.project?._id || initialValues.project || ""
       );

@@ -82,6 +82,7 @@ export const updatedProfile = async (updatedData, employeeId = null) => {
 };
 
 export const createTask = async (taskData, projectId) => {
+  console.log(taskData, "taskData");
   // api formated data
   const data = {
     title: taskData?.title,
