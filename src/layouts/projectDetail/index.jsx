@@ -54,9 +54,9 @@ const ProjectDetailLayout = () => {
       const updatedValues = cleanTaskData(values);
 
       // Handle assignee field mapping
-      if (updatedValues.assignedTo) {
-        updatedValues.assignedTo = [updatedValues.assignedTo];
-      }
+      // if (updatedValues.assignedTo) {
+      //   updatedValues.assignedTo = [updatedValues.assignedTo];
+      // }
 
       // Process attachments
       const proccesedValue = await processAttachments(
@@ -64,9 +64,9 @@ const ProjectDetailLayout = () => {
         uploadSingleFile
       );
       updatedValues.attachments = proccesedValue;
-
-      mutate(updatedValues);
-      resetForm();
+      console.log(updatedValues, "updatedValues");
+      // mutate(updatedValues);
+      // resetForm();
     } catch (error) {
       console.error(error);
     }
@@ -74,9 +74,18 @@ const ProjectDetailLayout = () => {
 
   return (
     <section className="flex flex-col h-full gap-y-1">
-      <Navigator />
       <div className="flexBetween   mb-2">
-        <Header>{projectData?.name}</Header>
+        <div className="flex gap-x-2 items-center">
+          <div
+            className=" cursor-pointer w-10 h-10
+           rounded-full translate-y-0.5 flex items-center
+            justify-center hover:bg-white"
+          >
+            <Navigator />
+          </div>
+
+          <Header>{projectData?.name}</Header>
+        </div>
         <div className="flex items-center  gap-x-4">
           {projectData?.startDate && projectData?.endDate && (
             <MonthSelector

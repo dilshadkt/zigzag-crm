@@ -73,12 +73,22 @@ const Task = ({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={() => handleClick()}
+        title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
         className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md transition-shadow relative ${
-          isExtraTask
+          task?.itemType === "subtask"
+            ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+            : isExtraTask
             ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
             : "bg-white"
         }`}
       >
+        {/* Subtask Badge */}
+        {task?.itemType === "subtask" && (
+          <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+            <span className="text-xs">📋</span>
+          </div>
+        )}
+
         {/* Extra Task Badge */}
         {isExtraTask && (
           <div className="absolute -top-2 -right-2 bg-purple-500 text-white rounded-full p-1">
@@ -87,23 +97,39 @@ const Task = ({
         )}
 
         {/* Board Task Badge */}
-        {task?.isBoardTask && !task?.project && !isExtraTask && (
-          <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
-            <span className="text-xs">🎯</span>
-          </div>
-        )}
+        {task?.isBoardTask &&
+          !task?.project &&
+          !isExtraTask &&
+          !task?.itemType === "subtask" && (
+            <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+              <span className="text-xs">🎯</span>
+            </div>
+          )}
 
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
               <h4
                 className={`font-medium line-clamp-2 ${
-                  isExtraTask ? "text-purple-800" : "text-gray-800"
+                  task?.itemType === "subtask"
+                    ? "text-blue-800"
+                    : isExtraTask
+                    ? "text-purple-800"
+                    : "text-gray-800"
                 }`}
               >
                 {task?.title}
               </h4>
-              {task?.project ? (
+              {task?.itemType === "subtask" ? (
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-blue-600">📋 Subtask</span>
+                  {task?.parentTask && (
+                    <span className="text-xs text-blue-500">
+                      Parent: {task.parentTask.title}
+                    </span>
+                  )}
+                </div>
+              ) : task?.project ? (
                 <span className="text-xs text-gray-500">
                   📋 {task.project.name || task.project.displayName}
                 </span>
@@ -176,12 +202,22 @@ const Task = ({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onClick={() => handleClick()}
+      title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
       className={`grid grid-cols-10 cursor-pointer gap-x-3 px-5 py-5 rounded-3xl relative ${
-        isExtraTask
+        task?.itemType === "subtask"
+          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+          : isExtraTask
           ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
           : "bg-white"
       }`}
     >
+      {/* Subtask Badge for List View */}
+      {task?.itemType === "subtask" && (
+        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-1">
+          <span className="text-xs">📋</span>
+        </div>
+      )}
+
       {/* Extra Task Badge for List View */}
       {isExtraTask && (
         <div className="absolute -top-1 -right-1 bg-purple-500 text-white rounded-full p-1">
@@ -190,29 +226,53 @@ const Task = ({
       )}
 
       {/* Board Task Badge for List View */}
-      {task?.isBoardTask && !task?.project && !isExtraTask && (
-        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-1">
-          <span className="text-xs">🎯</span>
-        </div>
-      )}
+      {task?.isBoardTask &&
+        !task?.project &&
+        !isExtraTask &&
+        !task?.itemType === "subtask" && (
+          <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-1">
+            <span className="text-xs">🎯</span>
+          </div>
+        )}
 
       <div className="col-span-3 gap-y-1 flex flex-col">
         <div className="flex items-center gap-2">
           <span className="text-sm text-[#91929E]">Task Name</span>
+          {task?.itemType === "subtask" && (
+            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
+              Subtask
+            </span>
+          )}
           {isExtraTask && (
             <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
               Extra
             </span>
           )}
-          {task?.isBoardTask && !task?.project && (
-            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
-              Board
-            </span>
-          )}
+          {task?.isBoardTask &&
+            !task?.project &&
+            !task?.itemType === "subtask" && (
+              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                Board
+              </span>
+            )}
         </div>
-        <h4 className={isExtraTask ? "text-purple-800 font-medium" : ""}>
+        <h4
+          className={
+            task?.itemType === "subtask"
+              ? "text-blue-800 font-medium"
+              : isExtraTask
+              ? "text-purple-800 font-medium"
+              : ""
+          }
+        >
           {task?.title}
         </h4>
+        {/* Parent Task Info for Subtasks in List View */}
+        {task?.itemType === "subtask" && task?.parentTask && (
+          <div className="text-xs text-blue-600 mt-1">
+            📋 Parent: {task.parentTask.title}
+          </div>
+        )}
         {/* Extra Task Work Type in List View */}
         {isExtraTask && task?.extraTaskWorkType && (
           <div className="text-xs text-purple-600 mt-1">

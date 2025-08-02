@@ -167,7 +167,9 @@ export const useProjectTasks = (projectId, monthKey = null) => {
       const url = monthKey
         ? `/projects/${projectId}/tasks?monthKey=${monthKey}`
         : `/projects/${projectId}/tasks`;
-      return apiClient.get(url).then((res) => res.data?.tasks || []);
+      return apiClient
+        .get(url)
+        .then((res) => [...res.data?.tasks, ...res.data?.subTasks] || []);
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 1, // 1 minute (Tasks change more frequently)

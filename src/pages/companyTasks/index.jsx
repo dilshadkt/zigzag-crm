@@ -82,7 +82,18 @@ const CompanyTasks = ({ filter: propFilter }) => {
         case "overdue":
           filtered = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
-            return dueDate < today && task.status !== "completed";
+            // Set due date to start of day for comparison
+            const dueDateStart = new Date(
+              dueDate.getFullYear(),
+              dueDate.getMonth(),
+              dueDate.getDate()
+            );
+            const todayStart = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate()
+            );
+            return dueDateStart < todayStart && task.status !== "completed";
           });
           break;
         case "in-progress":

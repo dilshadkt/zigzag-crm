@@ -107,7 +107,6 @@ const AddTask = ({
         selectedProjectId !== "other",
     }
   );
-  console.log(selectedMonth);
   // Fetch all employees when "Other" project is selected or no project is selected (for board view and tasks without projects)
   const { data: allEmployeesData, isLoading: isLoadingEmployees } =
     useGetAllEmployees(

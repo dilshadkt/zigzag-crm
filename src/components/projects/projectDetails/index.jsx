@@ -348,7 +348,13 @@ const ProjectDetails = ({
   };
 
   const handleNavigateTask = (task) => {
-    navigate(`/projects/${activeProject._id}/${task?._id}`);
+    // If it's a subtask, navigate to the parent task
+    if (task?.itemType === "subtask" && task?.parentTask) {
+      navigate(`/projects/${activeProject._id}/${task.parentTask._id}`);
+    } else {
+      // Regular task navigation
+      navigate(`/projects/${activeProject._id}/${task?._id}`);
+    }
   };
 
   const canUserDragTask = (task) => {

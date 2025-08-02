@@ -54,7 +54,7 @@ const Prjects = () => {
     selectProject,
     selectedMonth
   );
-
+  console.log(projectTasks, "projectTasks");
   // Combine project data with tasks
   const projectWithTasks = activeProject
     ? {

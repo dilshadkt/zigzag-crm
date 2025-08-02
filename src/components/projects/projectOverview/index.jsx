@@ -344,6 +344,14 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
     if (!activeFilters) return tasks;
 
     return tasks.filter((task) => {
+      // Filter by subtask visibility
+      if (
+        activeFilters.showSubtasks === false &&
+        task?.itemType === "subtask"
+      ) {
+        return false;
+      }
+
       // Filter by status
       if (
         activeFilters.status.length > 0 &&
@@ -415,7 +423,13 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const completedTasks = tasksByStatus.completed;
 
   const handleNavigateToTask = (task) => {
-    navigate(`/projects/${projectId}/${task?._id}`);
+    // If it's a subtask, navigate to the parent task
+    if (task?.itemType === "subtask" && task?.parentTask) {
+      navigate(`/projects/${projectId}/${task.parentTask._id}`);
+    } else {
+      // Regular task navigation
+      navigate(`/projects/${projectId}/${task?._id}`);
+    }
   };
 
   const handleFilterChange = (filters) => {
@@ -454,7 +468,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
 
       await updateTaskById(taskId, updateData);
       console.log(`Task ${taskId} status updated to ${newStatus}`);
-      
+
       // Invalidate and refetch the project data to update the UI
       if (onRefresh) {
         onRefresh();
