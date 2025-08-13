@@ -15,27 +15,29 @@ const ProjectHeading = ({
   return (
     <div className="flexBetween ">
       <Header>Projects</Header>
-      <div className="flexEnd gap-x-2">
+      <div className="flexEnd  gap-x-2">
         <MonthSelector
           selectedMonth={selectedMonth}
           onMonthChange={onMonthChange}
           className="mt-3"
           activeProject={activeProject}
         />
-        <PrimaryButton
-          disable={!isCompany}
-          icon={"/icons/add.svg"}
-          title={"Add Project"}
-          onclick={() => setShowModalProject(true)}
-          className={"mt-3 text-white px-5"}
-        />
-        <PrimaryButton
-          disable={!isCompany || !activeProject}
-          icon={"/icons/add.svg"}
-          title={"Add Task"}
-          onclick={() => setShowModalTask(true)}
-          className={"mt-3 text-white px-5"}
-        />
+        <div className="md:flex hidden gap-x-2">
+          <PrimaryButton
+            disable={!isCompany}
+            icon={"/icons/add.svg"}
+            title={"Add Project"}
+            onclick={() => setShowModalProject(true)}
+            className={"mt-3   text-white px-5"}
+          />
+          <PrimaryButton
+            disable={!isCompany || !activeProject}
+            icon={"/icons/add.svg"}
+            title={"Add Task"}
+            onclick={() => setShowModalTask(true)}
+            className={"mt-3 text-white px-5"}
+          />
+        </div>
       </div>
     </div>
   );

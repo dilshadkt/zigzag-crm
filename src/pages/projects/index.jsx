@@ -54,7 +54,6 @@ const Prjects = () => {
     selectProject,
     selectedMonth
   );
-  console.log(projectTasks, "projectTasks");
   // Combine project data with tasks
   const projectWithTasks = activeProject
     ? {
@@ -135,7 +134,7 @@ const Prjects = () => {
       {hasNoProject ? (
         <NoTask>There are no Projects</NoTask>
       ) : (
-        <div className="w-full h-full overflow-hidden gap-x-5 grid grid-cols-5">
+        <div className="w-full h-full  gap-y-3 md:gap-y-0  md:overflow-hidden md:gap-x-5 grid grid-cols-1 md:grid-cols-5">
           {/* current project section  */}
           <CurrentProject projects={projects} selectProject={selectProject} />
           {/* project detail page  */}

@@ -196,17 +196,17 @@ const CompanyProgressStats = () => {
       </div>
 
       {/* Company Statistics Grid */}
-      <div className="grid grid-cols-8 gap-4 flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-8 gap-2 md:gap-4 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div
               key={index}
               onClick={stat.onClick}
-              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105 group relative overflow-hidden`}
+              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer md:hover:shadow-md transition-all duration-200 transform md:hover:scale-105 group relative overflow-hidden`}
             >
               <div className={`${stat.color} p-3 rounded-lg mb-3`}>
-                <Icon className="w-6 h-6 text-white" />
+                <Icon className="w-4 md:w-6 h-4 md:h-6 text-white" />
               </div>
               <div className={`text-3xl font-bold ${stat.textColor} mb-2`}>
                 {stat.value}

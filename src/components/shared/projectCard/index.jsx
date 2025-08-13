@@ -18,9 +18,11 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
       className="flex flex-col cursor-pointer   h-fit "
       onClick={onClick}
     >
-      <div className={`bg-white   rounded-3xl grid grid-cols-2`}>
+      <div
+        className={`bg-white   rounded-3xl grid gap-y-4 md:gap-y-0 md:grid-cols-2`}
+      >
         <div
-          className="p-4  py-5 h-full flex gap-y-4 flex-col border-r 
+          className="p-4  py-5 h-full flex gap-y-4 flex-col border-b md:border-r 
        relative border-[#E4E6E8] "
         >
           <div className="flexStart  gap-x-3.5">
@@ -76,7 +78,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
             </div>
           </div>
         </div>
-        <div className="px-8 flex flex-col  gap-y-3 justify-center items-center">
+        <div className="px-8  py-5   flex flex-col  gap-y-3 justify-center items-center">
           <h5 className="font-medium w-full">Project Data</h5>
           <div className="w-full grid grid-cols-3 ">
             <div className="flex flex-col gap-y-2">

@@ -54,15 +54,17 @@ const Dashboard = () => {
 
   return (
     <section className="flex flex-col">
-      <span className="text-[#7D8592]">Welcome back, {user?.firstName} !</span>
+      <span className="text-sm md:text-base text-[#7D8592]">
+        Welcome back, {user?.firstName} !
+      </span>
       <div className="flexBetween ">
         <Header>Dashboard</Header>
         <div
-          className="h-11 flexCenter text-sm gap-x-2 text-[#0A1629] px-5
-         rounded-[14px] w-fit bg-[#E6EDF5]"
+          className=" h-8 md:h-11 flexCenter text-sm gap-x-2 text-[#0A1629] px-3 md:px-5
+         rounded-md md:rounded-[14px] w-fit bg-[#E6EDF5]"
         >
-          <img src="/icons/calender.svg" alt="" className="w-5" />
-          <span>{dateRange}</span>
+          <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
+          <span className="text-xs md:text-base">{dateRange}</span>
         </div>
       </div>
 
@@ -75,7 +77,7 @@ const Dashboard = () => {
         ) : null}
       </div>
 
-      <div className="w-full grid grid-cols-7 gap-x-6 mt-5">
+      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5">
         {/* work load section or employee work details */}
         {isEmployee ? (
           <Suspense fallback={<div>Loading Employee Work Details...</div>}>
@@ -92,16 +94,16 @@ const Dashboard = () => {
       {/* Employee Progress Statistics - Only for employees */}
 
       <div
-        className={`w-full grid gap-x-6 mt-5 ${
-          isEmployee ? "grid-cols-1" : "grid-cols-7"
+        className={`w-full grid gap-y-5 md:gap-x-6 mt-5 ${
+          isEmployee ? "grid-cols-1" : " grid-cols-1  md:grid-cols-7"
         }`}
       >
         <div
-          className={`px-4 h-[470px] pb-3 pt-5 flex flex-col rounded-3xl ${
-            isEmployee ? "col-span-1" : "col-span-5"
+          className={`md:px-4 md:h-[470px] pb-3 pt-5 flex flex-col rounded-3xl ${
+            isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
           }`}
         >
-          <div className="flexBetween">
+          <div className="flexBetween w-full ">
             <h4 className="font-semibold text-lg text-gray-800">
               {isEmployee ? "My Projects" : "Projects"}
             </h4>
@@ -114,7 +116,7 @@ const Dashboard = () => {
             </Link>
           </div>
           {/* project list section  */}
-          <div className=" flex flex-col h-full gap-y-3 mt-3">
+          <div className=" flex flex-col h-full gap-y-2 md:gap-y-3 mt-3">
             {projects?.length > 0 ? (
               projects.map((project, index) => (
                 <ProjectCard

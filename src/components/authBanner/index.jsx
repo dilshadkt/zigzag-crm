@@ -2,7 +2,7 @@ import React from "react";
 
 const AuthBanner = () => {
   return (
-    <div className="w-full h-full bg-[#3F8CFF] flexCenter flex-col px-6 ">
+    <div className="w-full hidden  h-full bg-[#3F8CFF] md:flex items-center justify-center flex-col px-6 ">
       <div className="flex flex-col gap-y-7">
         <div className="flexStart pl-7 gap-x-4">
           <img src="/image/logo.svg" alt="" className="w-10" />

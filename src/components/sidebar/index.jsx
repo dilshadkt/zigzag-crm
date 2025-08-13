@@ -7,7 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useRouteAccess } from "../../hooks/useRouteAccess";
 const Sidebar = () => {
   const { user } = useAuth();
-  const { hasAccessToRoute, userPosition } = useRouteAccess();
+  const { userPosition } = useRouteAccess();
   // Filter sidebar items based on user's position allowed routes
   const filteredSidebar = SIDE_MENU.filter((item) => {
     // Company admins have full access to all menu items
@@ -28,15 +28,6 @@ const Sidebar = () => {
     const allowedRoutes = userPosition?.allowedRoutes || [];
     return allowedRoutes.includes(item.routeKey);
   });
-
-  // Debug information (can be removed in production)
-  const debugInfo = {
-    userRole: user?.role,
-    userPosition: userPosition?.name,
-    allowedRoutes: userPosition?.allowedRoutes || [],
-    totalMenuItems: SIDE_MENU.length,
-    accessibleItems: filteredSidebar.length,
-  };
 
   // Additional debug for each menu item
   if (user?.role !== "company-admin") {
@@ -65,11 +56,10 @@ const Sidebar = () => {
   };
   return (
     <section
-      className="flex flex-col min-w-[220px]  my-3 ml-3 justify-between
+      className=" flex-col min-w-[220px] hidden lg:flex  my-3 ml-3 justify-between
      rounded-[24px] bg-white p-3"
     >
       <div className="flex flex-col">
-        {/* <div className="h-[40px] flexCenter "></div> */}
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
             filteredSidebar.map((item, index) => (
@@ -100,29 +90,6 @@ const Sidebar = () => {
             </li>
           )}
         </ul>
-
-        {/* Debug Panel (Development Only) */}
-        {/* {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-2 bg-gray-100 rounded-lg">
-            <button
-              onClick={() => setShowDebug(!showDebug)}
-              className="text-xs text-gray-600 hover:text-gray-800 mb-2"
-            >
-              {showDebug ? 'Hide Debug' : 'Show Debug'}
-            </button>
-            {showDebug && (
-              <div className="text-xs text-gray-600 space-y-1">
-                <div>Role: {debugInfo.userRole}</div>
-                <div>Position: {debugInfo.userPosition || 'None'}</div>
-                <div>Allowed Routes: {debugInfo.allowedRoutes.length}</div>
-                <div>Menu Items: {debugInfo.accessibleItems}/{debugInfo.totalMenuItems}</div>
-                <div className="text-[10px] mt-1">
-                  Routes: {debugInfo.allowedRoutes.join(', ')}
-                </div>
-              </div>
-            )}
-          </div>
-        )} */}
       </div>
 
       <div className="flex flex-col">

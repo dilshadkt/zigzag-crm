@@ -4,15 +4,26 @@ import { Link } from "react-router-dom";
 import PrimaryButton from "../../../components/shared/buttons/primaryButton";
 import { useSignIn } from "../../../hooks/useSignIn";
 import AuthBanner from "../../../components/authBanner";
-
+import logo from "../../../assets/icons/logo.svg";
 const SignIn = () => {
   const { values, errors, touched, handleChange, handleSubmit, isSubmitting } =
     useSignIn();
   return (
-    <section className="w-full h-full bg-white grid grid-cols-2 rounded-3xl overflow-hidden">
+    <section
+      className="w-full h-full bg-[#f4f9fd] md:bg-white grid grid-cols-1 md:grid-cols-2 
+    rounded-3xl overflow-hidden"
+    >
       <AuthBanner />
-      <div className="flexCenter ">
-        <form onSubmit={handleSubmit} className="flex flex-col max-w-md w-full">
+      <div className="flexCenter gap-y-7 md:gap-y-0 flex-col ">
+        <div className="flexCenter gap-x-4">
+          <img src={logo} alt="" />
+          <span className="text-xl text-[#3A89FF]  font-bold">Woorkroom</span>
+        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="flex bg-white shadow-sm md:bg-transparent p-5
+        md:p-0 rounded-3xl md:rounded-none  flex-col max-w-md w-full"
+        >
           <h4 className="text-[22px] font-bold  text-center">
             Sign In to Woorkroom
           </h4>
@@ -67,7 +78,7 @@ const SignIn = () => {
               />
               <Link
                 to={"/auth/register"}
-                className="text-sm  text-[#3F8CFF] font-medium mt-5"
+                className="text-sm  text-[#3F8CFF] font-semibold mt-5"
               >
                 Don’t have an account?
               </Link>

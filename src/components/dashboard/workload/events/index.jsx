@@ -165,7 +165,7 @@ const NearestEvents = () => {
   }
 
   return (
-    <div className="flex h-[470px] flex-col col-span-2 bg-white py-5 px-4 rounded-3xl">
+    <div className="flex h-[470px] flex-col  md:col-span-2 bg-white py-5 px-4 rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Nearest Events</h4>
         <Link

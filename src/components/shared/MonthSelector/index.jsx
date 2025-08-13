@@ -137,7 +137,9 @@ const MonthSelector = ({
       {/* Month Display Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center gap-2 px-2 md:px-4 py-2
+         bg-white border border-gray-300 rounded-lg
+          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <svg
           className="w-4 h-4"
@@ -152,7 +154,7 @@ const MonthSelector = ({
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
-        <span className="font-medium">
+        <span className="font-medium text-xs md:text-base">
           {selectedMonth ? format(currentDate, "MMMM yyyy") : "Select Month"}
         </span>
         {availableMonths.length > 0 && (

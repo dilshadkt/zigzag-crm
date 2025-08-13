@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import NotificationBar from "../notificationBar";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import {
   useGetUnreadNotificationCount,
@@ -14,10 +14,13 @@ import {
   IoTimeOutline,
   IoFingerPrintOutline,
   IoChevronDownOutline,
+  IoLogOutOutline,
 } from "react-icons/io5";
 import { syncTimer, updateTimer } from "../../store/slice/timerSlice";
 import { getUserLocation, getDeviceInfo } from "../../utils/locationUtils";
-
+import logo from "../../assets/icons/logo.svg";
+import { SIDE_MENU } from "../../constants";
+import { useRouteAccess } from "../../hooks/useRouteAccess";
 const DashboardHeader = () => {
   const [isNotifyMenuOpen, setNotifyMenuOpen] = useState(false);
   const [isAttendanceMenuOpen, setAttendanceMenuOpen] = useState(false);
@@ -26,6 +29,7 @@ const DashboardHeader = () => {
   const [attendanceError, setAttendanceError] = useState(null);
   const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
   const [isProcessingAttendance, setIsProcessingAttendance] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useAuth();
   const dispatch = useDispatch();
   const { data: unreadData } = useGetUnreadNotificationCount();
@@ -49,13 +53,14 @@ const DashboardHeader = () => {
     clockInError,
     clockOutError,
   } = useAttendanceManager();
-
+  const { userPosition } = useRouteAccess();
   // Calculate elapsed time for active shift
   const [shiftElapsedTime, setShiftElapsedTime] = useState(0);
 
   // Get timer state from Redux
   const { remainingTime, isRunning } = useSelector((state) => state.timer);
-
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   // Sync timer state on component mount
   useEffect(() => {
     dispatch(syncTimer());
@@ -102,6 +107,26 @@ const DashboardHeader = () => {
       .toString()
       .padStart(2, "0")}`;
   };
+
+  const filteredSidebar = SIDE_MENU.filter((item) => {
+    // Company admins have full access to all menu items
+    if (user?.role === "company-admin") {
+      return true;
+    }
+
+    // Dashboard, Board, and Settings are always accessible to everyone
+    if (
+      item.routeKey === "dashboard" ||
+      item.routeKey === "board" ||
+      item.routeKey === "settings"
+    ) {
+      return true;
+    }
+
+    // For other users, check if the routeKey is in their allowed routes
+    const allowedRoutes = userPosition?.allowedRoutes || [];
+    return allowedRoutes.includes(item.routeKey);
+  });
 
   const formatShiftTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -242,10 +267,15 @@ const DashboardHeader = () => {
     if (hour < 17) return "Good afternoon";
     return "Good evening";
   };
-
+  const handleLogout = () => {
+    navigate("/auth/signin");
+  };
   return (
-    <div className="flexBetween">
-      <div className="relative w-1/3">
+    <div className="  bg-white lg:bg-transparent rounded-xl py-1  md:py-0 flexBetween">
+      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+        <img src={logo} alt="" className="w-10 md:hidden h-10 ml-3" />
+      </button>
+      <div className="hidden lg:block relative w-1/3">
         <input
           type="text"
           className="bg-white py-3 text-sm w-full rounded-[14px] pr-3 pl-11 outline-none"
@@ -307,7 +337,8 @@ const DashboardHeader = () => {
 
         <Link
           to="/sticky-notes"
-          className="flexCenter cursor-pointer w-12 h-12 rounded-[14px] bg-white relative"
+          className=" hidden  lg:flexCenter cursor-pointer w-12 h-12
+           rounded-[14px] bg-white relative"
         >
           <IoDocumentTextOutline className="w-5 h-5 text-gray-600" />
           {stickyNotesCount > 0 && (
@@ -333,7 +364,7 @@ const DashboardHeader = () => {
 
         <Link
           to="/timer"
-          className={`flexCenter cursor-pointer rounded-[14px] bg-white relative transition-all ${
+          className={` hidden lg:flexCenter cursor-pointer rounded-[14px] bg-white relative transition-all ${
             isRunning ? "px-3 h-12" : "w-12 h-12"
           }`}
         >
@@ -372,7 +403,7 @@ const DashboardHeader = () => {
           </div>
           <Link
             to={"/settings"}
-            className="flexStart gap-x-3.5 cursor-pointer"
+            className="  hidden lg:flexStart gap-x-3.5 cursor-pointer"
           >
             <span className="text-sm font-medium ">{user?.firstName}</span>
             <img src="/icons/arrowDown.svg" alt="" className="w-5" />
@@ -497,6 +528,80 @@ const DashboardHeader = () => {
               {isClockingIn || isProcessingAttendance
                 ? "Processing..."
                 : "Cancel"}
+            </button>
+          </div>
+        </div>
+      )}
+      {/* sidebar menu  */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="bg-[#2155A3]/15 fixed w-full h-screen flex p-2 flex-col inset-0 m-auto
+       z-[1000]"
+        >
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="bg-white w-[220px] overflow-hidden flex flex-col justify-between
+         rounded-3xl h-dvh  p-3 "
+          >
+            <div
+              className="flex flex-col
+        "
+            >
+              <img src={logo} alt="" className="w-10" />
+              {/* menu items  */}
+              <ul className="flex flex-col gap-y-1  mt-5 text-[#7D8592] ">
+                {filteredSidebar.length > 0 ? (
+                  filteredSidebar.map((item, index) => (
+                    <li
+                      key={index}
+                      onClick={(e) => {
+                        setIsSidebarOpen(false);
+                        navigate(item.path);
+                      }}
+                      className={` relative cursor-pointer px-2 py-[10px] flexStart
+        gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
+          pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
+        }`}
+                    >
+                      <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
+                      <span
+                        className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
+          transition-all duration-300 text-sm"
+                      >
+                        {item.title}
+                      </span>
+                      <span
+                        className="absolute hidden group-hover:block
+          -right-2.5 h-full w-1 bg-[#3F8CFF]"
+                      ></span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-2 py-[10px] flexStart gap-x-3.5 rounded-[10px] text-[#7D8592] text-[13px]">
+                    <span>No accessible menu items</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+            <button
+              onClick={handleLogout}
+              className={` relative text-[#7D8592] cursor-pointer px-2 py-[10px] flexStart
+        gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] font-semibold group `}
+            >
+              <IoLogOutOutline className="text-lg group-hover:text-[#3F8CFF]" />
+              <span
+                className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
+          transition-all duration-300 text-sm"
+              >
+                Logout
+              </span>
+              <span
+                className="absolute hidden group-hover:block
+          -right-2.5 h-full w-1 bg-[#3F8CFF]"
+              ></span>
             </button>
           </div>
         </div>

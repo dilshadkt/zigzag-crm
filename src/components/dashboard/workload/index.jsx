@@ -10,7 +10,7 @@ const WorkLoad = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="px-4 col-span-5 h-fit bg-white pb-3 pt-5 flex flex-col rounded-3xl">
+    <div className="px-4 md:col-span-5 h-fit bg-white pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Workload</h4>
         {employees.length > 0 && (
@@ -31,7 +31,7 @@ const WorkLoad = () => {
           </div>
         </div>
       ) : employees.length > 0 ? (
-        <div className="w-full h-full grid grid-cols-4 gap-3 mt-3">
+        <div className="w-full h-full grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-3">
           {employees.map((employee, index) => (
             <div
               onClick={() => {
