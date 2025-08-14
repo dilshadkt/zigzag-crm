@@ -52,12 +52,15 @@ const SettingsLayout = () => {
           className={"mt-3 bg-white"}
         />
       </div>
-      <div className="w-full h-full  overflow-hidden gap-x-5  flex">
+      <div
+        className="w-full h-full  md:overflow-hidden gap-x-5  gap-y-5 md:gap-y-0
+       flex flex-col md:flex-row"
+      >
         {/* current project section  */}
         <UserProfile user={user} />
 
         {/* Settings info page  */}
-        <div className="flex-1 overflow-y-auto h-full  gap-y-2  flex flex-col">
+        <div className="flex-1 md:overflow-y-auto h-full  gap-y-2  flex flex-col">
           {!isEmployee && (
             <div className="flexStart gap-x-3 ">
               <FaArrowLeft className=" text-[#3F8CFF] text-lg hover:scale-85 cursor-pointer " />
@@ -74,9 +77,9 @@ const SettingsLayout = () => {
             </div>
           ) : (
             // Admin view - show regular settings
-            <div className=" flex h-full overflow-y-auto  gap-x-5">
+            <div className=" flex flex-col gap-y-5 md:gap-y-0 md:flex-row h-full md:overflow-y-auto  gap-x-5">
               <div
-                className="w-[250px] rounded-3xl
+                className=" w-full md:w-[250px] rounded-3xl
                bg-white p-2 flex flex-col gap-y-1  pt-5"
               >
                 {accessibleSettings.length > 0 ? (
@@ -119,8 +122,8 @@ const SettingsLayout = () => {
                 )}
               </div>
               <div
-                className="flex-1 bg-white p-5 overflow-hidden
-                 flex flex-col h-full
+                className="flex-1 bg-white p-5 md:overflow-hidden
+                 flex flex-col h-fit md:h-full
                rounded-3xl"
               >
                 <Outlet />

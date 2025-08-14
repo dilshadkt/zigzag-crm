@@ -170,7 +170,8 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
 
   return (
     <div
-      className="w-[250px] bg-white overflow-hidden pb-4 h-full text-[#0A1629]
+      className=" w-full md:w-[250px] bg-white md:overflow-hidden
+       pb-4 h-fit md:h-full text-[#0A1629]
 rounded-3xl  flex flex-col "
     >
       <div className="flex flex-col border-b border-[#E4E6E8] p-5">
@@ -229,7 +230,7 @@ rounded-3xl  flex flex-col "
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex h-full flex-col px-5 py-4 overflow-y-auto"
+        className="flex h-full flex-col px-5 py-4 md:overflow-y-auto"
       >
         <div className="flex flex-col gap-y-3">
           <h4 className=" font-medium">Main info</h4>

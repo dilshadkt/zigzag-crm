@@ -227,10 +227,7 @@ const Company = () => {
     isLoading,
     error: positionsError,
   } = useGetPositions(companyId);
-  console.log("Positions data:", positions);
-  console.log("Positions loading:", isLoading);
-  console.log("Positions error:", positionsError);
-  console.log("Company ID:", companyId);
+
   const { mutate: deletePosition } = useDeletePosition(companyId);
   const { mutate: restorePosition } = useRestorePosition(companyId);
   const [showTaskFlowModal, setShowTaskFlowModal] = useState(false);
@@ -332,7 +329,7 @@ const Company = () => {
   };
 
   return (
-    <div className="h-full  overflow-y-auto flex flex-col">
+    <div className="  h-fit md:h-full  md:overflow-y-auto flex flex-col">
       {/* Position Access Info */}
       {/* <div className="px-2 py-2">
         <PositionAccessInfo />
@@ -363,7 +360,7 @@ const Company = () => {
       </div>
 
       {/* Content Section */}
-      <div className="flex-1  overflow-y-auto min-h-[500px]  max-h-[300px] ">
+      <div className="flex-1  md:overflow-y-auto min-h-[500px]  md:max-h-[300px] ">
         {isLoading ? (
           <div className="flex flex-col justify-center items-center h-full bg-white rounded-xl border border-gray-200 shadow-sm">
             <img
@@ -376,7 +373,7 @@ const Company = () => {
         ) : (
           <div
             className="bg-white rounded-xl border border-gray-200 
-          shadow-sm h-full flex flex-col overflow-hidden"
+          shadow-sm h-fit md:h-full flex flex-col overflow-hidden"
           >
             {/* Table Header */}
             <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
@@ -405,7 +402,7 @@ const Company = () => {
             </div>
 
             {/* Scrollable Table Body */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1  h-full md:overflow-y-auto">
               {console.log(
                 "Rendering table with positions:",
                 positions?.positions?.length,
