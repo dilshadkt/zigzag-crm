@@ -28,8 +28,8 @@ const ProjectsShimmer = () => {
           <ShimmerBox className="h-10 w-32 rounded-lg" />
         </div>
 
-        {/* Main Content Grid */}
-        <div className="w-full h-full overflow-hidden gap-x-5 grid grid-cols-5">
+        {/* Main Content Grid - Mobile Responsive */}
+        <div className="w-full h-full overflow-y-auto gap-y-3 md:gap-y-0 md:overflow-hidden md:gap-x-5 grid grid-cols-1 md:grid-cols-5">
           {/* Current Projects Section Shimmer */}
           <div className="col-span-1 bg-white rounded-3xl flex flex-col p-4">
             {/* Header */}
@@ -50,7 +50,7 @@ const ProjectsShimmer = () => {
           </div>
 
           {/* Project Details Section Shimmer */}
-          <div className="col-span-4 flex flex-col space-y-4">
+          <div className="col-span-1 md:col-span-4 flex flex-col space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <ShimmerBox className="h-7 w-16" />

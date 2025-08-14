@@ -559,7 +559,7 @@ const Board = () => {
       {/* Header */}
       <div className="flexBetween">
         <Header>Task Board</Header>
-        <div className="flex gap-3">
+        <div className=" hidden md:flex gap-3">
           <MonthSelector
             selectedMonth={selectedMonth}
             onMonthChange={handleMonthChange}
@@ -678,7 +678,7 @@ const Board = () => {
 
       {/* Board View */}
       <div
-        className="flex h-[calc(100vh-180px)] mt-4 overflow-x-auto 
+        className="flex h-[calc(100vh-180px)] md:mt-4 overflow-x-auto 
       pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
        project-details-scroll"
       >

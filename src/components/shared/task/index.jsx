@@ -74,13 +74,14 @@ const Task = ({
         onDrop={handleDrop}
         onClick={() => handleClick()}
         title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
-        className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md transition-shadow relative ${
-          task?.itemType === "subtask"
-            ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
-            : isExtraTask
-            ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
-            : "bg-white"
-        }`}
+        className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md 
+          transition-shadow relative ${
+            task?.itemType === "subtask"
+              ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+              : isExtraTask
+              ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
+              : "bg-white"
+          }`}
       >
         {/* Subtask Badge */}
         {task?.itemType === "subtask" && (
@@ -203,13 +204,14 @@ const Task = ({
       onDrop={handleDrop}
       onClick={() => handleClick()}
       title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
-      className={`grid grid-cols-10 cursor-pointer gap-x-3 px-5 py-5 rounded-3xl relative ${
-        task?.itemType === "subtask"
-          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
-          : isExtraTask
-          ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
-          : "bg-white"
-      }`}
+      className={`grid gap-y-5 md:gap-y-0 grid-cols-1 md:grid-cols-10 cursor-pointer md:gap-x-3
+         px-5 py-5 rounded-3xl relative ${
+           task?.itemType === "subtask"
+             ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+             : isExtraTask
+             ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
+             : "bg-white"
+         }`}
     >
       {/* Subtask Badge for List View */}
       {task?.itemType === "subtask" && (
@@ -235,38 +237,48 @@ const Task = ({
           </div>
         )}
 
-      <div className="col-span-3 gap-y-1 flex flex-col">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[#91929E]">Task Name</span>
-          {task?.itemType === "subtask" && (
-            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
-              Subtask
-            </span>
-          )}
-          {isExtraTask && (
-            <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
-              Extra
-            </span>
-          )}
-          {task?.isBoardTask &&
-            !task?.project &&
-            !task?.itemType === "subtask" && (
+      <div
+        className="col-span-1  border-b pb-6 border-gray-200 md:border-none
+      md:pb-0 md:col-span-3 flexBetween"
+      >
+        <div className="flex flex-col gap-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[#91929E]">Task Name</span>
+            {task?.itemType === "subtask" && (
               <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                Board
+                Subtask
               </span>
             )}
+            {isExtraTask && (
+              <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                Extra
+              </span>
+            )}
+            {task?.isBoardTask &&
+              !task?.project &&
+              !task?.itemType === "subtask" && (
+                <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                  Board
+                </span>
+              )}
+          </div>
+          <h4
+            className={
+              task?.itemType === "subtask"
+                ? "text-blue-800 font-medium"
+                : isExtraTask
+                ? "text-purple-800 font-medium"
+                : ""
+            }
+          >
+            {task?.title}
+          </h4>
         </div>
-        <h4
-          className={
-            task?.itemType === "subtask"
-              ? "text-blue-800 font-medium"
-              : isExtraTask
-              ? "text-purple-800 font-medium"
-              : ""
-          }
-        >
-          {task?.title}
-        </h4>
+
+        <div className="visible md:hidden">
+          <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+        </div>
+
         {/* Parent Task Info for Subtasks in List View */}
         {task?.itemType === "subtask" && task?.parentTask && (
           <div className="text-xs text-blue-600 mt-1">
@@ -280,7 +292,7 @@ const Task = ({
           </div>
         )}
       </div>
-      <div className="col-span-5  grid grid-cols-4">
+      <div className=" col-span-1  md:col-span-5  grid grid-cols-4">
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Estimate</span>
           <h4>{task?.timeEstimate}h</h4>
@@ -320,7 +332,7 @@ const Task = ({
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-y-1">
+        <div className="md:flex hidden flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Priority</span>
           <div className="flexStart gap-x-1" style={{ color: priorityColor }}>
             <IoArrowUpOutline className="text-lg " />
@@ -328,14 +340,23 @@ const Task = ({
           </div>
         </div>
       </div>
-      <div className="col-span-2  flexBetween">
+      <div className="  col-span-1 md:col-span-2  flexBetween">
+        <div className="flex md:hidden flex-col gap-y-1">
+          <span className="text-sm text-[#91929E]">Priority</span>
+          <div className="flexStart gap-x-1" style={{ color: priorityColor }}>
+            <IoArrowUpOutline className="text-lg " />
+            <span className="text-xs font-medium">{task?.priority}</span>
+          </div>
+        </div>
         <span
           className="bg-[#E0F9F2] text-[#00D097] 
 flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
         >
           {task?.status}
         </span>
-        <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+        <div className="md:flex hidden">
+          <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+        </div>
       </div>
     </div>
   );

@@ -4,7 +4,8 @@ import UserProfile from "../../shared/profile";
 const ListItem = ({ employee, onClick }) => {
   return (
     <div
-      className=" rounded-3xl bg-white py-5 px-7 grid grid-cols-3 cursor-pointer"
+      className=" rounded-3xl bg-white py-5 px-7 grid grid-cols-1 
+      gap-y-5 md:gap-y-0 md:grid-cols-3 cursor-pointer"
       onClick={onClick}
     >
       <UserProfile
@@ -38,7 +39,9 @@ const ListItem = ({ employee, onClick }) => {
             </span>
           </div>
         </div>
-        <PrimaryButton className={"bg-[#F4F9FD]"} icon={"/icons/dot.svg"} />
+        <div className=" hidden md:block">
+          <PrimaryButton className={"bg-[#F4F9FD]"} icon={"/icons/dot.svg"} />
+        </div>
       </div>
     </div>
   );

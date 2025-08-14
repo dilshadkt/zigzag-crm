@@ -134,7 +134,10 @@ const Prjects = () => {
       {hasNoProject ? (
         <NoTask>There are no Projects</NoTask>
       ) : (
-        <div className="w-full h-full  gap-y-3 md:gap-y-0  md:overflow-hidden md:gap-x-5 grid grid-cols-1 md:grid-cols-5">
+        <div
+          className="w-full h-full overflow-y-auto gap-y-3 md:gap-y-0 
+         md:overflow-hidden md:gap-x-5 grid grid-cols-1 md:grid-cols-5"
+        >
           {/* current project section  */}
           <CurrentProject projects={projects} selectProject={selectProject} />
           {/* project detail page  */}

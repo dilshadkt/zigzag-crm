@@ -479,7 +479,7 @@ const ProjectDetails = ({
   );
 
   return (
-    <div className="col-span-4 overflow-hidden flex flex-col">
+    <div className="col-span-4 h-full md:overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flexBetween">
         <h3 className="text-lg font-medium text-gray-800">Tasks</h3>

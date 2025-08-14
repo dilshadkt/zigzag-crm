@@ -2,7 +2,7 @@ import React from "react";
 
 const UserProfile = ({ user }) => {
   return (
-    <div className="flexStart gap-x-3">
+    <div className="flexStart   border-b md:border-none border-gray-200 pb-5 md:pb-0 gap-x-3">
       <div className="w-12 h-12 rounded-full overflow-hidden">
         {user?.profile ? (
           <img

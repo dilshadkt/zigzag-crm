@@ -8,7 +8,7 @@ const CurrentProject = ({ projects, selectProject }) => {
 
   return (
     <div
-      className="col-span-1 w-full  md:bg-white overflow-hidden text-[#0A1629]
+      className="col-span-1 w-full  md:bg-white md:overflow-hidden text-[#0A1629]
  rounded-3xl  flex flex-col "
     >
       <div className=" border-b hidden md:flex items-center justify-center  border-[#E4E6E8] gap-x-2 py-5">

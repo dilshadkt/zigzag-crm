@@ -9,9 +9,13 @@ const EmployeeActivity = ({ employees }) => {
     navigate(`/employees/${employee._id}`);
   };
   return (
-    <div className="w-full h-full gap-5 grid grid-cols-4">
+    <div className=" gap-5 grid grid-cols-1 h-full md:grid-cols-4">
       {employees?.map((employee, index) => (
-        <ActivityCard key={index} employee={employee} onClick={() => handleNavigateToEmployee(employee)} />
+        <ActivityCard
+          key={index}
+          employee={employee}
+          onClick={() => handleNavigateToEmployee(employee)}
+        />
       ))}
     </div>
   );

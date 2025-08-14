@@ -20,17 +20,17 @@ const CalendarDay = ({
 
   return (
     <div
-      className={`min-h-[120px] border border-[#E6EBF5] relative p-1
+      className={`min-h-[60px] md:min-h-[120px] border border-[#E6EBF5] relative p-1
         ${isToday(item.fullDate) ? "bg-blue-50" : ""}
       `}
     >
       {/* Date Number */}
       {item?.date && (
         <div
-          className={`w-6 h-6 rounded-full ${
+          className={` w-4 md:w-6  h-4 md:h-6 rounded-full ${
             isToday(item.fullDate) ? "bg-blue-500 text-white" : "text-gray-600"
           } 
-          text-sm font-medium flexCenter absolute top-1 right-1`}
+          text-xs md:text-sm font-medium flexCenter absolute top-1 right-1`}
         >
           {item.date}
         </div>
@@ -100,26 +100,42 @@ const CalendarDayContent = ({
 
   return (
     <>
-      {/* Display the combined list of birthdays, projects, tasks and subtasks */}
-      {displayItems.map((item) => (
-        <CalendarEventItem
-          key={`${item.type}-${item.idx}`}
-          type={item.type}
-          data={item.data}
-          isEmployee={isEmployee}
-        />
-      ))}
+      {/* Mobile: Show only count */}
+      <div className="md:hidden absolute p-1  inset-0  h-full">
+        {totalItems > 0 && (
+          <div
+            onClick={() => onOpenModal(date)}
+            className="text-xs bg-blue-100/60 w-full h-full text-blue-700 rounded-md px-2 py-1.5 
+                      cursor-pointer hover:bg-blue-200 text-center font-medium"
+          >
+            {totalItems} item{totalItems !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
 
-      {/* Show "more" indicator if needed */}
-      {hasMore && (
-        <div
-          onClick={() => onOpenModal(date)}
-          className="text-xs bg-gray-100 text-gray-700 rounded-md px-2 py-1.5 mt-1 
-                    cursor-pointer hover:bg-gray-200 text-center font-medium"
-        >
-          +{totalItems - MAX_ITEMS_PER_DAY} more
-        </div>
-      )}
+      {/* Desktop: Show detailed items */}
+      <div className="hidden md:block">
+        {/* Display the combined list of birthdays, projects, tasks and subtasks */}
+        {displayItems.map((item) => (
+          <CalendarEventItem
+            key={`${item.type}-${item.idx}`}
+            type={item.type}
+            data={item.data}
+            isEmployee={isEmployee}
+          />
+        ))}
+
+        {/* Show "more" indicator if needed */}
+        {hasMore && (
+          <div
+            onClick={() => onOpenModal(date)}
+            className="text-xs bg-gray-100 text-gray-700 rounded-md px-2 py-1.5 mt-1 
+                      cursor-pointer hover:bg-gray-200 text-center font-medium"
+          >
+            +{totalItems - MAX_ITEMS_PER_DAY} more
+          </div>
+        )}
+      </div>
     </>
   );
 };

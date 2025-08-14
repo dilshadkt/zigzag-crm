@@ -566,7 +566,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   );
 
   return (
-    <div className="col-span-4 overflow-hidden flex flex-col">
+    <div className="col-span-4 md:overflow-hidden flex flex-col">
       <div className="flexBetween">
         <h3 className="text-lg font-medium text-gray-800">Tasks</h3>
         <div className="flex gap-2">

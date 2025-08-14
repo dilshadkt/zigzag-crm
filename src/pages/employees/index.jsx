@@ -86,16 +86,16 @@ const Employees = () => {
   };
 
   return (
-    <section className="flex flex-col h-full gap-y-3">
+    <section className="flex flex-col overflow-y-auto  h-full gap-y-2 md:gap-y-3">
       {/* header  */}
-      <div className="flexBetween ">
+      <div className="flexBetween flex-col md:flex-row ">
         <Header>Employees ({pagination.total})</Header>
         <ButtonToggle
           setValue={setStat}
           value={stat}
           values={["list", "activity"]}
         />
-        <div className="flexEnd gap-x-5">
+        <div className=" hidden md:flex items-center justify-end  gap-x-5">
           <PrimaryButton
             icon={"/icons/filter.svg"}
             className={"bg-white px-2 mt-3 hover:bg-gray-50 transition-colors"}
@@ -110,10 +110,10 @@ const Employees = () => {
         </div>
       </div>
       {/* body part  */}
-      <div className="w-full h-full  overflow-y-auto gap-y-4 mt-3  flex flex-col">
+      <div className="w-full h-full  md:overflow-y-auto gap-y-4 mt-3  flex flex-col">
         {renderStat()}
       </div>
-      <div className="flexEnd">
+      <div className="flex items-center  justify-center  md:justify-end">
         <PageNavigator
           currentPage={currentPage}
           totalPages={pagination.totalPages}

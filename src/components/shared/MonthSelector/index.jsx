@@ -158,13 +158,13 @@ const MonthSelector = ({
           {selectedMonth ? format(currentDate, "MMMM yyyy") : "Select Month"}
         </span>
         {availableMonths.length > 0 && (
-          <span className="text-xs text-gray-500 bg-gray-100 px-1 rounded">
+          <span className="text-xs hidden md:block text-gray-500 bg-gray-100 px-1 rounded">
             {availableMonths.length} month
             {availableMonths.length !== 1 ? "s" : ""}
           </span>
         )}
         <svg
-          className={`w-4 h-4 transition-transform ${
+          className={`w-4 h-4 hidden md:block transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
           fill="none"

@@ -21,7 +21,7 @@ const SignIn = () => {
         </div>
         <form
           onSubmit={handleSubmit}
-          className="flex bg-white shadow-sm md:bg-transparent p-5
+          className="flex bg-white shadow-sm md:shadow-none md:bg-transparent p-5
         md:p-0 rounded-3xl md:rounded-none  flex-col max-w-md w-full"
         >
           <h4 className="text-[22px] font-bold  text-center">

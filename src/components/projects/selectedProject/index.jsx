@@ -40,7 +40,7 @@ const SelectedProject = ({ currentProject }) => {
 
   return (
     <div
-      className="col-span-1 bg-white overflow-y-auto text-[#0A1629]
+      className="col-span-1  bg-white md:overflow-y-auto text-[#0A1629]
 rounded-3xl  flex flex-col  p-4"
     >
       <div className="flex flex-col overflow-y-auto">

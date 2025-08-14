@@ -27,7 +27,7 @@ const CalendarGrid = ({
       </div>
 
       {/* Calendar Grid */}
-      <div className="w-full h-full overflow-y-auto grid grid-cols-7">
+      <div className="w-full md:h-full overflow-y-auto grid grid-cols-7 ">
         {calendarDays.map((item, index) => (
           <CalendarDay
             key={index}

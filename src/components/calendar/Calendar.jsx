@@ -109,7 +109,7 @@ const Calendar = () => {
         className="w-full h-full  flex flex-col overflow-hidden
        bg-white rounded-3xl"
       >
-        <div className="min-h-[48px] relative w-full flexEnd border-b border-[#E6EBF5]">
+        <div className="min-h-[48px] relative w-full flexCenter md:flexEnd border-b border-[#E6EBF5]">
           {/* Calendar Header */}
           <CalendarHeader
             currentDate={currentDate}
@@ -120,15 +120,17 @@ const Calendar = () => {
           />
 
           {/* Event Type Filters */}
-          <EventFilters
-            eventFilters={eventFilters}
-            onToggleFilter={toggleEventFilter}
-            assignerFilter={assignerFilter}
-            onAssignerFilterChange={handleAssignerFilterChange}
-            projectFilter={projectFilter}
-            onProjectFilterChange={handleProjectFilterChange}
-            calendarData={calendarData}
-          />
+          <div className="hidden md:flex">
+            <EventFilters
+              eventFilters={eventFilters}
+              onToggleFilter={toggleEventFilter}
+              assignerFilter={assignerFilter}
+              onAssignerFilterChange={handleAssignerFilterChange}
+              projectFilter={projectFilter}
+              onProjectFilterChange={handleProjectFilterChange}
+              calendarData={calendarData}
+            />
+          </div>
         </div>
         {/* Calendar Grid */}
         <CalendarGrid

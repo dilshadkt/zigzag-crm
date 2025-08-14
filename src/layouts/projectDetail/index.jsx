@@ -73,11 +73,11 @@ const ProjectDetailLayout = () => {
   };
 
   return (
-    <section className="flex flex-col h-full gap-y-1">
+    <section className="flex flex-col overflow-y-auto  h-full gap-y-1">
       <div className="flexBetween   mb-2">
-        <div className="flex gap-x-2 items-center">
+        <div className="flex md:gap-x-2 items-center">
           <div
-            className=" cursor-pointer w-10 h-10
+            className=" cursor-pointer w-5 md:w-10 h-5 md:h-10
            rounded-full translate-y-0.5 flex items-center
             justify-center hover:bg-white"
           >
@@ -94,16 +94,18 @@ const ProjectDetailLayout = () => {
               activeProject={projectData}
             />
           )}
-          <PrimaryButton
-            disable={!isCompany}
-            className={" px-5 text-white"}
-            title={"Add Task"}
-            icon={"/icons/add.svg"}
-            onclick={() => setShowModalTask(true)}
-          />
+          <div className="hidden md:block">
+            <PrimaryButton
+              disable={!isCompany}
+              className={" px-5 text-white"}
+              title={"Add Task"}
+              icon={"/icons/add.svg"}
+              onclick={() => setShowModalTask(true)}
+            />
+          </div>
         </div>
       </div>
-      <div className="w-full h-full  overflow-hidden gap-x-5  grid grid-cols-5">
+      <div className="w-full h-full  gap-y-6 md:gap-y-0 overflow-y-auto md:overflow-hidden md:gap-x-5  grid grid-cols-1 md:grid-cols-5">
         {/* current project section  */}
         <SelectedProject currentProject={projectData} />
         {/* project overview page  */}
