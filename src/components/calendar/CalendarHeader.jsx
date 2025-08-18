@@ -10,7 +10,7 @@ const CalendarHeader = ({
   isLoading,
 }) => {
   return (
-    <div className="flexCenter md:absolute w-fit left-10 gap-x-8">
+    <div className="flex items-center justify-center md:absolute w-fit left-10 gap-x-8">
       <button
         onClick={onPrevMonth}
         className="h-8 w-8 rounded-full cursor-pointer hover:bg-gray-100 flexCenter transition-all duration-200"

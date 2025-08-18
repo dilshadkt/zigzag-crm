@@ -109,7 +109,7 @@ const Calendar = () => {
         className="w-full h-full  flex flex-col overflow-hidden
        bg-white rounded-3xl"
       >
-        <div className="min-h-[48px] relative w-full flexCenter md:flexEnd border-b border-[#E6EBF5]">
+        <div className="min-h-[48px] relative w-full flex items-center justify-center md:justify-end border-b border-[#E6EBF5]">
           {/* Calendar Header */}
           <CalendarHeader
             currentDate={currentDate}
