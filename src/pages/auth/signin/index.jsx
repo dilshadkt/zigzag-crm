@@ -50,7 +50,9 @@ const SignIn = () => {
               />
               {errors.general && (
                 <p className="text-red-500 mt-2 text-xs font-medium">
-                  {errors.general}
+                  {typeof errors.general === "string"
+                    ? errors.general
+                    : errors.general?.message || "An error occurred"}
                 </p>
               )}
             </div>

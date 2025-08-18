@@ -26,7 +26,8 @@ export const signIn = async (data) => {
   } catch (error) {
     return {
       success: false,
-      message: error || "Login failed",
+      message:
+        error?.response?.data?.message || error?.message || "Login failed",
       user: null,
     };
   }
