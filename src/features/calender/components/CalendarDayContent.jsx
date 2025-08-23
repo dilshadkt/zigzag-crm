@@ -1,62 +1,6 @@
 import React from "react";
-import { isSameDay } from "date-fns";
 import CalendarEventItem from "./CalendarEventItem";
-
-// Maximum number of items to display per day before showing a "more" indicator
-const MAX_ITEMS_PER_DAY = 2;
-
-const CalendarDay = ({
-  item,
-  calendarData,
-  isLoading,
-  onOpenModal,
-  isEmployee,
-}) => {
-  // Determine if a date is today
-  const isToday = (date) => {
-    if (!date) return false;
-    return isSameDay(date, new Date());
-  };
-
-  return (
-    <div
-      className={`min-h-[60px] md:min-h-[120px] border border-[#E6EBF5] relative p-1
-        ${isToday(item.fullDate) ? "bg-blue-50" : ""}
-      `}
-    >
-      {/* Date Number */}
-      {item?.date && (
-        <div
-          className={` w-4 md:w-6  h-4 md:h-6 rounded-full ${
-            isToday(item.fullDate) ? "bg-blue-500 text-white" : "text-gray-600"
-          } 
-          text-xs md:text-sm font-medium flexCenter absolute top-1 right-1`}
-        >
-          {item.date}
-        </div>
-      )}
-
-      {/* Projects, Tasks and Birthdays for this date */}
-      {item?.fullDate && (
-        <div className="w-[88%] flex flex-col gap-1 pr-1">
-          {isLoading ? (
-            <div className="animate-pulse">
-              <div className="h-6 bg-gray-200 rounded-md mb-1"></div>
-              <div className="h-6 bg-gray-200 rounded-md"></div>
-            </div>
-          ) : (
-            <CalendarDayContent
-              date={item.fullDate}
-              calendarData={calendarData}
-              onOpenModal={onOpenModal}
-              isEmployee={isEmployee}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
+import { MAX_ITEMS_PER_DAY } from "../constants";
 
 const CalendarDayContent = ({
   date,
@@ -114,7 +58,7 @@ const CalendarDayContent = ({
       </div>
 
       {/* Desktop: Show detailed items */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex flex-col gap-y-1">
         {/* Display the combined list of birthdays, projects, tasks and subtasks */}
         {displayItems.map((item) => (
           <CalendarEventItem
@@ -129,7 +73,7 @@ const CalendarDayContent = ({
         {hasMore && (
           <div
             onClick={() => onOpenModal(date)}
-            className="text-xs bg-gray-100 text-gray-700 rounded-md px-2 py-1.5 mt-1 
+            className="text-xs bg-gray-100 text-gray-700 rounded-md px-2 py-1.5 
                       cursor-pointer hover:bg-gray-200 text-center font-medium"
           >
             +{totalItems - MAX_ITEMS_PER_DAY} more
@@ -140,4 +84,4 @@ const CalendarDayContent = ({
   );
 };
 
-export default CalendarDay;
+export default CalendarDayContent;

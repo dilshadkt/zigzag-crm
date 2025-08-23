@@ -7,7 +7,7 @@ import {
   MdPerson,
 } from "react-icons/md";
 import { IoChevronDown } from "react-icons/io5";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 
 const EventFilters = ({
   eventFilters,

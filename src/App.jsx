@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import DashboardLayout from "./layouts/dashboard";
 import Dashboard from "./pages/dashboard";
-import Calender from "./pages/calender";
+// import Calender from "./pages/calender";
 import Vacations from "./pages/vacations";
 import Employees from "./pages/employees";
 import Messenger from "./pages/messenger";
@@ -55,6 +55,7 @@ import ActivityStreamPage from "./pages/activityStream";
 import EmployeeSubTasks from "./pages/employeeSubTasks/EmployeeSubTasks";
 import TaskDetailPage from "./pages/taskDetail";
 import TaskOnReview from "./pages/taskOnReview";
+import Calendar from "./features/calender";
 
 function App() {
   const dispatch = useDispatch();
@@ -175,7 +176,7 @@ function App() {
             <Route path="tasks/:taskId" element={<TaskDetailLayout />}>
               <Route index element={<TaskDetailPage />} />
             </Route>
-            <Route path="calender" element={<Calender />} />
+            <Route path="calender" element={<Calendar />} />
             <Route path="vacations" element={<Vacations />} />
             <Route path="employees" element={<Employees />} />
             <Route path="employees/:employeeId" element={<EmployeeDetails />} />
@@ -244,14 +245,7 @@ function App() {
                 </WithRoleAcess>
               }
             />
-            <Route
-              path="board"
-              element={
-                // <WithRoleAcess allowedRoles={["employee"]}>
-                <Board />
-                // </WithRoleAcess>
-              }
-            />
+            <Route path="board" element={<Board />} />
             <Route
               path="settings"
               element={

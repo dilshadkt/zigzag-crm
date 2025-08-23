@@ -8,16 +8,30 @@ import {
 } from "date-fns";
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { useCalendarData } from "../../hooks/useCalendarData";
-import CalendarHeader from "./CalendarHeader";
-import EventFilters from "./EventFilters";
-import EventsModal from "./EventsModal";
-import CalendarGrid from "./CalendarGrid";
+import { useCalendarDataOptimized } from "./hooks/useCalendarDataOptimized";
+import {
+  CalendarGrid,
+  CalendarHeader,
+  EventFilters,
+  EventsModal,
+} from "./components";
+import AddTask from "../../components/projects/addTask";
+import {
+  useCreateTaskFromBoard,
+  useGetAllEmployees,
+  useCompanyProjects,
+} from "../../api/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { uploadSingleFile } from "../../api/service";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
+import { getCurrentMonthKey } from "../../lib/dateUtils";
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState(null);
+  const [showModalTask, setShowModalTask] = useState(false);
+  const [selectedDateForTask, setSelectedDateForTask] = useState(null);
   const [eventFilters, setEventFilters] = useState({
     tasks: true,
     subtasks: true,
@@ -28,10 +42,23 @@ const Calendar = () => {
   const [projectFilter, setProjectFilter] = useState(null);
 
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const isEmployee = user?.role === "employee";
 
-  // Custom hook to manage calendar data
-  const { calendarData, isLoading } = useCalendarData(
+  // Get projects and employees data for AddTask modal
+  const { data: projectsData } = useCompanyProjects(user?.company);
+  const { data: employeesData } = useGetAllEmployees();
+
+  // Task creation hook
+  const { mutate: createTask, isLoading: isCreatingTask } =
+    useCreateTaskFromBoard(() => {
+      setShowModalTask(false);
+      // Refresh calendar data after task creation
+      queryClient.invalidateQueries(["calendarData"]);
+    });
+
+  // Custom hook to manage calendar data (optimized with single API call)
+  const { calendarData, isLoading } = useCalendarDataOptimized(
     currentDate,
     eventFilters,
     assignerFilter,
@@ -103,11 +130,66 @@ const Calendar = () => {
     setSelectedDayData(null);
   };
 
+  // Handle menu item click from calendar day
+  const handleMenuItemClick = (action, date) => {
+    if (action === "create-task") {
+      setSelectedDateForTask(date);
+      setShowModalTask(true);
+    }
+    // Add other actions here as needed
+  };
+
+  // Handle add task
+  const handleAddTask = async (values, { resetForm }) => {
+    try {
+      const updatedValues = cleanTaskData(values);
+      updatedValues.creator = user?._id;
+
+      // Set the selected date as the start date if no start date is provided
+      if (selectedDateForTask && !values.startDate) {
+        updatedValues.startDate = format(selectedDateForTask, "yyyy-MM-dd");
+      }
+
+      // Process attachments if any
+      if (values?.attachments && values.attachments.length > 0) {
+        const processedAttachments = await processAttachments(
+          values.attachments,
+          uploadSingleFile
+        );
+        updatedValues.attachments = processedAttachments;
+      }
+
+      // Handle project field
+      if (values.project === "other" || !values.project) {
+        updatedValues.project = null;
+        // Remove project-specific fields for "Other" project
+        delete updatedValues.taskGroup;
+        delete updatedValues.extraTaskWorkType;
+        delete updatedValues.taskFlow;
+      }
+
+      // Create the task
+      createTask(updatedValues, {
+        onSuccess: () => {
+          resetForm();
+          setSelectedDateForTask(null);
+        },
+        onError: (error) => {
+          console.error("Failed to create task:", error);
+          alert("Failed to create task. Please try again.");
+        },
+      });
+    } catch (error) {
+      console.error("Error processing task data:", error);
+      alert("Failed to process task data. Please try again.");
+    }
+  };
+
   return (
-    <section className="flex flex-col h-full">
+    <section className="flex flex-col  h-full">
       <div
         className="w-full h-full  flex flex-col overflow-hidden
-       bg-white rounded-3xl"
+         bg-white rounded-3xl"
       >
         <div className="min-h-[48px] relative w-full flex items-center justify-center md:justify-end border-b border-[#E6EBF5]">
           {/* Calendar Header */}
@@ -138,6 +220,7 @@ const Calendar = () => {
           calendarData={calendarData}
           isLoading={isLoading}
           onOpenModal={openEventsModal}
+          onMenuItemClick={handleMenuItemClick}
           isEmployee={isEmployee}
         />
       </div>
@@ -149,6 +232,26 @@ const Calendar = () => {
         onClose={closeModal}
         calendarData={calendarData}
         isEmployee={isEmployee}
+      />
+
+      {/* Add Task Modal */}
+      <AddTask
+        isOpen={showModalTask}
+        setShowModalTask={setShowModalTask}
+        projects={projectsData || []}
+        onSubmit={handleAddTask}
+        teams={employeesData?.employees || []}
+        selectedMonth={getCurrentMonthKey()}
+        isLoading={isCreatingTask}
+        showProjectSelection={true}
+        initialValues={
+          selectedDateForTask
+            ? {
+                startDate: format(selectedDateForTask, "yyyy-MM-dd"),
+                dueDate: format(selectedDateForTask, "yyyy-MM-dd"),
+              }
+            : {}
+        }
       />
     </section>
   );

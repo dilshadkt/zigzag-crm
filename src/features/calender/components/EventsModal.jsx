@@ -48,14 +48,16 @@ const EventsModal = ({
                 <FaGift className="text-purple-500" />
                 Birthdays ({birthdays.length})
               </h4>
-              {birthdays.map((birthday, idx) => (
-                <CalendarEventItem
-                  key={`modal-birthday-${idx}`}
-                  type="birthday"
-                  data={birthday}
-                  isEmployee={isEmployee}
-                />
-              ))}
+              <div className="flex flex-col gap-y-1">
+                {birthdays.map((birthday, idx) => (
+                  <CalendarEventItem
+                    key={`modal-birthday-${idx}`}
+                    type="birthday"
+                    data={birthday}
+                    isEmployee={isEmployee}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
@@ -65,14 +67,16 @@ const EventsModal = ({
               <h4 className="text-sm font-medium text-gray-700 mb-2">
                 Project Deadlines ({projects.length})
               </h4>
-              {projects.map((project, idx) => (
-                <CalendarEventItem
-                  key={`modal-project-${idx}`}
-                  type="project"
-                  data={project}
-                  isEmployee={isEmployee}
-                />
-              ))}
+              <div className="flex flex-col gap-y-1">
+                {projects.map((project, idx) => (
+                  <CalendarEventItem
+                    key={`modal-project-${idx}`}
+                    type="project"
+                    data={project}
+                    isEmployee={isEmployee}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
@@ -82,15 +86,17 @@ const EventsModal = ({
               <h4 className="text-sm font-medium text-gray-700 mb-2">
                 Task Due Dates ({tasks.length})
               </h4>
-              {tasks.map((task, idx) => (
-                <CalendarEventItem
-                  showExtraDetails={true}
-                  key={`modal-task-${idx}`}
-                  type="task"
-                  data={task}
-                  isEmployee={isEmployee}
-                />
-              ))}
+              <div className="flex flex-col gap-y-1">
+                {tasks.map((task, idx) => (
+                  <CalendarEventItem
+                    showExtraDetails={true}
+                    key={`modal-task-${idx}`}
+                    type="task"
+                    data={task}
+                    isEmployee={isEmployee}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
@@ -101,15 +107,17 @@ const EventsModal = ({
                 <MdSubdirectoryArrowRight className="text-green-600" />
                 Subtask Due Dates ({subtasks.length})
               </h4>
-              {subtasks.map((subtask, idx) => (
-                <CalendarEventItem
-                  showExtraDetails={true}
-                  key={`modal-subtask-${idx}`}
-                  type="subtask"
-                  data={subtask}
-                  isEmployee={isEmployee}
-                />
-              ))}
+              <div className="flex flex-col gap-y-1">
+                {subtasks.map((subtask, idx) => (
+                  <CalendarEventItem
+                    showExtraDetails={true}
+                    key={`modal-subtask-${idx}`}
+                    type="subtask"
+                    data={subtask}
+                    isEmployee={isEmployee}
+                  />
+                ))}
+              </div>
             </div>
           )}
 

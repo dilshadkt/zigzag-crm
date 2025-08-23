@@ -1,5 +1,4 @@
 import React from "react";
-import { isSameDay } from "date-fns";
 import CalendarDay from "./CalendarDay";
 
 const CalendarGrid = ({
@@ -7,6 +6,7 @@ const CalendarGrid = ({
   calendarData,
   isLoading,
   onOpenModal,
+  onMenuItemClick,
   isEmployee,
 }) => {
   // Day name headers for the calendar
@@ -28,16 +28,23 @@ const CalendarGrid = ({
 
       {/* Calendar Grid */}
       <div className="w-full md:h-full overflow-y-auto grid grid-cols-7 ">
-        {calendarDays.map((item, index) => (
-          <CalendarDay
-            key={index}
-            item={item}
-            calendarData={calendarData}
-            isLoading={isLoading}
-            onOpenModal={onOpenModal}
-            isEmployee={isEmployee}
-          />
-        ))}
+        {calendarDays.map((item, index) => {
+          // Calculate week index (0 for first week, 1 for second week, etc.)
+          const weekIndex = Math.floor(index / 7);
+
+          return (
+            <CalendarDay
+              key={index}
+              item={item}
+              calendarData={calendarData}
+              isLoading={isLoading}
+              onOpenModal={onOpenModal}
+              onMenuItemClick={onMenuItemClick}
+              isEmployee={isEmployee}
+              weekIndex={weekIndex}
+            />
+          );
+        })}
       </div>
     </>
   );

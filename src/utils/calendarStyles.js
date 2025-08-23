@@ -61,6 +61,14 @@ const subtaskColors = {
   dot: "bg-green-500",
 };
 
+// Colors for extra tasks (tasks without project)
+const extraTaskColors = {
+  bg: "bg-red-50",
+  text: "text-red-800",
+  border: "border-red-300",
+  dot: "bg-indigo-500",
+};
+
 // Default color for projects with undefined priority
 const defaultColor = {
   bg: "bg-blue-50",
@@ -77,6 +85,11 @@ export const getProjectStyle = (priority) => {
 
 // Get styling for tasks based on status
 export const getTaskStyle = (task) => {
+  // Check if this is an extra task (no project)
+  if (!task.project) {
+    return extraTaskColors;
+  }
+
   // First try to get style by status
   const statusStyle = statusColors[task.status] || statusColors.todo;
 
@@ -94,6 +107,15 @@ export const getBirthdayStyle = () => {
 };
 
 // Get subtask styling
-export const getSubtaskStyle = () => {
+export const getSubtaskStyle = (subtask) => {
+  // Check if this is an extra subtask (no project)
+  if (subtask && !subtask.project) {
+    return extraTaskColors;
+  }
   return subtaskColors;
+};
+
+// Get extra task styling
+export const getExtraTaskStyle = () => {
+  return extraTaskColors;
 };

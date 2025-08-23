@@ -15,7 +15,7 @@ const SignIn = () => {
     >
       <AuthBanner />
       <div className="flexCenter gap-y-7 md:gap-y-0 flex-col ">
-        <div className="flexCenter gap-x-4">
+        <div className=" flex md:hidden items-center justify-center  gap-x-4">
           <img src={logo} alt="" />
           <span className="text-xl text-[#3A89FF]  font-bold">Woorkroom</span>
         </div>

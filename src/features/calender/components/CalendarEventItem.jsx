@@ -1,14 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaGift } from "react-icons/fa";
-import { MdSubdirectoryArrowRight } from "react-icons/md";
 import {
   getProjectStyle,
   getTaskStyle,
   getBirthdayStyle,
   getSubtaskStyle,
-} from "../../utils/calendarStyles";
-import { truncateText } from "../../utils/textUtils";
+  getExtraTaskStyle,
+} from "../../../utils/calendarStyles";
+import { truncateText } from "../../../utils/textUtils";
 
 const CalendarEventItem = ({ type, data, showExtraDetails = false }) => {
   const navigate = useNavigate();
@@ -26,7 +26,13 @@ const CalendarEventItem = ({ type, data, showExtraDetails = false }) => {
       taskId = task._id;
     }
 
-    navigate(`/projects/${projectId}/${taskId}`);
+    // Handle navigation for extra tasks (tasks without project)
+    if (projectId) {
+      navigate(`/projects/${projectId}/${taskId}`);
+    } else {
+      // For extra tasks without project, navigate to task details directly
+      navigate(`/tasks/${taskId}`);
+    }
   };
 
   switch (type) {
@@ -114,6 +120,7 @@ const ProjectItem = ({ project, navigate }) => {
 
 const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
   const colorStyle = getTaskStyle(task);
+  const isExtraTask = !task.project;
   const statusText =
     {
       todo: "To Do",
@@ -124,12 +131,18 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
   return (
     <div
       onClick={() => onNavigate(task)}
-      className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${colorStyle.border} border 
+      className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${
+        colorStyle.border
+      } border-2
       rounded-md px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all 
-      duration-200 relative overflow-hidden mt-1`}
-      title={`Task: ${task.title} (${
+      duration-200 relative overflow-hidden ${
+        isExtraTask ? "border-dashed" : ""
+      }`}
+      title={`${isExtraTask ? "Extra Task" : "Task"}: ${task.title} (${
         task.priority || "medium"
-      } priority) - Status: ${statusText} - Project: ${task.project?.name}`}
+      } priority) - Status: ${statusText}${
+        task.project ? ` - Project: ${task.project.name}` : " - No Project"
+      }`}
     >
       <div className="flex items-center justify-between gap-1.5 relative z-10">
         <div className="flexStart gap-x-1">
@@ -164,10 +177,15 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
                   {task?.parentTask?.taskGroup}
                 </span>
               )}
+              {isExtraTask && (
+                <span className="text-[10px] text-indigo-600 font-medium capitalize bg-indigo-100 px-1 rounded-sm flexCenter">
+                  Extra
+                </span>
+              )}
             </div>
             {showExtraDetails && (
               <span className="truncate text-gray-400 text-xs flex-1">
-                {truncateText(task?.project?.name)}
+                {isExtraTask ? "No Project" : truncateText(task?.project?.name)}
               </span>
             )}
           </div>
@@ -202,7 +220,8 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
 };
 
 const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
-  const colorStyle = getSubtaskStyle();
+  const colorStyle = getSubtaskStyle(subtask);
+  const isExtraSubtask = !subtask.project;
   const statusText =
     {
       todo: "To Do",
@@ -213,10 +232,20 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
   return (
     <div
       onClick={() => onNavigate(subtask)}
-      className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${colorStyle.border} border 
+      className={`text-xs ${colorStyle.bg} ${colorStyle.text} ${
+        colorStyle.border
+      } border-2
       rounded-md px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all 
-      duration-200 relative overflow-hidden mt-1`}
-      title={`Subtask: ${subtask.title} - Status: ${statusText} - Parent: ${subtask.parentTask?.title} - Project: ${subtask.project?.name}`}
+      duration-200 relative overflow-hidden ${
+        isExtraSubtask ? "border-dashed" : ""
+      }`}
+      title={`${isExtraSubtask ? "Extra Subtask" : "Subtask"}: ${
+        subtask.title
+      } - Status: ${statusText} - Parent: ${subtask.parentTask?.title}${
+        subtask.project
+          ? ` - Project: ${subtask.project.name}`
+          : " - No Project"
+      }`}
     >
       <div className="flex items-center justify-between gap-1.5 relative z-10">
         <div className="flexStart gap-x-1">
@@ -252,6 +281,11 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
               {showExtraDetails && (
                 <span className="text-[10px] text-green-600 font-medium capitalize bg-green-100 px-1 rounded-sm flexCenter">
                   Subtask
+                </span>
+              )}
+              {isExtraSubtask && (
+                <span className="text-[10px] text-indigo-600 font-medium capitalize bg-indigo-100 px-1 rounded-sm flexCenter">
+                  Extra
                 </span>
               )}
             </div>
@@ -308,7 +342,7 @@ const BirthdayItem = ({ employee }) => {
         getBirthdayStyle().border
       } border 
       rounded-md cursor-pointer hover:shadow-sm transition-all 
-      duration-200 relative overflow-hidden mt-1`}
+      duration-200 relative overflow-hidden `}
       title={`Happy ${employee.age}th Birthday to ${employee.firstName} ${
         employee.lastName || ""
       }!`}
