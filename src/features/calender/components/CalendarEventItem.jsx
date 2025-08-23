@@ -292,7 +292,9 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
             {showExtraDetails && (
               <div className="flex flex-col gap-y-0.5">
                 <span className="truncate text-gray-400 text-xs flex-1">
-                  {truncateText(subtask?.project?.name)}
+                  {isExtraSubtask
+                    ? "No Project"
+                    : truncateText(subtask?.project?.name)}
                 </span>
                 <span className="truncate text-green-600 text-xs flex-1">
                   Parent: {truncateText(subtask?.parentTask?.title)}
