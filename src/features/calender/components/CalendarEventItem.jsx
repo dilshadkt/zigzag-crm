@@ -177,11 +177,6 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
                   {task?.parentTask?.taskGroup}
                 </span>
               )}
-              {isExtraTask && (
-                <span className="text-[10px] text-indigo-600 font-medium capitalize bg-indigo-100 px-1 rounded-sm flexCenter">
-                  Extra
-                </span>
-              )}
             </div>
             {showExtraDetails && (
               <span className="truncate text-gray-400 text-xs flex-1">
