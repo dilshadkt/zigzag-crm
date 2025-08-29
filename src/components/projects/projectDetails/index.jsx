@@ -22,11 +22,11 @@ const statusConfig = {
     color: "bg-blue-100 text-blue-800",
     allowedForAll: true,
   },
-  completed: {
-    title: "Completed",
-    color: "bg-green-100 text-green-800",
-    allowedForAll: true,
-  },
+  // completed: {
+  //   title: "Completed",
+  //   color: "bg-green-100 text-green-800",
+  //   allowedForAll: true,
+  // },
   "on-review": {
     title: "On Review",
     color: "bg-purple-100 text-purple-800",
@@ -543,7 +543,7 @@ const ProjectDetails = ({
         <div className="flex flex-col h-full gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
           {renderSection("Active Tasks", activeTasks)}
           {renderSection("Progress", progressTasks)}
-          {renderSection("Completed", completedTasks)}
+          {/* {renderSection("Completed", completedTasks)} */}
           {renderSection("On Review", tasksByStatus["on-review"])}
           {renderSection("On Hold", tasksByStatus["on-hold"])}
           {renderSection("Re-work", tasksByStatus["re-work"])}

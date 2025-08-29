@@ -22,11 +22,11 @@ const statusConfig = {
     color: "bg-blue-100 text-blue-800",
     allowedForAll: true,
   },
-  completed: {
-    title: "Completed",
-    color: "bg-green-100 text-green-800",
-    allowedForAll: true,
-  },
+  // completed: {
+  //   title: "Completed",
+  //   color: "bg-green-100 text-green-800",
+  //   allowedForAll: true,
+  // },
   "on-review": {
     title: "On Review",
     color: "bg-purple-100 text-purple-800",
@@ -335,7 +335,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const employeeAllowedStatuses = [
     "todo",
     "in-progress",
-    "completed",
+    // "completed",
     "on-review",
   ];
 
@@ -550,7 +550,10 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
 
   const renderListSection = (title, tasks) => (
     <>
-      <div className="min-h-10 font-medium sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
+      <div
+        className="min-h-10 font-medium sticky top-0 z-50
+       text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter"
+      >
         {title}
       </div>
       {tasks?.map((task, index) => (
@@ -688,7 +691,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
         <div className="flex flex-col h-full pb-5 gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
           {renderListSection("Active Tasks", activeTasks)}
           {renderListSection("Progress", progressTasks)}
-          {renderListSection("Completed", completedTasks)}
+          {/* {renderListSection("Completed", completedTasks)} */}
           {renderListSection("On Review", tasksByStatus["on-review"])}
           {renderListSection("On Hold", tasksByStatus["on-hold"])}
           {renderListSection("Re-work", tasksByStatus["re-work"])}

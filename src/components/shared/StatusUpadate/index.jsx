@@ -4,11 +4,16 @@ import { useUpdateTaskById } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 
 // Status options for different user roles
-const employeeStatusOptions = ["todo", "in-progress", "completed", "on-review"];
+const employeeStatusOptions = [
+  "todo",
+  "in-progress",
+  // "completed",
+  "on-review",
+];
 const adminStatusOptions = [
   "todo",
   "in-progress",
-  "completed",
+  // "completed",
   "on-review",
   "on-hold",
   "re-work",

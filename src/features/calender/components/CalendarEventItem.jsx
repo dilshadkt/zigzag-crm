@@ -158,7 +158,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
               {task?.project?.thumbImg ? (
                 <img src={task?.project?.thumbImg} alt="" />
               ) : (
-                task.project.name.slice(0, 1)
+                task?.project?.name?.slice(0, 1)
               )}
             </span>
           )}
