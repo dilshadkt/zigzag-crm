@@ -30,10 +30,10 @@ const statusConfig = {
     title: "In Progress",
     color: "bg-blue-100 text-blue-800",
   },
-  completed: {
-    title: "Completed",
-    color: "bg-green-100 text-green-800",
-  },
+  // completed: {
+  //   title: "Completed",
+  //   color: "bg-green-100 text-green-800",
+  // },
   "on-review": {
     title: "On Review",
     color: "bg-purple-100 text-purple-800",
