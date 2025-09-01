@@ -15,11 +15,11 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
       label: "In Progress",
       color: "bg-blue-100 text-blue-800",
     },
-    {
-      value: "completed",
-      label: "Completed",
-      color: "bg-green-100 text-green-800",
-    },
+    // {
+    //   value: "completed",
+    //   label: "Completed",
+    //   color: "bg-green-100 text-green-800",
+    // },
     {
       value: "on-review",
       label: "On Review",
@@ -35,11 +35,11 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
       label: "In Progress",
       color: "bg-blue-100 text-blue-800",
     },
-    {
-      value: "completed",
-      label: "Completed",
-      color: "bg-green-100 text-green-800",
-    },
+    // {
+    //   value: "completed",
+    //   label: "Completed",
+    //   color: "bg-green-100 text-green-800",
+    // },
     {
       value: "on-review",
       label: "On Review",
