@@ -93,7 +93,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
               today.getMonth(),
               today.getDate()
             );
-            return dueDateStart < todayStart && task.status !== "completed";
+            return dueDateStart < todayStart && task.status !== "approved";
           });
           break;
         case "in-progress":
