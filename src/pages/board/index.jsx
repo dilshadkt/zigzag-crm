@@ -260,7 +260,8 @@ const Board = () => {
 
   const { data: companyTasksData, isLoading: isLoadingCompanyTasks } =
     useGetAllCompanyTasks(
-      user?.role === "company-admin" ? user?.company : null
+      user?.role === "company-admin" ? user?.company : null,
+      selectedMonth
     );
 
   // Use different project hooks based on user role
@@ -287,7 +288,11 @@ const Board = () => {
 
       // Refresh the appropriate query based on user role
       if (user?.role === "company-admin") {
-        queryClient.invalidateQueries(["companyTasks", user?.company]);
+        queryClient.invalidateQueries([
+          "allCompanyTasks",
+          user?.company,
+          selectedMonth,
+        ]);
       } else {
         queryClient.invalidateQueries(["employeeTasks", user?._id]);
       }
@@ -334,7 +339,11 @@ const Board = () => {
       // Refresh if it's a task-related notification
       if (data.type === "task_review" || data.type === "task_updated") {
         if (user?.role === "company-admin") {
-          queryClient.invalidateQueries(["companyTasks", user?.company]);
+          queryClient.invalidateQueries([
+            "allCompanyTasks",
+            user?.company,
+            selectedMonth,
+          ]);
         } else {
           queryClient.invalidateQueries(["employeeTasks", user?._id]);
         }
@@ -350,7 +359,7 @@ const Board = () => {
       socketService.offTaskStatusChange(handleTaskStatusChange);
       socketService.offNewNotification(handleNewNotification);
     };
-  }, [queryClient, user?.role, user?.company, user?._id]);
+  }, [queryClient, user?.role, user?.company, user?._id, selectedMonth]);
 
   const projects =
     user?.role === "company-admin"
@@ -475,7 +484,11 @@ const Board = () => {
 
       await updateTaskById(taskId, updateData);
       if (user?.role === "company-admin") {
-        queryClient.invalidateQueries(["companyTasks", user?.company]);
+        queryClient.invalidateQueries([
+          "allCompanyTasks",
+          user?.company,
+          selectedMonth,
+        ]);
       } else {
         queryClient.invalidateQueries(["employeeTasks", user?._id]);
       }
@@ -491,7 +504,7 @@ const Board = () => {
     // Optimistically update the UI based on user role
     const queryKey =
       user?.role === "company-admin"
-        ? ["companyTasks", user?.company]
+        ? ["allCompanyTasks", user?.company, selectedMonth]
         : ["employeeTasks", user?._id];
 
     queryClient.setQueryData(queryKey, (oldData) => {
@@ -534,7 +547,11 @@ const Board = () => {
     } catch (error) {
       console.error("Failed to update task:", error);
       if (user?.role === "company-admin") {
-        queryClient.invalidateQueries(["companyTasks", user?.company]);
+        queryClient.invalidateQueries([
+          "allCompanyTasks",
+          user?.company,
+          selectedMonth,
+        ]);
       } else {
         queryClient.invalidateQueries(["employeeTasks", user?._id]);
       }
@@ -666,7 +683,11 @@ const Board = () => {
           <button
             onClick={() => {
               if (user?.role === "company-admin") {
-                queryClient.invalidateQueries(["companyTasks", user?.company]);
+                queryClient.invalidateQueries([
+                  "allCompanyTasks",
+                  user?.company,
+                  selectedMonth,
+                ]);
               } else {
                 queryClient.invalidateQueries(["employeeTasks", user?._id]);
               }

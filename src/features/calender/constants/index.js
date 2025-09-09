@@ -1,6 +1,7 @@
 import { BiTask } from "react-icons/bi";
 import { IoAdd } from "react-icons/io5";
 import { MdAlarm } from "react-icons/md";
+import { MdSchedule } from "react-icons/md";
 
 export const CALENDAR_MENU_ITEMS = [
   {
@@ -13,11 +14,15 @@ export const CALENDAR_MENU_ITEMS = [
     icon: IoAdd,
     key: "add-event",
   },
-
   {
     label: "Add Reminder",
     icon: MdAlarm,
     key: "add-reminder",
+  },
+  {
+    label: "Unscheduled Tasks",
+    icon: MdSchedule,
+    key: "unscheduled-tasks",
   },
 ];
 

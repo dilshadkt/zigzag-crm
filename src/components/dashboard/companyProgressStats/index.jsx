@@ -36,7 +36,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
   }, [refetch]);
   // Function to handle overdue tasks click
   const handleOverdueTasksClick = () => {
-    navigate("/company-tasks?filter=overdue");
+    navigate("/company-tasks?filter=overdue&taskMonth=" + taskMonth);
   };
 
   // Function to handle stats card clicks
@@ -130,7 +130,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       color: "bg-yellow-500",
       bgColor: "bg-yellow-50",
       textColor: "text-yellow-600",
-      onClick: () => navigate("/task-on-review"),
+      onClick: () => navigate("/task-on-review?taskMonth=" + taskMonth),
     },
     {
       title: "Approved Tasks",
@@ -140,7 +140,8 @@ const CompanyProgressStats = ({ taskMonth }) => {
       color: "bg-teal-500",
       bgColor: "bg-teal-50",
       textColor: "text-teal-600",
-      onClick: () => navigate("/company-tasks?filter=approved"),
+      onClick: () =>
+        navigate("/company-tasks?filter=approved&taskMonth=" + taskMonth),
     },
     {
       title: "Overdue Tasks",

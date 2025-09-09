@@ -188,14 +188,13 @@ export const getTasksOnReview = async (filters = {}) => {
     if (filters.projectId) params.append("projectId", filters.projectId);
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    if (filters.taskMonth) params.append("taskMonth", filters.taskMonth);
 
     const { data } = await apiClient.get(
       `/tasks/on-review?${params.toString()}`
     );
-    console.log(data);
     return data;
   } catch (error) {
-    console.error("Error fetching tasks on review:", error);
     throw error;
   }
 };
@@ -218,6 +217,16 @@ export const updateTaskOrder = async (taskId, newOrder) => {
 
 export const deleteProject = async (projectId) => {
   const response = await apiClient.delete(`/projects/${projectId}`);
+  return response.data;
+};
+
+export const pauseProject = async (projectId) => {
+  const response = await apiClient.patch(`/projects/${projectId}/pause`);
+  return response.data;
+};
+
+export const resumeProject = async (projectId) => {
+  const response = await apiClient.patch(`/projects/${projectId}/resume`);
   return response.data;
 };
 
@@ -777,6 +786,43 @@ export const deleteAllCompanyTasks = async () => {
     return response.data;
   } catch (error) {
     console.error("Error deleting all company tasks:", error);
+    throw error;
+  }
+};
+
+export const getUnscheduledTasks = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    // Add filters to query parameters
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.priority) params.append("priority", filters.priority);
+    if (filters.projectId) params.append("projectId", filters.projectId);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+
+    const queryString = params.toString();
+    const url = `/tasks/unscheduled${queryString ? `?${queryString}` : ""}`;
+
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching unscheduled tasks:", error);
+    throw error;
+  }
+};
+
+export const scheduleSubTask = async (subTaskId, startDate, dueDate) => {
+  try {
+    const response = await apiClient.put(`/subtasks/${subTaskId}/schedule`, {
+      startDate,
+      dueDate,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error scheduling subtask:", error);
     throw error;
   }
 };

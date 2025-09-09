@@ -4,7 +4,11 @@ import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useNavigate } from "react-router-dom";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
-import { useDeleteProject } from "../../../api/hooks";
+import {
+  useDeleteProject,
+  usePauseProject,
+  useResumeProject,
+} from "../../../api/hooks";
 import Modal from "../../shared/modal";
 
 const SelectedProject = ({ currentProject }) => {
@@ -13,6 +17,8 @@ const SelectedProject = ({ currentProject }) => {
   const isEmployee = user?.role === "employee";
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const deleteProject = useDeleteProject();
+  const pauseProject = usePauseProject();
+  const resumeProject = useResumeProject();
 
   const formatedDate = (isoDate) => {
     const date = new Date(isoDate);
@@ -27,6 +33,21 @@ const SelectedProject = ({ currentProject }) => {
   const handleEditClick = () => {
     const projectId = currentProject?._id;
     navigate(`/projects/${projectId}/edit`);
+  };
+
+  const handleToggleProjectStatus = () => {
+    const isPaused = currentProject?.status === "paused";
+    const mutation = isPaused ? resumeProject : pauseProject;
+    const action = isPaused ? "resumed" : "paused";
+
+    mutation.mutate(currentProject._id, {
+      onSuccess: () => {
+        console.log(`Project ${action} successfully`);
+      },
+      onError: (error) => {
+        console.error(`Failed to ${action} project:`, error);
+      },
+    });
   };
 
   const handleDeleteProject = () => {
@@ -150,11 +171,31 @@ rounded-3xl  flex flex-col  p-4"
               )}
             />
             {!isEmployee && (
-              <PrimaryButton
-                title="Remove Project"
-                className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"
-                onclick={() => setIsDeleteModalOpen(true)}
-              />
+              <>
+                <PrimaryButton
+                  title={
+                    pauseProject.isLoading || resumeProject.isLoading
+                      ? currentProject?.status === "paused"
+                        ? "Resuming..."
+                        : "Pausing..."
+                      : currentProject?.status === "paused"
+                      ? "Resume Project"
+                      : "Pause Project"
+                  }
+                  className="w-full text-white bg-gray-400 hover:bg-gray-800 cursor-pointer mt-4 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick={handleToggleProjectStatus}
+                  disable={
+                    pauseProject.isLoading ||
+                    resumeProject.isLoading ||
+                    currentProject?.status === "completed"
+                  }
+                />
+                <PrimaryButton
+                  title="Remove Project"
+                  className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer  text-sm"
+                  onclick={() => setIsDeleteModalOpen(true)}
+                />
+              </>
             )}
           </div>
         </div>

@@ -1,28 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { useGetTasksOnReview } from "../../api/hooks";
-import { useAuth } from "../../hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
-import socketService from "../../services/socketService";
-import Header from "../../components/shared/header";
-import Navigator from "../../components/shared/navigator";
+import React, { useEffect, useState } from "react";
 import {
-  FiClock,
   FiAlertCircle,
-  FiUser,
+  FiArrowLeft,
   FiCalendar,
-  FiFlag,
-  FiPlay,
-  FiPause,
-  FiCheckCircle,
-  FiSearch,
-  FiFilter,
-  FiX,
   FiChevronDown,
   FiChevronUp,
-  FiArrowLeft,
+  FiClock,
   FiEye,
+  FiFilter,
+  FiFlag,
+  FiSearch,
+  FiUser,
+  FiX,
 } from "react-icons/fi";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useGetTasksOnReview } from "../../api/hooks";
+import Navigator from "../../components/shared/navigator";
+import { useAuth } from "../../hooks/useAuth";
+import socketService from "../../services/socketService";
 
 const TaskOnReview = () => {
   const { user } = useAuth();
@@ -30,6 +26,7 @@ const TaskOnReview = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const filter = searchParams.get("filter");
+  const taskMonth = searchParams.get("taskMonth");
 
   // Get all tasks on review across the company
   const {
@@ -42,6 +39,7 @@ const TaskOnReview = () => {
     limit: 100,
     sortBy: "dueDate",
     sortOrder: "asc",
+    taskMonth: taskMonth,
   });
   const [filteredTasks, setFilteredTasks] = useState([]);
 
@@ -438,19 +436,14 @@ const TaskOnReview = () => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      <Header />
       <div className="flex flex-1 overflow-hidden">
-        <Navigator />
         <div className="flex-1 overflow-y-auto">
           <div className="">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-white shadow-sm`}>
-                  {React.createElement(getFilterIcon(), {
-                    className: `w-6 h-6 ${getFilterColor()}`,
-                  })}
-                </div>
+                <Navigator />
+
                 <div>
                   <h1 className="text-2xl font-semibold text-gray-900">
                     {getFilterTitle()}
@@ -618,28 +611,6 @@ const TaskOnReview = () => {
                     </button>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Debug: Show all tasks on review */}
-            {tasksOnReviewData?.tasks && tasksOnReviewData.tasks.length > 0 && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h4 className="font-medium text-green-800 mb-2">
-                  Tasks On Review ({tasksOnReviewData.tasks.length})
-                </h4>
-                <div className="space-y-2">
-                  {tasksOnReviewData.tasks.map((task) => (
-                    <div key={task._id} className="text-sm text-green-700">
-                      • {task.title} - Assigned to:{" "}
-                      {task.assignedTo && task.assignedTo.length > 0
-                        ? task.assignedTo
-                            .map((user) => `${user.firstName} ${user.lastName}`)
-                            .join(", ")
-                        : "Unassigned"}{" "}
-                      - Project: {task.project?.name || "No Project"}
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 

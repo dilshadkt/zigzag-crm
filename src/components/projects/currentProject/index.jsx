@@ -35,7 +35,9 @@ const CurrentProject = ({ projects, selectProject }) => {
                 : `bg-white md:bg-transparent`
             }  hover:bg-[#F4F9FD]  overflow-hidden md:overflow-visible
          cursor-pointer  relative rounded-2xl px-4
-          gap-y-1.5  group  md:mr-3 py-3 flex flex-col`}
+          gap-y-1.5  group  md:mr-3 py-3 flex flex-col ${
+            project?.status === "paused" ? "opacity-50" : ""
+          }`}
           >
             <span className="text-xs uppercase text-[#91929E]">
               {project?._id.slice(0, 9)}

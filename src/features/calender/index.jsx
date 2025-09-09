@@ -15,6 +15,7 @@ import {
   EventFilters,
   EventsModal,
 } from "./components";
+import UnscheduledTasksModal from "./components/UnscheduledTasksModal";
 import AddTask from "../../components/projects/addTask";
 import {
   useCreateTaskFromBoard,
@@ -32,6 +33,9 @@ const Calendar = () => {
   const [selectedDayData, setSelectedDayData] = useState(null);
   const [showModalTask, setShowModalTask] = useState(false);
   const [selectedDateForTask, setSelectedDateForTask] = useState(null);
+  const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
+  const [selectedDateForScheduling, setSelectedDateForScheduling] =
+    useState(null);
   const [eventFilters, setEventFilters] = useState({
     tasks: true,
     subtasks: true,
@@ -135,6 +139,9 @@ const Calendar = () => {
     if (action === "create-task") {
       setSelectedDateForTask(date);
       setShowModalTask(true);
+    } else if (action === "unscheduled-tasks") {
+      setSelectedDateForScheduling(date);
+      setShowUnscheduledModal(true);
     }
     // Add other actions here as needed
   };
@@ -252,6 +259,16 @@ const Calendar = () => {
               }
             : {}
         }
+      />
+
+      {/* Unscheduled Tasks Modal */}
+      <UnscheduledTasksModal
+        isOpen={showUnscheduledModal}
+        onClose={() => {
+          setShowUnscheduledModal(false);
+          setSelectedDateForScheduling(null);
+        }}
+        selectedDate={selectedDateForScheduling}
       />
     </section>
   );

@@ -12,6 +12,8 @@ import {
   updateTaskById,
   updateTaskOrder,
   deleteProject,
+  pauseProject,
+  resumeProject,
   createSubTask,
   getSubTasksByParentTask,
   getSubTaskById,
@@ -25,6 +27,8 @@ import {
   getUnreadNotificationCount,
   uploadSingleFile,
   getTasksOnReview,
+  getUnscheduledTasks,
+  scheduleSubTask,
   // Sticky Notes imports
   createStickyNote,
   getUserStickyNotes,
@@ -488,6 +492,32 @@ export const useDeleteProject = () => {
     mutationKey: ["deleteProject"],
     mutationFn: (projectId) =>
       apiClient.delete(`/projects/${projectId}`).then((res) => res.data),
+    onSuccess: () => {
+      // Invalidate all project-related queries
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["companyProjects"]);
+    },
+  });
+};
+
+export const usePauseProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["pauseProject"],
+    mutationFn: (projectId) => pauseProject(projectId),
+    onSuccess: () => {
+      // Invalidate all project-related queries
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["companyProjects"]);
+    },
+  });
+};
+
+export const useResumeProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["resumeProject"],
+    mutationFn: (projectId) => resumeProject(projectId),
     onSuccess: () => {
       // Invalidate all project-related queries
       queryClient.invalidateQueries(["projectDetails"]);
@@ -1091,7 +1121,7 @@ export const useGetCompanyStats = (companyId, taskMonth) => {
 // Get All Company Tasks Hook - uses the new dedicated endpoint
 export const useGetAllCompanyTasks = (companyId, taskMonth) => {
   return useQuery({
-    queryKey: ["allCompanyTasks", companyId],
+    queryKey: ["allCompanyTasks", companyId, taskMonth],
     queryFn: () =>
       apiClient.get("/tasks/company/all?taskMonth=" + taskMonth).then((res) => {
         return {
@@ -1100,9 +1130,7 @@ export const useGetAllCompanyTasks = (companyId, taskMonth) => {
           totalCount: res.data.tasks?.length || 0,
         };
       }),
-    enabled: !!companyId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 10, // 10 minutes
+    enabled: !!companyId && !!taskMonth,
   });
 };
 
@@ -1120,6 +1148,44 @@ export const useGetTasksOnReview = (filters = {}) => {
       pagination: data?.pagination || {},
       statistics: data?.statistics || {},
     }),
+  });
+};
+
+// Get Unscheduled Tasks Hook - for subtasks without startDate and dueDate
+export const useGetUnscheduledTasks = (filters = {}) => {
+  return useQuery({
+    queryKey: ["unscheduledTasks", filters],
+    queryFn: () => getUnscheduledTasks(filters),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnReconnect: true, // Refetch when network reconnects
+    select: (data) => ({
+      subTasks: data?.subTasks || [],
+      pagination: data?.pagination || {},
+      statistics: data?.statistics || {},
+    }),
+  });
+};
+
+// Schedule SubTask Hook - for scheduling unscheduled subtasks
+export const useScheduleSubTask = (onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ subTaskId, startDate, dueDate }) =>
+      scheduleSubTask(subTaskId, startDate, dueDate),
+    onSuccess: (data, variables) => {
+      // Invalidate unscheduled tasks query to refresh the list
+      queryClient.invalidateQueries(["unscheduledTasks"]);
+      // Invalidate calendar data to refresh calendar view
+      queryClient.invalidateQueries(["calendarData"]);
+      // Invalidate any subtask-specific queries
+      queryClient.invalidateQueries(["subtasks"]);
+      if (onSuccess) onSuccess(data, variables);
+    },
+    onError: (error) => {
+      console.error("Failed to schedule subtask:", error);
+    },
   });
 };
 

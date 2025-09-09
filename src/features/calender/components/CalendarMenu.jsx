@@ -31,7 +31,7 @@ const CalendarMenu = ({
 
       {/* Menu container */}
       <div
-        className={`${getPositionClasses()} w-36 bg-white border
+        className={`${getPositionClasses()} w-48 bg-white border
        border-gray-200 rounded-lg shadow-lg z-50 py-2`}
       >
         {CALENDAR_MENU_ITEMS.map((item) => (
