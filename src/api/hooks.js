@@ -949,18 +949,20 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
 };
 
 // Company Statistics Hook - for admin dashboard overview
-export const useGetCompanyStats = (companyId) => {
+export const useGetCompanyStats = (companyId, taskMonth) => {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
   return useQuery({
-    queryKey: ["companyStats", companyId, currentYear, currentMonth],
+    queryKey: ["companyStats", companyId, taskMonth],
     queryFn: async () => {
       try {
         // Fetch multiple endpoints in parallel for company overview
         const [companyTasks, projectsThisMonth, allProjects, allEmployees] =
           await Promise.all([
-            apiClient.get("/tasks/company/all").then((res) => res.data),
+            apiClient
+              .get(`/tasks/company/all?taskMonth=${taskMonth}`)
+              .then((res) => res.data),
             apiClient
               .get(
                 `/projects/due-this-month?date=${format(
@@ -1043,7 +1045,6 @@ export const useGetCompanyStats = (companyId) => {
           },
         };
       } catch (error) {
-        console.error("Error fetching company stats:", error);
         // Return fallback data
         return {
           tasks: {

@@ -1,6 +1,9 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import Header from "../../components/shared/header";
-import { MdOutlineKeyboardArrowRight } from "react-icons/md";
+import {
+  MdOutlineKeyboardArrowRight,
+  MdOutlineKeyboardArrowLeft,
+} from "react-icons/md";
 import WorkLoad from "../../components/dashboard/workload";
 import NearestEvents from "../../components/dashboard/workload/events";
 import ActivityStream from "../../components/dashboard/activityStream";
@@ -22,6 +25,21 @@ const Dashboard = () => {
   const isEmployee = user?.role === "employee";
   const isCompanyAdmin = user?.role === "company-admin";
 
+  // State for managing the selected month with persistence
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Try to get the persisted date from localStorage
+    const savedDate = localStorage.getItem("dashboard-selected-date");
+    if (savedDate) {
+      const parsedDate = new Date(savedDate);
+      // Validate that the date is valid
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate;
+      }
+    }
+    // Default to current date if no valid saved date
+    return new Date();
+  });
+
   // Fetch projects based on user role
   const { data: companyProjects } = useCompanyProjects(
     isEmployee ? null : companyId,
@@ -38,9 +56,34 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  const today = new Date();
-  const lastMonth = new Date(today);
-  lastMonth.setMonth(today.getMonth() - 1);
+  // Persist the selected date whenever it changes
+  useEffect(() => {
+    localStorage.setItem("dashboard-selected-date", selectedDate.toISOString());
+  }, [selectedDate]);
+
+  // Calculate taskMonth in YYYY-MM format
+  const taskMonth = `${selectedDate.getFullYear()}-${(
+    selectedDate.getMonth() + 1
+  )
+    .toString()
+    .padStart(2, "0")}`;
+
+  // Navigation functions for month selection
+  const goToPreviousMonth = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextMonth = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const resetToCurrentMonth = () => {
+    setSelectedDate(new Date());
+  };
 
   const formatDate = (date) => {
     return date.toLocaleDateString("en-US", {
@@ -50,7 +93,23 @@ const Dashboard = () => {
     });
   };
 
-  const dateRange = `${formatDate(lastMonth)} - ${formatDate(today)}`;
+  // Calculate date range for display (current month)
+  const startOfMonth = new Date(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth(),
+    1
+  );
+  const endOfMonth = new Date(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth() + 1,
+    0
+  );
+  const dateRange = `${formatDate(startOfMonth)} - ${formatDate(endOfMonth)}`;
+
+  // Check if the selected month is different from current month
+  const isCurrentMonth =
+    selectedDate.getMonth() === new Date().getMonth() &&
+    selectedDate.getFullYear() === new Date().getFullYear();
 
   return (
     <section className="flex flex-col">
@@ -63,8 +122,35 @@ const Dashboard = () => {
           className=" h-8 md:h-11 flexCenter text-sm gap-x-2 text-[#0A1629] px-3 md:px-5
          rounded-md md:rounded-[14px] w-fit bg-[#E6EDF5]"
         >
+          <button
+            onClick={goToPreviousMonth}
+            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            title="Previous month"
+          >
+            <MdOutlineKeyboardArrowLeft className="w-4 h-4" />
+          </button>
           <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
-          <span className="text-xs md:text-base">{dateRange}</span>
+          <span
+            className={`text-xs md:text-base cursor-pointer hover:text-blue-600 transition-colors ${
+              !isCurrentMonth ? "text-blue-600 font-medium" : ""
+            }`}
+            onClick={resetToCurrentMonth}
+            title={
+              !isCurrentMonth
+                ? "Click to reset to current month"
+                : "Current month"
+            }
+          >
+            {dateRange}
+            {!isCurrentMonth && <span className="ml-1 text-xs">(Viewing)</span>}
+          </span>
+          <button
+            onClick={goToNextMonth}
+            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            title="Next month"
+          >
+            <MdOutlineKeyboardArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -73,7 +159,7 @@ const Dashboard = () => {
         {isEmployee ? (
           <EmployeeProgressStats />
         ) : isCompanyAdmin ? (
-          <CompanyProgressStats />
+          <CompanyProgressStats taskMonth={taskMonth} />
         ) : null}
       </div>
 

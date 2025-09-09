@@ -13,13 +13,14 @@ import {
   FiBarChart2,
 } from "react-icons/fi";
 
-const CompanyProgressStats = () => {
+const CompanyProgressStats = ({ taskMonth }) => {
+  console.log(taskMonth);
   const { companyId } = useAuth();
   const {
     data: companyStats,
     isLoading,
     refetch,
-  } = useGetCompanyStats(companyId);
+  } = useGetCompanyStats(companyId, taskMonth);
   const navigate = useNavigate();
 
   // Refetch data when component mounts and when window gains focus
