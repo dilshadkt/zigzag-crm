@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetCompanyStats } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   FiTrendingUp,
@@ -12,15 +11,18 @@ import {
   FiAlertCircle,
   FiBarChart2,
 } from "react-icons/fi";
+import { useGetCompanyStatsChecking } from "../../../api/hooks/dashboard";
 
 const CompanyProgressStats = ({ taskMonth }) => {
-  console.log(taskMonth);
   const { companyId } = useAuth();
+
   const {
-    data: companyStats,
+    data: companyStatsCheck,
     isLoading,
     refetch,
-  } = useGetCompanyStats(companyId, taskMonth);
+  } = useGetCompanyStatsChecking(companyId, taskMonth);
+
+  console.log(companyStatsCheck);
   const navigate = useNavigate();
 
   // Refetch data when component mounts and when window gains focus
@@ -41,16 +43,16 @@ const CompanyProgressStats = ({ taskMonth }) => {
   const handleStatsClick = (statType) => {
     switch (statType) {
       case "projects":
-        navigate("/projects-analytics");
+        navigate("/projects-analytics?taskMonth=" + taskMonth);
         break;
       case "tasks":
-        navigate("/company-tasks");
+        navigate("/company-tasks?taskMonth=" + taskMonth);
         break;
       case "in-progress":
-        navigate("/company-tasks?filter=in-progress");
+        navigate("/company-tasks?filter=in-progress&taskMonth=" + taskMonth);
         break;
       case "approved":
-        navigate("/company-tasks?filter=approved");
+        navigate("/company-tasks?filter=approved&taskMonth=" + taskMonth);
         break;
       case "employees":
         navigate("/employees");
@@ -78,8 +80,10 @@ const CompanyProgressStats = ({ taskMonth }) => {
   const stats = [
     {
       title: "Active Projects",
-      value: companyStats?.projects?.total || 0,
-      subtitle: `${companyStats?.projects?.dueThisMonth || 0} due this month`,
+      value: companyStatsCheck?.statistics?.activeProjects || 0,
+      subtitle: `${
+        companyStatsCheck?.statistics?.activeProjects || 0
+      } active projects`,
       icon: FiFolderPlus,
       color: "bg-blue-500",
       bgColor: "bg-blue-50",
@@ -88,8 +92,8 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "Total Tasks",
-      value: companyStats?.tasks?.total || 0,
-      subtitle: `${companyStats?.tasks?.completed || 0} completed`,
+      value: companyStatsCheck?.statistics?.total || 0,
+      subtitle: `${companyStatsCheck?.statistics?.completed || 0} completed`,
       icon: FiTarget,
       color: "bg-purple-500",
       bgColor: "bg-purple-50",
@@ -98,8 +102,10 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "Team Members",
-      value: companyStats?.employees?.active || 0,
-      subtitle: `${companyStats?.employees?.total || 0} total employees`,
+      value: companyStatsCheck?.statistics?.teamMembers || 0,
+      subtitle: `${
+        companyStatsCheck?.statistics?.teamMembers || 0
+      } total employees`,
       icon: FiUsers,
       color: "bg-green-500",
       bgColor: "bg-green-50",
@@ -108,8 +114,8 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "In Progress",
-      value: companyStats?.tasks?.inProgress || 0,
-      subtitle: `${companyStats?.tasks?.pending || 0} pending`,
+      value: companyStatsCheck?.statistics?.inProgress || 0,
+      subtitle: `${companyStatsCheck?.statistics?.pending || 0} pending`,
       icon: FiClock,
       color: "bg-orange-500",
       bgColor: "bg-orange-50",
@@ -118,7 +124,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "On Review",
-      value: companyStats?.tasks?.onReview || 0,
+      value: companyStatsCheck?.statistics?.onReview || 0,
       subtitle: "Awaiting approval",
       icon: FiBarChart2,
       color: "bg-yellow-500",
@@ -128,7 +134,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "Approved Tasks",
-      value: companyStats?.tasks?.approved || 0,
+      value: companyStatsCheck?.statistics?.approved || 0,
       subtitle: "Ready to proceed",
       icon: FiCheckCircle,
       color: "bg-teal-500",
@@ -138,7 +144,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "Overdue Tasks",
-      value: companyStats?.tasks?.overdue || 0,
+      value: companyStatsCheck?.statistics?.overdue || 0,
       subtitle: "Need attention",
       icon: FiAlertCircle,
       color: "bg-red-500",
@@ -148,7 +154,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
     {
       title: "Today's Tasks",
-      value: companyStats?.tasks?.today || 0,
+      value: companyStatsCheck?.statistics?.today || 0,
       subtitle: "Due today",
       icon: FiCheckCircle,
       color: "bg-indigo-500",
@@ -158,10 +164,12 @@ const CompanyProgressStats = ({ taskMonth }) => {
     },
   ];
 
-  const workloadData = companyStats?.overview?.workloadDistribution || {
-    high: 0,
-    medium: 0,
-    low: 0,
+  // Since the new data structure doesn't have workload distribution,
+  // we'll create a simple distribution based on available data
+  const workloadData = {
+    high: companyStatsCheck?.statistics?.overdue || 0,
+    medium: companyStatsCheck?.statistics?.inProgress || 0,
+    low: companyStatsCheck?.statistics?.approved || 0,
   };
   const totalWorkload =
     workloadData.high + workloadData.medium + workloadData.low;
@@ -174,28 +182,26 @@ const CompanyProgressStats = ({ taskMonth }) => {
         </h4>
         <div className="flex items-center gap-2">
           <div className="text-2xl font-bold text-blue-600">
-            {companyStats?.overview?.taskCompletionRate || 0}%
+            {companyStatsCheck?.statistics?.completionRate || 0}%
           </div>
           <div className="text-xs text-gray-500">Task Completion</div>
         </div>
       </div>
-
       {/* Overall Progress Bar */}
       <div className="mb-6">
         <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>Project Progress Average</span>
-          <span>{companyStats?.overview?.projectProgressAvg || 0}%</span>
+          <span>Task Completion Progress</span>
+          <span>{companyStatsCheck?.statistics?.completionRate || 0}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
             className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
             style={{
-              width: `${companyStats?.overview?.projectProgressAvg || 0}%`,
+              width: `${companyStatsCheck?.statistics?.completionRate || 0}%`,
             }}
           ></div>
         </div>
       </div>
-
       {/* Company Statistics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-8 gap-2 md:gap-4 flex-1">
         {stats.map((stat, index) => {
@@ -224,50 +230,6 @@ const CompanyProgressStats = ({ taskMonth }) => {
           );
         })}
       </div>
-
-      {/* Workload Distribution */}
-      {totalWorkload > 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h5 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <FiBarChart2 className="w-4 h-4" />
-              Task Priority Distribution
-            </h5>
-            <span className="text-xs text-gray-500">
-              {totalWorkload} total tasks
-            </span>
-          </div>
-          <div className="flex gap-4 text-center">
-            <div className="flex-1">
-              <div className="text-lg font-bold text-red-600">
-                {workloadData.high}
-              </div>
-              <div className="text-xs text-gray-500">High Priority</div>
-              <div className="text-xs text-red-500">
-                {Math.round((workloadData.high / totalWorkload) * 100)}%
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="text-lg font-bold text-yellow-600">
-                {workloadData.medium}
-              </div>
-              <div className="text-xs text-gray-500">Medium Priority</div>
-              <div className="text-xs text-yellow-500">
-                {Math.round((workloadData.medium / totalWorkload) * 100)}%
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="text-lg font-bold text-green-600">
-                {workloadData.low}
-              </div>
-              <div className="text-xs text-gray-500">Low Priority</div>
-              <div className="text-xs text-green-500">
-                {Math.round((workloadData.low / totalWorkload) * 100)}%
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1089,11 +1089,11 @@ export const useGetCompanyStats = (companyId, taskMonth) => {
 };
 
 // Get All Company Tasks Hook - uses the new dedicated endpoint
-export const useGetAllCompanyTasks = (companyId) => {
+export const useGetAllCompanyTasks = (companyId, taskMonth) => {
   return useQuery({
     queryKey: ["allCompanyTasks", companyId],
     queryFn: () =>
-      apiClient.get("/tasks/company/all").then((res) => {
+      apiClient.get("/tasks/company/all?taskMonth=" + taskMonth).then((res) => {
         return {
           tasks: [...res.data.tasks, ...res.data.subTasks] || [],
           statistics: res.data.statistics || {},

@@ -85,14 +85,6 @@ const Dashboard = () => {
     setSelectedDate(new Date());
   };
 
-  const formatDate = (date) => {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   // Calculate date range for display (current month)
   const startOfMonth = new Date(
     selectedDate.getFullYear(),
@@ -104,7 +96,12 @@ const Dashboard = () => {
     selectedDate.getMonth() + 1,
     0
   );
-  const dateRange = `${formatDate(startOfMonth)} - ${formatDate(endOfMonth)}`;
+
+  // Display only the month name and year
+  const dateRange = selectedDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   // Check if the selected month is different from current month
   const isCurrentMonth =
@@ -131,9 +128,10 @@ const Dashboard = () => {
           </button>
           <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
           <span
-            className={`text-xs md:text-base cursor-pointer hover:text-blue-600 transition-colors ${
-              !isCurrentMonth ? "text-blue-600 font-medium" : ""
-            }`}
+            className={`text-xs whitespace-nowrap md:text-base 
+              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${
+                !isCurrentMonth ? "text-blue-600 font-medium" : ""
+              }`}
             onClick={resetToCurrentMonth}
             title={
               !isCurrentMonth

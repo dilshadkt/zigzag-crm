@@ -26,9 +26,13 @@ const CompanyTasks = ({ filter: propFilter }) => {
   const [searchParams] = useSearchParams();
   const urlFilter = searchParams.get("filter"); // Can be: 'overdue', 'in-progress', 'pending', 'completed'
   const filter = propFilter || urlFilter; // Use prop filter if provided, otherwise use URL filter
-
+  const taskMonth = searchParams.get("taskMonth");
+  console.log(taskMonth);
   // Get all company tasks and filter based on URL parameter
-  const { data: allTasksData, isLoading } = useGetAllCompanyTasks(companyId);
+  const { data: allTasksData, isLoading } = useGetAllCompanyTasks(
+    companyId,
+    taskMonth
+  );
   const [filteredTasks, setFilteredTasks] = useState([]);
   // Super filter states
   const [showFilters, setShowFilters] = useState(false);
