@@ -110,11 +110,15 @@ const Dashboard = () => {
 
   return (
     <section className="flex flex-col">
-      <span className="text-sm md:text-base text-[#7D8592]">
-        Welcome back, {user?.firstName} !
-      </span>
       <div className="flexBetween ">
-        <Header>Dashboard</Header>
+        <div>
+          <span className="text-sm md:text-base text-[#7D8592]">
+            Welcome back,
+            <span className="font-semibold text-gray-800 ml-2">
+              {user?.firstName} !{/* <Header>Dashboard</Header> */}
+            </span>
+          </span>
+        </div>
         <div
           className=" h-8 md:h-11 flexCenter text-sm gap-x-2 text-[#0A1629] px-3 md:px-5
          rounded-md md:rounded-[14px] w-fit bg-[#E6EDF5]"
@@ -153,7 +157,7 @@ const Dashboard = () => {
       </div>
 
       {/* Progress Stats Section - Show different components based on user role */}
-      <div className="w-full grid grid-cols-7 gap-x-6 mt-5">
+      <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
         {isEmployee ? (
           <EmployeeProgressStats />
         ) : isCompanyAdmin ? (

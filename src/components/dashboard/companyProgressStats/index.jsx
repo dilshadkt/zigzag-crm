@@ -161,7 +161,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       color: "bg-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
-      onClick: () => navigate("/company-today-tasks"),
+      onClick: () => navigate("/company-today-tasks?taskMonth=" + taskMonth),
     },
   ];
 

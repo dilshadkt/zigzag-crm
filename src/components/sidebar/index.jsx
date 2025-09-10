@@ -31,7 +31,6 @@ const Sidebar = () => {
 
   // Additional debug for each menu item
   if (user?.role !== "company-admin") {
-    console.log("Menu item access details:");
     SIDE_MENU.forEach((item) => {
       const allowedRoutes = userPosition?.allowedRoutes || [];
       const isAlwaysAccessible =
@@ -57,9 +56,9 @@ const Sidebar = () => {
   return (
     <section
       className=" flex-col min-w-[220px] hidden lg:flex  my-3 ml-3 justify-between
-     rounded-[24px] bg-white p-3"
+     rounded-[24px] gap-y-10 bg-white p-3"
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col  overflow-y-auto">
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
             filteredSidebar.map((item, index) => (
@@ -92,7 +91,7 @@ const Sidebar = () => {
         </ul>
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col ">
         <div className="h-[130px] justify-center  w-full flex items-end bg-[#F4F9FD] relative rounded-[24px] p-4">
           <button
             onClick={() => setMenuOpen(true)}

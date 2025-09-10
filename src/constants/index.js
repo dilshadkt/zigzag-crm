@@ -79,6 +79,13 @@ export const SIDE_MENU = [
     path: "/task-on-review",
     routeKey: "task-on-review",
   },
+  {
+    id: 8,
+    title: "Attendance",
+    icon: FiActivity,
+    path: "/attendance",
+    routeKey: "attendance",
+  },
   // {
   //   id: 9,
   //   title: "Info Portal",
