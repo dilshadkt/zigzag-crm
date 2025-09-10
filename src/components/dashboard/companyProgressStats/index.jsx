@@ -12,6 +12,7 @@ import {
   FiBarChart2,
 } from "react-icons/fi";
 import { useGetCompanyStatsChecking } from "../../../api/hooks/dashboard";
+import { MdBusinessCenter } from "react-icons/md";
 
 const CompanyProgressStats = ({ taskMonth }) => {
   const { companyId } = useAuth();
@@ -51,8 +52,20 @@ const CompanyProgressStats = ({ taskMonth }) => {
       case "in-progress":
         navigate("/company-tasks?filter=in-progress&taskMonth=" + taskMonth);
         break;
+      case "on-review":
+        navigate("/task-on-review?taskMonth=" + taskMonth);
+        break;
       case "approved":
-        navigate("/company-tasks?filter=approved&taskMonth=" + taskMonth);
+        navigate("/client-review?taskMonth=" + taskMonth);
+        break;
+      case "client-approved":
+        navigate("/task-on-publish");
+        break;
+      case "completed":
+        navigate("/task-on-publish?taskMonth=" + taskMonth);
+        break;
+      case "client-review":
+        navigate("/client-review?taskMonth=" + taskMonth);
         break;
       case "employees":
         navigate("/employees");
@@ -130,18 +143,37 @@ const CompanyProgressStats = ({ taskMonth }) => {
       color: "bg-yellow-500",
       bgColor: "bg-yellow-50",
       textColor: "text-yellow-600",
-      onClick: () => navigate("/task-on-review?taskMonth=" + taskMonth),
+      onClick: () => handleStatsClick("on-review"),
     },
     {
-      title: "Approved Tasks",
+      title: "Client Review",
       value: companyStatsCheck?.statistics?.approved || 0,
-      subtitle: "Ready to proceed",
+      subtitle: "Awaiting client review",
       icon: FiCheckCircle,
       color: "bg-teal-500",
       bgColor: "bg-teal-50",
       textColor: "text-teal-600",
-      onClick: () =>
-        navigate("/company-tasks?filter=approved&taskMonth=" + taskMonth),
+      onClick: () => handleStatsClick("client-review"),
+    },
+    {
+      title: "Client Approved ",
+      value: companyStatsCheck?.statistics?.clientApproved || 0,
+      subtitle: "Ready to publish",
+      icon: MdBusinessCenter,
+      color: "bg-indigo-500",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600",
+      onClick: () => navigate("/task-on-publish"),
+    },
+    {
+      title: "Completed ",
+      value: companyStatsCheck?.statistics?.completed || 0,
+      subtitle: "Work completed",
+      icon: FiCheckCircle,
+      color: "bg-green-500",
+      bgColor: "bg-green-50",
+      textColor: "text-green-600",
+      onClick: () => navigate("/task-on-publish?taskMonth=" + taskMonth),
     },
     {
       title: "Overdue Tasks",
@@ -204,7 +236,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         </div>
       </div>
       {/* Company Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-8 gap-2 md:gap-4 flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-2 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -214,9 +246,9 @@ const CompanyProgressStats = ({ taskMonth }) => {
               className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer md:hover:shadow-md transition-all duration-200 transform md:hover:scale-105 group relative overflow-hidden`}
             >
               <div className={`${stat.color} p-3 rounded-lg mb-3`}>
-                <Icon className="w-4 md:w-6 h-4 md:h-6 text-white" />
+                <Icon className="w-4  h-4  text-white" />
               </div>
-              <div className={`text-3xl font-bold ${stat.textColor} mb-2`}>
+              <div className={`text-2xl font-bold ${stat.textColor} mb-2`}>
                 {stat.value}
               </div>
               <p className="text-sm font-medium text-gray-700 mb-1">

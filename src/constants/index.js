@@ -1,8 +1,8 @@
 import { TbLayoutDashboardFilled } from "react-icons/tb";
-import { IoLayers } from "react-icons/io5";
+import { IoCloudUploadOutline, IoLayers } from "react-icons/io5";
 import { GrClipboard } from "react-icons/gr";
 
-import { FaCalendar } from "react-icons/fa";
+import { FaCalendar, FaFingerprint } from "react-icons/fa";
 import { BiSolidPlane } from "react-icons/bi";
 import { HiUsers } from "react-icons/hi2";
 import { FaSignalMessenger } from "react-icons/fa6";
@@ -20,6 +20,7 @@ import {
   FiClock,
   FiLayout,
   FiActivity,
+  FiCheckCircle,
 } from "react-icons/fi";
 
 export const SIDE_MENU = [
@@ -80,9 +81,23 @@ export const SIDE_MENU = [
     routeKey: "task-on-review",
   },
   {
-    id: 8,
+    id: 9,
+    title: "Task on Publish",
+    icon: IoCloudUploadOutline,
+    path: "/task-on-publish",
+    routeKey: "task-on-publish",
+  },
+  {
+    id: 10,
+    title: "Client Review",
+    icon: FiCheckCircle,
+    path: "/client-review",
+    routeKey: "client-review",
+  },
+  {
+    id: 11,
     title: "Attendance",
-    icon: FiActivity,
+    icon: FaFingerprint,
     path: "/attendance",
     routeKey: "attendance",
   },
@@ -102,7 +117,7 @@ export const SIDE_MENU = [
   // },
 
   {
-    id: 20,
+    id: 12,
     title: "Settings",
     icon: FiSettings,
     path: "/settings",

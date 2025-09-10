@@ -13,14 +13,15 @@ import {
   FiSearch,
   FiUser,
   FiX,
+  FiCheckCircle,
 } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useGetTasksOnReview } from "../../api/hooks";
+import { useGetClientReviewTasks } from "../../api/hooks";
 import Navigator from "../../components/shared/navigator";
 import { useAuth } from "../../hooks/useAuth";
 import socketService from "../../services/socketService";
 
-const TaskOnReview = () => {
+const ClientReview = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -37,13 +38,13 @@ const TaskOnReview = () => {
 
   const taskMonth = searchParams.get("taskMonth") || getCurrentMonth();
 
-  // Get all tasks on review across the company
+  // Get all client review tasks across the company
   const {
-    data: tasksOnReviewData,
+    data: clientReviewData,
     isLoading,
     refetch,
     error,
-  } = useGetTasksOnReview({
+  } = useGetClientReviewTasks({
     page: 1,
     limit: 100,
     sortBy: "dueDate",
@@ -60,25 +61,25 @@ const TaskOnReview = () => {
   // Listen for real-time task status changes
   useEffect(() => {
     const handleTaskStatusChange = (data) => {
-      console.log("📋 Task status changed in task-on-review:", data);
+      console.log("📋 Task status changed in client-review:", data);
 
-      // If a task was moved to "on-review", refresh the task list
-      if (data.newStatus === "on-review") {
-        console.log("🔄 Refreshing task list due to new task on review");
+      // If a task was moved to "approved", refresh the task list
+      if (data.newStatus === "approved") {
+        console.log("🔄 Refreshing task list due to new approved task");
         refetch();
 
-        // Show a toast notification for new task on review
+        // Show a toast notification for new approved task
         if (data.updatedBy && data.updatedBy._id !== user?._id) {
           // Only show notification if it wasn't the current user who moved the task
           const notification = document.createElement("div");
           notification.className =
-            "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full";
+            "fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full";
           notification.innerHTML = `
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               <div>
-                <div class="font-medium">New Task on Review</div>
-                <div class="text-sm opacity-90">"${data.taskTitle}" moved to review by ${data.updatedBy.name}</div>
+                <div class="font-medium">New Task Approved</div>
+                <div class="text-sm opacity-90">"${data.taskTitle}" approved by ${data.updatedBy.name}</div>
               </div>
             </div>
           `;
@@ -98,20 +99,20 @@ const TaskOnReview = () => {
           }, 5000);
         }
       }
-      // If a task was moved away from "on-review", also refresh to remove it
-      else if (data.oldStatus === "on-review") {
-        console.log("🔄 Refreshing task list due to task moved from review");
+      // If a task was moved away from "approved", also refresh to remove it
+      else if (data.oldStatus === "approved") {
+        console.log("🔄 Refreshing task list due to task moved from approved");
         refetch();
       }
     };
 
     const handleNewNotification = (data) => {
-      console.log("🔔 New notification in task-on-review:", data);
+      console.log("🔔 New notification in client-review:", data);
       // Refresh if it's a task-related notification
-      if (data.type === "task_review" || data.type === "task_updated") {
+      if (data.type === "task_approved" || data.type === "task_updated") {
         refetch();
-        // Also invalidate the tasks on review query
-        queryClient.invalidateQueries(["tasksOnReview"]);
+        // Also invalidate the client review query
+        queryClient.invalidateQueries(["clientReviewTasks"]);
       }
     };
 
@@ -142,12 +143,12 @@ const TaskOnReview = () => {
 
   // Get unique filter options from tasks
   const getFilterOptions = () => {
-    if (!tasksOnReviewData?.tasks) return { projects: [] };
+    if (!clientReviewData?.tasks) return { projects: [] };
 
     const projects = [];
     const projectIds = new Set();
 
-    tasksOnReviewData.tasks.forEach((task) => {
+    clientReviewData.tasks.forEach((task) => {
       if (task.project && !projectIds.has(task.project._id)) {
         projectIds.add(task.project._id);
         projects.push(task.project);
@@ -158,14 +159,14 @@ const TaskOnReview = () => {
   };
 
   useEffect(() => {
-    if (tasksOnReviewData?.tasks) {
+    if (clientReviewData?.tasks) {
       console.log(
-        "🔍 All tasks on review from API:",
-        tasksOnReviewData.tasks.length
+        "🔍 All client review tasks from API:",
+        clientReviewData.tasks.length
       );
       console.log(
         "🔍 Task details:",
-        tasksOnReviewData.tasks.map((t) => ({
+        clientReviewData.tasks.map((t) => ({
           id: t._id,
           title: t.title,
           status: t.status,
@@ -179,8 +180,8 @@ const TaskOnReview = () => {
         }))
       );
 
-      // All tasks from this API are already on review status
-      let filtered = [...tasksOnReviewData.tasks];
+      // All tasks from this API are already approved status
+      let filtered = [...clientReviewData.tasks];
 
       console.log("🔍 Tasks after filtering:", filtered.length);
       console.log(
@@ -292,7 +293,7 @@ const TaskOnReview = () => {
 
       setFilteredTasks(filtered);
     }
-  }, [tasksOnReviewData, filter, filters]);
+  }, [clientReviewData, filter, filters]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -334,13 +335,13 @@ const TaskOnReview = () => {
   const getFilterTitle = () => {
     switch (filter) {
       case "overdue":
-        return "Overdue Tasks & Subtasks on Review";
+        return "Overdue Tasks & Subtasks for Client Review";
       case "today":
-        return "Today's Tasks & Subtasks on Review";
+        return "Today's Tasks & Subtasks for Client Review";
       case "this-week":
-        return "This Week's Tasks & Subtasks on Review";
+        return "This Week's Tasks & Subtasks for Client Review";
       default:
-        return "Tasks & Subtasks on Review";
+        return "Tasks & Subtasks for Client Review";
     }
   };
 
@@ -353,7 +354,7 @@ const TaskOnReview = () => {
       case "this-week":
         return FiClock;
       default:
-        return FiEye;
+        return FiCheckCircle;
     }
   };
 
@@ -366,7 +367,7 @@ const TaskOnReview = () => {
       case "this-week":
         return "text-green-500";
       default:
-        return "text-purple-500";
+        return "text-teal-500";
     }
   };
 
@@ -375,12 +376,12 @@ const TaskOnReview = () => {
 
     if (filteredTasks.length === 0) {
       if (filter) {
-        return `No tasks or subtasks on review found for ${filter.replace(
+        return `No tasks or subtasks for client review found for ${filter.replace(
           "-",
           " "
         )}`;
       }
-      return "No tasks or subtasks are currently in review status";
+      return "No tasks or subtasks are currently approved and ready for client review";
     }
 
     return "";
@@ -459,10 +460,10 @@ const TaskOnReview = () => {
                   </h1>
                   <p className="text-gray-500">
                     {filteredTasks.length} item
-                    {filteredTasks.length !== 1 ? "s" : ""} on review
-                    {tasksOnReviewData?.statistics && (
+                    {filteredTasks.length !== 1 ? "s" : ""} for client review
+                    {clientReviewData?.statistics && (
                       <span className="ml-2 text-sm">
-                        ({tasksOnReviewData.statistics.total} total)
+                        ({clientReviewData.statistics.total} total)
                       </span>
                     )}
                   </p>
@@ -628,10 +629,10 @@ const TaskOnReview = () => {
               {filteredTasks.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <FiEye className="w-8 h-8 text-gray-400" />
+                    <FiCheckCircle className="w-8 h-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No tasks or subtasks on review
+                    No tasks or subtasks for client review
                   </h3>
                   <p className="text-gray-500">{getEmptyStateMessage()}</p>
                 </div>
@@ -655,8 +656,8 @@ const TaskOnReview = () => {
                           >
                             {task.priority}
                           </span>
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                            In Review
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-teal-100 text-teal-800">
+                            Approved
                           </span>
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -744,4 +745,4 @@ const TaskOnReview = () => {
   );
 };
 
-export default TaskOnReview;
+export default ClientReview;

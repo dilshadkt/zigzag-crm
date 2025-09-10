@@ -199,6 +199,52 @@ export const getTasksOnReview = async (filters = {}) => {
   }
 };
 
+export const getTasksOnPublish = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    // Add filters to query parameters
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.priority) params.append("priority", filters.priority);
+    if (filters.projectId) params.append("projectId", filters.projectId);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    if (filters.taskMonth) params.append("taskMonth", filters.taskMonth);
+
+    const { data } = await apiClient.get(
+      `/tasks/on-publish?${params.toString()}`
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getClientReviewTasks = async (filters = {}) => {
+  try {
+    const params = new URLSearchParams();
+
+    // Add filters to query parameters
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.priority) params.append("priority", filters.priority);
+    if (filters.projectId) params.append("projectId", filters.projectId);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    if (filters.taskMonth) params.append("taskMonth", filters.taskMonth);
+
+    const { data } = await apiClient.get(
+      `/tasks/client-review?${params.toString()}`
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createEmployee = async (employeeData) => {
   const { data } = await apiClient.post("/employee", employeeData);
   return data;

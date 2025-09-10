@@ -50,6 +50,8 @@ import ActivityStreamPage from "../pages/activityStream";
 import EmployeeSubTasks from "../pages/employeeSubTasks/EmployeeSubTasks";
 import TaskDetailPage from "../pages/taskDetail";
 import TaskOnReview from "../pages/taskOnReview";
+import TaskOnPublish from "../pages/taskOnPublish";
+import ClientReview from "../pages/clientReview";
 import Calendar from "../features/calender";
 import Attendance from "../features/attendance";
 
@@ -136,6 +138,8 @@ const AppRoutes = () => {
         />
         <Route path="messenger" element={<Messenger />} />
         <Route path="task-on-review" element={<TaskOnReview />} />
+        <Route path="task-on-publish" element={<TaskOnPublish />} />
+        <Route path="client-review" element={<ClientReview />} />
         <Route path="infoPortal" element={<InfoPortal />} />
         <Route path="events" element={<Events />} />
         <Route path="workload" element={<WorkLoad />} />

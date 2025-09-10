@@ -5,9 +5,41 @@ import { useLocation, useNavigate } from "react-router-dom";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouteAccess } from "../../hooks/useRouteAccess";
+import {
+  useGetTasksOnReview,
+  useGetTasksOnPublish,
+  useGetClientReviewTasks,
+} from "../../api/hooks";
 const Sidebar = () => {
   const { user } = useAuth();
   const { userPosition } = useRouteAccess();
+
+  // Get current month in YYYY-MM format for tasks on review
+  const getCurrentMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  };
+
+  // Fetch tasks on review count
+  const { data: tasksOnReviewData } = useGetTasksOnReview({
+    taskMonth: getCurrentMonth(),
+  });
+
+  // Fetch tasks on publish count
+  const { data: tasksOnPublishData } = useGetTasksOnPublish({
+    taskMonth: getCurrentMonth(),
+  });
+
+  // Fetch client review tasks count
+  const { data: clientReviewData } = useGetClientReviewTasks({
+    taskMonth: getCurrentMonth(),
+  });
+
+  console.log(tasksOnReviewData);
+  console.log(tasksOnPublishData);
+  console.log(clientReviewData);
   // Filter sidebar items based on user's position allowed routes
   const filteredSidebar = SIDE_MENU.filter((item) => {
     // Company admins have full access to all menu items
@@ -61,28 +93,60 @@ const Sidebar = () => {
       <div className="flex flex-col  overflow-y-auto">
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
-            filteredSidebar.map((item, index) => (
-              <li
-                key={index}
-                onClick={() => navigate(item.path)}
-                className={` relative cursor-pointer px-2 py-[10px] flexStart
-        gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
-          pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
-        }`}
-              >
-                <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
-                <span
-                  className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
-          transition-all duration-300 text-[15px]"
+            filteredSidebar.map((item, index) => {
+              // Get count for "Task on Review", "Task on Publish", and "Client Review" menu items
+              const getTaskCount = () => {
+                if (
+                  item.routeKey === "task-on-review" &&
+                  tasksOnReviewData?.tasks?.length
+                ) {
+                  return tasksOnReviewData.tasks.length;
+                }
+                if (
+                  item.routeKey === "task-on-publish" &&
+                  tasksOnPublishData?.tasks?.length
+                ) {
+                  return tasksOnPublishData.tasks.length;
+                }
+                if (
+                  item.routeKey === "client-review" &&
+                  clientReviewData?.tasks?.length
+                ) {
+                  return clientReviewData.tasks.length;
+                }
+                return null;
+              };
+
+              const taskCount = getTaskCount();
+
+              return (
+                <li
+                  key={index}
+                  onClick={() => navigate(item.path)}
+                  className={` relative cursor-pointer px-2 py-[10px] flexStart
+          gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
+            pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
+          }`}
                 >
-                  {item.title}
-                </span>
-                <span
-                  className="absolute hidden group-hover:block
-          -right-2.5 h-full w-1 bg-[#3F8CFF]"
-                ></span>
-              </li>
-            ))
+                  <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
+                  <span
+                    className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
+            transition-all duration-300 text-[15px] flex-1"
+                  >
+                    {item.title}
+                  </span>
+                  {taskCount !== null && taskCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs px-1 py-0.5 rounded-full min-w-[20px] text-center">
+                      {taskCount}
+                    </span>
+                  )}
+                  <span
+                    className="absolute hidden group-hover:block
+            -right-2.5 h-full w-1 bg-[#3F8CFF]"
+                  ></span>
+                </li>
+              );
+            })
           ) : (
             <li className="px-2 py-[10px] flexStart gap-x-3.5 rounded-[10px] text-[#7D8592] text-[13px]">
               <span>No accessible menu items</span>

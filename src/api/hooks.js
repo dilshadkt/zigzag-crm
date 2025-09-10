@@ -27,6 +27,8 @@ import {
   getUnreadNotificationCount,
   uploadSingleFile,
   getTasksOnReview,
+  getTasksOnPublish,
+  getClientReviewTasks,
   getUnscheduledTasks,
   scheduleSubTask,
   // Sticky Notes imports
@@ -1139,6 +1141,40 @@ export const useGetTasksOnReview = (filters = {}) => {
   return useQuery({
     queryKey: ["tasksOnReview", filters],
     queryFn: () => getTasksOnReview(filters),
+    staleTime: 1000 * 60 * 2, // 2 minutes (frequent updates for real-time)
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnReconnect: true, // Refetch when network reconnects
+    select: (data) => ({
+      tasks: data?.tasks || [],
+      pagination: data?.pagination || {},
+      statistics: data?.statistics || {},
+    }),
+  });
+};
+
+// Get Tasks On Publish Hook - for the task-on-publish page
+export const useGetTasksOnPublish = (filters = {}) => {
+  return useQuery({
+    queryKey: ["tasksOnPublish", filters],
+    queryFn: () => getTasksOnPublish(filters),
+    staleTime: 1000 * 60 * 2, // 2 minutes (frequent updates for real-time)
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnReconnect: true, // Refetch when network reconnects
+    select: (data) => ({
+      tasks: data?.tasks || [],
+      pagination: data?.pagination || {},
+      statistics: data?.statistics || {},
+    }),
+  });
+};
+
+// Get Client Review Tasks Hook - for the client-review page
+export const useGetClientReviewTasks = (filters = {}) => {
+  return useQuery({
+    queryKey: ["clientReviewTasks", filters],
+    queryFn: () => getClientReviewTasks(filters),
     staleTime: 1000 * 60 * 2, // 2 minutes (frequent updates for real-time)
     refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
     refetchOnWindowFocus: true, // Refetch when window gains focus

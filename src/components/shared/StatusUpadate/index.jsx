@@ -13,11 +13,12 @@ const employeeStatusOptions = [
 const adminStatusOptions = [
   "todo",
   "in-progress",
-  // "completed",
   "on-review",
   "on-hold",
   "re-work",
   "approved",
+  "client-approved",
+  "completed",
 ];
 
 // Define color schemes for each status
@@ -63,6 +64,12 @@ const statusColors = {
     bg: "bg-emerald-50",
     border: "border-emerald-200",
     hover: "hover:bg-emerald-100",
+  },
+  "client-approved": {
+    text: "text-indigo-500",
+    bg: "bg-indigo-50",
+    border: "border-indigo-200",
+    hover: "hover:bg-indigo-100",
   },
 };
 
@@ -145,7 +152,7 @@ const StatusButton = ({ taskDetails, disabled = false }) => {
             return (
               <div
                 key={status}
-                className={`py-2 px-4 text-sm capitalize text-gray-700
+                className={`py-2 px-4 text-xs capitalize text-gray-700
                            cursor-pointer transition-all
                            hover:bg-gray-50 ${
                              isCurrentStatus
