@@ -43,6 +43,36 @@ const statusColors = {
     border: "border-green-200",
     dot: "bg-green-500",
   },
+  "on-review": {
+    bg: "bg-purple-50",
+    text: "text-purple-800",
+    border: "border-purple-200",
+    dot: "bg-purple-500",
+  },
+  "on-hold": {
+    bg: "bg-yellow-50",
+    text: "text-yellow-800",
+    border: "border-yellow-200",
+    dot: "bg-yellow-500",
+  },
+  "re-work": {
+    bg: "bg-red-50",
+    text: "text-red-800",
+    border: "border-red-200",
+    dot: "bg-red-500",
+  },
+  approved: {
+    bg: "bg-emerald-50",
+    text: "text-emerald-800",
+    border: "border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  "client-approved": {
+    bg: "bg-indigo-50",
+    text: "text-indigo-800",
+    border: "border-indigo-200",
+    dot: "bg-indigo-500",
+  },
 };
 
 // Colors for birthday items

@@ -126,6 +126,11 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
       todo: "To Do",
       "in-progress": "In Progress",
       completed: "Done",
+      "on-review": "On Review",
+      "on-hold": "On Hold",
+      "re-work": "Re-work",
+      approved: "Approved",
+      "client-approved": "Client Approved",
     }[task.status] || "To Do";
 
   return (
@@ -222,6 +227,11 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
       todo: "To Do",
       "in-progress": "In Progress",
       completed: "Done",
+      "on-review": "On Review",
+      "on-hold": "On Hold",
+      "re-work": "Re-work",
+      approved: "Approved",
+      "client-approved": "Client Approved",
     }[subtask.status] || "To Do";
 
   return (
