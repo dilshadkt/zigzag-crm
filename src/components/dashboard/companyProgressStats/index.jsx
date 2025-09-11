@@ -23,7 +23,6 @@ const CompanyProgressStats = ({ taskMonth }) => {
     refetch,
   } = useGetCompanyStatsChecking(companyId, taskMonth);
 
-  console.log(companyStatsCheck);
   const navigate = useNavigate();
 
   // Refetch data when component mounts and when window gains focus
@@ -62,7 +61,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         navigate("/task-on-publish");
         break;
       case "completed":
-        navigate("/task-on-publish?taskMonth=" + taskMonth);
+        navigate("/company-tasks?filter=completed&taskMonth=" + taskMonth);
         break;
       case "client-review":
         navigate("/client-review?taskMonth=" + taskMonth);
@@ -146,7 +145,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       onClick: () => handleStatsClick("on-review"),
     },
     {
-      title: "Client Review",
+      title: "Content Approved",
       value: companyStatsCheck?.statistics?.approved || 0,
       subtitle: "Awaiting client review",
       icon: FiCheckCircle,
@@ -173,7 +172,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       color: "bg-green-500",
       bgColor: "bg-green-50",
       textColor: "text-green-600",
-      onClick: () => navigate("/task-on-publish?taskMonth=" + taskMonth),
+      onClick: () => handleStatsClick("completed"),
     },
     {
       title: "Overdue Tasks",
