@@ -7,6 +7,7 @@ import {
   subMonths,
 } from "date-fns";
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../../hooks/useAuth";
 import { useCalendarDataOptimized } from "./hooks/useCalendarDataOptimized";
 import {
@@ -16,7 +17,7 @@ import {
   EventsModal,
 } from "./components";
 import UnscheduledTasksModal from "./components/UnscheduledTasksModal";
-import AddTask from "../../components/projects/addTask";
+import AddTask from "../../components/projects/addTask"
 import {
   useCreateTaskFromBoard,
   useGetAllEmployees,
@@ -26,9 +27,27 @@ import { useQueryClient } from "@tanstack/react-query";
 import { uploadSingleFile } from "../../api/service";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { getCurrentMonthKey } from "../../lib/dateUtils";
+import {
+  toggleEventFilter,
+  setAssignerFilter,
+  setProjectFilter,
+  setCurrentDate,
+} from "../../store/slice/calendarSlice";
 
 const Calendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const dispatch = useDispatch();
+  const {
+    eventFilters,
+    assignerFilter,
+    projectFilter,
+    currentDate: persistedCurrentDate,
+  } = useSelector((state) => state.calendar);
+
+  // Use persisted current date or fallback to new Date()
+  const [currentDate, setCurrentDate] = useState(() => {
+    return persistedCurrentDate ? new Date(persistedCurrentDate) : new Date();
+  });
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState(null);
   const [showModalTask, setShowModalTask] = useState(false);
@@ -36,14 +55,6 @@ const Calendar = () => {
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const [selectedDateForScheduling, setSelectedDateForScheduling] =
     useState(null);
-  const [eventFilters, setEventFilters] = useState({
-    tasks: true,
-    subtasks: true,
-    projects: true,
-    birthdays: true,
-  });
-  const [assignerFilter, setAssignerFilter] = useState(null);
-  const [projectFilter, setProjectFilter] = useState(null);
 
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -69,8 +80,17 @@ const Calendar = () => {
     projectFilter
   );
 
-  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const handlePrevMonth = () => {
+    const newDate = subMonths(currentDate, 1);
+    setCurrentDate(newDate);
+    dispatch(setCurrentDate(newDate.toISOString()));
+  };
+
+  const handleNextMonth = () => {
+    const newDate = addMonths(currentDate, 1);
+    setCurrentDate(newDate);
+    dispatch(setCurrentDate(newDate.toISOString()));
+  };
 
   const firstDay = startOfMonth(currentDate);
   const lastDay = endOfMonth(currentDate);
@@ -95,21 +115,18 @@ const Calendar = () => {
   ];
 
   // Toggle event filter
-  const toggleEventFilter = (filterType) => {
-    setEventFilters((prev) => ({
-      ...prev,
-      [filterType]: !prev[filterType],
-    }));
+  const handleToggleEventFilter = (filterType) => {
+    dispatch(toggleEventFilter(filterType));
   };
 
   // Handle assigner filter change
   const handleAssignerFilterChange = (assignerId) => {
-    setAssignerFilter(assignerId);
+    dispatch(setAssignerFilter(assignerId));
   };
 
   // Handle project filter change
   const handleProjectFilterChange = (projectId) => {
-    setProjectFilter(projectId);
+    dispatch(setProjectFilter(projectId));
   };
 
   // Open modal with events for selected day
@@ -212,7 +229,7 @@ const Calendar = () => {
           <div className="hidden md:flex">
             <EventFilters
               eventFilters={eventFilters}
-              onToggleFilter={toggleEventFilter}
+              onToggleFilter={handleToggleEventFilter}
               assignerFilter={assignerFilter}
               onAssignerFilterChange={handleAssignerFilterChange}
               projectFilter={projectFilter}
