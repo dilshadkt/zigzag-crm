@@ -24,10 +24,13 @@ export const useCalendarData = (
   const getItemsForDate = (date) => {
     if (!date) return { projects: [], tasks: [], subtasks: [], birthdays: [] };
 
+    // Ensure date is a proper Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+
     const projects =
       eventFilters.projects && projectsData?.projects
         ? projectsData.projects.filter((project) =>
-            isSameDay(new Date(project.endDate), date)
+            isSameDay(new Date(project.endDate), dateObj)
           )
         : [];
 
@@ -35,7 +38,7 @@ export const useCalendarData = (
     let allTasks = [];
     if (tasksData?.tasks) {
       allTasks = tasksData.tasks.filter((task) =>
-        isSameDay(new Date(task.dueDate), date)
+        isSameDay(new Date(task.dueDate), dateObj)
       );
 
       // Apply assigner filter if selected
@@ -75,7 +78,7 @@ export const useCalendarData = (
       eventFilters.birthdays && birthdaysData?.birthdays
         ? birthdaysData.birthdays.filter((birthday) => {
             const dobDate = new Date(birthday.dob);
-            return dobDate.getDate() === date.getDate();
+            return dobDate.getDate() === dateObj.getDate();
           })
         : [];
 

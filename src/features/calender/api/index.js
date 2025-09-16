@@ -4,22 +4,26 @@ import { format } from "date-fns";
 
 // New consolidated calendar data hook
 export const useGetCalendarData = (date = new Date()) => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+  // Ensure date is a proper Date object
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth() + 1; // JavaScript months are 0-indexed
 
   return useQuery({
-    queryKey: ["calendarData", format(date, "yyyy-MM")],
+    queryKey: ["calendarData", format(dateObj, "yyyy-MM")],
     queryFn: () =>
       apiClient.get(`/calendar/data/${year}/${month}`).then((res) => res.data),
   });
 };
 
 export const useGetEmployeeBirthdays = (date = new Date()) => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+  // Ensure date is a proper Date object
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth() + 1; // JavaScript months are 0-indexed
 
   return useQuery({
-    queryKey: ["employeeBirthdays", format(date, "yyyy-MM")],
+    queryKey: ["employeeBirthdays", format(dateObj, "yyyy-MM")],
     queryFn: () =>
       apiClient
         .get(`/employee/birthdays/${year}/${month}`)
@@ -28,24 +32,29 @@ export const useGetEmployeeBirthdays = (date = new Date()) => {
 };
 
 export const useGetTasksDueThisMonth = (date = new Date()) => {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+  // Ensure date is a proper Date object
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth() + 1; // JavaScript months are 0-indexed
 
   return useQuery({
-    queryKey: ["tasksDueThisMonth", format(date, "yyyy-MM")],
+    queryKey: ["tasksDueThisMonth", format(dateObj, "yyyy-MM")],
     queryFn: () =>
       apiClient.get(`/tasks/month/${year}/${month}`).then((res) => res.data),
   });
 };
 
 export const useGetProjectsDueThisMonth = (date = new Date()) => {
+  // Ensure date is a proper Date object
+  const dateObj = date instanceof Date ? date : new Date(date);
+
   return useQuery({
-    queryKey: ["projectsDueThisMonth", format(date, "yyyy-MM")],
+    queryKey: ["projectsDueThisMonth", format(dateObj, "yyyy-MM")],
     queryFn: () =>
       apiClient
         .get(
           `/projects/due-this-month?date=${format(
-            date,
+            dateObj,
             "yyyy-MM-dd"
           )}&active=true`
         )
