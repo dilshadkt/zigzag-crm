@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import MessageAttachment from "./MessageAttachment";
+import VoiceMessage from "./VoiceMessage";
 
 const MessageBubble = React.memo(({ message }) => {
   const [showFullImage, setShowFullImage] = useState(false);
@@ -26,6 +27,23 @@ const MessageBubble = React.memo(({ message }) => {
     message.attachments.find(
       (attachment) =>
         attachment.mimetype && attachment.mimetype.startsWith("image/")
+    );
+
+  // Check if message has voice attachments
+  const hasVoiceAttachment =
+    message.attachments &&
+    message.attachments.some(
+      (attachment) =>
+        attachment.mimetype &&
+        (attachment.mimetype.startsWith("audio/") || message.type === "voice")
+    );
+
+  const voiceAttachment =
+    message.attachments &&
+    message.attachments.find(
+      (attachment) =>
+        attachment.mimetype &&
+        (attachment.mimetype.startsWith("audio/") || message.type === "voice")
     );
 
   return (
@@ -98,13 +116,29 @@ const MessageBubble = React.memo(({ message }) => {
               </div>
             )}
 
+            {/* Voice message content */}
+            {hasVoiceAttachment && voiceAttachment && (
+              <div className="p-3">
+                <VoiceMessage
+                  attachment={voiceAttachment}
+                  isOwn={message.isOwn}
+                />
+                {/* Show message text if exists */}
+                {message.message && message.message.trim() && (
+                  <p className="text-sm leading-relaxed mt-2">
+                    {message.message}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Regular message content */}
-            {!hasImageAttachment && (
+            {!hasImageAttachment && !hasVoiceAttachment && (
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <p className="text-sm leading-relaxed">{message.message}</p>
 
-                  {/* Render non-image attachments */}
+                  {/* Render non-image, non-voice attachments */}
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="mt-2">
                       {message.attachments.map((attachment, index) => (

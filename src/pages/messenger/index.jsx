@@ -80,8 +80,10 @@ const Messenger = () => {
           messageType = "file";
           messageContent = `🎥 ${file.name}`;
         } else if (fileCategory.isAudio) {
-          messageType = "file";
-          messageContent = `🎵 ${file.name}`;
+          messageType = fileCategory.isVoice ? "voice" : "file";
+          messageContent = fileCategory.isVoice
+            ? uploadResult.url
+            : `🎵 ${file.name}`;
         } else if (fileCategory.isDocument) {
           messageType = "file";
           messageContent = `📄 ${file.name}`;
