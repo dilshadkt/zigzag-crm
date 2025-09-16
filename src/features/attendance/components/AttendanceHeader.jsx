@@ -1,65 +1,86 @@
-import React from "react";
+import React, { useState } from "react";
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
+import { RiFileList2Line } from "react-icons/ri";
+import { exportAttendanceWithLoading } from "../../../utils/excelExport";
 
-const AttendanceHeader = () => {
+const AttendanceHeader = ({
+  attendanceData,
+  selectedDate,
+  onExportSuccess,
+  onExportError,
+}) => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportReport = async () => {
+    if (!attendanceData || attendanceData.length === 0) {
+      onExportError?.("No attendance data available to export");
+      return;
+    }
+
+    try {
+      await exportAttendanceWithLoading(
+        attendanceData,
+        selectedDate,
+        setIsExporting
+      );
+      onExportSuccess?.("Attendance report exported successfully!");
+    } catch (error) {
+      onExportError?.(error.message || "Failed to export attendance report");
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-2">
       {/* Title */}
-      <h1 className="text-3xl font-bold text-gray-800">Attandance</h1>
-
-      {/* Date Navigation */}
-      <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
-        <button className="text-gray-600 hover:text-gray-800 mr-2">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      <div className="flex items-center  gap-x-3">
+        <h1 className="text-3xl font-bold text-gray-800">Attandance</h1>
+        {/* Date Navigation */}
+        <div className="flex items-center   px-4 py-2">
+          <button
+            className="text-gray-600 bg-white p-2 rounded-lg border
+          border-gray-200 hover:text-gray-800 mr-2 cursor-pointer"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <span className="text-gray-800 font-medium">Monday, 15 October</span>
-        <button className="text-gray-600 hover:text-gray-800 ml-2">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            <MdKeyboardArrowLeft />
+          </button>
+          <span className="text-gray-800  text-[15px] font-semibold">
+            Monday, 15 October
+          </span>
+          <button
+            className="text-gray-600 bg-white p-2 rounded-lg border
+          border-gray-200 hover:text-gray-800 cursor-pointer ml-2"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
+            <MdKeyboardArrowRight />
+          </button>
+        </div>
       </div>
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <button className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          Attandance Report
+        <button
+          onClick={handleExportReport}
+          disabled={isExporting}
+          className="flex items-center gap-2 bg-white border
+         border-gray-200 text-gray-700 px-4 py-2 rounded-lg
+        text-sm cursor-pointer font-semibold hover:bg-gray-50 transition-colors
+        disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isExporting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              Exporting...
+            </>
+          ) : (
+            <>
+              <RiFileList2Line />
+              Attendance Report
+            </>
+          )}
         </button>
-        <button className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+        <button
+          className="flex items-center gap-2 bg-[#3f8cff]
+        text-sm font-semibold cursor-pointer
+         text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+        >
           <svg
             className="w-4 h-4"
             fill="none"
