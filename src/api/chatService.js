@@ -77,6 +77,37 @@ export const getProjectChats = async () => {
   }
 };
 
+// Get all project group chats for messenger
+export const getProjectGroupChats = async () => {
+  try {
+    const response = await apiClient.get(`/${CHAT_ENDPOINTS.PROJECT_GROUPS}`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message || "Failed to fetch project group chats",
+    };
+  }
+};
+
+// Ensure all projects have group conversations
+export const ensureProjectGroupChats = async () => {
+  try {
+    const response = await apiClient.post(
+      `/${CHAT_ENDPOINTS.ENSURE_PROJECT_CHATS}`
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        "Failed to ensure project group chats",
+    };
+  }
+};
+
 // Get direct message conversations
 export const getDirectMessages = async () => {
   try {
@@ -140,7 +171,7 @@ export const createDirectConversation = async (userId) => {
     const response = await apiClient.post(`/${CHAT_ENDPOINTS.CREATE_DIRECT}`, {
       userId,
     });
-    return { success: true, data: response.data };
+    return { success: true, data: response.data.data };
   } catch (error) {
     return {
       success: false,

@@ -29,7 +29,11 @@ const ChatHeader = ({ selectedConversation, onlineUsers = [] }) => {
           ) : (
             <>
               <img
-                src={selectedConversation.avatar}
+                src={
+                  selectedConversation.avatar === "/api/placeholder/32/32"
+                    ? "/image/noProfile.svg"
+                    : selectedConversation.avatar
+                }
                 alt={selectedConversation.name}
                 className="w-10 h-10 rounded-full object-cover"
               />

@@ -76,7 +76,8 @@ export const useChat = () => {
           const msgTime = new Date(msg.timestamp || msg.createdAt);
           const timeDiff = Math.abs(msgTime - messageTime);
 
-          if (msgContent === messageContent && timeDiff < 5000) {
+          // More strict duplicate detection - same content within 10 seconds
+          if (msgContent === messageContent && timeDiff < 10000) {
             return true;
           }
 
@@ -159,7 +160,14 @@ export const useChat = () => {
   const handleConversationUpdate = useCallback((updatedConversation) => {
     setConversations((prev) =>
       prev.map((conv) =>
-        conv.id === updatedConversation.id ? updatedConversation : conv
+        conv.id === updatedConversation.id
+          ? {
+              ...conv,
+              id: updatedConversation.id,
+              lastMessage: updatedConversation.lastMessage,
+              lastMessageTime: updatedConversation.lastMessageTime,
+            }
+          : conv
       )
     );
   }, []);
@@ -407,7 +415,6 @@ export const useChat = () => {
       }
 
       setSelectedConversation(conversation);
-
       // Immediately clear unread count for this conversation
       setConversations((prev) =>
         prev.map((conv) => {
@@ -458,23 +465,17 @@ export const useChat = () => {
         );
         return;
       }
-
       // Prevent duplicate sends by checking if we're already sending
       const sendingKey = `${selectedConversation.id}_${messageText.trim()}`;
       if (sendMessage._sending && sendMessage._sending.has(sendingKey)) {
         console.warn("🚫 Message already being sent, preventing duplicate");
         return;
       }
-
       // Initialize sending tracker if it doesn't exist
       if (!sendMessage._sending) {
         sendMessage._sending = new Set();
       }
       sendMessage._sending.add(sendingKey);
-
-      console.log("🎯 Selected conversation:", selectedConversation);
-      console.log("📝 Message text:", messageText);
-
       // Create optimistic message for immediate UI update
       const optimisticMessage = {
         id: `temp_${Date.now()}_${Math.random()}`, // More unique temporary ID
@@ -493,33 +494,22 @@ export const useChat = () => {
         status: "sending", // Status for optimistic message
         readBy: [],
       };
-
-      console.log("✨ Created optimistic message:", optimisticMessage);
-
       // Immediately add message to UI
       setMessages((prev) => {
         const conversationId =
           selectedConversation.id || selectedConversation._id;
         const currentMessages = prev[conversationId] || [];
-
         // Check if this exact message is already in the list (prevent duplicates)
         const messageExists = currentMessages.some(
           (msg) =>
             msg.id === optimisticMessage.id ||
             (msg.message === optimisticMessage.message && msg.isPending)
         );
-
         if (messageExists) {
           console.warn("🚫 Optimistic message already exists, skipping add");
           return prev;
         }
-
         const newMessages = [...currentMessages, optimisticMessage];
-
-        console.log("📦 Adding message to conversation:", conversationId);
-        console.log("📦 Current messages count:", currentMessages.length);
-        console.log("📦 New messages count:", newMessages.length);
-
         return {
           ...prev,
           [conversationId]: newMessages,
@@ -529,8 +519,7 @@ export const useChat = () => {
       // Update conversation last message immediately
       setConversations((prev) =>
         prev.map((conv) =>
-          conv.id === selectedConversation.id ||
-          conv._id === selectedConversation._id
+          conv.id === selectedConversation.id
             ? {
                 ...conv,
                 lastMessage: messageText.trim(),
@@ -539,7 +528,6 @@ export const useChat = () => {
             : conv
         )
       );
-
       // Set a timeout to remove pending message if it doesn't get replaced
       const timeoutId = setTimeout(() => {
         console.log(
@@ -559,51 +547,30 @@ export const useChat = () => {
         // Remove from sending tracker
         sendMessage._sending?.delete(sendingKey);
       }, 15000); // 15 second timeout
-
       const messageData = {
         conversationId: selectedConversation.id || selectedConversation._id,
         content: messageText.trim(),
         attachments,
         type: "text",
       };
-
-      console.log("📤 Attempting to send message:", messageData);
-
+      // console.log("📤 Attempting to send message:", messageData);
       try {
-        // Send via socket for immediate real-time delivery
-        console.log("⚡ Sending message via socket for real-time delivery...");
-        console.log("🔗 Socket connected:", socketService.isSocketConnected());
-
-        // Ensure we're in the correct room before sending
-        console.log(
-          "🔄 Re-joining conversation room to ensure proper connection..."
-        );
         socketService.joinConversation(
           selectedConversation.id || selectedConversation._id
         );
-
         // Small delay to ensure room join is processed
         await new Promise((resolve) => setTimeout(resolve, 100));
-
-        socketService.sendMessage(messageData);
-
-        // Also send via API for persistence
-        console.log("📡 Sending message via API for persistence...");
+        // Send via API only - the server will broadcast via socket after processing
         const result = await chatService.sendMessage(messageData);
-
         if (result.success) {
-          console.log("✅ Message sent successfully via API");
-
           // Clear the timeout since message was sent successfully
           clearTimeout(timeoutId);
           // Remove from sending tracker
           sendMessage._sending?.delete(sendingKey);
-
           // The socket event will handle replacing the optimistic message
           // with the real message, so we don't need to do it here
         } else {
           console.error("❌ API message send failed:", result.message);
-
           // Clear timeout and remove optimistic message on failure
           clearTimeout(timeoutId);
           sendMessage._sending?.delete(sendingKey);
@@ -617,12 +584,10 @@ export const useChat = () => {
               ),
             };
           });
-
           setError(result.message);
         }
       } catch (err) {
         console.error("❌ Error sending message:", err);
-
         // Clear timeout and remove optimistic message on error
         clearTimeout(timeoutId);
         sendMessage._sending?.delete(sendingKey);
@@ -636,7 +601,6 @@ export const useChat = () => {
             ),
           };
         });
-
         setError("Failed to send message");
       }
     },
@@ -678,8 +642,7 @@ export const useChat = () => {
         const directSection = transformedData.find(
           (section) => section.type === "direct"
         );
-
-        if (directSection && directSection.items.length > 0) {
+        if (directSection) {
           const transformedConversation = {
             ...directSection.items[0],
             type: "direct",
@@ -689,7 +652,8 @@ export const useChat = () => {
             time: "",
             unreadCount: 0,
           };
-
+          console.log(conversations);
+          console.log(transformedConversation);
           // Add to conversations list
           setConversations((prev) => [transformedConversation, ...prev]);
           return transformedConversation;
@@ -723,6 +687,60 @@ export const useChat = () => {
     return null;
   };
 
+  // Load project group chats specifically
+  const loadProjectGroupChats = async () => {
+    setLoading(true);
+    try {
+      const result = await chatService.getProjectGroupChats();
+      if (result.success) {
+        // Transform the project group conversations
+        const transformedConversations = result.data.conversations.map(
+          (conv) => ({
+            ...conv,
+            type: "project",
+            isGroup: true,
+            unreadCount: conv.unreadCount || 0,
+          })
+        );
+
+        // Update conversations state with project group chats
+        setConversations((prev) => {
+          // Remove existing project conversations and add new ones
+          const nonProjectConversations = prev.filter(
+            (conv) => conv.type !== "project"
+          );
+          return [...transformedConversations, ...nonProjectConversations];
+        });
+
+        return transformedConversations;
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      console.error("Error loading project group chats:", err);
+      setError("Failed to load project group chats");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ensure all projects have group conversations
+  const ensureProjectGroupChats = async () => {
+    try {
+      const result = await chatService.ensureProjectGroupChats();
+      if (result.success) {
+        // Reload conversations after ensuring project chats
+        await loadConversations();
+        return result.data;
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      console.error("Error ensuring project group chats:", err);
+      setError("Failed to ensure project group chats");
+    }
+  };
+
   return {
     // State
     conversations,
@@ -741,6 +759,8 @@ export const useChat = () => {
     createDirectConversation,
     uploadFile,
     loadConversations,
+    loadProjectGroupChats,
+    ensureProjectGroupChats,
     setError,
 
     // Utils

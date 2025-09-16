@@ -37,9 +37,6 @@ const Sidebar = () => {
     taskMonth: getCurrentMonth(),
   });
 
-  console.log(tasksOnReviewData);
-  console.log(tasksOnPublishData);
-  console.log(clientReviewData);
   // Filter sidebar items based on user's position allowed routes
   const filteredSidebar = SIDE_MENU.filter((item) => {
     // Company admins have full access to all menu items

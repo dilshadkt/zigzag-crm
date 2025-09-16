@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/shared/header";
 import { ConversationList, ChatWindow } from "../../components/messenger";
 import SocketDebugger from "../../components/messenger/SocketDebugger";
@@ -26,6 +26,8 @@ const Messenger = () => {
     setError,
     createDirectConversation,
     loadConversations,
+    loadProjectGroupChats,
+    ensureProjectGroupChats,
   } = useChat();
   const [messageInput, setMessageInput] = useState("");
 
@@ -94,6 +96,19 @@ const Messenger = () => {
   };
 
   const typingUsers = getTypingUsers();
+
+  // Ensure project group chats exist when component mounts
+  useEffect(() => {
+    const initializeProjectChats = async () => {
+      try {
+        await ensureProjectGroupChats();
+      } catch (err) {
+        console.error("Failed to ensure project group chats:", err);
+      }
+    };
+
+    initializeProjectChats();
+  }, []);
 
   return (
     <section className="flex flex-col w-full h-full gap-y-3">

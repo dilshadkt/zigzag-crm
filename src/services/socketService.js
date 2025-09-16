@@ -18,9 +18,6 @@ class SocketService {
         ? "https://crm.zigzagdigitalsolutions.com"
         : "http://localhost:5000";
 
-    console.log("Connecting to socket server:", baseURL);
-    console.log("Using token:", token ? "Token provided" : "No token");
-
     this.socket = io(baseURL, {
       auth: {
         token: token,
@@ -29,7 +26,6 @@ class SocketService {
     });
 
     this.socket.on("connect", () => {
-      console.log("✅ Connected to server successfully");
       this.isConnected = true;
     });
 
@@ -44,34 +40,20 @@ class SocketService {
     });
 
     // Add error handler for general socket errors
-    this.socket.on("error", (error) => {
-      console.error("❌ Socket error:", error);
-    });
+    this.socket.on("error", (error) => {});
 
     // Add debugging for chat events
-    this.socket.on("new_message", (data) => {
-      console.log("📨 New message received via socket:", data);
-    });
+    this.socket.on("new_message", (data) => {});
 
-    this.socket.on("message_sent", (data) => {
-      console.log("✅ Message sent confirmation received:", data);
-    });
+    this.socket.on("message_sent", (data) => {});
 
-    this.socket.on("user_typing", (data) => {
-      console.log("⌨️ User typing:", data);
-    });
+    this.socket.on("user_typing", (data) => {});
 
-    this.socket.on("user_online", (data) => {
-      console.log("🟢 User online:", data);
-    });
+    this.socket.on("user_online", (data) => {});
 
-    this.socket.on("user_offline", (data) => {
-      console.log("🔴 User offline:", data);
-    });
+    this.socket.on("user_offline", (data) => {});
 
-    this.socket.on("messages_read", (data) => {
-      console.log("👁️ Messages read:", data);
-    });
+    this.socket.on("messages_read", (data) => {});
 
     // Add task status change events
     this.socket.on("task_status_changed", (data) => {
@@ -136,15 +118,6 @@ class SocketService {
   // Send a message
   sendMessage(messageData) {
     if (this.socket && this.isConnected) {
-      console.log("📤 Sending message via socket:", messageData);
-      console.log("🔗 Socket connected:", this.socket.connected);
-      console.log("🔗 Socket ID:", this.socket.id);
-      console.log("🏠 Socket rooms:", this.socket.rooms);
-      console.log(
-        "🎯 Target conversation room:",
-        `conversation_${messageData.conversationId}`
-      );
-
       this.socket.emit("send_message", messageData);
 
       // Add a timeout to check if message was received by server
