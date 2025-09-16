@@ -30,10 +30,6 @@ const statusConfig = {
     title: "In Progress",
     color: "bg-blue-100 text-blue-800",
   },
-  // completed: {
-  //   title: "Completed",
-  //   color: "bg-green-100 text-green-800",
-  // },
   "on-review": {
     title: "On Review",
     color: "bg-purple-100 text-purple-800",
@@ -49,6 +45,14 @@ const statusConfig = {
   approved: {
     title: "Approved",
     color: "bg-emerald-100 text-emerald-800",
+  },
+  "client-approved": {
+    title: "Client Approved",
+    color: "bg-teal-100 text-teal-800",
+  },
+  completed: {
+    title: "Completed",
+    color: "bg-green-100 text-green-800",
   },
 };
 
@@ -473,6 +477,9 @@ const Board = () => {
     "on-hold": filteredTasks.filter((task) => task.status === "on-hold"),
     "re-work": filteredTasks.filter((task) => task.status === "re-work"),
     approved: filteredTasks.filter((task) => task.status === "approved"),
+    "client-approved": filteredTasks.filter(
+      (task) => task.status === "client-approved"
+    ),
   };
 
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
