@@ -27,7 +27,57 @@ const ChatInput = ({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && onFileUpload) {
-      onFileUpload(file);
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert("File size must be less than 10MB");
+        e.target.value = "";
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "video/mp4",
+        "video/avi",
+        "video/mov",
+        "video/wmv",
+        "audio/mp3",
+        "audio/wav",
+        "audio/ogg",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+        "application/zip",
+        "application/x-rar-compressed",
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        alert(
+          "File type not supported. Please select an image, video, audio, document, or archive file."
+        );
+        e.target.value = "";
+        return;
+      }
+
+      // Determine file category for better handling
+      const fileCategory = {
+        isImage: file.type.startsWith("image/"),
+        isVideo: file.type.startsWith("video/"),
+        isAudio: file.type.startsWith("audio/"),
+        isDocument:
+          file.type.includes("pdf") ||
+          file.type.includes("document") ||
+          file.type.includes("text"),
+        isArchive: file.type.includes("zip") || file.type.includes("rar"),
+      };
+
+      onFileUpload(file, fileCategory);
     }
     // Reset file input
     e.target.value = "";
@@ -62,7 +112,7 @@ const ChatInput = ({
           type="file"
           className="hidden"
           onChange={handleFileChange}
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
         />
 
         <div className="flex-1 relative">

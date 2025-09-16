@@ -65,12 +65,33 @@ const Messenger = () => {
     }
   };
 
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (file, fileCategory) => {
     try {
       const uploadResult = await uploadFile(file);
       if (uploadResult) {
-        // Send file as message
-        await sendMessage(`📎 ${file.name}`, [uploadResult]);
+        // Determine message type and content based on file category
+        let messageType = "file";
+        let messageContent = `📎 ${file.name}`;
+
+        if (fileCategory.isImage) {
+          messageType = "image";
+          messageContent = `🖼️ ${file.name}`;
+        } else if (fileCategory.isVideo) {
+          messageType = "file";
+          messageContent = `🎥 ${file.name}`;
+        } else if (fileCategory.isAudio) {
+          messageType = "file";
+          messageContent = `🎵 ${file.name}`;
+        } else if (fileCategory.isDocument) {
+          messageType = "file";
+          messageContent = `📄 ${file.name}`;
+        } else if (fileCategory.isArchive) {
+          messageType = "file";
+          messageContent = `📦 ${file.name}`;
+        }
+
+        // Send message with proper type and attachment
+        await sendMessage(messageContent, [uploadResult], messageType);
       }
     } catch (err) {
       setError("Failed to upload file");

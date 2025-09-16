@@ -18,11 +18,14 @@ const ActivityStream = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  
-  const { data: activitiesData, isLoading, refetch, dataUpdatedAt, isFetching } = useGetRecentActivities(
-    12,
-    selectedFilter
-  );
+
+  const {
+    data: activitiesData,
+    isLoading,
+    refetch,
+    dataUpdatedAt,
+    isFetching,
+  } = useGetRecentActivities(12, selectedFilter);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -47,8 +50,8 @@ const ActivityStream = () => {
       }
     };
 
-    window.addEventListener('focus', handleWindowFocus);
-    return () => window.removeEventListener('focus', handleWindowFocus);
+    window.addEventListener("focus", handleWindowFocus);
+    return () => window.removeEventListener("focus", handleWindowFocus);
   }, [refetch, dataUpdatedAt]);
 
   const filterOptions = [
@@ -102,7 +105,10 @@ const ActivityStream = () => {
           activity.project.progress || 0
         }% complete)`;
       case "subtask_change":
-        return activity.description || `Updated subtask "${activity.subTask?.title || 'Unknown'}"`;
+        return (
+          activity.description ||
+          `Updated subtask "${activity.subTask?.title || "Unknown"}"`
+        );
       case "file_attachment":
         return `Added ${activity.attachments?.length || 1} file(s) to "${
           activity.task.title
@@ -180,7 +186,8 @@ const ActivityStream = () => {
           deleted: "text-red-600 border-red-200",
         };
         const changeColorClass =
-          changeTypeColors[activity.changeType] || "text-gray-600 border-gray-200";
+          changeTypeColors[activity.changeType] ||
+          "text-gray-600 border-gray-200";
         return (
           <div
             className={`bg-white px-2 py-1 rounded-md text-xs border ${changeColorClass}`}
@@ -209,7 +216,7 @@ const ActivityStream = () => {
       case "file_attachment":
         return (
           <div className="bg-white px-2 py-1 rounded-md text-xs text-orange-600 border border-orange-200">
-            📎 {activity.attachments?.length || 1} files
+            {activity.attachments?.length || 1} files
           </div>
         );
       case "task_update":
@@ -241,7 +248,8 @@ const ActivityStream = () => {
           deleted: "text-red-600 border-red-200",
         };
         const subTaskChangeColorClass =
-          subTaskChangeTypeColors[activity.changeType] || "text-gray-600 border-gray-200";
+          subTaskChangeTypeColors[activity.changeType] ||
+          "text-gray-600 border-gray-200";
         return (
           <div
             className={`bg-white px-2 py-1 rounded-md text-xs border ${subTaskChangeColorClass}`}
@@ -296,20 +304,24 @@ const ActivityStream = () => {
     <div className="flex mt-5 h-[450px] flex-col relative col-span-2 mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-col">
-
-        <h4 className="font-semibold text-lg text-gray-800">Activity Stream</h4>
-        <div 
+          <h4 className="font-semibold text-lg text-gray-800">
+            Activity Stream
+          </h4>
+          <div
             className="text-[10px] text-gray-500 mr-2 flex items-center gap-1 cursor-help"
-            title={`Last updated: ${dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : 'Never'}. Auto-refreshes every 3 minutes.`}
+            title={`Last updated: ${
+              dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : "Never"
+            }. Auto-refreshes every 3 minutes.`}
           >
-            <span>Updated {dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : 'Never'}</span>
+            <span>
+              Updated {dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : "Never"}
+            </span>
             {isFetching && !isLoading && (
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-        
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -321,7 +333,9 @@ const ActivityStream = () => {
             title="Refresh activities"
           >
             <FaSync
-              className={`w-3 h-3 ${isRefreshing || isFetching ? "animate-spin" : ""}`}
+              className={`w-3 h-3 ${
+                isRefreshing || isFetching ? "animate-spin" : ""
+              }`}
             />
           </button>
           <div className="relative">
@@ -408,11 +422,13 @@ const ActivityStream = () => {
                   )}
 
                   {/* Subtask context */}
-                  {activity.action === "subtask_change" && activity.parentTask && (
-                    <p className="text-xs text-[#91929E] mt-1">
-                      Parent Task: {activity.parentTask.title} • Project: {activity.project?.name}
-                    </p>
-                  )}
+                  {activity.action === "subtask_change" &&
+                    activity.parentTask && (
+                      <p className="text-xs text-[#91929E] mt-1">
+                        Parent Task: {activity.parentTask.title} • Project:{" "}
+                        {activity.project?.name}
+                      </p>
+                    )}
 
                   {/* Project details for project activities */}
                   {activity.project && !activity.parentTask && (

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import socketService from "../services/socketService";
 import * as chatService from "../api/chatService";
+import { uploadSingleFile } from "../api/service";
 import { useAuth } from "./useAuth";
 import {
   transformMessageData,
@@ -458,7 +459,7 @@ export const useChat = () => {
 
   // Send a message
   const sendMessage = useCallback(
-    async (messageText, attachments = []) => {
+    async (messageText, attachments = [], messageType = "text") => {
       if (!selectedConversation || !messageText.trim()) {
         console.warn(
           "Cannot send message: No conversation selected or empty message"
@@ -490,6 +491,7 @@ export const useChat = () => {
         timestamp: new Date(),
         isOwn: true,
         attachments: attachments || [],
+        type: messageType, // Set message type (text, file, image, etc.)
         isPending: true, // Mark as pending to show loading state
         status: "sending", // Status for optimistic message
         readBy: [],
@@ -551,7 +553,7 @@ export const useChat = () => {
         conversationId: selectedConversation.id || selectedConversation._id,
         content: messageText.trim(),
         attachments,
-        type: "text",
+        type: messageType,
       };
       // console.log("📤 Attempting to send message:", messageData);
       try {
@@ -672,16 +674,25 @@ export const useChat = () => {
     if (!selectedConversation) return null;
 
     try {
-      const result = await chatService.uploadChatFile(
-        file,
-        selectedConversation.id
-      );
-      if (result.success) {
-        return result.data;
+      // Use the existing uploadSingleFile service from service.js
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await uploadSingleFile(formData);
+
+      if (result.success && result.fileUrl) {
+        // Return attachment data in the format expected by the message model
+        return {
+          filename: result.originalName || file.name,
+          originalName: result.originalName || file.name,
+          mimetype: result.mimeType || file.type,
+          size: file.size,
+          url: result.fileUrl,
+        };
       } else {
-        setError(result.message);
+        setError(result.message || "Failed to upload file");
       }
     } catch (err) {
+      console.error("Upload error:", err);
       setError("Failed to upload file");
     }
     return null;
