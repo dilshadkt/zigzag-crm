@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import AttendanceHeader from "./components/AttendanceHeader";
 import SummaryCards from "./components/SummaryCards";
@@ -40,6 +40,11 @@ const Attendance = () => {
     toast.error(error);
   };
 
+  // Memoize the data change handler to prevent infinite re-renders
+  const handleDataChange = useCallback((data) => {
+    setAttendanceData(data);
+  }, []);
+
   return (
     <div className=" bg-gray-50">
       <AttendanceHeader
@@ -62,7 +67,7 @@ const Attendance = () => {
         selectedDate={selectedDate}
         searchTerm={searchTerm}
         selectedPeriod={selectedPeriod}
-        onDataChange={setAttendanceData}
+        onDataChange={handleDataChange}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useDailyReport } from "../hooks/useAttendanceAnalytics";
 import {
   getAddressFromCoordinates,
@@ -336,25 +336,38 @@ const AttendanceTable = ({
   // Get attendance records from the API response
   const allAttendanceRecords = data?.report || [];
 
-  // Filter records based on search term
-  const attendanceRecords = allAttendanceRecords.filter((record) => {
-    if (!searchTerm) return true;
+  // Filter records based on search term using useMemo to prevent unnecessary re-computations
+  const attendanceRecords = useMemo(() => {
+    return allAttendanceRecords.filter((record) => {
+      if (!searchTerm) return true;
 
-    const employeeName = `${record.employee?.firstName || ""} ${
-      record.employee?.lastName || ""
-    }`.toLowerCase();
-    const employeeEmail = record.employee?.email?.toLowerCase() || "";
-    const searchLower = searchTerm.toLowerCase();
+      const employeeName = `${record.employee?.firstName || ""} ${
+        record.employee?.lastName || ""
+      }`.toLowerCase();
+      const employeeEmail = record.employee?.email?.toLowerCase() || "";
+      const searchLower = searchTerm.toLowerCase();
 
-    return (
-      employeeName.includes(searchLower) || employeeEmail.includes(searchLower)
-    );
-  });
+      return (
+        employeeName.includes(searchLower) ||
+        employeeEmail.includes(searchLower)
+      );
+    });
+  }, [allAttendanceRecords, searchTerm]);
+
+  // Use ref to track previous data and prevent unnecessary updates
+  const prevDataRef = useRef();
 
   // Pass filtered data to parent component for export
   React.useEffect(() => {
-    if (onDataChange) {
-      onDataChange(attendanceRecords);
+    if (onDataChange && attendanceRecords) {
+      // Only call onDataChange if the data has actually changed
+      const dataChanged =
+        attendanceRecords.length !== prevDataRef.current?.length ||
+        attendanceRecords !== prevDataRef.current;
+      if (dataChanged) {
+        prevDataRef.current = attendanceRecords;
+        onDataChange(attendanceRecords);
+      }
     }
   }, [attendanceRecords, onDataChange]);
 
