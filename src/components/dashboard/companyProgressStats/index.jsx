@@ -98,6 +98,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       } active projects`,
       icon: FiFolderPlus,
       color: "bg-blue-500",
+      borderColor: "hover:border-blue-500",
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
       onClick: () => handleStatsClick("projects"),
@@ -108,28 +109,30 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: `${companyStatsCheck?.statistics?.completed || 0} completed`,
       icon: FiTarget,
       color: "bg-purple-500",
+      borderColor: "hover:border-purple-500",
       bgColor: "bg-purple-50",
       textColor: "text-purple-600",
       onClick: () => handleStatsClick("tasks"),
     },
-    {
-      title: "Team Members",
-      value: companyStatsCheck?.statistics?.teamMembers || 0,
-      subtitle: `${
-        companyStatsCheck?.statistics?.teamMembers || 0
-      } total employees`,
-      icon: FiUsers,
-      color: "bg-green-500",
-      bgColor: "bg-green-50",
-      textColor: "text-green-600",
-      onClick: () => handleStatsClick("employees"),
-    },
+    // {
+    //   title: "Team Members",
+    //   value: companyStatsCheck?.statistics?.teamMembers || 0,
+    //   subtitle: `${
+    //     companyStatsCheck?.statistics?.teamMembers || 0
+    //   } total employees`,
+    //   icon: FiUsers,
+    //   color: "bg-green-500",
+    //   bgColor: "bg-green-50",
+    //   textColor: "text-green-600",
+    //   onClick: () => handleStatsClick("employees"),
+    // },
     {
       title: "In Progress",
       value: companyStatsCheck?.statistics?.inProgress || 0,
       subtitle: `${companyStatsCheck?.statistics?.pending || 0} pending`,
       icon: FiClock,
       color: "bg-orange-500",
+      borderColor: "hover:border-orange-500",
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
       onClick: () => handleStatsClick("in-progress"),
@@ -140,6 +143,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: "Awaiting approval",
       icon: FiBarChart2,
       color: "bg-yellow-500",
+      borderColor: "hover:border-yellow-500",
       bgColor: "bg-yellow-50",
       textColor: "text-yellow-600",
       onClick: () => handleStatsClick("on-review"),
@@ -150,6 +154,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: "Awaiting client review",
       icon: FiCheckCircle,
       color: "bg-teal-500",
+      borderColor: "hover:border-teal-500",
       bgColor: "bg-teal-50",
       textColor: "text-teal-600",
       onClick: () => handleStatsClick("client-review"),
@@ -160,6 +165,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: "Ready to publish",
       icon: MdBusinessCenter,
       color: "bg-indigo-500",
+      borderColor: "hover:border-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => navigate("/task-on-publish"),
@@ -170,6 +176,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: "Work completed",
       icon: FiCheckCircle,
       color: "bg-green-500",
+      borderColor: "hover:border-green-500",
       bgColor: "bg-green-50",
       textColor: "text-green-600",
       onClick: () => handleStatsClick("completed"),
@@ -180,6 +187,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: "Need attention",
       icon: FiAlertCircle,
       color: "bg-red-500",
+      borderColor: "hover:border-red-500",
       bgColor: "bg-red-50",
       textColor: "text-red-600",
       onClick: handleOverdueTasksClick,
@@ -190,6 +198,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       subtitle: "Due today",
       icon: FiCheckCircle,
       color: "bg-indigo-500",
+      borderColor: "hover:border-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => navigate("/company-today-tasks?taskMonth=" + taskMonth),
@@ -242,7 +251,9 @@ const CompanyProgressStats = ({ taskMonth }) => {
             <div
               key={index}
               onClick={stat.onClick}
-              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer md:hover:shadow-md transition-all duration-200 transform md:hover:scale-105 group relative overflow-hidden`}
+              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center
+               justify-center text-center cursor-pointer border-1 border-transparent
+                 ${stat.borderColor} transform  group relative overflow-hidden`}
             >
               <div className={`${stat.color} p-3 rounded-lg mb-3`}>
                 <Icon className="w-4  h-4  text-white" />

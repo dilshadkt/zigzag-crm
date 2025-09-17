@@ -74,7 +74,7 @@ rounded-3xl  flex flex-col  p-4"
             className="bg-[#F4F9FD]"
           />
         </div>
-        <span className="-translate-y-1.5 uppercase">
+        <span className="-translate-y-1.5 mt-2 uppercase">
           {currentProject?._id?.slice(0, 7)}
         </span>
         <div className="flex flex-col gap-y-2 my-4">

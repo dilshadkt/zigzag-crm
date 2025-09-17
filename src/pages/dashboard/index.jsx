@@ -159,7 +159,7 @@ const Dashboard = () => {
       {/* Progress Stats Section - Show different components based on user role */}
       <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
         {isEmployee ? (
-          <EmployeeProgressStats />
+          <EmployeeProgressStats taskMonth={taskMonth} />
         ) : isCompanyAdmin ? (
           <CompanyProgressStats taskMonth={taskMonth} />
         ) : null}

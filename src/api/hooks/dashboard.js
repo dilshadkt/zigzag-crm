@@ -13,3 +13,15 @@ export const useGetCompanyStatsChecking = (companyId, taskMonth) => {
     },
   });
 };
+
+export const useGetUserStatsChecking = (taskMonth) => {
+  return useQuery({
+    queryKey: ["userStats", taskMonth],
+    queryFn: async () => {
+      const response = await apiClient.get(
+        `/dashboard/user-statistics?taskMonth=${taskMonth}`
+      );
+      return response.data;
+    },
+  });
+};
