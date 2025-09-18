@@ -32,6 +32,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
     companyId,
     taskMonth
   );
+
   const [filteredTasks, setFilteredTasks] = useState([]);
   // Super filter states
   const [showFilters, setShowFilters] = useState(false);
@@ -129,6 +130,10 @@ const CompanyTasks = ({ filter: propFilter }) => {
               task.status !== "completed"
             );
           });
+          break;
+        case "unscheduled":
+          // Filter for tasks that have no startDate and no dueDate
+          filtered = allTasksData?.unscheduledSubTasks;
           break;
         // No default case - show all tasks for 'all' or no filter
       }
@@ -287,6 +292,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "Re-work Tasks";
       case "today":
         return "Today's Tasks";
+      case "unscheduled":
+        return "Unscheduled Tasks";
       default:
         return "All Tasks";
     }
@@ -306,6 +313,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return FiCheckCircle;
       case "re-work":
         return FiAlertCircle;
+      case "unscheduled":
+        return FiCalendar;
       default:
         return FiFlag;
     }
@@ -325,6 +334,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-teal-600";
       case "re-work":
         return "text-red-600";
+      case "unscheduled":
+        return "text-gray-600";
       default:
         return "text-gray-600";
     }
@@ -367,6 +378,12 @@ const CompanyTasks = ({ filter: propFilter }) => {
           emoji: "🔧",
           title: "No re-work tasks",
           message: "Tasks that need revision will appear here.",
+        };
+      case "unscheduled":
+        return {
+          emoji: "📅",
+          title: "No unscheduled tasks",
+          message: "All tasks have been scheduled with start and due dates.",
         };
       default:
         return {

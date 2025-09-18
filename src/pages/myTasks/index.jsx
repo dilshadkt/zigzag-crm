@@ -133,6 +133,15 @@ const MyTasks = () => {
             );
           });
           break;
+        case "unscheduled":
+          // Filter for tasks that have no startDate and no dueDate
+          filtered = filtered.filter((task) => {
+            return (
+              (!task.startDate || task.startDate === null) &&
+              (!task.dueDate || task.dueDate === null)
+            );
+          });
+          break;
         // No default case - show all tasks for 'all' or no filter
       }
 
@@ -287,6 +296,8 @@ const MyTasks = () => {
         return "Re-work Tasks";
       case "today":
         return "Today's Tasks";
+      case "unscheduled":
+        return "Unscheduled Tasks";
       default:
         return "My Tasks";
     }
@@ -311,6 +322,8 @@ const MyTasks = () => {
       case "re-work":
         return FiAlertCircle;
       case "today":
+        return FiCalendar;
+      case "unscheduled":
         return FiCalendar;
       default:
         return FiUser;
@@ -337,6 +350,8 @@ const MyTasks = () => {
         return "text-red-600 bg-red-50";
       case "today":
         return "text-purple-600 bg-purple-50";
+      case "unscheduled":
+        return "text-gray-600 bg-gray-50";
       default:
         return "text-gray-600 bg-gray-50";
     }
@@ -389,6 +404,12 @@ const MyTasks = () => {
           title: "No Tasks Due Today",
           message:
             "You have no tasks due today. Great job staying on top of your schedule!",
+        };
+      case "unscheduled":
+        return {
+          title: "No Unscheduled Tasks",
+          message:
+            "All your tasks have been scheduled with start and due dates.",
         };
       default:
         return {

@@ -1129,6 +1129,7 @@ export const useGetAllCompanyTasks = (companyId, taskMonth) => {
       apiClient.get("/tasks/company/all?taskMonth=" + taskMonth).then((res) => {
         return {
           tasks: [...res.data.tasks, ...res.data.subTasks] || [],
+          unscheduledSubTasks: res.data.unscheduledSubTasks || [],
           statistics: res.data.statistics || {},
           totalCount: res.data.tasks?.length || 0,
         };

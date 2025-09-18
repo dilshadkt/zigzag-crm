@@ -9,6 +9,7 @@ import {
   FiAlertCircle,
   FiFolderPlus,
   FiTarget,
+  FiCalendar,
 } from "react-icons/fi";
 
 const EmployeeProgressStats = ({ taskMonth }) => {
@@ -42,6 +43,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const reworkTasks = statistics.rework || 0;
   const overdueTasks = statistics.overdue || 0;
   const todayTasks = statistics.today || 0;
+  const unscheduledTasks = statistics.unscheduled || 0;
   const assignedProjects = statistics.assignedProjects || 0;
   const completionRate = statistics.completionRate || 0;
 
@@ -74,6 +76,9 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         break;
       case "re-work":
         navigate("/my-tasks?filter=re-work&taskMonth=" + taskMonth);
+        break;
+      case "unscheduled":
+        navigate("/my-tasks?filter=unscheduled&taskMonth=" + taskMonth);
         break;
       default:
         break;

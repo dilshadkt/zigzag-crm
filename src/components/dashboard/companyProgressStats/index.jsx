@@ -10,6 +10,7 @@ import {
   FiClock,
   FiAlertCircle,
   FiBarChart2,
+  FiCalendar,
 } from "react-icons/fi";
 import { useGetCompanyStatsChecking } from "../../../api/hooks/dashboard";
 import { MdBusinessCenter } from "react-icons/md";
@@ -71,6 +72,9 @@ const CompanyProgressStats = ({ taskMonth }) => {
         break;
       case "employees":
         navigate("/employees");
+        break;
+      case "unscheduled":
+        navigate("/company-tasks?filter=unscheduled&taskMonth=" + taskMonth);
         break;
       default:
         break;
@@ -217,6 +221,17 @@ const CompanyProgressStats = ({ taskMonth }) => {
       textColor: "text-indigo-600",
       onClick: () => navigate("/company-today-tasks?taskMonth=" + taskMonth),
     },
+    {
+      title: "Unscheduled Tasks",
+      value: companyStatsCheck?.statistics?.unscheduled || 0,
+      subtitle: "Need scheduling",
+      icon: FiCalendar,
+      color: "bg-gray-500",
+      borderColor: "hover:border-gray-500",
+      bgColor: "bg-gray-50",
+      textColor: "text-gray-600",
+      onClick: () => handleStatsClick("unscheduled"),
+    },
   ];
 
   // Since the new data structure doesn't have workload distribution,
@@ -258,7 +273,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         </div>
       </div>
       {/* Company Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-2 flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-2 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
