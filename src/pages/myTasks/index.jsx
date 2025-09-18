@@ -26,9 +26,13 @@ const MyTasks = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const filter = searchParams.get("filter"); // Can be: 'overdue', 'in-progress', 'pending', 'completed'
+  const taskMonth = searchParams.get("taskMonth"); // Get taskMonth from URL query
 
   // Get employee tasks and filter based on URL parameter
-  const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(user?._id);
+  const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
+    user?._id,
+    { taskMonth }
+  );
   const [filteredTasks, setFilteredTasks] = useState([]);
 
   // Filter states
@@ -65,7 +69,10 @@ const MyTasks = () => {
 
   useEffect(() => {
     if (employeeTasksData?.tasks) {
-      let filtered = [...employeeTasksData.tasks];
+      let filtered = [
+        ...employeeTasksData.tasks,
+        ...employeeTasksData.subTasks,
+      ];
 
       // Apply URL-based filter first
       const today = new Date();
@@ -73,7 +80,23 @@ const MyTasks = () => {
         case "overdue":
           filtered = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
-            return dueDate < today && task.status !== "completed";
+            // Set due date to start of day for comparison
+            const dueDateStart = new Date(
+              dueDate.getFullYear(),
+              dueDate.getMonth(),
+              dueDate.getDate()
+            );
+            const todayStart = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate()
+            );
+            return (
+              dueDateStart < todayStart &&
+              task.status !== "approved" &&
+              task.status !== "completed" &&
+              task.status !== "client-approved"
+            );
           });
           break;
         case "in-progress":
@@ -84,6 +107,28 @@ const MyTasks = () => {
           break;
         case "completed":
           filtered = filtered.filter((task) => task.status === "completed");
+          break;
+        case "approved":
+          filtered = filtered.filter((task) => task.status === "approved");
+          break;
+        case "client-approved":
+          filtered = filtered.filter(
+            (task) => task.status === "client-approved"
+          );
+          break;
+        case "on-review":
+          filtered = filtered.filter((task) => task.status === "on-review");
+          break;
+        case "today":
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            return (
+              dueDate.getDate() === today.getDate() &&
+              dueDate.getMonth() === today.getMonth() &&
+              dueDate.getFullYear() === today.getFullYear() &&
+              task.status !== "completed"
+            );
+          });
           break;
         // No default case - show all tasks for 'all' or no filter
       }
@@ -148,7 +193,14 @@ const MyTasks = () => {
             bValue = priorityOrder[b.priority] || 0;
             break;
           case "status":
-            const statusOrder = { pending: 1, "in-progress": 2, completed: 3 };
+            const statusOrder = {
+              pending: 1,
+              "in-progress": 2,
+              "on-review": 3,
+              approved: 4,
+              "client-approved": 5,
+              completed: 6,
+            };
             aValue = statusOrder[a.status] || 0;
             bValue = statusOrder[b.status] || 0;
             break;
@@ -221,6 +273,14 @@ const MyTasks = () => {
         return "Pending Tasks";
       case "completed":
         return "Completed Tasks";
+      case "approved":
+        return "Approved Tasks";
+      case "client-approved":
+        return "Client Approved Tasks";
+      case "on-review":
+        return "Tasks On Review";
+      case "today":
+        return "Today's Tasks";
       default:
         return "My Tasks";
     }
@@ -236,6 +296,14 @@ const MyTasks = () => {
         return FiPause;
       case "completed":
         return FiCheckCircle;
+      case "approved":
+        return FiCheckCircle;
+      case "client-approved":
+        return FiCheckCircle;
+      case "on-review":
+        return FiClock;
+      case "today":
+        return FiCalendar;
       default:
         return FiUser;
     }
@@ -251,6 +319,14 @@ const MyTasks = () => {
         return "text-yellow-600 bg-yellow-50";
       case "completed":
         return "text-green-600 bg-green-50";
+      case "approved":
+        return "text-teal-600 bg-teal-50";
+      case "client-approved":
+        return "text-indigo-600 bg-indigo-50";
+      case "on-review":
+        return "text-orange-600 bg-orange-50";
+      case "today":
+        return "text-purple-600 bg-purple-50";
       default:
         return "text-gray-600 bg-gray-50";
     }
@@ -277,6 +353,27 @@ const MyTasks = () => {
         return {
           title: "No Completed Tasks Yet",
           message: "Complete some tasks to see your achievements here.",
+        };
+      case "approved":
+        return {
+          title: "No Approved Tasks Yet",
+          message: "Tasks that have been approved will appear here.",
+        };
+      case "client-approved":
+        return {
+          title: "No Client Approved Tasks Yet",
+          message: "Tasks approved by clients will appear here.",
+        };
+      case "on-review":
+        return {
+          title: "No Tasks On Review",
+          message: "Tasks submitted for review will appear here.",
+        };
+      case "today":
+        return {
+          title: "No Tasks Due Today",
+          message:
+            "You have no tasks due today. Great job staying on top of your schedule!",
         };
       default:
         return {
@@ -307,6 +404,12 @@ const MyTasks = () => {
         return "bg-blue-100 text-blue-800";
       case "pending":
         return "bg-yellow-100 text-yellow-800";
+      case "approved":
+        return "bg-teal-100 text-teal-800";
+      case "client-approved":
+        return "bg-indigo-100 text-indigo-800";
+      case "on-review":
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -433,7 +536,14 @@ const MyTasks = () => {
                 Status
               </label>
               <div className="space-y-2">
-                {["pending", "in-progress", "completed"].map((status) => (
+                {[
+                  "pending",
+                  "in-progress",
+                  "on-review",
+                  "approved",
+                  "client-approved",
+                  "completed",
+                ].map((status) => (
                   <label key={status} className="flex items-center">
                     <input
                       type="checkbox"
