@@ -11,6 +11,7 @@ import {
   FiTarget,
   FiCalendar,
 } from "react-icons/fi";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const EmployeeProgressStats = ({ taskMonth }) => {
   const { user } = useAuth();
@@ -20,6 +21,10 @@ const EmployeeProgressStats = ({ taskMonth }) => {
     isLoading,
     refetch,
   } = useGetUserStatsChecking(taskMonth);
+
+  // State for managing card order with localStorage persistence
+  const [cardOrder, setCardOrder] = React.useState(null);
+  const isInitialized = React.useRef(false);
 
   // Refetch data when component mounts and when window gains focus
   React.useEffect(() => {
@@ -48,173 +53,265 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const assignedProjects = statistics.assignedProjects || 0;
   const completionRate = statistics.completionRate || 0;
 
-  // Function to handle stats card clicks
-  const handleStatsClick = (statType) => {
-    switch (statType) {
-      case "projects":
-        navigate("/my-projects?taskMonth=" + taskMonth);
-        break;
-      case "total":
-        navigate("/my-tasks?taskMonth=" + taskMonth);
-        break;
-      case "completed":
-        navigate("/my-tasks?filter=completed&taskMonth=" + taskMonth);
-        break;
-      case "in-progress":
-        navigate("/my-tasks?filter=in-progress&taskMonth=" + taskMonth);
-        break;
-      case "pending":
-        navigate("/my-tasks?filter=pending&taskMonth=" + taskMonth);
-        break;
-      case "on-review":
-        navigate("/my-tasks?filter=on-review&taskMonth=" + taskMonth);
-        break;
-      case "approved":
-        navigate("/my-tasks?filter=approved&taskMonth=" + taskMonth);
-        break;
-      case "client-approved":
-        navigate("/my-tasks?filter=client-approved&taskMonth=" + taskMonth);
-        break;
-      case "re-work":
-        navigate("/my-tasks?filter=re-work&taskMonth=" + taskMonth);
-        break;
-      case "unscheduled":
-        navigate("/my-tasks?filter=unscheduled&taskMonth=" + taskMonth);
-        break;
-      default:
-        break;
-    }
-  };
-
   // Function to handle overdue tasks click
-  const handleOverdueTasksClick = () => {
+  const handleOverdueTasksClick = React.useCallback(() => {
     navigate("/my-tasks?filter=overdue&taskMonth=" + taskMonth);
-  };
+  }, [navigate, taskMonth]);
 
-  const stats = [
-    {
-      title: "Assigned Projects",
-      value: assignedProjects,
-      subtitle: `${assignedProjects} projects assigned`,
-      icon: FiFolderPlus,
-      color: "bg-blue-500",
-      borderColor: "hover:border-blue-500",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-600",
-      onClick: () => handleStatsClick("projects"),
+  // Function to handle drag end
+  const handleDragEnd = React.useCallback(
+    (result) => {
+      if (!result.destination || !cardOrder) return;
+
+      const newOrder = Array.from(cardOrder);
+      const [reorderedItem] = newOrder.splice(result.source.index, 1);
+      newOrder.splice(result.destination.index, 0, reorderedItem);
+
+      setCardOrder(newOrder);
+      localStorage.setItem(
+        `employeeStatsCardOrder_${user?.id}`,
+        JSON.stringify(newOrder)
+      );
     },
-    {
-      title: "Total Tasks",
-      value: totalTasks,
-      subtitle: `${completedTasks} completed`,
-      icon: FiTarget,
-      color: "bg-purple-500",
-      borderColor: "hover:border-purple-500",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
-      onClick: () => handleStatsClick("total"),
+    [cardOrder, user?.id]
+  );
+
+  // Function to handle stats card clicks
+  const handleStatsClick = React.useCallback(
+    (statType) => {
+      switch (statType) {
+        case "projects":
+          navigate("/my-projects?taskMonth=" + taskMonth);
+          break;
+        case "total":
+          navigate("/my-tasks?taskMonth=" + taskMonth);
+          break;
+        case "completed":
+          navigate("/my-tasks?filter=completed&taskMonth=" + taskMonth);
+          break;
+        case "in-progress":
+          navigate("/my-tasks?filter=in-progress&taskMonth=" + taskMonth);
+          break;
+        case "pending":
+          navigate("/my-tasks?filter=pending&taskMonth=" + taskMonth);
+          break;
+        case "on-review":
+          navigate("/my-tasks?filter=on-review&taskMonth=" + taskMonth);
+          break;
+        case "approved":
+          navigate("/my-tasks?filter=approved&taskMonth=" + taskMonth);
+          break;
+        case "client-approved":
+          navigate("/my-tasks?filter=client-approved&taskMonth=" + taskMonth);
+          break;
+        case "re-work":
+          navigate("/my-tasks?filter=re-work&taskMonth=" + taskMonth);
+          break;
+        case "unscheduled":
+          navigate("/my-tasks?filter=unscheduled&taskMonth=" + taskMonth);
+          break;
+        default:
+          break;
+      }
     },
-    {
-      title: "In Progress",
-      value: inProgressTasks,
-      subtitle: `${pendingTasks} pending`,
-      icon: FiClock,
-      color: "bg-orange-500",
-      borderColor: "hover:border-orange-500",
-      bgColor: "bg-orange-50",
-      textColor: "text-orange-600",
-      onClick: () => handleStatsClick("in-progress"),
-    },
-    // {
-    //   title: "On Review",
-    //   value: onReviewTasks,
-    //   subtitle: "Awaiting approval",
-    //   icon: FiCheckCircle,
-    //   color: "bg-yellow-500",
-    //   borderColor: "hover:border-yellow-500",
-    //   bgColor: "bg-yellow-50",
-    //   textColor: "text-yellow-600",
-    //   onClick: () => handleStatsClick("on-review"),
-    // },
-    // {
-    //   title: "Content Approved",
-    //   value: approvedTasks,
-    //   subtitle: "Awaiting client review",
-    //   icon: FiCheckCircle,
-    //   color: "bg-teal-500",
-    //   borderColor: "hover:border-teal-500",
-    //   bgColor: "bg-teal-50",
-    //   textColor: "text-teal-600",
-    //   onClick: () => handleStatsClick("approved"),
-    // },
-    // {
-    //   title: "Client Approved",
-    //   value: clientApprovedTasks,
-    //   subtitle: "Ready to publish",
-    //   icon: FiCheckCircle,
-    //   color: "bg-indigo-500",
-    //   borderColor: "hover:border-indigo-500",
-    //   bgColor: "bg-indigo-50",
-    //   textColor: "text-indigo-600",
-    //   onClick: () => handleStatsClick("client-approved"),
-    // },
-    {
-      title: "Re-work",
-      value: reworkTasks,
-      subtitle: "Needs revision",
-      icon: FiAlertCircle,
-      color: "bg-red-500",
-      borderColor: "hover:border-red-500",
-      bgColor: "bg-red-50",
-      textColor: "text-red-600",
-      onClick: () => handleStatsClick("re-work"),
-    },
-    {
-      title: "Completed",
-      value: completedTasks,
-      subtitle: "Work completed",
-      icon: FiCheckCircle,
-      color: "bg-green-500",
-      borderColor: "hover:border-green-500",
-      bgColor: "bg-green-50",
-      textColor: "text-green-600",
-      onClick: () => handleStatsClick("completed"),
-    },
-    {
-      title: "Overdue Tasks",
-      value: overdueTasks,
-      subtitle: "Need attention",
-      icon: FiAlertCircle,
-      color: "bg-red-500",
-      borderColor: "hover:border-red-500",
-      bgColor: "bg-red-50",
-      textColor: "text-red-600",
-      onClick: handleOverdueTasksClick,
-    },
-    {
-      title: "Today's Tasks",
-      value: todayTasks,
-      subtitle: "Due today",
-      icon: FiClock,
-      color: "bg-indigo-500",
-      borderColor: "hover:border-indigo-500",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-600",
-      onClick: () => navigate("/today-tasks?taskMonth=" + taskMonth),
-    },
-    {
-      title: "Upcoming 3 Days",
-      value: upcoming3DaysTasks,
-      subtitle: "Due soon",
-      icon: FiCalendar,
-      color: "bg-cyan-500",
-      borderColor: "hover:border-cyan-500",
-      bgColor: "bg-cyan-50",
-      textColor: "text-cyan-600",
-      onClick: () =>
-        navigate("/my-tasks?filter=upcoming&taskMonth=" + taskMonth),
-    },
-  ];
+    [navigate, taskMonth]
+  );
+
+  const stats = React.useMemo(
+    () => [
+      {
+        id: "assigned-projects",
+        title: "Assigned Projects",
+        value: assignedProjects,
+        subtitle: `${assignedProjects} projects assigned`,
+        icon: FiFolderPlus,
+        color: "bg-blue-500",
+        borderColor: "hover:border-blue-500",
+        bgColor: "bg-blue-50",
+        textColor: "text-blue-600",
+        onClick: () => handleStatsClick("projects"),
+      },
+      {
+        id: "total-tasks",
+        title: "Total Tasks",
+        value: totalTasks,
+        subtitle: `${completedTasks} completed`,
+        icon: FiTarget,
+        color: "bg-purple-500",
+        borderColor: "hover:border-purple-500",
+        bgColor: "bg-purple-50",
+        textColor: "text-purple-600",
+        onClick: () => handleStatsClick("total"),
+      },
+      {
+        id: "in-progress",
+        title: "In Progress",
+        value: inProgressTasks,
+        subtitle: `${pendingTasks} pending`,
+        icon: FiClock,
+        color: "bg-orange-500",
+        borderColor: "hover:border-orange-500",
+        bgColor: "bg-orange-50",
+        textColor: "text-orange-600",
+        onClick: () => handleStatsClick("in-progress"),
+      },
+      // {
+      //   title: "On Review",
+      //   value: onReviewTasks,
+      //   subtitle: "Awaiting approval",
+      //   icon: FiCheckCircle,
+      //   color: "bg-yellow-500",
+      //   borderColor: "hover:border-yellow-500",
+      //   bgColor: "bg-yellow-50",
+      //   textColor: "text-yellow-600",
+      //   onClick: () => handleStatsClick("on-review"),
+      // },
+      // {
+      //   title: "Content Approved",
+      //   value: approvedTasks,
+      //   subtitle: "Awaiting client review",
+      //   icon: FiCheckCircle,
+      //   color: "bg-teal-500",
+      //   borderColor: "hover:border-teal-500",
+      //   bgColor: "bg-teal-50",
+      //   textColor: "text-teal-600",
+      //   onClick: () => handleStatsClick("approved"),
+      // },
+      // {
+      //   title: "Client Approved",
+      //   value: clientApprovedTasks,
+      //   subtitle: "Ready to publish",
+      //   icon: FiCheckCircle,
+      //   color: "bg-indigo-500",
+      //   borderColor: "hover:border-indigo-500",
+      //   bgColor: "bg-indigo-50",
+      //   textColor: "text-indigo-600",
+      //   onClick: () => handleStatsClick("client-approved"),
+      // },
+      {
+        id: "re-work",
+        title: "Re-work",
+        value: reworkTasks,
+        subtitle: "Needs revision",
+        icon: FiAlertCircle,
+        color: "bg-red-500",
+        borderColor: "hover:border-red-500",
+        bgColor: "bg-red-50",
+        textColor: "text-red-600",
+        onClick: () => handleStatsClick("re-work"),
+      },
+      {
+        id: "completed",
+        title: "Completed",
+        value: completedTasks,
+        subtitle: "Work completed",
+        icon: FiCheckCircle,
+        color: "bg-green-500",
+        borderColor: "hover:border-green-500",
+        bgColor: "bg-green-50",
+        textColor: "text-green-600",
+        onClick: () => handleStatsClick("completed"),
+      },
+      {
+        id: "overdue-tasks",
+        title: "Overdue Tasks",
+        value: overdueTasks,
+        subtitle: "Need attention",
+        icon: FiAlertCircle,
+        color: "bg-red-500",
+        borderColor: "hover:border-red-500",
+        bgColor: "bg-red-50",
+        textColor: "text-red-600",
+        onClick: handleOverdueTasksClick,
+      },
+      {
+        id: "todays-tasks",
+        title: "Today's Tasks",
+        value: todayTasks,
+        subtitle: "Due today",
+        icon: FiClock,
+        color: "bg-indigo-500",
+        borderColor: "hover:border-indigo-500",
+        bgColor: "bg-indigo-50",
+        textColor: "text-indigo-600",
+        onClick: () => navigate("/today-tasks?taskMonth=" + taskMonth),
+      },
+      {
+        id: "upcoming-3-days",
+        title: "Upcoming 3 Days",
+        value: upcoming3DaysTasks,
+        subtitle: "Due soon",
+        icon: FiCalendar,
+        color: "bg-cyan-500",
+        borderColor: "hover:border-cyan-500",
+        bgColor: "bg-cyan-50",
+        textColor: "text-cyan-600",
+        onClick: () =>
+          navigate("/my-tasks?filter=upcoming&taskMonth=" + taskMonth),
+      },
+    ],
+    [
+      assignedProjects,
+      totalTasks,
+      completedTasks,
+      inProgressTasks,
+      pendingTasks,
+      reworkTasks,
+      overdueTasks,
+      todayTasks,
+      upcoming3DaysTasks,
+      handleStatsClick,
+      handleOverdueTasksClick,
+      navigate,
+      taskMonth,
+    ]
+  );
+
+  // Initialize card order on first load
+  React.useEffect(() => {
+    if (stats.length > 0 && !isInitialized.current) {
+      const savedOrder = localStorage.getItem(
+        `employeeStatsCardOrder_${user?.id}`
+      );
+
+      if (savedOrder) {
+        try {
+          const parsedOrder = JSON.parse(savedOrder);
+          // Validate that all saved IDs still exist in current stats
+          const validOrder = parsedOrder.filter((id) =>
+            stats.some((stat) => stat.id === id)
+          );
+          // Add any new stats that weren't in the saved order
+          const newStats = stats
+            .filter((stat) => !validOrder.includes(stat.id))
+            .map((stat) => stat.id);
+
+          const finalOrder = [...validOrder, ...newStats];
+          setCardOrder(finalOrder);
+        } catch (error) {
+          // If parsing fails, create default order
+          const defaultOrder = stats.map((stat) => stat.id);
+          setCardOrder(defaultOrder);
+        }
+      } else {
+        // No saved order, create default
+        const defaultOrder = stats.map((stat) => stat.id);
+        setCardOrder(defaultOrder);
+      }
+
+      isInitialized.current = true;
+    }
+  }, [stats, user?.id]);
+
+  // Get ordered stats based on saved order
+  const orderedStats = React.useMemo(() => {
+    if (!cardOrder || !stats.length) return stats;
+
+    // Create a map for O(1) lookup
+    const statsMap = new Map(stats.map((stat) => [stat.id, stat]));
+
+    return cardOrder.map((id) => statsMap.get(id)).filter(Boolean);
+  }, [cardOrder, stats]);
 
   if (isLoading) {
     return (
@@ -260,33 +357,72 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       </div>
 
       {/* Task Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2 flex-1">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="employee-stats-grid" direction="horizontal">
+          {(provided, snapshot) => (
             <div
-              key={index}
-              onClick={stat.onClick}
-              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer border-1 border-transparent ${stat.borderColor} transform  group relative overflow-hidden`}
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2 flex-1 transition-colors duration-200 ${
+                snapshot.isDraggingOver ? "bg-blue-50" : ""
+              }`}
             >
-              <div className={`${stat.color} p-3 rounded-lg mb-3`}>
-                <Icon className="w-4 h-4 text-white" />
-              </div>
-              <div className={`text-2xl font-bold ${stat.textColor} mb-2`}>
-                {stat.value}
-              </div>
-              <p className="text-sm font-medium text-gray-700 mb-1">
-                {stat.title}
-              </p>
-              <p className="text-xs text-gray-500">{stat.subtitle}</p>
-              {/* Hover indicator */}
-              <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <span className="text-xs text-gray-400">→</span>
-              </div>
+              {orderedStats.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Draggable key={stat.id} draggableId={stat.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        onClick={stat.onClick}
+                        className={`${
+                          stat.bgColor
+                        } rounded-xl p-4 flex flex-col items-center
+                         justify-center text-center cursor-pointer border-1 border-transparent
+                           ${
+                             stat.borderColor
+                           } transform group relative overflow-hidden transition-all duration-200
+                           ${
+                             snapshot.isDragging
+                               ? "shadow-lg scale-105 rotate-2"
+                               : "hover:scale-105"
+                           }`}
+                        style={{
+                          ...provided.draggableProps.style,
+                        }}
+                      >
+                        <div className={`${stat.color} p-3 rounded-lg mb-3`}>
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+                        <div
+                          className={`text-2xl font-bold ${stat.textColor} mb-2`}
+                        >
+                          {stat.value}
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 mb-1">
+                          {stat.title}
+                        </p>
+                        <p className="text-xs text-gray-500">{stat.subtitle}</p>
+                        {/* Hover indicator */}
+                        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <span className="text-xs text-gray-400">→</span>
+                        </div>
+                        {/* Drag indicator */}
+                        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <span className="text-xs text-gray-400">⋮⋮</span>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
             </div>
-          );
-        })}
-      </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       {/* Overdue Tasks Alert */}
       {overdueTasks > 0 && (
