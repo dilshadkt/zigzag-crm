@@ -88,6 +88,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: `${assignedProjects} projects assigned`,
       icon: FiFolderPlus,
       color: "bg-blue-500",
+      borderColor: "hover:border-blue-500",
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
       onClick: () => handleStatsClick("projects"),
@@ -98,6 +99,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: `${completedTasks} completed`,
       icon: FiTarget,
       color: "bg-purple-500",
+      borderColor: "hover:border-purple-500",
       bgColor: "bg-purple-50",
       textColor: "text-purple-600",
       onClick: () => handleStatsClick("total"),
@@ -108,6 +110,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: `${pendingTasks} pending`,
       icon: FiClock,
       color: "bg-orange-500",
+      borderColor: "hover:border-orange-500",
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
       onClick: () => handleStatsClick("in-progress"),
@@ -118,6 +121,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: "Awaiting approval",
       icon: FiCheckCircle,
       color: "bg-yellow-500",
+      borderColor: "hover:border-yellow-500",
       bgColor: "bg-yellow-50",
       textColor: "text-yellow-600",
       onClick: () => handleStatsClick("on-review"),
@@ -128,6 +132,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: "Awaiting client review",
       icon: FiCheckCircle,
       color: "bg-teal-500",
+      borderColor: "hover:border-teal-500",
       bgColor: "bg-teal-50",
       textColor: "text-teal-600",
       onClick: () => handleStatsClick("approved"),
@@ -138,6 +143,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: "Ready to publish",
       icon: FiCheckCircle,
       color: "bg-indigo-500",
+      borderColor: "hover:border-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => handleStatsClick("client-approved"),
@@ -148,6 +154,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: "Work completed",
       icon: FiCheckCircle,
       color: "bg-green-500",
+      borderColor: "hover:border-green-500",
       bgColor: "bg-green-50",
       textColor: "text-green-600",
       onClick: () => handleStatsClick("completed"),
@@ -158,6 +165,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: "Need attention",
       icon: FiAlertCircle,
       color: "bg-red-500",
+      borderColor: "hover:border-red-500",
       bgColor: "bg-red-50",
       textColor: "text-red-600",
       onClick: handleOverdueTasksClick,
@@ -168,6 +176,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       subtitle: "Due today",
       icon: FiClock,
       color: "bg-indigo-500",
+      borderColor: "hover:border-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => navigate("/my-today-tasks?taskMonth=" + taskMonth),
@@ -225,7 +234,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
             <div
               key={index}
               onClick={stat.onClick}
-              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer md:hover:shadow-md transition-all duration-200 transform md:hover:scale-105 group relative overflow-hidden`}
+              className={`${stat.bgColor} rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer border-1 border-transparent ${stat.borderColor} transform  group relative overflow-hidden`}
             >
               <div className={`${stat.color} p-3 rounded-lg mb-3`}>
                 <Icon className="w-4 h-4 text-white" />
