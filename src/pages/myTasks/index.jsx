@@ -119,6 +119,9 @@ const MyTasks = () => {
         case "on-review":
           filtered = filtered.filter((task) => task.status === "on-review");
           break;
+        case "re-work":
+          filtered = filtered.filter((task) => task.status === "re-work");
+          break;
         case "today":
           filtered = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
@@ -199,7 +202,8 @@ const MyTasks = () => {
               "on-review": 3,
               approved: 4,
               "client-approved": 5,
-              completed: 6,
+              "re-work": 6,
+              completed: 7,
             };
             aValue = statusOrder[a.status] || 0;
             bValue = statusOrder[b.status] || 0;
@@ -279,6 +283,8 @@ const MyTasks = () => {
         return "Client Approved Tasks";
       case "on-review":
         return "Tasks On Review";
+      case "re-work":
+        return "Re-work Tasks";
       case "today":
         return "Today's Tasks";
       default:
@@ -302,6 +308,8 @@ const MyTasks = () => {
         return FiCheckCircle;
       case "on-review":
         return FiClock;
+      case "re-work":
+        return FiAlertCircle;
       case "today":
         return FiCalendar;
       default:
@@ -325,6 +333,8 @@ const MyTasks = () => {
         return "text-indigo-600 bg-indigo-50";
       case "on-review":
         return "text-orange-600 bg-orange-50";
+      case "re-work":
+        return "text-red-600 bg-red-50";
       case "today":
         return "text-purple-600 bg-purple-50";
       default:
@@ -369,6 +379,11 @@ const MyTasks = () => {
           title: "No Tasks On Review",
           message: "Tasks submitted for review will appear here.",
         };
+      case "re-work":
+        return {
+          title: "No Re-work Tasks",
+          message: "Tasks that need revision will appear here.",
+        };
       case "today":
         return {
           title: "No Tasks Due Today",
@@ -410,6 +425,8 @@ const MyTasks = () => {
         return "bg-indigo-100 text-indigo-800";
       case "on-review":
         return "bg-orange-100 text-orange-800";
+      case "re-work":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -542,6 +559,7 @@ const MyTasks = () => {
                   "on-review",
                   "approved",
                   "client-approved",
+                  "re-work",
                   "completed",
                 ].map((status) => (
                   <label key={status} className="flex items-center">

@@ -39,6 +39,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const onReviewTasks = statistics.onReview || 0;
   const approvedTasks = statistics.approved || 0;
   const clientApprovedTasks = statistics.clientApproved || 0;
+  const reworkTasks = statistics.rework || 0;
   const overdueTasks = statistics.overdue || 0;
   const todayTasks = statistics.today || 0;
   const assignedProjects = statistics.assignedProjects || 0;
@@ -70,6 +71,9 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         break;
       case "client-approved":
         navigate("/my-tasks?filter=client-approved&taskMonth=" + taskMonth);
+        break;
+      case "re-work":
+        navigate("/my-tasks?filter=re-work&taskMonth=" + taskMonth);
         break;
       default:
         break;
@@ -147,6 +151,17 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => handleStatsClick("client-approved"),
+    },
+    {
+      title: "Re-work",
+      value: reworkTasks,
+      subtitle: "Needs revision",
+      icon: FiAlertCircle,
+      color: "bg-red-500",
+      borderColor: "hover:border-red-500",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600",
+      onClick: () => handleStatsClick("re-work"),
     },
     {
       title: "Completed",

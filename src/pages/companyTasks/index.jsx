@@ -116,6 +116,9 @@ const CompanyTasks = ({ filter: propFilter }) => {
         case "approved":
           filtered = filtered.filter((task) => task.status === "approved");
           break;
+        case "re-work":
+          filtered = filtered.filter((task) => task.status === "re-work");
+          break;
         case "today":
           filtered = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
@@ -280,6 +283,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "Completed Tasks";
       case "approved":
         return "Approved Tasks";
+      case "re-work":
+        return "Re-work Tasks";
       case "today":
         return "Today's Tasks";
       default:
@@ -299,6 +304,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return FiCheckCircle;
       case "approved":
         return FiCheckCircle;
+      case "re-work":
+        return FiAlertCircle;
       default:
         return FiFlag;
     }
@@ -316,6 +323,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-green-600";
       case "approved":
         return "text-teal-600";
+      case "re-work":
+        return "text-red-600";
       default:
         return "text-gray-600";
     }
@@ -353,6 +362,12 @@ const CompanyTasks = ({ filter: propFilter }) => {
           title: "No approved tasks yet",
           message: "Tasks that have been approved will appear here.",
         };
+      case "re-work":
+        return {
+          emoji: "🔧",
+          title: "No re-work tasks",
+          message: "Tasks that need revision will appear here.",
+        };
       default:
         return {
           emoji: "📋",
@@ -385,6 +400,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-green-600 bg-green-50 border-green-200";
       case "approved":
         return "text-teal-600 bg-teal-50 border-teal-200";
+      case "re-work":
+        return "text-red-600 bg-red-50 border-red-200";
       case "on-review":
         return "text-yellow-600 bg-yellow-50 border-yellow-200";
       default:

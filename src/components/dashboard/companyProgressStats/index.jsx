@@ -60,6 +60,9 @@ const CompanyProgressStats = ({ taskMonth }) => {
       case "client-approved":
         navigate("/task-on-publish");
         break;
+      case "re-work":
+        navigate("/company-tasks?filter=re-work&taskMonth=" + taskMonth);
+        break;
       case "completed":
         navigate("/company-tasks?filter=completed&taskMonth=" + taskMonth);
         break;
@@ -169,6 +172,17 @@ const CompanyProgressStats = ({ taskMonth }) => {
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => navigate("/task-on-publish"),
+    },
+    {
+      title: "Re-work",
+      value: companyStatsCheck?.statistics?.rework || 0,
+      subtitle: "Needs revision",
+      icon: FiAlertCircle,
+      color: "bg-red-500",
+      borderColor: "hover:border-red-500",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600",
+      onClick: () => handleStatsClick("re-work"),
     },
     {
       title: "Completed ",
