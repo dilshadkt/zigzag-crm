@@ -76,6 +76,9 @@ const CompanyProgressStats = ({ taskMonth }) => {
       case "unscheduled":
         navigate("/company-tasks?filter=unscheduled&taskMonth=" + taskMonth);
         break;
+      case "upcoming":
+        navigate("/company-tasks?filter=upcoming&taskMonth=" + taskMonth);
+        break;
       default:
         break;
     }
@@ -220,6 +223,18 @@ const CompanyProgressStats = ({ taskMonth }) => {
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
       onClick: () => navigate("/company-today-tasks?taskMonth=" + taskMonth),
+    },
+    {
+      title: "Upcoming 3 Days",
+      value: companyStatsCheck?.statistics?.upcoming3Days || 0,
+      subtitle: "Due in 3 days",
+      icon: FiCalendar,
+      color: "bg-cyan-500",
+      borderColor: "hover:border-cyan-500",
+      bgColor: "bg-cyan-50",
+      textColor: "text-cyan-600",
+      onClick: () =>
+        navigate("/company-tasks?filter=upcoming&taskMonth=" + taskMonth),
     },
     {
       title: "Unscheduled Tasks",

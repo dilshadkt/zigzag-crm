@@ -142,6 +142,37 @@ const MyTasks = () => {
             );
           });
           break;
+        case "upcoming":
+          // Filter for tasks due in the next 3 days
+          const threeDaysFromNow = new Date(today);
+          threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 2); // Add 2 days to today
+
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            const dueDateStart = new Date(
+              dueDate.getFullYear(),
+              dueDate.getMonth(),
+              dueDate.getDate()
+            );
+            const todayStart = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate()
+            );
+            const threeDaysFromNowStart = new Date(
+              threeDaysFromNow.getFullYear(),
+              threeDaysFromNow.getMonth(),
+              threeDaysFromNow.getDate()
+            );
+            return (
+              dueDateStart >= todayStart &&
+              dueDateStart <= threeDaysFromNowStart &&
+              task.status !== "approved" &&
+              task.status !== "completed" &&
+              task.status !== "client-approved"
+            );
+          });
+          break;
         // No default case - show all tasks for 'all' or no filter
       }
 
@@ -298,6 +329,8 @@ const MyTasks = () => {
         return "Today's Tasks";
       case "unscheduled":
         return "Unscheduled Tasks";
+      case "upcoming":
+        return "Upcoming 3 Days Tasks";
       default:
         return "My Tasks";
     }
@@ -324,6 +357,8 @@ const MyTasks = () => {
       case "today":
         return FiCalendar;
       case "unscheduled":
+        return FiCalendar;
+      case "upcoming":
         return FiCalendar;
       default:
         return FiUser;
@@ -352,6 +387,8 @@ const MyTasks = () => {
         return "text-purple-600 bg-purple-50";
       case "unscheduled":
         return "text-gray-600 bg-gray-50";
+      case "upcoming":
+        return "text-cyan-600 bg-cyan-50";
       default:
         return "text-gray-600 bg-gray-50";
     }
@@ -410,6 +447,12 @@ const MyTasks = () => {
           title: "No Unscheduled Tasks",
           message:
             "All your tasks have been scheduled with start and due dates.",
+        };
+      case "upcoming":
+        return {
+          title: "No Upcoming Tasks",
+          message:
+            "You have no tasks due in the next 3 days. Great job staying ahead of your schedule!",
         };
       default:
         return {

@@ -135,6 +135,37 @@ const CompanyTasks = ({ filter: propFilter }) => {
           // Filter for tasks that have no startDate and no dueDate
           filtered = allTasksData?.unscheduledSubTasks;
           break;
+        case "upcoming":
+          // Filter for tasks due in the next 3 days (today + 2 more days)
+          const threeDaysFromNow = new Date(today);
+          threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 2); // Add 2 days to today
+
+          filtered = filtered.filter((task) => {
+            const dueDate = new Date(task.dueDate);
+            const dueDateStart = new Date(
+              dueDate.getFullYear(),
+              dueDate.getMonth(),
+              dueDate.getDate()
+            );
+            const todayStart = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate()
+            );
+            const threeDaysFromNowStart = new Date(
+              threeDaysFromNow.getFullYear(),
+              threeDaysFromNow.getMonth(),
+              threeDaysFromNow.getDate()
+            );
+            return (
+              dueDateStart >= todayStart &&
+              dueDateStart <= threeDaysFromNowStart &&
+              task.status !== "approved" &&
+              task.status !== "completed" &&
+              task.status !== "client-approved"
+            );
+          });
+          break;
         // No default case - show all tasks for 'all' or no filter
       }
 
@@ -294,6 +325,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "Today's Tasks";
       case "unscheduled":
         return "Unscheduled Tasks";
+      case "upcoming":
+        return "Upcoming 3 Days Tasks";
       default:
         return "All Tasks";
     }
@@ -314,6 +347,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
       case "re-work":
         return FiAlertCircle;
       case "unscheduled":
+        return FiCalendar;
+      case "upcoming":
         return FiCalendar;
       default:
         return FiFlag;
@@ -336,6 +371,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-red-600";
       case "unscheduled":
         return "text-gray-600";
+      case "upcoming":
+        return "text-cyan-600";
       default:
         return "text-gray-600";
     }
@@ -384,6 +421,12 @@ const CompanyTasks = ({ filter: propFilter }) => {
           emoji: "📅",
           title: "No unscheduled tasks",
           message: "All tasks have been scheduled with start and due dates.",
+        };
+      case "upcoming":
+        return {
+          emoji: "🎯",
+          title: "No upcoming tasks",
+          message: "No tasks are due in the next 3 days. Great planning!",
         };
       default:
         return {

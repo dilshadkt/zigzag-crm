@@ -43,6 +43,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const reworkTasks = statistics.rework || 0;
   const overdueTasks = statistics.overdue || 0;
   const todayTasks = statistics.today || 0;
+  const upcoming3DaysTasks = statistics.upcoming3Days || 0;
   const unscheduledTasks = statistics.unscheduled || 0;
   const assignedProjects = statistics.assignedProjects || 0;
   const completionRate = statistics.completionRate || 0;
@@ -124,39 +125,39 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       textColor: "text-orange-600",
       onClick: () => handleStatsClick("in-progress"),
     },
-    {
-      title: "On Review",
-      value: onReviewTasks,
-      subtitle: "Awaiting approval",
-      icon: FiCheckCircle,
-      color: "bg-yellow-500",
-      borderColor: "hover:border-yellow-500",
-      bgColor: "bg-yellow-50",
-      textColor: "text-yellow-600",
-      onClick: () => handleStatsClick("on-review"),
-    },
-    {
-      title: "Content Approved",
-      value: approvedTasks,
-      subtitle: "Awaiting client review",
-      icon: FiCheckCircle,
-      color: "bg-teal-500",
-      borderColor: "hover:border-teal-500",
-      bgColor: "bg-teal-50",
-      textColor: "text-teal-600",
-      onClick: () => handleStatsClick("approved"),
-    },
-    {
-      title: "Client Approved",
-      value: clientApprovedTasks,
-      subtitle: "Ready to publish",
-      icon: FiCheckCircle,
-      color: "bg-indigo-500",
-      borderColor: "hover:border-indigo-500",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-600",
-      onClick: () => handleStatsClick("client-approved"),
-    },
+    // {
+    //   title: "On Review",
+    //   value: onReviewTasks,
+    //   subtitle: "Awaiting approval",
+    //   icon: FiCheckCircle,
+    //   color: "bg-yellow-500",
+    //   borderColor: "hover:border-yellow-500",
+    //   bgColor: "bg-yellow-50",
+    //   textColor: "text-yellow-600",
+    //   onClick: () => handleStatsClick("on-review"),
+    // },
+    // {
+    //   title: "Content Approved",
+    //   value: approvedTasks,
+    //   subtitle: "Awaiting client review",
+    //   icon: FiCheckCircle,
+    //   color: "bg-teal-500",
+    //   borderColor: "hover:border-teal-500",
+    //   bgColor: "bg-teal-50",
+    //   textColor: "text-teal-600",
+    //   onClick: () => handleStatsClick("approved"),
+    // },
+    // {
+    //   title: "Client Approved",
+    //   value: clientApprovedTasks,
+    //   subtitle: "Ready to publish",
+    //   icon: FiCheckCircle,
+    //   color: "bg-indigo-500",
+    //   borderColor: "hover:border-indigo-500",
+    //   bgColor: "bg-indigo-50",
+    //   textColor: "text-indigo-600",
+    //   onClick: () => handleStatsClick("client-approved"),
+    // },
     {
       title: "Re-work",
       value: reworkTasks,
@@ -199,7 +200,19 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       borderColor: "hover:border-indigo-500",
       bgColor: "bg-indigo-50",
       textColor: "text-indigo-600",
-      onClick: () => navigate("/my-today-tasks?taskMonth=" + taskMonth),
+      onClick: () => navigate("/today-tasks?taskMonth=" + taskMonth),
+    },
+    {
+      title: "Upcoming 3 Days",
+      value: upcoming3DaysTasks,
+      subtitle: "Due soon",
+      icon: FiCalendar,
+      color: "bg-cyan-500",
+      borderColor: "hover:border-cyan-500",
+      bgColor: "bg-cyan-50",
+      textColor: "text-cyan-600",
+      onClick: () =>
+        navigate("/my-tasks?filter=upcoming&taskMonth=" + taskMonth),
     },
   ];
 
@@ -209,7 +222,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded mb-4"></div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
               <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
             ))}
           </div>
@@ -247,7 +260,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       </div>
 
       {/* Task Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-2 flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2 flex-1">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
