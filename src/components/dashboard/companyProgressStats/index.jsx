@@ -110,21 +110,6 @@ const CompanyProgressStats = ({ taskMonth }) => {
     [navigate, taskMonth]
   );
 
-  if (isLoading) {
-    return (
-      <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="grid grid-cols-8 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const stats = React.useMemo(
     () => [
       {
@@ -191,7 +176,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       },
       {
         id: "content-approved",
-        title: "Content Approved",
+        title: "CLIENT REVIEW PENDING",
         value: companyStatsCheck?.statistics?.approved || 0,
         subtitle: "Awaiting client review",
         icon: FiCheckCircle,
@@ -203,7 +188,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       },
       {
         id: "client-approved",
-        title: "Client Approved ",
+        title: "PUBLISHING PENDING",
         value: companyStatsCheck?.statistics?.clientApproved || 0,
         subtitle: "Ready to publish",
         icon: MdBusinessCenter,
@@ -351,6 +336,22 @@ const CompanyProgressStats = ({ taskMonth }) => {
   };
   const totalWorkload =
     workloadData.high + workloadData.medium + workloadData.low;
+
+  // Loading state check - must be after all hooks
+  if (isLoading) {
+    return (
+      <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded mb-4"></div>
+          <div className="grid grid-cols-8 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
