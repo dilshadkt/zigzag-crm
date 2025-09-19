@@ -176,7 +176,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       },
       {
         id: "content-approved",
-        title: "CLIENT REVIEW PENDING",
+        title: "Client Review Pending",
         value: companyStatsCheck?.statistics?.approved || 0,
         subtitle: "Awaiting client review",
         icon: FiCheckCircle,
@@ -188,7 +188,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
       },
       {
         id: "client-approved",
-        title: "PUBLISHING PENDING",
+        title: "Publishing Pending",
         value: companyStatsCheck?.statistics?.clientApproved || 0,
         subtitle: "Ready to publish",
         icon: MdBusinessCenter,
@@ -422,11 +422,11 @@ const CompanyProgressStats = ({ taskMonth }) => {
                           <Icon className="w-4 h-4 text-white" />
                         </div>
                         <div
-                          className={`text-2xl font-bold ${stat.textColor} mb-2`}
+                          className={`text-2xl font-bold ${stat.textColor} mb-2 `}
                         >
                           {stat.value}
                         </div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">
+                        <p className="text-sm font-medium text-gray-700 mb-1 ">
                           {stat.title}
                         </p>
                         <p className="text-xs text-gray-500">{stat.subtitle}</p>

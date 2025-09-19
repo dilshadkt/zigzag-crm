@@ -64,8 +64,8 @@ const ProjectDetailLayout = () => {
         uploadSingleFile
       );
       updatedValues.attachments = proccesedValue;
-      // mutate(updatedValues);
-      // resetForm();
+      mutate(updatedValues);
+      resetForm();
     } catch (error) {
       console.error(error);
     }
