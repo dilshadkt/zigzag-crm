@@ -4,8 +4,14 @@ import { MdSchedule, MdFilterList } from "react-icons/md";
 import { useGetUnscheduledTasks, useScheduleSubTask } from "../../../api/hooks";
 import CalendarEventItem from "./CalendarEventItem";
 import { format } from "date-fns";
+import { useSelector } from "react-redux";
 
 const UnscheduledTasksModal = ({ isOpen, onClose, selectedDate }) => {
+  // Get calendar filters from Redux state
+  const { assignerFilter, projectFilter } = useSelector(
+    (state) => state.calendar
+  );
+
   const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
@@ -19,7 +25,15 @@ const UnscheduledTasksModal = ({ isOpen, onClose, selectedDate }) => {
   // State to track scheduled task IDs for immediate removal
   const [scheduledTaskIds, setScheduledTaskIds] = useState(new Set());
 
-  const { data, isLoading, error } = useGetUnscheduledTasks(filters);
+  // Combine local filters with calendar filters
+  const combinedFilters = {
+    ...filters,
+    // Apply calendar filters if they exist
+    ...(assignerFilter && { assignerId: assignerFilter }),
+    ...(projectFilter && { projectId: projectFilter }),
+  };
+
+  const { data, isLoading, error } = useGetUnscheduledTasks(combinedFilters);
   const { subTasks = [], pagination = {}, statistics = {} } = data || {};
 
   // Filter out scheduled tasks from the display
@@ -102,6 +116,11 @@ const UnscheduledTasksModal = ({ isOpen, onClose, selectedDate }) => {
                 {scheduledTaskIds.size > 0 && (
                   <span className="text-green-600 ml-1">
                     ({scheduledTaskIds.size} scheduled)
+                  </span>
+                )}
+                {(assignerFilter || projectFilter) && (
+                  <span className="text-blue-600 ml-1">
+                    (filtered by calendar)
                   </span>
                 )}
               </p>

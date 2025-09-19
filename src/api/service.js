@@ -846,6 +846,7 @@ export const getUnscheduledTasks = async (filters = {}) => {
     if (filters.search) params.append("search", filters.search);
     if (filters.priority) params.append("priority", filters.priority);
     if (filters.projectId) params.append("projectId", filters.projectId);
+    if (filters.assignerId) params.append("assignerId", filters.assignerId);
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
