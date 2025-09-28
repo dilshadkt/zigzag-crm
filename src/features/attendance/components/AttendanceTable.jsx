@@ -356,20 +356,23 @@ const AttendanceTable = ({
 
   // Use ref to track previous data and prevent unnecessary updates
   const prevDataRef = useRef();
+  const prevSearchTermRef = useRef();
 
   // Pass filtered data to parent component for export
   React.useEffect(() => {
     if (onDataChange && attendanceRecords) {
-      // Only call onDataChange if the data has actually changed
+      // Simple length and reference check to avoid expensive comparisons
       const dataChanged =
-        attendanceRecords.length !== prevDataRef.current?.length ||
-        attendanceRecords !== prevDataRef.current;
+        !prevDataRef.current ||
+        prevDataRef.current.length !== attendanceRecords.length ||
+        prevDataRef.current !== attendanceRecords;
+
       if (dataChanged) {
         prevDataRef.current = attendanceRecords;
         onDataChange(attendanceRecords);
       }
     }
-  }, [attendanceRecords, onDataChange]);
+  }, [attendanceRecords]); // Remove onDataChange from dependencies
 
   // Show loading state
   if (isLoading) {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import SectionHeader from "./SectionHeader";
 import ConversationItem from "./ConversationItem";
 import EmployeeListModal from "./EmployeeListModal";
+import ConversationListSkeleton from "./ConversationListSkeleton";
 import { CONVERSATIONS_DATA } from "./data";
 
 const ConversationList = ({
@@ -44,16 +45,7 @@ const ConversationList = ({
   };
 
   if (loading) {
-    return (
-      <div className="border-r border-gray-200 overflow-y-auto col-span-1 flex flex-col">
-        <div className="h-[70px] flexBetween border-b border-gray-200 p-6">
-          <h4 className="font-bold text-gray-800">Conversations</h4>
-        </div>
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        </div>
-      </div>
-    );
+    return <ConversationListSkeleton />;
   }
 
   if (error) {

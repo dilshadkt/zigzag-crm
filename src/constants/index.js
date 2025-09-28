@@ -50,7 +50,7 @@ export const SIDE_MENU = [
     title: "Calendar",
     icon: FiCalendar,
     path: "/calender",
-    routeKey: "calender",
+    routeKey: "calendar",
   },
   {
     id: 5,

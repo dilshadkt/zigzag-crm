@@ -60,12 +60,16 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
   if (!isOpen) return null;
 
   const routeOptions = [
-    { value: "projects", label: "Projects", icon: "📁" },
-    { value: "team", label: "Team", icon: "👥" },
-    { value: "calender", label: "Calendar", icon: "📅" },
+    { value: "projects", label: "Clients", icon: "📁" },
+    { value: "board", label: "Board", icon: "📋" },
+    { value: "calendar", label: "Calendar", icon: "📅" },
     { value: "vacations", label: "Vacations", icon: "🏖️" },
     { value: "employees", label: "Employees", icon: "👥" },
     { value: "messenger", label: "Messenger", icon: "💬" },
+    { value: "task-on-review", label: "Task on Review", icon: "👀" },
+    { value: "task-on-publish", label: "Task on Publish", icon: "☁️" },
+    { value: "client-review", label: "Client Review", icon: "✅" },
+    { value: "attendance", label: "Attendance", icon: "👆" },
   ];
 
   return (
@@ -192,7 +196,9 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
                       <p className="text-xs text-blue-700">
-                        <strong>Note:</strong> Dashboard, Board, and Settings are always accessible to all users and don't need to be selected here.
+                        <strong>Note:</strong> Dashboard, Board, and Settings
+                        are always accessible to all users and don't need to be
+                        selected here.
                       </p>
                     </div>
                     <p className="text-xs text-gray-600 mb-3">
@@ -227,20 +233,26 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                             </span>
                             <p className="text-xs text-gray-500">
                               {route.value === "projects"
-                                ? "Project management and tracking"
-                                : route.value === "tasks"
-                                ? "Task creation and management"
-                                : route.value === "team"
-                                ? "Team member management"
-                                : route.value === "reports"
-                                ? "Analytics and reporting"
-                                : route.value === "calender"
-                                ? "Schedule and events"
+                                ? "Client and project management"
+                                : route.value === "board"
+                                ? "Task board and workflow management"
+                                : route.value === "calendar"
+                                ? "Schedule and events management"
                                 : route.value === "vacations"
-                                ? "Time-off management"
+                                ? "Time-off and vacation management"
                                 : route.value === "employees"
-                                ? "Employee management"
-                                : "Messaging and communication"}
+                                ? "Employee management and profiles"
+                                : route.value === "messenger"
+                                ? "Internal messaging and communication"
+                                : route.value === "task-on-review"
+                                ? "Tasks pending review and approval"
+                                : route.value === "task-on-publish"
+                                ? "Tasks ready for publishing"
+                                : route.value === "client-review"
+                                ? "Client feedback and review process"
+                                : route.value === "attendance"
+                                ? "Employee attendance tracking"
+                                : "System access and management"}
                             </p>
                           </div>
                           {values.allowedRoutes.includes(route.value) && (
