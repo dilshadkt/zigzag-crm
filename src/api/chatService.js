@@ -235,6 +235,29 @@ export const addTeamMemberToConversation = async (projectId, userId) => {
   }
 };
 
+// Update attachment duration for a message
+export const updateAttachmentDuration = async (
+  messageId,
+  attachmentIndex,
+  duration
+) => {
+  try {
+    const response = await apiClient.post("/chat/update-duration", {
+      messageId,
+      attachmentIndex,
+      duration,
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        "Failed to update attachment duration",
+    };
+  }
+};
+
 // Upload file for chat
 export const uploadChatFile = async (file, conversationId) => {
   try {

@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
+import { updateAttachmentDuration } from "../../api/chatService";
 
-const VoiceMessage = ({ attachment, isOwn }) => {
+const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(attachment.duration || 0);
   const [isLoading, setIsLoading] = useState(false);
+  const [metadataError, setMetadataError] = useState(false);
 
   const formatTime = (seconds) => {
     if (isNaN(seconds)) return "0:00";
@@ -41,10 +43,46 @@ const VoiceMessage = ({ attachment, isOwn }) => {
     }
   };
 
-  const handleLoadedMetadata = () => {
+  const handleLoadedMetadata = async () => {
     if (audioRef.current) {
-      setDuration(audioRef.current.duration);
+      const audioDuration = audioRef.current.duration;
+      if (audioDuration && !isNaN(audioDuration) && isFinite(audioDuration)) {
+        setDuration(audioDuration);
+        setMetadataError(false);
+
+        // Update the database with the extracted duration if it's not already stored
+        if (
+          !attachment.duration &&
+          messageId &&
+          attachmentIndex !== undefined
+        ) {
+          try {
+            await updateAttachmentDuration(
+              messageId,
+              attachmentIndex,
+              audioDuration
+            );
+            console.log(
+              "✅ Updated voice message duration in database:",
+              audioDuration
+            );
+          } catch (error) {
+            console.warn("⚠️ Failed to update duration in database:", error);
+          }
+        }
+      } else {
+        setMetadataError(true);
+        // Keep the stored duration if metadata fails
+        if (attachment.duration) {
+          setDuration(attachment.duration);
+        }
+      }
     }
+  };
+
+  const handleMetadataError = () => {
+    setMetadataError(true);
+    console.warn("Failed to load audio metadata for:", attachment.url);
   };
 
   const handleEnded = () => {
@@ -138,11 +176,23 @@ const VoiceMessage = ({ attachment, isOwn }) => {
           </span>
           <span className={isOwn ? "text-blue-100" : "text-gray-500"}>
             {formatTime(duration)}
+            {metadataError && attachment.duration && (
+              <span className="ml-1 opacity-75" title="Using stored duration">
+                *
+              </span>
+            )}
           </span>
         </div>
 
         {/* File info */}
-        <div className="text-xs mt-1 opacity-75">🎵 Voice Message</div>
+        <div className="text-xs mt-1 opacity-75">
+          🎵 Voice Message
+          {metadataError && !attachment.duration && (
+            <span className="ml-1 text-red-400" title="Duration unavailable">
+              ⚠️
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Hidden audio element */}
@@ -151,8 +201,10 @@ const VoiceMessage = ({ attachment, isOwn }) => {
         src={attachment.url}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onError={handleMetadataError}
         onEnded={handleEnded}
         preload="metadata"
+        crossOrigin="anonymous"
       />
     </div>
   );

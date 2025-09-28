@@ -122,6 +122,12 @@ const MessageBubble = React.memo(({ message }) => {
                 <VoiceMessage
                   attachment={voiceAttachment}
                   isOwn={message.isOwn}
+                  messageId={message.id}
+                  attachmentIndex={message.attachments.findIndex(
+                    (att) =>
+                      att._id === voiceAttachment._id ||
+                      att.url === voiceAttachment.url
+                  )}
                 />
                 {/* Show message text if exists */}
                 {message.message && message.message.trim() && (
