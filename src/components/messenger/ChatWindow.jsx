@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useRef } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import ChatInput from "./ChatInput";
+import DateSeparator from "./DateSeparator";
+import StickyDateHeader from "./StickyDateHeader";
+import { groupMessagesByDate } from "../../utils/messageUtils";
 
 const ChatWindow = ({
   selectedConversation,
@@ -18,6 +21,7 @@ const ChatWindow = ({
   onlineUsers = [],
   loading = false,
 }) => {
+  const messagesContainerRef = useRef(null);
   // Debug logging to track message rendering
   React.useEffect(() => {
     if (selectedConversation && messages.length > 0) {
@@ -79,22 +83,32 @@ const ChatWindow = ({
         onlineUsers={onlineUsers}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-        <div className="text-center mb-6">
-          <p className="text-sm text-gray-500">
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
+      <div
+        className="flex-1 overflow-y-auto p-4 bg-gray-50 relative chat-messages-container"
+        ref={messagesContainerRef}
+      >
+        <StickyDateHeader
+          messages={messages}
+          containerRef={messagesContainerRef}
+        />
 
         {messages.length > 0 ? (
           <>
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+            {groupMessagesByDate(messages).map((group, groupIndex) => (
+              <div key={group.date} className="mb-4">
+                <div
+                  data-date-separator
+                  data-date={group.date}
+                  className="date-separator-marker"
+                >
+                  <DateSeparator date={group.date} isSticky={false} />
+                </div>
+                <div className="space-y-4">
+                  {group.messages.map((message) => (
+                    <MessageBubble key={message.id} message={message} />
+                  ))}
+                </div>
+              </div>
             ))}
             {typingUsers.length > 0 && (
               <TypingIndicator typingUsers={typingUsers} />

@@ -349,7 +349,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                         className={`rounded-2xl p-4 relative group transition-all duration-200 ${
                           isAssignedToSubTask
                             ? "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300"
-                            : "bg-gray-50 hover:bg-gray-100"
+                            : "bg-gray-50 hidden hover:bg-gray-100"
                         }`}
                       >
                         <div className="flexBetween mb-2">

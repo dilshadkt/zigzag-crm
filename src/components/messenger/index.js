@@ -9,3 +9,5 @@ export { default as TypingIndicator } from "./TypingIndicator";
 export { default as ConversationItem } from "./ConversationItem";
 export { default as SectionHeader } from "./SectionHeader";
 export { default as EmployeeListModal } from "./EmployeeListModal";
+export { default as DateSeparator } from "./DateSeparator";
+export { default as StickyDateHeader } from "./StickyDateHeader";
