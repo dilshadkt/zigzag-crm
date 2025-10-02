@@ -980,6 +980,33 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
   });
 };
 
+export const useGetCompanyTodayTasks = (taskMonth) => {
+  return useQuery({
+    queryKey: ["companyTodayTasks", taskMonth],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (taskMonth) {
+        params.append("taskMonth", taskMonth);
+      }
+
+      return apiClient
+        .get(`/tasks/company/today?${params.toString()}`)
+        .then((res) => res.data)
+        .catch((error) => {
+          console.warn("Company today tasks endpoint not available:", error);
+          return {
+            tasks: [],
+            subTasks: [],
+            totalTodayTasks: 0,
+          };
+        });
+    },
+    enabled: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+};
+
 // Company Statistics Hook - for admin dashboard overview
 export const useGetCompanyStats = (companyId, taskMonth) => {
   const today = new Date();

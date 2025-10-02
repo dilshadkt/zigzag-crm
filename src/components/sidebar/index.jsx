@@ -87,7 +87,7 @@ const Sidebar = () => {
       className=" flex-col min-w-[220px] hidden lg:flex  my-3 ml-3 justify-between
      rounded-[24px] gap-y-10 bg-white p-3"
     >
-      <div className="flex flex-col  overflow-y-auto">
+      <div className="flex flex-col  overflow-y-auto scrollbar-hide">
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
             filteredSidebar.map((item, index) => {

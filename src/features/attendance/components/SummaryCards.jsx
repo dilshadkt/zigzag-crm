@@ -1,34 +1,26 @@
-import React from "react";
-import { useAttendanceAnalytics } from "../hooks/useAttendanceAnalytics";
+import React, { useMemo } from "react";
+import { useAttendanceData } from "../hooks/useAttendanceData";
 
-const SummaryCard = ({ title, icon, metrics }) => {
+const SummaryCard = ({ title, icon, metrics, bgColor = "bg-white" }) => {
   return (
-    <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <svg
-          className="w-5 h-5 text-blue-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+    <div
+      className={`${bgColor} rounded-lg p-4 shadow-sm border border-gray-100`}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+          {icon}
+        </div>
+        <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {metrics.map((metric, index) => (
           <div key={index} className="flex justify-between items-center">
-            <span className="text-gray-600">{metric.label}</span>
+            <span className="text-xs text-gray-600">{metric.label}</span>
             <div className="text-right">
-              <div className="text-2xl font-bold text-gray-800">
+              <div className="text-lg font-bold text-gray-800">
                 {metric.value}
               </div>
-              <div className={`text-sm ${metric.changeColor}`}>
+              <div className={`text-xs ${metric.changeColor}`}>
                 {metric.change}
               </div>
             </div>
@@ -40,8 +32,8 @@ const SummaryCard = ({ title, icon, metrics }) => {
 };
 
 const SummaryCards = ({ selectedDate, selectedPeriod }) => {
-  // Use the hook to fetch attendance analytics data
-  const { data, isLoading, error } = useAttendanceAnalytics(selectedPeriod);
+  // Use the shared data hook for consistency with the table
+  const { metrics, isLoading, error } = useAttendanceData(selectedDate);
 
   // Helper function to format numbers
   const formatNumber = (num) => {
@@ -60,16 +52,19 @@ const SummaryCards = ({ selectedDate, selectedPeriod }) => {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-gray-50 rounded-lg p-6 shadow-sm">
+          <div
+            key={i}
+            className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+          >
             <div className="animate-pulse">
-              <div className="h-6 bg-gray-200 rounded mb-4"></div>
-              <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded mb-3"></div>
+              <div className="space-y-2">
                 {[1, 2, 3].map((j) => (
                   <div key={j} className="flex justify-between items-center">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    <div className="h-4 bg-gray-200 rounded w-12"></div>
                   </div>
                 ))}
               </div>
@@ -83,12 +78,12 @@ const SummaryCards = ({ selectedDate, selectedPeriod }) => {
   // Show error state
   if (error) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-red-50 rounded-lg p-6 shadow-sm border border-red-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-red-50 rounded-lg p-4 shadow-sm border border-red-200">
           <div className="text-center">
             <div className="text-red-600 mb-2">
               <svg
-                className="w-8 h-8 mx-auto"
+                className="w-6 h-6 mx-auto"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -101,82 +96,141 @@ const SummaryCards = ({ selectedDate, selectedPeriod }) => {
                 />
               </svg>
             </div>
-            <p className="text-red-600 font-medium">
+            <p className="text-red-600 font-medium text-sm">
               Failed to load summary data
             </p>
-            <p className="text-sm text-red-500 mt-1">{error.message}</p>
+            <p className="text-xs text-red-500 mt-1">{error.message}</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // Get analytics data
-  const analytics = data?.analytics || {};
+  // Use the metrics from the shared hook (already calculated)
 
-  // Calculate metrics based on real data
-  const presentMetrics = [
+  // Calculate metrics based on real data from daily report
+  const attendanceMetrics = [
     {
-      label: "Total Records",
-      value: formatNumber(analytics.totalRecords),
-      change: "Current period",
+      label: "Total",
+      value: formatNumber(metrics.totalEmployees),
+      change: "Employees",
       changeColor: "text-blue-600",
     },
     {
-      label: "Late Arrivals",
-      value: formatNumber(analytics.lateArrivals),
-      change: "Late clock-ins",
-      changeColor: "text-orange-600",
+      label: "Checked In",
+      value: formatNumber(metrics.checkedIn),
+      change: "Active",
+      changeColor: "text-green-600",
     },
     {
-      label: "Early Departures",
-      value: formatNumber(analytics.earlyDepartures),
-      change: "Early clock-outs",
+      label: "On Break",
+      value: formatNumber(metrics.onBreak),
+      change: "Break",
       changeColor: "text-yellow-600",
     },
   ];
 
-  const notPresentMetrics = [
+  const performanceMetrics = [
     {
-      label: "Pending Approvals",
-      value: formatNumber(analytics.pendingApprovals),
-      change: "Awaiting review",
-      changeColor: "text-purple-600",
+      label: "Checked Out",
+      value: formatNumber(metrics.checkedOut),
+      change: "Completed",
+      changeColor: "text-gray-600",
     },
     {
-      label: "Average Hours",
-      value: formatHours(parseFloat(analytics.averageHours)),
+      label: "Late",
+      value: formatNumber(metrics.lateArrivals),
+      change: "Arrivals",
+      changeColor: "text-orange-600",
+    },
+    {
+      label: "Early",
+      value: formatNumber(metrics.earlyDepartures),
+      change: "Departures",
+      changeColor: "text-red-600",
+    },
+  ];
+
+  const timeMetrics = [
+    {
+      label: "Total Hours",
+      value: formatHours(metrics.totalHours),
+      change: "All employees",
+      changeColor: "text-blue-600",
+    },
+    {
+      label: "Average",
+      value: formatHours(metrics.averageHours),
       change: "Per employee",
       changeColor: "text-green-600",
     },
     {
-      label: "Total Hours",
-      value: formatHours(parseFloat(analytics.totalHours)),
-      change: "All employees",
-      changeColor: "text-blue-600",
-    },
-  ];
-
-  const awayMetrics = [
-    {
-      label: "Overtime Hours",
-      value: formatHours(parseFloat(analytics.totalOvertimeHours)),
-      change: "Total overtime",
+      label: "Overtime",
+      value: formatHours(metrics.overtimeHours),
+      change: "Extra hours",
       changeColor: "text-red-600",
-    },
-    {
-      label: "Period",
-      value: analytics.period || "month",
-      change: "Current view",
-      changeColor: "text-gray-600",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <SummaryCard title="Attendance Overview" metrics={presentMetrics} />
-      <SummaryCard title="Performance Metrics" metrics={notPresentMetrics} />
-      <SummaryCard title="Time Tracking" metrics={awayMetrics} />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <SummaryCard
+        title="Attendance"
+        metrics={attendanceMetrics}
+        icon={
+          <svg
+            className="w-4 h-4 text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+        }
+      />
+      <SummaryCard
+        title="Performance"
+        metrics={performanceMetrics}
+        icon={
+          <svg
+            className="w-4 h-4 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        }
+      />
+      <SummaryCard
+        title="Time Tracking"
+        metrics={timeMetrics}
+        icon={
+          <svg
+            className="w-4 h-4 text-purple-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        }
+      />
     </div>
   );
 };

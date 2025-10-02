@@ -119,6 +119,7 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
           dob: values.birthday,
           phoneNumber: values.mobile,
           skype: values.skype,
+          email: values.email,
         };
 
         await updateProfileMutation.mutateAsync(updateData);
@@ -230,7 +231,7 @@ rounded-3xl  flex flex-col "
       </div>
       <form
         onSubmit={handleSubmit}
-        className="flex h-full flex-col px-5 py-4 md:overflow-y-auto"
+        className="flex h-full flex-col px-5 py-4 md:overflow-y-auto scrollbar-hide"
       >
         <div className="flex flex-col gap-y-3">
           <h4 className=" font-medium">Main info</h4>
@@ -296,7 +297,7 @@ rounded-3xl  flex flex-col "
             onchange={handleChange}
             name={"email"}
             value={values}
-            readOnly={true} // Email should not be editable
+            readOnly={!isEditMode}
             title="Email"
             placeholder="evanyates@gmail.com"
           />
