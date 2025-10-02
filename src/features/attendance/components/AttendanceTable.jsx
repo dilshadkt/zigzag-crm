@@ -124,12 +124,21 @@ const EmployeeRow = React.memo(({ attendance }) => {
 
   // Memoized location handler
   const handleLocationClick = useCallback(async () => {
-    if (!attendance.clockInLocation?.coordinates) return;
+    if (
+      !attendance.clockInLocation?.latitude ||
+      !attendance.clockInLocation?.longitude
+    )
+      return;
 
     setIsLoadingLocation(true);
     try {
-      const { lat, lng } = attendance.clockInLocation.coordinates;
-      const address = await getAddressFromCoordinates(lat, lng);
+      const {
+        latitude: lat,
+        longitude: lng,
+        address: existingAddress,
+      } = attendance.clockInLocation;
+      const address =
+        existingAddress || (await getAddressFromCoordinates(lat, lng));
       const details = await getDetailedLocation(lat, lng);
 
       setLocationDetails({
@@ -221,16 +230,64 @@ const EmployeeRow = React.memo(({ attendance }) => {
 
         {/* Location */}
         <td className="px-6 py-4 whitespace-nowrap">
-          {attendance.clockInLocation?.coordinates ? (
-            <button
-              onClick={handleLocationClick}
-              disabled={isLoadingLocation}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50 transition-colors"
-            >
-              {isLoadingLocation ? "Loading..." : "View Location"}
-            </button>
+          {attendance.clockInLocation?.latitude &&
+          attendance.clockInLocation?.longitude ? (
+            <div className="flex items-center space-x-2">
+              <div className="flex-shrink-0">
+                <svg
+                  className="w-4 h-4 text-green-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                {attendance.clockInLocation?.address ? (
+                  <div>
+                    <div className="text-xs text-gray-500 truncate max-w-32">
+                      {attendance.clockInLocation.address}
+                    </div>
+                    <button
+                      onClick={handleLocationClick}
+                      disabled={isLoadingLocation}
+                      className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:opacity-50 transition-colors"
+                    >
+                      {isLoadingLocation ? "Loading..." : "View Details"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleLocationClick}
+                    disabled={isLoadingLocation}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50 transition-colors"
+                  >
+                    {isLoadingLocation ? "Loading..." : "View Location"}
+                  </button>
+                )}
+              </div>
+            </div>
           ) : (
-            <span className="text-gray-400 text-sm">No location</span>
+            <div className="flex items-center space-x-2">
+              <div className="flex-shrink-0">
+                <svg
+                  className="w-4 h-4 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <span className="text-gray-400 text-sm">No location</span>
+            </div>
           )}
         </td>
 
@@ -247,7 +304,8 @@ const EmployeeRow = React.memo(({ attendance }) => {
         <LocationModal
           isOpen={showLocationModal}
           onClose={() => setShowLocationModal(false)}
-          locationDetails={locationDetails}
+          latitude={locationDetails.coordinates.lat}
+          longitude={locationDetails.coordinates.lng}
         />
       )}
     </>
