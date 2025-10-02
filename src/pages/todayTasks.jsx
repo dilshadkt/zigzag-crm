@@ -1,27 +1,15 @@
 import React from "react";
-import { useGetEmployeeTasks } from "../api/hooks";
+import { useGetEmployeeSubTasksToday } from "../api/hooks";
 import { useAuth } from "../hooks/useAuth";
 import TaskList from "../components/shared/TaskList";
 
 const TodayTasks = () => {
   const { user } = useAuth();
-  const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
+  const { data: todaySubTasks, isLoading } = useGetEmployeeSubTasksToday(
     user?._id ? user._id : null
   );
 
-  const tasks = employeeTasksData?.tasks || [];
-
-  // Filter tasks for today
-  const todayTasks = tasks.filter((task) => {
-    const dueDate = new Date(task.dueDate);
-    const today = new Date();
-    return (
-      dueDate.getDate() === today.getDate() &&
-      dueDate.getMonth() === today.getMonth() &&
-      dueDate.getFullYear() === today.getFullYear()
-    );
-  });
-  console.log(todayTasks);
+  const tasks = todaySubTasks?.subTasks || [];
 
   if (isLoading) {
     return (
@@ -41,12 +29,12 @@ const TodayTasks = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">Today's Tasks</h1>
         <p className="text-gray-600 mt-1">
-          {todayTasks.length} task{todayTasks.length !== 1 ? "s" : ""} due today
+          {tasks.length} task{tasks.length !== 1 ? "s" : ""} due today
         </p>
       </div>
 
-      {todayTasks.length > 0 ? (
-        <TaskList tasks={todayTasks} />
+      {tasks.length > 0 ? (
+        <TaskList tasks={tasks} />
       ) : (
         <div className="text-center py-8">
           <div className="text-gray-400 text-4xl mb-3">📅</div>

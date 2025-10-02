@@ -33,11 +33,22 @@ const TaskList = ({ tasks }) => {
   };
 
   const handleTaskClick = (task) => {
-    if (task.project?._id && task._id) {
-      navigate(`/projects/${task.project._id}/${task._id}`);
-    } else if (task._id) {
-      // For tasks without project, navigate to task details directly
-      navigate(`/tasks/${task._id}`);
+    // Check if task has a parent task
+    if (task.parentTask && task.parentTask._id) {
+      // If it's a subtask, navigate to the parent task
+      if (task.project?._id) {
+        navigate(`/projects/${task.project._id}/${task.parentTask._id}`);
+      } else {
+        navigate(`/tasks/${task.parentTask._id}`);
+      }
+    } else {
+      // Regular task navigation
+      if (task.project?._id && task._id) {
+        navigate(`/projects/${task.project._id}/${task._id}`);
+      } else if (task._id) {
+        // For tasks without project, navigate to task details directly
+        navigate(`/tasks/${task._id}`);
+      }
     }
   };
 

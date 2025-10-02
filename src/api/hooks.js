@@ -773,7 +773,6 @@ export const useGetEmployeeTasksToday = (employeeId) => {
         .then((res) => res.data)
         .catch((error) => {
           // Fallback data if endpoint doesn't exist
-          console.warn("Employee tasks today endpoint not available:", error);
           return {
             tasks: [
               // Sample task data for demonstration
