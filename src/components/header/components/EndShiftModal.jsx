@@ -148,7 +148,7 @@ const EndShiftModal = ({
           <p className="text-sm text-gray-600 mb-1">
             Great work today! Swipe to complete your shift and log your hours.
           </p>
-          
+
           {/* Shift Duration Display */}
           <div className="bg-gray-50 rounded-lg p-4 mt-4">
             <div className="text-sm text-gray-600 mb-1">Shift Duration</div>

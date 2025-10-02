@@ -146,6 +146,7 @@ Each component receives only the props it needs:
 - **AttendanceStatus**: `isShiftActive`, `isOnBreak`, `shiftElapsedTime`, etc.
 - **ActionButtons**: `isShiftActive`, `onAttendanceClick`, `unreadCount`, etc.
 - **AttendanceModal**: `isOpen`, `onClose`, `user`, `onClockIn`, etc.
+- **EndShiftModal**: `isOpen`, `onClose`, `isClockingOut`, `onEndShift`, `shiftElapsedTime`, etc.
 - **MobileSidebar**: `isOpen`, `onClose`, `filteredSidebar`, etc.
 - **UserProfile**: `user` object
 
