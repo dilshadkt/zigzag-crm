@@ -30,7 +30,9 @@ const MySubTasks = ({ filter: propFilter }) => {
   const filter = propFilter || urlFilter; // Use prop filter if provided, otherwise use URL filter
 
   // Get employee subtasks and filter based on URL parameter
-  const { data: employeeSubTasksData, isLoading } = useGetEmployeeSubTasks(user?._id);
+  const { data: employeeSubTasksData, isLoading } = useGetEmployeeSubTasks(
+    user?._id
+  );
   const [filteredSubTasks, setFilteredSubTasks] = useState([]);
 
   // Filter states
@@ -79,13 +81,17 @@ const MySubTasks = ({ filter: propFilter }) => {
           });
           break;
         case "in-progress":
-          filtered = filtered.filter((subTask) => subTask.status === "in-progress");
+          filtered = filtered.filter(
+            (subTask) => subTask.status === "in-progress"
+          );
           break;
         case "pending":
           filtered = filtered.filter((subTask) => subTask.status === "todo");
           break;
         case "completed":
-          filtered = filtered.filter((subTask) => subTask.status === "completed");
+          filtered = filtered.filter(
+            (subTask) => subTask.status === "completed"
+          );
           break;
         case "today":
           filtered = filtered.filter((subTask) => {
@@ -104,7 +110,9 @@ const MySubTasks = ({ filter: propFilter }) => {
       if (filters.search) {
         filtered = filtered.filter(
           (subTask) =>
-            subTask.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+            subTask.title
+              .toLowerCase()
+              .includes(filters.search.toLowerCase()) ||
             subTask.description
               ?.toLowerCase()
               .includes(filters.search.toLowerCase())
@@ -125,7 +133,8 @@ const MySubTasks = ({ filter: propFilter }) => {
 
       if (filters.project.length > 0) {
         filtered = filtered.filter(
-          (subTask) => subTask.project && filters.project.includes(subTask.project._id)
+          (subTask) =>
+            subTask.project && filters.project.includes(subTask.project._id)
         );
       }
 
@@ -335,7 +344,9 @@ const MySubTasks = ({ filter: propFilter }) => {
 
   const handleSubTaskClick = (subTask) => {
     // Navigate to the parent task detail page with the correct URL structure
-    navigate(`/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`);
+    navigate(
+      `/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`
+    );
   };
 
   const { projects } = getFilterOptions();
@@ -369,14 +380,17 @@ const MySubTasks = ({ filter: propFilter }) => {
           <div>
             <Header>{getFilterTitle()}</Header>
             <p className="text-sm text-gray-500 mt-1">
-              {filteredSubTasks.length} subtask{filteredSubTasks.length !== 1 ? "s" : ""} found
+              {filteredSubTasks.length} subtask
+              {filteredSubTasks.length !== 1 ? "s" : ""} found
             </p>
           </div>
         </div>
 
         {/* Filter Badge */}
         {filter && (
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${getFilterColor()}`}>
+          <div
+            className={`px-3 py-1 rounded-full text-sm font-medium ${getFilterColor()}`}
+          >
             <div className="flex items-center gap-2">
               {React.createElement(getFilterIcon(), { className: "w-4 h-4" })}
               {getFilterTitle()}
@@ -437,7 +451,9 @@ const MySubTasks = ({ filter: propFilter }) => {
                       <input
                         type="checkbox"
                         checked={filters.status.includes(status)}
-                        onChange={() => handleMultiSelectFilter("status", status)}
+                        onChange={() =>
+                          handleMultiSelectFilter("status", status)
+                        }
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm capitalize">{status}</span>
@@ -457,7 +473,9 @@ const MySubTasks = ({ filter: propFilter }) => {
                       <input
                         type="checkbox"
                         checked={filters.priority.includes(priority)}
-                        onChange={() => handleMultiSelectFilter("priority", priority)}
+                        onChange={() =>
+                          handleMultiSelectFilter("priority", priority)
+                        }
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm">{priority}</span>
@@ -477,10 +495,14 @@ const MySubTasks = ({ filter: propFilter }) => {
                       <input
                         type="checkbox"
                         checked={filters.project.includes(project._id)}
-                        onChange={() => handleMultiSelectFilter("project", project._id)}
+                        onChange={() =>
+                          handleMultiSelectFilter("project", project._id)
+                        }
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="ml-2 text-sm truncate">{project.name}</span>
+                      <span className="ml-2 text-sm truncate">
+                        {project.name}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -504,7 +526,10 @@ const MySubTasks = ({ filter: propFilter }) => {
                 </select>
                 <button
                   onClick={() =>
-                    handleFilterChange("sortOrder", filters.sortOrder === "asc" ? "desc" : "asc")
+                    handleFilterChange(
+                      "sortOrder",
+                      filters.sortOrder === "asc" ? "desc" : "asc"
+                    )
                   }
                   className="mt-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
                 >
@@ -632,4 +657,4 @@ const MySubTasks = ({ filter: propFilter }) => {
   );
 };
 
-export default MySubTasks; 
+export default MySubTasks;

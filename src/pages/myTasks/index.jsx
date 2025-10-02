@@ -123,15 +123,59 @@ const MyTasks = () => {
           filtered = filtered.filter((task) => task.status === "re-work");
           break;
         case "today":
-          filtered = filtered.filter((task) => {
+          // First, get tasks due today
+          const todayTasks = filtered.filter((task) => {
             const dueDate = new Date(task.dueDate);
             return (
               dueDate.getDate() === today.getDate() &&
               dueDate.getMonth() === today.getMonth() &&
               dueDate.getFullYear() === today.getFullYear() &&
-              task.status !== "completed"
+              task.status !== "approved" &&
+              task.status !== "completed" &&
+              task.status !== "client-approved"
             );
           });
+
+          // If today's tasks are less than 3, include upcoming tasks to reach at least 3
+          if (todayTasks.length < 3) {
+            const threeDaysFromNow = new Date(today);
+            threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 2); // Add 2 days to today
+
+            const upcomingTasks = filtered.filter((task) => {
+              const dueDate = new Date(task.dueDate);
+              const dueDateStart = new Date(
+                dueDate.getFullYear(),
+                dueDate.getMonth(),
+                dueDate.getDate()
+              );
+              const todayStart = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate()
+              );
+              const threeDaysFromNowStart = new Date(
+                threeDaysFromNow.getFullYear(),
+                threeDaysFromNow.getMonth(),
+                threeDaysFromNow.getDate()
+              );
+              return (
+                dueDateStart > todayStart &&
+                dueDateStart <= threeDaysFromNowStart &&
+                task.status !== "approved" &&
+                task.status !== "completed" &&
+                task.status !== "client-approved"
+              );
+            });
+
+            // Add upcoming tasks to reach minimum of 3
+            const neededTasks = 3 - todayTasks.length;
+            const tasksToAdd = Math.min(neededTasks, upcomingTasks.length);
+            const selectedUpcomingTasks = upcomingTasks.slice(0, tasksToAdd);
+
+            filtered = [...todayTasks, ...selectedUpcomingTasks];
+          } else {
+            filtered = todayTasks;
+          }
           break;
         case "unscheduled":
           // Filter for tasks that have no startDate and no dueDate
@@ -513,11 +557,22 @@ const MyTasks = () => {
   };
 
   const handleTaskClick = (task) => {
-    if (task.project) {
-      navigate(`/projects/${task.project._id}/${task._id}`);
+    // Check if task has a parent task
+    if (task.parentTask && task.parentTask._id) {
+      // If it's a subtask, navigate to the parent task
+      if (task.project) {
+        navigate(`/projects/${task.project._id}/${task.parentTask._id}`);
+      } else {
+        navigate(`/tasks/${task.parentTask._id}`);
+      }
     } else {
-      // For tasks without project, navigate to task details directly
-      navigate(`/tasks/${task._id}`);
+      // Regular task navigation
+      if (task.project) {
+        navigate(`/projects/${task.project._id}/${task._id}`);
+      } else {
+        // For tasks without project, navigate to task details directly
+        navigate(`/tasks/${task._id}`);
+      }
     }
   };
 

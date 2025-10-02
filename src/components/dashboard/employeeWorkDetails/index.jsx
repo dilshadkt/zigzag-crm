@@ -12,12 +12,27 @@ const EmployeeWorkDetails = () => {
   );
 
   const formatTime = (dateString) => {
-    if (!dateString) return "No due time";
+    if (!dateString) return "No due date";
     const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Check if it's today
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    }
+
+    // Check if it's tomorrow
+    if (date.toDateString() === tomorrow.toDateString()) {
+      return "Tomorrow";
+    }
+
+    // For other dates, show the full date
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -49,7 +64,9 @@ const EmployeeWorkDetails = () => {
 
   const handleSubTaskClick = (subTask) => {
     // Navigate to the parent task detail page with the correct URL structure
-    navigate(`/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`);
+    navigate(
+      `/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`
+    );
   };
 
   return (
@@ -105,7 +122,8 @@ const EmployeeWorkDetails = () => {
                   <span>Due: {formatTime(subTask.dueDate)}</span>
                   {subTask.project && (
                     <span className="text-[#3F8CFF]">
-                      Project: {subTask.project.displayName || subTask.project.name}
+                      Project:{" "}
+                      {subTask.project.displayName || subTask.project.name}
                     </span>
                   )}
                   {subTask.parentTask && (
@@ -122,14 +140,16 @@ const EmployeeWorkDetails = () => {
                     subTask.status
                   )}`}
                 >
-                  {subTask.status === "todo" ? "Pending" : subTask.status || "Pending"}
+                  {subTask.status === "todo"
+                    ? "Pending"
+                    : subTask.status || "Pending"}
                 </span>
 
-                {subTask.timeEstimate && (
+                {/* {subTask.timeEstimate && (
                   <span className="text-xs text-gray-500">
                     {subTask.timeEstimate}h estimated
                   </span>
-                )}
+                )} */}
               </div>
             </div>
           ))}
