@@ -22,11 +22,6 @@ const statusConfig = {
     color: "bg-blue-100 text-blue-800",
     allowedForAll: true,
   },
-  // completed: {
-  //   title: "Completed",
-  //   color: "bg-green-100 text-green-800",
-  //   allowedForAll: true,
-  // },
   "on-review": {
     title: "On Review",
     color: "bg-purple-100 text-purple-800",
@@ -46,6 +41,16 @@ const statusConfig = {
     title: "Approved",
     color: "bg-emerald-100 text-emerald-800",
     allowedForAll: false,
+  },
+  "client-approved": {
+    title: "Client Approved",
+    color: "bg-teal-100 text-teal-800",
+    allowedForAll: false,
+  },
+  completed: {
+    title: "Completed",
+    color: "bg-green-100 text-green-800",
+    allowedForAll: true,
   },
 };
 
@@ -316,6 +321,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
   const [isBoardView, setIsBoardView] = useState(true);
+  const [showSubtasks, setShowSubtasks] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
   const { isCompany, user } = useAuth();
 
@@ -335,49 +341,55 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const employeeAllowedStatuses = [
     "todo",
     "in-progress",
-    // "completed",
+    "completed",
     "on-review",
   ];
 
   // Filter task based on the process and active filters
   const filterTasks = (tasks) => {
-    if (!activeFilters) return tasks;
-
     return tasks.filter((task) => {
-      // Filter by subtask visibility
-      if (
-        activeFilters.showSubtasks === false &&
-        task?.itemType === "subtask"
-      ) {
+      // Filter by subtask visibility (global toggle)
+      if (!showSubtasks && task?.itemType === "subtask") {
         return false;
       }
 
-      // Filter by status
-      if (
-        activeFilters.status.length > 0 &&
-        !activeFilters.status.includes(task.status)
-      ) {
-        return false;
-      }
-
-      // Filter by priority
-      if (
-        activeFilters.priority.length > 0 &&
-        !activeFilters.priority.includes(task.priority)
-      ) {
-        return false;
-      }
-
-      // Filter by date range
-      if (
-        activeFilters.dateRange.startDate &&
-        activeFilters.dateRange.endDate
-      ) {
-        const taskDate = new Date(task.dueDate);
-        const startDate = new Date(activeFilters.dateRange.startDate);
-        const endDate = new Date(activeFilters.dateRange.endDate);
-        if (taskDate < startDate || taskDate > endDate) {
+      // Apply additional filters if activeFilters is set
+      if (activeFilters) {
+        // Filter by subtask visibility from filter menu
+        if (
+          activeFilters.showSubtasks === false &&
+          task?.itemType === "subtask"
+        ) {
           return false;
+        }
+
+        // Filter by status
+        if (
+          activeFilters.status.length > 0 &&
+          !activeFilters.status.includes(task.status)
+        ) {
+          return false;
+        }
+
+        // Filter by priority
+        if (
+          activeFilters.priority.length > 0 &&
+          !activeFilters.priority.includes(task.priority)
+        ) {
+          return false;
+        }
+
+        // Filter by date range
+        if (
+          activeFilters.dateRange.startDate &&
+          activeFilters.dateRange.endDate
+        ) {
+          const taskDate = new Date(task.dueDate);
+          const startDate = new Date(activeFilters.dateRange.startDate);
+          const endDate = new Date(activeFilters.dateRange.endDate);
+          if (taskDate < startDate || taskDate > endDate) {
+            return false;
+          }
         }
       }
 
@@ -395,10 +407,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
       filterTasks(
         currentProject?.tasks?.filter((task) => task?.status === "in-progress")
       ) || [],
-    completed:
-      filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "completed")
-      ) || [],
     "on-review":
       filterTasks(
         currentProject?.tasks?.filter((task) => task?.status === "on-review")
@@ -414,6 +422,16 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
     approved:
       filterTasks(
         currentProject?.tasks?.filter((task) => task?.status === "approved")
+      ) || [],
+    "client-approved":
+      filterTasks(
+        currentProject?.tasks?.filter(
+          (task) => task?.status === "client-approved"
+        )
+      ) || [],
+    completed:
+      filterTasks(
+        currentProject?.tasks?.filter((task) => task?.status === "completed")
       ) || [],
   };
 
@@ -578,6 +596,40 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
             className={"bg-white hover:bg-gray-50 transition-colors"}
             onclick={handleRefresh}
           />
+          <button
+            onClick={() => setShowSubtasks(!showSubtasks)}
+            className={`p-2 rounded-lg border transition-colors ${
+              showSubtasks
+                ? "bg-blue-50 border-blue-300 text-blue-600"
+                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+            }`}
+            title={showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {showSubtasks ? (
+                // Eye icon when showing
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              ) : (
+                // Eye-off icon when hiding
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                />
+              )}
+            </svg>
+          </button>
           <PrimaryButton
             icon={!isBoardView ? list : board}
             className={"bg-white hover:bg-gray-50 transition-colors"}
@@ -691,11 +743,15 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
         <div className="flex flex-col h-full pb-5 gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
           {renderListSection("Active Tasks", activeTasks)}
           {renderListSection("Progress", progressTasks)}
-          {/* {renderListSection("Completed", completedTasks)} */}
           {renderListSection("On Review", tasksByStatus["on-review"])}
           {renderListSection("On Hold", tasksByStatus["on-hold"])}
           {renderListSection("Re-work", tasksByStatus["re-work"])}
           {renderListSection("Approved", tasksByStatus["approved"])}
+          {renderListSection(
+            "Client Approved",
+            tasksByStatus["client-approved"]
+          )}
+          {renderListSection("Completed", completedTasks)}
         </div>
       )}
 
