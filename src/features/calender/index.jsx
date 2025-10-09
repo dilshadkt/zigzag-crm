@@ -17,7 +17,7 @@ import {
   EventsModal,
 } from "./components";
 import UnscheduledTasksModal from "./components/UnscheduledTasksModal";
-import AddTask from "../../components/projects/addTask"
+import AddTask from "../../components/projects/addTask";
 import {
   useCreateTaskFromBoard,
   useGetAllEmployees,
@@ -215,7 +215,10 @@ const Calendar = () => {
         className="w-full h-full  flex flex-col overflow-hidden
          bg-white rounded-3xl"
       >
-        <div className="min-h-[48px] relative w-full flex items-center justify-center md:justify-end border-b border-[#E6EBF5]">
+        <div
+          className="min-h-[48px] relative w-full flex items-center justify-center 
+         border-b border-[#E6EBF5]"
+        >
           {/* Calendar Header */}
           <CalendarHeader
             currentDate={currentDate}
@@ -224,19 +227,6 @@ const Calendar = () => {
             onNextMonth={handleNextMonth}
             isLoading={isLoading}
           />
-
-          {/* Event Type Filters */}
-          <div className="hidden md:flex">
-            <EventFilters
-              eventFilters={eventFilters}
-              onToggleFilter={handleToggleEventFilter}
-              assignerFilter={assignerFilter}
-              onAssignerFilterChange={handleAssignerFilterChange}
-              projectFilter={projectFilter}
-              onProjectFilterChange={handleProjectFilterChange}
-              calendarData={calendarData}
-            />
-          </div>
         </div>
         {/* Calendar Grid */}
         <CalendarGrid
@@ -248,7 +238,18 @@ const Calendar = () => {
           isEmployee={isEmployee}
         />
       </div>
-
+      {/* Event Type Filters */}
+      <div className="hidden md:flex mt-2">
+        <EventFilters
+          eventFilters={eventFilters}
+          onToggleFilter={handleToggleEventFilter}
+          assignerFilter={assignerFilter}
+          onAssignerFilterChange={handleAssignerFilterChange}
+          projectFilter={projectFilter}
+          onProjectFilterChange={handleProjectFilterChange}
+          calendarData={calendarData}
+        />
+      </div>
       {/* Events Modal */}
       <EventsModal
         isOpen={modalOpen}

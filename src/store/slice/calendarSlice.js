@@ -1,17 +1,7 @@
 // store/calendarSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
-// Load initial state from localStorage
-const loadState = () => {
-  try {
-    const serializedState = localStorage.getItem("calendarFilters");
-    if (serializedState === null) return initialState;
-    return JSON.parse(serializedState);
-  } catch (error) {
-    return initialState;
-  }
-};
-
+// Define initial state first
 const initialState = {
   eventFilters: {
     tasks: true,
@@ -22,6 +12,17 @@ const initialState = {
   assignerFilter: null,
   projectFilter: null,
   currentDate: new Date().toISOString(), // Store as ISO string for serialization
+};
+
+// Load state from localStorage
+const loadState = () => {
+  try {
+    const serializedState = localStorage.getItem("calendarFilters");
+    if (serializedState === null) return initialState;
+    return JSON.parse(serializedState);
+  } catch (error) {
+    return initialState;
+  }
 };
 
 const calendarSlice = createSlice({
