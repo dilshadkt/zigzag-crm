@@ -6,7 +6,7 @@ import {
   startOfMonth,
   subMonths,
 } from "date-fns";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../../hooks/useAuth";
 import { useCalendarDataOptimized } from "./hooks/useCalendarDataOptimized";
@@ -26,7 +26,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { uploadSingleFile } from "../../api/service";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
-import { getCurrentMonthKey } from "../../lib/dateUtils";
 import {
   toggleEventFilter,
   setAssignerFilter,
@@ -47,6 +46,17 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(() => {
     return persistedCurrentDate ? new Date(persistedCurrentDate) : new Date();
   });
+
+  // Sync local state with Redux persisted state when component mounts or when persisted date changes
+  useEffect(() => {
+    if (persistedCurrentDate) {
+      const persistedDate = new Date(persistedCurrentDate);
+      // Only update if the dates are different (to avoid infinite loops)
+      if (persistedDate.getTime() !== currentDate.getTime()) {
+        setCurrentDate(persistedDate);
+      }
+    }
+  }, [persistedCurrentDate]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState(null);
@@ -211,6 +221,17 @@ const Calendar = () => {
 
   return (
     <section className="flex flex-col  h-full">
+      <div className="hidden md:flex mb-2">
+        <EventFilters
+          eventFilters={eventFilters}
+          onToggleFilter={handleToggleEventFilter}
+          assignerFilter={assignerFilter}
+          onAssignerFilterChange={handleAssignerFilterChange}
+          projectFilter={projectFilter}
+          onProjectFilterChange={handleProjectFilterChange}
+          calendarData={calendarData}
+        />
+      </div>
       <div
         className="w-full h-full  flex flex-col overflow-hidden
          bg-white rounded-3xl"
@@ -239,17 +260,7 @@ const Calendar = () => {
         />
       </div>
       {/* Event Type Filters */}
-      <div className="hidden md:flex mt-2">
-        <EventFilters
-          eventFilters={eventFilters}
-          onToggleFilter={handleToggleEventFilter}
-          assignerFilter={assignerFilter}
-          onAssignerFilterChange={handleAssignerFilterChange}
-          projectFilter={projectFilter}
-          onProjectFilterChange={handleProjectFilterChange}
-          calendarData={calendarData}
-        />
-      </div>
+
       {/* Events Modal */}
       <EventsModal
         isOpen={modalOpen}
@@ -266,7 +277,7 @@ const Calendar = () => {
         projects={projectsData || []}
         onSubmit={handleAddTask}
         teams={employeesData?.employees || []}
-        selectedMonth={getCurrentMonthKey()}
+        selectedMonth={format(currentDate, "yyyy-MM")}
         isLoading={isCreatingTask}
         showProjectSelection={true}
         initialValues={
