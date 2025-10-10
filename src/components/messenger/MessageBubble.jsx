@@ -176,66 +176,66 @@ const MessageBubble = React.memo(
               ${message.isPending ? "opacity-70" : ""}
             `}
             >
-               {/* Image preview for image messages */}
-               {hasImageAttachment && imageAttachment && !imageError && (
-                 <div className="relative">
-                   {/* Show replied message if exists */}
-                   {message.replyTo && (
-                     <div className="p-3 pb-0">
-                       <RepliedMessage
-                         repliedMessage={message.replyTo}
-                         isOwn={message.isOwn}
-                       />
-                     </div>
-                   )}
-                   
-                   <img
-                     src={imageAttachment.url}
-                     alt={imageAttachment.originalName}
-                     className="w-full max-w-sm h-auto cursor-pointer hover:opacity-90 transition-opacity"
-                     onClick={handleImageClick}
-                     onError={() => setImageError(true)}
-                   />
-                   {/* Message text overlay on image if exists */}
-                   {message.message && message.message.trim() && (
-                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-3">
-                       <p className="text-sm leading-relaxed">
-                         {message.message}
-                       </p>
-                     </div>
-                   )}
-                 </div>
-               )}
+              {/* Image preview for image messages */}
+              {hasImageAttachment && imageAttachment && !imageError && (
+                <div className="relative">
+                  {/* Show replied message if exists */}
+                  {message.replyTo && (
+                    <div className="p-3 pb-0">
+                      <RepliedMessage
+                        repliedMessage={message.replyTo}
+                        isOwn={message.isOwn}
+                      />
+                    </div>
+                  )}
 
-               {/* Voice message content */}
-               {hasVoiceAttachment && voiceAttachment && (
-                 <div className="p-3">
-                   {/* Show replied message if exists */}
-                   {message.replyTo && (
-                     <RepliedMessage
-                       repliedMessage={message.replyTo}
-                       isOwn={message.isOwn}
-                     />
-                   )}
-                   
-                   <VoiceMessage
-                     attachment={voiceAttachment}
-                     isOwn={message.isOwn}
-                     messageId={message.id}
-                     attachmentIndex={message.attachments.findIndex(
-                       (att) =>
-                         att._id === voiceAttachment._id ||
-                         att.url === voiceAttachment.url
-                     )}
-                   />
-                   {/* Show message text if exists */}
-                   {message.message && message.message.trim() && (
-                     <p className="text-sm leading-relaxed mt-2">
-                       {message.message}
-                     </p>
-                   )}
-                 </div>
-               )}
+                  <img
+                    src={imageAttachment.url}
+                    alt={imageAttachment.originalName}
+                    className="w-full max-w-sm h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={handleImageClick}
+                    onError={() => setImageError(true)}
+                  />
+                  {/* Message text overlay on image if exists */}
+                  {message.message && message.message.trim() && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-3">
+                      <p className="text-sm leading-relaxed">
+                        {message.message}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Voice message content */}
+              {hasVoiceAttachment && voiceAttachment && (
+                <div className="p-3">
+                  {/* Show replied message if exists */}
+                  {message.replyTo && (
+                    <RepliedMessage
+                      repliedMessage={message.replyTo}
+                      isOwn={message.isOwn}
+                    />
+                  )}
+
+                  <VoiceMessage
+                    attachment={voiceAttachment}
+                    isOwn={message.isOwn}
+                    messageId={message.id}
+                    attachmentIndex={message.attachments.findIndex(
+                      (att) =>
+                        att._id === voiceAttachment._id ||
+                        att.url === voiceAttachment.url
+                    )}
+                  />
+                  {/* Show message text if exists */}
+                  {message.message && message.message.trim() && (
+                    <p className="text-sm leading-relaxed mt-2">
+                      {message.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Regular message content */}
               {!hasImageAttachment && !hasVoiceAttachment && (
