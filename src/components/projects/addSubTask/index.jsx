@@ -153,34 +153,53 @@ const AddSubTask = ({
                 {/* Show publish URL fields if subtask is 'publish' */}
                 {values.title === "publish" && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg
-                        className="w-4 h-4 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-                        />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-700">
-                        Publish URLs
-                      </span>
-                      <span className="text-xs text-gray-600 bg-gray-200 py-0.5 px-3 rounded-full">
-                        Configured url will be here{" "}
-                      </span>
+                    <div className="flex flex-col gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-700">
+                          Publish URLs
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                        <svg
+                          className="w-4 h-4 text-blue-500 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <p className="text-xs text-blue-700">
+                          Only platforms managed in project settings will appear
+                          here. Configure social media platforms in the project
+                          settings.
+                        </p>
+                      </div>
                     </div>
 
                     {/* Instagram URL */}
                     {effectiveProjectData?.socialMedia?.instagram?.manage && (
-                      <div className="flex flex-col gap-1">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                      <div className="flex flex-col gap-y-[7px]">
+                        <label className="text-sm pl-[6px] font-bold text-[#7D8592] flex items-center gap-2">
                           <svg
-                            className="w-3 h-3 text-pink-500"
+                            className="w-4 h-4 text-pink-500"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
@@ -190,7 +209,7 @@ const AddSubTask = ({
                         </label>
                         <input
                           type="url"
-                          className="border rounded px-2 py-1 text-xs"
+                          className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full"
                           name="publishUrls.instagram"
                           value={values.publishUrls?.instagram || ""}
                           onChange={handleChange}
@@ -202,10 +221,10 @@ const AddSubTask = ({
 
                     {/* Facebook URL */}
                     {effectiveProjectData?.socialMedia?.facebook?.manage && (
-                      <div className="flex flex-col gap-1">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                      <div className="flex flex-col gap-y-[7px]">
+                        <label className="text-sm pl-[6px] font-bold text-[#7D8592] flex items-center gap-2">
                           <svg
-                            className="w-3 h-3 text-blue-600"
+                            className="w-4 h-4 text-blue-600"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
@@ -215,7 +234,7 @@ const AddSubTask = ({
                         </label>
                         <input
                           type="url"
-                          className="border rounded px-2 py-1 text-xs"
+                          className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full"
                           name="publishUrls.facebook"
                           value={values.publishUrls?.facebook || ""}
                           onChange={handleChange}
@@ -227,10 +246,10 @@ const AddSubTask = ({
 
                     {/* YouTube URL */}
                     {effectiveProjectData?.socialMedia?.youtube?.manage && (
-                      <div className="flex flex-col gap-1">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                      <div className="flex flex-col gap-y-[7px]">
+                        <label className="text-sm pl-[6px] font-bold text-[#7D8592] flex items-center gap-2">
                           <svg
-                            className="w-3 h-3 text-red-600"
+                            className="w-4 h-4 text-red-600"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
@@ -240,7 +259,7 @@ const AddSubTask = ({
                         </label>
                         <input
                           type="url"
-                          className="border rounded px-2 py-1 text-xs"
+                          className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full"
                           name="publishUrls.youtube"
                           value={values.publishUrls?.youtube || ""}
                           onChange={handleChange}
@@ -252,10 +271,10 @@ const AddSubTask = ({
 
                     {/* LinkedIn URL */}
                     {effectiveProjectData?.socialMedia?.linkedin?.manage && (
-                      <div className="flex flex-col gap-1">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                      <div className="flex flex-col gap-y-[7px]">
+                        <label className="text-sm pl-[6px] font-bold text-[#7D8592] flex items-center gap-2">
                           <svg
-                            className="w-3 h-3 text-blue-700"
+                            className="w-4 h-4 text-blue-700"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
@@ -265,7 +284,7 @@ const AddSubTask = ({
                         </label>
                         <input
                           type="url"
-                          className="border rounded px-2 py-1 text-xs"
+                          className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full"
                           name="publishUrls.linkedin"
                           value={values.publishUrls?.linkedin || ""}
                           onChange={handleChange}
@@ -277,10 +296,10 @@ const AddSubTask = ({
 
                     {/* Twitter URL */}
                     {effectiveProjectData?.socialMedia?.twitter?.manage && (
-                      <div className="flex flex-col gap-1">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                      <div className="flex flex-col gap-y-[7px]">
+                        <label className="text-sm pl-[6px] font-bold text-[#7D8592] flex items-center gap-2">
                           <svg
-                            className="w-3 h-3 text-blue-400"
+                            className="w-4 h-4 text-blue-400"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
@@ -290,7 +309,7 @@ const AddSubTask = ({
                         </label>
                         <input
                           type="url"
-                          className="border rounded px-2 py-1 text-xs"
+                          className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full"
                           name="publishUrls.twitter"
                           value={values.publishUrls?.twitter || ""}
                           onChange={handleChange}
@@ -304,10 +323,13 @@ const AddSubTask = ({
                     {effectiveProjectData?.socialMedia?.other?.map(
                       (platform, index) =>
                         platform.manage && (
-                          <div key={index} className="flex flex-col gap-1">
-                            <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                          <div
+                            key={index}
+                            className="flex flex-col gap-y-[7px]"
+                          >
+                            <label className="text-sm pl-[6px] font-bold text-[#7D8592] flex items-center gap-2">
                               <svg
-                                className="w-3 h-3 text-gray-500"
+                                className="w-4 h-4 text-gray-500"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -323,7 +345,7 @@ const AddSubTask = ({
                             </label>
                             <input
                               type="url"
-                              className="border rounded px-2 py-1 text-xs"
+                              className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full"
                               name={`publishUrls.${platform.platform.toLowerCase()}`}
                               value={
                                 values.publishUrls?.[
