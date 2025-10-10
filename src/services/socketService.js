@@ -225,6 +225,55 @@ class SocketService {
     }
   }
 
+  // Pin a message
+  pinMessage(conversationId, messageId) {
+    if (this.socket) {
+      this.socket.emit("pin_message", { conversationId, messageId });
+    }
+  }
+
+  // Unpin a message
+  unpinMessage(conversationId, messageId) {
+    if (this.socket) {
+      this.socket.emit("unpin_message", { conversationId, messageId });
+    }
+  }
+
+  // Listen for message pinned events
+  onMessagePinned(callback) {
+    if (this.socket) {
+      this.socket.on("message_pinned", callback);
+    }
+  }
+
+  // Listen for message unpinned events
+  onMessageUnpinned(callback) {
+    if (this.socket) {
+      this.socket.on("message_unpinned", callback);
+    }
+  }
+
+  // Delete a message
+  deleteMessage(conversationId, messageId) {
+    if (this.socket) {
+      this.socket.emit("delete_message", { conversationId, messageId });
+    }
+  }
+
+  // Listen for message deleted events
+  onMessageDeleted(callback) {
+    if (this.socket) {
+      this.socket.on("message_deleted", callback);
+    }
+  }
+
+  // Listen for chat cleared events
+  onChatCleared(callback) {
+    if (this.socket) {
+      this.socket.on("chat_cleared", callback);
+    }
+  }
+
   // Remove all listeners
   removeAllListeners() {
     if (this.socket) {

@@ -292,6 +292,12 @@ export const transformMessageData = (apiMessages, currentUserId) => {
       attachments: msg.attachments || [],
       status: messageStatus,
       readBy: msg.readBy || [],
+      type: msg.type || "text",
+      isPinned: msg.isPinned || false,
+      pinnedBy: msg.pinnedBy,
+      pinnedAt: msg.pinnedAt,
+      mentions: msg.mentions || [],
+      replyTo: msg.replyTo || null, // Include reply reference
     };
   });
 };

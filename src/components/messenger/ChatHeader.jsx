@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-const ChatHeader = ({ selectedConversation, onlineUsers = [] }) => {
+const ChatHeader = ({
+  selectedConversation,
+  onlineUsers = [],
+  onClearChat,
+}) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
   const isUserOnline = (userId) => {
     return onlineUsers.some((user) => user.id === userId);
   };
@@ -15,6 +22,34 @@ const ChatHeader = ({ selectedConversation, onlineUsers = [] }) => {
     if (!selectedConversation.isGroup) return 0;
     return selectedConversation.memberCount || 6; // Mock data
   };
+
+  const handleClearChat = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all messages in this conversation? This action cannot be undone."
+      )
+    ) {
+      onClearChat && onClearChat();
+      setShowMenu(false);
+    }
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
 
   return (
     <div className="h-[70px] flex items-center justify-between border-b border-gray-200 px-6">
@@ -63,9 +98,12 @@ const ChatHeader = ({ selectedConversation, onlineUsers = [] }) => {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 relative" ref={menuRef}>
         {/* More options button */}
-        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <button
+          onClick={() => setShowMenu(!showMenu)}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
           <svg
             className="w-5 h-5 text-gray-600"
             fill="none"
@@ -80,6 +118,31 @@ const ChatHeader = ({ selectedConversation, onlineUsers = [] }) => {
             />
           </svg>
         </button>
+
+        {/* Dropdown Menu */}
+        {showMenu && (
+          <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[180px] z-50 animate-in fade-in zoom-in-95 duration-100">
+            <button
+              onClick={handleClearChat}
+              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 active:bg-red-100 transition-colors flex items-center gap-3 text-red-600 cursor-pointer"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              <span>Clear Chat</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -19,6 +19,9 @@ export const useChat = () => {
   const [typingUsers, setTypingUsers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [mentionedUsers, setMentionedUsers] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   const typingTimeoutRef = useRef({});
   const messagesEndRef = useRef(null);
@@ -214,6 +217,69 @@ export const useChat = () => {
     []
   );
 
+  const handleMessagePinned = useCallback(
+    ({ messageId, conversationId, pinnedBy, pinnedAt }) => {
+      console.log("📌 Message pinned event received:", {
+        messageId,
+        conversationId,
+        pinnedBy,
+        pinnedAt,
+      });
+
+      // Update the message in messages state
+      setMessages((prev) => {
+        const conversationMessages = prev[conversationId] || [];
+        const updatedMessages = conversationMessages.map((msg) =>
+          msg.id === messageId
+            ? { ...msg, isPinned: true, pinnedBy, pinnedAt }
+            : msg
+        );
+
+        return {
+          ...prev,
+          [conversationId]: updatedMessages,
+        };
+      });
+
+      // Reload pinned messages if this is the selected conversation
+      if (selectedConversation?.id === conversationId) {
+        loadPinnedMessages(conversationId);
+      }
+    },
+    [selectedConversation]
+  );
+
+  const handleMessageUnpinned = useCallback(
+    ({ messageId, conversationId, unpinnedBy }) => {
+      console.log("📍 Message unpinned event received:", {
+        messageId,
+        conversationId,
+        unpinnedBy,
+      });
+
+      // Update the message in messages state
+      setMessages((prev) => {
+        const conversationMessages = prev[conversationId] || [];
+        const updatedMessages = conversationMessages.map((msg) =>
+          msg.id === messageId
+            ? { ...msg, isPinned: false, pinnedBy: null, pinnedAt: null }
+            : msg
+        );
+
+        return {
+          ...prev,
+          [conversationId]: updatedMessages,
+        };
+      });
+
+      // Reload pinned messages if this is the selected conversation
+      if (selectedConversation?.id === conversationId) {
+        loadPinnedMessages(conversationId);
+      }
+    },
+    [selectedConversation]
+  );
+
   // Initialize socket connection
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -228,6 +294,8 @@ export const useChat = () => {
       socketService.onConversationUpdate(handleConversationUpdate);
       socketService.onMessageUpdate(handleMessageUpdate);
       socketService.onMessagesRead(handleMessagesRead);
+      socketService.onMessagePinned(handleMessagePinned);
+      socketService.onMessageUnpinned(handleMessageUnpinned);
     }
 
     return () => {
@@ -242,6 +310,8 @@ export const useChat = () => {
     handleConversationUpdate,
     handleMessageUpdate,
     handleMessagesRead,
+    handleMessagePinned,
+    handleMessageUnpinned,
   ]);
 
   // Load conversations on mount
@@ -442,6 +512,9 @@ export const useChat = () => {
       console.log("📥 Loading messages for conversation:", conversation.id);
       await loadMessages(conversation.id);
 
+      // Load pinned messages
+      await loadPinnedMessages(conversation.id);
+
       // Mark messages as read
       console.log(
         "✅ Marking messages as read for conversation:",
@@ -457,9 +530,125 @@ export const useChat = () => {
     [selectedConversation, messages]
   );
 
+  // Load pinned messages for a conversation
+  const loadPinnedMessages = async (conversationId) => {
+    try {
+      const result = await chatService.getPinnedMessages(conversationId);
+      if (result.success) {
+        setPinnedMessages(result.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading pinned messages:", err);
+    }
+  };
+
+  // Pin a message
+  const pinMessage = useCallback(
+    async (message) => {
+      if (!selectedConversation) return;
+
+      try {
+        const result = await chatService.pinMessage(
+          message.id || message._id,
+          selectedConversation.id
+        );
+
+        if (result.success) {
+          console.log("✅ Message pinned successfully");
+
+          // Immediately update the message in the messages state
+          setMessages((prev) => {
+            const conversationId = selectedConversation.id;
+            const conversationMessages = prev[conversationId] || [];
+            const updatedMessages = conversationMessages.map((msg) =>
+              msg.id === (message.id || message._id)
+                ? {
+                    ...msg,
+                    isPinned: true,
+                    pinnedBy: result.data?.data?.pinnedBy,
+                    pinnedAt: result.data?.data?.pinnedAt || new Date(),
+                  }
+                : msg
+            );
+
+            return {
+              ...prev,
+              [conversationId]: updatedMessages,
+            };
+          });
+
+          // Immediately reload pinned messages to update the banner
+          await loadPinnedMessages(selectedConversation.id);
+        } else {
+          setError(result.message || "Failed to pin message");
+        }
+      } catch (err) {
+        console.error("Error pinning message:", err);
+        setError("Failed to pin message");
+      }
+    },
+    [selectedConversation]
+  );
+
+  // Unpin a message
+  const unpinMessage = useCallback(
+    async (message) => {
+      if (!selectedConversation) return;
+
+      const messageId = message.id || message._id;
+      if (!messageId) {
+        console.error("No message ID found for unpinning");
+        return;
+      }
+
+      try {
+        const result = await chatService.unpinMessage(
+          messageId,
+          selectedConversation.id
+        );
+
+        if (result.success) {
+          console.log("✅ Message unpinned successfully");
+
+          // Immediately update the message in the messages state
+          setMessages((prev) => {
+            const conversationId = selectedConversation.id;
+            const conversationMessages = prev[conversationId] || [];
+            const updatedMessages = conversationMessages.map((msg) => {
+              const msgId = msg.id || msg._id;
+              return msgId === messageId
+                ? { ...msg, isPinned: false, pinnedBy: null, pinnedAt: null }
+                : msg;
+            });
+
+            return {
+              ...prev,
+              [conversationId]: updatedMessages,
+            };
+          });
+
+          // Immediately reload pinned messages to update the banner
+          await loadPinnedMessages(selectedConversation.id);
+        } else {
+          setError(result.message || "Failed to unpin message");
+        }
+      } catch (err) {
+        console.error("Error unpinning message:", err);
+        setError("Failed to unpin message");
+      }
+    },
+    [selectedConversation]
+  );
+
   // Send a message
   const sendMessage = useCallback(
-    async (messageText, attachments = [], messageType = "text") => {
+    async (
+      messageText,
+      attachments = [],
+      messageType = "text",
+      mentions = [],
+      replyToId = null
+    ) => {
       if (!selectedConversation || !messageText.trim()) {
         console.warn(
           "Cannot send message: No conversation selected or empty message"
@@ -495,6 +684,7 @@ export const useChat = () => {
         isPending: true, // Mark as pending to show loading state
         status: "sending", // Status for optimistic message
         readBy: [],
+        replyTo: replyToId ? replyingTo : null, // Include reply reference in optimistic message
       };
       // Immediately add message to UI
       setMessages((prev) => {
@@ -554,6 +744,8 @@ export const useChat = () => {
         content: messageText.trim(),
         attachments,
         type: messageType,
+        mentions: mentions || [],
+        replyTo: replyToId || null,
       };
       // console.log("📤 Attempting to send message:", messageData);
       try {
@@ -569,6 +761,10 @@ export const useChat = () => {
           clearTimeout(timeoutId);
           // Remove from sending tracker
           sendMessage._sending?.delete(sendingKey);
+          // Clear reply state after successful send
+          if (replyToId) {
+            setReplyingTo(null);
+          }
           // The socket event will handle replacing the optimistic message
           // with the real message, so we don't need to do it here
         } else {
@@ -752,6 +948,151 @@ export const useChat = () => {
     }
   };
 
+  // Delete a message
+  const deleteMessage = useCallback(
+    async (message) => {
+      if (!selectedConversation) return;
+
+      const messageId = message.id || message._id;
+      if (!messageId) {
+        console.error("No message ID found for deletion");
+        return;
+      }
+
+      try {
+        const result = await chatService.deleteMessage(
+          messageId,
+          selectedConversation.id
+        );
+
+        if (result.success) {
+          console.log("✅ Message deleted successfully");
+
+          // Immediately remove the message from the messages state
+          setMessages((prev) => {
+            const conversationId = selectedConversation.id;
+            const conversationMessages = prev[conversationId] || [];
+            const updatedMessages = conversationMessages.filter((msg) => {
+              const msgId = msg.id || msg._id;
+              return msgId !== messageId;
+            });
+
+            return {
+              ...prev,
+              [conversationId]: updatedMessages,
+            };
+          });
+        } else {
+          setError(result.message || "Failed to delete message");
+        }
+      } catch (err) {
+        console.error("Error deleting message:", err);
+        setError("Failed to delete message");
+      }
+    },
+    [selectedConversation]
+  );
+
+  // Clear chat (delete all messages)
+  const clearChat = useCallback(async () => {
+    if (!selectedConversation) return;
+
+    try {
+      const result = await chatService.clearChat(selectedConversation.id);
+
+      if (result.success) {
+        console.log("✅ Chat cleared successfully");
+
+        // Immediately clear all messages from state
+        setMessages((prev) => ({
+          ...prev,
+          [selectedConversation.id]: [],
+        }));
+
+        // Clear pinned messages
+        setPinnedMessages([]);
+      } else {
+        setError(result.message || "Failed to clear chat");
+      }
+    } catch (err) {
+      console.error("Error clearing chat:", err);
+      setError("Failed to clear chat");
+    }
+  }, [selectedConversation]);
+
+  // Set message to reply to
+  const replyToMessage = useCallback((message) => {
+    setReplyingTo(message);
+  }, []);
+
+  // Cancel reply
+  const cancelReply = useCallback(() => {
+    setReplyingTo(null);
+  }, []);
+
+  // Handle message deleted event
+  const handleMessageDeleted = useCallback(
+    ({ messageId, conversationId, deletedBy }) => {
+      console.log("🗑️ Message deleted event received:", {
+        messageId,
+        conversationId,
+        deletedBy,
+      });
+
+      // Remove the message from messages state
+      setMessages((prev) => {
+        const conversationMessages = prev[conversationId] || [];
+        const updatedMessages = conversationMessages.filter((msg) => {
+          const msgId = msg.id || msg._id;
+          return msgId !== messageId;
+        });
+
+        return {
+          ...prev,
+          [conversationId]: updatedMessages,
+        };
+      });
+    },
+    []
+  );
+
+  // Handle chat cleared event
+  const handleChatCleared = useCallback(
+    ({ conversationId, clearedBy }) => {
+      console.log("🧹 Chat cleared event received:", {
+        conversationId,
+        clearedBy,
+      });
+
+      // Clear all messages in the conversation
+      setMessages((prev) => ({
+        ...prev,
+        [conversationId]: [],
+      }));
+
+      // Clear pinned messages if this is the selected conversation
+      if (selectedConversation?.id === conversationId) {
+        setPinnedMessages([]);
+      }
+    },
+    [selectedConversation]
+  );
+
+  // Add socket listeners for delete and clear
+  useEffect(() => {
+    if (socketService.isSocketConnected()) {
+      socketService.onMessageDeleted(handleMessageDeleted);
+      socketService.onChatCleared(handleChatCleared);
+    }
+
+    return () => {
+      if (socketService.getSocket()) {
+        socketService.getSocket().off("message_deleted", handleMessageDeleted);
+        socketService.getSocket().off("chat_cleared", handleChatCleared);
+      }
+    };
+  }, [handleMessageDeleted, handleChatCleared]);
+
   return {
     // State
     conversations,
@@ -762,6 +1103,9 @@ export const useChat = () => {
     loading,
     error,
     messagesEndRef,
+    pinnedMessages,
+    mentionedUsers,
+    replyingTo,
 
     // Actions
     selectConversation,
@@ -772,7 +1116,15 @@ export const useChat = () => {
     loadConversations,
     loadProjectGroupChats,
     ensureProjectGroupChats,
+    pinMessage,
+    unpinMessage,
+    loadPinnedMessages,
+    deleteMessage,
+    clearChat,
+    replyToMessage,
+    cancelReply,
     setError,
+    setMentionedUsers,
 
     // Utils
     isUserOnline: (userId) => onlineUsers.some((u) => u.id === userId),

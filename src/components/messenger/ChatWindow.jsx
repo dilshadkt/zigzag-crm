@@ -5,6 +5,7 @@ import TypingIndicator from "./TypingIndicator";
 import ChatInput from "./ChatInput";
 import DateSeparator from "./DateSeparator";
 import StickyDateHeader from "./StickyDateHeader";
+import PinnedMessages from "./PinnedMessages";
 import { groupMessagesByDate } from "../../utils/messageUtils";
 
 const ChatWindow = ({
@@ -20,6 +21,17 @@ const ChatWindow = ({
   messagesEndRef,
   onlineUsers = [],
   loading = false,
+  pinnedMessages = [],
+  onPinMessage,
+  onUnpinMessage,
+  onDeleteMessage,
+  onClearChat,
+  onReplyMessage,
+  replyingTo,
+  onCancelReply,
+  onMentionSelect,
+  participants = [],
+  currentUserId,
 }) => {
   const messagesContainerRef = useRef(null);
   // Debug logging to track message rendering
@@ -81,7 +93,37 @@ const ChatWindow = ({
       <ChatHeader
         selectedConversation={selectedConversation}
         onlineUsers={onlineUsers}
+        onClearChat={onClearChat}
       />
+
+      {/* Pinned Messages */}
+      {pinnedMessages && pinnedMessages.length > 0 && (
+        <PinnedMessages
+          pinnedMessages={pinnedMessages}
+          onUnpin={(messageId) => {
+            // Try to find the message in current messages
+            let message = messages.find(
+              (m) => m.id === messageId || m._id === messageId
+            );
+
+            // If not found in current messages, use the pinned message data
+            if (!message) {
+              message = pinnedMessages.find(
+                (m) => (m.id || m._id) === messageId
+              );
+            }
+
+            // Fallback: create a minimal message object with the ID
+            if (!message) {
+              message = { id: messageId, _id: messageId };
+            }
+
+            if (onUnpinMessage) {
+              onUnpinMessage(message);
+            }
+          }}
+        />
+      )}
 
       <div
         className="flex-1 overflow-y-auto p-4 bg-gray-50 relative chat-messages-container"
@@ -105,7 +147,15 @@ const ChatWindow = ({
                 </div>
                 <div className="space-y-4">
                   {group.messages.map((message) => (
-                    <MessageBubble key={message.id} message={message} />
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      onPin={onPinMessage}
+                      onUnpin={onUnpinMessage}
+                      onDelete={onDeleteMessage}
+                      onReply={onReplyMessage}
+                      currentUserId={currentUserId}
+                    />
                   ))}
                 </div>
               </div>
@@ -149,6 +199,10 @@ const ChatWindow = ({
         onTyping={onTyping}
         isTyping={typingUsers.length > 0}
         disabled={loading}
+        participants={participants}
+        onMentionSelect={onMentionSelect}
+        replyingTo={replyingTo}
+        onCancelReply={onCancelReply}
       />
     </div>
   );

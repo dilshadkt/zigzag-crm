@@ -18,6 +18,9 @@ const Messenger = () => {
     loading,
     error,
     messagesEndRef,
+    pinnedMessages,
+    mentionedUsers,
+    replyingTo,
     selectConversation,
     sendMessage,
     sendTypingIndicator,
@@ -28,8 +31,16 @@ const Messenger = () => {
     loadConversations,
     loadProjectGroupChats,
     ensureProjectGroupChats,
+    pinMessage,
+    unpinMessage,
+    deleteMessage,
+    clearChat,
+    replyToMessage,
+    cancelReply,
+    setMentionedUsers,
   } = useChat();
   const [messageInput, setMessageInput] = useState("");
+  const [currentMentions, setCurrentMentions] = useState([]);
 
   const toggleSection = (sectionType) => {
     setCollapsedSections((prev) => ({
@@ -49,9 +60,19 @@ const Messenger = () => {
 
   const handleSendMessage = async () => {
     if (messageInput.trim()) {
-      await sendMessage(messageInput);
+      // Extract mentions from message input
+      const mentionIds = currentMentions.map((user) => user._id || user.id);
+      const replyToId = replyingTo?.id || replyingTo?._id || null;
+
+      await sendMessage(messageInput, [], "text", mentionIds, replyToId);
       setMessageInput("");
+      setCurrentMentions([]);
+      cancelReply(); // Clear reply state after sending
     }
+  };
+
+  const handleMentionSelect = (user) => {
+    setCurrentMentions((prev) => [...prev, user]);
   };
 
   const handleInputChange = (e) => {
@@ -120,6 +141,12 @@ const Messenger = () => {
 
   const typingUsers = getTypingUsers();
 
+  // Get participants for mention autocomplete
+  const participants =
+    selectedConversation?.participants ||
+    selectedConversation?.project?.teams ||
+    [];
+
   // Ensure project group chats exist when component mounts
   useEffect(() => {
     const initializeProjectChats = async () => {
@@ -179,6 +206,17 @@ const Messenger = () => {
           messagesEndRef={messagesEndRef}
           onlineUsers={onlineUsers}
           loading={loading}
+          pinnedMessages={pinnedMessages}
+          onPinMessage={pinMessage}
+          onUnpinMessage={unpinMessage}
+          onDeleteMessage={deleteMessage}
+          onClearChat={clearChat}
+          onReplyMessage={replyToMessage}
+          replyingTo={replyingTo}
+          onCancelReply={cancelReply}
+          onMentionSelect={handleMentionSelect}
+          participants={participants}
+          currentUserId={localStorage.getItem("userId")}
         />
       </div>
     </section>

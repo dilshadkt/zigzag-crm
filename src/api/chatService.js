@@ -278,3 +278,82 @@ export const uploadChatFile = async (file, conversationId) => {
     };
   }
 };
+
+// Pin a message
+export const pinMessage = async (messageId, conversationId) => {
+  try {
+    const response = await apiClient.post(`/chat/pin-message`, {
+      messageId,
+      conversationId,
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to pin message",
+    };
+  }
+};
+
+// Unpin a message
+export const unpinMessage = async (messageId, conversationId) => {
+  try {
+    const response = await apiClient.post(`/chat/unpin-message`, {
+      messageId,
+      conversationId,
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to unpin message",
+    };
+  }
+};
+
+// Get pinned messages for a conversation
+export const getPinnedMessages = async (conversationId) => {
+  try {
+    const response = await apiClient.get(
+      `/chat/pinned-messages/${conversationId}`
+    );
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message || "Failed to fetch pinned messages",
+    };
+  }
+};
+
+// Delete a message
+export const deleteMessage = async (messageId, conversationId) => {
+  try {
+    const response = await apiClient.post(`/chat/delete-message`, {
+      messageId,
+      conversationId,
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to delete message",
+    };
+  }
+};
+
+// Clear chat (delete all messages)
+export const clearChat = async (conversationId) => {
+  try {
+    const response = await apiClient.post(`/chat/clear-chat`, {
+      conversationId,
+    });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to clear chat",
+    };
+  }
+};

@@ -1,4 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
+import MentionAutocomplete from "./MentionAutocomplete";
+import ReplyPreview from "./ReplyPreview";
 
 const ChatInput = ({
   messageInput,
@@ -9,21 +11,87 @@ const ChatInput = ({
   onTyping,
   isTyping,
   disabled = false,
+  participants = [],
+  onMentionSelect,
+  replyingTo = null,
+  onCancelReply,
 }) => {
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const inputRef = useRef(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasPermission, setHasPermission] = useState(false);
+  const [showMentionAutocomplete, setShowMentionAutocomplete] = useState(false);
+  const [mentionSearchTerm, setMentionSearchTerm] = useState("");
+  const [mentionCursorPosition, setMentionCursorPosition] = useState(0);
 
   const handleInputChange = (e) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+
     onInputChange(e);
+
     // Trigger typing indicator
     if (onTyping) {
-      onTyping(e.target.value.length > 0);
+      onTyping(value.length > 0);
     }
+
+    // Detect @ mention
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      // Check if there's no space after @ (actively typing a mention)
+      if (!textAfterAt.includes(" ") && textAfterAt.length >= 0) {
+        setShowMentionAutocomplete(true);
+        setMentionSearchTerm(textAfterAt);
+        setMentionCursorPosition(lastAtIndex);
+      } else {
+        setShowMentionAutocomplete(false);
+      }
+    } else {
+      setShowMentionAutocomplete(false);
+    }
+  };
+
+  const handleMentionSelect = (user) => {
+    const beforeMention = messageInput.substring(0, mentionCursorPosition);
+    const afterMention = messageInput.substring(
+      inputRef.current.selectionStart
+    );
+
+    // Create mention text with format: @[userId](userName)
+    const mentionText = `@${user.firstName} ${user.lastName}`;
+    const newValue = beforeMention + mentionText + " " + afterMention;
+
+    // Create synthetic event for onInputChange
+    const syntheticEvent = {
+      target: {
+        value: newValue,
+        selectionStart: beforeMention.length + mentionText.length + 1,
+      },
+    };
+
+    onInputChange(syntheticEvent);
+    setShowMentionAutocomplete(false);
+
+    // Call parent mention handler if provided
+    if (onMentionSelect) {
+      onMentionSelect(user, mentionText);
+    }
+
+    // Focus back on input
+    setTimeout(() => {
+      if (inputRef.current) {
+        const newCursorPos = beforeMention.length + mentionText.length + 1;
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
   };
 
   const handleFileClick = () => {
@@ -313,47 +381,22 @@ const ChatInput = ({
   };
 
   return (
-    <div className="border-t border-gray-200 p-4">
-      <div className="flex items-center gap-3">
-        {/* File upload button */}
-        <button
-          onClick={handleFileClick}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          disabled={disabled || isRecording}
-        >
-          <svg
-            className="w-5 h-5 text-gray-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-            />
-          </svg>
-        </button>
+    <div className="border-t border-gray-200">
+      {/* Reply Preview */}
+      {replyingTo && (
+        <ReplyPreview replyingTo={replyingTo} onCancel={onCancelReply} />
+      )}
 
-        {/* Voice recording button */}
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          className={`p-2 rounded-lg transition-colors ${
-            isRecording
-              ? "bg-red-500 text-white animate-pulse"
-              : "hover:bg-gray-100 text-gray-600"
-          }`}
-          disabled={disabled}
-        >
-          {isRecording ? (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-            </svg>
-          ) : (
+      <div className="p-4">
+        <div className="flex items-center gap-3">
+          {/* File upload button */}
+          <button
+            onClick={handleFileClick}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={disabled || isRecording}
+          >
             <svg
-              className="w-5 h-5"
+              className="w-5 h-5 text-gray-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -362,89 +405,131 @@ const ChatInput = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
               />
             </svg>
-          )}
-        </button>
+          </button>
 
-        {/* Recording timer */}
-        {isRecording && (
-          <div className="flex items-center gap-2 text-red-500">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">
-              {formatTime(recordingTime)}
-            </span>
-          </div>
-        )}
+          {/* Voice recording button */}
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`p-2 rounded-lg transition-colors ${
+              isRecording
+                ? "bg-red-500 text-white animate-pulse"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+            disabled={disabled}
+          >
+            {isRecording ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+            )}
+          </button>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          onChange={handleFileChange}
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
-        />
-
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={messageInput}
-            onChange={handleInputChange}
-            onKeyPress={onKeyPress}
-            placeholder="Type your message..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            disabled={isTyping || disabled}
-          />
-          {messageInput.length > 0 && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <span className="text-xs text-gray-400">
-                {messageInput.length}
+          {/* Recording timer */}
+          {isRecording && (
+            <div className="flex items-center gap-2 text-red-500">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium">
+                {formatTime(recordingTime)}
               </span>
             </div>
           )}
-        </div>
 
-        <button
-          onClick={onSendMessage}
-          disabled={!messageInput.trim() || isTyping || disabled}
-          className={`p-2 rounded-lg transition-all ${
-            messageInput.trim() && !isTyping && !disabled
-              ? "bg-blue-500 hover:bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {isTyping ? (
-            <svg
-              className="w-5 h-5 animate-spin"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          )}
-        </button>
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
+          />
+
+          <div className="flex-1 relative">
+            {/* Mention Autocomplete */}
+            <MentionAutocomplete
+              participants={participants}
+              searchTerm={mentionSearchTerm}
+              onSelectUser={handleMentionSelect}
+              visible={showMentionAutocomplete}
+              position={{ bottom: 60, left: 0 }}
+            />
+
+            <input
+              ref={inputRef}
+              type="text"
+              value={messageInput}
+              onChange={handleInputChange}
+              onKeyPress={onKeyPress}
+              placeholder="Type your message... (@mention someone)"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              disabled={isTyping || disabled || isRecording}
+            />
+            {messageInput.length > 0 && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <span className="text-xs text-gray-400">
+                  {messageInput.length}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={onSendMessage}
+            disabled={!messageInput.trim() || isTyping || disabled}
+            className={`p-2 rounded-lg transition-all ${
+              messageInput.trim() && !isTyping && !disabled
+                ? "bg-blue-500 hover:bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {isTyping ? (
+              <svg
+                className="w-5 h-5 animate-spin"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
