@@ -404,7 +404,9 @@ const AddSubTask = ({
                     value={values?.assignedTo || []}
                     options={
                       teams?.map((user) => ({
-                        label: `${user.firstName} (${user.position})`,
+                        label: `${user?.firstName || user?.name} (${
+                          user.position
+                        })`,
                         value: user._id,
                       })) || []
                     }

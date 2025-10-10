@@ -33,7 +33,6 @@ const TaskDetailPage = () => {
   const teams = hasProject
     ? taskDetails?.teams
     : allEmployeesData?.employees || [];
-
   const handleTaskEdit = async (values, { setSubmitting }) => {
     try {
       const updatedValues = cleanTaskData(values);
@@ -66,7 +65,7 @@ const TaskDetailPage = () => {
       <TaskDetails
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}
-        teams={taskDetails?.teams}
+        teams={teams}
       />
       {/* task info */}
       <TaskInfo taskDetails={taskDetails} />
