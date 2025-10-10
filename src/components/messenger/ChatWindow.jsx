@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
@@ -34,6 +34,34 @@ const ChatWindow = ({
   currentUserId,
 }) => {
   const messagesContainerRef = useRef(null);
+  const messageRefs = useRef({});
+  const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+
+  // Function to scroll to a specific message
+  const scrollToMessage = useCallback((messageId) => {
+    const messageElement = document.querySelector(
+      `[data-message-id="${messageId}"]`
+    );
+
+    if (messageElement && messagesContainerRef.current) {
+      // Scroll to the message
+      messageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      // Highlight the message
+      setHighlightedMessageId(messageId);
+
+      // Remove highlight after 2 seconds
+      setTimeout(() => {
+        setHighlightedMessageId(null);
+      }, 2000);
+    } else {
+      console.warn("Message not found:", messageId);
+    }
+  }, []);
+
   // Debug logging to track message rendering
   React.useEffect(() => {
     if (selectedConversation && messages.length > 0) {
@@ -122,6 +150,10 @@ const ChatWindow = ({
               onUnpinMessage(message);
             }
           }}
+          onJumpToMessage={(message) => {
+            const messageId = message.id || message._id;
+            scrollToMessage(messageId);
+          }}
         />
       )}
 
@@ -149,12 +181,19 @@ const ChatWindow = ({
                   {group.messages.map((message) => (
                     <MessageBubble
                       key={message.id}
+                      ref={(el) => {
+                        if (el) {
+                          messageRefs.current[message.id] = el;
+                        }
+                      }}
                       message={message}
                       onPin={onPinMessage}
                       onUnpin={onUnpinMessage}
                       onDelete={onDeleteMessage}
                       onReply={onReplyMessage}
+                      onScrollToMessage={scrollToMessage}
                       currentUserId={currentUserId}
+                      isHighlighted={highlightedMessageId === message.id}
                     />
                   ))}
                 </div>

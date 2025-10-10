@@ -1,6 +1,10 @@
 import React from "react";
 
-const RepliedMessage = ({ repliedMessage, isOwn = false }) => {
+const RepliedMessage = ({
+  repliedMessage,
+  isOwn = false,
+  onScrollToMessage,
+}) => {
   if (!repliedMessage) return null;
 
   const formatMessagePreview = (content) => {
@@ -33,11 +37,24 @@ const RepliedMessage = ({ repliedMessage, isOwn = false }) => {
       }`.trim()
     : "Unknown";
 
+  const handleClick = () => {
+    if (onScrollToMessage && repliedMessage) {
+      const messageId = repliedMessage.id || repliedMessage._id;
+      onScrollToMessage(messageId);
+    }
+  };
+
   return (
     <div
+      onClick={handleClick}
       className={`mb-2 pl-3 border-l-4 ${
         isOwn ? "border-blue-200" : "border-gray-400"
-      } py-1`}
+      } py-1 ${
+        onScrollToMessage
+          ? "cursor-pointer hover:bg-opacity-10 hover:bg-gray-500 rounded transition-colors"
+          : ""
+      }`}
+      title={onScrollToMessage ? "Click to jump to original message" : ""}
     >
       <div className="flex items-center gap-2 mb-1">
         <svg
