@@ -2,17 +2,25 @@ import React, { useState, useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import AttendanceHeader from "./components/AttendanceHeader";
 import SummaryCards from "./components/SummaryCards";
-import SearchAndFilters from "./components/SearchAndFilters";
+import AttendanceFilter, { getDateRanges } from "./components/AttendanceFilter";
 import AttendanceTable from "./components/AttendanceTable";
-import { useAttendanceData } from "./hooks/useAttendanceData";
+import {
+  useAttendanceData,
+  useAttendanceDataRange,
+} from "./hooks/useAttendanceData";
 
 // Custom hook for managing attendance state
 const useAttendanceState = () => {
-  const [selectedDate, setSelectedDate] = useState(
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("today");
+  const [customStartDate, setCustomStartDate] = useState(
     () => new Date().toISOString().split("T")[0]
   );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState("today");
+  const [customEndDate, setCustomEndDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageLimit] = useState(50); // Items per page
   const [attendanceData, setAttendanceData] = useState([]);
 
   // Memoized handlers to prevent unnecessary re-renders
@@ -20,12 +28,19 @@ const useAttendanceState = () => {
     () => ({
       handleSearchChange: (term) => {
         setSearchTerm(term);
+        setCurrentPage(1); // Reset to first page on search
       },
-      handlePeriodChange: (period) => {
-        setSelectedPeriod(period);
+      handleFilterChange: (filter) => {
+        setSelectedFilter(filter);
+        setCurrentPage(1); // Reset to first page on filter change
       },
-      handleDateChange: (date) => {
-        setSelectedDate(date);
+      handleCustomDateChange: (startDate, endDate) => {
+        setCustomStartDate(startDate);
+        setCustomEndDate(endDate);
+        setCurrentPage(1); // Reset to first page on date change
+      },
+      handlePageChange: (page) => {
+        setCurrentPage(page);
       },
       handleDataChange: (data) => {
         setAttendanceData(data);
@@ -41,9 +56,12 @@ const useAttendanceState = () => {
   );
 
   return {
-    selectedDate,
     searchTerm,
-    selectedPeriod,
+    selectedFilter,
+    customStartDate,
+    customEndDate,
+    currentPage,
+    pageLimit,
     attendanceData,
     ...handlers,
   };
@@ -51,69 +69,123 @@ const useAttendanceState = () => {
 
 const Attendance = () => {
   const {
-    selectedDate,
     searchTerm,
-    selectedPeriod,
+    selectedFilter,
+    customStartDate,
+    customEndDate,
+    currentPage,
+    pageLimit,
     attendanceData,
     handleSearchChange,
-    handlePeriodChange,
-    handleDateChange,
+    handleFilterChange,
+    handleCustomDateChange,
+    handlePageChange,
     handleDataChange,
     handleExportSuccess,
     handleExportError,
   } = useAttendanceState();
 
-  // Get attendance data using the shared hook
-  const { attendanceRecords, isLoading, error } =
-    useAttendanceData(selectedDate);
+  // Calculate the actual date range based on selected filter
+  const { actualStartDate, actualEndDate, isSingleDate } = useMemo(() => {
+    if (selectedFilter === "custom") {
+      return {
+        actualStartDate: customStartDate,
+        actualEndDate: customEndDate,
+        isSingleDate: customStartDate === customEndDate,
+      };
+    }
 
-  // Memoize the date navigation handlers
-  const dateNavigationHandlers = useMemo(
-    () => ({
-      onPreviousDay: () => {
-        const prevDate = new Date(selectedDate);
-        prevDate.setDate(prevDate.getDate() - 1);
-        handleDateChange(prevDate.toISOString().split("T")[0]);
-      },
-      onNextDay: () => {
-        const nextDate = new Date(selectedDate);
-        nextDate.setDate(nextDate.getDate() + 1);
-        handleDateChange(nextDate.toISOString().split("T")[0]);
-      },
-    }),
-    [selectedDate, handleDateChange]
+    const ranges = getDateRanges();
+    const range = ranges[selectedFilter] || ranges.today;
+    return {
+      actualStartDate: range.startDate,
+      actualEndDate: range.endDate,
+      isSingleDate: range.startDate === range.endDate,
+    };
+  }, [selectedFilter, customStartDate, customEndDate]);
+
+  // Get attendance data using the appropriate hook with pagination
+  const singleDateResult = useAttendanceData(
+    isSingleDate ? actualStartDate : null,
+    currentPage,
+    pageLimit
   );
+  const dateRangeResult = useAttendanceDataRange(
+    !isSingleDate ? actualStartDate : null,
+    !isSingleDate ? actualEndDate : null,
+    currentPage,
+    pageLimit
+  );
+
+  // Use the appropriate result based on query type
+  const { attendanceRecords, isLoading, error, pagination } = isSingleDate
+    ? singleDateResult
+    : dateRangeResult;
+
+  // Format date for display in header
+  const displayDate = useMemo(() => {
+    if (selectedFilter === "custom") {
+      if (actualStartDate === actualEndDate) {
+        return new Date(actualStartDate).toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+      return `${new Date(actualStartDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${new Date(actualEndDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+    }
+
+    const filterLabels = {
+      today: "Today",
+      yesterday: "Yesterday",
+      thisWeek: "This Week",
+      thisMonth: "This Month",
+      lastMonth: "Last Month",
+    };
+
+    return filterLabels[selectedFilter] || "Today";
+  }, [selectedFilter, actualStartDate, actualEndDate]);
 
   return (
     <div className="bg-gray-50 h-full flex overflow-hidden flex-col">
-      <div className="p-6 h-full flex flex-col">
+      <div className=" h-full flex flex-col">
         <AttendanceHeader
           attendanceData={attendanceRecords}
-          selectedDate={selectedDate}
+          displayDate={displayDate}
           onExportSuccess={handleExportSuccess}
           onExportError={handleExportError}
-          onPreviousDay={dateNavigationHandlers.onPreviousDay}
-          onNextDay={dateNavigationHandlers.onNextDay}
         />
 
         {/* <SummaryCards
-          selectedDate={selectedDate}
-          selectedPeriod={selectedPeriod}
+          startDate={actualStartDate}
+          endDate={actualEndDate}
         /> */}
 
-        <SearchAndFilters
-          selectedDate={selectedDate}
+        <AttendanceFilter
           searchTerm={searchTerm}
-          selectedPeriod={selectedPeriod}
-          onDateChange={handleDateChange}
+          selectedFilter={selectedFilter}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
           onSearchChange={handleSearchChange}
-          onPeriodChange={handlePeriodChange}
+          onFilterChange={handleFilterChange}
+          onCustomDateChange={handleCustomDateChange}
         />
 
         <AttendanceTable
-          selectedDate={selectedDate}
+          attendanceRecords={attendanceRecords}
+          isLoading={isLoading}
+          error={error}
           searchTerm={searchTerm}
-          selectedPeriod={selectedPeriod}
+          pagination={pagination}
+          onPageChange={handlePageChange}
           onDataChange={handleDataChange}
         />
       </div>

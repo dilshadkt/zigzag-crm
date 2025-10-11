@@ -31,18 +31,19 @@ export const useAttendanceAnalytics = (period = "month") => {
   };
 };
 
-// Enhanced daily report hook with better caching
-export const useDailyReport = (date) => {
+// Enhanced daily report hook with better caching and pagination
+export const useDailyReport = (date, page = 1, limit = 50) => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["dailyReport", date],
-    queryFn: () => attendanceApi.getDailyReport(date),
+    queryKey: ["dailyReport", date, page, limit],
+    queryFn: () => attendanceApi.getDailyReport(date, page, limit),
     enabled: !!date,
     staleTime: 2 * 60 * 1000, // 2 minutes
     cacheTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    keepPreviousData: true, // Keep previous data while loading next page
     onError: (error) => {
       console.error("Failed to fetch daily report:", error);
     },
@@ -56,6 +57,45 @@ export const useDailyReport = (date) => {
   return {
     ...query,
     invalidateDailyReport,
+    pagination: query.data?.pagination,
+  };
+};
+
+// Enhanced date range report hook with better caching and pagination
+export const useDateRangeReport = (
+  startDate,
+  endDate,
+  page = 1,
+  limit = 50
+) => {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["dateRangeReport", startDate, endDate, page, limit],
+    queryFn: () =>
+      attendanceApi.getAttendanceByDateRange(startDate, endDate, page, limit),
+    enabled: !!(startDate && endDate),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    keepPreviousData: true, // Keep previous data while loading next page
+    onError: (error) => {
+      console.error("Failed to fetch date range report:", error);
+    },
+  });
+
+  // Invalidate and refetch date range report data
+  const invalidateDateRangeReport = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["dateRangeReport", startDate, endDate],
+    });
+  }, [queryClient, startDate, endDate]);
+
+  return {
+    ...query,
+    invalidateDateRangeReport,
+    pagination: query.data?.pagination,
   };
 };
 

@@ -5,12 +5,12 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { useAttendanceData } from "../hooks/useAttendanceData";
 import {
   getAddressFromCoordinates,
   getDetailedLocation,
 } from "../../../utils/locationUtils";
 import LocationModal from "../../../components/LocationModal";
+import Pagination from "./Pagination";
 
 // Memoized table header component
 const TableHeader = React.memo(({ title, icon }) => {
@@ -387,19 +387,20 @@ const EmptyState = React.memo(({ searchTerm }) => (
 ));
 
 const AttendanceTable = ({
-  selectedDate,
+  attendanceRecords,
+  isLoading,
+  error,
   searchTerm,
-  selectedPeriod,
+  pagination,
+  onPageChange,
   onDataChange,
 }) => {
-  // Use the shared data hook
-  const { attendanceRecords, isLoading, error } =
-    useAttendanceData(selectedDate);
-
-  // Get attendance records from the shared hook
+  // Get attendance records from props
   const allAttendanceRecords = attendanceRecords || [];
 
   // Filter records based on search term using useMemo to prevent unnecessary re-computations
+  // Note: Filtering is now done client-side on the current page only
+  // For server-side filtering, you would need to update the API
   const filteredRecords = useMemo(() => {
     if (!searchTerm) return allAttendanceRecords;
 
@@ -590,10 +591,10 @@ const AttendanceTable = ({
   }
 
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white flex flex-col h-full shadow-sm rounded-lg overflow-hidden">
+      <div className="overflow-x-auto overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0">
             <tr>
               {tableHeaders.map((header, index) => (
                 <TableHeader
@@ -614,6 +615,18 @@ const AttendanceTable = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {pagination && pagination.totalRecords > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalRecords={pagination.totalRecords}
+          limit={pagination.limit}
+          onPageChange={onPageChange}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 };

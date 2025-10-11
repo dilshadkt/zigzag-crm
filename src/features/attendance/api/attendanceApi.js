@@ -10,9 +10,22 @@ export const attendanceApi = {
   },
 
   // Get daily report
-  getDailyReport: async (date) => {
+  getDailyReport: async (date, page = 1, limit = 50) => {
     const response = await apiClient.get(
-      `/attendance/daily-report?date=${date}`
+      `/attendance/daily-report?date=${date}&page=${page}&limit=${limit}`
+    );
+    return response.data;
+  },
+
+  // Get attendance by date range
+  getAttendanceByDateRange: async (
+    startDate,
+    endDate,
+    page = 1,
+    limit = 50
+  ) => {
+    const response = await apiClient.get(
+      `/attendance/date-range?startDate=${startDate}&endDate=${endDate}&page=${page}&limit=${limit}`
     );
     return response.data;
   },

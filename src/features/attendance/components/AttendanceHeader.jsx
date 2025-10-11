@@ -1,29 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { RiFileList2Line } from "react-icons/ri";
 import { exportAttendanceWithLoading } from "../../../utils/excelExport";
-
-// Memoized navigation buttons
-const NavigationButtons = React.memo(({ onPreviousDay, onNextDay }) => {
-  return (
-    <div className="flex items-center px-4 py-2">
-      <button
-        onClick={onPreviousDay}
-        className="text-gray-600 bg-white p-2 rounded-lg border border-gray-200 hover:text-gray-800 hover:bg-gray-50 mr-2 cursor-pointer transition-colors"
-        aria-label="Previous day"
-      >
-        <MdKeyboardArrowLeft />
-      </button>
-      <button
-        onClick={onNextDay}
-        className="text-gray-600 bg-white p-2 rounded-lg border border-gray-200 hover:text-gray-800 hover:bg-gray-50 cursor-pointer ml-2 transition-colors"
-        aria-label="Next day"
-      >
-        <MdKeyboardArrowRight />
-      </button>
-    </div>
-  );
-});
 
 // Memoized export button
 const ExportButton = React.memo(({ isExporting, onExport, disabled }) => {
@@ -75,25 +52,11 @@ const AddAttendanceButton = React.memo(({ onClick }) => {
 
 const AttendanceHeader = ({
   attendanceData = [],
-  selectedDate,
+  displayDate,
   onExportSuccess,
   onExportError,
-  onPreviousDay,
-  onNextDay,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
-
-  // Format date for display
-  const formattedDate = useMemo(() => {
-    if (!selectedDate) return "Select Date";
-    const date = new Date(selectedDate);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }, [selectedDate]);
 
   // Memoized export handler
   const handleExportReport = useCallback(async () => {
@@ -103,16 +66,17 @@ const AttendanceHeader = ({
     }
 
     try {
+      const exportDate = new Date().toISOString().split("T")[0];
       await exportAttendanceWithLoading(
         attendanceData,
-        selectedDate,
+        exportDate,
         setIsExporting
       );
       onExportSuccess?.("Attendance report exported successfully!");
     } catch (error) {
       onExportError?.(error.message || "Failed to export attendance report");
     }
-  }, [attendanceData, selectedDate, onExportSuccess, onExportError]);
+  }, [attendanceData, onExportSuccess, onExportError]);
 
   // Memoized add attendance handler
   const handleAddAttendance = useCallback(() => {
@@ -126,19 +90,13 @@ const AttendanceHeader = ({
   }, [attendanceData, isExporting]);
 
   return (
-    <div className="flex items-center justify-between mb-6">
-      {/* Title and Navigation */}
+    <div className="flex items-center justify-between mb-2">
+      {/* Title and Date Display */}
       <div className="flex items-center gap-x-3">
         <h1 className="text-3xl font-bold text-gray-800">Attendance</h1>
-        <div className="flex items-center gap-x-2">
-          <NavigationButtons
-            onPreviousDay={onPreviousDay}
-            onNextDay={onNextDay}
-          />
-          <span className="text-gray-800 text-[15px] font-semibold">
-            {formattedDate}
-          </span>
-        </div>
+        <span className="text-gray-600 text-[15px] font-semibold">
+          {displayDate}
+        </span>
       </div>
 
       {/* Action Buttons */}

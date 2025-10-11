@@ -28,8 +28,11 @@ This attendance feature has been completely restructured to fix re-rendering iss
 - **Proper prop drilling** elimination
 - **Consistent error handling** across all components
 
-### 4. **Filter System Fixes**
+### 4. **Filter System Redesign**
 
+- **Unified Filter Dropdown** with single selection: Today, Yesterday, This Week, This Month, Last Month, Custom
+- **Custom Date Range** inputs that appear only when "Custom" is selected
+- **Smart Date Calculations** for predefined periods (week starts Monday)
 - **Debounced search input** to prevent excessive filtering
 - **Proper state synchronization** between local and parent state
 - **Optimized filter logic** with useMemo
@@ -41,14 +44,16 @@ This attendance feature has been completely restructured to fix re-rendering iss
 src/features/attendance/
 ├── index.jsx                          # Main attendance component (restructured)
 ├── components/
-│   ├── AttendanceHeader.jsx           # Header with navigation & actions (optimized)
+│   ├── AttendanceHeader.jsx           # Header with date display & actions (optimized)
 │   ├── AttendanceTable.jsx            # Table with memoized rows (restructured)
-│   ├── SearchAndFilters.jsx           # Search & filters with debouncing (fixed)
+│   ├── AttendanceFilter.jsx           # Unified filter with search & date options (new)
 │   └── SummaryCards.jsx               # Summary cards (unified with table data)
 ├── hooks/
 │   ├── useAttendanceAnalytics.js      # Enhanced data fetching hooks
 │   ├── useAttendanceState.js          # Custom state management hooks
 │   └── useAttendanceData.js           # Shared data hook for consistency
+├── api/
+│   └── attendanceApi.js               # API client with date range support
 └── README.md                          # This documentation
 ```
 
@@ -60,12 +65,18 @@ src/features/attendance/
 - Searches employee name and email
 - Real-time filtering with optimized performance
 
-### 📅 **Date Navigation**
+### 📅 **Smart Date Filtering**
 
 - **Default to Today**: Shows today's attendance by default
-- Previous/Next day navigation
-- Quick date selection (Today, Yesterday, etc.)
-- Period-based filtering (Today, Week, Month, Year)
+- **Unified Filter Dropdown**: Single dropdown with options:
+  - Today
+  - Yesterday
+  - This Week (Monday to Sunday)
+  - This Month
+  - Last Month
+  - Custom (shows From/To date inputs)
+- **Custom Date Range**: Pick any date range when "Custom" is selected
+- **Intelligent Query Optimization**: Uses single-date API for single days, date-range API for periods
 
 ### 📊 **Unified Data Management**
 
