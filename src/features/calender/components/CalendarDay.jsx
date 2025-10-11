@@ -58,7 +58,7 @@ const CalendarDay = ({
 
   return (
     <div
-      className={`min-h-[60px] md:min-h-[120px] border group border-[#E6EBF5] relative p-1
+      className={`min-h-[60px] md:min-h-[150px] border group border-[#E6EBF5] relative p-1
         ${isToday(item.fullDate) ? "bg-blue-50" : ""}
       `}
     >
