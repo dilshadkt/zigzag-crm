@@ -592,7 +592,7 @@ const AttendanceTable = ({
 
   return (
     <div className="bg-white flex flex-col h-full shadow-sm rounded-lg overflow-hidden">
-      <div className="overflow-x-auto overflow-y-auto">
+      <div className="overflow-x-auto h-full overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
