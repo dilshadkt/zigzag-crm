@@ -6,6 +6,7 @@ import ChatInput from "./ChatInput";
 import DateSeparator from "./DateSeparator";
 import StickyDateHeader from "./StickyDateHeader";
 import PinnedMessages from "./PinnedMessages";
+import MediaFilesPanel from "./MediaFilesPanel";
 import { groupMessagesByDate } from "../../utils/messageUtils";
 
 const ChatWindow = ({
@@ -36,6 +37,7 @@ const ChatWindow = ({
   const messagesContainerRef = useRef(null);
   const messageRefs = useRef({});
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+  const [showMediaPanel, setShowMediaPanel] = useState(false);
 
   // Function to scroll to a specific message
   const scrollToMessage = useCallback((messageId) => {
@@ -117,11 +119,21 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="col-span-3 overflow-y-auto flex flex-col">
+    <div className="col-span-3 overflow-y-auto flex flex-col relative">
       <ChatHeader
         selectedConversation={selectedConversation}
         onlineUsers={onlineUsers}
         onClearChat={onClearChat}
+        onShowMediaPanel={() => setShowMediaPanel(true)}
+      />
+
+      {/* Media & Files Panel */}
+      <MediaFilesPanel
+        isOpen={showMediaPanel}
+        onClose={() => setShowMediaPanel(false)}
+        messages={messages}
+        conversationName={selectedConversation?.name}
+        selectedConversation={selectedConversation}
       />
 
       {/* Pinned Messages */}

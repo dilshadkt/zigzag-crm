@@ -1,5 +1,6 @@
 export { default as ConversationList } from "./ConversationList";
 export { default as ChatWindow } from "./ChatWindow";
+export { default as MediaFilesPanel } from "./MediaFilesPanel";
 export { default as ChatHeader } from "./ChatHeader";
 export { default as MessageBubble } from "./MessageBubble";
 export { default as MessageAttachment } from "./MessageAttachment";
