@@ -20,6 +20,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, canEdit = false }) => {
     if (!files || !files.length) return;
 
     const result = await handleFileUpload(files);
+    console.log(result);
 
     // Reset file input
     if (fileInputRef.current) {

@@ -130,6 +130,128 @@ const MessageBubble = React.memo(
               message.type === "voice")
         );
 
+      // Render system/activity messages differently
+      if (message.type === "system") {
+        // Check if this is an attachment activity message
+        const isAttachmentMessage =
+          message.metadata?.action?.includes("attachment_added");
+        const attachments = message.metadata?.attachments || [];
+
+        console.log("🔍 [MessageBubble] System message rendering:", {
+          isAttachmentMessage,
+          attachmentCount: attachments.length,
+          metadata: message.metadata,
+          hasAttachments: attachments.length > 0,
+        });
+
+        return (
+          <div
+            ref={ref}
+            className="flex w-full mb-4 justify-center"
+            data-message-id={message.id || message._id}
+          >
+            <div className="max-w-[85%] bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 shadow-sm">
+              <div className="flex items-start gap-3">
+                {/* User Avatar */}
+                <div className="flex-shrink-0 mt-0.5">
+                  <img
+                    src={message.avatar}
+                    alt={message.sender}
+                    className="w-7 h-7 rounded-full object-cover border-2 border-blue-300"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="14" fill="%233B82F6"/><text x="14" y="18" text-anchor="middle" font-size="12" font-family="Arial" fill="white">${
+                        message.sender?.charAt(0) || "?"
+                      }</text></svg>`;
+                    }}
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {message.message}
+                  </p>
+
+                  {/* Show file previews for attachment messages */}
+                  {isAttachmentMessage && attachments.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {attachments.slice(0, 4).map((attachment, index) => {
+                        const isImage =
+                          attachment.type === "image" ||
+                          attachment.mimetype?.startsWith("image/") ||
+                          attachment.preview?.match(
+                            /\.(jpg|jpeg|png|gif|webp|svg)$/i
+                          );
+
+                        return (
+                          <div key={index} className="relative group">
+                            {isImage && attachment.preview ? (
+                              <a
+                                href={attachment.preview}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                              >
+                                <img
+                                  src={attachment.preview}
+                                  alt={
+                                    attachment.title ||
+                                    attachment.originalName ||
+                                    "Attachment"
+                                  }
+                                  className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                  onError={(e) => {
+                                    e.target.style.display = "none";
+                                  }}
+                                />
+                              </a>
+                            ) : (
+                              <a
+                                href={attachment.preview || attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center w-16 h-16 bg-white rounded-lg border-2 border-gray-300 shadow-sm hover:shadow-md transition-shadow"
+                                title={
+                                  attachment.title || attachment.originalName
+                                }
+                              >
+                                <span className="text-2xl">
+                                  {attachment.type === "pdf"
+                                    ? "📄"
+                                    : attachment.type === "doc"
+                                    ? "📝"
+                                    : attachment.type === "video"
+                                    ? "🎥"
+                                    : attachment.type === "audio"
+                                    ? "🎵"
+                                    : "📌"}
+                                </span>
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {attachments.length > 4 && (
+                        <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-lg border-2 border-gray-300 text-xs text-gray-600">
+                          +{attachments.length - 4}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Timestamp */}
+                  <div className="mt-1.5">
+                    <span className="text-xs text-gray-500">
+                      {message.time}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div
           ref={ref}

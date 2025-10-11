@@ -29,6 +29,16 @@ export const useChat = () => {
   // Socket event handlers (defined first to avoid hoisting issues)
   const handleNewMessage = useCallback(
     (message) => {
+      console.log("🎯 [useChat] NEW MESSAGE RECEIVED:", {
+        id: message._id,
+        type: message.type,
+        content: message.content?.substring(0, 50),
+        isSystem: message.type === "system",
+        hasMetadata: !!message.metadata,
+        metadataAction: message.metadata?.action,
+        attachmentCount: message.metadata?.attachments?.length || 0,
+      });
+
       // Ensure we use the correct conversation ID
       const conversationId = message.conversationId || message.conversation;
 

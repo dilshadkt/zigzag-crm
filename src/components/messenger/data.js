@@ -259,7 +259,11 @@ export const transformMessageData = (apiMessages, currentUserId) => {
       ? `${msg.sender.firstName || ""} ${msg.sender.lastName || ""}`.trim()
       : "Unknown";
 
-    const isOwn = (msg.sender?._id || msg.sender?.id) === currentUserId;
+    // System messages should never be considered "own" messages
+    const isOwn =
+      msg.type === "system"
+        ? false
+        : (msg.sender?._id || msg.sender?.id) === currentUserId;
 
     // Determine message status for own messages
     let messageStatus = "sent"; // Default status
@@ -298,6 +302,7 @@ export const transformMessageData = (apiMessages, currentUserId) => {
       pinnedAt: msg.pinnedAt,
       mentions: msg.mentions || [],
       replyTo: msg.replyTo || null, // Include reply reference
+      metadata: msg.metadata || {}, // Include metadata for system messages
     };
   });
 };

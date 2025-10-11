@@ -339,17 +339,12 @@ export const deleteSubTask = async (subTaskId) => {
 // SubTask Attachment API functions
 export const addSubTaskAttachments = async (subTaskId, attachments) => {
   try {
-    const formData = new FormData();
-    attachments.forEach((file, index) => {
-      formData.append(`attachments`, file);
-    });
-
     const response = await apiClient.post(
       `/subtasks/${subTaskId}/attachments`,
-      formData,
+      { attachments },
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       }
     );

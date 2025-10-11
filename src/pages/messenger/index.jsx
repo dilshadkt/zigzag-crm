@@ -162,7 +162,7 @@ const Messenger = () => {
 
   return (
     <section className="flex flex-col w-full h-full gap-y-3">
-      <Header>Messenger</Header>
+      {/* <Header>Messenger</Header> */}
 
       {/* Temporary Debug Component */}
       {/* <div className="mb-4">
