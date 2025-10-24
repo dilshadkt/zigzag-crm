@@ -258,16 +258,16 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-              <FiUsers className="text-xl text-white" />
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+              <FiUsers className="text-lg text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="text-lg font-bold text-gray-800">
                 Edit Permissions
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 Managing permissions for{" "}
                 <span className="font-semibold">{role.name}</span>
               </p>
@@ -277,13 +277,13 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <FiX className="text-xl" />
+            <FiX className="text-lg" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-4">
             {Object.entries(PERMISSION_CATEGORIES).map(
               ([
                 category,
@@ -291,43 +291,45 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
               ]) => (
                 <div
                   key={category}
-                  className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm"
+                  className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm"
                 >
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{icon}</span>
+                      <span className="text-lg">{icon}</span>
                       <div>
-                        <h3 className="font-semibold text-gray-800">{label}</h3>
-                        <p className="text-xs text-gray-500">
+                        <h3 className="text-sm font-semibold text-gray-800">
+                          {label}
+                        </h3>
+                        <p className="text-[10px] text-gray-500">
                           {countActivePermissions(category)} of{" "}
                           {categoryPermissions.length} enabled
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       <button
                         onClick={() => handleSelectAll(category)}
-                        className="px-3 py-1 text-xs font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                        className="px-2 py-1 text-[10px] font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
                       >
                         Select All
                       </button>
                       <button
                         onClick={() => handleDeselectAll(category)}
-                        className="px-3 py-1 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-2 py-1 text-[10px] font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         Deselect All
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {categoryPermissions.map((perm) => {
                       const isChecked =
                         permissions[category]?.[perm.key] || false;
                       return (
                         <label
                           key={perm.key}
-                          className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                          className={`flex items-start gap-2 p-2 rounded-lg border-2 transition-all cursor-pointer ${
                             isChecked
                               ? "border-blue-500 bg-blue-50"
                               : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
@@ -339,18 +341,18 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
                             onChange={() =>
                               handlePermissionToggle(category, perm.key)
                             }
-                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 transition-all mt-0.5"
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 transition-all mt-0.5"
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm text-gray-800">
+                              <span className="font-medium text-xs text-gray-800">
                                 {perm.label}
                               </span>
                               {isChecked && (
-                                <FiCheck className="text-blue-600" />
+                                <FiCheck className="text-blue-600 text-xs" />
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-[10px] text-gray-500 mt-1">
                               {perm.description}
                             </p>
                           </div>
@@ -365,9 +367,9 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+            <p className="text-xs text-gray-600">
               Total permissions enabled:{" "}
               <span className="font-semibold">
                 {Object.values(permissions).reduce(
@@ -377,17 +379,17 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
                 )}
               </span>
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={onClose}
-                className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="px-4 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
@@ -513,39 +515,39 @@ const SecuritySettings = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <AiOutlineSafety className="text-2xl text-blue-600" />
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <AiOutlineSafety className="text-lg text-blue-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-lg font-bold text-gray-800">
               Security Settings
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               Manage your account security and role permissions
             </p>
           </div>
         </div>
 
         {/* Role-Based Permissions */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-4">
-            <FiUsers className="text-xl text-gray-700" />
+            <FiUsers className="text-lg text-gray-700" />
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-sm font-semibold text-gray-800">
                 Role-Based Permissions
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 Configure what each role can do in the system
               </p>
             </div>
           </div>
 
           {/* Info Banner */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <div className="flex items-start gap-3">
-              <FiAlertCircle className="text-blue-600 mt-0.5" />
+              <FiAlertCircle className="text-blue-600 mt-0.5 text-sm" />
               <div className="flex-1">
-                <p className="text-sm text-blue-800">
+                <p className="text-xs text-blue-800">
                   <strong>Note:</strong> Admin roles (Company Admin, etc.) have
                   full access to all system features by default. Their
                   permissions cannot be modified to ensure system security and
@@ -556,13 +558,15 @@ const SecuritySettings = () => {
           </div>
 
           {isLoadingPositions ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-500 text-sm mt-2">Loading roles...</p>
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 text-xs mt-2">Loading roles...</p>
             </div>
           ) : positions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No roles found. Create roles in the Company settings.</p>
+            <div className="text-center py-6 text-gray-500">
+              <p className="text-xs">
+                No roles found. Create roles in the Company settings.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -574,13 +578,13 @@ const SecuritySettings = () => {
                 return (
                   <div
                     key={role._id}
-                    className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                    className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
                       isAdminRole
                         ? "border-yellow-300 bg-yellow-50"
                         : "border-gray-200 hover:bg-gray-50"
                     }`}
                   >
-                    <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center gap-3 flex-1">
                       <div
                         className={`p-3 bg-gradient-to-br rounded-lg ${
                           isAdminRole
@@ -589,32 +593,32 @@ const SecuritySettings = () => {
                         }`}
                       >
                         <FiShield
-                          className={`text-xl ${
+                          className={`text-lg ${
                             isAdminRole ? "text-yellow-600" : "text-blue-600"
                           }`}
                         />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-gray-800">
+                          <h4 className="text-sm font-semibold text-gray-800">
                             {role.name}
                           </h4>
                           {isAdminRole && (
-                            <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-medium rounded-full">
                               Admin - Full Access
                             </span>
                           )}
                           {role.isActive ? (
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                            <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-medium rounded-full">
                               Active
                             </span>
                           ) : (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                            <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-medium rounded-full">
                               Inactive
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-1">
                           {isAdminRole ? (
                             <>
                               <span className="font-medium text-yellow-700">
@@ -633,16 +637,16 @@ const SecuritySettings = () => {
                       </div>
                     </div>
                     {isAdminRole ? (
-                      <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-yellow-700 border border-yellow-300 rounded-lg bg-yellow-50">
-                        <FiLock />
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-yellow-700 border border-yellow-300 rounded-lg bg-yellow-50">
+                        <FiLock className="text-xs" />
                         <span>Protected</span>
                       </div>
                     ) : (
                       <button
                         onClick={() => handleEditRole(role)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
                       >
-                        <MdEdit />
+                        <MdEdit className="text-xs" />
                         Edit Permissions
                       </button>
                     )}
@@ -654,14 +658,14 @@ const SecuritySettings = () => {
         </div>
 
         {/* Change Password Section */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-4">
-            <FiLock className="text-xl text-gray-700" />
-            <h3 className="text-lg font-semibold text-gray-800">
+            <FiLock className="text-lg text-gray-700" />
+            <h3 className="text-sm font-semibold text-gray-800">
               Change Password
             </h3>
           </div>
-          <form onSubmit={handlePasswordChange} className="space-y-4">
+          <form onSubmit={handlePasswordChange} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Current Password
@@ -671,15 +675,19 @@ const SecuritySettings = () => {
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="Enter current password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+                  {showCurrentPassword ? (
+                    <FiEyeOff className="text-xs" />
+                  ) : (
+                    <FiEye className="text-xs" />
+                  )}
                 </button>
               </div>
             </div>
@@ -693,18 +701,22 @@ const SecuritySettings = () => {
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="Enter new password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showNewPassword ? <FiEyeOff /> : <FiEye />}
+                  {showNewPassword ? (
+                    <FiEyeOff className="text-xs" />
+                  ) : (
+                    <FiEye className="text-xs" />
+                  )}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-[10px] text-gray-500 mt-1">
                 Must be at least 8 characters long
               </p>
             </div>
@@ -718,15 +730,19 @@ const SecuritySettings = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="Confirm new password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                  {showConfirmPassword ? (
+                    <FiEyeOff className="text-xs" />
+                  ) : (
+                    <FiEye className="text-xs" />
+                  )}
                 </button>
               </div>
             </div>
@@ -734,7 +750,7 @@ const SecuritySettings = () => {
             <button
               type="submit"
               disabled={isChangingPassword}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isChangingPassword ? "Changing Password..." : "Change Password"}
             </button>
@@ -742,15 +758,15 @@ const SecuritySettings = () => {
         </div>
 
         {/* Two-Factor Authentication */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <FiSmartphone className="text-xl text-gray-700" />
+              <FiSmartphone className="text-lg text-gray-700" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className="text-sm font-semibold text-gray-800">
                   Two-Factor Authentication
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs text-gray-500">
                   Add an extra layer of security to your account
                 </p>
               </div>
@@ -768,28 +784,28 @@ const SecuritySettings = () => {
         </div>
 
         {/* Security Recommendations */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <FiShield className="text-xl text-blue-600 mt-1" />
+            <FiShield className="text-lg text-blue-600 mt-1" />
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">
                 Security Recommendations
               </h3>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-1.5 text-xs text-gray-700">
                 <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                  <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
                   Use a strong, unique password for your account
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                  <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
                   Enable two-factor authentication for extra security
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                  <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
                   Configure role permissions to follow least privilege principle
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                  <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
                   Regularly review and update role permissions
                 </li>
               </ul>
