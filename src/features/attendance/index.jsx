@@ -8,6 +8,8 @@ import {
   useAttendanceData,
   useAttendanceDataRange,
 } from "./hooks/useAttendanceData";
+import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 
 // Custom hook for managing attendance state
 const useAttendanceState = () => {
@@ -68,6 +70,59 @@ const useAttendanceState = () => {
 };
 
 const Attendance = () => {
+  const { user, isCompany } = useAuth();
+  const { hasPermission } = usePermissions();
+
+  // Permission checks for attendance access
+  const canViewAttendance = isCompany || hasPermission("attendance", "view");
+  const canCreateAttendance =
+    isCompany || hasPermission("attendance", "create");
+  const canEditAttendance = isCompany || hasPermission("attendance", "edit");
+  const canApproveAttendance =
+    isCompany || hasPermission("attendance", "approve");
+  const canDeleteAttendance =
+    isCompany || hasPermission("attendance", "delete");
+
+  // If user doesn't have view permission, show access denied message
+  if (!canViewAttendance) {
+    return (
+      <div className="bg-gray-50 h-full flex overflow-hidden flex-col">
+        <div className="h-full flex flex-col">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 m-6">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-red-100 rounded-full flexCenter mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Access Denied
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You don't have permission to view attendance data. Please
+                contact your administrator to request access.
+              </p>
+              <div className="text-sm text-gray-500">
+                Required permissions:{" "}
+                <span className="font-medium">attendance.view</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const {
     searchTerm,
     selectedFilter,
@@ -154,6 +209,58 @@ const Attendance = () => {
     return filterLabels[selectedFilter] || "Today";
   }, [selectedFilter, actualStartDate, actualEndDate]);
 
+  // Show limited access message for users with view permission but no management permissions
+  if (
+    !canCreateAttendance &&
+    !canEditAttendance &&
+    !canApproveAttendance &&
+    !canDeleteAttendance
+  ) {
+    return (
+      <div className="bg-gray-50 h-full flex overflow-hidden flex-col">
+        <div className="h-full flex flex-col">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 m-6">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flexCenter mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                View Only Access
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You can view attendance data but don't have permission to manage
+                attendance records. Contact your administrator for management
+                permissions.
+              </p>
+              <div className="text-sm text-gray-500">
+                Available permissions:{" "}
+                <span className="font-medium">attendance.view</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 h-full flex overflow-hidden flex-col">
       <div className=" h-full flex flex-col">
@@ -162,6 +269,10 @@ const Attendance = () => {
           displayDate={displayDate}
           onExportSuccess={handleExportSuccess}
           onExportError={handleExportError}
+          canCreateAttendance={canCreateAttendance}
+          canEditAttendance={canEditAttendance}
+          canApproveAttendance={canApproveAttendance}
+          canDeleteAttendance={canDeleteAttendance}
         />
 
         {/* <SummaryCards
@@ -187,6 +298,9 @@ const Attendance = () => {
           pagination={pagination}
           onPageChange={handlePageChange}
           onDataChange={handleDataChange}
+          canEditAttendance={canEditAttendance}
+          canApproveAttendance={canApproveAttendance}
+          canDeleteAttendance={canDeleteAttendance}
         />
       </div>
     </div>

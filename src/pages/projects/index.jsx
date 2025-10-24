@@ -16,6 +16,7 @@ import ProjectDetails from "../../components/projects/projectDetails";
 import ProjectHeading from "../../components/projects/projectHeader";
 import { useAuth } from "../../hooks/useAuth";
 import { useProject } from "../../hooks/useProject";
+import { usePermissions } from "../../hooks/usePermissions";
 import { setActiveProject } from "../../store/slice/projectSlice";
 import FilterMenu from "../../components/projects/FilterMenu";
 import NoTask from "../../components/projects/noTask";
@@ -26,6 +27,7 @@ import { uploadSingleFile } from "../../api/service";
 const Prjects = () => {
   const { companyId, user } = useAuth();
   const { activeProject: selectProject } = useProject();
+  const { hasPermission } = usePermissions();
   const dispatch = useDispatch();
 
   // Month selection state - default to current month
@@ -158,28 +160,32 @@ const Prjects = () => {
       />
 
       {/* add task modal  */}
-      <AddTask
-        isOpen={showModalTask}
-        setShowModalTask={setShowModalTask}
-        selectedProject={selectProject}
-        assignee={activeProject?.teams}
-        projectData={activeProject}
-        teams={activeProject?.teams}
-        monthWorkDetails={activeProject?.workDetails?.find(
-          (wd) => wd.month === selectedMonth
-        )}
-        onSubmit={(values, helpers) => handleAddTask(values, helpers)}
-        isLoading={createTask.isPending}
-        selectedMonth={selectedMonth}
-        showProjectSelection={false}
-      />
+      {hasPermission("tasks", "create") && (
+        <AddTask
+          isOpen={showModalTask}
+          setShowModalTask={setShowModalTask}
+          selectedProject={selectProject}
+          assignee={activeProject?.teams}
+          projectData={activeProject}
+          teams={activeProject?.teams}
+          monthWorkDetails={activeProject?.workDetails?.find(
+            (wd) => wd.month === selectedMonth
+          )}
+          onSubmit={(values, helpers) => handleAddTask(values, helpers)}
+          isLoading={createTask.isPending}
+          selectedMonth={selectedMonth}
+          showProjectSelection={false}
+        />
+      )}
 
       {/* add project modal */}
-      <AddProject
-        isOpen={showModalProject}
-        setShowModalProject={setShowModalProject}
-        onSubmit={handleAddProject}
-      />
+      {hasPermission("projects", "create") && (
+        <AddProject
+          isOpen={showModalProject}
+          setShowModalProject={setShowModalProject}
+          onSubmit={handleAddProject}
+        />
+      )}
     </section>
   );
 };

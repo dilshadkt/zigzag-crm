@@ -11,9 +11,11 @@ import Modal from "../../shared/modal";
 import { formatDate } from "../../../lib/dateUtils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
+import { usePermissions } from "../../../hooks/usePermissions";
 
 const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
-  const { user } = useAuth();
+  const { user, isCompany } = useAuth();
+  const { hasPermission } = usePermissions();
   const isEmployee = user?.role === "employee";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -27,6 +29,15 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   } = useGetTaskTimeLogs(taskDetails?._id);
   const createTimeLog = useCreateTimeLog();
   const deleteTask = useDeleteTask(taskDetails?.project, onTaskDeleted);
+
+  // Permission checks
+  const canDeleteTask = isCompany || hasPermission("tasks", "delete");
+  const canLogTime =
+    isCompany ||
+    hasPermission("tasks", "edit") ||
+    taskDetails?.assignedTo?.some(
+      (assignedUser) => assignedUser._id === user?._id
+    );
   const handleLogTime = () => {
     if (!duration || !description) return;
 
@@ -174,12 +185,14 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
                   </span>
                 </div>
               </div>
-              <PrimaryButton
-                title="Log time"
-                icon="/icons/time.svg"
-                className="w-fit text-white"
-                onclick={() => setIsModalOpen(true)}
-              />
+              {canLogTime && (
+                <PrimaryButton
+                  title="Log time"
+                  icon="/icons/time.svg"
+                  className="w-fit text-white"
+                  onclick={() => setIsModalOpen(true)}
+                />
+              )}
             </>
           )}
         </div>
@@ -199,7 +212,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
         </span>
       </div>
       <div className="mt-4 px-3">
-        {!isEmployee && (
+        {canDeleteTask && (
           <PrimaryButton
             title="Remove Task"
             className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer mt-4 text-sm"

@@ -27,6 +27,8 @@ import {
 } from "../../api/hooks";
 import VacationRequestModal from "../../components/vacations/VacationRequestModal";
 import { RxCross2 } from "react-icons/rx";
+import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 
 // Add the Spinner component
 const Spinner = () => (
@@ -351,7 +353,13 @@ const ApprovalMenu = ({ onApprove, onReject, onModify, isOpen, setIsOpen }) => {
   );
 };
 
-const VacationCard = ({ item, updateStatus }) => {
+const VacationCard = ({
+  item,
+  updateStatus,
+  canApproveVacations,
+  canModifyVacations,
+}) => {
+  const { user, isCompany } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedRequests, setExpandedRequests] = useState(false);
   const [modifyingRequest, setModifyingRequest] = useState(null);
@@ -413,7 +421,7 @@ const VacationCard = ({ item, updateStatus }) => {
         </div>
       </div>
 
-      {pendingRequests.length > 0 && (
+      {pendingRequests.length > 0 && canApproveVacations && (
         <>
           <div className="col-span-2 mt-4">
             <div className="flex justify-between items-center">
@@ -459,27 +467,33 @@ const VacationCard = ({ item, updateStatus }) => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleModifyOpen(request)}
-                        className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600"
-                        title="Modify dates"
-                      >
-                        <FaEdit size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleApprove(request.id)}
-                        className="p-2 text-white bg-green-500 rounded-full hover:bg-green-600"
-                        title="Approve"
-                      >
-                        <FaCheck size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleReject(request.id)}
-                        className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600"
-                        title="Reject"
-                      >
-                        <FaTimes size={12} />
-                      </button>
+                      {canModifyVacations && (
+                        <button
+                          onClick={() => handleModifyOpen(request)}
+                          className="p-2 text-white bg-blue-500 rounded-full hover:bg-blue-600"
+                          title="Modify dates"
+                        >
+                          <FaEdit size={12} />
+                        </button>
+                      )}
+                      {canApproveVacations && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(request.id)}
+                            className="p-2 text-white bg-green-500 rounded-full hover:bg-green-600"
+                            title="Approve"
+                          >
+                            <FaCheck size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleReject(request.id)}
+                            className="p-2 text-white bg-red-500 rounded-full hover:bg-red-600"
+                            title="Reject"
+                          >
+                            <FaTimes size={12} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -503,9 +517,60 @@ const VacationCard = ({ item, updateStatus }) => {
 };
 
 const Vacations = () => {
+  const { user, isCompany } = useAuth();
+  const { hasPermission } = usePermissions();
   const [stat, setStat] = useState("Employees' vacations");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
+
+  // Permission checks for vacation access
+  const canViewVacations = isCompany || hasPermission("vacations", "view");
+  const canCreateVacationRequest =
+    isCompany || hasPermission("vacations", "create");
+  const canApproveVacations =
+    isCompany || hasPermission("vacations", "approve");
+  const canEditVacations = isCompany || hasPermission("vacations", "edit");
+
+  // If user doesn't have view permission, show access denied message
+  if (!canViewVacations) {
+    return (
+      <section className="flex flex-col h-full gap-y-3">
+        <div className="flexBetween">
+          <Header>Vacations</Header>
+        </div>
+        <div className="bg-white h-full flexCenter rounded-3xl p-6 text-center">
+          <div className="max-w-md">
+            <div className="w-16 h-16 bg-red-100 rounded-full flexCenter mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Access Denied
+            </h3>
+            <p className="text-gray-600 mb-4">
+              You don't have permission to view vacation data. Please contact
+              your administrator to request access.
+            </p>
+            <div className="text-sm text-gray-500">
+              Required permissions:{" "}
+              <span className="font-medium">vacations.view</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // Get month and year for API calls
   const month = currentDate.getMonth() + 1; // 1-12
@@ -578,6 +643,53 @@ const Vacations = () => {
       );
     }
 
+    // Show limited access message for users with view permission but no management permissions
+    if (
+      !canApproveVacations &&
+      !canEditVacations &&
+      !canCreateVacationRequest
+    ) {
+      return (
+        <div className="bg-white h-full flexCenter rounded-3xl p-6 text-center">
+          <div className="max-w-md">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flexCenter mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              View Only Access
+            </h3>
+            <p className="text-gray-600 mb-4">
+              You can view vacation data but don't have permission to manage
+              vacation requests. Contact your administrator for management
+              permissions.
+            </p>
+            <div className="text-sm text-gray-500">
+              Available permissions:{" "}
+              <span className="font-medium">vacations.view</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (stat === "Employees' vacations") {
       return (
         <div className="flex flex-col h-full overflow-y-auto gap-y-3 mt-3">
@@ -586,6 +698,8 @@ const Vacations = () => {
               key={index}
               item={item}
               updateStatus={handleUpdateVacationStatus}
+              canApproveVacations={canApproveVacations}
+              canModifyVacations={canEditVacations}
             />
           ))}
 
@@ -767,12 +881,14 @@ const Vacations = () => {
           value={stat}
           values={["Employees' vacations", "Calendar"]}
         />
-        <PrimaryButton
-          icon={"/icons/add.svg"}
-          title={"Add Request"}
-          className={"mt-3 px-5 text-white"}
-          onclick={() => setShowRequestModal(true)}
-        />
+        {canCreateVacationRequest && (
+          <PrimaryButton
+            icon={"/icons/add.svg"}
+            title={"Add Request"}
+            className={"mt-3 px-5 text-white"}
+            onclick={() => setShowRequestModal(true)}
+          />
+        )}
       </div>
       {/* body part  */}
       {renderStat()}

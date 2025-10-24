@@ -15,6 +15,7 @@ import { Outlet, useParams, useOutletContext } from "react-router-dom";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import MonthSelector from "../../components/shared/MonthSelector";
 import { getCurrentMonthKey } from "../../lib/dateUtils";
 
@@ -40,6 +41,10 @@ const ProjectDetailLayout = () => {
   }, projectData?._id);
 
   const { isCompany } = useAuth();
+  const { hasPermission } = usePermissions();
+
+  // Permission check for creating tasks
+  const canCreateTask = isCompany || hasPermission("tasks", "create");
 
   const handleMonthChange = (month) => {
     setSelectedMonth(month);
@@ -95,7 +100,7 @@ const ProjectDetailLayout = () => {
           )}
           <div className="hidden md:block">
             <PrimaryButton
-              disable={!isCompany}
+              disable={!canCreateTask}
               className={" px-5 text-white"}
               title={"Add Task"}
               icon={"/icons/add.svg"}

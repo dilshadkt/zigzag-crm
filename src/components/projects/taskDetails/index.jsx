@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useAuth } from "../../../hooks/useAuth";
+import { usePermissions } from "../../../hooks/usePermissions";
 import StatusButton from "../../shared/StatusUpadate";
 import AddSubTask from "../addSubTask";
 import {
@@ -16,6 +17,7 @@ import TaskAttachments from "./TaskAttachments";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const { isCompany, user } = useAuth();
+  const { hasPermission } = usePermissions();
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState(null);
   const isAdmin = user?.role === "company-admin";
@@ -25,8 +27,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
     (assignedUser) => assignedUser._id === user?._id
   );
 
-  // Employees can only edit tasks assigned to them, company admins can edit any task
-  const canEditTask = isCompany || isAssignedToTask;
+  // Check permissions for task editing
+  const canEditTask =
+    isCompany || hasPermission("tasks", "edit") || isAssignedToTask;
+
+  // Check permissions for subtask management
+  const canManageSubtasks = isCompany || hasPermission("tasks", "create");
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
@@ -94,13 +100,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
           <h4 className="text-lg font-medium">Task Details</h4>
           <div className="flex gap-2">
             <PrimaryButton
-              disable={!isCompany}
+              disable={!canManageSubtasks}
               className={"bg-[#3F8CFF] text-white"}
               title="Add Subtask"
               onclick={handleAddSubTask}
             />
             <PrimaryButton
-              disable={!isCompany}
+              disable={!canEditTask}
               className={"bg-white "}
               icon={"/icons/edit.svg"}
               onclick={() => setShowModalTask(true)}
@@ -114,7 +120,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
             </span>
             <div className="flexBetween">
               <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
-              <StatusButton taskDetails={taskDetails} disabled={!isAdmin} />
+              <StatusButton taskDetails={taskDetails} disabled={!canEditTask} />
             </div>
 
             <RecurringTaskInfo taskDetails={taskDetails} />
@@ -129,6 +135,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
               onEditSubTask={handleEditSubTask}
               onDeleteSubTask={handleDeleteSubTask}
               isAdmin={isAdmin}
+              canManageSubtasks={canManageSubtasks}
             />
 
             <TaskAttachments taskDetails={taskDetails} />

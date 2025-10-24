@@ -8,6 +8,7 @@ import {
   useCompanyProjects,
 } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateTaskById } from "../../api/service";
 import socketService from "../../services/socketService";
@@ -250,6 +251,7 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
 
 const Board = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState("all");
@@ -257,6 +259,10 @@ const Board = () => {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
   const [selectedAssignee, setSelectedAssignee] = useState("all");
   const [showModalTask, setShowModalTask] = useState(false);
+
+  // Permission check for creating tasks
+  const canCreateTask =
+    user?.role === "company-admin" || hasPermission("tasks", "create");
 
   // Use different hooks based on user role
   const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
@@ -681,12 +687,14 @@ const Board = () => {
             </div>
           )}
 
-          <button
-            onClick={() => setShowModalTask(true)}
-            className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
-          >
-            + Add Task
-          </button>
+          {canCreateTask && (
+            <button
+              onClick={() => setShowModalTask(true)}
+              className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
+            >
+              + Add Task
+            </button>
+          )}
           <button
             onClick={() => {
               if (user?.role === "company-admin") {

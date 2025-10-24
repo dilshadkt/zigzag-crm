@@ -9,6 +9,7 @@ import board from "../../../assets/icons/board.svg";
 import { updateTaskById } from "../../../api/service";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import { usePermissions } from "../../../hooks/usePermissions";
 
 // Status configuration
 const statusConfig = {
@@ -326,6 +327,7 @@ const ProjectDetails = ({
   const [showSubtasks, setShowSubtasks] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(activeProject?._id);
   const { isCompany, user } = useAuth();
+  const { hasPermission } = usePermissions();
 
   const hasNoTasks = activeProject?.tasks?.length === 0;
   let projectName = activeProject?.name?.trim().split(" ")?.join("_");
@@ -383,6 +385,9 @@ const ProjectDetails = ({
   const canUserDragTask = (task) => {
     if (isCompany) return true;
 
+    // Check if user has edit permission for tasks
+    if (hasPermission("tasks", "edit")) return true;
+
     // Check if user is assigned to this task
     return task.assignedTo?.some(
       (assignedUser) => assignedUser._id === user?.id
@@ -391,6 +396,9 @@ const ProjectDetails = ({
 
   const canUserDropInStatus = (status) => {
     if (isCompany) return true;
+
+    // Check if user has edit permission for tasks
+    if (hasPermission("tasks", "edit")) return true;
 
     // Employee can only drop in their allowed statuses
     return employeeAllowedStatuses.includes(status);

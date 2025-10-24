@@ -607,6 +607,36 @@ export const useRestorePosition = (companyId) => {
   });
 };
 
+// Get position permissions
+export const useGetPermissions = (companyId, positionId) => {
+  return useQuery({
+    queryKey: ["permissions", companyId, positionId],
+    queryFn: () =>
+      apiClient
+        .get(`/companies/${companyId}/positions/${positionId}/permissions`)
+        .then((res) => res.data),
+    enabled: !!companyId && !!positionId,
+  });
+};
+
+// Update position permissions
+export const useUpdatePermissions = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updatePermissions"],
+    mutationFn: ({ positionId, permissions }) =>
+      apiClient
+        .put(`/companies/${companyId}/positions/${positionId}/permissions`, {
+          permissions,
+        })
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["positions", companyId]);
+      queryClient.invalidateQueries(["permissions"]);
+    },
+  });
+};
+
 export const useDeleteTask = (projectId, onSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({

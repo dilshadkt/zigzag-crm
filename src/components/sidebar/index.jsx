@@ -68,9 +68,6 @@ const Sidebar = () => {
         item.routeKey === "settings";
       const hasRouteAccess = allowedRoutes.includes(item.routeKey);
       const hasAccess = isAlwaysAccessible || hasRouteAccess;
-      console.log(
-        `${item.title}: routeKey=${item.routeKey}, alwaysAccessible=${isAlwaysAccessible}, hasRouteAccess=${hasRouteAccess}, hasAccess=${hasAccess}, path=${item.path}`
-      );
     });
   }
 

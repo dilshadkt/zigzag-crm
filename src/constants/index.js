@@ -393,10 +393,10 @@ export const SETTINGS = [
     icon: BsBuildings,
     path: "company",
   },
-  // {
-  //   id: 4,
-  //   title: "Safety",
-  //   icon: AiOutlineSafety,
-  //   path: "safety",
-  // },
+  {
+    id: 4,
+    title: "Security",
+    icon: AiOutlineSafety,
+    path: "safety",
+  },
 ];

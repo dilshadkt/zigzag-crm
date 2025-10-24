@@ -4,6 +4,7 @@ import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useNavigate } from "react-router-dom";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
+import { usePermissions } from "../../../hooks/usePermissions";
 import {
   useDeleteProject,
   usePauseProject,
@@ -14,11 +15,17 @@ import Modal from "../../shared/modal";
 const SelectedProject = ({ currentProject }) => {
   const navigate = useNavigate();
   const { isCompany, user } = useAuth();
+  const { hasPermission } = usePermissions();
   const isEmployee = user?.role === "employee";
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const deleteProject = useDeleteProject();
   const pauseProject = usePauseProject();
   const resumeProject = useResumeProject();
+
+  // Permission checks
+  const canEditProject = isCompany || hasPermission("projects", "edit");
+  const canDeleteProject = isCompany || hasPermission("projects", "delete");
+  const canPauseProject = isCompany || hasPermission("projects", "edit");
 
   const formatedDate = (isoDate) => {
     const date = new Date(isoDate);
@@ -68,7 +75,7 @@ rounded-3xl  flex flex-col  p-4"
         <div className="flexBetween">
           <span className="text-sm text-[#91929E] ">Project Number</span>
           <PrimaryButton
-            disable={!isCompany}
+            disable={!canEditProject}
             icon={"/icons/edit.svg"}
             onclick={handleEditClick}
             className="bg-[#F4F9FD]"
@@ -170,32 +177,32 @@ rounded-3xl  flex flex-col  p-4"
                 (file) => file.type === "link"
               )}
             />
-            {!isEmployee && (
-              <>
-                <PrimaryButton
-                  title={
-                    pauseProject.isLoading || resumeProject.isLoading
-                      ? currentProject?.status === "paused"
-                        ? "Resuming..."
-                        : "Pausing..."
-                      : currentProject?.status === "paused"
-                      ? "Resume Project"
-                      : "Pause Project"
-                  }
-                  className="w-full text-white bg-gray-400 hover:bg-gray-800 cursor-pointer mt-4 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  onclick={handleToggleProjectStatus}
-                  disable={
-                    pauseProject.isLoading ||
-                    resumeProject.isLoading ||
-                    currentProject?.status === "completed"
-                  }
-                />
-                <PrimaryButton
-                  title="Remove Project"
-                  className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer  text-sm"
-                  onclick={() => setIsDeleteModalOpen(true)}
-                />
-              </>
+            {canPauseProject && (
+              <PrimaryButton
+                title={
+                  pauseProject.isLoading || resumeProject.isLoading
+                    ? currentProject?.status === "paused"
+                      ? "Resuming..."
+                      : "Pausing..."
+                    : currentProject?.status === "paused"
+                    ? "Resume Project"
+                    : "Pause Project"
+                }
+                className="w-full text-white bg-gray-400 hover:bg-gray-800 cursor-pointer mt-4 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onclick={handleToggleProjectStatus}
+                disable={
+                  pauseProject.isLoading ||
+                  resumeProject.isLoading ||
+                  currentProject?.status === "completed"
+                }
+              />
+            )}
+            {canDeleteProject && (
+              <PrimaryButton
+                title="Remove Project"
+                className="w-full text-white bg-red-400 hover:bg-red-500 cursor-pointer  text-sm"
+                onclick={() => setIsDeleteModalOpen(true)}
+              />
             )}
           </div>
         </div>

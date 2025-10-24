@@ -42,6 +42,89 @@ export const validateSession = async () => {
   }
 };
 
+export const forgetPassword = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/forget-password", data);
+    if (response?.data) {
+      return { success: true, message: response.data.message };
+    }
+  } catch (error) {
+    console.error("Forget password error", error);
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to send reset email",
+    };
+  }
+};
+
+export const verifyOTP = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/verify-email-otp", data);
+    if (response?.data) {
+      return {
+        success: true,
+        message: response.data.message,
+        token: response.data.token,
+      };
+    }
+  } catch (error) {
+    console.error("OTP verification error", error);
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Invalid OTP",
+    };
+  }
+};
+
+export const resetPassword = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/reset-password", data);
+    if (response?.data) {
+      return { success: true, message: response.data.message };
+    }
+  } catch (error) {
+    console.error("Reset password error", error);
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to reset password",
+    };
+  }
+};
+
+export const verifyCurrentPassword = async (data) => {
+  try {
+    const response = await apiClient.post(
+      "/auth/verify-current-password",
+      data
+    );
+    if (response?.data) {
+      return { success: true, message: response.data.message };
+    }
+  } catch (error) {
+    console.error("Password verification error", error);
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message || "Current password is incorrect",
+    };
+  }
+};
+
+export const changePassword = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/change-password", data);
+    if (response?.data) {
+      return { success: true, message: response.data.message };
+    }
+  } catch (error) {
+    console.error("Change password error", error);
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to change password",
+    };
+  }
+};
+
 export const uploadSingleFile = async (file) => {
   try {
     const { data } = await apiClient.post("/upload/single", file, {

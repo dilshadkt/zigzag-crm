@@ -11,6 +11,7 @@ const SubtasksSection = ({
   onEditSubTask,
   onDeleteSubTask,
   isAdmin,
+  canManageSubtasks,
 }) => {
   const [expandedSubTasks, setExpandedSubTasks] = useState(new Set());
 
@@ -43,8 +44,8 @@ const SubtasksSection = ({
       (assignedUser) => assignedUser._id === user?.id
     );
 
-    // Show if user is assigned to subtask or if user is admin
-    return isAssignedToSubTask || isAdmin;
+    // Show if user is assigned to subtask, has view permission, or is admin
+    return isAssignedToSubTask || canManageSubtasks || isAdmin;
   };
 
   // Get subtask styling classes based on assignment and admin status
@@ -55,7 +56,7 @@ const SubtasksSection = ({
 
     if (isAssignedToSubTask) {
       return "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300";
-    } else if (isAdmin) {
+    } else if (canManageSubtasks || isAdmin) {
       return "bg-gray-50 hover:bg-gray-100";
     } else {
       return "hidden";
@@ -132,10 +133,10 @@ const SubtasksSection = ({
                     <SubTaskStatusButton
                       subTask={subtask}
                       parentTaskId={taskDetails?._id}
-                      canEdit={isCompany || isAssignedToSubTask}
+                      canEdit={canManageSubtasks || isAssignedToSubTask}
                     />
-                    {/* Edit button for admins and assigned users */}
-                    {(isCompany || isAssignedToSubTask) && (
+                    {/* Edit button for users with permission and assigned users */}
+                    {(canManageSubtasks || isAssignedToSubTask) && (
                       <button
                         onClick={() => onEditSubTask(subtask)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
@@ -381,7 +382,7 @@ const SubtasksSection = ({
                 <SubTaskAttachments
                   subTask={subtask}
                   parentTaskId={taskDetails?._id}
-                  canEdit={isCompany || isAssignedToSubTask}
+                  canEdit={canManageSubtasks || isAssignedToSubTask}
                 />
               </div>
             );
