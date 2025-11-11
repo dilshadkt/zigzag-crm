@@ -18,7 +18,7 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
   };
 
   const handlePlayPause = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || isUnsupportedFormat) return;
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -89,6 +89,7 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
 
   const handleMetadataError = () => {
     setMetadataError(true);
+    setIsUnsupportedFormat(true);
     console.warn("Failed to load audio metadata for:", attachment.url);
   };
 
@@ -127,7 +128,7 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
 
     if (mimeType && typeof audioElement.canPlayType === "function") {
       const supportLevel = audioElement.canPlayType(mimeType);
-      setIsUnsupportedFormat(supportLevel === "no");
+      setIsUnsupportedFormat(supportLevel === "");
     } else {
       setIsUnsupportedFormat(false);
     }
