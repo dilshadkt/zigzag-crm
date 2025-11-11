@@ -148,14 +148,11 @@ const ChatInput = ({
 
       // Check for supported MIME types in order of preference
       const supportedTypes = [
-        // Prefer formats with the broadest playback support (Safari/iOS needs AAC)
-        "audio/mp4;codecs=mp4a.40.2",
-        "audio/mp4",
-        "audio/mpeg",
         "audio/webm;codecs=opus",
         "audio/webm",
-        "audio/ogg",
+        "audio/mp4",
         "audio/wav",
+        "audio/ogg",
       ];
 
       for (const type of supportedTypes) {
@@ -190,11 +187,7 @@ const ChatInput = ({
 
         if (audioChunksRef.current.length > 0) {
           // Use the correct MIME type based on what was recorded
-          const mimeType =
-            mediaRecorderRef.current.mimeType ||
-            (MediaRecorder.isTypeSupported("audio/mp4")
-              ? "audio/mp4"
-              : "audio/webm");
+          const mimeType = mediaRecorderRef.current.mimeType || "audio/webm";
           const audioBlob = new Blob(audioChunksRef.current, {
             type: mimeType,
           });
@@ -207,12 +200,10 @@ const ChatInput = ({
           );
 
           // Create file with proper extension
-          const extension = mimeType.includes("mp4")
-            ? "m4a"
-            : mimeType.includes("mpeg")
-            ? "mp3"
-            : mimeType.includes("webm")
+          const extension = mimeType.includes("webm")
             ? "webm"
+            : mimeType.includes("mp4")
+            ? "mp4"
             : mimeType.includes("wav")
             ? "wav"
             : "ogg";
