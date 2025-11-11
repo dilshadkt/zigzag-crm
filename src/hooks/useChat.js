@@ -7,7 +7,6 @@ import {
   transformMessageData,
   transformConversationData,
 } from "../components/messenger/data";
-import resolveAttachmentUrl from "../utils/resolveAttachmentUrl";
 
 export const useChat = () => {
   const { user } = useAuth();
@@ -887,14 +886,13 @@ export const useChat = () => {
       const result = await uploadSingleFile(formData);
 
       if (result.success && result.fileUrl) {
-        const resolvedUrl = resolveAttachmentUrl(result.fileUrl);
         // Return attachment data in the format expected by the message model
         return {
           filename: result.originalName || file.name,
           originalName: result.originalName || file.name,
           mimetype: result.mimeType || file.type,
           size: file.size,
-          url: resolvedUrl,
+          url: result.fileUrl,
         };
       } else {
         setError(result.message || "Failed to upload file");

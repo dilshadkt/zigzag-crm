@@ -51,18 +51,10 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
         setMetadataError(false);
 
         // Update the database with the extracted duration if it's not already stored
-        const hasValidMessageId =
-          typeof messageId === "string" &&
-          messageId.trim() !== "" &&
-          !messageId.startsWith("temp_") &&
-          messageId.length >= 12;
-        const hasValidAttachmentIndex =
-          typeof attachmentIndex === "number" && attachmentIndex >= 0;
-
         if (
           !attachment.duration &&
-          hasValidMessageId &&
-          hasValidAttachmentIndex
+          messageId &&
+          attachmentIndex !== undefined
         ) {
           try {
             await updateAttachmentDuration(
