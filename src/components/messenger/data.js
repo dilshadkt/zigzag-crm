@@ -1,3 +1,5 @@
+import resolveAttachmentUrl from "../../utils/resolveAttachmentUrl";
+
 // Static data for messenger (fallback/demo data)
 
 export const INITIAL_GROUP_MESSAGES = {
@@ -253,6 +255,41 @@ export const transformConversationData = (apiConversations, currentUserId) => {
   ];
 };
 
+const normalizeAttachments = (attachments) => {
+  if (!Array.isArray(attachments)) return [];
+
+  return attachments.map((attachment) => {
+    if (!attachment || typeof attachment !== "object") {
+      return attachment;
+    }
+
+    const normalized = { ...attachment };
+
+    if (attachment.url) {
+      normalized.url = resolveAttachmentUrl(attachment.url);
+    }
+
+    if (attachment.preview) {
+      normalized.preview = resolveAttachmentUrl(attachment.preview);
+    }
+
+    return normalized;
+  });
+};
+
+const normalizeMetadata = (metadata) => {
+  if (!metadata || typeof metadata !== "object") return metadata;
+
+  if (!Array.isArray(metadata.attachments)) {
+    return metadata;
+  }
+
+  return {
+    ...metadata,
+    attachments: normalizeAttachments(metadata.attachments),
+  };
+};
+
 export const transformMessageData = (apiMessages, currentUserId) => {
   return apiMessages.map((msg) => {
     const senderName = msg.sender
@@ -283,6 +320,9 @@ export const transformMessageData = (apiMessages, currentUserId) => {
       }
     }
 
+    const normalizedAttachments = normalizeAttachments(msg.attachments);
+    const normalizedMetadata = normalizeMetadata(msg.metadata);
+
     return {
       id: msg._id || msg.id,
       sender: senderName,
@@ -293,7 +333,7 @@ export const transformMessageData = (apiMessages, currentUserId) => {
       isOwn,
       isLink: msg.type === "link",
       linkColor: msg.type === "link" ? "text-cyan-500" : undefined,
-      attachments: msg.attachments || [],
+      attachments: normalizedAttachments,
       status: messageStatus,
       readBy: msg.readBy || [],
       type: msg.type || "text",
@@ -302,7 +342,7 @@ export const transformMessageData = (apiMessages, currentUserId) => {
       pinnedAt: msg.pinnedAt,
       mentions: msg.mentions || [],
       replyTo: msg.replyTo || null, // Include reply reference
-      metadata: msg.metadata || {}, // Include metadata for system messages
+      metadata: normalizedMetadata || {}, // Include metadata for system messages
     };
   });
 };
