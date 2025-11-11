@@ -8,6 +8,7 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
   const [duration, setDuration] = useState(attachment.duration || 0);
   const [isLoading, setIsLoading] = useState(false);
   const [metadataError, setMetadataError] = useState(false);
+  const [isUnsupportedFormat, setIsUnsupportedFormat] = useState(false);
 
   const formatTime = (seconds) => {
     if (isNaN(seconds)) return "0:00";
@@ -32,6 +33,12 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
         })
         .catch((error) => {
           console.error("Error playing audio:", error);
+          if (
+            error.name === "NotSupportedError" ||
+            error.message?.includes("supported sources")
+          ) {
+            setIsUnsupportedFormat(true);
+          }
           setIsLoading(false);
         });
     }
@@ -91,7 +98,7 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
   };
 
   const handleSeek = (e) => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || isUnsupportedFormat) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -107,6 +114,39 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
     return (currentTime / duration) * 100;
   };
 
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audioElement = audioRef.current;
+    const mimeType = attachment.mimetype || attachment.mimeType || "";
+
+    // Trigger a fresh load for new sources
+    audioElement.pause();
+    audioElement.currentTime = 0;
+    audioElement.load();
+
+    if (mimeType && typeof audioElement.canPlayType === "function") {
+      const supportLevel = audioElement.canPlayType(mimeType);
+      setIsUnsupportedFormat(supportLevel === "no");
+    } else {
+      setIsUnsupportedFormat(false);
+    }
+
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setMetadataError(false);
+  }, [attachment.url, attachment.mimetype, attachment.mimeType]);
+
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = attachment.url;
+    link.download =
+      attachment.originalName || attachment.filename || "voice-message";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div
       className={`flex items-center gap-3 p-3 rounded-lg max-w-xs ${
@@ -116,12 +156,12 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
       {/* Play/Pause button */}
       <button
         onClick={handlePlayPause}
-        disabled={isLoading}
+        disabled={isLoading || isUnsupportedFormat}
         className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
           isOwn
             ? "bg-blue-500 hover:bg-blue-600 text-white"
             : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-        } ${isLoading ? "opacity-50" : ""}`}
+        } ${isLoading || isUnsupportedFormat ? "opacity-50" : ""}`}
       >
         {isLoading ? (
           <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -158,8 +198,12 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
       <div className="flex-1 min-w-0">
         {/* Progress bar */}
         <div
-          className="w-full h-2 bg-gray-300 rounded-full cursor-pointer mb-1"
-          onClick={handleSeek}
+          className={`w-full h-2 rounded-full mb-1 ${
+            isUnsupportedFormat
+              ? "bg-gray-200 cursor-not-allowed"
+              : "bg-gray-300 cursor-pointer"
+          }`}
+          onClick={isUnsupportedFormat ? undefined : handleSeek}
         >
           <div
             className={`h-full rounded-full transition-all ${
@@ -192,20 +236,54 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
               ⚠️
             </span>
           )}
+          {isUnsupportedFormat && (
+            <span className="ml-1 text-red-400" title="Download to listen">
+              (Browser can't play this format)
+            </span>
+          )}
         </div>
+
+        {isUnsupportedFormat && (
+          <button
+            onClick={handleDownload}
+            className={`mt-2 inline-flex items-center gap-1 text-xs font-medium underline ${
+              isOwn ? "text-blue-100" : "text-blue-600"
+            }`}
+          >
+            Download audio
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v12m0 0l-4-4m4 4l4-4m5 6H7a2 2 0 01-2-2V5"
+              />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        src={attachment.url}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onError={handleMetadataError}
         onEnded={handleEnded}
         preload="metadata"
         crossOrigin="anonymous"
-      />
+      >
+        <source
+          src={attachment.url}
+          type={attachment.mimetype || attachment.mimeType || "audio/mpeg"}
+        />
+        Your browser does not support the audio element.
+      </audio>
     </div>
   );
 };
