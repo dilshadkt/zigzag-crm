@@ -55,14 +55,7 @@ const EventFilters = ({
 
     // Extract projects from tasks data
     if (calendarData?.tasksData?.tasks) {
-      console.log(
-        "Tasks data for project extraction:",
-        calendarData.tasksData.tasks
-      );
-
       calendarData.tasksData.tasks.forEach((task) => {
-        console.log("Task project data:", task.project);
-
         // Check for different possible project data structures
         if (task.project) {
           const projectId = task.project._id || task.project.id;
@@ -83,11 +76,7 @@ const EventFilters = ({
 
     // Also extract projects from projectsData
     if (calendarData?.projectsData?.projects) {
-      console.log("Projects data:", calendarData.projectsData.projects);
-
       calendarData.projectsData.projects.forEach((project) => {
-        console.log("Project data:", project);
-
         const projectId = project._id || project.id;
         const projectName =
           project.title || project.name || project.projectName;
@@ -129,10 +118,6 @@ const EventFilters = ({
       }
     }
 
-    console.log(
-      "Final extracted projects:",
-      Array.from(uniqueProjects.values())
-    );
     setProjects(Array.from(uniqueProjects.values()));
   }, [
     calendarData?.tasksData?.tasks,

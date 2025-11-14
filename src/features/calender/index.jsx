@@ -30,7 +30,7 @@ import {
   toggleEventFilter,
   setAssignerFilter,
   setProjectFilter,
-  setCurrentDate,
+  setCurrentDate as setCalendarCurrentDate,
 } from "../../store/slice/calendarSlice";
 
 const Calendar = () => {
@@ -49,13 +49,15 @@ const Calendar = () => {
 
   // Sync local state with Redux persisted state when component mounts or when persisted date changes
   useEffect(() => {
-    if (persistedCurrentDate) {
-      const persistedDate = new Date(persistedCurrentDate);
-      // Only update if the dates are different (to avoid infinite loops)
-      if (persistedDate.getTime() !== currentDate.getTime()) {
-        setCurrentDate(persistedDate);
+    if (!persistedCurrentDate) return;
+    const persistedDate = new Date(persistedCurrentDate);
+    if (Number.isNaN(persistedDate.getTime())) return;
+    setCurrentDate((prevDate) => {
+      if (prevDate.getTime() === persistedDate.getTime()) {
+        return prevDate;
       }
-    }
+      return persistedDate;
+    });
   }, [persistedCurrentDate]);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -93,13 +95,13 @@ const Calendar = () => {
   const handlePrevMonth = () => {
     const newDate = subMonths(currentDate, 1);
     setCurrentDate(newDate);
-    dispatch(setCurrentDate(newDate.toISOString()));
+    dispatch(setCalendarCurrentDate(newDate.toISOString()));
   };
 
   const handleNextMonth = () => {
     const newDate = addMonths(currentDate, 1);
     setCurrentDate(newDate);
-    dispatch(setCurrentDate(newDate.toISOString()));
+    dispatch(setCalendarCurrentDate(newDate.toISOString()));
   };
 
   const firstDay = startOfMonth(currentDate);

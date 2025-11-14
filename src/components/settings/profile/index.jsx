@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Input from "../../shared/Field/input";
 import DatePicker from "../../shared/Field/date";
-import Select from "../../shared/Field/select";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Progress from "../../shared/progress";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useAuth } from "../../../hooks/useAuth";
-import {
-  useGetPositions,
-  useUpdateProfile,
-  useDeleteEmployee,
-} from "../../../api/hooks";
+import { useUpdateProfile, useDeleteEmployee } from "../../../api/hooks";
 import { loginSuccess } from "../../../store/slice/authSlice";
 import { toast } from "react-hot-toast";
 
 const UserProfile = ({ user, disableEdit, employeeId }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { user: currentUser } = useAuth();
-  const companyId = currentUser?.company;
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState(user?.profileImage || "");
+  const fileInputRef = useRef(null);
+  const {
+    user: currentUser,
+    companyId: currentCompanyId,
+    isProfileComplete: currentProfileComplete,
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -36,22 +37,13 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
   // Determine which employeeId to use for updates
   const targetEmployeeId = isOwnProfile ? null : employeeId;
 
-  // Fetch company positions for dropdown
-  const { data: positionsData, isLoading: positionsLoading } =
-    useGetPositions(companyId);
-  const positions = positionsData?.positions || [];
-
-  // Format positions for dropdown
-  const positionOptions = positions.map((position) => ({
-    value: position.name,
-    label: position.name,
-  }));
-
   // Delete employee mutation
   const deleteEmployeeMutation = useDeleteEmployee();
 
   // Initial form values from the user object
   const initialValues = {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
     position: user?.position || "",
     company: user?.company || "",
     location: user?.location || "",
@@ -77,14 +69,33 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
 
     // If this is the current user's profile, update Redux state
     if (isOwnProfile && updatedData?.employee) {
+      const mergedUser = {
+        ...currentUser,
+        ...updatedData.employee,
+        positionDetails:
+          updatedData.employee.positionDetails ??
+          currentUser?.positionDetails ??
+          null,
+      };
+
       dispatch(
         loginSuccess({
-          user: updatedData.employee,
-          companyId: updatedData.employee.company,
-          isProfileComplete: updatedData.employee.isProfileComplete,
+          user: mergedUser,
+          companyId:
+            updatedData.employee.company ??
+            currentCompanyId ??
+            mergedUser?.company ??
+            null,
+          isProfileComplete:
+            updatedData.employee.isProfileComplete ??
+            currentProfileComplete ??
+            true,
         })
       );
     }
+
+    setSelectedImageFile(null);
+    setPreviewImage(updatedData?.employee?.profileImage || "");
   };
 
   // Handle successful employee deletion
@@ -113,7 +124,9 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
     enableReinitialize: true, // This will reinitialize the form when initialValues change
     onSubmit: async (values) => {
       try {
-        const updateData = {
+        const normalizedData = {
+          firstName: values.firstName,
+          lastName: values.lastName,
           position: values.position,
           location: values.location,
           dob: values.birthday,
@@ -122,7 +135,19 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
           email: values.email,
         };
 
-        await updateProfileMutation.mutateAsync(updateData);
+        let updatePayload = normalizedData;
+
+        if (selectedImageFile) {
+          updatePayload = new FormData();
+          Object.entries(normalizedData).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "") {
+              updatePayload.append(key, value);
+            }
+          });
+          updatePayload.append("profileImage", selectedImageFile);
+        }
+
+        await updateProfileMutation.mutateAsync(updatePayload);
       } catch (error) {
         toast.error("Failed to update profile. Please try again.");
         console.error("Profile update error:", error);
@@ -135,6 +160,8 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
     if (user) {
       resetForm({
         values: {
+          firstName: user?.firstName || "",
+          lastName: user?.lastName || "",
           position: user?.position || "",
           company: user?.company || "",
           location: user?.location || "",
@@ -144,17 +171,56 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
           skype: user?.skype || "",
         },
       });
-    }
-  }, [user, resetForm]);
 
-  // Handle position change
-  const handlePositionChange = (e) => {
-    setFieldValue("position", e.target.value);
-  };
+      if (!selectedImageFile) {
+        setPreviewImage(user?.profileImage || "");
+      }
+    }
+  }, [user, resetForm, selectedImageFile]);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      setSelectedImageFile(null);
+      return;
+    }
+  }, [isEditMode]);
+
+  useEffect(() => {
+    if (!selectedImageFile) {
+      setPreviewImage(user?.profileImage || "");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(selectedImageFile);
+    setPreviewImage(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedImageFile, user?.profileImage]);
 
   // Handle date change
   const handleDateChange = (e) => {
     setFieldValue("birthday", e.target.value);
+  };
+
+  const handleImageInputClick = () => {
+    if (!isEditMode || disableEdit) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedImageFile(file);
+    event.target.value = "";
   };
 
   // Handle delete employee
@@ -177,14 +243,30 @@ rounded-3xl  flex flex-col "
     >
       <div className="flex flex-col border-b border-[#E4E6E8] p-5">
         <div className="flex justify-between">
-          <div className="relative">
+          <div className="relative group">
             <Progress size={54} currentValue={user?.progressValue ?? 0} />
             <img
-              src={user?.profileImage}
-              alt=""
+              src={previewImage || "/icons/profile.svg"}
+              alt={`${user?.firstName || "User"} profile`}
               className="absolute top-0 left-0 right-0
               scale-85 bottom-0 w-full h-full  object-cover rounded-full"
             />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            {isEditMode && !disableEdit && (
+              <button
+                type="button"
+                onClick={handleImageInputClick}
+                className="absolute top-0 left-0 right-0 bottom-0 rounded-full bg-black/50 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center px-2 text-center"
+              >
+                Change Photo
+              </button>
+            )}
           </div>
           <div className="flex gap-2">
             <PrimaryButton
@@ -228,6 +310,11 @@ rounded-3xl  flex flex-col "
         <span className="text-xs text-gray-600  capitalize">
           {user?.position}
         </span>
+        {selectedImageFile && isEditMode && (
+          <span className="text-[11px] text-[#3F8CFF] mt-1">
+            New profile photo selected
+          </span>
+        )}
       </div>
       <form
         onSubmit={handleSubmit}
@@ -236,28 +323,33 @@ rounded-3xl  flex flex-col "
         <div className="flex flex-col gap-y-3">
           <h4 className=" font-medium">Main info</h4>
 
-          {/* Position Field - Dropdown when editing, Input when readonly */}
-          {isEditMode ? (
-            <Select
-              title="Position"
-              name="position"
-              value={values.position}
-              onChange={handlePositionChange}
-              options={positionOptions}
-              placeholder="Select Position"
-              errors={errors}
-              touched={touched}
-              disabled={positionsLoading}
-            />
-          ) : (
-            <Input
-              readOnly={true}
-              name="position"
-              value={values}
-              title="Position"
-              placeholder="UI/UX Designer"
-            />
-          )}
+          <Input
+            errors={errors}
+            touched={touched}
+            onchange={handleChange}
+            name={"firstName"}
+            value={values}
+            readOnly={!isEditMode}
+            title="First Name"
+            placeholder="John"
+          />
+          <Input
+            errors={errors}
+            touched={touched}
+            onchange={handleChange}
+            name={"lastName"}
+            value={values}
+            readOnly={!isEditMode}
+            title="Last Name"
+            placeholder="Doe"
+          />
+          <Input
+            readOnly={true}
+            name="position"
+            value={values}
+            title="Position"
+            placeholder="UI/UX Designer"
+          />
 
           <Input
             errors={errors}
@@ -265,7 +357,7 @@ rounded-3xl  flex flex-col "
             onchange={handleChange}
             name={"company"}
             value={values}
-            readOnly={!isEditMode}
+            readOnly={true}
             title="Company"
             placeholder="Cadabra"
           />

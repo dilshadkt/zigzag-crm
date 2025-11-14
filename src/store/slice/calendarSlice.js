@@ -1,8 +1,9 @@
 // store/calendarSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
-// Define initial state first
-const initialState = {
+const BASE_STORAGE_KEY = "calendarFilters";
+
+const createDefaultState = () => ({
   eventFilters: {
     tasks: true,
     subtasks: true,
@@ -12,16 +13,45 @@ const initialState = {
   assignerFilter: null,
   projectFilter: null,
   currentDate: new Date().toISOString(), // Store as ISO string for serialization
+});
+
+const getCurrentUserId = () => {
+  try {
+    const serializedAuth = localStorage.getItem("authState");
+    if (!serializedAuth) return null;
+    const parsedAuth = JSON.parse(serializedAuth);
+    return parsedAuth?.user?._id || parsedAuth?.user?.id || null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const getStorageKey = () => {
+  const userId = getCurrentUserId();
+  return userId ? `${BASE_STORAGE_KEY}_${userId}` : BASE_STORAGE_KEY;
+};
+
+const persistState = (state) => {
+  localStorage.setItem(getStorageKey(), JSON.stringify(state));
 };
 
 // Load state from localStorage
 const loadState = () => {
+  const defaultState = createDefaultState();
   try {
-    const serializedState = localStorage.getItem("calendarFilters");
-    if (serializedState === null) return initialState;
-    return JSON.parse(serializedState);
+    const serializedState = localStorage.getItem(getStorageKey());
+    if (serializedState === null) return defaultState;
+    const parsedState = JSON.parse(serializedState);
+    return {
+      ...defaultState,
+      ...parsedState,
+      eventFilters: {
+        ...defaultState.eventFilters,
+        ...parsedState?.eventFilters,
+      },
+    };
   } catch (error) {
-    return initialState;
+    return defaultState;
   }
 };
 
@@ -31,31 +61,32 @@ const calendarSlice = createSlice({
   reducers: {
     setEventFilters(state, action) {
       state.eventFilters = action.payload;
-      localStorage.setItem("calendarFilters", JSON.stringify(state));
+      persistState(state);
     },
     toggleEventFilter(state, action) {
       const filterType = action.payload;
       state.eventFilters[filterType] = !state.eventFilters[filterType];
-      localStorage.setItem("calendarFilters", JSON.stringify(state));
+      persistState(state);
     },
     setAssignerFilter(state, action) {
       state.assignerFilter = action.payload;
-      localStorage.setItem("calendarFilters", JSON.stringify(state));
+      persistState(state);
     },
     setProjectFilter(state, action) {
       state.projectFilter = action.payload;
-      localStorage.setItem("calendarFilters", JSON.stringify(state));
+      persistState(state);
     },
     setCurrentDate(state, action) {
       state.currentDate = action.payload;
-      localStorage.setItem("calendarFilters", JSON.stringify(state));
+      persistState(state);
     },
     resetCalendarFilters(state) {
-      state.eventFilters = initialState.eventFilters;
-      state.assignerFilter = initialState.assignerFilter;
-      state.projectFilter = initialState.projectFilter;
-      state.currentDate = initialState.currentDate;
-      localStorage.setItem("calendarFilters", JSON.stringify(state));
+      const defaultState = createDefaultState();
+      state.eventFilters = defaultState.eventFilters;
+      state.assignerFilter = defaultState.assignerFilter;
+      state.projectFilter = defaultState.projectFilter;
+      state.currentDate = defaultState.currentDate;
+      persistState(state);
     },
   },
 });
