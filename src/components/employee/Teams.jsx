@@ -15,11 +15,17 @@ const Teams = ({ teams }) => {
 
   return (
     <div className="w-full h-full grid grid-cols-4 gap-3 mt-3">
-      {teams.map((team) => (
+      {teams.map((team) => {
+        const fullName =
+          team?.firstName || team?.lastName
+            ? `${team?.firstName || ""} ${team?.lastName || ""}`.trim()
+            : team?.name || "Team Member";
+
+        return (
         <EmployeeCard
           key={team._id}
           employee={{
-            name: `${team.firstName} ${team.lastName}`,
+            name: fullName,
             email: team.email,
             profile: team.profileImage,
             position: team.position,
@@ -28,7 +34,8 @@ const Teams = ({ teams }) => {
           }}
           className="bg-white h-fit"
         />
-      ))}
+      );
+      })}
     </div>
   );
 };

@@ -178,7 +178,7 @@ rounded-3xl  flex flex-col "
       <div className="flex flex-col border-b border-[#E4E6E8] p-5">
         <div className="flex justify-between">
           <div className="relative">
-            <Progress size={54} currentValue={75} />
+            <Progress size={54} currentValue={user?.progressValue ?? 0} />
             <img
               src={user?.profileImage}
               alt=""

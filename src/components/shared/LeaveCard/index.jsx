@@ -30,6 +30,8 @@ const LeaveCard = ({ request }) => {
         return "bg-green-500 text-white";
       case "rejected":
         return "bg-red-500 text-white";
+      case "cancelled":
+        return "bg-gray-300 text-gray-700";
       case "pending":
       default:
         return "bg-[#FDC748] text-white";

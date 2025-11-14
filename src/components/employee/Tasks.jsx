@@ -1,12 +1,20 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetEmployeeSubTasks } from "../../api/hooks";
 import { FiClock, FiUser, FiCalendar, FiFlag } from "react-icons/fi";
 import { format } from "date-fns";
 
-const Tasks = ({ employeeId }) => {
+const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
   const navigate = useNavigate();
-  const { data: subTasksData, isLoading } = useGetEmployeeSubTasks(employeeId);
+
+  const monthLabel = useMemo(() => {
+    if (!selectedMonth) return "All subtasks";
+    const [year, month] = selectedMonth.split("-");
+    if (!year || !month) return "All subtasks";
+    return `${new Date(parseInt(year), parseInt(month) - 1).toLocaleString(
+      "default",
+      { month: "long", year: "numeric" }
+    )} subtasks`;
+  }, [selectedMonth]);
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
@@ -75,17 +83,15 @@ const Tasks = ({ employeeId }) => {
     );
   }
 
-  if (!subTasksData?.subTasks || subTasksData.subTasks.length === 0) {
+  if (!subTasks || subTasks.length === 0) {
     return (
       <div className="text-center w-full h-full flex items-center justify-center text-gray-500">
         <div>
           <div className="text-gray-400 text-6xl mb-4">📋</div>
           <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            No subtasks assigned
+            No subtasks found
           </h3>
-          <p className="text-gray-500">
-            This employee doesn't have any subtasks assigned yet.
-          </p>
+          <p className="text-gray-500">{monthLabel}</p>
         </div>
       </div>
     );
@@ -95,7 +101,7 @@ const Tasks = ({ employeeId }) => {
     <div className="flex flex-col w-full h-full overflow-y-auto">
       <div className="rounded-lg">
         <div className="divide-y flex flex-col gap-y-2 divide-gray-200">
-          {subTasksData.subTasks.map((subTask) => {
+          {subTasks.map((subTask) => {
             const isOverdue = (() => {
               const dueDate = new Date(subTask.dueDate);
               const today = new Date();

@@ -27,7 +27,7 @@ const Projects = ({ projects, isLoading }) => {
         <ProjectCard
           key={project?._id}
           project={project}
-          onClick={() => navigate(`/projects/${project?.name}`)}
+          onClick={() => navigate(`/projects/${project?._id}`)}
         />
       ))}
     </div>

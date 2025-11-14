@@ -128,6 +128,7 @@ const renderActiveShape = (props) => {
 const OverviewTab = ({
   project,
   workTypesData,
+  workSummary,
   taskStatusData,
   timelinePercentage,
   formatDate,
@@ -268,6 +269,99 @@ const OverviewTab = ({
           </div>
         </div>
       </div>
+
+      {/* Work Details Summary */}
+      {workSummary?.totalPlanned > 0 && (
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">
+                Work Details Overview
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Breakdown of planned, completed, and pending work items.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+              <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+                <p className="text-[11px] uppercase text-blue-600 font-semibold">
+                  Planned
+                </p>
+                <p className="text-xl font-bold text-blue-900">
+                  {workSummary.totalPlanned}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                <p className="text-[11px] uppercase text-emerald-600 font-semibold">
+                  Completed
+                </p>
+                <p className="text-xl font-bold text-emerald-900">
+                  {workSummary.totalCompleted}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <p className="text-[11px] uppercase text-amber-600 font-semibold">
+                  Pending
+                </p>
+                <p className="text-xl font-bold text-amber-900">
+                  {workSummary.totalPending}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-purple-50 border border-purple-100">
+                <p className="text-[11px] uppercase text-purple-600 font-semibold">
+                  Completion
+                </p>
+                <p className="text-xl font-bold text-purple-900">
+                  {workSummary.completionRate}%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {workSummary.breakdown.map((item) => {
+              const percent =
+                item.total > 0
+                  ? Math.round((item.completed / item.total) * 100)
+                  : 0;
+              return (
+                <div
+                  key={item.key}
+                  className="flex flex-col gap-2 border border-gray-100 rounded-xl p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {item.completed}/{item.total} completed
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-800">
+                      {percent}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full transition-all duration-300"
+                      style={{ width: `${percent}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-emerald-600 font-medium">
+                      ✓ {item.completed} completed
+                    </span>
+                    <span className="text-orange-600 font-medium">
+                      ⏳ {item.remaining} pending
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

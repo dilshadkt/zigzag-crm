@@ -24,6 +24,7 @@ import {
   useGetCompanyVacations,
   useGetVacationsCalendar,
   useUpdateVacationStatus,
+  useUpdateVacationRequest,
 } from "../../api/hooks";
 import VacationRequestModal from "../../components/vacations/VacationRequestModal";
 import { RxCross2 } from "react-icons/rx";
@@ -48,6 +49,16 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
     new Date(request?.startDate || new Date())
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedType, setSelectedType] = useState(request?.type || "vacation");
+  useEffect(() => {
+    setFormData({
+      startDate: format(new Date(request?.startDate || new Date()), "yyyy-MM-dd"),
+      endDate: format(new Date(request?.endDate || new Date()), "yyyy-MM-dd"),
+    });
+    setCurrentMonth(new Date(request?.startDate || new Date()));
+    setSelectedType(request?.type || "vacation");
+    setSelectionMode("start");
+  }, [request]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,6 +68,7 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
       await onSave({
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
+        type: selectedType,
       });
       onClose();
     } catch (error) {
@@ -193,6 +205,21 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
           </button>
         </div>
 
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Request Type
+          </label>
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="w-full border border-[#D8E0F0] rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="vacation">Vacation</option>
+            <option value="sick_leave">Sick Leave</option>
+            <option value="remote_work">Work Remotely</option>
+          </select>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-2">
             <span className="text-sm font-medium text-gray-700">
@@ -302,7 +329,14 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
 };
 
 // Add dropdown menu component for vacation approval
-const ApprovalMenu = ({ onApprove, onReject, onModify, isOpen, setIsOpen }) => {
+const ApprovalMenu = ({
+  onApprove,
+  onReject,
+  onModify,
+  onCancel,
+  isOpen,
+  setIsOpen,
+}) => {
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -349,6 +383,13 @@ const ApprovalMenu = ({ onApprove, onReject, onModify, isOpen, setIsOpen }) => {
         <FaTimes size={12} />
         <span>Reject</span>
       </button>
+      <button
+        onClick={onCancel}
+        className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-600"
+      >
+        <FaTimes size={12} />
+        <span>Cancel</span>
+      </button>
     </div>
   );
 };
@@ -358,6 +399,7 @@ const VacationCard = ({
   updateStatus,
   canApproveVacations,
   canModifyVacations,
+  onModifyRequest,
 }) => {
   const { user, isCompany } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -384,17 +426,16 @@ const VacationCard = ({
     setMenuOpen(false);
   };
 
+  const handleCancel = (requestId) => {
+    updateStatus({ vacationId: requestId, status: "cancelled" });
+    setMenuOpen(false);
+  };
+
   const handleModifySave = (requestId, newDates) => {
-    // The API doesn't support modifying dates directly, only status and notes
-    // So we'll just approve with a note about the modified dates
-    updateStatus({
-      vacationId: requestId,
-      status: "approved",
-      notes: `MODIFIED DATE REQUEST: Original request approved with modified dates. Please consider this approval valid only for ${format(
-        new Date(newDates.startDate),
-        "MMM dd, yyyy"
-      )} to ${format(new Date(newDates.endDate), "MMM dd, yyyy")}.`,
-    });
+    if (!onModifyRequest) {
+      return Promise.resolve();
+    }
+    return onModifyRequest(requestId, newDates);
   };
 
   return (
@@ -444,6 +485,7 @@ const VacationCard = ({
                 onApprove={() => handleApprove(pendingRequests[0].id)}
                 onModify={() => handleModifyOpen(pendingRequests[0])}
                 onReject={() => handleReject(pendingRequests[0].id)}
+                onCancel={() => handleCancel(pendingRequests[0].id)}
               />
             </div>
 
@@ -474,6 +516,15 @@ const VacationCard = ({
                           title="Modify dates"
                         >
                           <FaEdit size={12} />
+                        </button>
+                      )}
+                      {canModifyVacations && (
+                        <button
+                          onClick={() => handleCancel(request.id)}
+                          className="px-3 py-2 text-xs font-semibold border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100"
+                          title="Cancel request"
+                        >
+                          Cancel
                         </button>
                       )}
                       {canApproveVacations && (
@@ -584,9 +635,17 @@ const Vacations = () => {
     useGetVacationsCalendar(month, year);
 
   const updateVacationMutation = useUpdateVacationStatus();
+  const updateVacationRequestMutation = useUpdateVacationRequest();
 
   const handleUpdateVacationStatus = ({ vacationId, status, notes = "" }) => {
     updateVacationMutation.mutate({ vacationId, status, notes });
+  };
+
+  const handleModifyVacationRequest = (vacationId, updates) => {
+    return updateVacationRequestMutation.mutateAsync({
+      vacationId,
+      data: updates,
+    });
   };
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -700,6 +759,7 @@ const Vacations = () => {
               updateStatus={handleUpdateVacationStatus}
               canApproveVacations={canApproveVacations}
               canModifyVacations={canEditVacations}
+              onModifyRequest={handleModifyVacationRequest}
             />
           ))}
 

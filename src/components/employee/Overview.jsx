@@ -1,9 +1,19 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import StatCard from "./StatCard";
 
-const Overview = ({ subTasks, employeeId }) => {
+const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
   const navigate = useNavigate();
+
+  const monthLabel = useMemo(() => {
+    if (!selectedMonth) return "All subtasks";
+    const [year, month] = selectedMonth.split("-");
+    if (!year || !month) return "All subtasks";
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleString(
+      "default",
+      { month: "long", year: "numeric" }
+    );
+  }, [selectedMonth]);
 
   const totalSubTasks = subTasks.length;
   const completedSubTasks = subTasks.filter(
@@ -75,10 +85,23 @@ const Overview = ({ subTasks, employeeId }) => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="w-8 h-8 border-4 border-[#E6EBF5] border-t-[#3F8CFF] rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flexBetween mb-4">
-        <h4 className="font-semibold text-lg text-gray-800">Task Progress</h4>
+        <div className="flex flex-col">
+          <h4 className="font-semibold text-lg text-gray-800">
+            Task Progress
+          </h4>
+          <span className="text-xs text-gray-500">{monthLabel}</span>
+        </div>
         <div className="flex items-center gap-2">
           <div className="text-2xl font-bold text-blue-600">
             {completionRate}%

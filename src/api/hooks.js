@@ -472,7 +472,12 @@ export const useGetEmployeeTeams = (employeeId, projectId) => {
         .get(`/teams/employee/${employeeId}`, {
           params: { projectId },
         })
-        .then((res) => res.data),
+        .then((res) => res.data)
+        .catch((error) => {
+          console.warn("Employee teams endpoint not available:", error);
+          return { teams: [] };
+        }),
+    enabled: !!employeeId && !!projectId,
   });
 };
 
@@ -747,6 +752,19 @@ export const useUpdateVacationStatus = () => {
       apiClient
         .patch(`/vacations/${vacationId}/status`, { status, notes })
         .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["myVacations"]);
+      queryClient.invalidateQueries(["vacationsCalendar"]);
+      queryClient.invalidateQueries(["companyVacations"]);
+    },
+  });
+};
+
+export const useUpdateVacationRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ vacationId, data }) =>
+      apiClient.put(`/vacations/${vacationId}`, data).then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(["myVacations"]);
       queryClient.invalidateQueries(["vacationsCalendar"]);
