@@ -9,6 +9,34 @@ import {
   MdOutlineKeyboardArrowLeft,
 } from "react-icons/md";
 
+const ProjectListShimmer = () => {
+  return (
+    <div className="flex flex-col gap-y-3 animate-pulse">
+      {[1, 2, 3].map((item) => (
+        <div
+          key={item}
+          className="bg-white border border-gray-100 rounded-3xl p-4 space-y-4 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-32 bg-gray-200 rounded"></div>
+            <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
+          </div>
+          <div className="h-5 w-3/4 bg-gray-200 rounded"></div>
+          <div className="flex items-center justify-between">
+            <div className="h-3 w-24 bg-gray-200 rounded"></div>
+            <div className="h-3 w-20 bg-gray-200 rounded"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            {[1, 2, 3].map((avatar) => (
+              <div key={avatar} className="h-8 w-8 bg-gray-200 rounded-full" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const ProjectsAnalytics = () => {
   const { companyId, user } = useAuth();
   const navigate = useNavigate();
@@ -44,11 +72,11 @@ const ProjectsAnalytics = () => {
     .padStart(2, "0")}`;
 
   // Fetch projects with month filter
-  const { data: projects, isLoading } = useCompanyProjects(
-    companyId,
-    0,
-    taskMonth
-  );
+  const {
+    data: projects,
+    isLoading,
+    isFetching,
+  } = useCompanyProjects(companyId, 0, taskMonth);
 
   // Persist the selected date whenever it changes (only if user is available)
   useEffect(() => {
@@ -130,20 +158,31 @@ const ProjectsAnalytics = () => {
           </button>
         </div>
       </div>
-      <div className="mt-5">
+      <div className="mt-5 relative min-h-[200px]">
         {isLoading ? (
-          <div className="text-center">Loading projects...</div>
+          <ProjectListShimmer />
         ) : (
-          <div className="flex flex-col gap-y-3">
-            {projects?.map((project) => (
-              <ProjectCard
-                key={project?._id}
-                project={project}
-                viewMore
-                onClick={() => handleProjectClick(project?._id)}
-              />
-            ))}
-          </div>
+          <>
+            {isFetching && (
+              <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm rounded-3xl p-1 pointer-events-none">
+                <ProjectListShimmer />
+              </div>
+            )}
+            <div
+              className={`flex flex-col gap-y-3 ${
+                isFetching ? "opacity-40" : ""
+              }`}
+            >
+              {projects?.map((project) => (
+                <ProjectCard
+                  key={project?._id}
+                  project={project}
+                  viewMore
+                  onClick={() => handleProjectClick(project?._id)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </section>
