@@ -53,9 +53,18 @@ const DashboardHeader = () => {
     handleEndBreak,
     isClockingIn,
     isClockingOut,
+    isStartingBreak,
+    isEndingBreak,
     clockInError,
     clockOutError,
   } = useAttendanceManager();
+
+  // Prevent multiple modal opens
+  const handleAttendanceClick = () => {
+    if (!isAttendanceMenuOpen && !isClockingIn) {
+      setAttendanceMenuOpen(true);
+    }
+  };
 
   // Timer state from Redux
   const { remainingTime, isRunning } = useSelector((state) => state.timer);
@@ -158,6 +167,10 @@ const DashboardHeader = () => {
           isClockingOut={isClockingOut}
           clockOutError={clockOutError}
           onEndShift={endShift}
+          onStartBreak={handleStartBreak}
+          onEndBreak={handleEndBreak}
+          isStartingBreak={isStartingBreak}
+          isEndingBreak={isEndingBreak}
         />
 
         {/* Action Buttons */}
@@ -165,7 +178,7 @@ const DashboardHeader = () => {
           isShiftActive={isShiftActive}
           statusLoading={statusLoading}
           isClockingIn={isClockingIn}
-          onAttendanceClick={() => setAttendanceMenuOpen(true)}
+          onAttendanceClick={handleAttendanceClick}
           onNotifyClick={() => setNotifyMenuOpen(true)}
           unreadCount={unreadCount}
           stickyNotesCount={stickyNotesCount}

@@ -11,6 +11,7 @@ import {
   useResumeProject,
 } from "../../../api/hooks";
 import Modal from "../../shared/modal";
+import { assetPath } from "../../../utils/assetPath";
 
 const SelectedProject = ({ currentProject }) => {
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ rounded-3xl  flex flex-col  p-4"
           <span className="text-sm text-[#91929E] ">Project Number</span>
           <PrimaryButton
             disable={!canEditProject}
-            icon={"/icons/edit.svg"}
+            icon={assetPath("icons/edit.svg")}
             onclick={handleEditClick}
             className="bg-[#F4F9FD]"
           />
@@ -162,7 +163,11 @@ rounded-3xl  flex flex-col  p-4"
           </div>
           <div className="flex flex-col gap-y-2">
             <div className="flexStart gap-x-2">
-              <img src="/icons/fillCalender.svg" alt="" className="w-4" />
+              <img
+                src={assetPath("icons/fillCalender.svg")}
+                alt=""
+                className="w-4"
+              />
               <span className="text-sm text-[#91929E]">
                 Created {formatedDate(currentProject?.createdAt)}
               </span>

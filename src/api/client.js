@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "https://crm.zigzagdigitalsolutions.com/api",
-  // baseURL: "http://localhost:5000/api",
+  // baseURL: "https://crm.zigzagdigitalsolutions.com/api",
+  baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,16 +24,23 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    const isDesktop = typeof window !== "undefined" && window.desktop;
+    const redirectToSignIn = () => {
+      if (isDesktop) {
+        if (!window.location.href.includes("#/auth/signin")) {
+          window.location.hash = "/auth/signin";
+        }
+      } else if (!window.location.href.includes("/auth/signin")) {
+        window.location.href = "/auth/signin";
+      }
+    };
+
     if (
       error.response?.status === 401 ||
       error.response?.data?.message === "Invalid token"
     ) {
       localStorage.removeItem("token");
-      if (!window.location.href.includes("/auth/signin")) {
-        window.location.href = "/auth/signin";
-      }
-      // Clear the token
-      // window.location.href = "/auth/signin"; // Redirect to login page
+      redirectToSignIn();
     }
     return Promise.reject(error || "Something went wrong");
   }

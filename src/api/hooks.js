@@ -1,5 +1,6 @@
 // src/api/hooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import apiClient from "./client";
 import {
   addProject,
@@ -133,17 +134,24 @@ export const useCustomers = () =>
     queryFn: () => apiClient.get("/customers").then((res) => res.data),
   });
 
-export const useCompanyProjects = (companyId, limit = 0) => {
+export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
   return useQuery({
-    queryKey: ["companyProjects", companyId, limit],
-    queryFn: () =>
-      apiClient
+    queryKey: ["companyProjects", companyId, limit, monthKey],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (limit) params.append("limit", limit.toString());
+      if (monthKey) params.append("monthKey", monthKey);
+      params.append("active", "true");
+
+      const queryString = params.toString();
+      return apiClient
         .get(
           `/projects/company/${companyId}${
-            limit ? `?limit=${limit}` : ""
-          }?active=true`
+            queryString ? `?${queryString}` : ""
+          }`
         )
-        .then((res) => res.data?.projects),
+        .then((res) => res.data?.projects);
+    },
     enabled: !!companyId,
   });
 };
@@ -385,12 +393,17 @@ export const useUpdateTaskOrder = (projectId) => {
   });
 };
 
-export const useGetEmployeeProjects = (employeeId) => {
+export const useGetEmployeeProjects = (employeeId, monthKey = null) => {
   return useQuery({
-    queryKey: ["employeeProjects", employeeId],
-    queryFn: () =>
-      apiClient
-        .get(`/projects/employee/${employeeId}?active=true`)
+    queryKey: ["employeeProjects", employeeId, monthKey],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (monthKey) params.append("monthKey", monthKey);
+      params.append("active", "true");
+
+      const queryString = params.toString();
+      return apiClient
+        .get(`/projects/employee/${employeeId}?${queryString}`)
         .then((res) => res.data)
         .catch((error) => {
           // Fallback data if endpoint doesn't exist or has errors
@@ -436,7 +449,8 @@ export const useGetEmployeeProjects = (employeeId) => {
               },
             ],
           };
-        }),
+        });
+    },
     enabled: !!employeeId, // Only run if employeeId exists and is not null
   });
 };
@@ -1705,6 +1719,15 @@ export const useClockIn = () => {
   return useMutation({
     mutationKey: ["clockIn"],
     mutationFn: (attendanceData) => clockIn(attendanceData),
+    retry: (failureCount, error) => {
+      // Don't retry on 400 errors (client errors like "already clocked in")
+      if (error?.response?.status === 400) {
+        return false;
+      }
+      // Retry other errors up to 1 time
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
     onSuccess: () => {
       queryClient.invalidateQueries(["attendanceStatus"]);
       queryClient.invalidateQueries(["employeeAttendanceHistory"]);
@@ -1719,6 +1742,15 @@ export const useClockOut = () => {
   return useMutation({
     mutationKey: ["clockOut"],
     mutationFn: (clockOutData) => clockOut(clockOutData),
+    retry: (failureCount, error) => {
+      // Don't retry on 400 errors (client errors like "no active attendance")
+      if (error?.response?.status === 400) {
+        return false;
+      }
+      // Retry other errors up to 1 time
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
     onSuccess: () => {
       queryClient.invalidateQueries(["attendanceStatus"]);
       queryClient.invalidateQueries(["employeeAttendanceHistory"]);
@@ -1733,6 +1765,15 @@ export const useStartBreak = () => {
   return useMutation({
     mutationKey: ["startBreak"],
     mutationFn: (breakData) => startBreak(breakData),
+    retry: (failureCount, error) => {
+      // Don't retry on 400 errors (client errors)
+      if (error?.response?.status === 400) {
+        return false;
+      }
+      // Retry other errors up to 1 time
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
     onSuccess: () => {
       queryClient.invalidateQueries(["attendanceStatus"]);
     },
@@ -1745,6 +1786,15 @@ export const useEndBreak = () => {
   return useMutation({
     mutationKey: ["endBreak"],
     mutationFn: () => endBreak(),
+    retry: (failureCount, error) => {
+      // Don't retry on 400 errors (client errors)
+      if (error?.response?.status === 400) {
+        return false;
+      }
+      // Retry other errors up to 1 time
+      return failureCount < 1;
+    },
+    retryDelay: 1000,
     onSuccess: () => {
       queryClient.invalidateQueries(["attendanceStatus"]);
     },
@@ -1758,7 +1808,8 @@ export const useGetCurrentAttendanceStatus = () => {
     queryFn: () => getCurrentAttendanceStatus(),
     staleTime: 1000 * 60 * 1, // 1 minute
     refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Disable refetch on window focus to prevent multiple calls on scroll
+    refetchOnMount: false, // Only refetch if data is stale
   });
 };
 
@@ -1924,6 +1975,12 @@ export const useAttendanceManager = () => {
   const startBreakMutation = useStartBreak();
   const endBreakMutation = useEndBreak();
 
+  // Use refs to prevent concurrent calls (faster than isPending check)
+  const isClockInInProgress = useRef(false);
+  const isClockOutInProgress = useRef(false);
+  const isStartBreakInProgress = useRef(false);
+  const isEndBreakInProgress = useRef(false);
+
   const isShiftActive =
     currentStatus?.attendance?.status === "checked-in" ||
     currentStatus?.attendance?.status === "break";
@@ -1935,11 +1992,14 @@ export const useAttendanceManager = () => {
     : null;
 
   const handleClockIn = async (locationData = {}, deviceInfo = {}) => {
-    // Prevent multiple simultaneous calls
-    if (clockInMutation.isPending) {
+    // Prevent multiple simultaneous calls using ref (immediate check)
+    if (isClockInInProgress.current || clockInMutation.isPending) {
       console.log("Clock in already in progress, ignoring request");
       return { success: false, message: "Clock in already in progress" };
     }
+
+    // Set flag immediately to prevent concurrent calls
+    isClockInInProgress.current = true;
 
     try {
       const attendanceData = {
@@ -1958,15 +2018,21 @@ export const useAttendanceManager = () => {
     } catch (error) {
       console.error("Failed to clock in:", error);
       throw error;
+    } finally {
+      // Reset flag after completion (success or error)
+      isClockInInProgress.current = false;
     }
   };
 
   const handleClockOut = async (locationData = {}, workDescription = "") => {
-    // Prevent multiple simultaneous calls
-    if (clockOutMutation.isPending) {
+    // Prevent multiple simultaneous calls using ref (immediate check)
+    if (isClockOutInProgress.current || clockOutMutation.isPending) {
       console.log("Clock out already in progress, ignoring request");
       return { success: false, message: "Clock out already in progress" };
     }
+
+    // Set flag immediately to prevent concurrent calls
+    isClockOutInProgress.current = true;
 
     try {
       const clockOutData = {
@@ -1981,15 +2047,21 @@ export const useAttendanceManager = () => {
     } catch (error) {
       console.error("Failed to clock out:", error);
       throw error;
+    } finally {
+      // Reset flag after completion (success or error)
+      isClockOutInProgress.current = false;
     }
   };
 
   const handleStartBreak = async (reason = "") => {
-    // Prevent multiple simultaneous calls
-    if (startBreakMutation.isPending) {
+    // Prevent multiple simultaneous calls using ref (immediate check)
+    if (isStartBreakInProgress.current || startBreakMutation.isPending) {
       console.log("Start break already in progress, ignoring request");
       return { success: false, message: "Start break already in progress" };
     }
+
+    // Set flag immediately to prevent concurrent calls
+    isStartBreakInProgress.current = true;
 
     try {
       const result = await startBreakMutation.mutateAsync({ reason });
@@ -1997,15 +2069,21 @@ export const useAttendanceManager = () => {
     } catch (error) {
       console.error("Failed to start break:", error);
       throw error;
+    } finally {
+      // Reset flag after completion (success or error)
+      isStartBreakInProgress.current = false;
     }
   };
 
   const handleEndBreak = async () => {
-    // Prevent multiple simultaneous calls
-    if (endBreakMutation.isPending) {
+    // Prevent multiple simultaneous calls using ref (immediate check)
+    if (isEndBreakInProgress.current || endBreakMutation.isPending) {
       console.log("End break already in progress, ignoring request");
       return { success: false, message: "End break already in progress" };
     }
+
+    // Set flag immediately to prevent concurrent calls
+    isEndBreakInProgress.current = true;
 
     try {
       const result = await endBreakMutation.mutateAsync();
@@ -2013,6 +2091,9 @@ export const useAttendanceManager = () => {
     } catch (error) {
       console.error("Failed to end break:", error);
       throw error;
+    } finally {
+      // Reset flag after completion (success or error)
+      isEndBreakInProgress.current = false;
     }
   };
 

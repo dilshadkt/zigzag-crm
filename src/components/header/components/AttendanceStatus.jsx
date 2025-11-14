@@ -8,6 +8,10 @@ const AttendanceStatus = ({
   isClockingOut,
   clockOutError,
   onEndShift,
+  onStartBreak,
+  onEndBreak,
+  isStartingBreak,
+  isEndingBreak,
 }) => {
   const [showEndShiftModal, setShowEndShiftModal] = useState(false);
 
@@ -31,9 +35,33 @@ const AttendanceStatus = ({
         <span className="text-sm font-mono font-bold text-gray-800">
           {formatShiftTime(shiftElapsedTime)}
         </span>
+        
+        {/* Break Controls */}
+        {isOnBreak ? (
+          <button
+            onClick={onEndBreak}
+            disabled={isEndingBreak}
+            className="flex items-center gap-1 hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <span className="text-xs font-medium text-blue-600">
+              {isEndingBreak ? "Ending..." : "End Break"}
+            </span>
+          </button>
+        ) : (
+          <button
+            onClick={() => onStartBreak("Break")}
+            disabled={isStartingBreak}
+            className="flex items-center gap-1 hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <span className="text-xs font-medium text-yellow-600">
+              {isStartingBreak ? "Starting..." : "Break"}
+            </span>
+          </button>
+        )}
+        
         <button
           onClick={() => setShowEndShiftModal(true)}
-          className="flex items-center gap-1 hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors"
+          className="flex items-center gap-1 hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors disabled:opacity-50"
           disabled={isClockingOut}
         >
           <span className="text-xs font-medium text-gray-600">

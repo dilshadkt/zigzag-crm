@@ -15,6 +15,7 @@ import socketService from "../../services/socketService";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Task from "../../components/shared/task";
 import FilterMenu from "../../components/projects/FilterMenu";
+import { assetPath } from "../../utils/assetPath";
 
 const ClientReview = () => {
   const { user } = useAuth();
@@ -335,7 +336,7 @@ const ClientReview = () => {
   if (isLoading) {
     return (
       <div className="h-screen w-full flexCenter">
-        <img src="/icons/loading.svg" alt="" />
+        <img src={assetPath("icons/loading.svg")} alt="" />
       </div>
     );
   }

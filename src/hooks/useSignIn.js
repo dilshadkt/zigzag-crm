@@ -26,7 +26,16 @@ export const useSignIn = () => {
             isProfileComplete: user?.isProfileComplete || false,
           })
         );
-        window.location.href = user?.role === "employee" ? "/projects" : "/";
+
+        const isDesktop =
+          typeof window !== "undefined" && window.desktop && window.location;
+
+        if (isDesktop) {
+          const target = user?.role === "employee" ? "#/" : "#/";
+          window.location.hash = target.replace("#", "");
+        } else {
+          window.location.href = user?.role === "employee" ? "/" : "/";
+        }
       } else {
         setErrors({ general: message || "Something went wrong" });
       }

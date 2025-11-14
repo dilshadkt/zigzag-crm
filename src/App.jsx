@@ -1,4 +1,4 @@
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, HashRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
@@ -6,6 +6,10 @@ import { validateSession } from "./api/service";
 import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 import socketService from "./services/socketService";
 import AppRoutes from "./routes/AppRoutes";
+import { assetPath } from "./utils/assetPath";
+
+const isDesktop = typeof window !== "undefined" && window.desktop;
+const Router = isDesktop ? HashRouter : BrowserRouter;
 
 function App() {
   const dispatch = useDispatch();
@@ -48,16 +52,16 @@ function App() {
   if (loading || !isAuthChecked) {
     return (
       <div className="h-screen w-full flexCenter">
-        <img src="/icons/loading.svg" alt="" />
+        <img src={assetPath("icons/loading.svg")} alt="" />
       </div>
     );
   }
 
   return (
     <>
-      <BrowserRouter>
+      <Router>
         <AppRoutes />
-      </BrowserRouter>
+      </Router>
       <Toaster
         position="top-right"
         toastOptions={{

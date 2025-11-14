@@ -20,6 +20,7 @@ import { getCurrentMonthKey } from "../../lib/dateUtils";
 import AddTask from "../../components/projects/addTask";
 import { uploadSingleFile } from "../../api/service";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
+import { assetPath } from "../../utils/assetPath";
 
 // Status configuration
 const statusConfig = {
@@ -709,7 +710,11 @@ const Board = () => {
             }}
             className="p-2 bg-white h-fit hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
           >
-            <img src="/icons/refresh.svg" alt="Refresh" className="w-5 h-5" />
+            <img
+              src={assetPath("icons/refresh.svg")}
+              alt="Refresh"
+              className="w-5 h-5"
+            />
           </button>
         </div>
       </div>

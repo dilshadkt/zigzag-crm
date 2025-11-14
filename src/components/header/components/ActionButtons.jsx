@@ -17,6 +17,7 @@ const ActionButtons = ({
   remainingTime,
   isRunning,
   formatTime,
+  // isShiftActive is no longer used to hide the button, but kept for compatibility
 }) => {
   return (
     <>
@@ -33,20 +34,19 @@ const ActionButtons = ({
         )}
       </Link>
 
-      {/* Clock In Button */}
-      {!isShiftActive && (
-        <button
-          onClick={onAttendanceClick}
-          className="flexCenter cursor-pointer w-12 h-12 rounded-[14px] bg-white relative hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={statusLoading || isClockingIn}
-        >
-          {statusLoading ? (
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <IoFingerPrintOutline className="w-5 h-5 text-gray-600" />
-          )}
-        </button>
-      )}
+      {/* Clock In Button - Always available for multiple check-ins */}
+      <button
+        onClick={onAttendanceClick}
+        className="flexCenter cursor-pointer w-12 h-12 rounded-[14px] bg-white relative hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={statusLoading || isClockingIn}
+        title={isShiftActive ? "Clock in again" : "Clock in"}
+      >
+        {statusLoading ? (
+          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        ) : (
+          <IoFingerPrintOutline className="w-5 h-5 text-gray-600" />
+        )}
+      </button>
 
       {/* Timer */}
       <Link

@@ -25,28 +25,53 @@ const Dashboard = () => {
   const isEmployee = user?.role === "employee";
   const isCompanyAdmin = user?.role === "company-admin";
 
+  // Get user-specific localStorage key
+  const getStorageKey = (userId) => {
+    return userId
+      ? `dashboard-selected-date-${userId}`
+      : "dashboard-selected-date";
+  };
+
   // State for managing the selected month with persistence
+  // Default to current date initially - will be updated when user loads
   const [selectedDate, setSelectedDate] = useState(() => {
-    // Try to get the persisted date from localStorage
-    const savedDate = localStorage.getItem("dashboard-selected-date");
-    if (savedDate) {
-      const parsedDate = new Date(savedDate);
-      // Validate that the date is valid
-      if (!isNaN(parsedDate.getTime())) {
-        return parsedDate;
-      }
-    }
-    // Default to current date if no valid saved date
     return new Date();
   });
 
-  // Fetch projects based on user role
+  // Initialize selectedDate from localStorage when user is available
+  useEffect(() => {
+    if (user?._id) {
+      const storageKey = getStorageKey(user._id);
+      const savedDate = localStorage.getItem(storageKey);
+      if (savedDate) {
+        const parsedDate = new Date(savedDate);
+        // Validate that the date is valid
+        if (!isNaN(parsedDate.getTime())) {
+          setSelectedDate(parsedDate);
+        }
+      } else {
+        // If no saved date for this user, default to current date
+        setSelectedDate(new Date());
+      }
+    }
+  }, [user?._id]); // Only run when user ID changes
+
+  // Calculate taskMonth in YYYY-MM format
+  const taskMonth = `${selectedDate.getFullYear()}-${(
+    selectedDate.getMonth() + 1
+  )
+    .toString()
+    .padStart(2, "0")}`;
+
+  // Fetch projects based on user role with month filter
   const { data: companyProjects } = useCompanyProjects(
     isEmployee ? null : companyId,
-    3
+    3,
+    taskMonth
   );
   const { data: employeeProjectsData } = useGetEmployeeProjects(
-    isEmployee && user?._id ? user._id : null
+    isEmployee && user?._id ? user._id : null,
+    taskMonth
   );
 
   // Determine which projects to show
@@ -56,17 +81,13 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  // Persist the selected date whenever it changes
+  // Persist the selected date whenever it changes (only if user is available)
   useEffect(() => {
-    localStorage.setItem("dashboard-selected-date", selectedDate.toISOString());
-  }, [selectedDate]);
-
-  // Calculate taskMonth in YYYY-MM format
-  const taskMonth = `${selectedDate.getFullYear()}-${(
-    selectedDate.getMonth() + 1
-  )
-    .toString()
-    .padStart(2, "0")}`;
+    if (user?._id) {
+      const storageKey = getStorageKey(user._id);
+      localStorage.setItem(storageKey, selectedDate.toISOString());
+    }
+  }, [selectedDate, user?._id]);
 
   // Navigation functions for month selection
   const goToPreviousMonth = () => {

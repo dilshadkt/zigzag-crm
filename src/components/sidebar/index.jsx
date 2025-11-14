@@ -10,6 +10,7 @@ import {
   useGetTasksOnPublish,
   useGetClientReviewTasks,
 } from "../../api/hooks";
+import { assetPath } from "../../utils/assetPath";
 const Sidebar = () => {
   const { user } = useAuth();
   const { userPosition } = useRouteAccess();
@@ -157,7 +158,7 @@ const Sidebar = () => {
        gap-x-2 rounded-[14px] cursor-pointer bg-[#3F8CFF] text-white w-fit px-5 py-2
     text-sm font-medium"
           >
-            <img src="/icons/chat.svg" alt="" className="w-6" />
+            <img src={assetPath("icons/chat.svg")} alt="" className="w-6" />
             <span>Support</span>
           </button>
           <img
@@ -189,7 +190,7 @@ const Sidebar = () => {
                 className="w-11 h-11 flexCenter bg-[#F4F9FD] rounded-2xl"
               >
                 <img
-                  src="/icons/cancel.svg"
+                  src={assetPath("icons/cancel.svg")}
                   alt=""
                   className="w-5"
                   loading="lazy"

@@ -95,10 +95,13 @@ const AttendanceModal = ({
   };
 
   const markAttendance = async () => {
-    // Prevent multiple API calls
-    if (isProcessingAttendance || isClockingIn) {
+    // Prevent multiple API calls - check both flags
+    if (isProcessingAttendance || isClockingIn || isSwipeCompleted) {
       return;
     }
+
+    // Set processing state immediately to prevent concurrent calls
+    setIsSwipeCompleted(true);
 
     try {
       setAttendanceError(null);
@@ -108,19 +111,30 @@ const AttendanceModal = ({
 
       const result = await onClockIn(location, deviceInfo);
 
-      if (result.success) {
+      if (result && result.success) {
         // Auto-close modal after successful clock in
         setTimeout(() => {
           onClose();
           setSwipeProgress(0);
           setIsSwipeCompleted(false);
         }, 1000); // Give user time to see success state
+      } else {
+        // If result doesn't indicate success, reset to allow retry
+        setSwipeProgress(0);
+        setIsSwipeCompleted(false);
       }
     } catch (error) {
       console.error("Failed to mark attendance:", error);
-      setAttendanceError(
-        error.message || "Failed to clock in. Please try again."
-      );
+      
+      // Extract error message from response
+      let errorMessage = "Failed to clock in. Please try again.";
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      setAttendanceError(errorMessage);
 
       // Reset states on error to allow retry
       setSwipeProgress(0);
@@ -141,7 +155,8 @@ const AttendanceModal = ({
             {getGreeting()}, {user?.firstName}
           </h3>
           <p className="text-sm text-gray-600 mb-1">
-            Punch in now to track your hours and let your team know you're here
+            Punch in now to track your hours and let your team know you're here.
+            You can clock in multiple times per day to accumulate your work hours.
           </p>
           <div className="text-center mt-4">
             <div className="text-2xl font-bold text-gray-800">

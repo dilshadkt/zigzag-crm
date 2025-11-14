@@ -12,6 +12,7 @@ import { formatDate } from "../../../lib/dateUtils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
+import { assetPath } from "../../../utils/assetPath";
 
 const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   const { user, isCompany } = useAuth();
@@ -188,7 +189,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
               {canLogTime && (
                 <PrimaryButton
                   title="Log time"
-                  icon="/icons/time.svg"
+                  icon={assetPath("icons/time.svg")}
                   className="w-fit text-white"
                   onclick={() => setIsModalOpen(true)}
                 />
@@ -206,7 +207,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
         </div>
       </div>
       <div className="flexStart px-3 gap-x-2">
-        <img src="/icons/calender2.svg" alt="" className="w-4" />
+        <img src={assetPath("icons/calender2.svg")} alt="" className="w-4" />
         <span className="text-sm text-[#7D8592]">
           Created {formatDate(taskDetails?.createdAt)}
         </span>
