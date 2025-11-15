@@ -99,7 +99,9 @@ const EmployeeDetails = () => {
       <div className="w-full h-full overflow-hidden gap-x-5 flex">
         <UserProfile
           user={{
-            name: `${employee.firstName} ${employee.lastName}`,
+            ...employee,
+            firstName: employee.firstName,
+            lastName: employee.lastName,
             email: employee.email,
             profileImage: employee.profileImage,
             phoneNumber: employee.phoneNumber,
@@ -107,7 +109,10 @@ const EmployeeDetails = () => {
             level: employee.level,
             gender: employee.gender,
             dob: employee.dob,
-            firstName: employee.firstName,
+            company: employee.company,
+            location: employee.location,
+            progressValue: employee.progressValue,
+            skype: employee.skype,
           }}
           disableEdit={!isAdmin}
           employeeId={employeeId}

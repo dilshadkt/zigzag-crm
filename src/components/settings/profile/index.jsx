@@ -306,7 +306,9 @@ rounded-3xl  flex flex-col "
             )}
           </div>
         </div>
-        <h4 className="text-lg font-medium mt-2">{user?.firstName}</h4>
+        <h4 className="text-lg font-medium mt-2">
+          {[user?.firstName, user?.lastName].filter(Boolean).join(" ").trim()}
+        </h4>
         <span className="text-xs text-gray-600  capitalize">
           {user?.position}
         </span>
