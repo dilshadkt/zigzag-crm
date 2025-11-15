@@ -273,6 +273,12 @@ const Task = ({
           >
             {task?.title}
           </h4>
+          {/* Project info for tasks/subtasks */}
+          {task?.project?.name && (
+            <div className="text-xs bg-gray-50 px-3 py-1 rounded-full text-gray-500 mt-1">
+              {task.project.name}
+            </div>
+          )}
         </div>
 
         <div className="visible md:hidden">
