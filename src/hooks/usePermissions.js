@@ -88,6 +88,19 @@ export const usePermissions = () => {
     return user?.position?.name || "";
   };
 
+  /**
+   * Check if user has access to admin dashboard
+   * @returns {boolean} True if user has admin dashboard access
+   */
+  const hasAdminDashboardAccess = () => {
+    // Company admins always have access
+    if (user?.role === "company-admin") {
+      return true;
+    }
+
+    return userPermissions?.accessAdminDashboard || false;
+  };
+
   return {
     hasPermission,
     hasAnyPermission,
@@ -95,6 +108,7 @@ export const usePermissions = () => {
     getCategoryPermissions,
     isAdmin,
     getPositionName,
+    hasAdminDashboardAccess,
     userPermissions,
   };
 };

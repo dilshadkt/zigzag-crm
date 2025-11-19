@@ -3,6 +3,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 
 // // HOC for role-based route protection
 // export const WithRoleAccess = (allowedRoles) => (Component) => {
@@ -20,6 +21,7 @@ import { useAuth } from "../../hooks/useAuth";
 
 function WithRoleAcess({ children, allowedRoles, allowedRoutes }) {
   const { user } = useAuth();
+  const { hasAdminDashboardAccess } = usePermissions();
   const location = useLocation();
 
   if (!user) {
@@ -27,8 +29,19 @@ function WithRoleAcess({ children, allowedRoles, allowedRoutes }) {
   }
 
   // Check role-based access if allowedRoles is provided
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+  // Allow access if user has the role OR (if checking for company-admin role) has admin dashboard access permission
+  if (allowedRoles) {
+    const hasRole = allowedRoles.includes(user.role);
+    
+    // If checking for company-admin access, also allow users with admin dashboard permission
+    let hasAdminAccess = false;
+    if (allowedRoles.includes("company-admin")) {
+      hasAdminAccess = hasAdminDashboardAccess();
+    }
+    
+    if (!hasRole && !hasAdminAccess) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   // Check route-based access if allowedRoutes is provided and user has position details

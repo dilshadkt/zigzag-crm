@@ -206,6 +206,13 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
     }));
   };
 
+  const handleAdminDashboardToggle = () => {
+    setPermissions((prev) => ({
+      ...prev,
+      accessAdminDashboard: !prev.accessAdminDashboard,
+    }));
+  };
+
   const handleSelectAll = (category) => {
     const allPermissions = {};
     PERMISSION_CATEGORIES[category].permissions.forEach((perm) => {
@@ -284,6 +291,35 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-4">
+            {/* Admin Dashboard Access Section */}
+            <div className="border-2 border-purple-200 rounded-xl p-4 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
+                    <FiShield className="text-lg text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800">
+                      Admin Dashboard Access
+                    </h3>
+                    <p className="text-[10px] text-gray-600">
+                      Grant access to the admin dashboard and administrative
+                      features
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={permissions.accessAdminDashboard || false}
+                    onChange={handleAdminDashboardToggle}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+            </div>
+
             {Object.entries(PERMISSION_CATEGORIES).map(
               ([
                 category,
@@ -372,11 +408,12 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
             <p className="text-xs text-gray-600">
               Total permissions enabled:{" "}
               <span className="font-semibold">
-                {Object.values(permissions).reduce(
-                  (acc, category) =>
-                    acc + Object.values(category).filter(Boolean).length,
-                  0
-                )}
+                {Object.entries(permissions).reduce((acc, [key, value]) => {
+                  if (key === "accessAdminDashboard") {
+                    return acc + (value ? 1 : 0);
+                  }
+                  return acc + Object.values(value).filter(Boolean).length;
+                }, 0)}
               </span>
             </p>
             <div className="flex gap-2">
@@ -504,10 +541,16 @@ const SecuritySettings = () => {
 
   const getPermissionCount = (role) => {
     if (!role.permissions) return 0;
-    return Object.values(role.permissions).reduce(
-      (acc, category) => acc + Object.values(category).filter(Boolean).length,
-      0
-    );
+    return Object.entries(role.permissions).reduce((acc, [key, value]) => {
+      if (key === "accessAdminDashboard") {
+        return acc + (value ? 1 : 0);
+      }
+      return acc + Object.values(value).filter(Boolean).length;
+    }, 0);
+  };
+
+  const hasAdminDashboardAccess = (role) => {
+    return role.permissions?.accessAdminDashboard || false;
   };
 
   return (
@@ -631,6 +674,14 @@ const SecuritySettings = () => {
                               {getPermissionCount(role)} permissions enabled •
                               Access to {role.allowedRoutes?.length || 0}{" "}
                               modules
+                              {hasAdminDashboardAccess(role) && (
+                                <>
+                                  {" • "}
+                                  <span className="font-medium text-purple-600">
+                                    Admin Dashboard Access
+                                  </span>
+                                </>
+                              )}
                             </>
                           )}
                         </p>

@@ -12,7 +12,10 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useAttendanceCalendarData } from "../hooks/useAttendanceCalendarData";
 import AttendanceCalendarHeader from "./AttendanceCalendarHeader";
 import AttendanceCalendarGrid from "./AttendanceCalendarGrid";
-import { setCurrentDate as setCalendarCurrentDate } from "../../../store/slice/calendarSlice";
+import {
+  setCurrentDate as setCalendarCurrentDate,
+  reloadCalendarState,
+} from "../../../store/slice/calendarSlice";
 
 const AttendanceCalendar = () => {
   const dispatch = useDispatch();
@@ -21,23 +24,41 @@ const AttendanceCalendar = () => {
     (state) => state.calendar
   );
 
-  // Use persisted current date or fallback to new Date()
+  // Reload calendar state when user changes to get user-specific persisted date
+  useEffect(() => {
+    if (user?._id) {
+      dispatch(reloadCalendarState());
+    }
+  }, [user?._id, dispatch]);
+
+  // Use persisted current date or fallback to current month (new Date())
   const [currentDate, setCurrentDate] = useState(() => {
-    return persistedCurrentDate ? new Date(persistedCurrentDate) : new Date();
+    // Default to current month if no persisted date
+    return new Date();
   });
 
-  // Sync local state with Redux persisted state when component mounts or when persisted date changes
+  // Sync local state with Redux persisted state when user loads or persisted date changes
   useEffect(() => {
-    if (!persistedCurrentDate) return;
-    const persistedDate = new Date(persistedCurrentDate);
-    if (Number.isNaN(persistedDate.getTime())) return;
-    setCurrentDate((prevDate) => {
-      if (prevDate.getTime() === persistedDate.getTime()) {
-        return prevDate;
+    if (user?._id) {
+      if (persistedCurrentDate) {
+        const persistedDate = new Date(persistedCurrentDate);
+        if (!Number.isNaN(persistedDate.getTime())) {
+          setCurrentDate((prevDate) => {
+            if (prevDate.getTime() === persistedDate.getTime()) {
+              return prevDate;
+            }
+            return persistedDate;
+          });
+        } else {
+          // If persisted date is invalid, default to current month
+          setCurrentDate(new Date());
+        }
+      } else {
+        // If no persisted date for this user, default to current month
+        setCurrentDate(new Date());
       }
-      return persistedDate;
-    });
-  }, [persistedCurrentDate]);
+    }
+  }, [user?._id, persistedCurrentDate]);
 
   // Fetch attendance data for the current month
   const { attendanceData, isLoading, getAttendanceForDate } =

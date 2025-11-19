@@ -88,6 +88,14 @@ const calendarSlice = createSlice({
       state.currentDate = defaultState.currentDate;
       persistState(state);
     },
+    reloadCalendarState(state) {
+      // Reload state from localStorage for current user
+      const reloadedState = loadState();
+      state.eventFilters = reloadedState.eventFilters;
+      state.assignerFilter = reloadedState.assignerFilter;
+      state.projectFilter = reloadedState.projectFilter;
+      state.currentDate = reloadedState.currentDate;
+    },
   },
 });
 
@@ -98,6 +106,7 @@ export const {
   setProjectFilter,
   setCurrentDate,
   resetCalendarFilters,
+  reloadCalendarState,
 } = calendarSlice.actions;
 
 export default calendarSlice.reducer;

@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouteAccess } from "../../hooks/useRouteAccess";
+import { usePermissions } from "../../hooks/usePermissions";
+import { MdDashboard } from "react-icons/md";
 import {
   useGetTasksOnReview,
   useGetTasksOnPublish,
@@ -14,6 +16,7 @@ import { assetPath } from "../../utils/assetPath";
 const Sidebar = () => {
   const { user } = useAuth();
   const { userPosition } = useRouteAccess();
+  const { hasAdminDashboardAccess } = usePermissions();
 
   // Get current month in YYYY-MM format for tasks on review
   const getCurrentMonth = () => {
@@ -38,10 +41,39 @@ const Sidebar = () => {
     taskMonth: getCurrentMonth(),
   });
 
+  // Check if user has admin dashboard access permission
+  // IMPORTANT: Company admins should NOT see this option - only non-admin users with permission
+  const isCompanyAdmin = user?.role === "company-admin";
+  const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
+
+  // Build sidebar menu items - only add Company Dashboard if user has permission (but NOT for admins)
+  const sidebarMenuItems = [...SIDE_MENU];
+
+  // IMPORTANT: Only add Company Dashboard menu item if user has the permission AND is NOT a company admin
+  if (canAccessAdminDashboard) {
+    // Insert Company Dashboard after Dashboard
+    const dashboardIndex = sidebarMenuItems.findIndex(
+      (item) => item.routeKey === "dashboard"
+    );
+    if (dashboardIndex !== -1) {
+      sidebarMenuItems.splice(dashboardIndex + 1, 0, {
+        id: 13,
+        title: "Company Dashboard",
+        icon: MdDashboard,
+        path: "/company-dashboard",
+        routeKey: "company-dashboard",
+      });
+    }
+  }
+
   // Filter sidebar items based on user's position allowed routes
-  const filteredSidebar = SIDE_MENU.filter((item) => {
-    // Company admins have full access to all menu items
-    if (user?.role === "company-admin") {
+  const filteredSidebar = sidebarMenuItems.filter((item) => {
+    // Company admins have full access to all menu items EXCEPT Company Dashboard
+    if (isCompanyAdmin) {
+      // Hide Company Dashboard for admins
+      if (item.routeKey === "company-dashboard") {
+        return false;
+      }
       return true;
     }
 
@@ -54,7 +86,12 @@ const Sidebar = () => {
       return true;
     }
 
-    // For other users, check if the routeKey is in their allowed routes
+    // Company Dashboard is ONLY accessible if user has the permission (and is NOT an admin)
+    if (item.routeKey === "company-dashboard") {
+      return canAccessAdminDashboard;
+    }
+
+    // For other menu items, check if the routeKey is in their allowed routes
     const allowedRoutes = userPosition?.allowedRoutes || [];
     return allowedRoutes.includes(item.routeKey);
   });

@@ -31,6 +31,7 @@ import {
   setAssignerFilter,
   setProjectFilter,
   setCurrentDate as setCalendarCurrentDate,
+  reloadCalendarState,
 } from "../../store/slice/calendarSlice";
 
 const Calendar = () => {
@@ -42,23 +43,45 @@ const Calendar = () => {
     currentDate: persistedCurrentDate,
   } = useSelector((state) => state.calendar);
 
-  // Use persisted current date or fallback to new Date()
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const isEmployee = user?.role === "employee";
+
+  // Use persisted current date or fallback to current month (new Date())
   const [currentDate, setCurrentDate] = useState(() => {
-    return persistedCurrentDate ? new Date(persistedCurrentDate) : new Date();
+    // Default to current month if no persisted date
+    return new Date();
   });
 
-  // Sync local state with Redux persisted state when component mounts or when persisted date changes
+  // Reload calendar state when user changes to get user-specific persisted date
   useEffect(() => {
-    if (!persistedCurrentDate) return;
-    const persistedDate = new Date(persistedCurrentDate);
-    if (Number.isNaN(persistedDate.getTime())) return;
-    setCurrentDate((prevDate) => {
-      if (prevDate.getTime() === persistedDate.getTime()) {
-        return prevDate;
+    if (user?._id) {
+      dispatch(reloadCalendarState());
+    }
+  }, [user?._id, dispatch]);
+
+  // Sync local state with Redux persisted state when user loads or persisted date changes
+  useEffect(() => {
+    if (user?._id) {
+      if (persistedCurrentDate) {
+        const persistedDate = new Date(persistedCurrentDate);
+        if (!Number.isNaN(persistedDate.getTime())) {
+          setCurrentDate((prevDate) => {
+            if (prevDate.getTime() === persistedDate.getTime()) {
+              return prevDate;
+            }
+            return persistedDate;
+          });
+        } else {
+          // If persisted date is invalid, default to current month
+          setCurrentDate(new Date());
+        }
+      } else {
+        // If no persisted date for this user, default to current month
+        setCurrentDate(new Date());
       }
-      return persistedDate;
-    });
-  }, [persistedCurrentDate]);
+    }
+  }, [user?._id, persistedCurrentDate]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState(null);
@@ -67,10 +90,6 @@ const Calendar = () => {
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const [selectedDateForScheduling, setSelectedDateForScheduling] =
     useState(null);
-
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const isEmployee = user?.role === "employee";
 
   // Get projects and employees data for AddTask modal
   const { data: projectsData } = useCompanyProjects(user?.company);

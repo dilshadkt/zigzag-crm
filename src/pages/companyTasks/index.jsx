@@ -32,8 +32,21 @@ const CompanyTasks = ({ filter: propFilter }) => {
     useGetAllCompanyTasks(companyId, taskMonth);
 
   // Get today's tasks with smart logic (same as dashboard)
-  const { data: todayTasksData, isLoading: todayTasksLoading } =
+  const { data: todayTasksData, isLoading: todayTasksLoading, error: todayTasksError } =
     useGetCompanyTodayTasks(taskMonth);
+
+  // Debug: Log today tasks data
+  React.useEffect(() => {
+    if (filter === "today") {
+      console.log("CompanyTasks - Today Tasks Data:", {
+        todayTasksData,
+        isLoading: todayTasksLoading,
+        error: todayTasksError,
+        taskMonth,
+        filter,
+      });
+    }
+  }, [todayTasksData, todayTasksLoading, todayTasksError, taskMonth, filter]);
 
   // Determine which data to use based on filter
   const isTodayFilter = filter === "today";
@@ -128,6 +141,25 @@ const CompanyTasks = ({ filter: propFilter }) => {
         return "text-gray-600";
     }
   };
+
+  // Show error message if there's an error
+  if (isTodayFilter && todayTasksError) {
+    return (
+      <section className="flex flex-col">
+        <Navigator path={"/"} title={"Back to Dashboard"} />
+        <Header>{getFilterTitle()}</Header>
+        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+          <p className="text-red-800 font-medium">Error loading today's tasks</p>
+          <p className="text-red-600 text-sm mt-1">
+            {todayTasksError?.response?.data?.message || todayTasksError?.message || "An error occurred"}
+          </p>
+          <p className="text-red-500 text-xs mt-2">
+            Status: {todayTasksError?.response?.status || "Unknown"}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   if (isLoading) {
     return (

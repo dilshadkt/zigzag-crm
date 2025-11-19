@@ -54,6 +54,7 @@ import TaskOnPublish from "../pages/taskOnPublish";
 import ClientReview from "../pages/clientReview";
 import Calendar from "../features/calender";
 import Attendance from "../features/attendance";
+import CompanyDashboard from "../pages/companyDashboard";
 
 const AppRoutes = () => {
   return (
@@ -71,6 +72,14 @@ const AppRoutes = () => {
           element={
             <RouteAccess>
               <Dashboard />
+            </RouteAccess>
+          }
+        />
+        <Route
+          path="company-dashboard"
+          element={
+            <RouteAccess>
+              <CompanyDashboard />
             </RouteAccess>
           }
         />
@@ -154,9 +163,11 @@ const AppRoutes = () => {
         <Route
           path="company-today-tasks"
           element={
-            <WithRoleAcess allowedRoles={["company-admin"]}>
-              <CompanyTasks filter="today" />
-            </WithRoleAcess>
+            <RouteAccess>
+              <WithRoleAcess allowedRoles={["company-admin"]}>
+                <CompanyTasks filter="today" />
+              </WithRoleAcess>
+            </RouteAccess>
           }
         />
         <Route

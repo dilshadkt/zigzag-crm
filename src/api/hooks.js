@@ -1053,9 +1053,43 @@ export const useGetCompanyTodayTasks = (taskMonth) => {
 
       return apiClient
         .get(`/tasks/company/today?${params.toString()}`)
-        .then((res) => res.data)
+        .then((res) => {
+          // Backend returns: { success: true, tasks: [...], subTasks: [...], totalTodayTasks: ... }
+          // axios wraps it in res.data, so res.data is the response body
+          const responseData = res.data;
+          
+          // Ensure we return the expected structure
+          if (responseData && (responseData.tasks || responseData.subTasks)) {
+            return {
+              tasks: responseData.tasks || [],
+              subTasks: responseData.subTasks || [],
+              totalTodayTasks: responseData.totalTodayTasks || 0,
+            };
+          }
+          
+          // Fallback if structure is unexpected
+          console.warn("Unexpected response structure:", responseData);
+          return {
+            tasks: [],
+            subTasks: [],
+            totalTodayTasks: 0,
+          };
+        })
         .catch((error) => {
-          console.warn("Company today tasks endpoint not available:", error);
+          console.error("Company today tasks endpoint error:", error);
+          console.error("Error details:", {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            url: `/tasks/company/today?${params.toString()}`,
+          });
+          
+          // If it's a 403 error, it means permission denied
+          if (error.response?.status === 403) {
+            console.error("Access denied - user may not have admin dashboard access permission");
+          }
+          
+          // Return empty structure on error
           return {
             tasks: [],
             subTasks: [],
