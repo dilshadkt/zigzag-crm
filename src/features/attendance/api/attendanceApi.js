@@ -39,9 +39,9 @@ export const attendanceApi = {
   },
 
   // Get employee attendance
-  getEmployeeAttendance: async (employeeId, startDate, endDate) => {
+  getEmployeeAttendance: async (employeeId, startDate, endDate, page = 1, limit = 30) => {
     const response = await apiClient.get(
-      `/attendance/employee/${employeeId}?startDate=${startDate}&endDate=${endDate}`
+      `/attendance/employee/${employeeId}?startDate=${startDate}&endDate=${endDate}&page=${page}&limit=${limit}`
     );
     return response.data;
   },
