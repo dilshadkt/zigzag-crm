@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { FiEdit2, FiSave, FiX } from "react-icons/fi";
 import LeadStatusBadge from "../../leads/components/LeadStatusBadge";
+import StatusDropdown from "../../leads/components/StatusDropdown";
 import DynamicLeadForm from "../../leads/components/DynamicLeadForm";
+import { toast } from "react-hot-toast";
 import {
   useGetLeadFormConfig,
   useGetLeadStatuses,
@@ -73,6 +75,29 @@ const LeadOverviewSection = ({ lead }) => {
     useGetLeadStatuses();
 
   const { mutate: updateLead, isLoading: isUpdating } = useUpdateLead();
+
+  // Handle status change from dropdown
+  const handleStatusChange = useCallback(
+    (statusId) => {
+      updateLead(
+        {
+          leadId: lead.id || lead._id,
+          leadData: { status: statusId },
+        },
+        {
+          onSuccess: () => {
+            toast.success("Lead status updated successfully");
+          },
+          onError: (error) => {
+            toast.error(
+              error?.response?.data?.message || "Failed to update status"
+            );
+          },
+        }
+      );
+    },
+    [lead, updateLead]
+  );
 
   // Stable handler for form value changes (same pattern as AddLeadModal)
   const handleFormValueChange = useCallback((updater) => {
@@ -509,7 +534,15 @@ const LeadOverviewSection = ({ lead }) => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <LeadStatusBadge status={lead.status || leadDetails?.status} />
+            {statuses && statuses.length > 0 ? (
+              <StatusDropdown
+                status={lead.status || leadDetails?.status}
+                statuses={statuses}
+                onStatusChange={handleStatusChange}
+              />
+            ) : (
+              <LeadStatusBadge status={lead.status || leadDetails?.status} />
+            )}
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(true)}

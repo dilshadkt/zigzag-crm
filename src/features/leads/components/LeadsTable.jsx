@@ -13,6 +13,16 @@ const LeadsTable = ({
   onToggleSelect,
   onToggleSelectAll,
   onRowClick,
+  onEdit,
+  onSendEmail,
+  onCreateTask,
+  onAssign,
+  onDelete,
+  onConvert,
+  onCopyURL,
+  statuses,
+  onStatusChange,
+  isEmployee = false,
 }) => {
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
   const isAllSelected =
@@ -42,13 +52,18 @@ const LeadsTable = ({
                 {column.label}
               </th>
             ))}
+            {!isEmployee && (
+              <th className={headerClasses} style={{ width: "60px" }}>
+                {/* Actions column */}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="bg-white">
           {showEmptyState ? (
             <tr>
               <td
-                colSpan={columns.length + 1}
+                colSpan={columns.length + (isEmployee ? 1 : 2)}
                 className="px-6 py-12 text-center text-sm text-slate-500"
               >
                 No leads found. Try adjusting your filters or create a new lead.
@@ -65,6 +80,16 @@ const LeadsTable = ({
                   isSelected={selectedLeadIds.includes(leadId)}
                   onToggle={onToggleSelect}
                   onRowClick={onRowClick}
+                  onEdit={onEdit}
+                  onSendEmail={onSendEmail}
+                  onCreateTask={onCreateTask}
+                  onAssign={onAssign}
+                  onDelete={onDelete}
+                  onConvert={onConvert}
+                  onCopyURL={onCopyURL}
+                  statuses={statuses}
+                  onStatusChange={onStatusChange}
+                  isEmployee={isEmployee}
                 />
               );
             })

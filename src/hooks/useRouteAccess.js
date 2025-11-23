@@ -33,6 +33,7 @@ export const useRouteAccess = () => {
         vacations: "/vacations",
         employees: "/employees",
         messenger: "/messenger",
+        leads: "/leads",
         "task-on-review": "/task-on-review",
         settings: "/settings",
       };

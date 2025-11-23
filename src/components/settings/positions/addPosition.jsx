@@ -66,6 +66,7 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
     { value: "vacations", label: "Vacations", icon: "🏖️" },
     { value: "employees", label: "Employees", icon: "👥" },
     { value: "messenger", label: "Messenger", icon: "💬" },
+    { value: "leads", label: "Leads", icon: "🎯" },
     { value: "task-on-review", label: "Task on Review", icon: "👀" },
     { value: "task-on-publish", label: "Task on Publish", icon: "☁️" },
     { value: "client-review", label: "Client Review", icon: "✅" },
@@ -244,6 +245,8 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                                 ? "Employee management and profiles"
                                 : route.value === "messenger"
                                 ? "Internal messaging and communication"
+                                : route.value === "leads"
+                                ? "Lead management and CRM"
                                 : route.value === "task-on-review"
                                 ? "Tasks pending review and approval"
                                 : route.value === "task-on-publish"

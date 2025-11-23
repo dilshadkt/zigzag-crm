@@ -162,6 +162,42 @@ const PERMISSION_CATEGORIES = {
       },
     ],
   },
+  leads: {
+    label: "Lead Management",
+    icon: "🎯",
+    permissions: [
+      {
+        key: "create",
+        label: "Create Lead",
+        description: "Can create new leads",
+      },
+      {
+        key: "edit",
+        label: "Edit Lead",
+        description: "Can edit existing leads",
+      },
+      {
+        key: "delete",
+        label: "Delete Lead",
+        description: "Can delete leads",
+      },
+      {
+        key: "view",
+        label: "View Lead",
+        description: "Can view lead details",
+      },
+      {
+        key: "assign",
+        label: "Assign Lead",
+        description: "Can assign leads to team members",
+      },
+      {
+        key: "changeStatus",
+        label: "Change Status",
+        description: "Can change lead status",
+      },
+    ],
+  },
   settings: {
     label: "Settings & Configuration",
     icon: "⚙️",

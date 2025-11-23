@@ -1,4 +1,8 @@
+import { useState, useRef, useEffect } from "react";
+import { FiMoreVertical } from "react-icons/fi";
 import LeadStatusBadge from "./LeadStatusBadge";
+import LeadRowContextMenu from "./LeadRowContextMenu";
+import StatusDropdown from "./StatusDropdown";
 
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
@@ -50,7 +54,18 @@ const columnRenderers = {
       {lead.name || lead.contact?.name || "—"}
     </div>
   ),
-  status: (lead) => <LeadStatusBadge status={lead.status || "Unknown"} />,
+  status: (lead, statuses, onStatusChange) => {
+    if (statuses && onStatusChange) {
+      return (
+        <StatusDropdown
+          status={lead.status || "Unknown"}
+          statuses={statuses}
+          onStatusChange={(statusId) => onStatusChange(lead, statusId)}
+        />
+      );
+    }
+    return <LeadStatusBadge status={lead.status || "Unknown"} />;
+  },
   email: (lead) => (
     <div className="text-[13px] text-slate-600">
       {lead.email || lead.contact?.email || "—"}
@@ -72,18 +87,97 @@ const columnRenderers = {
     </div>
   ),
   owner: (lead) => {
-    const ownerName = lead.owner?.firstName
-      ? `${lead.owner.firstName} ${lead.owner.lastName || ""}`
-      : lead.owner?.name || "—";
-    return <div className="text-[13px] text-slate-600">{ownerName}</div>;
+    const owner = lead.owner;
+    if (!owner) {
+      return <div className="text-[13px] text-slate-500">—</div>;
+    }
+
+    const ownerName = owner.firstName
+      ? `${owner.firstName} ${owner.lastName || ""}`.trim()
+      : owner.name || "Unknown";
+
+    return (
+      <div className="flex items-center gap-2">
+        {owner.profileImage ? (
+          <img
+            src={owner.profileImage}
+            alt={ownerName}
+            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+            <span className="text-[10px] font-medium text-slate-600">
+              {ownerName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)}
+            </span>
+          </div>
+        )}
+        <div className="text-[13px] text-slate-600 truncate">{ownerName}</div>
+      </div>
+    );
   },
 };
 
-const LeadRow = ({ lead, columns, isSelected, onToggle, onRowClick }) => {
+const LeadRow = ({
+  lead,
+  columns,
+  isSelected,
+  onToggle,
+  onRowClick,
+  onEdit,
+  onSendEmail,
+  onCreateTask,
+  onAssign,
+  onDelete,
+  onConvert,
+  onCopyURL,
+  statuses,
+  onStatusChange,
+  isEmployee = false,
+}) => {
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({
+    x: 0,
+    y: 0,
+  });
+  const actionButtonRef = useRef(null);
+
+  const handleActionButtonClick = (e) => {
+    e.stopPropagation();
+    if (actionButtonRef.current) {
+      const rect = actionButtonRef.current.getBoundingClientRect();
+      setContextMenuPosition({
+        x: rect.right - 180, // Position menu to the left of button
+        y: rect.bottom + 5, // Position menu below button
+      });
+    }
+    setIsContextMenuOpen(true);
+  };
+
+  const handleContextMenuClose = () => {
+    setIsContextMenuOpen(false);
+  };
+
+  const handleAction = (action) => {
+    if (action) {
+      action(lead);
+    }
+    handleContextMenuClose();
+  };
+
   const renderCellValue = (column, lead) => {
     // Use custom renderer if available
     if (columnRenderers[column.key]) {
-      return columnRenderers[column.key](lead);
+      const renderer = columnRenderers[column.key];
+      // Pass statuses and onStatusChange for status column
+      if (column.key === "status") {
+        return renderer(lead, statuses, onStatusChange);
+      }
+      return renderer(lead);
     }
 
     // Fallback to direct property access (works for flattened custom fields)
@@ -118,32 +212,62 @@ const LeadRow = ({ lead, columns, isSelected, onToggle, onRowClick }) => {
   };
 
   return (
-    <tr
-      className="border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50/70 transition-colors"
-      onClick={() => onRowClick && onRowClick(lead)}
-    >
-      <td className="px-6 py-4">
-        <input
-          type="checkbox"
-          className={checkboxClasses}
-          checked={isSelected}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          onChange={(event) => {
-            event.stopPropagation();
-            onToggle(lead._id || lead.id);
-          }}
-        />
-      </td>
-      {columns
-        .filter((col) => col.visible)
-        .map((column) => (
-          <td key={column.key} className="px-6 py-4">
-            {renderCellValue(column, lead)}
+    <>
+      <tr
+        className="border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50/70 transition-colors group"
+        onClick={() => onRowClick && onRowClick(lead)}
+      >
+        <td className="px-6 py-4">
+          <input
+            type="checkbox"
+            className={checkboxClasses}
+            checked={isSelected}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            onChange={(event) => {
+              event.stopPropagation();
+              onToggle(lead._id || lead.id);
+            }}
+          />
+        </td>
+        {columns
+          .filter((col) => col.visible)
+          .map((column) => (
+            <td key={column.key} className="px-6 py-4">
+              {renderCellValue(column, lead)}
+            </td>
+          ))}
+        {!isEmployee && (
+          <td className="px-6 py-4">
+            <div className="flex items-center justify-end">
+              <button
+                ref={actionButtonRef}
+                onClick={handleActionButtonClick}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                aria-label="Lead actions"
+              >
+                <FiMoreVertical size={18} />
+              </button>
+            </div>
           </td>
-        ))}
-    </tr>
+        )}
+      </tr>
+
+      <LeadRowContextMenu
+        visible={isContextMenuOpen}
+        position={contextMenuPosition}
+        onClose={handleContextMenuClose}
+        onEdit={() => handleAction(onEdit)}
+        onSendEmail={() => handleAction(onSendEmail)}
+        onCreateTask={() => handleAction(onCreateTask)}
+        onAssign={() => handleAction(onAssign)}
+        onDelete={() => handleAction(onDelete)}
+        onConvert={() => handleAction(onConvert)}
+        onCopyURL={() => handleAction(onCopyURL)}
+        lead={lead}
+      />
+    </>
   );
 };
 

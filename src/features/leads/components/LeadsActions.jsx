@@ -61,13 +61,15 @@ const LeadsActions = ({
         >
           <FiDownload size={18} />
         </button>
-        <button
-          onClick={onMoreActions}
-          className={iconButtonClasses}
-          aria-label="More actions"
-        >
-          <FiMoreVertical size={18} />
-        </button>
+        {onMoreActions && (
+          <button
+            onClick={onMoreActions}
+            className={iconButtonClasses}
+            aria-label="More actions"
+          >
+            <FiMoreVertical size={18} />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -82,6 +82,8 @@ export const useLeadsData = (filters = {}) => {
       validKeys.add("createdAt");
       // Always allow status (system meta - often managed outside form)
       validKeys.add("status");
+      // Always allow owner (system meta)
+      validKeys.add("owner");
 
       formFields.forEach((field) => {
         let key = field.key || field.id;
@@ -101,7 +103,7 @@ export const useLeadsData = (filters = {}) => {
           ...col,
           // Default visibility logic
           visible: col.isSystem
-            ? ["createdAt", "name", "status", "phone"].includes(col.key)
+            ? ["createdAt", "name", "status", "phone", "owner"].includes(col.key)
             : false, // Custom fields hidden by default
         }));
     }

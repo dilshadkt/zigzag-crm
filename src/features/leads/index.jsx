@@ -1,5 +1,8 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import LeadsPageHeader from "./components/LeadsPageHeader";
 import LeadsTable from "./components/LeadsTable";
 import LeadsTableShimmer from "./components/LeadsTableShimmer";
@@ -8,8 +11,9 @@ import LeadsColumnEditor from "./components/LeadsColumnEditor";
 import LeadActionsMenu from "./components/LeadActionsMenu";
 import LeadUploadModal from "./components/LeadUploadModal";
 import AddLeadModal from "./components/AddLeadModal";
+import AssignLeadModal from "./components/AssignLeadModal";
 import { useLeadsData } from "./hooks/useLeadsData";
-import { useCreateLead } from "./api";
+import { useCreateLead, useUpdateLead, useDeleteLead } from "./api";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -56,6 +60,8 @@ const clearColumnVisibility = () => {
 
 const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
@@ -73,6 +79,13 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const [columnDraft, setColumnDraft] = useState([]);
   const hasInitializedColumns = useRef(false);
   const lastGeneratedColumnsKeys = useRef(null);
+  const [isAssignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
+  const navigate = useNavigate();
+
+  // Mutations
+  const updateLeadMutation = useUpdateLead();
+  const deleteLeadMutation = useDeleteLead();
 
   // Debounce search term
   useEffect(() => {
@@ -298,6 +311,100 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const canToggleColumn =
     columnDraft.filter((column) => column.visible).length > 1;
 
+  // Action handlers
+  const handleEdit = (lead) => {
+    const leadId = lead._id || lead.id;
+    if (leadId) {
+      navigate(`/leads/${leadId}`, { state: lead });
+    }
+  };
+
+  const handleSendEmail = (lead) => {
+    const email = lead.contact?.email || lead.email;
+    if (email) {
+      window.location.href = `mailto:${email}`;
+    } else {
+      toast.error("No email address found for this lead");
+    }
+  };
+
+  const handleCreateTask = (lead) => {
+    // Navigate to create task page with lead context
+    navigate("/board", { state: { leadContext: lead } });
+    toast.success("Redirecting to create task...");
+  };
+
+  const handleAssign = (lead) => {
+    setSelectedLeadForAssign(lead);
+    setAssignModalOpen(true);
+  };
+
+  const handleAssignConfirm = async (employeeId) => {
+    if (!selectedLeadForAssign) return;
+
+    try {
+      const leadId = selectedLeadForAssign._id || selectedLeadForAssign.id;
+      await updateLeadMutation.mutateAsync({
+        leadId,
+        leadData: { owner: employeeId },
+      });
+      toast.success("Lead owner updated successfully");
+      setAssignModalOpen(false);
+      setSelectedLeadForAssign(null);
+      // Refetch leads to show updated owner with avatar
+      refetchLeads();
+      // Also invalidate queries to ensure fresh data
+      queryClient.invalidateQueries(["leads"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to assign lead");
+    }
+  };
+
+  const handleDelete = async (lead) => {
+    const leadName = lead.contact?.name || lead.name || "this lead";
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${leadName}? This action cannot be undone.`
+      )
+    ) {
+      try {
+        const leadId = lead._id || lead.id;
+        await deleteLeadMutation.mutateAsync(leadId);
+        toast.success("Lead deleted successfully");
+        refetchLeads();
+      } catch (error) {
+        toast.error(error?.response?.data?.message || "Failed to delete lead");
+      }
+    }
+  };
+
+  const handleConvert = (lead) => {
+    // TODO: Implement convert lead to customer/opportunity
+    toast.info("Convert functionality coming soon");
+  };
+
+  const handleCopyURL = (lead) => {
+    const leadId = lead._id || lead.id;
+    const url = `${window.location.origin}/leads/${leadId}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Lead URL copied to clipboard");
+  };
+
+  const handleStatusChange = async (lead, statusId) => {
+    try {
+      const leadId = lead._id || lead.id;
+      await updateLeadMutation.mutateAsync({
+        leadId,
+        leadData: { status: statusId },
+      });
+      toast.success("Lead status updated successfully");
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update status");
+    }
+  };
+
   return (
     <div className="relative bg-white h-full rounded-3xl border border-slate-100 overflow-hidden flex flex-col">
       <LeadsPageHeader
@@ -321,6 +428,16 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
             onToggleSelect={handleToggleSelect}
             onToggleSelectAll={handleToggleSelectAll}
             onRowClick={onSelectLead}
+            onEdit={handleEdit}
+            onSendEmail={handleSendEmail}
+            onCreateTask={handleCreateTask}
+            onAssign={handleAssign}
+            onDelete={handleDelete}
+            onConvert={handleConvert}
+            onCopyURL={handleCopyURL}
+            statuses={statuses}
+            onStatusChange={handleStatusChange}
+            isEmployee={isEmployee}
           />
           <LeadsPagination
             pageSize={pageSize}
@@ -392,6 +509,16 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
         isOpen={isAddLeadModalOpen}
         onClose={() => setAddLeadModalOpen(false)}
         onSuccess={handleLeadCreated}
+      />
+
+      <AssignLeadModal
+        isOpen={isAssignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedLeadForAssign(null);
+        }}
+        onAssign={handleAssignConfirm}
+        currentOwner={selectedLeadForAssign?.owner}
       />
     </div>
   );
