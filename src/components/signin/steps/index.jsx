@@ -1,5 +1,5 @@
 import InviteTeam from "./inviteTeam";
-import ValidPhone from "./validPhone";
+import ValidEmail from "./validEmail";
 import YourCompany from "./yourCompany";
 import YourSelf from "./yourSelf";
 
@@ -9,14 +9,34 @@ const StepRenderer = ({
   handleChange,
   errors,
   touched,
+  emailOTPSent,
+  emailOTPVerified,
+  isSendingOTP,
+  isVerifyingOTP,
+  otp,
+  setOtp,
+  otpError,
+  setOtpError,
+  handleSendEmailOTP,
+  handleVerifyEmailOTP,
 }) => {
   const stepComponents = {
     1: (
-      <ValidPhone
+      <ValidEmail
         values={values}
         handleChange={handleChange}
         errors={errors}
         touched={touched}
+        emailOTPSent={emailOTPSent}
+        emailOTPVerified={emailOTPVerified}
+        isSendingOTP={isSendingOTP}
+        isVerifyingOTP={isVerifyingOTP}
+        otp={otp}
+        setOtp={setOtp}
+        otpError={otpError}
+        setOtpError={setOtpError}
+        handleSendEmailOTP={handleSendEmailOTP}
+        handleVerifyEmailOTP={handleVerifyEmailOTP}
       />
     ),
     2: (

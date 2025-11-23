@@ -55,6 +55,9 @@ import ClientReview from "../pages/clientReview";
 import Calendar from "../features/calender";
 import Attendance from "../features/attendance";
 import CompanyDashboard from "../pages/companyDashboard";
+import LeadsPage from "../pages/leads";
+import LeadDetailsPage from "../pages/leads/LeadDetails";
+import LeadSettingsPage from "../pages/leads/LeadSettings";
 
 const AppRoutes = () => {
   return (
@@ -139,6 +142,30 @@ const AppRoutes = () => {
         <Route path="calender" element={<Calendar />} />
         <Route path="vacations" element={<Vacations />} />
         <Route path="employees" element={<Employees />} />
+        <Route
+          path="leads"
+          element={
+            <RouteAccess>
+              <LeadsPage />
+            </RouteAccess>
+          }
+        />
+        <Route
+          path="leads/:leadId"
+          element={
+            <RouteAccess>
+              <LeadDetailsPage />
+            </RouteAccess>
+          }
+        />
+        <Route
+          path="leads/settings"
+          element={
+            <RouteAccess>
+              <LeadSettingsPage />
+            </RouteAccess>
+          }
+        />
         <Route path="attendance" element={<Attendance />} />
         <Route path="employees/:employeeId" element={<EmployeeDetails />} />
         <Route

@@ -3,7 +3,6 @@ import Select from "../../../shared/Field/select";
 import Input from "../../../shared/Field/input";
 
 const YourCompany = ({ errors, values, handleChange, touched }) => {
-  const [selectedTeam, setSelectedTeam] = useState("6-10");
   const team = [
     "Only me",
     "2-5",
@@ -14,6 +13,16 @@ const YourCompany = ({ errors, values, handleChange, touched }) => {
     "51-100",
     "101-500",
   ];
+  
+  const handleTeamSizeChange = (item) => {
+    handleChange({
+      target: {
+        name: "teamSize",
+        value: item,
+      },
+    });
+  };
+
   return (
     <form action="" className="flex flex-col gap-y-4 mt-6">
       <div className="flex flex-col gap-y-4">
@@ -23,8 +32,8 @@ const YourCompany = ({ errors, values, handleChange, touched }) => {
           onchange={handleChange}
           touched={touched}
           errors={errors}
-          title="Your Company’s Name"
-          placeholder="Company’s Name"
+          title="Your Company's Name"
+          placeholder="Company's Name"
         />
         <Select
           name={"businessDirection"}
@@ -43,9 +52,9 @@ const YourCompany = ({ errors, values, handleChange, touched }) => {
             {team.map((item, index) => (
               <div
                 key={index}
-                onClick={() => setSelectedTeam(item)}
+                onClick={() => handleTeamSizeChange(item)}
                 className={`${
-                  selectedTeam === item
+                  values.teamSize === item
                     ? `border-none bg-[#3F8CFF] text-white`
                     : `text-[#7D8592] border border-[#D8E0F0]`
                 } h-12 rounded-[10px]

@@ -20,6 +20,9 @@ export const InfoPortal = lazy(() => import("../pages/infoPortal"));
 export const Events = lazy(() => import("../pages/events"));
 export const WorkLoad = lazy(() => import("../pages/workLoad"));
 export const Board = lazy(() => import("../pages/board"));
+export const Leads = lazy(() => import("../pages/leads"));
+export const LeadDetails = lazy(() => import("../pages/leads/LeadDetails"));
+export const LeadSettings = lazy(() => import("../pages/leads/LeadSettings"));
 export const TaskOnReview = lazy(() => import("../pages/taskOnReview"));
 export const ProjectsAnalytics = lazy(() =>
   import("../pages/projectAnalytics")

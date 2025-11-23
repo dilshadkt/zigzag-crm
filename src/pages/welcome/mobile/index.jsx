@@ -4,10 +4,35 @@ import * as Yup from "yup";
 import { Phone } from "lucide-react";
 import { useUpdateProfile } from "../../../api/hooks";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useAuth } from "../../../hooks/useAuth";
+import { loginSuccess } from "../../../store/slice/authSlice";
 
 const MobileNumberInput = () => {
-  const handleSuccess = () => {
-    window.location.href = "/";
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user, companyId, isProfileComplete } = useAuth();
+  
+  const handleSuccess = (data) => {
+    // Update auth state if this is the current user's profile
+    if (data?.employee && user?._id === data.employee._id) {
+      const mergedUser = {
+        ...user,
+        ...data.employee,
+        positionDetails: data.employee.positionDetails ?? user?.positionDetails ?? null,
+      };
+
+      dispatch(
+        loginSuccess({
+          user: mergedUser,
+          companyId: data.employee.company ?? companyId ?? mergedUser?.company ?? null,
+          isProfileComplete: data.employee.isProfileComplete ?? isProfileComplete ?? true,
+        })
+      );
+    }
+    
+    // Use navigate instead of window.location.href for better React Router integration
+    navigate("/", { replace: true });
   };
   const { mutate } = useUpdateProfile(handleSuccess);
 

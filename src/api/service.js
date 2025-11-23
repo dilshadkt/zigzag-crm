@@ -1,6 +1,36 @@
 import apiClient from "./client";
 import { POST_PROJECT } from "./enpoint";
 
+export const sendRegistrationEmailOTP = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/send-registration-email-otp", data);
+    if (response?.data) {
+      return { success: true, message: response.data.message };
+    }
+  } catch (error) {
+    console.error("Send registration email OTP error", error);
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to send OTP",
+    };
+  }
+};
+
+export const verifyRegistrationEmailOTP = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/verify-registration-email-otp", data);
+    if (response?.data) {
+      return { success: true, message: response.data.message };
+    }
+  } catch (error) {
+    console.error("Verify registration email OTP error", error);
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Invalid OTP",
+    };
+  }
+};
+
 export const register = async (data) => {
   try {
     const response = await apiClient.post("/auth/register", data);
@@ -8,10 +38,10 @@ export const register = async (data) => {
       return { success: true };
     }
   } catch (error) {
-    console.error("Login error", error);
+    console.error("Register error", error);
     return {
       success: false,
-      message: error?.response?.data?.message || "Login failed",
+      message: error?.response?.data?.message || "Registration failed",
     };
   }
 };

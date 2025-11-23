@@ -19,6 +19,9 @@ const Messenger = lazy(() => import("../pages/messenger"));
 const InfoPortal = lazy(() => import("../pages/infoPortal"));
 const Events = lazy(() => import("../pages/events"));
 const WorkLoad = lazy(() => import("../pages/workLoad"));
+const Leads = lazy(() => import("../pages/leads"));
+const LeadDetails = lazy(() => import("../pages/leads/LeadDetails"));
+const LeadSettings = lazy(() => import("../pages/leads/LeadSettings"));
 const CompanyTasks = lazy(() => import("../pages/companyTasks"));
 const MyTasks = lazy(() => import("../pages/myTasks"));
 const MySubTasks = lazy(() => import("../pages/mySubTasks"));
@@ -147,6 +150,24 @@ export const routeConfig = [
       {
         path: "messenger",
         component: Messenger,
+        requiresAuth: true,
+        allowedRoles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+      },
+      {
+        path: "leads",
+        component: Leads,
+        requiresAuth: true,
+        allowedRoles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+      },
+      {
+        path: "leads/:leadId",
+        component: LeadDetails,
+        requiresAuth: true,
+        allowedRoles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+      },
+      {
+        path: "leads/settings",
+        component: LeadSettings,
         requiresAuth: true,
         allowedRoles: [ROLES.ADMIN, ROLES.EMPLOYEE],
       },

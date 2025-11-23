@@ -6,8 +6,23 @@ import { useRegisterForm } from "../../../hooks/useRegisterForm";
 const Register = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
-  const { values, errors, touched, handleChange, handleSubmit } =
-    useRegisterForm(currentStep, setCurrentStep);
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleSubmit,
+    emailOTPSent,
+    emailOTPVerified,
+    isSendingOTP,
+    isVerifyingOTP,
+    otp,
+    setOtp,
+    otpError,
+    setOtpError,
+    handleSendEmailOTP,
+    handleVerifyEmailOTP,
+  } = useRegisterForm(currentStep, setCurrentStep);
 
   const handleNextStep = () => {
     handleSubmit();
@@ -20,7 +35,7 @@ const Register = () => {
   };
 
   const steps = [
-    { id: 1, text: "Valid your phone" },
+    { id: 1, text: "Valid your email" },
     { id: 2, text: "Tell about yourself" },
     { id: 3, text: "Tell about your company" },
     { id: 4, text: "Invite Team Members" },
@@ -51,6 +66,16 @@ const Register = () => {
               handleChange={handleChange}
               errors={errors}
               touched={touched}
+              emailOTPSent={emailOTPSent}
+              emailOTPVerified={emailOTPVerified}
+              isSendingOTP={isSendingOTP}
+              isVerifyingOTP={isVerifyingOTP}
+              otp={otp}
+              setOtp={setOtp}
+              otpError={otpError}
+              setOtpError={setOtpError}
+              handleSendEmailOTP={handleSendEmailOTP}
+              handleVerifyEmailOTP={handleVerifyEmailOTP}
             />
           </form>
         </div>

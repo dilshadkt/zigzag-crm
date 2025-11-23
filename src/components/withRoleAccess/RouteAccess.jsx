@@ -11,7 +11,12 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user has no position or no position details, deny access
+  // Company admins have full access regardless of position
+  if (user.role === "company-admin") {
+    return children;
+  }
+
+  // For employees, check position and position details
   if (!user.position || !user.positionDetails) {
     return <Navigate to={fallbackPath} replace />;
   }
@@ -73,6 +78,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       employees: "/employees",
       messenger: "/messenger",
       "task-on-review": "/task-on-review",
+      leads: "/leads",
       settings: "/settings",
     };
 

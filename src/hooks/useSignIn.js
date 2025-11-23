@@ -19,9 +19,10 @@ export const useSignIn = () => {
     onSubmit: async (values, { setErrors }) => {
       const { success, message, user } = await signIn(values);
       if (success) {
+        // Store the full user object, not just the ID
         dispatch(
           loginSuccess({
-            user: user._id,
+            user: user, // Full user object with all properties including positionDetails
             companyId: user.company,
             isProfileComplete: user?.isProfileComplete || false,
           })

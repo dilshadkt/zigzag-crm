@@ -22,6 +22,7 @@ import {
   FiActivity,
   FiCheckCircle,
 } from "react-icons/fi";
+import { MdOutlineLeaderboard } from "react-icons/md";  
 
 export const SIDE_MENU = [
   {
@@ -72,6 +73,13 @@ export const SIDE_MENU = [
     icon: FiMessageSquare,
     path: "/messenger",
     routeKey: "messenger",
+  },
+  {
+    id: 14,
+    title: "Leads",
+    icon: MdOutlineLeaderboard,
+    path: "/leads",
+    routeKey: "leads",
   },
   {
     id: 8,
