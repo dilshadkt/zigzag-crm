@@ -77,10 +77,10 @@ const MyTasks = () => {
       // Apply URL-based filter first
       const today = new Date();
       switch (filter) {
-        case "overdue":
-          filtered = filtered.filter((task) => {
+        case "overdue": {
+          const subTasksOnly = employeeTasksData.subTasks || [];
+          filtered = subTasksOnly.filter((task) => {
             const dueDate = new Date(task.dueDate);
-            // Set due date to start of day for comparison
             const dueDateStart = new Date(
               dueDate.getFullYear(),
               dueDate.getMonth(),
@@ -94,11 +94,11 @@ const MyTasks = () => {
             return (
               dueDateStart < todayStart &&
               task.status !== "approved" &&
-              task.status !== "completed" &&
-              task.status !== "client-approved"
+              task.status !== "completed"
             );
           });
           break;
+        }
         case "in-progress":
           filtered = filtered.filter((task) => task.status === "in-progress");
           break;
