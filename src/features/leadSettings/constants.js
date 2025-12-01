@@ -119,17 +119,25 @@ export const MANDATORY_FIELDS = [
 // Helper function to check if a field is mandatory
 export const isMandatoryField = (field) => {
   if (!field) return false;
-  return ["system_name", "system_email", "system_phone"].includes(field.key || field.id);
+  return ["system_name", "system_email", "system_phone"].includes(
+    field.key || field.id
+  );
 };
 
 // Helper function to ensure mandatory fields are present and properly configured
 export const ensureMandatoryFields = (fields) => {
   const existingFields = (fields || []).map((f) => ({ ...f }));
-  
+
   // Check presence using stable keys
-  const hasName = existingFields.some(f => f.key === "system_name" || f.id === "system_name");
-  const hasEmail = existingFields.some(f => f.key === "system_email" || f.id === "system_email");
-  const hasPhone = existingFields.some(f => f.key === "system_phone" || f.id === "system_phone");
+  const hasName = existingFields.some(
+    (f) => f.key === "system_name" || f.id === "system_name"
+  );
+  const hasEmail = existingFields.some(
+    (f) => f.key === "system_email" || f.id === "system_email"
+  );
+  const hasPhone = existingFields.some(
+    (f) => f.key === "system_phone" || f.id === "system_phone"
+  );
 
   const fieldsWithMandatory = [...existingFields];
 
@@ -137,30 +145,33 @@ export const ensureMandatoryFields = (fields) => {
     fieldsWithMandatory.unshift({ ...MANDATORY_FIELDS[0] });
   }
   if (!hasEmail) {
-    const insertIdx = !hasName ? 1 : fieldsWithMandatory.findIndex(f => f.key === "system_name" || f.id === "system_name") + 1;
-     // Just append if complex to calculate, but let's try to keep order: Name, Email, Phone
+    const insertIdx = !hasName
+      ? 1
+      : fieldsWithMandatory.findIndex(
+          (f) => f.key === "system_name" || f.id === "system_name"
+        ) + 1;
+    // Just append if complex to calculate, but let's try to keep order: Name, Email, Phone
     fieldsWithMandatory.splice(1, 0, { ...MANDATORY_FIELDS[1] });
   }
   if (!hasPhone) {
-     fieldsWithMandatory.splice(2, 0, { ...MANDATORY_FIELDS[2] });
+    fieldsWithMandatory.splice(2, 0, { ...MANDATORY_FIELDS[2] });
   }
-  
+
   // Clean up order if needed, but for now just ensure they exist
   // Ideally we want Name, Email, Phone at the top
   const systemFields = [];
   const customFields = [];
-  
-  fieldsWithMandatory.forEach(f => {
-     if (isMandatoryField(f)) systemFields.push(f);
-     else customFields.push(f);
+
+  fieldsWithMandatory.forEach((f) => {
+    if (isMandatoryField(f)) systemFields.push(f);
+    else customFields.push(f);
   });
 
   // Sort system fields: Name, Email, Phone
   systemFields.sort((a, b) => {
-      const order = { "system_name": 1, "system_email": 2, "system_phone": 3 };
-      return (order[a.key || a.id] || 99) - (order[b.key || b.id] || 99);
+    const order = { system_name: 1, system_email: 2, system_phone: 3 };
+    return (order[a.key || a.id] || 99) - (order[b.key || b.id] || 99);
   });
 
   return [...systemFields, ...customFields];
 };
-
