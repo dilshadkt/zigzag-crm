@@ -120,7 +120,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
             </span>
             <div className="flexBetween">
               <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
-              <StatusButton taskDetails={taskDetails} disabled={!canEditTask} />
+              {canEditTask && isCompany && (
+                <StatusButton
+                  taskDetails={taskDetails}
+                  disabled={!canEditTask}
+                />
+              )}
             </div>
 
             <RecurringTaskInfo taskDetails={taskDetails} />

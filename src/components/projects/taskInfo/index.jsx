@@ -33,9 +33,9 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
 
   // Permission checks
   const canDeleteTask = isCompany || hasPermission("tasks", "delete");
+  const canEditTask = isCompany || hasPermission("tasks", "edit");
   const canLogTime =
-    isCompany ||
-    hasPermission("tasks", "edit") ||
+    canEditTask ||
     taskDetails?.assignedTo?.some(
       (assignedUser) => assignedUser._id === user?._id
     );
