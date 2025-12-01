@@ -24,7 +24,7 @@ const ProjectDetailLayout = () => {
   const { projectId } = useParams();
   const [showModalTask, setShowModalTask] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
-
+  const { taskId } = useParams();
   const { data: projectData } = useProjectDetails(projectId, {
     enabled: !!projectId,
   });
@@ -91,7 +91,7 @@ const ProjectDetailLayout = () => {
           <Header>{projectData?.name}</Header>
         </div>
         <div className="flex items-center  gap-x-4">
-          {projectData?.startDate && projectData?.endDate && (
+          {projectData?.startDate && projectData?.endDate && !taskId && (
             <MonthSelector
               selectedMonth={selectedMonth}
               onMonthChange={handleMonthChange}
