@@ -22,6 +22,7 @@ const LeadsTable = ({
   onCopyURL,
   statuses,
   onStatusChange,
+  onCustomFieldChange,
   isEmployee = false,
 }) => {
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
@@ -61,7 +62,7 @@ const LeadsTable = ({
         </thead>
         <tbody className="bg-white">
           {showEmptyState ? (
-            <tr>
+            <tr className="h-[400px]">
               <td
                 colSpan={columns.length + (isEmployee ? 1 : 2)}
                 className="px-6 py-12 text-center text-sm text-slate-500"
@@ -89,6 +90,7 @@ const LeadsTable = ({
                   onCopyURL={onCopyURL}
                   statuses={statuses}
                   onStatusChange={onStatusChange}
+                  onCustomFieldChange={onCustomFieldChange}
                   isEmployee={isEmployee}
                 />
               );

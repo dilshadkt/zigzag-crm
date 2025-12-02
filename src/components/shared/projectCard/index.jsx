@@ -316,7 +316,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
             <div className="flex flex-col    gap-y-2">
               <span className="text-[#91929E]/90 text-sm">Assignees</span>
               <div className="font-semibold flex items-center text-gray-800 text-lg relative">
-                {project?.teams?.map((team, index) => (
+                {project?.teams?.slice(0, 5).map((team, index) => (
                   <div
                     key={index}
                     className="relative group"
@@ -351,6 +351,19 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                     )}
                   </div>
                 ))}
+                {project?.teams?.length > 5 && (
+                  <div
+                    style={{
+                      marginLeft: "-8px",
+                      zIndex: 100,
+                    }}
+                    className={`min-w-7 min-h-7  flex text-[8px]
+                      text-white items-center justify-center rounded-full
+                      bg-gray-600  overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out `}
+                  >
+                    {project?.teams?.length - 5} +
+                  </div>
+                )}
               </div>
             </div>
           </div>

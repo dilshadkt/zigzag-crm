@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "https://crm.zigzagdigitalsolutions.com/api",
-  // baseURL: "http://localhost:5000/api",
+  // baseURL: "https://crm.zi gzagdigitalsolutions.com/api",
+  baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },

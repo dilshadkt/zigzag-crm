@@ -135,6 +135,7 @@ const LeadFormBuilder = ({
             onUpdateField={onUpdateField}
             onRemoveField={onRemoveField}
             onFieldOptionChange={handleFieldOptionChange}
+            onReorderFields={onReplaceFields}
           />
         </div>
 

@@ -11,6 +11,7 @@ export const useLeadsData = (filters = {}) => {
     source,
     sortBy = "createdAt",
     sortOrder = "desc",
+    appliedFilters,
   } = filters;
 
   // Fetch leads data
@@ -28,6 +29,7 @@ export const useLeadsData = (filters = {}) => {
     source,
     sortBy,
     sortOrder,
+    filters: appliedFilters,
   });
 
   // Fetch form configuration
@@ -85,6 +87,8 @@ export const useLeadsData = (filters = {}) => {
       // Always allow owner (system meta)
       validKeys.add("owner");
 
+      // Create a map of field key to field data for enrichment
+      const fieldDataMap = new Map();
       formFields.forEach((field) => {
         let key = field.key || field.id;
         // Map system keys
@@ -94,18 +98,26 @@ export const useLeadsData = (filters = {}) => {
         if (key === "company") key = "companyName";
 
         validKeys.add(key);
+        fieldDataMap.set(key, field);
       });
 
-      // 2. Filter backend columns
+      // 2. Filter and enrich backend columns with field metadata
       return backendColumns
         .filter((col) => validKeys.has(col.key))
-        .map((col) => ({
-          ...col,
-          // Default visibility logic
-          visible: col.isSystem
-            ? ["createdAt", "name", "status", "phone", "owner"].includes(col.key)
-            : false, // Custom fields hidden by default
-        }));
+        .map((col) => {
+          const fieldData = fieldDataMap.get(col.key);
+          return {
+            ...col,
+            // Add field type and options if available
+            type: fieldData?.type || col.type,
+            fieldType: fieldData?.type || col.fieldType,
+            options: fieldData?.options || col.options || [],
+            // Default visibility logic
+            visible: col.isSystem
+              ? ["createdAt", "name", "status", "phone", "owner"].includes(col.key)
+              : false, // Custom fields hidden by default
+          };
+        });
     }
 
     // Fallback: Default system columns (old way)
@@ -132,6 +144,8 @@ export const useLeadsData = (filters = {}) => {
         isSystem: false,
         fieldId: field.id,
         fieldType: field.type,
+        type: field.type,
+        options: field.options || [], // Include options for select fields
       }));
 
     return [...systemColumns, ...fieldColumns];

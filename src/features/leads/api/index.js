@@ -112,12 +112,13 @@ export const useGetLeads = (params = {}) => {
     source,
     sortBy = "createdAt",
     sortOrder = "desc",
+    filters,
   } = params;
 
   return useQuery({
     queryKey: [
       "leads",
-      { page, limit, search, status, owner, source, sortBy, sortOrder },
+      { page, limit, search, status, owner, source, sortBy, sortOrder, filters },
     ],
     queryFn: async () => {
       const response = await apiClient.get("/leads", {
@@ -130,6 +131,7 @@ export const useGetLeads = (params = {}) => {
           source,
           sortBy,
           sortOrder,
+          filters: filters ? JSON.stringify(filters) : undefined,
         },
       });
       return response.data;

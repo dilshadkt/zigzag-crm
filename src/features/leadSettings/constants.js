@@ -128,50 +128,44 @@ export const isMandatoryField = (field) => {
 export const ensureMandatoryFields = (fields) => {
   const existingFields = (fields || []).map((f) => ({ ...f }));
 
-  // Check presence using stable keys
-  const hasName = existingFields.some(
+  // Find existing mandatory fields
+  const existingName = existingFields.find(
     (f) => f.key === "system_name" || f.id === "system_name"
   );
-  const hasEmail = existingFields.some(
+  const existingEmail = existingFields.find(
     (f) => f.key === "system_email" || f.id === "system_email"
   );
-  const hasPhone = existingFields.some(
+  const existingPhone = existingFields.find(
     (f) => f.key === "system_phone" || f.id === "system_phone"
   );
 
-  const fieldsWithMandatory = [...existingFields];
-
-  if (!hasName) {
-    fieldsWithMandatory.unshift({ ...MANDATORY_FIELDS[0] });
-  }
-  if (!hasEmail) {
-    const insertIdx = !hasName
-      ? 1
-      : fieldsWithMandatory.findIndex(
-          (f) => f.key === "system_name" || f.id === "system_name"
-        ) + 1;
-    // Just append if complex to calculate, but let's try to keep order: Name, Email, Phone
-    fieldsWithMandatory.splice(1, 0, { ...MANDATORY_FIELDS[1] });
-  }
-  if (!hasPhone) {
-    fieldsWithMandatory.splice(2, 0, { ...MANDATORY_FIELDS[2] });
-  }
-
-  // Clean up order if needed, but for now just ensure they exist
-  // Ideally we want Name, Email, Phone at the top
+  // Separate mandatory and custom fields
   const systemFields = [];
   const customFields = [];
 
-  fieldsWithMandatory.forEach((f) => {
-    if (isMandatoryField(f)) systemFields.push(f);
-    else customFields.push(f);
+  existingFields.forEach((f) => {
+    if (!isMandatoryField(f)) {
+      customFields.push(f);
+    }
   });
 
-  // Sort system fields: Name, Email, Phone
-  systemFields.sort((a, b) => {
-    const order = { system_name: 1, system_email: 2, system_phone: 3 };
-    return (order[a.key || a.id] || 99) - (order[b.key || b.id] || 99);
-  });
+  // Add mandatory fields (preserving existing data if present, otherwise using defaults)
+  // Preserve the required status - don't force it to true
+  systemFields.push(
+    existingName
+      ? { ...existingName, isMandatory: true }
+      : { ...MANDATORY_FIELDS[0] }
+  );
+  systemFields.push(
+    existingEmail
+      ? { ...existingEmail, isMandatory: true }
+      : { ...MANDATORY_FIELDS[1] }
+  );
+  systemFields.push(
+    existingPhone
+      ? { ...existingPhone, isMandatory: true }
+      : { ...MANDATORY_FIELDS[2] }
+  );
 
   return [...systemFields, ...customFields];
 };

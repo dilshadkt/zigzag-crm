@@ -12,6 +12,7 @@ import LeadActionsMenu from "./components/LeadActionsMenu";
 import LeadUploadModal from "./components/LeadUploadModal";
 import AddLeadModal from "./components/AddLeadModal";
 import AssignLeadModal from "./components/AssignLeadModal";
+import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
 import { useLeadsData } from "./hooks/useLeadsData";
 import { useCreateLead, useUpdateLead, useDeleteLead } from "./api";
 
@@ -81,6 +82,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const lastGeneratedColumnsKeys = useRef(null);
   const [isAssignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
+  const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState({});
   const navigate = useNavigate();
 
   // Mutations
@@ -110,6 +113,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     page,
     limit: pageSize,
     search: debouncedSearch,
+    appliedFilters,
   });
 
   // Initialize columns from generated columns
@@ -204,6 +208,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const handleAction = (action) => () => {
     if (action === "add-lead") {
       setAddLeadModalOpen(true);
+    } else if (action === "add-filter") {
+      setFilterDrawerOpen(true);
     } else if (action === "refresh") {
       refetchLeads();
     } else {
@@ -405,6 +411,40 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     }
   };
 
+  const handleCustomFieldChange = async (lead, fieldKey, newValue) => {
+    try {
+      const leadId = lead._id || lead.id;
+
+      // Update the customFields object
+      const updatedCustomFields = {
+        ...(lead.customFields || {}),
+        [fieldKey]: newValue,
+      };
+
+      await updateLeadMutation.mutateAsync({
+        leadId,
+        leadData: { customFields: updatedCustomFields },
+      });
+
+      toast.success("Field updated successfully");
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update field");
+    }
+  };
+
+  const handleApplyFilters = (filters) => {
+    setAppliedFilters(filters);
+    setPage(1); // Reset to first page when filters change
+    const filterCount = Object.keys(filters).length;
+    if (filterCount > 0) {
+      toast.success(`${filterCount} filter(s) applied successfully`);
+    } else {
+      toast.info("All filters cleared");
+    }
+  };
+
   return (
     <div className="relative bg-white h-full rounded-3xl border border-slate-100 overflow-hidden flex flex-col">
       <LeadsPageHeader
@@ -437,6 +477,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
             onCopyURL={handleCopyURL}
             statuses={statuses}
             onStatusChange={handleStatusChange}
+            onCustomFieldChange={handleCustomFieldChange}
             isEmployee={isEmployee}
           />
           <LeadsPagination
@@ -519,6 +560,15 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
         }}
         onAssign={handleAssignConfirm}
         currentOwner={selectedLeadForAssign?.owner}
+      />
+
+      <LeadsFilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        onApplyFilters={handleApplyFilters}
+        formFields={formFields}
+        statuses={statuses}
+        currentFilters={appliedFilters}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { FiMoreVertical } from "react-icons/fi";
 import LeadStatusBadge from "./LeadStatusBadge";
 import LeadRowContextMenu from "./LeadRowContextMenu";
 import StatusDropdown from "./StatusDropdown";
+import SelectFieldDropdown from "./SelectFieldDropdown";
 
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
@@ -137,6 +138,7 @@ const LeadRow = ({
   onCopyURL,
   statuses,
   onStatusChange,
+  onCustomFieldChange,
   isEmployee = false,
 }) => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
@@ -185,6 +187,22 @@ const LeadRow = ({
 
     if (value === undefined || value === null || value === "") {
       return <div className="text-[13px] text-slate-500">—</div>;
+    }
+
+    // Handle select/dropdown fields with options
+    if ((column.type === "select" || column.fieldType === "select") && column.options && column.options.length > 0) {
+      return (
+        <SelectFieldDropdown
+          value={value}
+          options={column.options}
+          onValueChange={(newValue) => {
+            if (onCustomFieldChange) {
+              onCustomFieldChange(lead, column.key, newValue);
+            }
+          }}
+          column={column}
+        />
+      );
     }
 
     // Format based on field type

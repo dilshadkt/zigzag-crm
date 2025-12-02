@@ -43,7 +43,21 @@ const LeadSettingsFeature = () => {
   // Ensure mandatory fields are always present
   const formFields = useMemo(() => {
     const fields = formConfigData?.data?.fields || [];
-    return ensureMandatoryFields(fields);
+    console.log("🔄 Raw fields from API:", fields.map(f => ({ _id: f._id, id: f.id, key: f.key, label: f.label })));
+
+    // Normalize MongoDB _id to id for consistent usage
+    const normalizedFields = fields.map((field) => ({
+      ...field,
+      id: field._id || field.id, // Use MongoDB _id as id, fallback to existing id
+    }));
+
+    console.log("✅ Normalized fields:", normalizedFields.map(f => ({ id: f.id, key: f.key, label: f.label })));
+
+    const result = ensureMandatoryFields(normalizedFields);
+
+    console.log("📋 Final formFields with mandatory:", result.map(f => ({ id: f.id, key: f.key, label: f.label, isMandatory: f.isMandatory })));
+
+    return result;
   }, [formConfigData?.data?.fields]);
   const statuses = statusesData?.data || [];
 
@@ -89,7 +103,7 @@ const LeadSettingsFeature = () => {
           console.error("Error updating status:", error);
           alert(
             error.response?.data?.message ||
-              "Failed to update status. Please try again."
+            "Failed to update status. Please try again."
           );
         },
       }
@@ -108,7 +122,7 @@ const LeadSettingsFeature = () => {
   };
 
   const handleAddField = (fieldInput) => {
-    // Generate a key from label
+    // Generate a unique key from label
     const slug = fieldInput.label
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
@@ -118,7 +132,7 @@ const LeadSettingsFeature = () => {
     const newFields = [
       ...formFields,
       {
-        id: Date.now().toString(),
+        // Don't include 'id' - MongoDB will generate _id automatically
         key: key,
         label: fieldInput.label,
         type: fieldInput.type,
@@ -133,7 +147,7 @@ const LeadSettingsFeature = () => {
   };
 
   const replaceFields = (nextFields) => {
-    const fieldsWithIds = nextFields.map((field) => {
+    const fieldsWithKeys = nextFields.map((field) => {
       // Ensure key exists
       let key = field.key;
       if (!key) {
@@ -146,32 +160,65 @@ const LeadSettingsFeature = () => {
           .substr(2, 5)}`;
       }
 
-      return {
+      // Preserve existing id if present, otherwise let MongoDB generate _id
+      const fieldData = {
         ...field,
         key: key,
-        id: field.id || Date.now().toString() + Math.random().toString(16),
       };
+
+      // Only include id if it already exists (for existing fields)
+      if (field.id || field._id) {
+        fieldData.id = field.id || field._id;
+      }
+
+      return fieldData;
     });
     // Ensure mandatory fields are maintained
-    const fieldsWithMandatory = ensureMandatoryFields(fieldsWithIds);
+    const fieldsWithMandatory = ensureMandatoryFields(fieldsWithKeys);
     updateFormConfig(fieldsWithMandatory);
   };
 
   const handleRemoveField = (fieldId) => {
-    // Note: fieldId here is likely the 'id' not 'key', depending on what LeadFormBuilder passes
-    // LeadFormBuilder passes field.id
-    const newFields = formFields.filter((field) => field.id !== fieldId);
+    console.log("🗑️ Removing field with ID:", fieldId);
+    console.log("📋 Current fields before removal:", formFields.map(f => ({ id: f.id, key: f.key, label: f.label })));
+
+    const newFields = formFields.filter((field) => {
+      const shouldKeep = field.id !== fieldId;
+      if (!shouldKeep) {
+        console.log("❌ Removing field:", { id: field.id, key: field.key, label: field.label });
+      }
+      return shouldKeep;
+    });
+
+    console.log("📋 Fields after filter:", newFields.map(f => ({ id: f.id, key: f.key, label: f.label })));
+
     // Ensure mandatory fields are maintained after removal
     const fieldsWithMandatory = ensureMandatoryFields(newFields);
+
+    console.log("📋 Final fields after ensureMandatory:", fieldsWithMandatory.map(f => ({ id: f.id, key: f.key, label: f.label })));
+
     updateFormConfig(fieldsWithMandatory);
   };
 
   const handleUpdateField = (fieldId, update) => {
-    const newFields = formFields.map((field) =>
-      field.id === fieldId ? { ...field, ...update } : field
-    );
-    // Ensure mandatory fields are maintained and required
+    console.log("✏️ Updating field with ID:", fieldId, "Update:", update);
+    console.log("📋 Current fields before update:", formFields.map(f => ({ id: f.id, key: f.key, label: f.label, required: f.required })));
+
+    const newFields = formFields.map((field) => {
+      if (field.id === fieldId) {
+        console.log("✅ Found field to update:", { id: field.id, key: field.key, label: field.label });
+        return { ...field, ...update };
+      }
+      return field;
+    });
+
+    console.log("📋 Fields after update:", newFields.map(f => ({ id: f.id, key: f.key, label: f.label, required: f.required })));
+
+    // Ensure mandatory fields are maintained - the function now preserves existing data
     const fieldsWithMandatory = ensureMandatoryFields(newFields);
+
+    console.log("📋 Final fields after ensureMandatory:", fieldsWithMandatory.map(f => ({ id: f.id, key: f.key, label: f.label, required: f.required })));
+
     updateFormConfig(fieldsWithMandatory);
   };
 
