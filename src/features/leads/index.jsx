@@ -109,6 +109,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     columns: generatedColumns,
     isLoading,
     refetchLeads,
+    isRefetching
   } = useLeadsData({
     page,
     limit: pageSize,
@@ -453,6 +454,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
         onAddLead={handleAction("add-lead")}
         onAddFilter={handleAction("add-filter")}
         onRefresh={handleAction("refresh")}
+        isRefreshing={isRefetching}
         onToggleLayout={openColumnEditor}
         onDownload={handleAction("download")}
         onMoreActions={openLeadMenu}

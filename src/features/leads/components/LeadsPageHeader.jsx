@@ -7,6 +7,7 @@ const LeadsPageHeader = ({
   onAddLead,
   onAddFilter,
   onRefresh,
+  isRefreshing,
   onToggleLayout,
   onDownload,
   onMoreActions,
@@ -21,6 +22,7 @@ const LeadsPageHeader = ({
           onAddLead={onAddLead}
           onAddFilter={onAddFilter}
           onRefresh={onRefresh}
+          isRefreshing={isRefreshing}
           onToggleLayout={onToggleLayout}
           onDownload={onDownload}
           onMoreActions={onMoreActions}

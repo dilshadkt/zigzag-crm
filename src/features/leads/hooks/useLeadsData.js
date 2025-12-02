@@ -20,6 +20,7 @@ export const useLeadsData = (filters = {}) => {
     isLoading: leadsLoading,
     error: leadsError,
     refetch: refetchLeads,
+    isRefetching,
   } = useGetLeads({
     page,
     limit,
@@ -160,5 +161,6 @@ export const useLeadsData = (filters = {}) => {
     isLoading,
     error: leadsError,
     refetchLeads,
+    isRefetching
   };
 };
