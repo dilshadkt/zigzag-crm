@@ -18,16 +18,14 @@ const PrimaryButton = ({
       type={type}
       onClick={onclick}
       className={clsx(
-        `flexCenter ${
-          iconPosition === "left" ? `` : `flex-row-reverse`
-        } h-10 px-3   gap-x-2 ${
-          disable ? `cursor-default` : ` cursor-pointer`
+        `flexCenter ${iconPosition === "left" ? `` : `flex-row-reverse`
+        } h-10 px-3   gap-x-2 ${disable ? `cursor-default` : ` cursor-pointer`
         }  ${loading && "opacity-50"} bg-[#3F8CFF]   rounded-xl `,
         className
       )}
     >
       {icon && <img src={icon} alt="" className="w-5" />}
-      {title && <span>{title}</span>}
+      {title && <span className="text-sm">{title}</span>}
       {loading && <img src="/icons/loader.svg" alt="" className="w-5" />}
     </button>
   );

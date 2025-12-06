@@ -79,7 +79,7 @@ const DashboardHeader = () => {
 
   // Build sidebar menu items - only add Company Dashboard if user has permission (but NOT for admins)
   const sidebarMenuItems = [...SIDE_MENU];
-  
+
   // IMPORTANT: Only add Company Dashboard menu item if user has the permission AND is NOT a company admin
   if (canAccessAdminDashboard) {
     // Insert Company Dashboard after Dashboard
@@ -187,8 +187,8 @@ const DashboardHeader = () => {
   return (
     <div className="bg-white lg:bg-transparent rounded-xl py-1 md:py-0 flexBetween">
       {/* Mobile Logo */}
-      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-        <img src={logo} alt="" className="w-10 md:hidden h-10 ml-3" />
+      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
+        <img src={logo} alt="" className="w-10 h-10 ml-3" />
       </button>
 
       {/* Search Bar */}

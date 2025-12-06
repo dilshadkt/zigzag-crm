@@ -29,9 +29,28 @@ const MyTasks = () => {
   const taskMonth = searchParams.get("taskMonth"); // Get taskMonth from URL query
 
   // Get employee tasks and filter based on URL parameter
+  // Map filter to status for backend, but keep special filters (overdue, today, unscheduled) for client-side filtering
+  const getStatusFromFilter = (filter) => {
+    const statusMap = {
+      "in-progress": "in-progress",
+      pending: "pending", // Backend accepts both "pending" and "todo"
+      completed: "completed",
+      approved: "approved",
+      "client-approved": "client-approved",
+      "on-review": "on-review",
+      "re-work": "re-work",
+      overdue: "overdue",
+      upcoming: "upcoming", // Backend handles upcoming via getUpcomingThreeDayTasks
+    };
+    return statusMap[filter] || null; // Return null for special filters (overdue, today, unscheduled)
+  };
+
   const { data: employeeTasksData, isLoading } = useGetEmployeeTasks(
     user?._id,
-    { taskMonth }
+    {
+      taskMonth,
+      status: getStatusFromFilter(filter), // Pass status to backend for standard status filters
+    }
   );
   const [filteredTasks, setFilteredTasks] = useState([]);
 
@@ -75,53 +94,12 @@ const MyTasks = () => {
       ];
 
       // Apply URL-based filter first
+      // Note: Standard status filters (pending, in-progress, completed, approved, client-approved, on-review, re-work, overdue, upcoming) are handled by backend
+      // Only special filters (today, unscheduled) need client-side filtering
       const today = new Date();
       switch (filter) {
-        case "overdue": {
-          const subTasksOnly = employeeTasksData.subTasks || [];
-          filtered = subTasksOnly.filter((task) => {
-            const dueDate = new Date(task.dueDate);
-            const dueDateStart = new Date(
-              dueDate.getFullYear(),
-              dueDate.getMonth(),
-              dueDate.getDate()
-            );
-            const todayStart = new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate()
-            );
-            return (
-              dueDateStart < todayStart &&
-              task.status !== "approved" &&
-              task.status !== "completed"
-            );
-          });
-          break;
-        }
-        case "in-progress":
-          filtered = filtered.filter((task) => task.status === "in-progress");
-          break;
-        case "pending":
-          filtered = filtered.filter((task) => task.status === "pending");
-          break;
-        case "completed":
-          filtered = filtered.filter((task) => task.status === "completed");
-          break;
-        case "approved":
-          filtered = filtered.filter((task) => task.status === "approved");
-          break;
-        case "client-approved":
-          filtered = filtered.filter(
-            (task) => task.status === "client-approved"
-          );
-          break;
-        case "on-review":
-          filtered = filtered.filter((task) => task.status === "on-review");
-          break;
-        case "re-work":
-          filtered = filtered.filter((task) => task.status === "re-work");
-          break;
+        // "overdue" is now handled by backend, so no client-side filtering needed
+        // case "overdue" removed - backend handles it via getOverdueTaskUpToMonth
         case "today":
           // First, get tasks due today
           const todayTasks = filtered.filter((task) => {
@@ -186,37 +164,8 @@ const MyTasks = () => {
             );
           });
           break;
-        case "upcoming":
-          // Filter for tasks due in the next 3 days
-          const threeDaysFromNow = new Date(today);
-          threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 2); // Add 2 days to today
-
-          filtered = filtered.filter((task) => {
-            const dueDate = new Date(task.dueDate);
-            const dueDateStart = new Date(
-              dueDate.getFullYear(),
-              dueDate.getMonth(),
-              dueDate.getDate()
-            );
-            const todayStart = new Date(
-              today.getFullYear(),
-              today.getMonth(),
-              today.getDate()
-            );
-            const threeDaysFromNowStart = new Date(
-              threeDaysFromNow.getFullYear(),
-              threeDaysFromNow.getMonth(),
-              threeDaysFromNow.getDate()
-            );
-            return (
-              dueDateStart >= todayStart &&
-              dueDateStart <= threeDaysFromNowStart &&
-              task.status !== "approved" &&
-              task.status !== "completed" &&
-              task.status !== "client-approved"
-            );
-          });
-          break;
+        // "upcoming" is now handled by backend, so no client-side filtering needed
+        // case "upcoming" removed - backend handles it via getUpcomingThreeDayTasks
         // No default case - show all tasks for 'all' or no filter
       }
 

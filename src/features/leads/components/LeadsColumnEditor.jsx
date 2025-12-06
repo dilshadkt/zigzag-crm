@@ -9,7 +9,7 @@ const LeadsColumnEditor = ({
   canToggleColumn,
 }) => {
   return (
-    <div className="bg-white w-96 rounded-3xl border border-slate-200 shadow-xl p-5 space-y-5">
+    <div className="bg-white w-96 rounded-3xl border border-slate-200 shadow-xl px-5 py-4 space-y-3">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Edit Columns</h3>
@@ -27,11 +27,11 @@ const LeadsColumnEditor = ({
         </button>
       </div>
 
-      <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+      <div className="space-y-2  max-h-[48vh]  overflow-y-auto pr-1">
         {columns.map((column) => (
           <label
             key={column.key}
-            className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-3 py-2 text-sm font-medium text-slate-700"
+            className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl px-3 py-2 text-[13px] font-medium text-slate-700"
           >
             <input
               type="checkbox"
@@ -48,14 +48,14 @@ const LeadsColumnEditor = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onReset}
-          className="flex-1 h-11 rounded-full border border-slate-200 text-sm
+          className="flex-1 h-11 rounded-full border border-slate-200 text-[13px]
           cursor-pointer  font-semibold text-slate-600 hover:border-slate-300"
         >
           Reset to Default
         </button>
         <button
           onClick={onApply}
-          className="flex-1 h-11 rounded-full bg-[#3f8cff] text-white text-sm font-semibold
+          className="flex-1 h-11 rounded-full bg-[#3f8cff] text-white text-[13px] font-semibold
            hover:bg-[#3f8cff]/80 cursor-pointer"
         >
           Apply

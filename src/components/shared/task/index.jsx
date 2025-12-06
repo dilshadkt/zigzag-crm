@@ -271,7 +271,8 @@ const Task = ({
                 : ""
             }
           >
-            {task?.title}
+            {task?.title.slice(0, 35)}
+            {task?.title.length > 35 && "..."}
           </h4>
           {/* Project info for tasks/subtasks */}
           {task?.project?.name && (

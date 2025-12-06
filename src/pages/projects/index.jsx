@@ -59,9 +59,9 @@ const Prjects = () => {
   // Combine project data with tasks
   const projectWithTasks = activeProject
     ? {
-        ...activeProject,
-        tasks: projectTasks || [],
-      }
+      ...activeProject,
+      tasks: projectTasks || [],
+    }
     : null;
 
   // Mutation
@@ -112,6 +112,8 @@ const Prjects = () => {
   const hasNoProject = !projects || projects.length === 0;
   const isLoading = projectLoading || tasksLoading;
 
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+
   if (isLoading) return <ProjectsShimmer />;
 
   const activeTasks = projectWithTasks?.tasks?.filter(
@@ -141,7 +143,9 @@ const Prjects = () => {
          md:overflow-hidden md:gap-x-5 grid grid-cols-1 md:grid-cols-5"
         >
           {/* current project section  */}
-          <CurrentProject projects={projects} selectProject={selectProject} />
+          {!isTimelineExpanded && (
+            <CurrentProject projects={projects} selectProject={selectProject} />
+          )}
           {/* project detail page  */}
           <ProjectDetails
             activeProject={projectWithTasks || projects}
@@ -149,6 +153,9 @@ const Prjects = () => {
             completedTasks={completedTasks}
             progressTasks={progressTasks}
             setShowModalFilter={setShowModalFilter}
+            selectedMonth={selectedMonth}
+            isTimelineExpanded={isTimelineExpanded}
+            setIsTimelineExpanded={setIsTimelineExpanded}
           />
         </div>
       )}

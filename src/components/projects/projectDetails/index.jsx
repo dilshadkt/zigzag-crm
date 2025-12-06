@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
-import Task from "../../shared/task";
 import NoTask from "../noTask";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,309 +9,9 @@ import { updateTaskById } from "../../../api/service";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
-
-// Status configuration
-const statusConfig = {
-  todo: {
-    title: "Active Tasks",
-    color: "bg-orange-100 text-orange-800",
-    allowedForAll: true,
-  },
-  "in-progress": {
-    title: "In Progress",
-    color: "bg-blue-100 text-blue-800",
-    allowedForAll: true,
-  },
-  "on-review": {
-    title: "On Review",
-    color: "bg-purple-100 text-purple-800",
-    allowedForAll: true,
-  },
-  "on-hold": {
-    title: "On Hold",
-    color: "bg-yellow-100 text-yellow-800",
-    allowedForAll: false,
-  },
-  "re-work": {
-    title: "Re-work",
-    color: "bg-red-100 text-red-800",
-    allowedForAll: false,
-  },
-  approved: {
-    title: "Approved",
-    color: "bg-emerald-100 text-emerald-800",
-    allowedForAll: false,
-  },
-  "client-approved": {
-    title: "Client Approved",
-    color: "bg-teal-100 text-teal-800",
-    allowedForAll: false,
-  },
-  completed: {
-    title: "Completed",
-    color: "bg-green-100 text-green-800",
-    allowedForAll: true,
-  },
-};
-
-const DraggableTask = ({
-  task,
-  isBoardView,
-  onClick,
-  projectId,
-  index,
-  canDrag,
-}) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = (e) => {
-    if (!canDrag) {
-      e.preventDefault();
-      return;
-    }
-
-    e.dataTransfer.setData(
-      "application/json",
-      JSON.stringify({
-        taskId: task._id,
-        sourceStatus: task.status,
-        sourceIndex: index,
-      })
-    );
-    e.dataTransfer.effectAllowed = "move";
-    setIsDragging(true);
-
-    // Minimal visual feedback
-    e.currentTarget.style.opacity = "0.7";
-  };
-
-  const handleDragEnd = (e) => {
-    // Reset visual feedback
-    e.currentTarget.style.opacity = "1";
-    setIsDragging(false);
-  };
-
-  return (
-    <div
-      draggable={canDrag}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      className={`transition-opacity duration-200 ease-out ${
-        canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
-      }`}
-      style={{
-        opacity: isDragging ? 0.7 : 1,
-      }}
-      title={!canDrag ? "You can only move tasks assigned to you" : ""}
-    >
-      <Task
-        task={task}
-        isBoardView={isBoardView}
-        onClick={() => (onClick ? onClick(task) : null)}
-        projectId={projectId}
-        index={index}
-      />
-    </div>
-  );
-};
-
-const DropZone = ({ onDrop, position, status, isVisible, canDrop }) => {
-  const [isOver, setIsOver] = useState(false);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!canDrop) {
-      e.dataTransfer.dropEffect = "none";
-      return;
-    }
-
-    e.dataTransfer.dropEffect = "move";
-    setIsOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOver(false);
-
-    if (!canDrop) return;
-
-    const taskDataString = e.dataTransfer.getData("application/json");
-    if (taskDataString) {
-      try {
-        const taskData = JSON.parse(taskDataString);
-        onDrop(taskData, status, position);
-      } catch (error) {
-        console.error("Error parsing task data:", error);
-      }
-    }
-  };
-
-  if (!isVisible) return null;
-
-  return (
-    <div
-      className={`h-2 transition-all duration-200 ease-out ${
-        isOver && canDrop
-          ? "bg-blue-300 rounded-full mx-2"
-          : canDrop
-          ? "bg-transparent"
-          : "bg-red-200 rounded-full mx-2"
-      }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    />
-  );
-};
-
-const Droppable = ({
-  id,
-  title,
-  children,
-  onDrop,
-  tasks,
-  canDrop,
-  isCompany,
-}) => {
-  const [isOver, setIsOver] = useState(false);
-  const [draggedTask, setDraggedTask] = useState(null);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    const taskData = e.dataTransfer.types.includes("application/json");
-    if (taskData) {
-      if (!canDrop) {
-        e.dataTransfer.dropEffect = "none";
-        return;
-      }
-
-      e.dataTransfer.dropEffect = "move";
-      setIsOver(true);
-
-      // Get dragged task data for positioning
-      try {
-        const taskDataString = e.dataTransfer.getData("application/json");
-        if (taskDataString) {
-          setDraggedTask(JSON.parse(taskDataString));
-        }
-      } catch (error) {
-        // Ignore parsing errors during drag over
-      }
-    }
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    // Only set isOver to false if we're actually leaving the droppable area
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-      setIsOver(false);
-      setDraggedTask(null);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsOver(false);
-    setDraggedTask(null);
-
-    if (!canDrop) return;
-
-    const taskDataString = e.dataTransfer.getData("application/json");
-    if (taskDataString) {
-      try {
-        const taskData = JSON.parse(taskDataString);
-        // Drop at the end if dropped on the container itself
-        onDrop(taskData, id, tasks.length);
-      } catch (error) {
-        console.error("Error parsing task data:", error);
-      }
-    }
-  };
-
-  // Convert children to array if it's not already
-  const childrenArray = React.Children.toArray(children);
-
-  const config = statusConfig[id];
-
-  return (
-    <div
-      className={`flex-shrink-0 w-80 rounded-lg p-4 transition-all duration-200 ease-out
-                  ${
-                    isOver && canDrop
-                      ? "bg-blue-50 border-2 border-blue-300"
-                      : isOver && !canDrop
-                      ? "bg-red-50 border-2 border-red-300"
-                      : "bg-gray-50 border-2 border-transparent"
-                  }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      data-droppable-id={id}
-    >
-      <div
-        className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${
-          config?.color || "bg-gray-200 text-gray-800"
-        }`}
-      >
-        {title}
-        {!canDrop && !isCompany && (
-          <div className="text-xs mt-1 opacity-70">Admin only</div>
-        )}
-      </div>
-      <div
-        className="space-y-1 min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
-        data-droppable-id={id}
-      >
-        {/* Drop zone at the beginning */}
-        <DropZone
-          onDrop={onDrop}
-          position={0}
-          status={id}
-          isVisible={isOver && draggedTask?.sourceStatus !== id}
-          canDrop={canDrop}
-        />
-
-        {childrenArray.map((child, index) => (
-          <React.Fragment key={child.key || index}>
-            {child}
-            {/* Drop zone after each task */}
-            <DropZone
-              onDrop={onDrop}
-              position={index + 1}
-              status={id}
-              isVisible={isOver}
-              canDrop={canDrop}
-            />
-          </React.Fragment>
-        ))}
-
-        {/* Show drop zone at end if no tasks */}
-        {childrenArray.length === 0 && (
-          <DropZone
-            onDrop={onDrop}
-            position={0}
-            status={id}
-            isVisible={isOver}
-            canDrop={canDrop}
-          />
-        )}
-      </div>
-    </div>
-  );
-};
+import ProjectTimeline from "../projectTimeline";
+import ProjectBoard from "./components/ProjectBoard";
+import ProjectList from "./components/ProjectList";
 
 const ProjectDetails = ({
   setShowModalFilter,
@@ -320,10 +19,13 @@ const ProjectDetails = ({
   activeTasks = [],
   progressTasks = [],
   completedTasks = [],
+  selectedMonth,
+  isTimelineExpanded,
+  setIsTimelineExpanded,
 }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isBoardView, setIsBoardView] = useState(true);
+  const [viewMode, setViewMode] = useState("board"); // 'board', 'list', 'timeline'
   const [showSubtasks, setShowSubtasks] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(activeProject?._id);
   const { isCompany, user } = useAuth();
@@ -492,25 +194,8 @@ const ProjectDetails = ({
     }
   };
 
-  const renderSection = (title, tasks) => (
-    <>
-      <div className="min-h-10 font-medium sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter">
-        {title}
-      </div>
-      {tasks?.map((task, index) => (
-        <Task
-          onClick={handleNavigateTask}
-          key={task._id || index}
-          task={task}
-          isBoardView={isBoardView}
-          index={index}
-        />
-      ))}
-    </>
-  );
-
   return (
-    <div className="col-span-4 h-full md:overflow-hidden flex flex-col">
+    <div className={`${isTimelineExpanded ? "col-span-5" : "col-span-4"} h-full md:overflow-hidden flex flex-col`}>
       {/* Header */}
       <div className="flexBetween">
         <h3 className="text-lg font-medium text-gray-800">Tasks</h3>
@@ -520,13 +205,24 @@ const ProjectDetails = ({
             className={"bg-white hover:bg-gray-50 transition-colors"}
             onclick={handleRefresh}
           />
+          <PrimaryButton
+            icon={"/icons/timeline.svg"}
+            className={`transition-colors ${viewMode === "timeline" ? "bg-blue-50 border-blue-300" : "bg-white hover:bg-gray-50"}`}
+            onclick={() => {
+              if (viewMode === "timeline") {
+                setViewMode("board");
+                setIsTimelineExpanded(false);
+              } else {
+                setViewMode("timeline");
+              }
+            }}
+          />
           <button
             onClick={() => setShowSubtasks(!showSubtasks)}
-            className={`p-2 rounded-lg border transition-colors ${
-              showSubtasks
-                ? "bg-blue-50 border-blue-300 text-blue-600"
-                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-            }`}
+            className={`p-2 rounded-lg border transition-colors ${showSubtasks
+              ? "bg-blue-50 border-blue-300 text-blue-600"
+              : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
             title={showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
           >
             <svg
@@ -555,9 +251,12 @@ const ProjectDetails = ({
             </svg>
           </button>
           <PrimaryButton
-            icon={!isBoardView ? list : board}
+            icon={viewMode === "list" ? board : list}
             className={"bg-white hover:bg-gray-50 transition-colors"}
-            onclick={() => setIsBoardView(!isBoardView)}
+            onclick={() => {
+              setViewMode(viewMode === "list" ? "board" : "list");
+              setIsTimelineExpanded(false);
+            }}
           />
         </div>
       </div>
@@ -567,54 +266,32 @@ const ProjectDetails = ({
         <NoTask>
           There are no tasks in this project <br /> yet Let's add them
         </NoTask>
-      ) : isBoardView ? (
-      <div className="flex gap-4 h-full  overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 project-details-scroll">
-          {Object.entries(statusConfig).map(([status, config]) => {
-            const canDrop = canUserDropInStatus(status);
-            const tasks = tasksByStatus[status] || [];
-
-            return (
-              <Droppable
-                key={status}
-                id={status}
-                title={config.title}
-                onDrop={handleTaskDrop}
-                tasks={tasks}
-                canDrop={canDrop}
-                isCompany={isCompany}
-              >
-                {tasks.length > 0 ? (
-                  tasks.map((task, index) => (
-                    <DraggableTask
-                      key={task._id}
-                      task={task}
-                      isBoardView={true}
-                      onClick={handleNavigateTask}
-                      projectId={activeProject?._id}
-                      index={index}
-                      canDrag={canUserDragTask(task)}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-4 text-sm">
-                    No {config.title.toLowerCase()}
-                  </div>
-                )}
-              </Droppable>
-            );
-          })}
-        </div>
+      ) : viewMode === "timeline" ? (
+        <ProjectTimeline
+          tasks={activeProject?.tasks || []}
+          currentMonth={selectedMonth}
+          onTaskClick={handleNavigateTask}
+          isExpanded={isTimelineExpanded}
+          onToggleExpand={() => setIsTimelineExpanded(!isTimelineExpanded)}
+        />
+      ) : viewMode === "board" ? (
+        <ProjectBoard
+          tasksByStatus={tasksByStatus}
+          handleTaskDrop={handleTaskDrop}
+          canUserDropInStatus={canUserDropInStatus}
+          isCompany={isCompany}
+          handleNavigateTask={handleNavigateTask}
+          activeProject={activeProject}
+          canUserDragTask={canUserDragTask}
+        />
       ) : (
-        <div className="flex flex-col h-full gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
-          {renderSection("Active Tasks", activeTasks)}
-          {renderSection("Progress", progressTasks)}
-          {renderSection("On Review", tasksByStatus["on-review"])}
-          {renderSection("On Hold", tasksByStatus["on-hold"])}
-          {renderSection("Re-work", tasksByStatus["re-work"])}
-          {renderSection("Approved", tasksByStatus["approved"])}
-          {renderSection("Client Approved", tasksByStatus["client-approved"])}
-          {renderSection("Completed", completedTasks)}
-        </div>
+        <ProjectList
+          activeTasks={activeTasks}
+          progressTasks={progressTasks}
+          tasksByStatus={tasksByStatus}
+          completedTasks={completedTasks}
+          handleNavigateTask={handleNavigateTask}
+        />
       )}
     </div>
   );

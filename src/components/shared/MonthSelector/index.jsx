@@ -142,7 +142,7 @@ const MonthSelector = ({
           hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <svg
-          className="w-4 h-4"
+          className="w-4 h-4 "
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -155,7 +155,7 @@ const MonthSelector = ({
           />
         </svg>
         <span className="font-medium text-xs md:text-base">
-          {selectedMonth ? format(currentDate, "MMMM yyyy") : "Select Month"}
+          {selectedMonth ? format(currentDate, "MMMM") : "Select Month"}
         </span>
         {availableMonths.length > 0 && (
           <span className="text-xs hidden md:block text-gray-500 bg-gray-100 px-1 rounded">
@@ -164,9 +164,8 @@ const MonthSelector = ({
           </span>
         )}
         <svg
-          className={`w-4 h-4 hidden md:block transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 hidden md:block transition-transform ${isOpen ? "rotate-180" : ""
+            }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -191,11 +190,10 @@ const MonthSelector = ({
             <button
               onClick={goToPreviousMonth}
               disabled={!canGoPrevious}
-              className={`p-1 rounded ${
-                canGoPrevious
-                  ? "hover:bg-gray-100"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
+              className={`p-1 rounded ${canGoPrevious
+                ? "hover:bg-gray-100"
+                : "opacity-50 cursor-not-allowed"
+                }`}
             >
               <svg
                 className="w-4 h-4"
@@ -217,11 +215,10 @@ const MonthSelector = ({
             <button
               onClick={goToNextMonth}
               disabled={!canGoNext}
-              className={`p-1 rounded ${
-                canGoNext
-                  ? "hover:bg-gray-100"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
+              className={`p-1 rounded ${canGoNext
+                ? "hover:bg-gray-100"
+                : "opacity-50 cursor-not-allowed"
+                }`}
             >
               <svg
                 className="w-4 h-4"
@@ -264,13 +261,11 @@ const MonthSelector = ({
                   key={index}
                   onClick={() => handleMonthSelect(month)}
                   disabled={!isAvailable}
-                  className={`w-full text-left px-3 py-2 text-sm ${
-                    isSelected ? "bg-blue-50 text-blue-600 font-medium" : ""
-                  } ${isCurrentMonth ? "font-semibold" : ""} ${
-                    isAvailable
+                  className={`w-full text-left px-3 py-2 text-sm ${isSelected ? "bg-blue-50 text-blue-600 font-medium" : ""
+                    } ${isCurrentMonth ? "font-semibold" : ""} ${isAvailable
                       ? "hover:bg-gray-50"
                       : "opacity-50 cursor-not-allowed"
-                  }`}
+                    }`}
                 >
                   {format(month, "MMMM yyyy")}
                   {isCurrentMonth && !isSelected && " (Current)"}

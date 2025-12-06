@@ -1,7 +1,7 @@
 import LeadRow from "./LeadRow";
 
 const headerClasses =
-  "px-6 py-3 text-left text-xs font-semibold uppercase sticky top-0 z-20 bg-slate-50 tracking-wide text-slate-500";
+  "px-6 py-3 text-left text-xs whitespace-nowrap font-semibold uppercase sticky top-0 z-20 bg-slate-50 tracking-wide text-slate-500";
 
 const checkboxClasses =
   "h-[14px] w-[14px] cursor-pointer rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";

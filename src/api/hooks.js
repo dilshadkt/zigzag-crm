@@ -146,13 +146,26 @@ export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
       const queryString = params.toString();
       return apiClient
         .get(
-          `/projects/company/${companyId}${
-            queryString ? `?${queryString}` : ""
+          `/projects/company/${companyId}${queryString ? `?${queryString}` : ""
           }`
         )
         .then((res) => res.data?.projects);
     },
     enabled: !!companyId,
+  });
+};
+
+export const useCompanyActiveProjects = () => {
+  return useQuery({
+    queryKey: ["companyActiveProjects"],
+    queryFn: () =>
+      apiClient
+        .get("/projects/company/active")
+        .then((res) => res.data?.projects),
+    staleTime: 1000 * 60 * 2, // 2 minutes (Prevents frequent refetches)
+    cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
+    refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
+    // refetchOnReconnect: false, // Prevents refetch when network reconnects
   });
 };
 
@@ -804,7 +817,10 @@ export const useGetEmployeeTasks = (employeeId, filters = {}) => {
     queryKey: ["employeeTasks", employeeId, filters],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (filters.status) params.append("status", filters.status);
+      // Pass status filter to backend (backend accepts both "pending" and "todo")
+      if (filters.status) {
+        params.append("status", filters.status);
+      }
       if (filters.dueDate) params.append("dueDate", filters.dueDate);
       if (filters.priority) params.append("priority", filters.priority);
       if (filters.projectId) params.append("projectId", filters.projectId);
@@ -1042,37 +1058,59 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
   });
 };
 
-export const useGetCompanyTodayTasks = (taskMonth) => {
+export const useGetCompanyTodayTasks = (taskMonth, options = {}) => {
+  const { superFilters, enabled = true } = options || {};
+
   return useQuery({
-    queryKey: ["companyTodayTasks", taskMonth],
+    queryKey: [
+      "companyTodayTasks",
+      taskMonth,
+      JSON.stringify(superFilters || {}),
+    ],
     queryFn: () => {
       const params = new URLSearchParams();
       if (taskMonth) {
         params.append("taskMonth", taskMonth);
       }
+      params.append("filter", "today");
+      appendSuperFiltersToParams(params, superFilters);
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `/tasks/company/today?${queryString}`
+        : "/tasks/company/today";
 
       return apiClient
-        .get(`/tasks/company/today?${params.toString()}`)
+        .get(url)
         .then((res) => {
-          // Backend returns: { success: true, tasks: [...], subTasks: [...], totalTodayTasks: ... }
-          // axios wraps it in res.data, so res.data is the response body
-          const responseData = res.data;
-          
-          // Ensure we return the expected structure
+          const responseData = res.data || {};
+          const legacyCombined = [
+            ...(responseData.tasks || []),
+            ...(responseData.subTasks || []),
+          ];
+          const filteredItems = responseData.filteredItems || legacyCombined;
+
           if (responseData && (responseData.tasks || responseData.subTasks)) {
             return {
               tasks: responseData.tasks || [],
               subTasks: responseData.subTasks || [],
-              totalTodayTasks: responseData.totalTodayTasks || 0,
+              totalTodayTasks:
+                responseData.totalTodayTasks || legacyCombined.length,
+              filteredItems,
+              filterOptions: responseData.filterOptions || {
+                users: [],
+                projects: [],
+              },
             };
           }
-          
-          // Fallback if structure is unexpected
+
           console.warn("Unexpected response structure:", responseData);
           return {
             tasks: [],
             subTasks: [],
             totalTodayTasks: 0,
+            filteredItems: [],
+            filterOptions: { users: [], projects: [] },
           };
         })
         .catch((error) => {
@@ -1081,23 +1119,25 @@ export const useGetCompanyTodayTasks = (taskMonth) => {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status,
-            url: `/tasks/company/today?${params.toString()}`,
+            url,
           });
-          
-          // If it's a 403 error, it means permission denied
+
           if (error.response?.status === 403) {
-            console.error("Access denied - user may not have admin dashboard access permission");
+            console.error(
+              "Access denied - user may not have admin dashboard access permission"
+            );
           }
-          
-          // Return empty structure on error
+
           return {
             tasks: [],
             subTasks: [],
             totalTodayTasks: 0,
+            filteredItems: [],
+            filterOptions: { users: [], projects: [] },
           };
         });
     },
-    enabled: true,
+    enabled: !!taskMonth && enabled !== false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
   });
@@ -1165,11 +1205,11 @@ export const useGetCompanyStats = (companyId, taskMonth) => {
         const projectProgressAvg =
           activeProjects.length > 0
             ? Math.round(
-                activeProjects.reduce(
-                  (sum, project) => sum + (project.progress || 0),
-                  0
-                ) / activeProjects.length
-              )
+              activeProjects.reduce(
+                (sum, project) => sum + (project.progress || 0),
+                0
+              ) / activeProjects.length
+            )
             : 0;
 
         return {
@@ -1243,20 +1283,141 @@ export const useGetCompanyStats = (companyId, taskMonth) => {
   });
 };
 
-// Get All Company Tasks Hook - uses the new dedicated endpoint
-export const useGetAllCompanyTasks = (companyId, taskMonth) => {
+const appendCommaSeparatedParam = (params, key, values = []) => {
+  if (!Array.isArray(values) || values.length === 0) return;
+  const sanitized = values
+    .map((value) =>
+      value !== undefined && value !== null ? String(value).trim() : ""
+    )
+    .filter(Boolean);
+  if (sanitized.length > 0) {
+    params.append(key, sanitized.join(","));
+  }
+};
+
+const appendSuperFiltersToParams = (params, filters = {}) => {
+  const safeFilters = filters || {};
+
+  if (safeFilters.search) {
+    params.append("search", safeFilters.search);
+  }
+
+  appendCommaSeparatedParam(params, "status", safeFilters.status);
+  appendCommaSeparatedParam(params, "priority", safeFilters.priority);
+  appendCommaSeparatedParam(params, "assignedTo", safeFilters.assignedTo);
+  appendCommaSeparatedParam(params, "project", safeFilters.project);
+
+  if (safeFilters.dateRange?.start) {
+    params.append("dateStart", safeFilters.dateRange.start);
+  }
+  if (safeFilters.dateRange?.end) {
+    params.append("dateEnd", safeFilters.dateRange.end);
+  }
+
+  params.append("sortBy", safeFilters.sortBy || "dueDate");
+  params.append("sortOrder", safeFilters.sortOrder || "asc");
+};
+
+// Get All Company Tasks Hook - supports backend filtering
+export const useGetAllCompanyTasks = (companyId, taskMonth, options = {}) => {
+  const { filter, superFilters, enabled = true } = options || {};
+
   return useQuery({
-    queryKey: ["allCompanyTasks", companyId, taskMonth],
-    queryFn: () =>
-      apiClient.get("/tasks/company/all?taskMonth=" + taskMonth).then((res) => {
+    queryKey: [
+      "allCompanyTasks",
+      companyId,
+      taskMonth,
+      filter || "all",
+      JSON.stringify(superFilters || {}),
+    ],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (taskMonth) {
+        params.append("taskMonth", taskMonth);
+      }
+      if (filter) {
+        params.append("filter", filter);
+      }
+      appendSuperFiltersToParams(params, superFilters);
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `/tasks/company/all?${queryString}`
+        : "/tasks/company/all";
+
+      return apiClient.get(url).then((res) => {
+        const responseData = res.data || {};
+        const legacyCombined = [
+          ...(responseData.tasks || []),
+          ...(responseData.subTasks || []),
+        ];
+        const filteredItems = responseData.filteredItems || legacyCombined;
+
         return {
-          tasks: [...res.data.tasks, ...res.data.subTasks] || [],
-          unscheduledSubTasks: res.data.unscheduledSubTasks || [],
-          statistics: res.data.statistics || {},
-          totalCount: res.data.tasks?.length || 0,
+          tasks: legacyCombined,
+          subTasks: responseData.subTasks || [],
+          filteredItems,
+          unscheduledSubTasks: responseData.unscheduledSubTasks || [],
+          statistics: responseData.statistics || {},
+          totalCount:
+            responseData.statistics?.total ??
+            filteredItems.length ??
+            legacyCombined.length,
+          filterOptions: responseData.filterOptions || {
+            users: [],
+            projects: [],
+          },
         };
-      }),
-    enabled: !!companyId && !!taskMonth,
+      });
+    },
+    enabled: !!companyId && !!taskMonth && enabled !== false,
+  });
+};
+
+export const useGetCompanyTasksFiltered = (
+  companyId,
+  taskMonth,
+  options = {}
+) => {
+  const { filter, superFilters, enabled = true } = options || {};
+
+  return useQuery({
+    queryKey: [
+      "companyFilteredTasks",
+      companyId,
+      taskMonth,
+      filter || "all",
+      JSON.stringify(superFilters || {}),
+    ],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (taskMonth) {
+        params.append("taskMonth", taskMonth);
+      }
+      if (filter) {
+        params.append("filter", filter);
+      }
+      appendSuperFiltersToParams(params, superFilters);
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `/tasks/company/filtered?${queryString}`
+        : "/tasks/company/filtered";
+
+      return apiClient.get(url).then((res) => {
+        const responseData = res.data || {};
+        return {
+          filteredItems: responseData.filteredItems || [],
+          filterOptions: responseData.filterOptions || {
+            users: [],
+            projects: [],
+          },
+          statistics: responseData.statistics || {},
+          totalCount: responseData.filteredCount || 0,
+        };
+      });
+    },
+    enabled: !!companyId && !!taskMonth && enabled !== false,
   });
 };
 

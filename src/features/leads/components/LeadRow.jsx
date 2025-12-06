@@ -39,12 +39,12 @@ const formatDate = (date) => {
 
 const columnRenderers = {
   createdAt: (lead) => (
-    <div className="text-xs font-semibold text-slate-500">
+    <div className="text-xs whitespace-nowrap font-semibold text-slate-500">
       {formatDate(lead.createdAt || lead.createdOn)}
     </div>
   ),
   name: (lead) => (
-    <div className="text-[13px] font-medium text-slate-900">
+    <div className="text-[13px] whitespace-nowrap font-medium text-slate-900">
       {lead.name || lead.contact?.name || "—"}
     </div>
   ),
@@ -68,7 +68,7 @@ const columnRenderers = {
     return <LeadStatusBadge status={lead.status || "Unknown"} />;
   },
   email: (lead) => (
-    <div className="text-[13px] text-slate-600">
+    <div className="text-[13px]    text-slate-600">
       {lead.email || lead.contact?.email || "—"}
     </div>
   ),
@@ -208,7 +208,7 @@ const LeadRow = ({
     // Format based on field type
     if (column.type === "number" || column.fieldType === "number") {
       return (
-        <div className="text-[13px] text-slate-900">
+        <div className="text-[13px] whitespace-nowrap text-slate-900">
           {Number(value).toLocaleString()}
         </div>
       );
@@ -222,11 +222,11 @@ const LeadRow = ({
 
     if (column.type === "date" || column.fieldType === "date") {
       return (
-        <div className="text-[13px] text-slate-900">{formatDate(value)}</div>
+        <div className="text-[13px]  whitespace-nowrap text-slate-900">{formatDate(value)}</div>
       );
     }
 
-    return <div className="text-[13px] text-slate-900">{String(value)}</div>;
+    return <div className="text-[13px]     whitespace-nowrap text-slate-900">{String(value)}</div>;
   };
 
   return (

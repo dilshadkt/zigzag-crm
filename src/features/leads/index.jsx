@@ -502,7 +502,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
           onClick={closeColumnEditor}
         >
           <div
-            className="absolute right-6 top-18"
+            className="absolute right-6 top-5"
             onClick={(event) => event.stopPropagation()}
           >
             <LeadsColumnEditor

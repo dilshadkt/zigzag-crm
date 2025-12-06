@@ -66,7 +66,7 @@ const SelectFieldDropdown = ({ value, options, onValueChange, disabled = false, 
                 disabled={disabled}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3f8cff]/20"
             >
-                <span className="text-[13px] font-medium text-slate-700">
+                <span className="text-[13px] whitespace-nowrap font-medium text-slate-700">
                     {displayValue}
                 </span>
                 {!disabled && (

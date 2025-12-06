@@ -131,9 +131,8 @@ const DropZone = ({ onDrop, position, status, isVisible }) => {
 
   return (
     <div
-      className={`h-2 transition-all duration-200 ease-out ${
-        isOver ? "bg-blue-300 rounded-full mx-2" : "bg-transparent"
-      }`}
+      className={`h-2 transition-all duration-200 ease-out ${isOver ? "bg-blue-300 rounded-full mx-2" : "bg-transparent"
+        }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -197,20 +196,18 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
   return (
     <div
       className={`flex-shrink-0 w-80 rounded-lg p-4 transition-all duration-200 ease-out
-                  ${
-                    isOver
-                      ? "bg-blue-50 border-2 border-blue-300"
-                      : "bg-gray-50 border-2 border-transparent"
-                  }`}
+                  ${isOver
+          ? "bg-blue-50 border-2 border-blue-300"
+          : "bg-gray-50 border-2 border-transparent"
+        }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       data-droppable-id={id}
     >
       <div
-        className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${
-          config?.color || "bg-gray-200 text-gray-800"
-        }`}
+        className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${config?.color || "bg-gray-200 text-gray-800"
+          }`}
       >
         {title}
       </div>
@@ -586,11 +583,11 @@ const Board = () => {
     );
   }
   return (
-    <div className="col-span-4 overflow-hidden flex flex-col">
+    <div className="col-span-4  overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flexBetween">
-        <Header>Task Board</Header>
-        <div className=" hidden md:flex gap-3">
+      <div className="flexBetween  ">
+        <Header className={"whitespace-nowrap"}>Task Board</Header>
+        <div className=" hidden md:flex gap-2 2xl:gap-3 items-center">
           <MonthSelector
             selectedMonth={selectedMonth}
             onMonthChange={handleMonthChange}
@@ -599,7 +596,9 @@ const Board = () => {
             <select
               value={selectedProject}
               onChange={handleProjectChange}
-              className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
+              className="appearance-none px-4 py-2 bg-white border
+               border-gray-200 rounded-lg text-sm
+               max-w-[200px] w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
             >
               <option value="all">All Projects</option>
               {projects?.map((project) => (
@@ -630,7 +629,10 @@ const Board = () => {
             <select
               value={selectedPriority}
               onChange={handlePriorityChange}
-              className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
+              className="appearance-none px-4 py-2
+              max-w-[200px] w-full bg-white border
+               border-gray-200 rounded-lg text-sm focus:outline-none 
+               focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
             >
               <option value="all">All Priorities</option>
               <option value="high">High Priority</option>
@@ -659,7 +661,10 @@ const Board = () => {
               <select
                 value={selectedAssignee}
                 onChange={(e) => setSelectedAssignee(e.target.value)}
-                className="appearance-none px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
+                className="appearance-none px-4 py-2 bg-white border
+                 border-gray-200 rounded-lg text-sm focus:outline-none
+                 max-w-[200px] w-full focus:ring-2 focus:ring-blue-500
+                  focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
               >
                 <option value="all">All Assignees</option>
                 {assignees.map((user) => (
@@ -691,7 +696,8 @@ const Board = () => {
           {canCreateTask && (
             <button
               onClick={() => setShowModalTask(true)}
-              className="h-fit px-5 p-2 bg-blue-600 cursor-pointer text-sm text-white rounded-lg"
+              className="h-fit px-5 p-2 bg-blue-600 
+              whitespace-nowrap cursor-pointer text-sm text-white rounded-lg"
             >
               + Add Task
             </button>
@@ -771,7 +777,7 @@ const Board = () => {
         selectedMonth={selectedMonth}
         isLoading={isCreatingTask}
         showProjectSelection={true}
-        // You may want to pass other props as needed
+      // You may want to pass other props as needed
       />
     </div>
   );

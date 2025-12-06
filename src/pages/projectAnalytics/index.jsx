@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Header from "../../components/shared/header";
-import { useCompanyProjects } from "../../api/hooks";
+import { useCompanyActiveProjects, useCompanyProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import ProjectCard from "../../components/shared/projectCard";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +38,7 @@ const ProjectListShimmer = () => {
 };
 
 const ProjectsAnalytics = () => {
-  const { companyId, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // State for managing the selected month - default to current date
@@ -71,12 +71,7 @@ const ProjectsAnalytics = () => {
     .toString()
     .padStart(2, "0")}`;
 
-  // Fetch projects with month filter
-  const {
-    data: projects,
-    isLoading,
-    isFetching,
-  } = useCompanyProjects(companyId, 0, taskMonth);
+  const { data: projects, isLoading, isFetching } = useCompanyActiveProjects();
 
   // Persist the selected date whenever it changes (only if user is available)
   useEffect(() => {

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  useGetAllCompanyTasks,
+  useGetCompanyTasksFiltered,
   useGetCompanyTodayTasks,
 } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
@@ -27,31 +27,6 @@ const CompanyTasks = ({ filter: propFilter }) => {
   const filter = propFilter || urlFilter; // Use prop filter if provided, otherwise use URL filter
   const taskMonth = searchParams.get("taskMonth");
 
-  // Get all company tasks and filter based on URL parameter
-  const { data: allTasksData, isLoading: allTasksLoading } =
-    useGetAllCompanyTasks(companyId, taskMonth);
-
-  // Get today's tasks with smart logic (same as dashboard)
-  const { data: todayTasksData, isLoading: todayTasksLoading, error: todayTasksError } =
-    useGetCompanyTodayTasks(taskMonth);
-
-  // Debug: Log today tasks data
-  React.useEffect(() => {
-    if (filter === "today") {
-      console.log("CompanyTasks - Today Tasks Data:", {
-        todayTasksData,
-        isLoading: todayTasksLoading,
-        error: todayTasksError,
-        taskMonth,
-        filter,
-      });
-    }
-  }, [todayTasksData, todayTasksLoading, todayTasksError, taskMonth, filter]);
-
-  // Determine which data to use based on filter
-  const isTodayFilter = filter === "today";
-  const isLoading = isTodayFilter ? todayTasksLoading : allTasksLoading;
-
   // Use custom hooks for filters and data processing
   const {
     superFilters,
@@ -61,12 +36,76 @@ const CompanyTasks = ({ filter: propFilter }) => {
     hasActiveFilters,
   } = useTaskFilters();
 
+  // Determine which data to use based on filter
+  const isTodayFilter = filter === "today";
+  const shouldFetchAllTasks = !isTodayFilter;
+
+  // Get all company tasks and filter based on URL parameter
+  const { data: allTasksData, isLoading: allTasksLoading } =
+    useGetCompanyTasksFiltered(companyId, taskMonth, {
+      filter,
+      superFilters,
+      enabled: shouldFetchAllTasks,
+    });
+
+  // Get today's tasks with smart logic (same as dashboard)
+  const {
+    data: todayTasksData,
+    isLoading: todayTasksLoading,
+    error: todayTasksError,
+  } = useGetCompanyTodayTasks(taskMonth, {
+    superFilters,
+    enabled: isTodayFilter,
+  });
+  const isLoading = isTodayFilter ? todayTasksLoading : allTasksLoading;
   const { filteredTasks, getFilterOptions } = useTaskData(
     allTasksData,
     todayTasksData,
-    filter,
-    superFilters
+    filter
   );
+
+  const overdueTaskGroups = useMemo(() => {
+    if (filter !== "overdue" || filteredTasks.length === 0) {
+      return [];
+    }
+
+    const groups = new Map();
+
+    filteredTasks.forEach((task) => {
+      const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+      const hasValidDate =
+        dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+      const groupKey = hasValidDate
+        ? `${dueDate.getFullYear()}-${dueDate.getMonth()}`
+        : "no-date";
+      const label = hasValidDate
+        ? dueDate.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          })
+        : "No Due Date";
+      const sortValue = hasValidDate
+        ? new Date(dueDate.getFullYear(), dueDate.getMonth(), 1).getTime()
+        : Number.MIN_SAFE_INTEGER;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          key: groupKey,
+          label,
+          sortValue,
+          tasks: [],
+        });
+      }
+      groups.get(groupKey).tasks.push(task);
+    });
+
+    return Array.from(groups.values()).sort(
+      (a, b) => (b.sortValue || 0) - (a.sortValue || 0)
+    );
+  }, [filter, filteredTasks]);
+
+  const shouldGroupOverdue =
+    filter === "overdue" && overdueTaskGroups.length > 0;
 
   // Get unique filter options from tasks
   const { users, projects } = getFilterOptions();
@@ -149,9 +188,13 @@ const CompanyTasks = ({ filter: propFilter }) => {
         <Navigator path={"/"} title={"Back to Dashboard"} />
         <Header>{getFilterTitle()}</Header>
         <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-          <p className="text-red-800 font-medium">Error loading today's tasks</p>
+          <p className="text-red-800 font-medium">
+            Error loading today's tasks
+          </p>
           <p className="text-red-600 text-sm mt-1">
-            {todayTasksError?.response?.data?.message || todayTasksError?.message || "An error occurred"}
+            {todayTasksError?.response?.data?.message ||
+              todayTasksError?.message ||
+              "An error occurred"}
           </p>
           <p className="text-red-500 text-xs mt-2">
             Status: {todayTasksError?.response?.status || "Unknown"}
@@ -205,7 +248,30 @@ const CompanyTasks = ({ filter: propFilter }) => {
         </div>
       </div>
 
-      <TaskList tasks={filteredTasks} filter={filter} />
+      <div className="flex-1 overflow-hidden">
+        {shouldGroupOverdue ? (
+          <div className="flex h-full flex-col gap-6 overflow-y-auto pr-1">
+            {overdueTaskGroups.map((group) => (
+              <div key={group.key} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span className="font-semibold">{group.label}</span>
+                  <span className="text-xs text-gray-400">
+                    {group.tasks.length}{" "}
+                    {group.tasks.length === 1 ? "task" : "tasks"}
+                  </span>
+                </div>
+                <TaskList
+                  tasks={group.tasks}
+                  filter={filter}
+                  scrollable={false}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <TaskList tasks={filteredTasks} filter={filter} />
+        )}
+      </div>
     </section>
   );
 };

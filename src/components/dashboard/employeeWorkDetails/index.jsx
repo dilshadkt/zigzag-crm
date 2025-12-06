@@ -75,7 +75,7 @@ const EmployeeWorkDetails = () => {
         <h4 className="font-semibold text-lg text-gray-800">Today's Work</h4>
         {todaySubTasks?.subTasks?.length > 0 && (
           <Link
-            to={"/today-subtasks"}
+            to={"/today-tasks"}
             className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-2"
           >
             <span>View all subtasks</span>

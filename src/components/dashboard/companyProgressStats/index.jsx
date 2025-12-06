@@ -17,6 +17,16 @@ import { MdBusinessCenter } from "react-icons/md";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const CompanyProgressStats = ({ taskMonth }) => {
+  // Boolean: true if the given taskMonth is the current calendar month (formatted as "YYYY-MM")
+  const isCurrentMonth = React.useMemo(() => {
+    if (!taskMonth) return false;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // getMonth() returns 0-11, so add 1 to get 1-12
+    const currentMonth = `${year}-${String(month).padStart(2, "0")}`; // Format as "YYYY-MM"
+    return currentMonth === taskMonth;
+  }, [taskMonth]);
+
   const { companyId } = useAuth();
 
   const {
@@ -110,8 +120,8 @@ const CompanyProgressStats = ({ taskMonth }) => {
     [navigate, taskMonth]
   );
 
-  const stats = React.useMemo(
-    () => [
+  const stats = React.useMemo(() => {
+    const allStats = [
       {
         id: "active-projects",
         title: "Active Projects",
@@ -138,18 +148,6 @@ const CompanyProgressStats = ({ taskMonth }) => {
         textColor: "text-purple-600",
         onClick: () => handleStatsClick("tasks"),
       },
-      // {
-      //   title: "Team Members",
-      //   value: companyStatsCheck?.statistics?.teamMembers || 0,
-      //   subtitle: `${
-      //     companyStatsCheck?.statistics?.teamMembers || 0
-      //   } total employees`,
-      //   icon: FiUsers,
-      //   color: "bg-green-500",
-      //   bgColor: "bg-green-50",
-      //   textColor: "text-green-600",
-      //   onClick: () => handleStatsClick("employees"),
-      // },
       {
         id: "in-progress",
         title: "In Progress",
@@ -271,15 +269,32 @@ const CompanyProgressStats = ({ taskMonth }) => {
         textColor: "text-gray-600",
         onClick: () => handleStatsClick("unscheduled"),
       },
-    ],
-    [
-      companyStatsCheck?.statistics,
-      handleStatsClick,
-      handleOverdueTasksClick,
-      navigate,
-      taskMonth,
-    ]
-  );
+    ];
+
+    // If current month, show all stats; otherwise, only show specific stats
+    if (isCurrentMonth) {
+      return allStats;
+    }
+
+    // Stats to show when NOT current month
+    const allowedIdsForPastMonths = [
+      "on-review",
+      "content-approved",
+      "client-approved",
+      "re-work",
+      "overdue-tasks",
+      "unscheduled-tasks",
+    ];
+
+    return allStats.filter((stat) => allowedIdsForPastMonths.includes(stat.id));
+  }, [
+    companyStatsCheck?.statistics,
+    handleStatsClick,
+    handleOverdueTasksClick,
+    navigate,
+    taskMonth,
+    isCurrentMonth,
+  ]);
 
   // Initialize card order on first load
   React.useEffect(() => {
@@ -339,13 +354,45 @@ const CompanyProgressStats = ({ taskMonth }) => {
 
   // Loading state check - must be after all hooks
   if (isLoading) {
+    // Match the number of shimmer cards to the stats that will be shown
+    const placeholderCount =
+      (stats && stats.length) || (isCurrentMonth ? 12 : 6);
+    const placeholders = Array.from({ length: placeholderCount });
+
     return (
       <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="grid grid-cols-8 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
+          {/* Header shimmer (title + completion) */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="h-6 w-32 bg-gray-200 rounded" />
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-12 bg-gray-200 rounded" />
+              <div className="h-4 w-20 bg-gray-100 rounded" />
+            </div>
+          </div>
+
+          {/* Progress bar shimmer */}
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-gray-500 mb-2">
+              <div className="h-3 w-32 bg-gray-100 rounded" />
+              <div className="h-3 w-10 bg-gray-100 rounded" />
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-gray-300 h-2 rounded-full w-1/2" />
+            </div>
+          </div>
+
+          {/* Stats grid shimmer, matching the real grid layout */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-2">
+            {placeholders.map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 border border-gray-100"
+              >
+                <div className="w-8 h-8 bg-gray-200 rounded-lg mb-3" />
+                <div className="h-4 w-10 bg-gray-200 rounded mb-2" />
+                <div className="h-3 w-20 bg-gray-100 rounded" />
+              </div>
             ))}
           </div>
         </div>

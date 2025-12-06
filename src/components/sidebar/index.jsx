@@ -156,14 +156,13 @@ const Sidebar = () => {
                   key={index}
                   onClick={() => navigate(item.path)}
                   className={` relative cursor-pointer px-2 py-[10px] flexStart
-          gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
-            pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
-          }`}
+          gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
+                    }`}
                 >
                   <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
                   <span
                     className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
-            transition-all duration-300 text-[15px] flex-1"
+            transition-all duration-300 text-sm flex-1"
                   >
                     {item.title}
                   </span>
@@ -186,22 +185,21 @@ const Sidebar = () => {
           )}
         </ul>
       </div>
-
       <div className="flex flex-col ">
-        <div className="h-[130px] justify-center  w-full flex items-end bg-[#F4F9FD] relative rounded-[24px] p-4">
+        <div className="h-[95px] mt-3 justify-center  w-full flex items-end bg-[#F4F9FD] relative rounded-[24px] p-4">
           <button
             onClick={() => setMenuOpen(true)}
             className="flexCenter  
        gap-x-2 rounded-[14px] cursor-pointer bg-[#3F8CFF] text-white w-fit px-5 py-2
     text-sm font-medium"
           >
-            <img src={assetPath("icons/chat.svg")} alt="" className="w-6" />
+            <img src={assetPath("icons/chat.svg")} alt="" className="w-4" />
             <span>Support</span>
           </button>
           <img
             src="/image/support.svg"
             alt=""
-            className="absolute w-27 -top-10"
+            className="absolute w-22 -top-10"
           />
         </div>
         <button
@@ -209,7 +207,7 @@ const Sidebar = () => {
           className="text-[#7D8592] mt-2 px-2 py-[10px] rounded-[10px]  
   flexStart gap-x-3.5 hover:text-[#3F8CFF] text-sm"
         >
-          <TbLogout className="text-xl" />
+          <TbLogout className="text-lg" />
           <span>Logout</span>
         </button>
       </div>
