@@ -12,9 +12,8 @@ const LeadTimeline = ({ timeline }) => {
         {timeline.map((item) => (
           <div key={item.label} className="flex items-center gap-4">
             <span
-              className={`w-2 h-2 rounded-full ${
-                item.color || timelineColors.blue
-              }`}
+              className={`w-2 h-2 rounded-full ${item.color || timelineColors.blue
+                }`}
             />
             <div>
               <p className="text-sm font-semibold text-slate-800">

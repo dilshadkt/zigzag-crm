@@ -151,6 +151,19 @@ export default function ProjectTimeline({ tasks = [], currentMonth, onTaskClick,
         return colors[status] || "bg-gray-100 text-gray-700";
     };
 
+    // Helper for task group colors
+    const getTaskGroupColor = (group) => {
+        if (!group) return "bg-gray-100 text-gray-700";
+        const normalizedGroup = group.toLowerCase();
+
+        if (normalizedGroup.includes("reels")) return "bg-pink-100 text-pink-700";
+        if (normalizedGroup.includes("poster")) return "bg-purple-100 text-purple-700";
+        if (normalizedGroup.includes("shooting")) return "bg-cyan-100 text-cyan-700";
+        if (normalizedGroup.includes("motion")) return "bg-indigo-100 text-indigo-700";
+
+        return "bg-slate-100 text-slate-700";
+    };
+
     return (
         <div className="flex-1 h-full mt-3 overflow-hidden flex flex-col relative">
             {/* Expand/Collapse Button */}
@@ -269,6 +282,14 @@ export default function ProjectTimeline({ tasks = [], currentMonth, onTaskClick,
                                                     >
                                                         {task.status}
                                                     </Badge>
+                                                    {task.taskGroup && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={cn("text-[9px] px-1 py-0 h-4 font-medium rounded uppercase", getTaskGroupColor(task.taskGroup))}
+                                                        >
+                                                            {task.taskGroup}
+                                                        </Badge>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex items-center gap-1">
