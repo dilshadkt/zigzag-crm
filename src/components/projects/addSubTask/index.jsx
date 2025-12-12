@@ -98,7 +98,7 @@ const AddSubTask = ({
                 )}
 
                 {/* Show extra fields if subtask is 'content' */}
-                {values.title === "content" && (
+                {values.title.toLowerCase() === "content" && (
                   <>
                     <Description
                       errors={errors}
@@ -151,7 +151,7 @@ const AddSubTask = ({
                 )}
 
                 {/* Show publish URL fields if subtask is 'publish' */}
-                {values.title === "publish" && (
+                {values.title.toLowerCase() === "publish" && (
                   <div className="space-y-3">
                     <div className="flex flex-col gap-2 mb-3">
                       <div className="flex items-center gap-2">
