@@ -15,6 +15,7 @@ import {
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
 import { AiOutlineConsoleSql } from "react-icons/ai";
+import Modal from "../../shared/modal";
 
 const AddTask = ({
   isOpen,
@@ -69,6 +70,7 @@ const AddTask = ({
       recurringInterval: initialValues.recurringInterval || 1,
       recurringEndDate: initialValues.recurringEndDate || "",
       maxRecurrences: initialValues.maxRecurrences || "",
+      dueDateChangeReason: initialValues.dueDateChangeReason || "",
     };
   };
 
@@ -85,6 +87,12 @@ const AddTask = ({
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialValues?.project?._id || initialValues?.project || ""
   );
+
+  // State for due date change reason modal
+  const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
+    useState(false);
+  const [pendingNewDueDate, setPendingNewDueDate] = useState(null);
+  const [dateChangeReason, setDateChangeReason] = useState("");
 
   // Debug selectedProjectId changes
   useEffect(() => {
@@ -389,6 +397,69 @@ const AddTask = ({
     { label: "Weekly", value: "weekly" },
     { label: "Monthly", value: "monthly" },
   ];
+
+  // Handle due date change - check if we need to ask for reason
+  const handleDueDateChange = (e) => {
+    const newDate = e.target.value;
+    const originalDueDate = initialValues?.dueDate;
+
+    // Normalize dates for comparison (convert to YYYY-MM-DD format)
+    const normalizeDate = (date) => {
+      if (!date) return "";
+      // If already in YYYY-MM-DD format, return as is
+      if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return date;
+      }
+      // Otherwise, convert to YYYY-MM-DD
+      try {
+        return new Date(date).toISOString().split("T")[0];
+      } catch {
+        return "";
+      }
+    };
+
+    const normalizedNewDate = normalizeDate(newDate);
+    const normalizedOriginalDate = normalizeDate(originalDueDate);
+
+    // If editing and there's an existing dueDate, show reason modal
+    if (
+      isEdit &&
+      normalizedOriginalDate &&
+      normalizedNewDate &&
+      normalizedNewDate !== normalizedOriginalDate
+    ) {
+      setPendingNewDueDate(newDate);
+      setShowDateChangeReasonModal(true);
+    } else {
+      // Directly update the date if no reason needed
+      handleChange(e);
+    }
+  };
+
+  // Handle reason submission
+  const handleDateChangeReasonSubmit = () => {
+    if (!dateChangeReason.trim()) {
+      alert("Please provide a reason for changing the due date.");
+      return;
+    }
+
+    // Update the due date
+    setFieldValue("dueDate", pendingNewDueDate);
+    // Store the reason
+    setFieldValue("dueDateChangeReason", dateChangeReason.trim());
+
+    // Reset modal state
+    setShowDateChangeReasonModal(false);
+    setPendingNewDueDate(null);
+    setDateChangeReason("");
+  };
+
+  // Handle reason modal cancel
+  const handleDateChangeReasonCancel = () => {
+    setShowDateChangeReasonModal(false);
+    setPendingNewDueDate(null);
+    setDateChangeReason("");
+  };
 
   if (!isOpen) return null;
   return (
@@ -721,7 +792,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     title="Dead Line"
                     errors={errors}
                     value={values.dueDate}
-                    onChange={handleChange}
+                    onChange={handleDueDateChange}
                     touched={touched}
                     name={"dueDate"}
                     disabled={!isFormEnabled && !isOtherProjectSelected}
@@ -902,6 +973,73 @@ rounded-3xl max-w-[584px] w-full h-full relative"
           </>
         )}
       </div>
+
+      {/* Due Date Change Reason Modal */}
+      <Modal
+        isOpen={showDateChangeReasonModal}
+        onClose={handleDateChangeReasonCancel}
+        title="Reason for Date Change"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-600 mb-2">
+              You are changing the due date from{" "}
+              <span className="font-semibold">
+                {initialValues?.dueDate
+                  ? new Date(initialValues.dueDate).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )
+                  : "N/A"}
+              </span>{" "}
+              to{" "}
+              <span className="font-semibold">
+                {pendingNewDueDate
+                  ? new Date(pendingNewDueDate).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "N/A"}
+              </span>
+              . Please provide a reason for this change.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Reason <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={dateChangeReason}
+              onChange={(e) => setDateChangeReason(e.target.value)}
+              placeholder="Enter the reason for changing the due date..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              rows={4}
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={handleDateChangeReasonCancel}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDateChangeReasonSubmit}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Confirm Change
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

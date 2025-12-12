@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { assetPath } from "../../../utils/assetPath";
+import "./taskInfo.css";
 
 const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   const { user, isCompany } = useAuth();
@@ -22,6 +23,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
+  const [showDueDateHistoryModal, setShowDueDateHistoryModal] = useState(false);
   const navigate = useNavigate();
   const {
     data: timeLogData,
@@ -200,9 +202,47 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
         <div className="gap-y-3 mt-1 flex flex-col mx-3">
           <div className="flex flex-col gap-y-1">
             <span className="text-sm text-[#91929E]">Dead Line</span>
-            <span className="text-sm text-[#0A1629]">
-              {formatDate(taskDetails?.dueDate)}
-            </span>
+            <div className="flex flex-col gap-y-1">
+              {/* Current Due Date with click to view history */}
+              <div className="relative inline-block">
+                <span
+                  className={`text-sm text-[#0A1629] ${
+                    taskDetails?.dueDateHistory &&
+                    taskDetails.dueDateHistory.length > 0
+                      ? "cursor-pointer hover:text-blue-600 transition-colors underline decoration-dotted"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (
+                      taskDetails?.dueDateHistory &&
+                      taskDetails.dueDateHistory.length > 0
+                    ) {
+                      setShowDueDateHistoryModal(true);
+                    }
+                  }}
+                >
+                  {formatDate(taskDetails?.dueDate)}
+                </span>
+              </div>
+              {/* Original Due Date (if different from current) */}
+              {taskDetails?.originalDueDate &&
+                taskDetails.originalDueDate !== taskDetails?.dueDate && (
+                  <div className="flex flex-col gap-y-0.5">
+                    <span className="text-xs text-[#91929E]">
+                      Original: {formatDate(taskDetails.originalDueDate)}
+                    </span>
+                    {taskDetails?.dueDateHistory &&
+                      taskDetails.dueDateHistory.length > 0 && (
+                        <span className="text-xs text-[#91929E]">
+                          Changed {taskDetails.dueDateHistory.length}{" "}
+                          {taskDetails.dueDateHistory.length === 1
+                            ? "time"
+                            : "times"}
+                        </span>
+                      )}
+                  </div>
+                )}
+            </div>
           </div>
         </div>
       </div>
@@ -298,6 +338,80 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {deleteTask.isLoading ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Due Date History Modal */}
+      <Modal
+        isOpen={showDueDateHistoryModal}
+        onClose={() => setShowDueDateHistoryModal(false)}
+        title={`Due Date Change History (${
+          taskDetails?.dueDateHistory?.length || 0
+        })`}
+      >
+        <div className="flex flex-col gap-4">
+          {taskDetails?.dueDateHistory &&
+          taskDetails.dueDateHistory.length > 0 ? (
+            <div
+              className="space-y-4 overflow-y-auto pr-2 custom-scrollbar"
+              style={{ maxHeight: "500px" }}
+            >
+              {/* Reverse the array to show most recent first */}
+              {[...taskDetails.dueDateHistory]
+                .reverse()
+                .map((change, index) => (
+                  <div
+                    key={index}
+                    className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
+                  >
+                    <div className="text-gray-800 mb-2 leading-relaxed font-medium">
+                      {change?.reason || "No reason provided"}
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-gray-600 text-xs">
+                        <span className="font-medium">From:</span>
+                        <span className="text-gray-800">
+                          {change?.oldDate ? formatDate(change.oldDate) : "N/A"}
+                        </span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-gray-800 font-medium">
+                          {change?.newDate ? formatDate(change.newDate) : "N/A"}
+                        </span>
+                      </div>
+                      {change?.changedBy && (
+                        <div className="text-gray-600 text-xs">
+                          Changed by:{" "}
+                          <span className="text-gray-800 font-medium">
+                            {change.changedBy?.firstName || ""}{" "}
+                            {change.changedBy?.lastName || ""}
+                          </span>
+                        </div>
+                      )}
+                      {change?.changedAt && (
+                        <div className="text-gray-600 text-xs">
+                          On:{" "}
+                          <span className="text-gray-800 font-medium">
+                            {formatDate(change.changedAt)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="text-gray-500 text-sm text-center py-4">
+              No due date changes recorded.
+            </div>
+          )}
+          <div className="flex justify-end pt-2 border-t border-gray-200">
+            <button
+              onClick={() => setShowDueDateHistoryModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            >
+              Close
             </button>
           </div>
         </div>
