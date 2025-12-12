@@ -408,7 +408,10 @@ const ActivityStream = () => {
                   </span>
                   <span className="text-xs text-[#91929E] mt-1">
                     • {formatDateTime(activity.timestamp)}
-                    {formatTimeAgo(activity.timestamp)}
+                    {"   "}
+                    <span className="text-gray-400 bg-slate-50 rounded-xl px-2 py-0.5">
+                      {formatTimeAgo(activity.timestamp)}
+                    </span>
                   </span>
                 </div>
               </div>
