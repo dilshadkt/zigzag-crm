@@ -26,6 +26,7 @@ const ActivityStream = () => {
     dataUpdatedAt,
     isFetching,
   } = useGetRecentActivities(12, selectedFilter);
+  console.log(activitiesData);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -276,6 +277,18 @@ const ActivityStream = () => {
     return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
   };
 
+  const formatDateTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const isToday =
+      format(date, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+
+    if (isToday) {
+      return format(date, "h:mm a");
+    } else {
+      return format(date, "MMM d, h:mm a");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex mt-5 h-[450px] flex-col relative col-span-2 mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
@@ -394,6 +407,7 @@ const ActivityStream = () => {
                     {activity.user.position || "Team Member"}
                   </span>
                   <span className="text-xs text-[#91929E] mt-1">
+                    • {formatDateTime(activity.timestamp)}
                     {formatTimeAgo(activity.timestamp)}
                   </span>
                 </div>

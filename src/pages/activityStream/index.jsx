@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { format, formatDistanceToNow, subDays, startOfDay, endOfDay } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  subDays,
+  startOfDay,
+  endOfDay,
+} from "date-fns";
 import { useGetRecentActivities } from "../../api/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +24,7 @@ import {
 const ActivityStreamPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   // State for filters
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all"); // all, today, yesterday, week, month, custom
@@ -28,10 +34,13 @@ const ActivityStreamPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [limit, setLimit] = useState(50); // Show more activities
 
-  const { data: activitiesData, isLoading, refetch, dataUpdatedAt, isFetching } = useGetRecentActivities(
-    limit,
-    selectedFilter
-  );
+  const {
+    data: activitiesData,
+    isLoading,
+    refetch,
+    dataUpdatedAt,
+    isFetching,
+  } = useGetRecentActivities(limit, selectedFilter);
 
   const filterOptions = [
     { value: "all", label: "All Activities", icon: FaFilter },
@@ -105,7 +114,10 @@ const ActivityStreamPage = () => {
           activity.project.progress || 0
         }% complete)`;
       case "subtask_change":
-        return activity.description || `Updated subtask "${activity.subTask?.title || 'Unknown'}"`;
+        return (
+          activity.description ||
+          `Updated subtask "${activity.subTask?.title || "Unknown"}"`
+        );
       case "file_attachment":
         return `Added ${activity.attachments?.length || 1} file(s) to "${
           activity.task.title
@@ -187,7 +199,8 @@ const ActivityStreamPage = () => {
           deleted: "text-red-600 border-red-200",
         };
         const changeColorClass =
-          changeTypeColors[activity.changeType] || "text-gray-600 border-gray-200";
+          changeTypeColors[activity.changeType] ||
+          "text-gray-600 border-gray-200";
         return (
           <div
             className={`bg-white px-2 py-1 rounded-md text-xs border ${changeColorClass}`}
@@ -219,7 +232,8 @@ const ActivityStreamPage = () => {
           deleted: "text-red-600 border-red-200",
         };
         const subTaskChangeColorClass =
-          subTaskChangeTypeColors[activity.changeType] || "text-gray-600 border-gray-200";
+          subTaskChangeTypeColors[activity.changeType] ||
+          "text-gray-600 border-gray-200";
         return (
           <div
             className={`bg-white px-2 py-1 rounded-md text-xs border ${subTaskChangeColorClass}`}
@@ -286,50 +300,50 @@ const ActivityStreamPage = () => {
   // Filter activities based on date filter
   const filterActivitiesByDate = (activities) => {
     if (!activities) return [];
-    
+
     const now = new Date();
-    
+
     switch (dateFilter) {
       case "today":
         const todayStart = startOfDay(now);
         const todayEnd = endOfDay(now);
-        return activities.filter(activity => {
+        return activities.filter((activity) => {
           const activityDate = new Date(activity.timestamp);
           return activityDate >= todayStart && activityDate <= todayEnd;
         });
-      
+
       case "yesterday":
         const yesterday = subDays(now, 1);
         const yesterdayStart = startOfDay(yesterday);
         const yesterdayEnd = endOfDay(yesterday);
-        return activities.filter(activity => {
+        return activities.filter((activity) => {
           const activityDate = new Date(activity.timestamp);
           return activityDate >= yesterdayStart && activityDate <= yesterdayEnd;
         });
-      
+
       case "week":
         const weekAgo = subDays(now, 7);
-        return activities.filter(activity => {
+        return activities.filter((activity) => {
           const activityDate = new Date(activity.timestamp);
           return activityDate >= weekAgo;
         });
-      
+
       case "month":
         const monthAgo = subDays(now, 30);
-        return activities.filter(activity => {
+        return activities.filter((activity) => {
           const activityDate = new Date(activity.timestamp);
           return activityDate >= monthAgo;
         });
-      
+
       case "custom":
         if (!customStartDate || !customEndDate) return activities;
         const startDate = startOfDay(new Date(customStartDate));
         const endDate = endOfDay(new Date(customEndDate));
-        return activities.filter(activity => {
+        return activities.filter((activity) => {
           const activityDate = new Date(activity.timestamp);
           return activityDate >= startDate && activityDate <= endDate;
         });
-      
+
       default:
         return activities;
     }
@@ -338,25 +352,30 @@ const ActivityStreamPage = () => {
   // Filter activities based on search term
   const filterActivitiesBySearch = (activities) => {
     if (!searchTerm.trim()) return activities;
-    
+
     const searchLower = searchTerm.toLowerCase();
-    return activities.filter(activity => {
+    return activities.filter((activity) => {
       // Search in user names
-      const userName = `${activity.user.firstName} ${activity.user.lastName}`.toLowerCase();
+      const userName =
+        `${activity.user.firstName} ${activity.user.lastName}`.toLowerCase();
       if (userName.includes(searchLower)) return true;
-      
+
       // Search in task titles
-      if (activity.task?.title?.toLowerCase().includes(searchLower)) return true;
-      
+      if (activity.task?.title?.toLowerCase().includes(searchLower))
+        return true;
+
       // Search in subtask titles
-      if (activity.subTask?.title?.toLowerCase().includes(searchLower)) return true;
-      
+      if (activity.subTask?.title?.toLowerCase().includes(searchLower))
+        return true;
+
       // Search in project names
-      if (activity.project?.name?.toLowerCase().includes(searchLower)) return true;
-      
+      if (activity.project?.name?.toLowerCase().includes(searchLower))
+        return true;
+
       // Search in descriptions
-      if (activity.description?.toLowerCase().includes(searchLower)) return true;
-      
+      if (activity.description?.toLowerCase().includes(searchLower))
+        return true;
+
       return false;
     });
   };
@@ -378,12 +397,17 @@ const ActivityStreamPage = () => {
               >
                 <FaArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Activity Stream</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Activity Stream
+              </h1>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="text-sm text-gray-500 flex items-center gap-1">
-                <span>Updated {dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : 'Never'}</span>
+                <span>
+                  Updated{" "}
+                  {dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : "Never"}
+                </span>
                 {isFetching && !isLoading && (
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                 )}
@@ -399,7 +423,9 @@ const ActivityStreamPage = () => {
                 title="Refresh activities"
               >
                 <FaSync
-                  className={`w-4 h-4 ${isRefreshing || isFetching ? "animate-spin" : ""}`}
+                  className={`w-4 h-4 ${
+                    isRefreshing || isFetching ? "animate-spin" : ""
+                  }`}
                 />
               </button>
             </div>
@@ -496,13 +522,17 @@ const ActivityStreamPage = () => {
           {/* Results Summary */}
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              Showing {filteredBySearch.length} of {activities.length} activities
+              Showing {filteredBySearch.length} of {activities.length}{" "}
+              activities
             </div>
             <div className="text-sm text-gray-600">
               {dateFilter !== "all" && (
                 <span className="inline-flex items-center gap-1">
                   <FaCalendar className="w-3 h-3" />
-                  {dateFilterOptions.find(opt => opt.value === dateFilter)?.label}
+                  {
+                    dateFilterOptions.find((opt) => opt.value === dateFilter)
+                      ?.label
+                  }
                 </span>
               )}
             </div>
@@ -530,18 +560,22 @@ const ActivityStreamPage = () => {
         ) : filteredBySearch.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📊</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No activities found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No activities found
+            </h3>
             <p className="text-gray-600">
-              {searchTerm || dateFilter !== "all" 
+              {searchTerm || dateFilter !== "all"
                 ? "Try adjusting your filters or search terms"
-                : "No activities have been recorded yet"
-              }
+                : "No activities have been recorded yet"}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {filteredBySearch.map((activity, index) => (
-              <div key={activity.id || index} className="bg-white rounded-xl border border-gray-200 p-6">
+              <div
+                key={activity.id || index}
+                className="bg-white rounded-xl border border-gray-200 p-6"
+              >
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                     {activity.user.profileImage ? (
@@ -552,8 +586,8 @@ const ActivityStreamPage = () => {
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="24" fill="%23E5E7EB"/><text x="24" y="30" text-anchor="middle" font-size="18" font-family="Arial" fill="%236B7280">${
-                          activity.user.firstName?.charAt(0) || "?"
-                        }</text></svg>`;
+                            activity.user.firstName?.charAt(0) || "?"
+                          }</text></svg>`;
                         }}
                       />
                     ) : (
@@ -601,54 +635,64 @@ const ActivityStreamPage = () => {
                     )}
 
                     {/* Subtask context */}
-                    {activity.action === "subtask_change" && activity.parentTask && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Parent Task: {activity.parentTask.title} • Project: {activity.project?.name}
-                      </p>
-                    )}
+                    {activity.action === "subtask_change" &&
+                      activity.parentTask && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          Parent Task: {activity.parentTask.title} • Project:{" "}
+                          {activity.project?.name}
+                        </p>
+                      )}
 
                     {/* Project details for project activities */}
                     {activity.project && !activity.parentTask && (
                       <p className="text-sm text-gray-600 mt-1">
-                        Priority: {activity.project.priority} • Status: {activity.project.status}
+                        Priority: {activity.project.priority} • Status:{" "}
+                        {activity.project.status}
                       </p>
                     )}
 
                     {/* Time log description */}
-                    {activity.action === "logged_time" && activity.description && (
-                      <p className="text-sm text-gray-600 mt-2 italic">
-                        "{activity.description}"
-                      </p>
-                    )}
+                    {activity.action === "logged_time" &&
+                      activity.description && (
+                        <p className="text-sm text-gray-600 mt-2 italic">
+                          "{activity.description}"
+                        </p>
+                      )}
 
                     {/* File attachment details */}
-                    {activity.action === "file_attachment" && activity.attachments && (
-                      <div className="mt-3">
-                        <p className="text-sm text-gray-600 mb-2">Files:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {activity.attachments.map((file, idx) => (
-                            <span
-                              key={idx}
-                              className="text-sm bg-white px-3 py-1 rounded-lg border"
-                            >
-                              {file.title || `File ${idx + 1}`}
-                            </span>
-                          ))}
+                    {activity.action === "file_attachment" &&
+                      activity.attachments && (
+                        <div className="mt-3">
+                          <p className="text-sm text-gray-600 mb-2">Files:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {activity.attachments.map((file, idx) => (
+                              <span
+                                key={idx}
+                                className="text-sm bg-white px-3 py-1 rounded-lg border"
+                              >
+                                {file.title || `File ${idx + 1}`}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Change details for task/subtask changes */}
-                    {(activity.action === "task_change" || activity.action === "subtask_change") && (
+                    {(activity.action === "task_change" ||
+                      activity.action === "subtask_change") && (
                       <div className="mt-3 p-3 bg-white rounded-lg border">
                         <div className="text-sm text-gray-600 mb-2">
                           <strong>Change Details:</strong>
                         </div>
                         {activity.oldValue && activity.newValue && (
                           <div className="text-sm">
-                            <span className="text-red-600 line-through">{activity.oldValue}</span>
+                            <span className="text-red-600 line-through">
+                              {activity.oldValue}
+                            </span>
                             <span className="mx-2">→</span>
-                            <span className="text-green-600">{activity.newValue}</span>
+                            <span className="text-green-600">
+                              {activity.newValue}
+                            </span>
                           </div>
                         )}
                         {activity.description && (
@@ -666,19 +710,20 @@ const ActivityStreamPage = () => {
         )}
 
         {/* Load More Button */}
-        {filteredBySearch.length > 0 && filteredBySearch.length < activities.length && (
-          <div className="text-center mt-8">
-            <button
-              onClick={() => setLimit(prev => prev + 25)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Load More Activities
-            </button>
-          </div>
-        )}
+        {filteredBySearch.length > 0 &&
+          filteredBySearch.length < activities.length && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setLimit((prev) => prev + 25)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Load More Activities
+              </button>
+            </div>
+          )}
       </div>
     </div>
   );
 };
 
-export default ActivityStreamPage; 
+export default ActivityStreamPage;
