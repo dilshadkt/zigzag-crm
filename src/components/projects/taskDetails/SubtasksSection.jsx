@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SubTaskStatusButton from "../subTaskStatus";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
+import Modal from "../../shared/modal";
 
 const SubtasksSection = ({
   subTasks,
@@ -14,6 +15,21 @@ const SubtasksSection = ({
   canManageSubtasks,
 }) => {
   const [expandedSubTasks, setExpandedSubTasks] = useState(new Set());
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historySubTask, setHistorySubTask] = useState(null);
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    try {
+      return new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "N/A";
+    }
+  };
 
   // Check if subtask has additional content to show
   const hasAdditionalContent = (subtask) => {
@@ -372,12 +388,41 @@ const SubtasksSection = ({
                       <span>Unassigned</span>
                     )}
                   </div>
-                  <span>
-                    Due:{" "}
-                    {subtask.dueDate
-                      ? new Date(subtask.dueDate).toLocaleDateString()
-                      : "No date"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Due:{" "}
+                      {subtask.dueDate
+                        ? new Date(subtask.dueDate).toLocaleDateString()
+                        : "No date"}
+                    </span>
+                    {subtask?.dueDateHistory &&
+                      subtask.dueDateHistory.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHistorySubTask(subtask);
+                            setHistoryModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="View due date change history"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                  </div>
                 </div>
                 <SubTaskAttachments
                   subTask={subtask}
@@ -409,6 +454,77 @@ const SubtasksSection = ({
           </p>
         </div>
       )}
+
+      {/* Due Date History Modal */}
+      <Modal
+        isOpen={historyModalOpen}
+        onClose={() => {
+          setHistoryModalOpen(false);
+          setHistorySubTask(null);
+        }}
+        title={
+          historySubTask
+            ? `Due Date Change History (${
+                historySubTask.dueDateHistory?.length || 0
+              })`
+            : "Due Date Change History"
+        }
+      >
+        {historySubTask?.dueDateHistory &&
+        historySubTask.dueDateHistory.length > 0 ? (
+          <div
+            className="space-y-4 overflow-y-auto pr-2 custom-scrollbar"
+            style={{ maxHeight: "500px" }}
+          >
+            {[...historySubTask.dueDateHistory]
+              .slice()
+              .reverse()
+              .map((change, index) => (
+                <div
+                  key={index}
+                  className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
+                >
+                  <div className="text-gray-800 mb-2 leading-relaxed font-medium">
+                    {change?.reason || "No reason provided"}
+                  </div>
+                  <div className="space-y-1.5 text-xs text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">From:</span>
+                      <span className="text-gray-800">
+                        {change?.oldDate ? formatDate(change.oldDate) : "N/A"}
+                      </span>
+                      <span className="text-gray-400">→</span>
+                      <span className="text-gray-800 font-medium">
+                        {change?.newDate ? formatDate(change.newDate) : "N/A"}
+                      </span>
+                    </div>
+                    {change?.changedBy && (
+                      <div>
+                        Changed by:{" "}
+                        <span className="text-gray-800 font-medium">
+                          {change.changedBy?.firstName || ""}{" "}
+                          {change.changedBy?.lastName || ""}
+                        </span>
+                      </div>
+                    )}
+                    {change?.changedAt && (
+                      <div>
+                        On:{" "}
+                        <span className="text-gray-800 font-medium">
+                          {formatDate(change.changedAt)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="text-gray-500 text-sm text-center py-4">
+            No due date changes recorded.
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

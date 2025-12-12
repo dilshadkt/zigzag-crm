@@ -19,6 +19,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     ideas: defaultValue?.ideas || "",
     publishUrls: defaultValue?.publishUrls || {},
     parentTaskId: defaultValue?.parentTaskId || "",
+    dueDateChangeReason: defaultValue?.dueDateChangeReason || "",
   };
 
   const validationSchema = Yup.object().shape({
