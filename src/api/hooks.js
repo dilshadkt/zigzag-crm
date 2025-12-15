@@ -146,7 +146,8 @@ export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
       const queryString = params.toString();
       return apiClient
         .get(
-          `/projects/company/${companyId}${queryString ? `?${queryString}` : ""
+          `/projects/company/${companyId}${
+            queryString ? `?${queryString}` : ""
           }`
         )
         .then((res) => res.data?.projects);
@@ -948,18 +949,13 @@ export const useGetEmployeeSubTasks = (employeeId, filters = {}) => {
   });
 };
 
-// Get subtasks assigned to an employee that are due today
+// Get tasks + subtasks assigned to an employee that are due today
 export const useGetEmployeeSubTasksToday = (employeeId) => {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
-
   return useQuery({
-    queryKey: ["employeeSubTasksToday", employeeId, today],
+    queryKey: ["employeeSubTasksToday", employeeId],
     queryFn: () => {
-      const params = new URLSearchParams();
-      params.append("dueDate", today);
-
       return apiClient
-        .get(`/subtasks/employee/${employeeId}?${params.toString()}`)
+        .get(`/tasks/employee/${employeeId}/today`)
         .then((res) => res.data)
         .catch((error) => {
           // Fallback data if endpoint doesn't exist
@@ -968,13 +964,13 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
             error
           );
           return {
+            tasks: [],
             subTasks: [
-              // Sample subtask data for demonstration
+              // Sample combined data for demonstration
               {
-                _id: "sample-subtask-1",
-                title: "Review subtask requirements",
-                description:
-                  "Go through the subtask specifications and prepare feedback",
+                _id: "sample-task-1",
+                title: "Sample Task",
+                description: "Demo task fallback",
                 priority: "High",
                 status: "todo",
                 dueDate: new Date().toISOString(),
@@ -984,16 +980,11 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
                   name: "Sample-Project",
                   displayName: "Sample Project",
                 },
-                parentTask: {
-                  _id: "sample-task-1",
-                  title: "Sample Parent Task",
-                },
               },
               {
-                _id: "sample-subtask-2",
-                title: "Update subtask documentation",
-                description:
-                  "Update the subtask documentation with recent changes",
+                _id: "sample-subtask-1",
+                title: "Sample Subtask",
+                description: "Demo subtask fallback",
                 priority: "Medium",
                 status: "in-progress",
                 dueDate: new Date().toISOString(),
@@ -1002,50 +993,6 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
                   _id: "sample-project-2",
                   name: "Documentation-Project",
                   displayName: "Documentation Project",
-                },
-                parentTask: {
-                  _id: "sample-task-2",
-                  title: "Documentation Task",
-                },
-              },
-              {
-                _id: "sample-subtask-3",
-                title: "Fix subtask bug",
-                description: "Resolve the subtask issue reported by users",
-                priority: "High",
-                status: "todo",
-                dueDate: new Date(
-                  Date.now() + 2 * 60 * 60 * 1000
-                ).toISOString(), // 2 hours from now
-                timeEstimate: 3,
-                project: {
-                  _id: "sample-project-3",
-                  name: "Bug-Fixes",
-                  displayName: "Bug Fixes",
-                },
-                parentTask: {
-                  _id: "sample-task-3",
-                  title: "Bug Fix Task",
-                },
-              },
-              {
-                _id: "sample-subtask-4",
-                title: "Subtask code review",
-                description: "Review subtask pull requests from team members",
-                priority: "Low",
-                status: "completed",
-                dueDate: new Date(
-                  Date.now() - 1 * 60 * 60 * 1000
-                ).toISOString(), // 1 hour ago
-                timeEstimate: 1,
-                project: {
-                  _id: "sample-project-1",
-                  name: "Sample-Project",
-                  displayName: "Sample Project",
-                },
-                parentTask: {
-                  _id: "sample-task-1",
-                  title: "Sample Parent Task",
                 },
               },
             ],
@@ -1205,11 +1152,11 @@ export const useGetCompanyStats = (companyId, taskMonth) => {
         const projectProgressAvg =
           activeProjects.length > 0
             ? Math.round(
-              activeProjects.reduce(
-                (sum, project) => sum + (project.progress || 0),
-                0
-              ) / activeProjects.length
-            )
+                activeProjects.reduce(
+                  (sum, project) => sum + (project.progress || 0),
+                  0
+                ) / activeProjects.length
+              )
             : 0;
 
         return {

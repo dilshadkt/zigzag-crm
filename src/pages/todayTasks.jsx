@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetEmployeeSubTasksToday } from "../api/hooks";
 import { useAuth } from "../hooks/useAuth";
@@ -19,11 +19,11 @@ import {
 const TodayTasks = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: todaySubTasksData, isLoading } = useGetEmployeeSubTasksToday(
+  const { data: todayData, isLoading } = useGetEmployeeSubTasksToday(
     user?._id ? user._id : null
   );
 
-  const [filteredSubTasks, setFilteredSubTasks] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
@@ -37,16 +37,27 @@ const TodayTasks = () => {
   });
 
   // Get unique filter options from subtasks
+  const combinedItems = useMemo(() => {
+    if (!todayData) return [];
+    const tasks = todayData.tasks || [];
+    const subTasks = todayData.subTasks || [];
+    // Tag items to distinguish for UI logic
+    return [
+      ...tasks.map((t) => ({ ...t, __type: "task" })),
+      ...subTasks.map((s) => ({ ...s, __type: "subtask" })),
+    ];
+  }, [todayData]);
+
   const getFilterOptions = () => {
-    if (!todaySubTasksData?.subTasks) return { projects: [] };
+    if (!combinedItems.length) return { projects: [] };
 
     const projects = [];
     const projectIds = new Set();
 
-    todaySubTasksData.subTasks.forEach((subTask) => {
-      if (subTask.project && !projectIds.has(subTask.project._id)) {
-        projectIds.add(subTask.project._id);
-        projects.push(subTask.project);
+    combinedItems.forEach((item) => {
+      if (item.project && !projectIds.has(item.project._id)) {
+        projectIds.add(item.project._id);
+        projects.push(item.project);
       }
     });
 
@@ -54,41 +65,37 @@ const TodayTasks = () => {
   };
 
   useEffect(() => {
-    if (todaySubTasksData?.subTasks) {
-      let filtered = [...todaySubTasksData.subTasks];
+    if (combinedItems.length) {
+      let filtered = [...combinedItems];
 
       // Apply search filter
       if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
         filtered = filtered.filter(
-          (subTask) =>
-            subTask.title
-              .toLowerCase()
-              .includes(filters.search.toLowerCase()) ||
-            subTask.description
-              ?.toLowerCase()
-              .includes(filters.search.toLowerCase())
+          (item) =>
+            item.title.toLowerCase().includes(searchLower) ||
+            item.description?.toLowerCase().includes(searchLower)
         );
       }
 
       // Apply status filter
       if (filters.status.length > 0) {
-        filtered = filtered.filter((subTask) =>
-          filters.status.includes(subTask.status)
+        filtered = filtered.filter((item) =>
+          filters.status.includes(item.status)
         );
       }
 
       // Apply priority filter
       if (filters.priority.length > 0) {
-        filtered = filtered.filter((subTask) =>
-          filters.priority.includes(subTask.priority)
+        filtered = filtered.filter((item) =>
+          filters.priority.includes(item.priority)
         );
       }
 
       // Apply project filter
       if (filters.project.length > 0) {
         filtered = filtered.filter(
-          (subTask) =>
-            subTask.project && filters.project.includes(subTask.project._id)
+          (item) => item.project && filters.project.includes(item.project._id)
         );
       }
 
@@ -101,16 +108,18 @@ const TodayTasks = () => {
             aValue = a.title.toLowerCase();
             bValue = b.title.toLowerCase();
             break;
-          case "priority":
+          case "priority": {
             const priorityOrder = { High: 3, Medium: 2, Low: 1 };
             aValue = priorityOrder[a.priority] || 0;
             bValue = priorityOrder[b.priority] || 0;
             break;
-          case "status":
+          }
+          case "status": {
             const statusOrder = { todo: 1, "in-progress": 2, completed: 3 };
             aValue = statusOrder[a.status] || 0;
             bValue = statusOrder[b.status] || 0;
             break;
+          }
           case "createdAt":
             aValue = new Date(a.createdAt);
             bValue = new Date(b.createdAt);
@@ -127,9 +136,11 @@ const TodayTasks = () => {
         }
       });
 
-      setFilteredSubTasks(filtered);
+      setFilteredItems(filtered);
+    } else {
+      setFilteredItems([]);
     }
-  }, [todaySubTasksData, filters]);
+  }, [combinedItems, filters]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -238,7 +249,8 @@ const TodayTasks = () => {
           <div>
             <Header>Today's Tasks</Header>
             <p className="text-sm text-gray-500 mt-1">
-              {filteredSubTasks.length} task{filteredSubTasks.length !== 1 ? "s" : ""} due today
+              {filteredItems.length} task
+              {filteredItems.length !== 1 ? "s" : ""} due today
             </p>
           </div>
         </div>
@@ -262,10 +274,11 @@ const TodayTasks = () => {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${hasActiveFilters()
+            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${
+              hasActiveFilters()
                 ? "border-blue-500 bg-blue-50 text-blue-600"
                 : "border-gray-200 hover:border-gray-300"
-              }`}
+            }`}
           >
             <FiFilter className="w-4 h-4" />
             Filters
@@ -397,43 +410,49 @@ const TodayTasks = () => {
         )}
       </div>
 
-      {/* Subtasks List */}
+      {/* Tasks/Subtasks List */}
       <div className="flex-1 overflow-y-auto">
-        {filteredSubTasks.length > 0 ? (
+        {filteredItems.length > 0 ? (
           <div className="space-y-3">
-            {filteredSubTasks.map((subTask) => (
+            {filteredItems.map((item) => (
               <div
-                key={subTask._id}
-                onClick={() => handleSubTaskClick(subTask)}
+                key={item._id}
+                onClick={() =>
+                  item.__type === "subtask" && handleSubTaskClick(item)
+                }
                 className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {subTask.title}
+                      {item.title}
                     </h3>
-                    {subTask.description && (
+                    {item.description && (
                       <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {subTask.description}
+                        {item.description}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 ml-4">
+                    {/* Type Badge */}
+                    <span className="px-2 py-1 text-xs font-medium rounded-full border text-gray-600 bg-gray-50 border-gray-200">
+                      {item.__type === "subtask" ? "Subtask" : "Task"}
+                    </span>
                     {/* Priority Badge */}
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(
-                        subTask.priority
+                        item.priority
                       )}`}
                     >
-                      {subTask.priority}
+                      {item.priority}
                     </span>
                     {/* Status Badge */}
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                        subTask.status
+                        item.status
                       )}`}
                     >
-                      {subTask.status === "todo" ? "Pending" : subTask.status}
+                      {item.status === "todo" ? "Pending" : item.status}
                     </span>
                   </div>
                 </div>
@@ -441,33 +460,33 @@ const TodayTasks = () => {
                 <div className="flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center gap-4">
                     {/* Project */}
-                    {subTask.project && (
+                    {item.project && (
                       <div className="flex items-center gap-1">
                         <FiFolder className="w-4 h-4" />
-                        <span>{subTask.project.name}</span>
+                        <span>{item.project.name}</span>
                       </div>
                     )}
                     {/* Parent Task */}
-                    {subTask.parentTask && (
+                    {item.__type === "subtask" && item.parentTask && (
                       <div className="flex items-center gap-1">
                         <FiUser className="w-4 h-4" />
-                        <span>Task: {subTask.parentTask.title}</span>
+                        <span>Task: {item.parentTask.title}</span>
                       </div>
                     )}
                     {/* Due Date */}
-                    {subTask.dueDate && (
+                    {item.dueDate && (
                       <div className="flex items-center gap-1">
                         <FiCalendar className="w-4 h-4" />
-                        <span>{formatDate(subTask.dueDate)}</span>
+                        <span>{formatDate(item.dueDate)}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Time Estimate */}
-                  {subTask.timeEstimate && (
+                  {item.timeEstimate && (
                     <div className="flex items-center gap-1">
                       <FiClock className="w-4 h-4" />
-                      <span>{subTask.timeEstimate}h</span>
+                      <span>{item.timeEstimate}h</span>
                     </div>
                   )}
                 </div>
