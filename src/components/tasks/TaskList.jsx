@@ -2,8 +2,17 @@ import React from "react";
 import TaskCard from "./TaskCard";
 import EmptyState from "./EmptyState";
 
-const TaskList = ({ tasks, filter, scrollable = true }) => {
-  if (tasks.length === 0) {
+const TaskList = ({
+  tasks,
+  filter,
+  scrollable = true,
+  showSubtasks = true,
+}) => {
+  const visibleTasks = showSubtasks
+    ? tasks
+    : tasks.filter((task) => !task?.parentTask && !task?.isSubTask);
+
+  if (visibleTasks.length === 0) {
     return <EmptyState filter={filter} />;
   }
 
@@ -13,7 +22,7 @@ const TaskList = ({ tasks, filter, scrollable = true }) => {
 
   return (
     <div className={containerClassName}>
-      {tasks.map((task) => (
+      {visibleTasks.map((task) => (
         <TaskCard key={task._id} task={task} filter={filter} />
       ))}
     </div>

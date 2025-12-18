@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   useGetCompanyTasksFiltered,
@@ -222,6 +222,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
   }
 
   const FilterIcon = getFilterIcon();
+  const [showSubtasks, setShowSubtasks] = useState(true);
 
   return (
     <section className="flex flex-col h-full overflow-hidden">
@@ -234,8 +235,22 @@ const CompanyTasks = ({ filter: propFilter }) => {
           <div className={`flex items-center gap-2 ${getFilterColor()}`}>
             <FilterIcon className="w-5 h-5" />
 
-            <span className="font-medium">{filteredTasks.length} tasks</span>
+            <span className="font-medium">
+              {showSubtasks
+                ? filteredTasks.length
+                : filteredTasks.filter(
+                    (task) => !task?.parentTask && !task?.isSubTask
+                  ).length}{" "}
+              tasks
+            </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowSubtasks((prev) => !prev)}
+            className="px-3 py-1.5 text-xs font-medium rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+          >
+            {showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
+          </button>
           <SuperFilterPanel
             superFilters={superFilters}
             handleFilterChange={handleFilterChange}
@@ -264,12 +279,17 @@ const CompanyTasks = ({ filter: propFilter }) => {
                   tasks={group.tasks}
                   filter={filter}
                   scrollable={false}
+                  showSubtasks={showSubtasks}
                 />
               </div>
             ))}
           </div>
         ) : (
-          <TaskList tasks={filteredTasks} filter={filter} />
+          <TaskList
+            tasks={filteredTasks}
+            filter={filter}
+            showSubtasks={showSubtasks}
+          />
         )}
       </div>
     </section>
