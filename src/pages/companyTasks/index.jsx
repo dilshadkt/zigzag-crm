@@ -252,12 +252,13 @@ const CompanyTasks = ({ filter: propFilter }) => {
     <>
       <div className="flex items-center ">
         <Header />
-        <Navigator />
       </div>
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-start justify-between">
           <div className="mb-6 flex items-center justify-between">
-            <div>
+            <div className="flex  gap-x-2">
+              <Navigator />
+
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <FilterIcon className={getFilterColor()} />
                 {getFilterTitle()}
