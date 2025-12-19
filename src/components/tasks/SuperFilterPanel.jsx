@@ -3,28 +3,47 @@ import FilterButton from "./FilterButton";
 import FilterDrawer from "./FilterDrawer";
 
 const SuperFilterPanel = ({
-  superFilters,
+  superFilters = {}, // Default to empty object
   handleFilterChange,
   handleMultiSelectFilter,
   clearAllFilters,
   hasActiveFilters,
-  users,
-  projects,
+  users = [],
+  projects = [],
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const getActiveFiltersCount = () => {
+    // Return 0 if superFilters is not properly initialized
+    if (!superFilters) return 0;
+
     let count = 0;
-    if (superFilters.search) count++;
-    if (superFilters.status.length > 0) count += superFilters.status.length;
-    if (superFilters.priority.length > 0) count += superFilters.priority.length;
-    if (superFilters.assignedTo.length > 0)
+
+    // Safely check each filter property
+    if (superFilters?.search) count++;
+
+    if (superFilters?.status && Array.isArray(superFilters.status)) {
+      count += superFilters.status.length;
+    }
+
+    if (superFilters?.priority && Array.isArray(superFilters.priority)) {
+      count += superFilters.priority.length;
+    }
+
+    if (superFilters?.assignedTo && Array.isArray(superFilters.assignedTo)) {
       count += superFilters.assignedTo.length;
-    if (superFilters.project.length > 0) count += superFilters.project.length;
-    if (superFilters.dateRange.start) count++;
-    if (superFilters.dateRange.end) count++;
-    if (superFilters.sortBy !== "dueDate") count++;
-    if (superFilters.sortOrder !== "asc") count++;
+    }
+
+    if (superFilters?.project && Array.isArray(superFilters.project)) {
+      count += superFilters.project.length;
+    }
+
+    if (superFilters?.dateRange?.start) count++;
+    if (superFilters?.dateRange?.end) count++;
+
+    if (superFilters?.sortBy && superFilters.sortBy !== "dueDate") count++;
+    if (superFilters?.sortOrder && superFilters.sortOrder !== "asc") count++;
+
     return count;
   };
 
@@ -37,7 +56,7 @@ const SuperFilterPanel = ({
       <div className="">
         <FilterButton
           onClick={() => setIsDrawerOpen(true)}
-          hasActiveFilters={hasActiveFilters()}
+          hasActiveFilters={hasActiveFilters ? hasActiveFilters() : false}
           activeFiltersCount={getActiveFiltersCount()}
         />
       </div>

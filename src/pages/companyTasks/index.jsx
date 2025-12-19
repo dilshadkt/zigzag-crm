@@ -23,11 +23,11 @@ import {
 const CompanyTasks = ({ filter: propFilter }) => {
   const { companyId } = useAuth();
   const [searchParams] = useSearchParams();
-  const urlFilter = searchParams.get("filter"); // Can be: 'overdue', 'in-progress', 'pending', 'completed'
-  const filter = propFilter || urlFilter; // Use prop filter if provided, otherwise use URL filter
+  const urlFilter = searchParams.get("filter");
+  const filter = propFilter || urlFilter;
   const taskMonth = searchParams.get("taskMonth");
 
-  // Use custom hooks for filters and data processing
+  // Use custom hooks for filters
   const {
     superFilters,
     handleFilterChange,
@@ -38,26 +38,28 @@ const CompanyTasks = ({ filter: propFilter }) => {
 
   // Determine which data to use based on filter
   const isTodayFilter = filter === "today";
-  const shouldFetchAllTasks = !isTodayFilter;
 
-  // Get all company tasks and filter based on URL parameter
+  // ALWAYS call both hooks, but control them with 'enabled' option
+  // This ensures hooks are called in the same order every render
   const { data: allTasksData, isLoading: allTasksLoading } =
     useGetCompanyTasksFiltered(companyId, taskMonth, {
       filter,
       superFilters,
-      enabled: shouldFetchAllTasks,
+      enabled: !isTodayFilter, // Only fetch when NOT today filter
     });
 
-  // Get today's tasks with smart logic (same as dashboard)
   const {
     data: todayTasksData,
     isLoading: todayTasksLoading,
     error: todayTasksError,
   } = useGetCompanyTodayTasks(taskMonth, {
     superFilters,
-    enabled: isTodayFilter,
+    enabled: isTodayFilter, // Only fetch when IS today filter
   });
+
+  // Determine loading state based on active filter
   const isLoading = isTodayFilter ? todayTasksLoading : allTasksLoading;
+
   const { filteredTasks, getFilterOptions } = useTaskData(
     allTasksData,
     todayTasksData,
@@ -70,20 +72,22 @@ const CompanyTasks = ({ filter: propFilter }) => {
     }
 
     const groups = new Map();
-
     filteredTasks.forEach((task) => {
       const dueDate = task.dueDate ? new Date(task.dueDate) : null;
       const hasValidDate =
         dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+
       const groupKey = hasValidDate
         ? `${dueDate.getFullYear()}-${dueDate.getMonth()}`
         : "no-date";
+
       const label = hasValidDate
         ? dueDate.toLocaleDateString("en-US", {
             month: "long",
             year: "numeric",
           })
         : "No Due Date";
+
       const sortValue = hasValidDate
         ? new Date(dueDate.getFullYear(), dueDate.getMonth(), 1).getTime()
         : Number.MIN_SAFE_INTEGER;
@@ -96,6 +100,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
           tasks: [],
         });
       }
+
       groups.get(groupKey).tasks.push(task);
     });
 
@@ -181,118 +186,133 @@ const CompanyTasks = ({ filter: propFilter }) => {
     }
   };
 
+  const FilterIcon = getFilterIcon();
+  const [showSubtasks, setShowSubtasks] = useState(true);
+
   // Show error message if there's an error
   if (isTodayFilter && todayTasksError) {
     return (
-      <section className="flex flex-col">
-        <Navigator path={"/"} title={"Back to Dashboard"} />
-        <Header>{getFilterTitle()}</Header>
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-          <p className="text-red-800 font-medium">
-            Error loading today's tasks
-          </p>
-          <p className="text-red-600 text-sm mt-1">
-            {todayTasksError?.response?.data?.message ||
-              todayTasksError?.message ||
-              "An error occurred"}
-          </p>
-          <p className="text-red-500 text-xs mt-2">
-            Status: {todayTasksError?.response?.status || "Unknown"}
-          </p>
+      <>
+        <Header />
+        <Navigator />
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FilterIcon className={getFilterColor()} />
+              {getFilterTitle()}
+            </h1>
+          </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h3 className="text-red-800 font-semibold mb-2">
+              Error loading today's tasks
+            </h3>
+            <p className="text-red-600 mb-2">
+              {todayTasksError?.response?.data?.message ||
+                todayTasksError?.message ||
+                "An error occurred"}
+            </p>
+            <p className="text-sm text-red-500">
+              Status: {todayTasksError?.response?.status || "Unknown"}
+            </p>
+          </div>
         </div>
-      </section>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <section className="flex flex-col">
-        <Navigator path={"/"} title={"Back to Dashboard"} />
-        <Header>{getFilterTitle()}</Header>
-        <div className="mt-6 space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          ))}
+      <>
+        <Header />
+        <Navigator />
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FilterIcon className={getFilterColor()} />
+              {getFilterTitle()}
+            </h1>
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-lg shadow p-6 animate-pulse"
+              >
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
         </div>
-      </section>
+      </>
     );
   }
 
-  const FilterIcon = getFilterIcon();
-  const [showSubtasks, setShowSubtasks] = useState(true);
-
   return (
-    <section className="flex flex-col h-full overflow-hidden">
-      <div className="flexBetween mb-3">
-        <div className="flex items-center gap-x-3">
-          <Navigator path={"/"} title={"Back to Dashboard"} />
-          <Header>{getFilterTitle()}</Header>
-        </div>
-        <div className="flex items-center  gap-x-3">
-          <div className={`flex items-center gap-2 ${getFilterColor()}`}>
-            <FilterIcon className="w-5 h-5" />
-
-            <span className="font-medium">
-              {showSubtasks
-                ? filteredTasks.length
-                : filteredTasks.filter(
-                    (task) => !task?.parentTask && !task?.isSubTask
-                  ).length}{" "}
-              tasks
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowSubtasks((prev) => !prev)}
-            className="px-3 py-1.5 text-xs font-medium rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-          >
-            {showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
-          </button>
-          <SuperFilterPanel
-            superFilters={superFilters}
-            handleFilterChange={handleFilterChange}
-            handleMultiSelectFilter={handleMultiSelectFilter}
-            clearAllFilters={clearAllFilters}
-            hasActiveFilters={hasActiveFilters}
-            users={users}
-            projects={projects}
-          />
-        </div>
+    <>
+      <div className="flex items-center ">
+        <Header />
+        <Navigator />
       </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-start justify-between">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <FilterIcon className={getFilterColor()} />
+                {getFilterTitle()}
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                {showSubtasks
+                  ? filteredTasks.length
+                  : filteredTasks.filter(
+                      (task) => !task?.parentTask && !task?.isSubTask
+                    ).length}{" "}
+                tasks
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-x-2">
+            <button
+              onClick={() => setShowSubtasks((prev) => !prev)}
+              className="px-3 py-1.5 text-xs font-medium rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              {showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
+            </button>
+            <SuperFilterPanel
+              users={users}
+              projects={projects}
+              filters={superFilters}
+              onFilterChange={handleFilterChange}
+              onMultiSelectFilter={handleMultiSelectFilter}
+              onClearFilters={clearAllFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
+        </div>
 
-      <div className="flex-1 overflow-hidden">
         {shouldGroupOverdue ? (
-          <div className="flex h-full flex-col gap-6 overflow-y-auto pr-1">
+          <div className="space-y-6">
             {overdueTaskGroups.map((group) => (
-              <div key={group.key} className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span className="font-semibold">{group.label}</span>
-                  <span className="text-xs text-gray-400">
+              <div key={group.key}>
+                <div className="mb-3 pb-2 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {group.label}
+                  </h2>
+                  <p className="text-sm text-gray-500">
                     {group.tasks.length}{" "}
                     {group.tasks.length === 1 ? "task" : "tasks"}
-                  </span>
+                  </p>
                 </div>
-                <TaskList
-                  tasks={group.tasks}
-                  filter={filter}
-                  scrollable={false}
-                  showSubtasks={showSubtasks}
-                />
+                <TaskList tasks={group.tasks} showSubtasks={showSubtasks} />
               </div>
             ))}
           </div>
         ) : (
-          <TaskList
-            tasks={filteredTasks}
-            filter={filter}
-            showSubtasks={showSubtasks}
-          />
+          <TaskList tasks={filteredTasks} showSubtasks={showSubtasks} />
         )}
       </div>
-    </section>
+    </>
   );
 };
 
