@@ -260,7 +260,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
               <Navigator />
 
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <FilterIcon className={getFilterColor()} />
+                {/* <FilterIcon className={getFilterColor()} /> */}
                 {getFilterTitle()}
               </h1>
               <p className="text-sm text-gray-500 mt-1">
