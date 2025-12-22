@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/client";
 import ActivityStreamFilterDrawer from "../../components/activityStream/ActivityStreamFilterDrawer";
+import ActivityStreamQuickFilters from "../../components/activityStream/ActivityStreamQuickFilters";
 import {
   FaFilter,
   FaProjectDiagram,
@@ -442,6 +443,14 @@ const ActivityStreamPage = () => {
     setFilters(newFilters);
   };
 
+  // Handle quick filter changes
+  const handleQuickFilterChange = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const hasActiveFilters = () => {
     return (
       filters.type !== "all" ||
@@ -584,6 +593,18 @@ const ActivityStreamPage = () => {
         </div>
       </div>
 
+      {/* Quick Filters Bar - Sticky */}
+      <div className="sticky top-12 z-20 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <ActivityStreamQuickFilters
+            filters={filters}
+            onFilterChange={handleQuickFilterChange}
+            employees={employees}
+            projects={projects || []}
+          />
+        </div>
+      </div>
+
       {/* Results Summary */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
@@ -593,6 +614,14 @@ const ActivityStreamPage = () => {
               activities
             </div>
             <div className="flex items-center gap-1.5 text-xs text-gray-600">
+              {filters.type !== "all" && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs">
+                  {
+                    filterOptions.find((opt) => opt.value === filters.type)
+                      ?.label
+                  }
+                </span>
+              )}
               {filters.dateFilter !== "all" && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs">
                   <FaCalendar className="w-2.5 h-2.5" />

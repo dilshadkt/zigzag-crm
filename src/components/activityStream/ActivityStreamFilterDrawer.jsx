@@ -7,6 +7,12 @@ import {
   FiUser,
   FiFlag,
 } from "react-icons/fi";
+import {
+  FaClock,
+  FaTasks,
+  FaProjectDiagram,
+  FaFileAlt,
+} from "react-icons/fa";
 
 const ActivityStreamFilterDrawer = ({
   isOpen,
@@ -152,22 +158,105 @@ const ActivityStreamFilterDrawer = ({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-            {/* Activity Type Filter */}
+            {/* Quick Activity Type Filters */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-700">
                 Activity Type
               </label>
-              <select
-                value={localFilters.type}
-                onChange={(e) => handleLocalFilterChange("type", e.target.value)}
-                className="w-full px-2.5 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                {filterOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  {
+                    value: "all",
+                    label: "All",
+                    icon: FiFilter,
+                    color: "bg-gray-100 text-gray-700 border-gray-200",
+                  },
+                  {
+                    value: "time_log",
+                    label: "Time Logs",
+                    icon: FaClock,
+                    color: "bg-blue-100 text-blue-700 border-blue-200",
+                  },
+                  {
+                    value: "task_update",
+                    label: "Tasks",
+                    icon: FaTasks,
+                    color: "bg-green-100 text-green-700 border-green-200",
+                  },
+                  {
+                    value: "subtask_update",
+                    label: "Subtasks",
+                    icon: FaTasks,
+                    color: "bg-teal-100 text-teal-700 border-teal-200",
+                  },
+                  {
+                    value: "project",
+                    label: "Projects",
+                    icon: FaProjectDiagram,
+                    color: "bg-amber-100 text-amber-700 border-amber-200",
+                  },
+                  {
+                    value: "attachments",
+                    label: "Files",
+                    icon: FaFileAlt,
+                    color: "bg-purple-100 text-purple-700 border-purple-200",
+                  },
+                ].map((button) => {
+                  const Icon = button.icon;
+                  const isActive = localFilters.type === button.value;
+                  return (
+                    <button
+                      key={button.value}
+                      onClick={() => handleLocalFilterChange("type", button.value)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                        isActive
+                          ? `${button.color}`
+                          : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      <Icon className="text-xs" />
+                      <span>{button.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Date Filters */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-700">
+                Quick Date Filters
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "all", label: "All Time" },
+                  { value: "today", label: "Today" },
+                  { value: "week", label: "7 Days" },
+                  { value: "month", label: "30 Days" },
+                ].map((button) => {
+                  const isActive = localFilters.dateFilter === button.value;
+                  return (
+                    <button
+                      key={button.value}
+                      onClick={() => {
+                        handleLocalFilterChange("dateFilter", button.value);
+                        if (button.value !== "custom") {
+                          handleLocalFilterChange("customStartDate", "");
+                          handleLocalFilterChange("customEndDate", "");
+                        }
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                        isActive
+                          ? "bg-indigo-100 text-indigo-700 border-indigo-200"
+                          : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      <FiCalendar className="text-xs" />
+                      <span>{button.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Date Filter */}

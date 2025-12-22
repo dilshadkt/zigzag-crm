@@ -10,6 +10,7 @@ import { useTaskData } from "../../hooks/useTaskData";
 import Header from "../../components/shared/header";
 import Navigator from "../../components/shared/navigator";
 import SuperFilterPanel from "../../components/tasks/SuperFilterPanel";
+import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
 import TaskList from "../../components/tasks/TaskList";
 import {
   FiAlertCircle,
@@ -19,6 +20,7 @@ import {
   FiPause,
   FiCheckCircle,
 } from "react-icons/fi";
+import { MdTask, MdSubdirectoryArrowRight } from "react-icons/md";
 
 const CompanyTasks = ({ filter: propFilter }) => {
   const { companyId } = useAuth();
@@ -187,6 +189,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
   };
 
   const FilterIcon = getFilterIcon();
+  const [showTasks, setShowTasks] = useState(true);
   const [showSubtasks, setShowSubtasks] = useState(true);
 
   // Show error message if there's an error
@@ -250,44 +253,51 @@ const CompanyTasks = ({ filter: propFilter }) => {
 
   return (
     <>
-      <div className="flex items-center ">
-        <Header />
-      </div>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-start justify-between">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex  gap-x-2">
+      <div className=" ">
+        <div className="sticky top-0 bg-[#f4f9fd]">
+          <div className="flex sticky top-0 items-start justify-between ">
+            <div className="flex items-center sticky top-0 gap-x-2">
               <Navigator />
-
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                {/* <FilterIcon className={getFilterColor()} /> */}
                 {getFilterTitle()}
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                {showSubtasks
-                  ? filteredTasks.length
-                  : filteredTasks.filter(
-                      (task) => !task?.parentTask && !task?.isSubTask
-                    ).length}{" "}
+                {
+                  filteredTasks.filter((task) => {
+                    const isSubTask = task?.parentTask || task?.isSubTask;
+                    if (isSubTask && !showSubtasks) return false;
+                    if (!isSubTask && !showTasks) return false;
+                    return true;
+                  }).length
+                }{" "}
                 tasks
               </p>
             </div>
+            <div className="flex items-center gap-x-2">
+              <SuperFilterPanel
+                users={users}
+                projects={projects}
+                superFilters={superFilters}
+                handleFilterChange={handleFilterChange}
+                handleMultiSelectFilter={handleMultiSelectFilter}
+                clearAllFilters={clearAllFilters}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-x-2">
-            <button
-              onClick={() => setShowSubtasks((prev) => !prev)}
-              className="px-3 py-1.5 text-xs font-medium rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-            >
-              {showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
-            </button>
-            <SuperFilterPanel
+
+          {/* Quick Filters Bar */}
+          <div className="mb-6 pb-4 border-b border-gray-200">
+            <TaskQuickFilters
+              superFilters={superFilters}
+              onFilterChange={handleFilterChange}
+              onMultiSelectFilter={handleMultiSelectFilter}
               users={users}
               projects={projects}
-              superFilters={superFilters}
-              handleFilterChange={handleFilterChange}
-              handleMultiSelectFilter={handleMultiSelectFilter}
-              clearAllFilters={clearAllFilters}
-              hasActiveFilters={hasActiveFilters}
+              showTasks={showTasks}
+              showSubtasks={showSubtasks}
+              onToggleTasks={() => setShowTasks((prev) => !prev)}
+              onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
             />
           </div>
         </div>
@@ -305,12 +315,20 @@ const CompanyTasks = ({ filter: propFilter }) => {
                     {group.tasks.length === 1 ? "task" : "tasks"}
                   </p>
                 </div>
-                <TaskList tasks={group.tasks} showSubtasks={showSubtasks} />
+                <TaskList
+                  tasks={group.tasks}
+                  showSubtasks={showSubtasks}
+                  showTasks={showTasks}
+                />
               </div>
             ))}
           </div>
         ) : (
-          <TaskList tasks={filteredTasks} showSubtasks={showSubtasks} />
+          <TaskList
+            tasks={filteredTasks}
+            showSubtasks={showSubtasks}
+            showTasks={showTasks}
+          />
         )}
       </div>
     </>

@@ -7,10 +7,14 @@ const TaskList = ({
   filter,
   scrollable = true,
   showSubtasks = true,
+  showTasks = true,
 }) => {
-  const visibleTasks = showSubtasks
-    ? tasks
-    : tasks.filter((task) => !task?.parentTask && !task?.isSubTask);
+  const visibleTasks = tasks.filter((task) => {
+    const isSubTask = task?.parentTask || task?.isSubTask;
+    if (isSubTask && !showSubtasks) return false;
+    if (!isSubTask && !showTasks) return false;
+    return true;
+  });
 
   if (visibleTasks.length === 0) {
     return <EmptyState filter={filter} />;

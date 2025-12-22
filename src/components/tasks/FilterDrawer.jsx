@@ -7,6 +7,10 @@ import {
   FiUser,
   FiFlag,
   FiArrowUp,
+  FiAlertCircle,
+  FiPlay,
+  FiPause,
+  FiCheckCircle,
 } from "react-icons/fi";
 
 const FilterDrawer = ({
@@ -191,10 +195,76 @@ const FilterDrawer = ({
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div className="space-y-3">
+            {/* Quick Status Filters */}
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Status
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  {
+                    value: "todo",
+                    label: "Todo",
+                    icon: FiPause,
+                    color: "bg-orange-100 text-orange-700 border-orange-200",
+                  },
+                  {
+                    value: "in-progress",
+                    label: "In Progress",
+                    icon: FiPlay,
+                    color: "bg-blue-100 text-blue-700 border-blue-200",
+                  },
+                  {
+                    value: "on-review",
+                    label: "Review",
+                    icon: FiAlertCircle,
+                    color: "bg-yellow-100 text-yellow-700 border-yellow-200",
+                  },
+                  {
+                    value: "completed",
+                    label: "Completed",
+                    icon: FiCheckCircle,
+                    color: "bg-green-100 text-green-700 border-green-200",
+                  },
+                  {
+                    value: "approved",
+                    label: "Approved",
+                    icon: FiCheckCircle,
+                    color: "bg-teal-100 text-teal-700 border-teal-200",
+                  },
+                  {
+                    value: "re-work",
+                    label: "Re-work",
+                    icon: FiAlertCircle,
+                    color: "bg-red-100 text-red-700 border-red-200",
+                  },
+                ].map((button) => {
+                  const Icon = button.icon;
+                  const isActive = localFilters.status.includes(button.value);
+                  return (
+                    <button
+                      key={button.value}
+                      onClick={() =>
+                        handleLocalMultiSelectFilter("status", button.value)
+                      }
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                        isActive
+                          ? `${button.color}`
+                          : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      <Icon className="text-xs" />
+                      <span>{button.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Status Filter - Checkbox List (for additional statuses) */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">
+                Additional Status Options
               </label>
               <div className="space-y-2">
                 {[
@@ -259,46 +329,46 @@ const FilterDrawer = ({
               </div>
             </div>
 
-            {/* Priority Filter */}
-            <div className="space-y-3">
+            {/* Quick Priority Filters */}
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Priority
               </label>
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
                 {[
                   {
                     value: "High",
                     label: "High",
-                    color: "bg-red-100 text-red-800",
+                    color: "bg-red-100 text-red-700 border-red-200",
                   },
                   {
                     value: "Medium",
                     label: "Medium",
-                    color: "bg-yellow-100 text-yellow-800",
+                    color: "bg-yellow-100 text-yellow-700 border-yellow-200",
                   },
                   {
                     value: "Low",
                     label: "Low",
-                    color: "bg-green-100 text-green-800",
+                    color: "bg-green-100 text-green-700 border-green-200",
                   },
-                ].map((priority) => (
-                  <label
-                    key={priority.value}
-                    className="flex items-center space-x-3 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={localFilters.priority.includes(priority.value)}
-                      onChange={() =>
-                        handleLocalMultiSelectFilter("priority", priority.value)
+                ].map((button) => {
+                  const isActive = localFilters.priority.includes(button.value);
+                  return (
+                    <button
+                      key={button.value}
+                      onClick={() =>
+                        handleLocalMultiSelectFilter("priority", button.value)
                       }
-                      className="checkbox checkbox-sm"
-                    />
-                    <span className="text-sm text-gray-700">
-                      {priority.label}
-                    </span>
-                  </label>
-                ))}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                        isActive
+                          ? `${button.color}`
+                          : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      <span>{button.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
