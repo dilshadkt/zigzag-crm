@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useGetEmployeeTasks } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import Header from "../../components/shared/header";
 import Navigator from "../../components/shared/navigator";
+import TaskList from "../../components/tasks/TaskList";
 import {
   FiClock,
   FiAlertCircle,
@@ -260,6 +261,53 @@ const MyTasks = () => {
       setFilteredTasks(filtered);
     }
   }, [employeeTasksData, filter, filters]);
+
+  // Group overdue tasks by month (same logic as companyTasks)
+  const overdueTaskGroups = useMemo(() => {
+    if (filter !== "overdue" || filteredTasks.length === 0) {
+      return [];
+    }
+
+    const groups = new Map();
+    filteredTasks.forEach((task) => {
+      const dueDate = task.dueDate ? new Date(task.dueDate) : null;
+      const hasValidDate =
+        dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+
+      const groupKey = hasValidDate
+        ? `${dueDate.getFullYear()}-${dueDate.getMonth()}`
+        : "no-date";
+
+      const label = hasValidDate
+        ? dueDate.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          })
+        : "No Due Date";
+
+      const sortValue = hasValidDate
+        ? new Date(dueDate.getFullYear(), dueDate.getMonth(), 1).getTime()
+        : Number.MIN_SAFE_INTEGER;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          key: groupKey,
+          label,
+          sortValue,
+          tasks: [],
+        });
+      }
+
+      groups.get(groupKey).tasks.push(task);
+    });
+
+    return Array.from(groups.values()).sort(
+      (a, b) => (b.sortValue || 0) - (a.sortValue || 0)
+    );
+  }, [filter, filteredTasks]);
+
+  const shouldGroupOverdue =
+    filter === "overdue" && overdueTaskGroups.length > 0;
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -763,7 +811,7 @@ const MyTasks = () => {
       )}
 
       {/* Tasks List */}
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className=" ">
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">
@@ -783,6 +831,27 @@ const MyTasks = () => {
                 Clear Filters
               </button>
             )}
+          </div>
+        ) : shouldGroupOverdue ? (
+          <div className="space-y-6">
+            {overdueTaskGroups.map((group) => (
+              <div key={group.key}>
+                <div className="mb-3 pb-2 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {group.label}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {group.tasks.length}{" "}
+                    {group.tasks.length === 1 ? "task" : "tasks"}
+                  </p>
+                </div>
+                <TaskList
+                  tasks={group.tasks}
+                  filter={filter}
+                  showSubtasks={true}
+                />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">

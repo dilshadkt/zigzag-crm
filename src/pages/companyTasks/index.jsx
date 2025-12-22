@@ -283,10 +283,10 @@ const CompanyTasks = ({ filter: propFilter }) => {
             <SuperFilterPanel
               users={users}
               projects={projects}
-              filters={superFilters}
-              onFilterChange={handleFilterChange}
-              onMultiSelectFilter={handleMultiSelectFilter}
-              onClearFilters={clearAllFilters}
+              superFilters={superFilters}
+              handleFilterChange={handleFilterChange}
+              handleMultiSelectFilter={handleMultiSelectFilter}
+              clearAllFilters={clearAllFilters}
               hasActiveFilters={hasActiveFilters}
             />
           </div>

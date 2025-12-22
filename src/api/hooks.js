@@ -788,9 +788,14 @@ export const useUpdateVacationRequest = () => {
 };
 
 // Recent Activities Hook
-export const useGetRecentActivities = (limit = 10, type = "all") => {
+export const useGetRecentActivities = (
+  limit = 10,
+  type = "all",
+  employeeIds = null,
+  projectIds = null
+) => {
   return useQuery({
-    queryKey: ["recentActivities", limit, type],
+    queryKey: ["recentActivities", limit, type, employeeIds, projectIds],
     queryFn: () => {
       const params = new URLSearchParams({
         limit: limit.toString(),
@@ -798,6 +803,14 @@ export const useGetRecentActivities = (limit = 10, type = "all") => {
 
       if (type && type !== "all") {
         params.append("type", type);
+      }
+
+      if (employeeIds && Array.isArray(employeeIds) && employeeIds.length > 0) {
+        params.append("employeeIds", employeeIds.join(","));
+      }
+
+      if (projectIds && Array.isArray(projectIds) && projectIds.length > 0) {
+        params.append("projectIds", projectIds.join(","));
       }
 
       return apiClient

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   FiX,
   FiSearch,
@@ -12,15 +12,127 @@ import {
 const FilterDrawer = ({
   isOpen,
   onClose,
-  superFilters,
+  superFilters = {},
   handleFilterChange,
   handleMultiSelectFilter,
   clearAllFilters,
   hasActiveFilters,
-  users,
-  projects,
+  users = [],
+  projects = [],
+  onApplyFilters,
 }) => {
+  // Local state for temporary filter values (only applied when button is clicked)
+  const [localFilters, setLocalFilters] = useState({
+    search: "",
+    status: [],
+    priority: [],
+    assignedTo: [],
+    project: [],
+    dateRange: {
+      start: "",
+      end: "",
+    },
+    sortBy: "dueDate",
+    sortOrder: "asc",
+  });
+
+  // Initialize local filters from props when drawer opens
+  useEffect(() => {
+    if (isOpen) {
+      setLocalFilters({
+        search: superFilters?.search || "",
+        status: Array.isArray(superFilters?.status) ? superFilters.status : [],
+        priority: Array.isArray(superFilters?.priority)
+          ? superFilters.priority
+          : [],
+        assignedTo: Array.isArray(superFilters?.assignedTo)
+          ? superFilters.assignedTo
+          : [],
+        project: Array.isArray(superFilters?.project)
+          ? superFilters.project
+          : [],
+        dateRange: {
+          start: superFilters?.dateRange?.start || "",
+          end: superFilters?.dateRange?.end || "",
+        },
+        sortBy: superFilters?.sortBy || "dueDate",
+        sortOrder: superFilters?.sortOrder || "asc",
+      });
+    }
+  }, [isOpen, superFilters]);
+
   if (!isOpen) return null;
+
+  // Handle local filter changes (not applied yet)
+  const handleLocalFilterChange = (key, value) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleLocalMultiSelectFilter = (key, value) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      [key]: prev[key].includes(value)
+        ? prev[key].filter((item) => item !== value)
+        : [...prev[key], value],
+    }));
+  };
+
+  // Apply filters when button is clicked
+  const handleApplyFilters = () => {
+    // Apply all local filter changes
+    // React will batch these state updates, so React Query will only refetch once
+    handleFilterChange("search", localFilters.search);
+    handleFilterChange("status", localFilters.status);
+    handleFilterChange("priority", localFilters.priority);
+    handleFilterChange("assignedTo", localFilters.assignedTo);
+    handleFilterChange("project", localFilters.project);
+    handleFilterChange("dateRange", localFilters.dateRange);
+    handleFilterChange("sortBy", localFilters.sortBy);
+    handleFilterChange("sortOrder", localFilters.sortOrder);
+
+    // Call optional callback if provided
+    if (onApplyFilters) {
+      onApplyFilters(localFilters);
+    }
+
+    // Close drawer
+    onClose();
+  };
+
+  // Handle clear all - reset local filters and apply immediately
+  const handleClearAll = () => {
+    const defaultFilters = {
+      search: "",
+      status: [],
+      priority: [],
+      assignedTo: [],
+      project: [],
+      dateRange: { start: "", end: "" },
+      sortBy: "dueDate",
+      sortOrder: "asc",
+    };
+    setLocalFilters(defaultFilters);
+    clearAllFilters();
+    onClose();
+  };
+
+  // Check if local filters have any active values
+  const hasLocalActiveFilters = () => {
+    return (
+      localFilters.search ||
+      localFilters.status.length > 0 ||
+      localFilters.priority.length > 0 ||
+      localFilters.assignedTo.length > 0 ||
+      localFilters.project.length > 0 ||
+      localFilters.dateRange.start ||
+      localFilters.dateRange.end ||
+      localFilters.sortBy !== "dueDate" ||
+      localFilters.sortOrder !== "asc"
+    );
+  };
 
   return (
     <>
@@ -44,7 +156,7 @@ const FilterDrawer = ({
               <h2 className="text-lg font-semibold text-gray-900">
                 Advanced Filters
               </h2>
-              {hasActiveFilters() && (
+              {(hasActiveFilters() || hasLocalActiveFilters()) && (
                 <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                   Active
                 </span>
@@ -70,8 +182,10 @@ const FilterDrawer = ({
                 <input
                   type="text"
                   placeholder="Search tasks..."
-                  value={superFilters.search}
-                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                  value={localFilters.search}
+                  onChange={(e) =>
+                    handleLocalFilterChange("search", e.target.value)
+                  }
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
@@ -100,9 +214,19 @@ const FilterDrawer = ({
                     color: "bg-yellow-100 text-yellow-800",
                   },
                   {
+                    value: "on-hold",
+                    label: "On Hold",
+                    color: "bg-gray-100 text-gray-800",
+                  },
+                  {
                     value: "approved",
                     label: "Approved",
                     color: "bg-teal-100 text-teal-800",
+                  },
+                  {
+                    value: "client-approved",
+                    label: "Client Approved",
+                    color: "bg-purple-100 text-purple-800",
                   },
                   {
                     value: "re-work",
@@ -121,9 +245,9 @@ const FilterDrawer = ({
                   >
                     <input
                       type="checkbox"
-                      checked={superFilters.status.includes(status.value)}
+                      checked={localFilters.status.includes(status.value)}
                       onChange={() =>
-                        handleMultiSelectFilter("status", status.value)
+                        handleLocalMultiSelectFilter("status", status.value)
                       }
                       className="checkbox checkbox-sm"
                     />
@@ -164,9 +288,9 @@ const FilterDrawer = ({
                   >
                     <input
                       type="checkbox"
-                      checked={superFilters.priority.includes(priority.value)}
+                      checked={localFilters.priority.includes(priority.value)}
                       onChange={() =>
-                        handleMultiSelectFilter("priority", priority.value)
+                        handleLocalMultiSelectFilter("priority", priority.value)
                       }
                       className="checkbox checkbox-sm"
                     />
@@ -192,9 +316,9 @@ const FilterDrawer = ({
                   >
                     <input
                       type="checkbox"
-                      checked={superFilters.assignedTo.includes(user._id)}
+                      checked={localFilters.assignedTo.includes(user._id)}
                       onChange={() =>
-                        handleMultiSelectFilter("assignedTo", user._id)
+                        handleLocalMultiSelectFilter("assignedTo", user._id)
                       }
                       className="checkbox checkbox-sm"
                     />
@@ -229,9 +353,9 @@ const FilterDrawer = ({
                   >
                     <input
                       type="checkbox"
-                      checked={superFilters.project.includes(project._id)}
+                      checked={localFilters.project.includes(project._id)}
                       onChange={() =>
-                        handleMultiSelectFilter("project", project._id)
+                        handleLocalMultiSelectFilter("project", project._id)
                       }
                       className="checkbox checkbox-sm"
                     />
@@ -256,10 +380,10 @@ const FilterDrawer = ({
                   </label>
                   <input
                     type="date"
-                    value={superFilters.dateRange.start}
+                    value={localFilters.dateRange.start}
                     onChange={(e) =>
-                      handleFilterChange("dateRange", {
-                        ...superFilters.dateRange,
+                      handleLocalFilterChange("dateRange", {
+                        ...localFilters.dateRange,
                         start: e.target.value,
                       })
                     }
@@ -270,10 +394,10 @@ const FilterDrawer = ({
                   <label className="block text-xs text-gray-500 mb-1">To</label>
                   <input
                     type="date"
-                    value={superFilters.dateRange.end}
+                    value={localFilters.dateRange.end}
                     onChange={(e) =>
-                      handleFilterChange("dateRange", {
-                        ...superFilters.dateRange,
+                      handleLocalFilterChange("dateRange", {
+                        ...localFilters.dateRange,
                         end: e.target.value,
                       })
                     }
@@ -295,9 +419,9 @@ const FilterDrawer = ({
                     Sort Field
                   </label>
                   <select
-                    value={superFilters.sortBy}
+                    value={localFilters.sortBy}
                     onChange={(e) =>
-                      handleFilterChange("sortBy", e.target.value)
+                      handleLocalFilterChange("sortBy", e.target.value)
                     }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
@@ -313,9 +437,9 @@ const FilterDrawer = ({
                     Order
                   </label>
                   <select
-                    value={superFilters.sortOrder}
+                    value={localFilters.sortOrder}
                     onChange={(e) =>
-                      handleFilterChange("sortOrder", e.target.value)
+                      handleLocalFilterChange("sortOrder", e.target.value)
                     }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
@@ -330,16 +454,16 @@ const FilterDrawer = ({
           {/* Footer */}
           <div className="p-6 border-t border-gray-200 bg-gray-50">
             <div className="flex gap-3">
-              {hasActiveFilters() && (
+              {(hasActiveFilters() || hasLocalActiveFilters()) && (
                 <button
-                  onClick={clearAllFilters}
+                  onClick={handleClearAll}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                 >
                   Clear All
                 </button>
               )}
               <button
-                onClick={onClose}
+                onClick={handleApplyFilters}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#3f8cff] rounded-lg hover:bg-[#3f8cff] transition-colors"
               >
                 Apply Filters
