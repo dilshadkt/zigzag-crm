@@ -146,8 +146,7 @@ export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
       const queryString = params.toString();
       return apiClient
         .get(
-          `/projects/company/${companyId}${
-            queryString ? `?${queryString}` : ""
+          `/projects/company/${companyId}${queryString ? `?${queryString}` : ""
           }`
         )
         .then((res) => res.data?.projects);
@@ -167,6 +166,23 @@ export const useCompanyActiveProjects = () => {
     cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
     refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
     // refetchOnReconnect: false, // Prevents refetch when network reconnects
+  });
+};
+
+export const useCompanyWorkDetailsByMonth = (companyId, monthKey = null) => {
+  return useQuery({
+    queryKey: ["companyWorkDetails", companyId, monthKey],
+    queryFn: () => {
+      const url = monthKey
+        ? `/projects/company/${companyId}/work-details?month=${monthKey}`
+        : `/projects/company/${companyId}/work-details`;
+      return apiClient.get(url).then((res) => res.data?.data);
+    },
+    enabled: !!companyId,
+    // Always fetch fresh data when visiting
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Consider data stale immediately to force refetch
   });
 };
 
@@ -1165,11 +1181,11 @@ export const useGetCompanyStats = (companyId, taskMonth) => {
         const projectProgressAvg =
           activeProjects.length > 0
             ? Math.round(
-                activeProjects.reduce(
-                  (sum, project) => sum + (project.progress || 0),
-                  0
-                ) / activeProjects.length
-              )
+              activeProjects.reduce(
+                (sum, project) => sum + (project.progress || 0),
+                0
+              ) / activeProjects.length
+            )
             : 0;
 
         return {

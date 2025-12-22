@@ -47,6 +47,7 @@ import NotificationsPage from "../pages/notifications";
 import StickyNotes from "../pages/stickyNotes";
 import Timer from "../pages/timer";
 import ActivityStreamPage from "../pages/activityStream";
+import PendingWorks from "../pages/pendingWorks";
 import EmployeeSubTasks from "../pages/employeeSubTasks/EmployeeSubTasks";
 import TaskDetailPage from "../pages/taskDetail";
 import TaskOnReview from "../pages/taskOnReview";
@@ -123,6 +124,14 @@ const AppRoutes = () => {
           element={
             <RouteAccess>
               <ActivityStreamPage />
+            </RouteAccess>
+          }
+        />
+        <Route
+          path="pending-works"
+          element={
+            <RouteAccess>
+              <PendingWorks />
             </RouteAccess>
           }
         />

@@ -5,8 +5,9 @@ import {
   MdOutlineKeyboardArrowLeft,
 } from "react-icons/md";
 import WorkLoad from "../../components/dashboard/workload";
-import NearestEvents from "../../components/dashboard/workload/events";
+import PendingWork from "../../components/dashboard/workload/events";
 import ActivityStream from "../../components/dashboard/activityStream";
+import NearestEvents from "../../components/dashboard/nearestEvents";
 // import EmployeeWorkDetails from "../../components/dashboard/employeeWorkDetails";
 import { Link, useNavigate } from "react-router-dom";
 import { useCompanyProjects, useGetEmployeeProjects } from "../../api/hooks";
@@ -196,7 +197,7 @@ const Dashboard = () => {
         )}
 
         {/* nearest event */}
-        <NearestEvents />
+        <PendingWork taskMonth={taskMonth} />
       </div>
 
       {/* Employee Progress Statistics - Only for employees */}
@@ -248,8 +249,13 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        {/* activity stream - only show for non-employees */}
-        {!isEmployee && <ActivityStream />}
+        {/* activity stream and nearest events - only show for non-employees */}
+        {!isEmployee && (
+          <div className="flex flex-col gap-5 md:col-span-2">
+            <ActivityStream />
+            <NearestEvents selectedDate={selectedDate} />
+          </div>
+        )}
       </div>
     </section>
   );
