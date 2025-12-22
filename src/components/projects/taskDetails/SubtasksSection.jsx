@@ -135,13 +135,12 @@ const SubtasksSection = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        subtask.priority === "High"
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${subtask.priority === "High"
                           ? "bg-red-100 text-red-800"
                           : subtask.priority === "Medium"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
                     >
                       {subtask.priority}
                     </span>
@@ -149,7 +148,12 @@ const SubtasksSection = ({
                     <SubTaskStatusButton
                       subTask={subtask}
                       parentTaskId={taskDetails?._id}
-                      canEdit={canManageSubtasks || isAssignedToSubTask}
+                      canEdit={
+                        (canManageSubtasks || isAssignedToSubTask) &&
+                        (isAdmin ||
+                          canManageSubtasks ||
+                          subtask.status !== "completed")
+                      }
                     />
                     {/* Edit button for users with permission and assigned users */}
                     {(canManageSubtasks || isAssignedToSubTask) && (
@@ -464,14 +468,13 @@ const SubtasksSection = ({
         }}
         title={
           historySubTask
-            ? `Due Date Change History (${
-                historySubTask.dueDateHistory?.length || 0
-              })`
+            ? `Due Date Change History (${historySubTask.dueDateHistory?.length || 0
+            })`
             : "Due Date Change History"
         }
       >
         {historySubTask?.dueDateHistory &&
-        historySubTask.dueDateHistory.length > 0 ? (
+          historySubTask.dueDateHistory.length > 0 ? (
           <div
             className="space-y-4 overflow-y-auto pr-2 custom-scrollbar"
             style={{ maxHeight: "500px" }}

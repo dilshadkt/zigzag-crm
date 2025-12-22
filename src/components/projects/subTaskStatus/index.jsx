@@ -66,7 +66,7 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
   // Get status options based on user role
   const statusOptions = isCompany ? adminStatusOptions : employeeStatusOptions;
 
-  const currentStatus = statusOptions.find(
+  const currentStatus = adminStatusOptions.find(
     (status) => status.value === subTask.status
   );
 
@@ -85,9 +85,8 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
     <div className="relative">
       <button
         onClick={() => canEdit && setIsOpen(!isOpen)}
-        className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-          currentStatus?.color || "bg-gray-100 text-gray-800"
-        } ${!canEdit ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${currentStatus?.color || "bg-gray-100 text-gray-800"
+          } ${!canEdit ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
         disabled={updateSubTaskMutation.isLoading || !canEdit}
         title={!canEdit ? "You can only edit subtasks assigned to you" : ""}
       >
@@ -107,11 +106,10 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
               <button
                 key={status.value}
                 onClick={() => handleStatusChange(status.value)}
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                  status.value === subTask.status
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${status.value === subTask.status
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-700"
-                }`}
+                  }`}
               >
                 {status.label}
               </button>
