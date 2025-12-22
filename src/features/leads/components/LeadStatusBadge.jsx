@@ -9,10 +9,10 @@ const LeadStatusBadge = ({ status }) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
       : { r: 148, g: 163, b: 184 }; // Default slate gray
   };
 
@@ -21,14 +21,14 @@ const LeadStatusBadge = ({ status }) => {
 
   return (
     <span
-      className="inline-flex items-center gap-2 px-3 py-[3px] rounded-full text-[11px] font-medium"
+      className="inline-flex whitespace-nowrap items-center gap-2 px-3 py-[3px] rounded-full text-[11px] font-medium"
       style={{
         backgroundColor: bgColor,
         color: statusColor,
       }}
     >
       <span
-        className="w-2 h-2 rounded-full"
+        className="w-2 h-2  rounded-full"
         style={{ backgroundColor: statusColor }}
       />
       {statusName}

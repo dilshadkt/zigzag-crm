@@ -185,15 +185,16 @@ const LeadRow = ({
     // Fallback to direct property access (works for flattened custom fields)
     const value = lead[column.key];
 
-    if (value === undefined || value === null || value === "") {
-      return <div className="text-[13px] text-slate-500">—</div>;
-    }
-
     // Handle select/dropdown fields with options
     if ((column.type === "select" || column.fieldType === "select") && column.options && column.options.length > 0) {
+      // If value is empty, use the first option as default
+      const displayValue = (value === undefined || value === null || value === "")
+        ? column.options[0]
+        : value;
+
       return (
         <SelectFieldDropdown
-          value={value}
+          value={displayValue}
           options={column.options}
           onValueChange={(newValue) => {
             if (onCustomFieldChange) {
@@ -203,6 +204,10 @@ const LeadRow = ({
           column={column}
         />
       );
+    }
+
+    if (value === undefined || value === null || value === "") {
+      return <div className="text-[13px] text-slate-500">—</div>;
     }
 
     // Format based on field type

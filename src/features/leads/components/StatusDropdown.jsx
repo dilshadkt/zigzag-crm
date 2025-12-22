@@ -67,9 +67,8 @@ const StatusDropdown = ({ status, statuses, onStatusChange, disabled = false }) 
         <LeadStatusBadge status={currentStatus || status} />
         {!disabled && (
           <FiChevronDown
-            className={`text-slate-400 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""
+              }`}
             size={14}
           />
         )}
@@ -90,11 +89,10 @@ const StatusDropdown = ({ status, statuses, onStatusChange, disabled = false }) 
                     e.stopPropagation();
                     handleStatusSelect(statusOption);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors flex items-center gap-2 ${
-                    isSelected
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors flex items-center gap-2 ${isSelected
                       ? "bg-[#3f8cff]/10 text-[#3f8cff] font-semibold"
                       : "text-slate-700"
-                  }`}
+                    }`}
                 >
                   <LeadStatusBadge status={statusOption} />
                 </button>

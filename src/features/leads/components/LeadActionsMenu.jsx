@@ -30,7 +30,7 @@ const MENU_ITEMS = [
   },
 ];
 
-const LeadActionsMenu = ({ onClose, onUpload, onSettings }) => {
+const LeadActionsMenu = ({ onClose, onUpload, onSettings, onDownloadTemplate }) => {
   return (
     <div className="bg-white w-72 rounded-3xl border border-slate-200 shadow-2xl p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -59,6 +59,8 @@ const LeadActionsMenu = ({ onClose, onUpload, onSettings }) => {
                   onUpload();
                 } else if (item.label === "Settings" && onSettings) {
                   onSettings();
+                } else if (item.label === "Download Template" && onDownloadTemplate) {
+                  onDownloadTemplate();
                 } else {
                   onClose();
                   return;

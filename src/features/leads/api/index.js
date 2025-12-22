@@ -167,6 +167,21 @@ export const useCreateLead = () => {
   });
 };
 
+// Bulk create leads
+export const useBulkCreateLeads = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (leadsData) => {
+      const response = await apiClient.post("/leads/bulk", { leads: leadsData });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leads"]);
+    },
+  });
+};
+
 // Update lead
 export const useUpdateLead = () => {
   const queryClient = useQueryClient();
