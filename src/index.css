@@ -61,7 +61,9 @@
     display: none; /* Safari and Chrome */
   }
 }
-
+button {
+  cursor: pointer;
+}
 @theme {
   --font-display: "Nunito Sans", "sans-serif";
 }

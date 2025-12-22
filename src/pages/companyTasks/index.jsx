@@ -19,6 +19,8 @@ import {
   FiPlay,
   FiPause,
   FiCheckCircle,
+  FiChevronDown,
+  FiChevronRight,
 } from "react-icons/fi";
 import { MdTask, MdSubdirectoryArrowRight } from "react-icons/md";
 
@@ -114,6 +116,81 @@ const CompanyTasks = ({ filter: propFilter }) => {
   const shouldGroupOverdue =
     filter === "overdue" && overdueTaskGroups.length > 0;
 
+  const completedTaskGroups = useMemo(() => {
+    if (filter !== "completed" || filteredTasks.length === 0) {
+      return [];
+    }
+
+    const today = new Date();
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+    const groups = new Map();
+
+    filteredTasks.forEach((task) => {
+      const completedAt = task.updatedAt ? new Date(task.updatedAt) : null;
+      const hasValidCompletion =
+        completedAt instanceof Date && !Number.isNaN(completedAt.getTime());
+
+      const isToday =
+        hasValidCompletion &&
+        completedAt >= startOfToday &&
+        completedAt < new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
+
+      const isYesterday =
+        hasValidCompletion &&
+        completedAt >= startOfYesterday &&
+        completedAt < startOfToday;
+
+      const groupKey = isToday
+        ? "today"
+        : isYesterday
+        ? "yesterday"
+        : hasValidCompletion
+        ? completedAt.toDateString()
+        : "no-date";
+
+      let label = "No Date";
+      if (isToday) label = "Today";
+      else if (isYesterday) label = "Yesterday";
+      else if (hasValidCompletion) {
+        label = completedAt.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
+
+      const sortValue = hasValidCompletion
+        ? completedAt.getTime()
+        : Number.MIN_SAFE_INTEGER;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          key: groupKey,
+          label,
+          sortValue,
+          tasks: [],
+        });
+      }
+
+      groups.get(groupKey).tasks.push(task);
+    });
+
+    return Array.from(groups.values()).sort(
+      (a, b) => (b.sortValue || 0) - (a.sortValue || 0)
+    );
+  }, [filter, filteredTasks]);
+
+  const shouldGroupCompleted =
+    filter === "completed" && completedTaskGroups.length > 0;
+
   // Get unique filter options from tasks
   const { users, projects } = getFilterOptions();
 
@@ -191,6 +268,14 @@ const CompanyTasks = ({ filter: propFilter }) => {
   const FilterIcon = getFilterIcon();
   const [showTasks, setShowTasks] = useState(true);
   const [showSubtasks, setShowSubtasks] = useState(true);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+
+  const toggleGroup = (key) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   // Show error message if there's an error
   if (isTodayFilter && todayTasksError) {
@@ -306,20 +391,77 @@ const CompanyTasks = ({ filter: propFilter }) => {
           <div className="space-y-6">
             {overdueTaskGroups.map((group) => (
               <div key={group.key}>
-                <div className="mb-3 pb-2 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {group.label}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {group.tasks.length}{" "}
-                    {group.tasks.length === 1 ? "task" : "tasks"}
-                  </p>
+                <div className="mb-3 pb-2 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      {group.label}
+                    </h2>
+                    <p className="text-sm   text-gray-500">
+                      {group.tasks.length}{" "}
+                      {group.tasks.length === 1 ? "task" : "tasks"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleGroup(group.key)}
+                    className="text-gray-500 hover:text-gray-800 transition"
+                    aria-label={`${
+                      collapsedGroups[group.key] ? "Expand" : "Collapse"
+                    } ${group.label}`}
+                  >
+                    {collapsedGroups[group.key] ? (
+                      <FiChevronRight className="w-5 h-5" />
+                    ) : (
+                      <FiChevronDown className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-                <TaskList
-                  tasks={group.tasks}
-                  showSubtasks={showSubtasks}
-                  showTasks={showTasks}
-                />
+                {!collapsedGroups[group.key] && (
+                  <TaskList
+                    tasks={group.tasks}
+                    showSubtasks={showSubtasks}
+                    showTasks={showTasks}
+                    filter={filter}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        ) : shouldGroupCompleted ? (
+          <div className="space-y-6">
+            {completedTaskGroups.map((group) => (
+              <div key={group.key}>
+                <div className="mb-3 pb-2 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center gap-x-2">
+                    <h2 className=" text-[15px] font-semibold text-gray-900">
+                      {group.label}
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      {group.tasks.length}{" "}
+                      {group.tasks.length === 1 ? "task" : "tasks"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleGroup(group.key)}
+                    className="text-gray-500 hover:text-gray-800 transition"
+                    aria-label={`${
+                      collapsedGroups[group.key] ? "Expand" : "Collapse"
+                    } ${group.label}`}
+                  >
+                    {collapsedGroups[group.key] ? (
+                      <FiChevronRight className="w-5 h-5" />
+                    ) : (
+                      <FiChevronDown className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {!collapsedGroups[group.key] && (
+                  <TaskList
+                    tasks={group.tasks}
+                    showSubtasks={showSubtasks}
+                    showTasks={showTasks}
+                    filter={filter}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -328,6 +470,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
             tasks={filteredTasks}
             showSubtasks={showSubtasks}
             showTasks={showTasks}
+            filter={filter}
           />
         )}
       </div>
