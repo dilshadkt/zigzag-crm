@@ -93,6 +93,8 @@ const AddTask = ({
     useState(false);
   const [pendingNewDueDate, setPendingNewDueDate] = useState(null);
   const [dateChangeReason, setDateChangeReason] = useState("");
+  const [showFlowAssigneeModal, setShowFlowAssigneeModal] = useState(false);
+  const [missingFlowAssignees, setMissingFlowAssignees] = useState([]);
 
   // Debug selectedProjectId changes
   useEffect(() => {
@@ -144,8 +146,17 @@ const AddTask = ({
     }
   }, [values.project, initialValues?.project, setFieldValue, isEdit]);
 
-  // Handle task flow selection
+  // Handle task flow selection with project membership validation
   useEffect(() => {
+    const normalizeId = (val) => {
+      if (!val) return null;
+      if (typeof val === "string") return val;
+      if (val._id) return String(val._id);
+      if (val.id) return String(val.id);
+      if (val.userId) return String(val.userId);
+      return String(val);
+    };
+
     if (values.taskFlow && taskFlows.length > 0) {
       const selectedFlow = taskFlows.find(
         (flow) => flow._id === values.taskFlow
@@ -153,15 +164,51 @@ const AddTask = ({
       if (selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0) {
         // Get all assignees from the flow steps
         const flowAssignees = selectedFlow.flows
-          .map((step) => step.assignee?._id || step.assignee)
-          .filter((assigneeId) => assigneeId);
+          .map((step) => normalizeId(step.assignee))
+          .filter(Boolean);
         // Remove duplicates
         const uniqueAssignees = Array.from(new Set(flowAssignees));
-        // Update the assignedTo field with unique flow assignees
-        setFieldValue("assignedTo", uniqueAssignees);
+
+        // Prefer teams prop (project members) for validation; fallback to project data
+        const projectMembersRaw =
+          (Array.isArray(teams) && teams.length > 0 && teams) ||
+          selectedProjectData?.teamMembers ||
+          selectedProjectData?.teams ||
+          [];
+        const projectMemberIds = projectMembersRaw
+          .map((m) => normalizeId(m))
+          .filter(Boolean);
+
+        const missingAssignees = projectMemberIds.length
+          ? uniqueAssignees.filter((id) => !projectMemberIds.includes(id))
+          : [];
+
+        if (missingAssignees.length > 0) {
+          setFieldValue("taskFlow", "");
+          const missingNames = selectedFlow.flows
+            .map((step) => step.assignee)
+            .filter((assignee) =>
+              missingAssignees.includes(normalizeId(assignee))
+            )
+            .map((assignee) => {
+              if (!assignee) return null;
+              if (typeof assignee === "string") return assignee;
+              return (
+                assignee.name ||
+                `${assignee.firstName || ""} ${assignee.lastName || ""}`.trim()
+              );
+            })
+            .filter(Boolean);
+          setMissingFlowAssignees(
+            missingNames.length > 0 ? missingNames : missingAssignees
+          );
+          setShowFlowAssigneeModal(true);
+        } else {
+          setFieldValue("assignedTo", uniqueAssignees);
+        }
       }
     }
-  }, [values.taskFlow, taskFlows, setFieldValue]);
+  }, [values.taskFlow, taskFlows, setFieldValue, selectedProjectData]);
 
   // Initialize form when modal opens for editing
   useEffect(() => {
@@ -1036,6 +1083,41 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Confirm Change
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Task Flow Assignee Validation Modal */}
+      <Modal
+        isOpen={showFlowAssigneeModal}
+        onClose={() => setShowFlowAssigneeModal(false)}
+        title="Task Flow Members Not in Project"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            One or more users in this task flow are not part of the selected
+            project. Please add them to the project or choose another task flow.
+          </p>
+          {missingFlowAssignees.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-red-800 mb-1">
+                Missing from project:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-red-700">
+                {missingFlowAssignees.map((name, idx) => (
+                  <li key={idx}>{name || "Unknown user"}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowFlowAssigneeModal(false)}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Got it
             </button>
           </div>
         </div>
