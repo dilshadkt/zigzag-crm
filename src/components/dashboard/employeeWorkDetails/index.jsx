@@ -11,6 +11,19 @@ const EmployeeWorkDetails = () => {
     user?._id ? user._id : null
   );
 
+  const priorityRank = {
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  const sortedSubTasks =
+    todaySubTasks?.subTasks?.slice()?.sort((a, b) => {
+      const aRank = priorityRank[a?.priority?.toLowerCase()] || 0;
+      const bRank = priorityRank[b?.priority?.toLowerCase()] || 0;
+      return bRank - aRank;
+    }) || [];
+
   const formatTime = (dateString) => {
     if (!dateString) return "No due date";
     const date = new Date(dateString);
@@ -92,7 +105,7 @@ const EmployeeWorkDetails = () => {
         </div>
       ) : todaySubTasks?.subTasks?.length > 0 ? (
         <div className="w-full flex flex-col gap-3 mt-3 max-h-96 overflow-y-auto">
-          {todaySubTasks.subTasks.map((subTask, index) => (
+          {sortedSubTasks.map((subTask, index) => (
             <div
               onClick={() => handleSubTaskClick(subTask)}
               key={subTask._id || index}
