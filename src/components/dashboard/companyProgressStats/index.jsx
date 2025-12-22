@@ -113,6 +113,9 @@ const CompanyProgressStats = ({ taskMonth }) => {
         case "upcoming":
           navigate("/company-tasks?filter=upcoming&taskMonth=" + taskMonth);
           break;
+        case "on-hold":
+          navigate("/company-tasks?filter=on-hold&taskMonth=" + taskMonth);
+          break;
         default:
           break;
       }
@@ -268,6 +271,18 @@ const CompanyProgressStats = ({ taskMonth }) => {
         bgColor: "bg-gray-50",
         textColor: "text-gray-600",
         onClick: () => handleStatsClick("unscheduled"),
+      },
+      {
+        id: "on-hold-tasks",
+        title: "On Hold Tasks",
+        value: companyStatsCheck?.statistics?.onHold || 0,
+        subtitle: "On hold",
+        icon: FiAlertCircle,
+        color: "bg-gray-500",
+        borderColor: "hover:border-gray-500",
+        bgColor: "bg-slate-300",
+        textColor: "text-slate-600",
+        onClick: () => handleStatsClick("on-hold"),
       },
     ];
 
@@ -435,11 +450,12 @@ const CompanyProgressStats = ({ taskMonth }) => {
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-2 flex-1 transition-colors duration-200 ${
+              className={`grid grid-cols-2 md:grid-cols-7 gap-2 md:gap-2 flex-1 transition-colors duration-200 ${
                 snapshot.isDraggingOver ? "bg-blue-50" : ""
               }`}
             >
               {orderedStats.map((stat, index) => {
+                console.log(orderedStats);
                 const Icon = stat.icon;
                 return (
                   <Draggable key={stat.id} draggableId={stat.id} index={index}>
