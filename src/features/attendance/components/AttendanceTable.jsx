@@ -16,7 +16,7 @@ import Pagination from "./Pagination";
 const TableHeader = React.memo(({ title, icon }) => {
   return (
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      <div className="flex items-center gap-2">
+      <div className="flex whitespace-nowrap items-center gap-2">
         {icon}
         {title}
         <div className="flex flex-col">
@@ -207,7 +207,7 @@ const EmployeeRow = React.memo(({ attendance }) => {
 
         {/* Clock In/Out Times */}
         <td className="px-6 py-4 whitespace-nowrap">
-          <div className="space-y-1">
+          <div className="space-y-1 ">
             <TimeDisplay time={attendance.clockInTime} label="In" />
             <TimeDisplay time={attendance.clockOutTime} label="Out" />
           </div>
@@ -231,7 +231,7 @@ const EmployeeRow = React.memo(({ attendance }) => {
         {/* Location */}
         <td className="px-6 py-4 whitespace-nowrap">
           {attendance.clockInLocation?.latitude &&
-          attendance.clockInLocation?.longitude ? (
+            attendance.clockInLocation?.longitude ? (
             <div className="flex items-center space-x-2">
               <div className="flex-shrink-0">
                 <svg
@@ -406,9 +406,8 @@ const AttendanceTable = ({
 
     const searchLower = searchTerm.toLowerCase();
     return allAttendanceRecords.filter((record) => {
-      const employeeName = `${record.employee?.firstName || ""} ${
-        record.employee?.lastName || ""
-      }`.toLowerCase();
+      const employeeName = `${record.employee?.firstName || ""} ${record.employee?.lastName || ""
+        }`.toLowerCase();
       const employeeEmail = record.employee?.email?.toLowerCase() || "";
 
       return (

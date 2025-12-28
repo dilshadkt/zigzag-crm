@@ -87,9 +87,9 @@ const CompanyTasks = ({ filter: propFilter }) => {
 
       const label = hasValidDate
         ? dueDate.toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })
+          month: "long",
+          year: "numeric",
+        })
         : "No Due Date";
 
       const sortValue = hasValidDate
@@ -150,10 +150,10 @@ const CompanyTasks = ({ filter: propFilter }) => {
       const groupKey = isToday
         ? "today"
         : isYesterday
-        ? "yesterday"
-        : hasValidCompletion
-        ? completedAt.toDateString()
-        : "no-date";
+          ? "yesterday"
+          : hasValidCompletion
+            ? completedAt.toDateString()
+            : "no-date";
 
       let label = "No Date";
       if (isToday) label = "Today";
@@ -392,11 +392,11 @@ const CompanyTasks = ({ filter: propFilter }) => {
             {overdueTaskGroups.map((group) => (
               <div key={group.key}>
                 <div className="mb-3 pb-2 border-b border-gray-200 flex items-center justify-between">
-                  <div className="flex">
+                  <div className="flex items-center">
                     <h2 className="text-lg font-semibold text-gray-900">
                       {group.label}
                     </h2>
-                    <p className="text-sm   text-gray-500">
+                    <p className="text-sm ml-2  text-gray-500">
                       {group.tasks.length}{" "}
                       {group.tasks.length === 1 ? "task" : "tasks"}
                     </p>
@@ -404,9 +404,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
                   <button
                     onClick={() => toggleGroup(group.key)}
                     className="text-gray-500 hover:text-gray-800 transition"
-                    aria-label={`${
-                      collapsedGroups[group.key] ? "Expand" : "Collapse"
-                    } ${group.label}`}
+                    aria-label={`${collapsedGroups[group.key] ? "Expand" : "Collapse"
+                      } ${group.label}`}
                   >
                     {collapsedGroups[group.key] ? (
                       <FiChevronRight className="w-5 h-5" />
@@ -443,9 +442,8 @@ const CompanyTasks = ({ filter: propFilter }) => {
                   <button
                     onClick={() => toggleGroup(group.key)}
                     className="text-gray-500 hover:text-gray-800 transition"
-                    aria-label={`${
-                      collapsedGroups[group.key] ? "Expand" : "Collapse"
-                    } ${group.label}`}
+                    aria-label={`${collapsedGroups[group.key] ? "Expand" : "Collapse"
+                      } ${group.label}`}
                   >
                     {collapsedGroups[group.key] ? (
                       <FiChevronRight className="w-5 h-5" />

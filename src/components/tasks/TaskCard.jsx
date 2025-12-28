@@ -134,6 +134,11 @@ const TaskCard = ({ task, filter }) => {
     }
   };
 
+  const handleProfileClick = (e, user) => {
+    e.stopPropagation();
+    navigate(`/employees/${user._id}`);
+  };
+
   return (
     <div
       onClick={() => handleTaskClick(task)}
@@ -182,7 +187,9 @@ const TaskCard = ({ task, filter }) => {
                     {task.assignedTo.slice(0, 2).map((user, index) => (
                       <div
                         key={user._id || index}
-                        className="w-5 h-5 rounded-full overflow-hidden border border-white"
+                        onClick={(e) => handleProfileClick(e, user)}
+                        className="w-5 h-5 rounded-full overflow-hidden hover:scale-125
+                        transition-all duration-300 cursor-pointer border border-white"
                         title={`${user.firstName} ${user.lastName}`}
                       >
                         <img
