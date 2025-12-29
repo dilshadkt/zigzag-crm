@@ -22,9 +22,9 @@ export const useOverdueTaskGroups = (filter, tasks) => {
 
       const label = hasValidDate
         ? dueDate.toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })
+          month: "long",
+          year: "numeric",
+        })
         : "No Due Date";
 
       const sortValue = hasValidDate
@@ -71,7 +71,9 @@ export const useCompletedTaskGroups = (filter, tasks) => {
     const groups = new Map();
 
     tasks.forEach((task) => {
-      const completedAt = task.updatedAt ? new Date(task.updatedAt) : null;
+      // Use completedAt if available, otherwise fall back to updatedAt
+      const dateToUse = task.completedAt || task.updatedAt;
+      const completedAt = dateToUse ? new Date(dateToUse) : null;
       const hasValidCompletion =
         completedAt instanceof Date && !Number.isNaN(completedAt.getTime());
 
@@ -88,10 +90,10 @@ export const useCompletedTaskGroups = (filter, tasks) => {
       const groupKey = isToday
         ? "today"
         : isYesterday
-        ? "yesterday"
-        : hasValidCompletion
-        ? completedAt.toDateString()
-        : "no-date";
+          ? "yesterday"
+          : hasValidCompletion
+            ? completedAt.toDateString()
+            : "no-date";
 
       let label = "No Date";
       if (isToday) label = "Today";

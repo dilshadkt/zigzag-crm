@@ -107,7 +107,8 @@ const TaskCard = ({ task, filter }) => {
           </div>
         );
       case "completed":
-        const completedAt = task.updatedAt || task.completedAt;
+        const completedAt = task.completedAt || task.updatedAt;
+        const isUsingCompletedAt = !!task.completedAt;
         const formatDateTime = (dateString) => {
           if (!dateString) return "Completed";
           return new Date(dateString).toLocaleString("en-US", {
@@ -122,7 +123,9 @@ const TaskCard = ({ task, filter }) => {
           <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-lg">
             <FiCheckCircle className="w-4 h-4" />
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium">Completed</span>
+              <span className="text-sm font-medium">
+                {isUsingCompletedAt ? "Completed" : "Updated"}
+              </span>
               <span className="text-xs text-green-700">
                 {formatDateTime(completedAt)}
               </span>

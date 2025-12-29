@@ -23,6 +23,7 @@ import {
   FiChevronUp,
   FiArrowLeft,
 } from "react-icons/fi";
+import { groupTasksByCompletionDate, formatGroupLabel } from "./taskGroupingUtils";
 
 const MyTasks = () => {
   const { user } = useAuth();
@@ -282,9 +283,9 @@ const MyTasks = () => {
 
       const label = hasValidDate
         ? dueDate.toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })
+          month: "long",
+          year: "numeric",
+        })
         : "No Due Date";
 
       const sortValue = hasValidDate
@@ -310,6 +311,18 @@ const MyTasks = () => {
 
   const shouldGroupOverdue =
     filter === "overdue" && overdueTaskGroups.length > 0;
+
+  // Group completed tasks by completion date (Today, Yesterday, This Week, etc.)
+  const completedTaskGroups = useMemo(() => {
+    if (filter !== "completed" || filteredTasks.length === 0) {
+      return [];
+    }
+
+    return groupTasksByCompletionDate(filteredTasks);
+  }, [filter, filteredTasks]);
+
+  const shouldGroupCompleted =
+    filter === "completed" && completedTaskGroups.length > 0;
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -547,6 +560,21 @@ const MyTasks = () => {
     });
   };
 
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    const dateStr = date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return `${dateStr} at ${timeStr}`;
+  };
+
   const getDaysOverdue = (dueDate) => {
     const today = new Date();
     const due = new Date(dueDate);
@@ -666,6 +694,90 @@ const MyTasks = () => {
                   filter={filter}
                   showSubtasks={true}
                 />
+              </div>
+            ))}
+          </div>
+        ) : shouldGroupCompleted ? (
+          <div className="space-y-6">
+            {completedTaskGroups.map((group, index) => (
+              <div key={`completed-group-${index}`}>
+                <div className="mb-3 pb-2 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {formatGroupLabel(group.label, group.tasks.length)}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {group.tasks.length}{" "}
+                    {group.tasks.length === 1 ? "task" : "tasks"}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-y-2">
+                  {group.tasks.map((task) => {
+                    const isOverdue =
+                      new Date(task.dueDate) < new Date() &&
+                      task.status !== "completed";
+                    const daysOverdue = isOverdue ? getDaysOverdue(task.dueDate) : 0;
+
+                    return (
+                      <div
+                        key={task._id}
+                        onClick={() => handleTaskClick(task)}
+                        className="p-4 bg-white rounded-lg hover:bg-gray-50 cursor-pointer 
+                        transition-colors border border-gray-100"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                {task.title}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
+                                    task.priority
+                                  )}`}
+                                >
+                                  {task.priority}
+                                </span>
+                                <span
+                                  className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                                    task.status
+                                  )}`}
+                                >
+                                  {task.status.replace("-", " ")}
+                                </span>
+                              </div>
+                            </div>
+
+                            {task.description && (
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                                {task.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              {task.project && (
+                                <div className="flex items-center gap-1">
+                                  <FiFlag className="w-4 h-4" />
+                                  <span>{task.project.name}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1">
+                                <FiCheckCircle className="w-4 h-4 text-green-600" />
+                                {task.completedAt ? (
+                                  <span>Completed {formatDateTime(task.completedAt)}</span>
+                                ) : task.updatedAt ? (
+                                  <span>Updated {formatDateTime(task.updatedAt)}</span>
+                                ) : (
+                                  <span>Completed</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>
