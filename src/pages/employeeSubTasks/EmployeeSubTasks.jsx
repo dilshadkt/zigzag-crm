@@ -2,6 +2,8 @@ import React, { useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useGetEmployeeTasks } from "../../api/hooks";
 import { format } from "date-fns";
+import { IoIosArrowBack } from "react-icons/io";
+import EmployeeSubTasksSkeleton from "./EmployeeSubTasksSkeleton";
 
 const statusColorMap = {
   completed: "bg-green-100 text-green-800",
@@ -91,17 +93,20 @@ const EmployeeSubTasks = () => {
 
   return (
     <div className=" mx-auto ">
-      <button
-        className="mb-6 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 text-sm"
-        onClick={() => navigate(-1)}
-      >
-        ← Back to Employee Details
-      </button>
-      <h2 className="text-2xl font-bold mb-4">
-        Employee Tasks {filter ? `- ${filter.replace(/-/g, " ")}` : ""}
-      </h2>
+      <div className="flex items-center gap-x-2">
+        <button
+          className="mb-6 px-4 py-3 bg-white
+           hover:bg-gray-200 rounded-lg text-gray-700 text-sm"
+          onClick={() => navigate(-1)}
+        >
+          <IoIosArrowBack />
+        </button>
+        <h2 className="text-xl text-gray-700 font-bold mb-4">
+          Employee Tasks {filter ? `- ${filter.replace(/-/g, " ")}` : ""}
+        </h2>
+      </div>
       {isLoading ? (
-        <div>Loading tasks...</div>
+        <EmployeeSubTasksSkeleton />
       ) : filteredTasks.length === 0 ? (
         <div className="text-gray-500">No tasks found for this filter.</div>
       ) : (

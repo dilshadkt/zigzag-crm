@@ -457,7 +457,7 @@ const TodayTasks = () => {
                         item.status
                       )}`}
                     >
-                      {item.status === "todo" ? "Pending" : item.status}
+                      {item.status}
                     </span>
                   </div>
                 </div>
