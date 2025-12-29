@@ -45,6 +45,7 @@ const EmployeeDetails = () => {
   const { data: statisticsData, isLoading: isLoadingStatistics } =
     useGetEmployeeStatistics(employeeId, selectedMonth);
 
+
   const employee = employeeData?.employee;
   const projects = projectsData?.projects || [];
   const subTasks = subTasksData?.subTasks || [];

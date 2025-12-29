@@ -13,7 +13,7 @@ const statusColorMap = {
   "on-review": "bg-purple-100 text-purple-800",
   "on-hold": "bg-orange-100 text-orange-800",
   "re-work": "bg-red-100 text-red-800",
-  approved: "bg-emerald-100 text-emerald-800",
+  approved: "bg-yellow-300 text-yellow-800",
 };
 
 // Map URL filter to backend status filter, similar to MyTasks
@@ -123,9 +123,8 @@ const EmployeeSubTasks = () => {
                   {task.title}
                 </span>
                 <span
-                  className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    statusColorMap[task.status] || "bg-gray-100 text-gray-800"
-                  }`}
+                  className={`text-xs px-2 py-1 rounded-full font-medium ${statusColorMap[task.status] || "bg-gray-100 text-gray-800"
+                    }`}
                 >
                   {task.status?.replace(/-/g, " ")}
                 </span>

@@ -15,6 +15,8 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
     );
   }, [selectedMonth]);
 
+  console.log(statistics)
+
   // Use statistics from API if available, otherwise default to 0
   const totalSubTasks = statistics?.total || 0;
   const completedSubTasks = statistics?.completed || 0;
@@ -26,6 +28,7 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
   const reworkSubTasks = statistics?.rework || 0;
   const upcoming3DaysSubTasks = statistics?.upcoming3Days || 0;
   const completionRate = statistics?.completionRate || 0;
+  const approvedSubTasks = statistics?.approved || 0;
 
   // Navigation handlers for stat cards
   const handleStatsClick = (statType) => {
@@ -35,8 +38,7 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
     switch (statType) {
       case "total":
         navigate(
-          `/employees/${employeeId}/subtasks${
-            selectedMonth ? `?taskMonth=${selectedMonth}` : ""
+          `/employees/${employeeId}/subtasks${selectedMonth ? `?taskMonth=${selectedMonth}` : ""
           }`
         );
         break;
@@ -48,6 +50,12 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
       case "in-progress":
         navigate(
           `/employees/${employeeId}/subtasks?filter=in-progress${monthQuery}`
+        );
+        break;
+
+      case "approved":
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=approved${monthQuery}`
         );
         break;
       case "pending":
@@ -162,17 +170,17 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
           }
           onClick={() => handleStatsClick("in-progress")}
         />
-        {/* <StatCard
-          title="Pending"
-          value={pendingSubTasks}
-          color="orange"
+        <StatCard
+          title="Approved"
+          value={approvedSubTasks}
+          color="green"
           percent={
             totalSubTasks > 0
-              ? Math.round((pendingSubTasks / totalSubTasks) * 100)
+              ? Math.round((approvedSubTasks / totalSubTasks) * 100)
               : 0
           }
-          onClick={() => handleStatsClick("pending")}
-        /> */}
+          onClick={() => handleStatsClick("approved")}
+        />
         <StatCard
           title="On Review"
           value={onReviewSubTasks}
