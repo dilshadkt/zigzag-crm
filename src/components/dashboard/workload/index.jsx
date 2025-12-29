@@ -8,10 +8,9 @@ const WorkLoad = () => {
   const { data, isLoading } = useEmpoyees(1);
   const employees = data?.employees?.slice(0, 8) || [];
   const navigate = useNavigate();
-  console.log(employees);
 
   return (
-    <div className="px-4 md:col-span-5 h-fit bg-white pb-3 pt-5 flex flex-col rounded-3xl">
+    <div className="px-4 md:col-span-5  bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Workload</h4>
         {employees.length > 0 && (
@@ -39,7 +38,8 @@ const WorkLoad = () => {
                 navigate(`/employees/${employee._id}`);
               }}
               key={employee._id || index}
-              className="flex flex-col items-center rounded-3xl bg-[#F4F9FD] p-4 py-4 cursor-pointer"
+              className="flex flex-col items-center rounded-3xl bg-[#F4F9FD] p-4 py-4 
+             h-fit cursor-pointer"
             >
               <div className="relative">
                 <Progress

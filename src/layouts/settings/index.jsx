@@ -73,7 +73,7 @@ const SettingsLayout = () => {
 
           {isEmployee ? (
             // Employee view - show employee-specific content
-            <div className="flex-1 bg-gray-50 p-5 overflow-y-auto flex flex-col h-full rounded-3xl">
+            <div className="flex-1 bg-gray-50  overflow-y-auto flex flex-col h-full rounded-3xl">
               <EmployeeSettings />
             </div>
           ) : (
