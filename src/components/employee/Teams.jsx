@@ -14,7 +14,7 @@ const Teams = ({ teams }) => {
   }
 
   return (
-    <div className="w-full h-full grid grid-cols-4 gap-3 mt-3">
+    <div className="w-full h-fit grid grid-cols-4 gap-3 mt-3">
       {teams.map((team) => {
         const fullName =
           team?.firstName || team?.lastName
@@ -22,19 +22,19 @@ const Teams = ({ teams }) => {
             : team?.name || "Team Member";
 
         return (
-        <EmployeeCard
-          key={team._id}
-          employee={{
-            name: fullName,
-            email: team.email,
-            profile: team.profileImage,
-            position: team.position,
-            level: team.level,
-            progress_value: team.progressValue,
-          }}
-          className="bg-white h-fit"
-        />
-      );
+          <EmployeeCard
+            key={team._id}
+            employee={{
+              name: fullName,
+              email: team.email,
+              profile: team.profileImage,
+              position: team.position,
+              level: team.level,
+              progress_value: team.progressValue,
+            }}
+            className="bg-white h-fit"
+          />
+        );
       })}
     </div>
   );

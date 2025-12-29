@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import StatCard from "./StatCard";
 
-const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
+const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
   const navigate = useNavigate();
 
   const monthLabel = useMemo(() => {
@@ -15,70 +15,68 @@ const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
     );
   }, [selectedMonth]);
 
-  const totalSubTasks = subTasks.length;
-  const completedSubTasks = subTasks.filter(
-    (subTask) => subTask.status === "completed"
-  ).length;
-  const inProgressSubTasks = subTasks.filter(
-    (subTask) => subTask.status === "in-progress"
-  ).length;
-  const pendingSubTasks = subTasks.filter(
-    (subTask) => subTask.status === "todo"
-  ).length;
-  const overdueSubTasks = subTasks.filter((subTask) => {
-    const dueDate = new Date(subTask.dueDate);
-    const today = new Date();
-
-    // Reset time to start of day for accurate date comparison
-    const dueDateOnly = new Date(
-      dueDate.getFullYear(),
-      dueDate.getMonth(),
-      dueDate.getDate()
-    );
-    const todayOnly = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
-    // Task is overdue if due date has passed AND task is not completed
-    return dueDateOnly < todayOnly && subTask.status !== "completed";
-  }).length;
-  const todaySubTasks = subTasks.filter((subTask) => {
-    if (!subTask.dueDate) return false;
-    const dueDate = new Date(subTask.dueDate);
-    const today = new Date();
-    return (
-      dueDate.getDate() === today.getDate() &&
-      dueDate.getMonth() === today.getMonth() &&
-      dueDate.getFullYear() === today.getFullYear()
-    );
-  }).length;
-  const completionRate =
-    totalSubTasks > 0
-      ? Math.round((completedSubTasks / totalSubTasks) * 100)
-      : 0;
+  // Use statistics from API if available, otherwise default to 0
+  const totalSubTasks = statistics?.total || 0;
+  const completedSubTasks = statistics?.completed || 0;
+  const inProgressSubTasks = statistics?.inProgress || 0;
+  const pendingSubTasks = statistics?.pending || 0;
+  const overdueSubTasks = statistics?.overdue || 0;
+  const todaySubTasks = statistics?.today || 0;
+  const onReviewSubTasks = statistics?.onReview || 0;
+  const reworkSubTasks = statistics?.rework || 0;
+  const upcoming3DaysSubTasks = statistics?.upcoming3Days || 0;
+  const completionRate = statistics?.completionRate || 0;
 
   // Navigation handlers for stat cards
   const handleStatsClick = (statType) => {
+    // Keep task listing in sync with the selected month on the overview
+    const monthQuery = selectedMonth ? `&taskMonth=${selectedMonth}` : "";
+
     switch (statType) {
       case "total":
-        navigate(`/employees/${employeeId}/subtasks`);
+        navigate(
+          `/employees/${employeeId}/subtasks${
+            selectedMonth ? `?taskMonth=${selectedMonth}` : ""
+          }`
+        );
         break;
       case "completed":
-        navigate(`/employees/${employeeId}/subtasks?filter=completed`);
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=completed${monthQuery}`
+        );
         break;
       case "in-progress":
-        navigate(`/employees/${employeeId}/subtasks?filter=in-progress`);
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=in-progress${monthQuery}`
+        );
         break;
       case "pending":
-        navigate(`/employees/${employeeId}/subtasks?filter=pending`);
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=pending${monthQuery}`
+        );
         break;
       case "today":
-        navigate(`/employees/${employeeId}/subtasks?filter=today`);
+        navigate(`/employees/${employeeId}/subtasks?filter=today${monthQuery}`);
         break;
       case "overdue":
-        navigate(`/employees/${employeeId}/subtasks?filter=overdue`);
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=overdue${monthQuery}`
+        );
+        break;
+      case "on-review":
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=on-review${monthQuery}`
+        );
+        break;
+      case "rework":
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=re-work${monthQuery}`
+        );
+        break;
+      case "upcoming":
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=upcoming${monthQuery}`
+        );
         break;
       default:
         break;
@@ -97,9 +95,7 @@ const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
     <div className="space-y-6">
       <div className="flexBetween mb-4">
         <div className="flex flex-col">
-          <h4 className="font-semibold text-lg text-gray-800">
-            Task Progress
-          </h4>
+          <h4 className="font-semibold text-lg text-gray-800">Task Progress</h4>
           <span className="text-xs text-gray-500">{monthLabel}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -125,7 +121,7 @@ const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
         </div>
       </div>
       {/* Subtask Statistics */}
-      <div className="grid grid-cols-6 gap-4 flex-1">
+      <div className="grid grid-cols-3 gap-4 flex-1">
         <StatCard
           title="Total task"
           value={totalSubTasks}
@@ -137,6 +133,12 @@ const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
           value={todaySubTasks}
           color="purple"
           onClick={() => handleStatsClick("today")}
+        />
+        <StatCard
+          title="Upcoming (3 days)"
+          value={upcoming3DaysSubTasks}
+          color="cyan"
+          onClick={() => handleStatsClick("upcoming")}
         />
         <StatCard
           title="Completed"
@@ -160,7 +162,7 @@ const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
           }
           onClick={() => handleStatsClick("in-progress")}
         />
-        <StatCard
+        {/* <StatCard
           title="Pending"
           value={pendingSubTasks}
           color="orange"
@@ -170,6 +172,28 @@ const Overview = ({ subTasks, employeeId, selectedMonth, isLoading }) => {
               : 0
           }
           onClick={() => handleStatsClick("pending")}
+        /> */}
+        <StatCard
+          title="On Review"
+          value={onReviewSubTasks}
+          color="indigo"
+          percent={
+            totalSubTasks > 0
+              ? Math.round((onReviewSubTasks / totalSubTasks) * 100)
+              : 0
+          }
+          onClick={() => handleStatsClick("on-review")}
+        />
+        <StatCard
+          title="Rework"
+          value={reworkSubTasks}
+          color="pink"
+          percent={
+            totalSubTasks > 0
+              ? Math.round((reworkSubTasks / totalSubTasks) * 100)
+              : 0
+          }
+          onClick={() => handleStatsClick("rework")}
         />
         <StatCard
           title="Overdue"

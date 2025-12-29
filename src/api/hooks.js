@@ -511,6 +511,21 @@ export const useGetEmployeeTeams = (employeeId, projectId) => {
   });
 };
 
+export const useGetEmployeeStatistics = (employeeId, taskMonth) => {
+  return useQuery({
+    queryKey: ["employeeStatistics", employeeId, taskMonth],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (taskMonth) params.append("taskMonth", taskMonth);
+
+      return apiClient
+        .get(`/dashboard/employee-statistics/${employeeId}?${params.toString()}`)
+        .then((res) => res.data);
+    },
+    enabled: !!employeeId && !!taskMonth,
+  });
+};
+
 export const useGetProjectsDueThisMonth = (date = new Date()) => {
   return useQuery({
     queryKey: ["projectsDueThisMonth", format(date, "yyyy-MM")],

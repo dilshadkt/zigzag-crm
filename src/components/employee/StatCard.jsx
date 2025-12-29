@@ -10,6 +10,10 @@ const StatCard = ({ title, value, color, percent, onClick }) => {
       bg: "bg-purple-50",
       text: "text-purple-600",
     },
+    cyan: {
+      bg: "bg-cyan-50",
+      text: "text-cyan-600",
+    },
     green: {
       bg: "bg-green-50",
       text: "text-green-600",
@@ -21,6 +25,14 @@ const StatCard = ({ title, value, color, percent, onClick }) => {
     orange: {
       bg: "bg-orange-50",
       text: "text-orange-600",
+    },
+    indigo: {
+      bg: "bg-indigo-50",
+      text: "text-indigo-600",
+    },
+    pink: {
+      bg: "bg-pink-50",
+      text: "text-pink-600",
     },
     red: {
       bg: "bg-red-50",

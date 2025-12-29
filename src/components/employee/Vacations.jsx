@@ -114,7 +114,7 @@ const Vacations = ({ employeeId }) => {
           </div>
         </div>
       </div>
-      <h3 className="text-lg font-bold mt-5 mb-3 text-gray-800">
+      <h3 className="text-sm font-bold my-3 ml-1  text-gray-600">
         Vacation Requests
       </h3>
       <div className="w-full h-full overflow-y-auto">

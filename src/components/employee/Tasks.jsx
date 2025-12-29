@@ -6,15 +6,25 @@ import { format } from "date-fns";
 const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
   const navigate = useNavigate();
 
-  const monthLabel = useMemo(() => {
-    if (!selectedMonth) return "All subtasks";
-    const [year, month] = selectedMonth.split("-");
-    if (!year || !month) return "All subtasks";
-    return `${new Date(parseInt(year), parseInt(month) - 1).toLocaleString(
-      "default",
-      { month: "long", year: "numeric" }
-    )} subtasks`;
-  }, [selectedMonth]);
+  // For this view we want to focus on today's subtasks for the employee
+  const todaySubTasks = useMemo(() => {
+    if (!subTasks || subTasks.length === 0) return [];
+
+    const today = new Date();
+    return subTasks.filter((s) => {
+      if (!s.dueDate) return false;
+      const dueDate = new Date(s.dueDate);
+      return (
+        dueDate.getDate() === today.getDate() &&
+        dueDate.getMonth() === today.getMonth() &&
+        dueDate.getFullYear() === today.getFullYear()
+      );
+    });
+  }, [subTasks]);
+
+  const label = useMemo(() => {
+    return "Today's subtasks";
+  }, []);
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
@@ -83,15 +93,15 @@ const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
     );
   }
 
-  if (!subTasks || subTasks.length === 0) {
+  if (!todaySubTasks || todaySubTasks.length === 0) {
     return (
       <div className="text-center w-full h-full flex items-center justify-center text-gray-500">
         <div>
           <div className="text-gray-400 text-6xl mb-4">📋</div>
           <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            No subtasks found
+            No subtasks due today
           </h3>
-          <p className="text-gray-500">{monthLabel}</p>
+          <p className="text-gray-500">{label}</p>
         </div>
       </div>
     );
@@ -101,7 +111,7 @@ const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
     <div className="flex flex-col w-full h-full overflow-y-auto">
       <div className="rounded-lg">
         <div className="divide-y flex flex-col gap-y-2 divide-gray-200">
-          {subTasks.map((subTask) => {
+          {todaySubTasks.map((subTask) => {
             const isOverdue = (() => {
               const dueDate = new Date(subTask.dueDate);
               const today = new Date();

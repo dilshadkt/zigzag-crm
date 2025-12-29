@@ -7,6 +7,7 @@ import {
   useGetEmployeeProjects,
   useGetEmployeeTeams,
   useGetEmployeeSubTasks,
+  useGetEmployeeStatistics,
 } from "../../api/hooks";
 import Dropdown from "../../components/shared/dropdown";
 import { useAuth } from "../../hooks/useAuth";
@@ -16,6 +17,7 @@ import Projects from "../../components/employee/Projects";
 import Teams from "../../components/employee/Teams";
 import Vacations from "../../components/employee/Vacations";
 import { Loading } from "./Loading";
+import { EmployeeHeader } from "./Header";
 
 const EmployeeDetails = () => {
   const { employeeId } = useParams();
@@ -40,6 +42,8 @@ const EmployeeDetails = () => {
   );
   const { data: subTasksData, isLoading: isLoadingSubTasks } =
     useGetEmployeeSubTasks(employeeId);
+  const { data: statisticsData, isLoading: isLoadingStatistics } =
+    useGetEmployeeStatistics(employeeId, selectedMonth);
 
   const employee = employeeData?.employee;
   const projects = projectsData?.projects || [];
@@ -57,6 +61,22 @@ const EmployeeDetails = () => {
   }, [subTasks, selectedMonth]);
 
   const subTasksCount = filteredSubTasks.length;
+
+  // Count of today's subtasks (used for the Tasks tab badge)
+  const todaySubTasksCount = useMemo(() => {
+    if (!filteredSubTasks || filteredSubTasks.length === 0) return 0;
+
+    const today = new Date();
+    return filteredSubTasks.filter((subTask) => {
+      if (!subTask?.dueDate) return false;
+      const dueDate = new Date(subTask.dueDate);
+      return (
+        dueDate.getDate() === today.getDate() &&
+        dueDate.getMonth() === today.getMonth() &&
+        dueDate.getFullYear() === today.getFullYear()
+      );
+    }).length;
+  }, [filteredSubTasks]);
 
   useEffect(() => {
     if (!projects.length) {
@@ -79,9 +99,7 @@ const EmployeeDetails = () => {
   }));
 
   if (isLoadingEmployee) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   if (!employee) {
@@ -117,66 +135,26 @@ const EmployeeDetails = () => {
           employeeId={employeeId}
         />
         <div className="flex-1 flex flex-col gap-y-5">
-          <div className="flexBetween">
-            <div className="flex bg-[#E6EDF5] rounded-full p-1">
-              {[
-                ...(isAdmin ? ["Overview"] : []),
-                "Projects",
-                "Teams",
-                "Tasks",
-                "Vacations",
-              ].map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActivePage(item)}
-                  className={`${activePage === item
-                    ? `bg-[#3F8CFF] text-white`
-                    : `bg-[#E6EDF5] text-[#0A1629]`
-                    } text-sm py-2 px-8 
-                  cursor-pointer flex  gap-x-1 rounded-full font-medium relative`}
-                >
-                  {item}
-                  {item === "Tasks" && subTasksCount > 0 && (
-                    <span
-                      className=" -top-0 -right-2 bg-white text-gray-600
-                     text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                    >
-                      {subTasksCount}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-x-3">
-              {(activePage === "Overview" || activePage === "Tasks") && (
-                <label className="flex flex-col text-xs font-medium text-gray-600">
-                  Month
-                  <input
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(event) => setSelectedMonth(event.target.value)}
-                    className="mt-1 rounded-lg border border-transparent bg-[#E6EDF5] px-3 py-2 text-sm text-[#0A1629] focus:border-[#3F8CFF] focus:bg-white focus:outline-none"
-                  />
-                </label>
-              )}
-              {activePage === "Teams" && (
-                <Dropdown
-                  options={projectOptions}
-                  value={selectedProject}
-                  onChange={setSelectedProject}
-                  placeholder="Select project"
-                  className="w-64 bg-[#E6EDF5] rounded-lg font-medium"
-                />
-              )}
-            </div>
-          </div>
+          <EmployeeHeader
+            isAdmin={isAdmin}
+            activePage={activePage}
+            setActivePage={setActivePage}
+            subTasksCount={subTasksCount}
+            todaySubTasksCount={todaySubTasksCount}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            projectOptions={projectOptions}
+            selectedProject={selectedProject}
+            setSelectedProject={setSelectedProject}
+          />
           <div className="w-full h-full overflow-y-auto">
             {activePage === "Overview" && isAdmin && (
               <Overview
                 subTasks={filteredSubTasks}
                 employeeId={employeeId}
                 selectedMonth={selectedMonth}
-                isLoading={isLoadingSubTasks}
+                isLoading={isLoadingSubTasks || isLoadingStatistics}
+                statistics={statisticsData?.statistics}
               />
             )}
             {activePage === "Projects" && (
