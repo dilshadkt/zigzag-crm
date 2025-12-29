@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   useGetCompanyTasksFiltered,
@@ -7,22 +7,14 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useTaskFilters } from "../../hooks/useTaskFilters";
 import { useTaskData } from "../../hooks/useTaskData";
-import Header from "../../components/shared/header";
-import Navigator from "../../components/shared/navigator";
-import SuperFilterPanel from "../../components/tasks/SuperFilterPanel";
+import { useOverdueTaskGroups, useCompletedTaskGroups } from "./useTaskGroups";
+import { getFilterTitle, getFilterIcon, getFilterColor } from "./filterUtils";
+import CompanyTasksHeader from "./CompanyTasksHeader";
+import LoadingState from "./LoadingState";
+import ErrorState from "./ErrorState";
 import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
 import TaskList from "../../components/tasks/TaskList";
-import {
-  FiAlertCircle,
-  FiCalendar,
-  FiFlag,
-  FiPlay,
-  FiPause,
-  FiCheckCircle,
-  FiChevronDown,
-  FiChevronRight,
-} from "react-icons/fi";
-import { MdTask, MdSubdirectoryArrowRight } from "react-icons/md";
+import TaskGroup from "./TaskGroup";
 
 const CompanyTasks = ({ filter: propFilter }) => {
   const { companyId } = useAuth();
@@ -30,6 +22,10 @@ const CompanyTasks = ({ filter: propFilter }) => {
   const urlFilter = searchParams.get("filter");
   const filter = propFilter || urlFilter;
   const taskMonth = searchParams.get("taskMonth");
+
+  // State for task visibility toggles
+  const [showTasks, setShowTasks] = useState(true);
+  const [showSubtasks, setShowSubtasks] = useState(true);
 
   // Use custom hooks for filters
   const {
@@ -64,415 +60,131 @@ const CompanyTasks = ({ filter: propFilter }) => {
   // Determine loading state based on active filter
   const isLoading = isTodayFilter ? todayTasksLoading : allTasksLoading;
 
+  // Get filtered tasks from the appropriate data source
   const { filteredTasks, getFilterOptions } = useTaskData(
     allTasksData,
     todayTasksData,
     filter
   );
 
-  const overdueTaskGroups = useMemo(() => {
-    if (filter !== "overdue" || filteredTasks.length === 0) {
-      return [];
-    }
 
-    const groups = new Map();
-    filteredTasks.forEach((task) => {
-      const dueDate = task.dueDate ? new Date(task.dueDate) : null;
-      const hasValidDate =
-        dueDate instanceof Date && !Number.isNaN(dueDate.getTime());
+  // Group tasks for special filters
+  const overdueTaskGroups = useOverdueTaskGroups(filter, filteredTasks);
+  const completedTaskGroups = useCompletedTaskGroups(filter, filteredTasks);
 
-      const groupKey = hasValidDate
-        ? `${dueDate.getFullYear()}-${dueDate.getMonth()}`
-        : "no-date";
 
-      const label = hasValidDate
-        ? dueDate.toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })
-        : "No Due Date";
 
-      const sortValue = hasValidDate
-        ? new Date(dueDate.getFullYear(), dueDate.getMonth(), 1).getTime()
-        : Number.MIN_SAFE_INTEGER;
-
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, {
-          key: groupKey,
-          label,
-          sortValue,
-          tasks: [],
-        });
-      }
-
-      groups.get(groupKey).tasks.push(task);
-    });
-
-    return Array.from(groups.values()).sort(
-      (a, b) => (b.sortValue || 0) - (a.sortValue || 0)
-    );
-  }, [filter, filteredTasks]);
 
   const shouldGroupOverdue =
     filter === "overdue" && overdueTaskGroups.length > 0;
-
-  const completedTaskGroups = useMemo(() => {
-    if (filter !== "completed" || filteredTasks.length === 0) {
-      return [];
-    }
-
-    const today = new Date();
-    const startOfToday = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-    const startOfYesterday = new Date(startOfToday);
-    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-
-    const groups = new Map();
-
-    filteredTasks.forEach((task) => {
-      const completedAt = task.updatedAt ? new Date(task.updatedAt) : null;
-      const hasValidCompletion =
-        completedAt instanceof Date && !Number.isNaN(completedAt.getTime());
-
-      const isToday =
-        hasValidCompletion &&
-        completedAt >= startOfToday &&
-        completedAt < new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
-
-      const isYesterday =
-        hasValidCompletion &&
-        completedAt >= startOfYesterday &&
-        completedAt < startOfToday;
-
-      const groupKey = isToday
-        ? "today"
-        : isYesterday
-          ? "yesterday"
-          : hasValidCompletion
-            ? completedAt.toDateString()
-            : "no-date";
-
-      let label = "No Date";
-      if (isToday) label = "Today";
-      else if (isYesterday) label = "Yesterday";
-      else if (hasValidCompletion) {
-        label = completedAt.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        });
-      }
-
-      const sortValue = hasValidCompletion
-        ? completedAt.getTime()
-        : Number.MIN_SAFE_INTEGER;
-
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, {
-          key: groupKey,
-          label,
-          sortValue,
-          tasks: [],
-        });
-      }
-
-      groups.get(groupKey).tasks.push(task);
-    });
-
-    return Array.from(groups.values()).sort(
-      (a, b) => (b.sortValue || 0) - (a.sortValue || 0)
-    );
-  }, [filter, filteredTasks]);
-
   const shouldGroupCompleted =
     filter === "completed" && completedTaskGroups.length > 0;
 
   // Get unique filter options from tasks
   const { users, projects } = getFilterOptions();
 
-  const getFilterTitle = () => {
-    switch (filter) {
-      case "overdue":
-        return "Overdue Tasks";
-      case "in-progress":
-        return "In Progress Tasks";
-      case "pending":
-        return "Pending Tasks";
-      case "completed":
-        return "Completed Tasks";
-      case "approved":
-        return "Approved Tasks";
-      case "re-work":
-        return "Re-work Tasks";
-      case "today":
-        return "Today's Tasks";
-      case "unscheduled":
-        return "Unscheduled Tasks";
-      case "upcoming":
-        return "Upcoming 3 Days Tasks";
-      default:
-        return "All Tasks";
-    }
-  };
+  // Get filter metadata
+  const filterTitle = getFilterTitle(filter);
+  const FilterIcon = getFilterIcon(filter);
+  const filterColor = getFilterColor(filter);
 
-  const getFilterIcon = () => {
-    switch (filter) {
-      case "overdue":
-        return FiAlertCircle;
-      case "in-progress":
-        return FiPlay;
-      case "pending":
-        return FiPause;
-      case "completed":
-        return FiCheckCircle;
-      case "approved":
-        return FiCheckCircle;
-      case "re-work":
-        return FiAlertCircle;
-      case "unscheduled":
-        return FiCalendar;
-      case "upcoming":
-        return FiCalendar;
-      default:
-        return FiFlag;
-    }
-  };
-
-  const getFilterColor = () => {
-    switch (filter) {
-      case "overdue":
-        return "text-red-600";
-      case "in-progress":
-        return "text-blue-600";
-      case "pending":
-        return "text-orange-600";
-      case "completed":
-        return "text-green-600";
-      case "approved":
-        return "text-teal-600";
-      case "re-work":
-        return "text-red-600";
-      case "unscheduled":
-        return "text-gray-600";
-      case "upcoming":
-        return "text-cyan-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  const FilterIcon = getFilterIcon();
-  const [showTasks, setShowTasks] = useState(true);
-  const [showSubtasks, setShowSubtasks] = useState(true);
-  const [collapsedGroups, setCollapsedGroups] = useState({});
-
-  const toggleGroup = (key) => {
-    setCollapsedGroups((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  // Calculate the actual task count AFTER applying visibility filters
+  // This is the fix for the count discrepancy issue
+  const visibleTaskCount = useMemo(() => {
+    return filteredTasks.filter((task) => {
+      const isSubTask = task?.parentTask || task?.isSubTask;
+      if (isSubTask && !showSubtasks) return false;
+      if (!isSubTask && !showTasks) return false;
+      return true;
+    }).length;
+  }, [filteredTasks, showSubtasks, showTasks]);
 
   // Show error message if there's an error
   if (isTodayFilter && todayTasksError) {
     return (
-      <>
-        <Header />
-        <Navigator />
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FilterIcon className={getFilterColor()} />
-              {getFilterTitle()}
-            </h1>
-          </div>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h3 className="text-red-800 font-semibold mb-2">
-              Error loading today's tasks
-            </h3>
-            <p className="text-red-600 mb-2">
-              {todayTasksError?.response?.data?.message ||
-                todayTasksError?.message ||
-                "An error occurred"}
-            </p>
-            <p className="text-sm text-red-500">
-              Status: {todayTasksError?.response?.status || "Unknown"}
-            </p>
-          </div>
-        </div>
-      </>
+      <ErrorState
+        title={filterTitle}
+        FilterIcon={FilterIcon}
+        getFilterColor={() => filterColor}
+        error={todayTasksError}
+      />
     );
   }
 
+  // Show loading state
   if (isLoading) {
     return (
-      <>
-        <Header />
-        <Navigator />
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FilterIcon className={getFilterColor()} />
-              {getFilterTitle()}
-            </h1>
-          </div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-lg shadow p-6 animate-pulse"
-              >
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </>
+      <LoadingState
+        title={filterTitle}
+        FilterIcon={FilterIcon}
+        getFilterColor={() => filterColor}
+      />
     );
   }
 
   return (
-    <>
-      <div className=" ">
-        <div className="sticky top-0 bg-[#f4f9fd]">
-          <div className="flex sticky top-0 items-start justify-between ">
-            <div className="flex items-center sticky top-0 gap-x-2">
-              <Navigator />
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                {getFilterTitle()}
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {
-                  filteredTasks.filter((task) => {
-                    const isSubTask = task?.parentTask || task?.isSubTask;
-                    if (isSubTask && !showSubtasks) return false;
-                    if (!isSubTask && !showTasks) return false;
-                    return true;
-                  }).length
-                }{" "}
-                tasks
-              </p>
-            </div>
-            <div className="flex items-center gap-x-2">
-              <SuperFilterPanel
-                users={users}
-                projects={projects}
-                superFilters={superFilters}
-                handleFilterChange={handleFilterChange}
-                handleMultiSelectFilter={handleMultiSelectFilter}
-                clearAllFilters={clearAllFilters}
-                hasActiveFilters={hasActiveFilters}
-              />
-            </div>
-          </div>
+    <div className="">
+      <CompanyTasksHeader
+        title={filterTitle}
+        taskCount={visibleTaskCount}
+        users={users}
+        projects={projects}
+        superFilters={superFilters}
+        handleFilterChange={handleFilterChange}
+        handleMultiSelectFilter={handleMultiSelectFilter}
+        clearAllFilters={clearAllFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
 
-          {/* Quick Filters Bar */}
-          <div className="mb-6 pb-4 border-b border-gray-200">
-            <TaskQuickFilters
-              superFilters={superFilters}
-              onFilterChange={handleFilterChange}
-              onMultiSelectFilter={handleMultiSelectFilter}
-              users={users}
-              projects={projects}
-              showTasks={showTasks}
-              showSubtasks={showSubtasks}
-              onToggleTasks={() => setShowTasks((prev) => !prev)}
-              onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-            />
-          </div>
-        </div>
-
-        {shouldGroupOverdue ? (
-          <div className="space-y-6">
-            {overdueTaskGroups.map((group) => (
-              <div key={group.key}>
-                <div className="mb-3 pb-2 border-b border-gray-200 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      {group.label}
-                    </h2>
-                    <p className="text-sm ml-2  text-gray-500">
-                      {group.tasks.length}{" "}
-                      {group.tasks.length === 1 ? "task" : "tasks"}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => toggleGroup(group.key)}
-                    className="text-gray-500 hover:text-gray-800 transition"
-                    aria-label={`${collapsedGroups[group.key] ? "Expand" : "Collapse"
-                      } ${group.label}`}
-                  >
-                    {collapsedGroups[group.key] ? (
-                      <FiChevronRight className="w-5 h-5" />
-                    ) : (
-                      <FiChevronDown className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-                {!collapsedGroups[group.key] && (
-                  <TaskList
-                    tasks={group.tasks}
-                    showSubtasks={showSubtasks}
-                    showTasks={showTasks}
-                    filter={filter}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        ) : shouldGroupCompleted ? (
-          <div className="space-y-6">
-            {completedTaskGroups.map((group) => (
-              <div key={group.key}>
-                <div className="mb-3 pb-2 border-b border-gray-200 flex items-center justify-between">
-                  <div className="flex items-center gap-x-2">
-                    <h2 className=" text-[15px] font-semibold text-gray-900">
-                      {group.label}
-                    </h2>
-                    <p className="text-xs text-gray-500">
-                      {group.tasks.length}{" "}
-                      {group.tasks.length === 1 ? "task" : "tasks"}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => toggleGroup(group.key)}
-                    className="text-gray-500 hover:text-gray-800 transition"
-                    aria-label={`${collapsedGroups[group.key] ? "Expand" : "Collapse"
-                      } ${group.label}`}
-                  >
-                    {collapsedGroups[group.key] ? (
-                      <FiChevronRight className="w-5 h-5" />
-                    ) : (
-                      <FiChevronDown className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-                {!collapsedGroups[group.key] && (
-                  <TaskList
-                    tasks={group.tasks}
-                    showSubtasks={showSubtasks}
-                    showTasks={showTasks}
-                    filter={filter}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <TaskList
-            tasks={filteredTasks}
-            showSubtasks={showSubtasks}
-            showTasks={showTasks}
-            filter={filter}
-          />
-        )}
+      {/* Quick Filters Bar */}
+      <div className="mb-6 pb-4 border-b border-gray-200">
+        <TaskQuickFilters
+          superFilters={superFilters}
+          onFilterChange={handleFilterChange}
+          onMultiSelectFilter={handleMultiSelectFilter}
+          users={users}
+          projects={projects}
+          showTasks={showTasks}
+          showSubtasks={showSubtasks}
+          onToggleTasks={() => setShowTasks((prev) => !prev)}
+          onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+        />
       </div>
-    </>
+
+      {/* Task List or Grouped Tasks */}
+      {shouldGroupOverdue ? (
+        <div className="space-y-6">
+          {overdueTaskGroups.map((group) => (
+            <TaskGroup
+              key={group.key}
+              group={group}
+              showSubtasks={showSubtasks}
+              showTasks={showTasks}
+              filter={filter}
+            />
+          ))}
+        </div>
+      ) : shouldGroupCompleted ? (
+        <div className="space-y-6">
+          {completedTaskGroups.map((group) => (
+            <TaskGroup
+              key={group.key}
+              group={group}
+              showSubtasks={showSubtasks}
+              showTasks={showTasks}
+              filter={filter}
+            />
+          ))}
+        </div>
+      ) : (
+        <TaskList
+          tasks={filteredTasks}
+          showSubtasks={showSubtasks}
+          showTasks={showTasks}
+          filter={filter}
+        />
+      )}
+    </div>
   );
 };
 
