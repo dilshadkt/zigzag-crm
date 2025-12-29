@@ -15,6 +15,7 @@ import Overview from "../../components/employee/Overview";
 import Projects from "../../components/employee/Projects";
 import Teams from "../../components/employee/Teams";
 import Vacations from "../../components/employee/Vacations";
+import { Loading } from "./Loading";
 
 const EmployeeDetails = () => {
   const { employeeId } = useParams();
@@ -79,9 +80,7 @@ const EmployeeDetails = () => {
 
   if (isLoadingEmployee) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500">Loading employee details...</div>
-      </div>
+      <Loading />
     );
   }
 
@@ -130,11 +129,10 @@ const EmployeeDetails = () => {
                 <button
                   key={index}
                   onClick={() => setActivePage(item)}
-                  className={`${
-                    activePage === item
-                      ? `bg-[#3F8CFF] text-white`
-                      : `bg-[#E6EDF5] text-[#0A1629]`
-                  } text-sm py-2 px-8 
+                  className={`${activePage === item
+                    ? `bg-[#3F8CFF] text-white`
+                    : `bg-[#E6EDF5] text-[#0A1629]`
+                    } text-sm py-2 px-8 
                   cursor-pointer flex  gap-x-1 rounded-full font-medium relative`}
                 >
                   {item}
