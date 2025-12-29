@@ -5,6 +5,8 @@ import { useAuth } from "../../hooks/useAuth";
 import Header from "../../components/shared/header";
 import Navigator from "../../components/shared/navigator";
 import TaskList from "../../components/tasks/TaskList";
+import MyTasksHeader from "./MyTasksHeader";
+import MyTasksFiltersPanel from "./MyTasksFiltersPanel";
 import {
   FiClock,
   FiAlertCircle,
@@ -591,224 +593,38 @@ const MyTasks = () => {
 
   return (
     <section className="flex flex-col">
-      {/* Header */}
-      <div className="flexBetween mb-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <FiArrowLeft className="w-5 h-5" />
-          </button>
-          <Header>{getFilterTitle()}</Header>
-          <div
-            className={`px-3 py-1 rounded-full flex items-center gap-2 ${getFilterColor()}`}
-          >
-            <FilterIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">{filteredTasks.length}</span>
-          </div>
-        </div>
-
-        {/* Search and Filter Toggle */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search tasks..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-              value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg border transition-colors flex items-center gap-2 ${
-              hasActiveFilters()
-                ? "bg-blue-50 border-blue-200 text-blue-600"
-                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            <FiFilter className="w-4 h-4" />
-            <span className="text-sm">Filters</span>
-            {hasActiveFilters() && (
-              <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {filters.status.length +
-                  filters.priority.length +
-                  filters.project.length +
-                  (filters.dateRange.start ? 1 : 0) +
-                  (filters.dateRange.end ? 1 : 0)}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
+      <MyTasksHeader
+        title={getFilterTitle()}
+        filterColorClass={getFilterColor()}
+        FilterIcon={FilterIcon}
+        taskCount={filteredTasks.length}
+        filters={filters}
+        onSearchChange={(value) => handleFilterChange("search", value)}
+        showFilters={showFilters}
+        toggleFilters={() => setShowFilters(!showFilters)}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={
+          filters.status.length +
+          filters.priority.length +
+          filters.project.length +
+          (filters.dateRange.start ? 1 : 0) +
+          (filters.dateRange.end ? 1 : 0)
+        }
+        onClearAllFilters={clearAllFilters}
+        onBack={() => navigate("/")}
+      />
 
       {/* Navigator */}
 
-      {/* Advanced Filters Panel */}
-      {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
-            {hasActiveFilters() && (
-              <button
-                onClick={clearAllFilters}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                <FiX className="w-4 h-4" />
-                Clear All
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <div className="space-y-2">
-                {[
-                  "pending",
-                  "in-progress",
-                  "on-review",
-                  "approved",
-                  "client-approved",
-                  "re-work",
-                  "completed",
-                ].map((status) => (
-                  <label key={status} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.status.includes(status)}
-                      onChange={() => handleMultiSelectFilter("status", status)}
-                      className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm capitalize">
-                      {status.replace("-", " ")}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Priority Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Priority
-              </label>
-              <div className="space-y-2">
-                {["high", "medium", "low"].map((priority) => (
-                  <label key={priority} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.priority.includes(priority)}
-                      onChange={() =>
-                        handleMultiSelectFilter("priority", priority)
-                      }
-                      className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm capitalize">{priority}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Project Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project
-              </label>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {filterOptions.projects.map((project) => (
-                  <label key={project._id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.project.includes(project._id)}
-                      onChange={() =>
-                        handleMultiSelectFilter("project", project._id)
-                      }
-                      className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm">{project.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Date Range Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Due Date Range
-              </label>
-              <div className="space-y-2">
-                <input
-                  type="date"
-                  value={filters.dateRange.start}
-                  onChange={(e) =>
-                    handleFilterChange("dateRange", {
-                      ...filters.dateRange,
-                      start: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Start date"
-                />
-                <input
-                  type="date"
-                  value={filters.dateRange.end}
-                  onChange={(e) =>
-                    handleFilterChange("dateRange", {
-                      ...filters.dateRange,
-                      end: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="End date"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sort by
-                </label>
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="dueDate">Due Date</option>
-                  <option value="title">Title</option>
-                  <option value="priority">Priority</option>
-                  <option value="status">Status</option>
-                  <option value="createdAt">Created Date</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Order
-                </label>
-                <select
-                  value={filters.sortOrder}
-                  onChange={(e) =>
-                    handleFilterChange("sortOrder", e.target.value)
-                  }
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="asc">Ascending</option>
-                  <option value="desc">Descending</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <MyTasksFiltersPanel
+        showFilters={showFilters}
+        filters={filters}
+        filterOptions={filterOptions}
+        hasActiveFilters={hasActiveFilters}
+        clearAllFilters={clearAllFilters}
+        handleMultiSelectFilter={handleMultiSelectFilter}
+        handleFilterChange={handleFilterChange}
+      />
 
       {/* Tasks List */}
       <div className=" ">
@@ -854,7 +670,7 @@ const MyTasks = () => {
             ))}
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className=" flex flex-col gap-y-2">
             {filteredTasks.map((task) => {
               const isOverdue =
                 new Date(task.dueDate) < new Date() &&
@@ -865,7 +681,8 @@ const MyTasks = () => {
                 <div
                   key={task._id}
                   onClick={() => handleTaskClick(task)}
-                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="p-4 bg-white rounded-lg hover:bg-gray-50 cursor-pointer 
+                  transition-colors border border-gray-100"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">

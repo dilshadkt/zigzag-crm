@@ -455,7 +455,6 @@ const CompanyProgressStats = ({ taskMonth }) => {
               }`}
             >
               {orderedStats.map((stat, index) => {
-                console.log(orderedStats);
                 const Icon = stat.icon;
                 return (
                   <Draggable key={stat.id} draggableId={stat.id} index={index}>

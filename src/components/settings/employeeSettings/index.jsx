@@ -20,16 +20,29 @@ const EmployeeSettings = () => {
   const [selectedProject, setSelectedProject] = useState("");
   const navigate = useNavigate();
 
+  // Current month key in format YYYY-MM, similar to other task views
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}`;
+
   const { data: projectsData, isLoading: isLoadingProjects } =
     useGetEmployeeProjects(user?._id);
   const { data: teamsData, isLoading: isLoadingTeams } = useGetEmployeeTeams(
     user?._id,
     selectedProject
   );
-  const { data: tasksData } = useGetEmployeeTasks(user?._id);
+  // Limit tasks to the current month so overview cards show current month status
+  const { data: tasksData } = useGetEmployeeTasks(user?._id, {
+    taskMonth: currentMonthKey,
+  });
 
   const projects = projectsData?.projects || [];
   const tasks = tasksData?.tasks || [];
+  const subTasks = tasksData?.subTasks || [];
+
+  // Combine tasks and subtasks so overview stats match other parts of the app
+  const allTasks = [...tasks, ...subTasks];
 
   React.useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
@@ -77,7 +90,7 @@ const EmployeeSettings = () => {
 
       <div className="flex-1 overflow-y-auto">
         {activePage === "Overview" && (
-          <Overview projects={projects} tasks={tasks} user={user} />
+          <Overview projects={projects} tasks={allTasks} user={user} />
         )}
         {activePage === "Projects" && (
           <Projects projects={projects} isLoading={isLoadingProjects} />
@@ -98,7 +111,10 @@ const Overview = ({ projects, tasks, user }) => {
   const completedTasks = tasks.filter(
     (task) => task.status === "completed"
   ).length;
-  const pendingTasks = tasks.filter((task) => task.status === "pending").length;
+  // Treat both "pending" and "todo" as pending to match task filters elsewhere
+  const pendingTasks = tasks.filter(
+    (task) => task.status === "pending" || task.status === "todo"
+  ).length;
 
   return (
     <div className="space-y-6">

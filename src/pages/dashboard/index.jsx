@@ -155,7 +155,8 @@ const Dashboard = () => {
           <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
           <span
             className={`text-xs whitespace-nowrap md:text-base 
-              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
+              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${
+                !isCurrentMonth ? "text-blue-600 font-medium" : ""
               }`}
             onClick={resetToCurrentMonth}
             title={
@@ -197,18 +198,24 @@ const Dashboard = () => {
         )}
 
         {/* nearest event */}
-        <PendingWork taskMonth={taskMonth} />
+        {isEmployee ? (
+          <NearestEvents selectedDate={selectedDate} />
+        ) : (
+          <PendingWork taskMonth={taskMonth} />
+        )}
       </div>
 
       {/* Employee Progress Statistics - Only for employees */}
 
       <div
-        className={`w-full grid gap-y-5 md:gap-x-6 mt-5 ${isEmployee ? "grid-cols-1" : " grid-cols-1  md:grid-cols-7"
-          }`}
+        className={`w-full grid gap-y-5 md:gap-x-6 mt-5 ${
+          isEmployee ? "grid-cols-1" : " grid-cols-1  md:grid-cols-7"
+        }`}
       >
         <div
-          className={`md:px-4 md:h-[470px] pb-3 pt-5 flex flex-col rounded-3xl ${isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
-            }`}
+          className={`md:px-4 md:h-[470px] pb-3 pt-5 flex flex-col rounded-3xl ${
+            isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
+          }`}
         >
           <div className="flexBetween w-full ">
             <h4 className="font-semibold text-lg text-gray-800">

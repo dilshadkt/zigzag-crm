@@ -26,7 +26,6 @@ const ActivityStream = () => {
     dataUpdatedAt,
     isFetching,
   } = useGetRecentActivities(12, selectedFilter);
-  console.log(activitiesData);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
