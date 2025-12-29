@@ -22,21 +22,20 @@ export const EmployeeHeader = ({
           ...(isAdmin ? ["Overview"] : []),
           "Projects",
           "Teams",
-          "Tasks",
+          "Today's Tasks",
           "Vacations",
         ].map((item, index) => (
           <button
             key={index}
             onClick={() => setActivePage(item)}
-            className={`${
-              activePage === item
-                ? `bg-[#3F8CFF] text-white`
-                : `bg-[#E6EDF5] text-[#0A1629]`
-            } text-sm py-2 px-8 
+            className={`${activePage === item
+              ? `bg-[#3F8CFF] text-white`
+              : `bg-[#E6EDF5] text-[#0A1629]`
+              } text-sm py-2 px-8 
                   cursor-pointer flex  gap-x-1 rounded-full font-medium relative`}
           >
             {item}
-            {item === "Tasks" && tasksBadgeCount > 0 && (
+            {item === "Today's Tasks" && tasksBadgeCount > 0 && (
               <span
                 className=" -top-0 -right-2 bg-white text-gray-600
                      text-xs rounded-full w-5 h-5 flex items-center justify-center"
@@ -48,7 +47,7 @@ export const EmployeeHeader = ({
         ))}
       </div>
       <div className="flex items-center gap-x-3">
-        {(activePage === "Overview" || activePage === "Tasks") && (
+        {(activePage === "Overview" || activePage === "Today's Tasks") && (
           <label className="flex flex-col text-xs font-medium text-gray-600">
             <input
               type="month"

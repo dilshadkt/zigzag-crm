@@ -74,7 +74,8 @@ const EmployeeDetails = () => {
       return (
         dueDate.getDate() === today.getDate() &&
         dueDate.getMonth() === today.getMonth() &&
-        dueDate.getFullYear() === today.getFullYear()
+        dueDate.getFullYear() === today.getFullYear() &&
+        subTask.status !== "approved"
       );
     }).length;
   }, [filteredSubTasks]);
@@ -162,7 +163,7 @@ const EmployeeDetails = () => {
               <Projects projects={projects} isLoading={isLoadingProjects} />
             )}
             {activePage === "Teams" && <Teams teams={teamsData?.teams || []} />}
-            {activePage === "Tasks" && (
+            {activePage === "Today's Tasks" && (
               <Tasks
                 employeeId={employeeId}
                 subTasks={filteredSubTasks}

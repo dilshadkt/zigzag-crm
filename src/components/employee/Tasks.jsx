@@ -17,7 +17,8 @@ const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
       return (
         dueDate.getDate() === today.getDate() &&
         dueDate.getMonth() === today.getMonth() &&
-        dueDate.getFullYear() === today.getFullYear()
+        dueDate.getFullYear() === today.getFullYear() &&
+        s.status !== "approved"
       );
     });
   }, [subTasks]);
