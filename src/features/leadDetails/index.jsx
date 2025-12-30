@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiPhone } from "react-icons/fi";
 import LeadDetailTabs from "./components/LeadDetailTabs";
 import LeadOverviewSection from "./components/LeadOverviewSection";
 import LeadTimeline from "./components/LeadTimeline";
@@ -8,7 +8,7 @@ import LeadAttachments from "./components/LeadAttachments";
 import LeadEmails from "./components/LeadEmails";
 import LeadActivityPanel from "./components/LeadActivityPanel";
 import LeadQuickActions from "./components/LeadQuickActions";
-import { useUploadLeadAttachment } from "../leads/api";
+import { useUploadLeadAttachment, useLogLeadActivity } from "../leads/api";
 
 const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Emails"];
 
@@ -19,10 +19,14 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   // Use notes from lead.details (will be updated when API refetches)
   const notes = lead.details?.notes || [];
   const attachments = lead.details?.attachments || [];
+  const phoneNumber = lead.contact?.phone || lead.details?.contact?.phone;
 
   // Upload attachment mutation
   const { mutateAsync: uploadAttachment, isLoading: isUploadingAttachment } =
     useUploadLeadAttachment();
+
+  // Log activity mutation
+  const { mutate: logActivity } = useLogLeadActivity();
 
   const handleAddNote = (newNote) => {
     // This is called for optimistic updates, but the real data comes from API refetch
@@ -44,6 +48,28 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
       console.error("Error uploading file:", error);
       throw error; // Re-throw so LeadAttachments can handle it
     }
+  };
+
+  const handleCallClick = () => {
+    if (!leadId) return;
+
+    logActivity(
+      {
+        leadId,
+        type: "call_made",
+        title: "Call Initiated",
+        description: `Call initiated to ${phoneNumber}`,
+        metadata: { phoneNumber },
+      },
+      {
+        onSuccess: () => {
+          console.log("Call activity logged");
+        },
+        onError: (err) => {
+          console.error("Failed to log call activity", err);
+        },
+      }
+    );
   };
 
   const tabContent = useMemo(() => {
@@ -111,6 +137,19 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           <LeadQuickActions />
         </div>
       </div>
+
+      {/* Mobile Sticky Call Button */}
+      {phoneNumber && (
+        <a
+          href={`tel:${phoneNumber}`}
+          onClick={handleCallClick}
+          className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#3f8cff] text-white rounded-full 
+          shadow-lg flex items-center justify-center hover:bg-[#2f6bff] transition-colors z-50"
+          aria-label="Call Lead"
+        >
+          <FiPhone size={24} />
+        </a>
+      )}
     </div>
   );
 };

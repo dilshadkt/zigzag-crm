@@ -292,3 +292,24 @@ export const useGetLeadActivities = (leadId, params = {}) => {
     enabled: !!leadId,
   });
 };
+
+// Log lead activity manually
+export const useLogLeadActivity = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ leadId, type, title, description, metadata }) => {
+      const response = await apiClient.post(`/leads/${leadId}/activities`, {
+        type,
+        title,
+        description,
+        metadata,
+      });
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["lead", variables.leadId]);
+      queryClient.invalidateQueries(["leadActivities", variables.leadId]);
+    },
+  });
+};
