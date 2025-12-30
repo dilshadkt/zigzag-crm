@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import TaskList from "../../components/tasks/TaskList";
 
 const TaskGroup = ({ group, showSubtasks, showTasks, filter }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+
+    const visibleCount = useMemo(() => {
+        return group.tasks.filter((task) => {
+            const isSubTask = task?.parentTask || task?.isSubTask;
+            if (isSubTask && !showSubtasks) return false;
+            if (!isSubTask && !showTasks) return false;
+            return true;
+        }).length;
+    }, [group.tasks, showSubtasks, showTasks]);
 
     return (
         <div>
@@ -13,7 +22,7 @@ const TaskGroup = ({ group, showSubtasks, showTasks, filter }) => {
                         {group.label}
                     </h2>
                     <p className="text-xs text-gray-500">
-                        {group.tasks.length} {group.tasks.length === 1 ? "task" : "tasks"}
+                        {visibleCount} {visibleCount === 1 ? "task" : "tasks"}
                     </p>
                 </div>
                 <button

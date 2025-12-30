@@ -290,10 +290,9 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
                       h-12 w-full mx-auto 
                       flex items-center justify-center text-sm
                       ${!isCurrentMonth ? "text-gray-300" : ""}
-                      ${
-                        inRange && !isStart && !isEnd
-                          ? "bg-[#15C0E6] text-white"
-                          : ""
+                      ${inRange && !isStart && !isEnd
+                        ? "bg-[#15C0E6] text-white"
+                        : ""
                       }
                       ${isStart ? "bg-[#15C0E6] text-white rounded-l-xl" : ""}
                       ${isEnd ? "bg-[#15C0E6] text-white rounded-r-xl" : ""}
@@ -570,7 +569,7 @@ const VacationCard = ({
 const Vacations = () => {
   const { user, isCompany } = useAuth();
   const { hasPermission } = usePermissions();
-  const [stat, setStat] = useState("Employees' vacations");
+  const [stat, setStat] = useState("Vacations");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
 
@@ -586,7 +585,7 @@ const Vacations = () => {
   if (!canViewVacations) {
     return (
       <section className="flex flex-col h-full gap-y-3">
-        <div className="flexBetween">
+        <div className="flexBetween ">
           <Header>Vacations</Header>
         </div>
         <div className="bg-white h-full flexCenter rounded-3xl p-6 text-center">
@@ -934,20 +933,26 @@ const Vacations = () => {
   return (
     <section className="flex flex-col h-full gap-y-3">
       {/* header  */}
-      <div className="flexBetween ">
+      <div className="flex flex-col md:flex-row items-start 
+       md:items-center justify-between ">
+
         <Header>Vacations</Header>
+
         <ButtonToggle
           setValue={setStat}
           value={stat}
-          values={["Employees' vacations", "Calendar"]}
+          values={["Vacations", "Calendar"]}
         />
         {canCreateVacationRequest && (
-          <PrimaryButton
-            icon={"/icons/add.svg"}
-            title={"Add Request"}
-            className={"mt-3 px-5 text-white"}
-            onclick={() => setShowRequestModal(true)}
-          />
+          <div className="hidden md:block">
+
+            <PrimaryButton
+              icon={"/icons/add.svg"}
+              title={"Add Request"}
+              className={"mt-3 px-5 text-white"}
+              onclick={() => setShowRequestModal(true)}
+            />
+          </div>
         )}
       </div>
       {/* body part  */}

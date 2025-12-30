@@ -26,10 +26,11 @@ const MobileSidebar = ({
         }}
         className="bg-white w-[220px] overflow-hidden flex flex-col justify-between rounded-3xl h-dvh p-3"
       >
-        <div className="flex flex-col">
+        <div className="flex flex-col h-full overflow-y-auto">
           <img src={logo} alt="" className="w-10" />
           {/* Menu Items */}
-          <ul className="flex flex-col gap-y-1 mt-5 text-[#7D8592]">
+          <ul className="flex flex-col  h-full
+           overflow-y-auto gap-y-1 mt-5 text-[#7D8592]">
             {filteredSidebar.length > 0 ? (
               filteredSidebar.map((item, index) => (
                 <li
@@ -38,9 +39,8 @@ const MobileSidebar = ({
                     onClose();
                     navigate(item.path);
                   }}
-                  className={`relative cursor-pointer px-2 py-[10px] flexStart gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${
-                    pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
-                  }`}
+                  className={`relative cursor-pointer px-2 py-[10px] flexStart gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
+                    }`}
                 >
                   <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
                   <span className="group-hover:text-[#3F8CFF] group-hover:translate-x-1 transition-all duration-300 text-sm">
