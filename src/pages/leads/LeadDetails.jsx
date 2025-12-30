@@ -13,10 +13,10 @@ const LeadDetailsPage = () => {
   const { leadId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Try to use lead from navigation state first (for faster loading)
   const leadFromState = location.state?.lead;
-  
+
   // Fetch lead and related data from API
   const {
     data: leadData,
@@ -47,7 +47,7 @@ const LeadDetailsPage = () => {
   // So: leadData.data = { lead: {...}, notes: [], ... }
   const apiResponse = leadData?.data;
   const lead = leadFromState || apiResponse?.lead;
-  
+
   // Debug logging (remove in production)
   if (leadData && !lead) {
     console.log("LeadData structure:", {
@@ -59,7 +59,7 @@ const LeadDetailsPage = () => {
       "hasLead": !!lead,
     });
   }
-  
+
   // Use data from getLeadById if available, otherwise use separate API calls
   // Notes/attachments/activities hooks also return { success: true, data: [...] }
   const notes = apiResponse?.notes || notesData?.data || [];
@@ -67,11 +67,11 @@ const LeadDetailsPage = () => {
   const activities = apiResponse?.activities || activitiesData?.data || [];
 
   // Only show loading if we're actually loading and don't have the data yet
-  const isLoading = isLoadingLead || 
-    (isLoadingNotes && !apiResponse?.notes && notes.length === 0) || 
-    (isLoadingAttachments && !apiResponse?.attachments && attachments.length === 0) || 
+  const isLoading = isLoadingLead ||
+    (isLoadingNotes && !apiResponse?.notes && notes.length === 0) ||
+    (isLoadingAttachments && !apiResponse?.attachments && attachments.length === 0) ||
     (isLoadingActivities && !apiResponse?.activities && activities.length === 0);
-  
+
   // Check if we have lead data (either from state or API)
   const hasLead = !!lead;
 
@@ -85,7 +85,7 @@ const LeadDetailsPage = () => {
       const userName = user.firstName && user.lastName
         ? `${user.firstName} ${user.lastName}`
         : user.email || "Unknown User";
-      
+
       return {
         label: activity.title || activity.description || activity.type,
         date: new Date(activity.createdAt).toLocaleString("en-US", {
@@ -106,7 +106,7 @@ const LeadDetailsPage = () => {
       const authorName = author.firstName && author.lastName
         ? `${author.firstName} ${author.lastName}`
         : author.email || "Unknown User";
-      
+
       return {
         text: note.text,
         author: authorName,
@@ -145,10 +145,10 @@ const LeadDetailsPage = () => {
           source: lead.source || "Manual Entry",
           created: lead.createdAt
             ? new Date(lead.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
             : "",
           owner: lead.owner?.firstName || lead.owner?.name || "Unknown",
         },
@@ -178,7 +178,6 @@ const LeadDetailsPage = () => {
 
   // Show error only if we're done loading and there's an actual error
   if (!isLoading && leadError) {
-    console.error("Lead error:", leadError);
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-4">
         <p className="text-lg font-semibold text-slate-800">
@@ -193,7 +192,7 @@ const LeadDetailsPage = () => {
       </div>
     );
   }
-  
+
   // If we've finished loading lead but still no lead data, show error
   // But only if we're sure the request completed (not loading and no error means it completed successfully but no data)
   if (!isLoadingLead && !leadError && !hasLead && leadData) {

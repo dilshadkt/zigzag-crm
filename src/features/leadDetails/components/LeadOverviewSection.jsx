@@ -11,7 +11,7 @@ import {
 } from "../../leads/api";
 
 const SectionCard = ({ children }) => (
-  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 lg:p-6">
     {children}
   </div>
 );
@@ -45,13 +45,12 @@ const BulletList = ({ items }) => (
 );
 
 const LeadOverviewSection = ({ lead }) => {
-  console.log(lead);
   const [isEditing, setIsEditing] = useState(false);
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
   // Get contact from both possible locations
   const contact = lead.contact || lead.details?.contact || {};
-  console.log(contact);
+
   const leadDetails = lead.details?.leadDetails || {};
   // Get AI suggestions from lead data (backwards compatible)
   const aiSuggestions = lead.aiSuggestions || lead.details?.aiSuggestions;
@@ -467,7 +466,7 @@ const LeadOverviewSection = ({ lead }) => {
   return (
     <div className="space-y-4">
       {/* AI Suggestions Section - Show First */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className=" hidden lg:grid grid-cols-1 md:grid-cols-2 gap-4">
         <SectionCard>
           <div className="flex items-center gap-2 mb-4">
             <span className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
@@ -526,10 +525,10 @@ const LeadOverviewSection = ({ lead }) => {
       <SectionCard>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="lg:text-xl font-semibold text-slate-900">
               Lead Overview
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className=" text-[13px] md:text-sm text-slate-500">
               Contact and lead information. Click edit to modify.
             </p>
           </div>
@@ -598,7 +597,7 @@ const LeadOverviewSection = ({ lead }) => {
                       Edit the fields below to update this lead's information.
                     </p>
                     {Object.keys(formValues).length === 0 &&
-                    formFields.length > 0 ? (
+                      formFields.length > 0 ? (
                       <div className="text-center py-4 text-sm text-slate-500">
                         Initializing form...
                       </div>

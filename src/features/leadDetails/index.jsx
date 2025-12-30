@@ -75,21 +75,23 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
 
   return (
     <div
-      className="bg-white rounded-3xl border border-slate-100
-      h-full flex flex-col  shadow-sm overflow-hidden"
+      className="lg:bg-white rounded-3xl lg:border border-slate-100
+      h-full flex flex-col  lg:shadow-sm lg:overflow-hidden"
     >
-      <div className="h-full  overflow-hidden flex gap-6 p-6">
+      <div className="h-full  lg:overflow-hidden flex flex-col lg:flex-row gap-6  p-0 lg:p-6">
         <div
-          className="lg:col-span-3 space-y-3 w-full
-         h-full overflow-y-auto flex flex-col  "
+          className="lg:col-span-3 space-y-1 lg:space-y-3 w-full
+         h-full lg:overflow-y-auto flex flex-col  "
         >
           <div className="flex items-center gap-x-2">
             {onBack && (
               <button
                 title="back to list"
                 onClick={onBack}
-                className="w-10 h-10 rounded-full bg-gray-50 border border-slate-200 flex
-              cursor-pointer items-center  group justify-center hover:bg-[#3f8cff]"
+                className="w-10 h-10 rounded-full bg-gray-50 border
+                 border-slate-200 hidden lg:flex
+              cursor-pointer items-center  group justify-center 
+              hover:bg-[#3f8cff]"
               >
                 <FiArrowLeft size={16} className="group-hover:text-white" />
               </button>
@@ -102,7 +104,7 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           </div>
           <div className="h-full overflow-y-auto">{tabContent}</div>
         </div>
-        <div className="min-w-[350px] flex flex-col space-y-3 ">
+        <div className="min-w-[350px] hidden lg:flex flex-col space-y-3 ">
           <LeadActivityPanel
             activity={lead.details?.activities || lead.details?.activity || []}
           />
