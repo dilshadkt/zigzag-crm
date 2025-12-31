@@ -22,6 +22,8 @@ const EmployeeWorkDetails = lazy(() =>
   import("../../components/dashboard/employeeWorkDetails")
 );
 
+import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
+
 const Dashboard = () => {
   const { companyId, user } = useAuth();
   const isEmployee = user?.role === "employee";
@@ -76,7 +78,16 @@ const Dashboard = () => {
     taskMonth
   );
 
-  // Determine which projects to show
+  // Determine which projects to show - For Checklist using ALL projects not just sliced ones
+  // We need a list of ALL active projects for the checklist, not just the top 3
+  // However, useGetEmployeeProjects by default might return all or paginated.
+  // The hook implementation with `useGetEmployeeProjects(..., taskMonth)` returns objects.
+  // The slice(0,3) is only for display on dashboard cards.
+  // We should pass the FULL list to the drawer.
+  const projectsForChecklist = isEmployee
+    ? employeeProjectsData?.projects || []
+    : companyProjects || []; // Admin sees company projects
+
   const projects = isEmployee
     ? employeeProjectsData?.projects?.slice(0, 3) || []
     : companyProjects || [];
@@ -265,7 +276,8 @@ const Dashboard = () => {
         )}
       </div>
 
-
+      {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
+      <DailyChecklistDrawer projects={projectsForChecklist} />
     </section>
   );
 };

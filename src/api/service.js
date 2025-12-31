@@ -389,6 +389,11 @@ export const resumeProject = async (projectId) => {
   return response.data;
 };
 
+export const updateDailyChecklistStatus = async (projectId, data) => {
+  const response = await apiClient.patch(`/projects/${projectId}/daily-checklist/status`, data);
+  return response.data;
+};
+
 // SubTask API functions
 export const createSubTask = async (subTaskData) => {
   try {

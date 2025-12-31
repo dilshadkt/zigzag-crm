@@ -13,6 +13,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     teams: defaultValue?.teams || [],
     workDetails: defaultValue?.workDetails || {},
     socialMedia: defaultValue?.socialMedia || {},
+    dailyChecklist: defaultValue?.dailyChecklist || [],
   };
   const validationSchema = Yup.object().shape({
     name: Yup.string()
@@ -31,7 +32,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
         if (!value) return false;
         return new Date(value) instanceof Date && !isNaN(new Date(value));
       })
-      .test('is-after-start', 'End date must be after start date', function(value) {
+      .test('is-after-start', 'End date must be after start date', function (value) {
         const { startDate } = this.parent;
         if (!startDate || !value) return true;
         return new Date(value) > new Date(startDate);

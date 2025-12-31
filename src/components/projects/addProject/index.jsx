@@ -12,6 +12,8 @@ import SocialMediaForm from "../socialMediaForm";
 import ThumbImage from "../thumbImage";
 import MonthlyWorkDetailsForm from "../monthlyWorkDetailsForm";
 
+import DailyChecklistForm from "../dailyChecklistForm";
+
 const AddProject = ({
   setShowModalProject,
   initialValues,
@@ -28,7 +30,7 @@ const AddProject = ({
     setFieldValue,
     isSubmitting,
   } = useAddProjectForm(initialValues, onSubmit); // Pass initialValues and onSubmit to the hook
-  const [activeTab, setActiveTab] = useState("basic"); // "basic", "workDetails", "socialMedia"
+  const [activeTab, setActiveTab] = useState("basic"); // "basic", "workDetails", "socialMedia", "checklist"
   if (!isOpen) {
     return null;
   }
@@ -38,11 +40,12 @@ const AddProject = ({
     { id: "basic", label: "Basic Info" },
     { id: "workDetails", label: "Work Details" },
     { id: "socialMedia", label: "Social Media" },
+    { id: "checklist", label: "Daily Checklist" },
   ];
 
   const onFormSubmit = (e) => {
     e.preventDefault();
-    if (activeTab === "socialMedia") {
+    if (activeTab === "checklist") {
       handleSubmit(e);
     }
   };
@@ -64,6 +67,8 @@ const AddProject = ({
         return Object.keys(errors).some((key) => ["workDetails"].includes(key));
       case "socialMedia":
         return Object.keys(errors).some((key) => ["socialMedia"].includes(key));
+      case "checklist":
+        return false; // No strict validation for checklist yet, key check if needed
       default:
         return false;
     }
@@ -88,13 +93,12 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
             <button
               key={tab.id}
               type="button"
-              className={`px-6 py-3 text-sm cursor-pointer border-b-2 font-medium ${
-                activeTab === tab.id
+              className={`px-6 py-3 text-sm cursor-pointer border-b-2 font-medium ${activeTab === tab.id
                   ? "text-blue-600 border-blue-600"
                   : hasErrors(tab.id)
-                  ? "text-red-600 border-transparent"
-                  : "text-gray-500 hover:text-gray-700 border-transparent"
-              }`}
+                    ? "text-red-600 border-transparent"
+                    : "text-gray-500 hover:text-gray-700 border-transparent"
+                }`}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.label}
@@ -211,6 +215,18 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
               />
             </div>
           )}
+
+          {/* Daily Checklist Tab */}
+          {activeTab === "checklist" && (
+            <div className="col-span-5 overflow-y-auto pr-4">
+              <DailyChecklistForm
+                values={values}
+                setFieldValue={setFieldValue}
+                errors={errors}
+                touched={touched}
+              />
+            </div>
+          )}
         </div>
 
         <PrimaryButton
@@ -223,6 +239,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
         <div className="absolute  bottom-[35px] right-[30px] flex gap-4">
           {activeTab !== "basic" && (
             <PrimaryButton
+              key="prev-btn"
               type="button"
               title="Previous"
               onclick={() => {
@@ -239,9 +256,11 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
 
           {activeTab !== tabs[tabs.length - 1].id ? (
             <PrimaryButton
+              key="next-btn"
               type="button"
               title="Next"
-              onclick={() => {
+              onclick={(e) => {
+                e?.preventDefault();
                 const currentIndex = tabs.findIndex(
                   (tab) => tab.id === activeTab
                 );
@@ -253,13 +272,14 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
             />
           ) : (
             <PrimaryButton
+              key="submit-btn"
               type="submit"
               title={
                 isSubmitting
                   ? "Loading..."
                   : isEditMode
-                  ? "Save Changes"
-                  : "Save Project"
+                    ? "Save Changes"
+                    : "Save Project"
               }
               className="text-white px-4"
             />

@@ -69,6 +69,7 @@ const EditProject = () => {
               twitter: { manage: false, handle: "", notes: "" },
               other: [],
             },
+            dailyChecklist: currentProject?.dailyChecklist || [],
           }}
         />
       </div>
