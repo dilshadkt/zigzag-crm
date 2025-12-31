@@ -96,7 +96,6 @@ const TaskItem = ({ project, task, isCompleted, onToggle }) => {
                 <p className={`text-sm font-medium ${isCompleted ? "text-gray-400 line-through" : "text-gray-700"}`}>
                     {task.title}
                 </p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{project.name}</p>
             </div>
         </div>
     );
@@ -224,8 +223,8 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                                     onClick={handleNextDay}
                                     disabled={isToday(selectedDate)}
                                     className={`p-1 rounded-full transition-colors ${isToday(selectedDate)
-                                            ? 'text-gray-300 cursor-not-allowed'
-                                            : 'hover:bg-blue-100 text-blue-600'
+                                        ? 'text-gray-300 cursor-not-allowed'
+                                        : 'hover:bg-blue-100 text-blue-600'
                                         }`}
                                     title="Next Day"
                                 >
@@ -243,7 +242,7 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {tasksByProject.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-48 text-gray-400">
                                 <p>No daily tasks defined.</p>
@@ -251,11 +250,14 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                             </div>
                         ) : (
                             tasksByProject.map(({ project, tasks }) => (
-                                <div key={project._id} className="animate-fade-in">
-                                    <h3 className="font-semibold text-gray-700 mb-3 px-1 border-l-4 border-blue-400 pl-2">
-                                        {project.name}
-                                    </h3>
-                                    <div className="space-y-1">
+                                <div key={project._id} className="animate-fade-in bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
+                                    <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center gap-2">
+                                        <span className="text-lg">{project.emoji || "📁"}</span>
+                                        <h3 className="font-bold text-sm text-gray-800 truncate">
+                                            {project.name}
+                                        </h3>
+                                    </div>
+                                    <div className="p-2 space-y-0.5">
                                         {tasks.map((item, idx) => (
                                             <TaskItem
                                                 key={`${project._id}-${idx}`}

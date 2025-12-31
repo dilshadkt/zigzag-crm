@@ -26,6 +26,7 @@ import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/Dail
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
+  console.log(user)
   const isEmployee = user?.role === "employee";
   const isCompanyAdmin = user?.role === "company-admin";
 
