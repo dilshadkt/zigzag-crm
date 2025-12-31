@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
 import DashboardLayout from "../layouts/dashboard";
 import Dashboard from "../pages/dashboard";
+import Campaigns from "../pages/campaigns";
+import CampaignDetails from "../pages/campaigns/CampaignDetails";
 import Vacations from "../pages/vacations";
 import Employees from "../pages/employees";
 import Messenger from "../pages/messenger";
@@ -148,6 +150,11 @@ const AppRoutes = () => {
         <Route path="tasks/:taskId" element={<TaskDetailLayout />}>
           <Route index element={<TaskDetailPage />} />
         </Route>
+
+        {/* Campaign Routes */}
+        <Route path="campaigns" element={<Campaigns />} />
+        <Route path="campaigns/:id" element={<CampaignDetails />} />
+
         <Route path="calender" element={<Calendar />} />
         <Route path="vacations" element={<Vacations />} />
         <Route path="employees" element={<Employees />} />

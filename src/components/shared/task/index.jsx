@@ -1,6 +1,7 @@
 import React from "react";
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
+import { FiMoreVertical } from "react-icons/fi";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import { formatDate } from "../../../lib/dateUtils";
@@ -33,7 +34,10 @@ const Task = ({
   onDragStart,
   onDragOver,
   onDrop,
+  isMoreOptions,
+  onMoreOptions
 }) => {
+  console.log(task)
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
   const priorityColor =
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
@@ -75,10 +79,9 @@ const Task = ({
         onClick={() => handleClick()}
         title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
         className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md 
-          transition-shadow relative ${
-            task?.itemType === "subtask"
-              ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
-              : isExtraTask
+          transition-shadow relative ${task?.itemType === "subtask"
+            ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+            : isExtraTask
               ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
               : "bg-white"
           }`}
@@ -111,13 +114,12 @@ const Task = ({
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
               <h4
-                className={`font-medium line-clamp-2 ${
-                  task?.itemType === "subtask"
-                    ? "text-blue-800"
-                    : isExtraTask
+                className={`font-medium line-clamp-2 ${task?.itemType === "subtask"
+                  ? "text-blue-800"
+                  : isExtraTask
                     ? "text-purple-800"
                     : "text-gray-800"
-                }`}
+                  }`}
               >
                 {task?.title}
               </h4>
@@ -205,13 +207,12 @@ const Task = ({
       onClick={() => handleClick()}
       title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
       className={`grid gap-y-5 md:gap-y-0 grid-cols-1 md:grid-cols-10 cursor-pointer md:gap-x-3
-         px-5 py-5 rounded-3xl relative ${
-           task?.itemType === "subtask"
-             ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
-             : isExtraTask
-             ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
-             : "bg-white"
-         }`}
+         px-5 py-5 rounded-3xl relative ${task?.itemType === "subtask"
+          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+          : isExtraTask
+            ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
+            : "bg-white"
+        }`}
     >
       {/* Subtask Badge for List View */}
       {task?.itemType === "subtask" && (
@@ -267,8 +268,8 @@ const Task = ({
               task?.itemType === "subtask"
                 ? "text-blue-800 font-medium"
                 : isExtraTask
-                ? "text-purple-800 font-medium"
-                : ""
+                  ? "text-purple-800 font-medium"
+                  : ""
             }
           >
             {task?.title.slice(0, 35)}
@@ -362,7 +363,19 @@ flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
           {task?.status}
         </span>
         <div className="md:flex hidden">
-          <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+          {isMoreOptions ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoreOptions && onMoreOptions(task, e);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <FiMoreVertical size={20} className="text-gray-500" />
+            </button>
+          ) : (
+            <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+          )}
         </div>
       </div>
     </div>
