@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { FiArrowLeft, FiPhone } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import LeadDetailTabs from "./components/LeadDetailTabs";
 import LeadOverviewSection from "./components/LeadOverviewSection";
 import LeadTimeline from "./components/LeadTimeline";
@@ -72,6 +73,28 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
     );
   };
 
+  const handleWhatsappClick = () => {
+    if (!leadId) return;
+
+    logActivity(
+      {
+        leadId,
+        type: "whatsapp_conversation",
+        title: "WhatsApp Conversation",
+        description: `WhatsApp conversation initiated with ${phoneNumber}`,
+        metadata: { phoneNumber },
+      },
+      {
+        onSuccess: () => {
+          console.log("WhatsApp activity logged");
+        },
+        onError: (err) => {
+          console.error("Failed to log WhatsApp activity", err);
+        },
+      }
+    );
+  };
+
   const tabContent = useMemo(() => {
     switch (activeTab) {
       case "Timeline":
@@ -138,17 +161,33 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
         </div>
       </div>
 
-      {/* Mobile Sticky Call Button */}
+      {/* Mobile Sticky Action Buttons */}
       {phoneNumber && (
-        <a
-          href={`tel:${phoneNumber}`}
-          onClick={handleCallClick}
-          className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#3f8cff] text-white rounded-full 
-          shadow-lg flex items-center justify-center hover:bg-[#2f6bff] transition-colors z-50"
-          aria-label="Call Lead"
-        >
-          <FiPhone size={24} />
-        </a>
+        <div className="lg:hidden fixed bottom-4 right-6 flex flex-col gap-2 z-50">
+          {/* WhatsApp Button */}
+          <a
+            href={`https://wa.me/${phoneNumber.replace(/[^0-9]/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleWhatsappClick}
+            className="w-14 h-14 bg-[#25D366] text-white rounded-full 
+            shadow-lg flex items-center justify-center hover:bg-[#1ebe57] transition-colors"
+            aria-label="WhatsApp Lead"
+          >
+            <FaWhatsapp size={28} />
+          </a>
+
+          {/* Call Button */}
+          <a
+            href={`tel:${phoneNumber}`}
+            onClick={handleCallClick}
+            className="w-14 h-14 bg-[#3f8cff] text-white rounded-full 
+            shadow-lg flex items-center justify-center hover:bg-[#2f6bff] transition-colors"
+            aria-label="Call Lead"
+          >
+            <FiPhone size={24} />
+          </a>
+        </div>
       )}
     </div>
   );
