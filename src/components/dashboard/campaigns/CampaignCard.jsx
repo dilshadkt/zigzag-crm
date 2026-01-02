@@ -9,7 +9,7 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat("en-US", {
             style: "currency",
-            currency: "AED", // Or user's currency preference
+            currency: "INR", // Or user's currency preference
             minimumFractionDigits: 0,
         }).format(amount);
     };
@@ -84,7 +84,7 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
                     </div>
                     <div className="flex flex-col">
                         <span className="text-xs text-gray-400 mb-1 flex items-center gap-1">
-                            <FiDollarSign className="w-3 h-3" /> Budget
+                            Budget
                         </span>
                         <span className="text-xs font-medium text-gray-700">
                             {formatCurrency(budget)}
