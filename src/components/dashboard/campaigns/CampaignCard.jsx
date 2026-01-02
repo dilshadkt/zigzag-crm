@@ -2,7 +2,7 @@ import React from "react";
 import { FiCalendar, FiDollarSign, FiUsers, FiActivity } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-const CampaignCard = ({ campaign }) => {
+const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
     const navigate = useNavigate();
 
     // Helper to format currency
@@ -44,8 +44,8 @@ const CampaignCard = ({ campaign }) => {
     return (
         <div
             onClick={() => navigate(`/campaigns/${campaign._id}`)}
-            className="bg-[#f4f9fd] rounded-2xl p-5 transition-all 
-            duration-300 cursor-pointer group relative overflow-hidden"
+            className={`${cardStyle} rounded-2xl p-5 transition-all 
+                duration-300 cursor-pointer group relative overflow-hidden`}
         >
 
 

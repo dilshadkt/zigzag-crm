@@ -44,7 +44,9 @@ const DashboardCampaigns = () => {
                 ) : (
                     <div className="grid grid-cols-1 gap-2   ">
                         {campaigns.map((campaign) => (
-                            <CampaignCard key={campaign._id} campaign={campaign} />
+                            <CampaignCard
+                                cardStyle="bg-[#f4f9fd]"
+                                key={campaign._id} campaign={campaign} />
                         ))}
                     </div>
                 )}
