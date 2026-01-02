@@ -66,7 +66,7 @@ const TaskItem = ({ project, task, isCompleted, onToggle }) => {
     };
 
     return (
-        <div className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
+        <div className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors border border-transparent hover:border-gray-100">
             <div className="relative flex items-center mt-0.5">
                 <input
                     type="checkbox"
@@ -93,7 +93,7 @@ const TaskItem = ({ project, task, isCompleted, onToggle }) => {
                 </svg>
             </div>
             <div className="flex-1">
-                <p className={`text-sm font-medium ${isCompleted ? "text-gray-400 line-through" : "text-gray-700"}`}>
+                <p className={`text-xs uppercase font-medium ${isCompleted ? "text-gray-400 line-through" : "text-gray-700"}`}>
                     {task.title}
                 </p>
             </div>
@@ -206,9 +206,20 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
             >
                 <div className="flex flex-col h-full">
                     <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">Daily Checklist</h2>
-                            <div className="flex items-center gap-2 mt-2">
+                        <div className="w-full  flex items-start flex-col ">
+                            <div className="flex items-center w-full justify-between">
+
+                                <h2 className="text-lg font-bold text-gray-800">Daily Checklist</h2>
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="p-2 hover:bg-white rounded-full transition-colors text-gray-500 hover:text-gray-800 hover:shadow-sm"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
                                 <button
                                     onClick={handlePrevDay}
                                     className="p-1 hover:bg-blue-100 rounded-full text-blue-600 transition-colors"
@@ -232,14 +243,7 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                                 </button>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="p-2 hover:bg-white rounded-full transition-colors text-gray-500 hover:text-gray-800 hover:shadow-sm"
-                        >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -253,11 +257,11 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                                 <div key={project._id} className="animate-fade-in bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
                                     <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center gap-2">
                                         <span className="text-lg">{project.emoji || "📁"}</span>
-                                        <h3 className="font-bold text-sm text-gray-800 truncate">
+                                        <h3 className="font-bold text-xs text-gray-800 truncate">
                                             {project.name}
                                         </h3>
                                     </div>
-                                    <div className="p-2 space-y-0.5">
+                                    <div className="p-2 ">
                                         {tasks.map((item, idx) => (
                                             <TaskItem
                                                 key={`${project._id}-${idx}`}

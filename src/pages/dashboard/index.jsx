@@ -12,6 +12,7 @@ import NearestEvents from "../../components/dashboard/nearestEvents";
 import { Link, useNavigate } from "react-router-dom";
 import { useCompanyProjects, useGetEmployeeProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import ProjectCard from "../../components/shared/projectCard";
 import EmployeeProgressStats from "../../components/dashboard/employeeProgressStats";
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
@@ -26,9 +27,13 @@ import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/Dail
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
+  const { hasPermission } = usePermissions();
   console.log(user)
   const isEmployee = user?.role === "employee";
   const isCompanyAdmin = user?.role === "company-admin";
+
+  // Check if user has permission to view daily checklist
+  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist");
 
   // Get user-specific localStorage key
   const getStorageKey = (userId) => {
@@ -278,7 +283,9 @@ const Dashboard = () => {
       </div>
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
-      <DailyChecklistDrawer projects={projectsForChecklist} />
+      {canViewDailyChecklist && (
+        <DailyChecklistDrawer projects={projectsForChecklist} />
+      )}
     </section>
   );
 };

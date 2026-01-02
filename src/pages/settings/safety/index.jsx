@@ -219,6 +219,17 @@ const PERMISSION_CATEGORIES = {
       },
     ],
   },
+  dashboard: {
+    label: "Dashboard Features",
+    icon: "📊",
+    permissions: [
+      {
+        key: "viewDailyChecklist",
+        label: "View Daily Checklist",
+        description: "Can view the daily checklist drawer on dashboard",
+      },
+    ],
+  },
 };
 
 // Role Permission Editor Component
@@ -401,11 +412,10 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
                       return (
                         <label
                           key={perm.key}
-                          className={`flex items-start gap-2 p-2 rounded-lg border-2 transition-all cursor-pointer ${
-                            isChecked
+                          className={`flex items-start gap-2 p-2 rounded-lg border-2 transition-all cursor-pointer ${isChecked
                               ? "border-blue-500 bg-blue-50"
                               : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           <input
                             type="checkbox"
@@ -657,24 +667,21 @@ const SecuritySettings = () => {
                 return (
                   <div
                     key={role._id}
-                    className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
-                      isAdminRole
+                    className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isAdminRole
                         ? "border-yellow-300 bg-yellow-50"
                         : "border-gray-200 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className={`p-3 bg-gradient-to-br rounded-lg ${
-                          isAdminRole
+                        className={`p-3 bg-gradient-to-br rounded-lg ${isAdminRole
                             ? "from-yellow-100 to-orange-100"
                             : "from-blue-100 to-indigo-100"
-                        }`}
+                          }`}
                       >
                         <FiShield
-                          className={`text-lg ${
-                            isAdminRole ? "text-yellow-600" : "text-blue-600"
-                          }`}
+                          className={`text-lg ${isAdminRole ? "text-yellow-600" : "text-blue-600"
+                            }`}
                         />
                       </div>
                       <div className="flex-1">
