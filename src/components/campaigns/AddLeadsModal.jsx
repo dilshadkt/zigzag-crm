@@ -36,11 +36,11 @@ const AddLeadsModal = ({ isOpen, onClose, campaignId, onAdd, alreadyAssignedIds 
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="bg-white rounded-2xl w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
 
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                    <h3 className="text-xl font-bold text-gray-800">Add Leads to Campaign</h3>
+                <div className="flex justify-between items-center p-4  border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-800">Add Leads to Campaign</h3>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
                         <FiX size={20} />
                     </button>
@@ -122,11 +122,13 @@ const AddLeadsModal = ({ isOpen, onClose, campaignId, onAdd, alreadyAssignedIds 
                         >
                             Cancel
                         </button>
-                        <PrimaryButton
-                            text={`Add ${selectedLeads.length > 0 ? selectedLeads.length : ''} Lead${selectedLeads.length !== 1 ? 's' : ''}`}
-                            onclick={handleAdd}
+                        <button
+                            className="px-5 py-2.5 text-gray-600 font-medium hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 rounded-xl transition-all text-sm"
+                            onClick={handleAdd}
                             disabled={selectedLeads.length === 0}
-                        />
+                        >
+                            Add
+                        </button>
                     </div>
                 </div>
             </div>

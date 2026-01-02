@@ -44,9 +44,8 @@ const CampaignCard = ({ campaign }) => {
     return (
         <div
             onClick={() => navigate(`/campaigns/${campaign._id}`)}
-            className="bg-[#f4f9fd]  rounded-2xl p-5 transition-all 
-            duration-300 
-            cursor-pointer group relative overflow-hidden"
+            className="bg-[#f4f9fd] rounded-2xl p-5 transition-all 
+            duration-300 cursor-pointer group relative overflow-hidden"
         >
 
 

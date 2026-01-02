@@ -81,7 +81,7 @@ const CampaignDetails = () => {
     return (
         <section className="flex flex-col h-full bg-gray-50/50">
             {/* Header */}
-            <div className="flexBetween mb-6">
+            <div className="flexBetween mb-3">
                 <div className="flex items-center gap-3">
                     <Navigator />
                     <h3 className="font-bold text-xl text-gray-800">
@@ -98,35 +98,39 @@ const CampaignDetails = () => {
                             >
                                 Cancel
                             </button>
-                            <PrimaryButton
-                                text={isUpdating ? "Saving..." : "Save Changes"}
-                                onclick={handleSave}
-                                icon={<FiSave />}
-                            />
+                            <button
+                                onClick={handleSave}
+                                className="px-4 py-2 text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 font-medium"
+                                disabled={isUpdating}
+                            >
+                                Save Changes
+                            </button>
                         </>
                     ) : (
                         <>
                             <button
                                 onClick={handleDelete}
-                                className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                                className="p-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
                                 title="Delete Campaign"
                             >
                                 <FiTrash2 />
                             </button>
-                            <PrimaryButton
-                                text="Edit Campaign"
-                                onclick={startEditing}
-                                icon={<FiEdit2 />}
-                            />
+                            <button
+                                onClick={startEditing}
+                                className="p-3 text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                                title="Edit Campaign"
+                            >
+                                <FiEdit2 />
+                            </button>
                         </>
                     )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Main Info Card */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="bg-white rounded-2xl p-4 py-6 border border-gray-100">
                         {isEditing ? (
                             <div className="space-y-4">
                                 <div>
@@ -135,7 +139,7 @@ const CampaignDetails = () => {
                                         type="text"
                                         value={editForm.name}
                                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                                        className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        className="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                                     />
                                 </div>
                                 <div>
@@ -144,7 +148,7 @@ const CampaignDetails = () => {
                                         value={editForm.description}
                                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                                         rows="3"
-                                        className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        className="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -153,7 +157,7 @@ const CampaignDetails = () => {
                                         <select
                                             value={editForm.status}
                                             onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            className="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                                         >
                                             <option value="planned">Planned</option>
                                             <option value="active">Active</option>
@@ -167,7 +171,7 @@ const CampaignDetails = () => {
                                             type="number"
                                             value={editForm.budget}
                                             onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })}
-                                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            className="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                                         />
                                     </div>
                                 </div>
@@ -178,7 +182,7 @@ const CampaignDetails = () => {
                                             type="date"
                                             value={editForm.startDate}
                                             onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })}
-                                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            className="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                                         />
                                     </div>
                                     <div>
@@ -187,7 +191,7 @@ const CampaignDetails = () => {
                                             type="date"
                                             value={editForm.endDate}
                                             onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
-                                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            className="w-full p-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
                                         />
                                     </div>
                                 </div>
@@ -195,34 +199,33 @@ const CampaignDetails = () => {
                         ) : (
                             <>
                                 <div className="flex justify-between items-start mb-4">
-                                    <h2 className="text-lg font-semibold text-gray-800">{campaign.name}</h2>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                                    <h2 className=" font-semibold text-gray-800">{campaign.name}</h2>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold  tracking-wider
                                         ${campaign.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}
                                     `}>
                                         {campaign.status}
                                     </span>
                                 </div>
-                                <p className="text-gray-600 mb-6 leading-relaxed">
+                                <p className="text-gray-600 text-sm mb-3 leading-relaxed">
                                     {campaign.description || "No description provided."}
                                 </p>
 
                                 <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-500 mb-1">Budget</span>
+                                    <div className="flex flex-col text-xs">
+                                        <span className=" text-gray-500 mb-1">Budget</span>
                                         <div className="flex items-center gap-1 font-semibold text-gray-800">
-                                            <FiDollarSign className="text-gray-400" />
                                             {campaign.budget.toLocaleString()}
                                         </div>
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-500 mb-1">Start Date</span>
+                                    <div className="flex flex-col text-xs">
+                                        <span className=" text-gray-500 mb-1">Start Date</span>
                                         <div className="flex items-center gap-1 font-semibold text-gray-800">
                                             <FiCalendar className="text-gray-400" />
                                             {new Date(campaign.startDate).toLocaleDateString()}
                                         </div>
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-500 mb-1">End Date</span>
+                                    <div className="flex flex-col text-xs">
+                                        <span className=" text-gray-500 mb-1">End Date</span>
                                         <div className="flex items-center gap-1 font-semibold text-gray-800">
                                             <FiCalendar className="text-gray-400" />
                                             {new Date(campaign.endDate).toLocaleDateString()}
@@ -236,7 +239,7 @@ const CampaignDetails = () => {
 
                 {/* Sidebar / Leads Section */}
                 <div className="space-y-6">
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
+                    <div className="bg-white rounded-2xl p-4 py-6  border border-gray-100 h-full flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-medium  text-gray-800
                              flex items-center gap-2">
