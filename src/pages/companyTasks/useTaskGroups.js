@@ -128,3 +128,62 @@ export const useCompletedTaskGroups = (filter, tasks) => {
     );
   }, [filter, tasks]);
 };
+
+/**
+ * Custom hook to group tasks by their task month or start date month
+ * Used for on-hold tasks to organize them by month
+ */
+export const useOnHoldTaskGroups = (filter, tasks) => {
+  return useMemo(() => {
+    if (filter !== "on-hold" || tasks.length === 0) {
+      return [];
+    }
+
+    const groups = new Map();
+    tasks.forEach((task) => {
+      let date;
+      let hasValidDate = false;
+
+      // For subtasks (they usually have parentTask or isSubTask)
+      if (task.parentTask || task.isSubTask) {
+        date = task.startDate ? new Date(task.startDate) : null;
+        hasValidDate = date instanceof Date && !Number.isNaN(date.getTime());
+      } else if (task.taskMonth) {
+        // For main tasks, use taskMonth
+        const [year, month] = task.taskMonth.split("-");
+        date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        hasValidDate = true;
+      }
+
+      const groupKey = hasValidDate
+        ? `${date.getFullYear()}-${date.getMonth()}`
+        : "no-date";
+
+      const label = hasValidDate
+        ? date.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        })
+        : "No Specified Month";
+
+      const sortValue = hasValidDate
+        ? new Date(date.getFullYear(), date.getMonth(), 1).getTime()
+        : Number.MIN_SAFE_INTEGER;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          key: groupKey,
+          label,
+          sortValue,
+          tasks: [],
+        });
+      }
+
+      groups.get(groupKey).tasks.push(task);
+    });
+
+    return Array.from(groups.values()).sort(
+      (a, b) => (b.sortValue || 0) - (a.sortValue || 0)
+    );
+  }, [filter, tasks]);
+};

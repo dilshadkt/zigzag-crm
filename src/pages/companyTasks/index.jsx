@@ -7,7 +7,11 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useTaskFilters } from "../../hooks/useTaskFilters";
 import { useTaskData } from "../../hooks/useTaskData";
-import { useOverdueTaskGroups, useCompletedTaskGroups } from "./useTaskGroups";
+import {
+  useOverdueTaskGroups,
+  useCompletedTaskGroups,
+  useOnHoldTaskGroups,
+} from "./useTaskGroups";
 import { getFilterTitle, getFilterIcon, getFilterColor } from "./filterUtils";
 import CompanyTasksHeader from "./CompanyTasksHeader";
 import LoadingState from "./LoadingState";
@@ -71,14 +75,13 @@ const CompanyTasks = ({ filter: propFilter }) => {
   // Group tasks for special filters
   const overdueTaskGroups = useOverdueTaskGroups(filter, filteredTasks);
   const completedTaskGroups = useCompletedTaskGroups(filter, filteredTasks);
-
-
-
+  const onHoldTaskGroups = useOnHoldTaskGroups(filter, filteredTasks);
 
   const shouldGroupOverdue =
     filter === "overdue" && overdueTaskGroups.length > 0;
   const shouldGroupCompleted =
     filter === "completed" && completedTaskGroups.length > 0;
+  const shouldGroupOnHold = filter === "on-hold" && onHoldTaskGroups.length > 0;
 
   // Get unique filter options from tasks
   const { users, projects } = getFilterOptions();
@@ -151,7 +154,6 @@ const CompanyTasks = ({ filter: propFilter }) => {
         />
       </div>
 
-      {/* Task List or Grouped Tasks */}
       {shouldGroupOverdue ? (
         <div className="space-y-6">
           {overdueTaskGroups.map((group) => (
@@ -167,6 +169,18 @@ const CompanyTasks = ({ filter: propFilter }) => {
       ) : shouldGroupCompleted ? (
         <div className="space-y-6">
           {completedTaskGroups.map((group) => (
+            <TaskGroup
+              key={group.key}
+              group={group}
+              showSubtasks={showSubtasks}
+              showTasks={showTasks}
+              filter={filter}
+            />
+          ))}
+        </div>
+      ) : shouldGroupOnHold ? (
+        <div className="space-y-6">
+          {onHoldTaskGroups.map((group) => (
             <TaskGroup
               key={group.key}
               group={group}
