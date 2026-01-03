@@ -107,6 +107,9 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         case "re-work":
           navigate("/my-tasks?filter=re-work&taskMonth=" + taskMonth);
           break;
+        case "monthly-rework":
+          navigate("/my-tasks?filter=monthly-rework&taskMonth=" + taskMonth);
+          break;
         case "unscheduled":
           navigate("/my-tasks?filter=unscheduled&taskMonth=" + taskMonth);
           break;
@@ -201,6 +204,18 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         onClick: () => handleStatsClick("re-work"),
       },
       {
+        id: "monthly-rework",
+        title: "Total Reworked",
+        value: statistics.totalReworked || 0,
+        subtitle: "Reworked this month",
+        icon: FiTrendingUp,
+        color: "bg-rose-500",
+        borderColor: "hover:border-rose-500",
+        bgColor: "bg-rose-50",
+        textColor: "text-rose-600",
+        onClick: () => handleStatsClick("monthly-rework"),
+      },
+      {
         id: "completed",
         title: "Completed",
         value: completedTasks,
@@ -257,6 +272,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       inProgressTasks,
       pendingTasks,
       reworkTasks,
+      statistics.totalReworked,
       overdueTasks,
       todayTasks,
       upcoming3DaysTasks,
@@ -267,38 +283,52 @@ const EmployeeProgressStats = ({ taskMonth }) => {
     ]
   );
 
-  // Initialize card order on first load
+  // Initialize and maintain card order
   React.useEffect(() => {
-    if (stats.length > 0 && !isInitialized.current) {
+    if (stats.length > 0) {
       const savedOrder = localStorage.getItem(
         `employeeStatsCardOrder_${user?.id}`
       );
 
+      let finalOrder;
       if (savedOrder) {
         try {
           const parsedOrder = JSON.parse(savedOrder);
-          // Validate that all saved IDs still exist in current stats
-          const validOrder = parsedOrder.filter((id) =>
-            stats.some((stat) => stat.id === id)
-          );
-          // Add any new stats that weren't in the saved order
-          const newStats = stats
-            .filter((stat) => !validOrder.includes(stat.id))
-            .map((stat) => stat.id);
+          // Get IDs of all currently available stats
+          const currentStatsIds = stats.map(s => (s.id || s.title));
 
-          const finalOrder = [...validOrder, ...newStats];
-          setCardOrder(finalOrder);
+          // Filter saved order to only include IDs/titles that still exist
+          const validOrder = parsedOrder.filter((id) =>
+            currentStatsIds.includes(id)
+          );
+
+          // Find stats that are in code but NOT in saved order (newly added cards)
+          const newStatsIds = currentStatsIds.filter(id => !validOrder.includes(id));
+
+          if (newStatsIds.length > 0 || parsedOrder.length !== validOrder.length) {
+            finalOrder = [...validOrder, ...newStatsIds];
+            // Update localStorage if we found new items or removed invalid ones
+            localStorage.setItem(
+              `employeeStatsCardOrder_${user?.id}`,
+              JSON.stringify(finalOrder)
+            );
+          } else {
+            finalOrder = validOrder;
+          }
         } catch (error) {
-          // If parsing fails, create default order
-          const defaultOrder = stats.map((stat) => stat.id);
-          setCardOrder(defaultOrder);
+          finalOrder = stats.map((stat) => (stat.id || stat.title));
         }
       } else {
-        // No saved order, create default
-        const defaultOrder = stats.map((stat) => stat.id);
-        setCardOrder(defaultOrder);
+        finalOrder = stats.map((stat) => (stat.id || stat.title));
       }
 
+      setCardOrder(prev => {
+        // Only trigger state update if order actually changed to avoid infinite loops
+        if (JSON.stringify(prev) !== JSON.stringify(finalOrder)) {
+          return finalOrder;
+        }
+        return prev;
+      });
       isInitialized.current = true;
     }
   }, [stats, user?.id]);
@@ -363,9 +393,8 @@ const EmployeeProgressStats = ({ taskMonth }) => {
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2 flex-1 transition-colors duration-200 ${
-                snapshot.isDraggingOver ? "bg-blue-50" : ""
-              }`}
+              className={`grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2 flex-1 transition-colors duration-200 ${snapshot.isDraggingOver ? "bg-blue-50" : ""
+                }`}
             >
               {orderedStats.map((stat, index) => {
                 const Icon = stat.icon;
@@ -377,18 +406,15 @@ const EmployeeProgressStats = ({ taskMonth }) => {
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         onClick={stat.onClick}
-                        className={`${
-                          stat.bgColor
-                        } rounded-xl p-4 flex flex-col items-center
+                        className={`${stat.bgColor
+                          } rounded-xl p-4 flex flex-col items-center
                          justify-center text-center cursor-pointer border-1 border-transparent
-                           ${
-                             stat.borderColor
-                           } transform group relative overflow-hidden transition-all duration-200
-                           ${
-                             snapshot.isDragging
-                               ? "shadow-lg scale-105 rotate-2"
-                               : "hover:scale-105"
-                           }`}
+                           ${stat.borderColor
+                          } transform group relative overflow-hidden transition-all duration-200
+                           ${snapshot.isDragging
+                            ? "shadow-lg scale-105 rotate-2"
+                            : "hover:scale-105"
+                          }`}
                         style={{
                           ...provided.draggableProps.style,
                         }}

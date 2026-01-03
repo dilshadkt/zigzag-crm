@@ -1,7 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { useUpdateTaskById } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import ReworkReasonModal from "../reworkReasonModal";
 
 // Status options for different user roles
 const employeeStatusOptions = [
@@ -75,9 +76,11 @@ const statusColors = {
 
 const StatusButton = ({ taskDetails, disabled = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null);
   const buttonRef = useRef(null);
   const { isCompany } = useAuth();
-  const { mutate } = useUpdateTaskById(taskDetails._id, () =>
+  const { mutate, isLoading } = useUpdateTaskById(taskDetails._id, () =>
     setMenuOpen(false)
   );
 
@@ -105,9 +108,27 @@ const StatusButton = ({ taskDetails, disabled = false }) => {
     if (disabled) return;
 
     if (taskDetails?.status !== status) {
+      if (status === "re-work") {
+        setPendingStatus(status);
+        setIsReworkModalOpen(true);
+        setMenuOpen(false);
+        return;
+      }
       mutate({ status });
     }
     setMenuOpen(false);
+  };
+
+  const handleReworkSubmit = (reworkReason) => {
+    mutate(
+      { status: pendingStatus, reworkReason },
+      {
+        onSuccess: () => {
+          setIsReworkModalOpen(false);
+          setPendingStatus(null);
+        },
+      }
+    );
   };
 
   // Get color scheme based on current status
@@ -122,19 +143,17 @@ const StatusButton = ({ taskDetails, disabled = false }) => {
         className={`text-xs font-medium flex items-center justify-between gap-x-2 px-4 h-8
                    ${colorScheme.text} ${colorScheme.bg} rounded-lg
                    border ${colorScheme.border} transition-all
-                   ${
-                     disabled
-                       ? "opacity-60 cursor-not-allowed"
-                       : `cursor-pointer ${colorScheme.hover}`
-                   }`}
+                   ${disabled
+            ? "opacity-60 cursor-not-allowed"
+            : `cursor-pointer ${colorScheme.hover}`
+          }`}
         disabled={disabled}
         title={disabled ? "You can only edit tasks assigned to you" : ""}
       >
         <span className="capitalize">{taskDetails?.status}</span>
         <IoIosArrowDown
-          className={`transform transition-transform ${
-            menuOpen ? "rotate-180" : "rotate-0"
-          }`}
+          className={`transform transition-transform ${menuOpen ? "rotate-180" : "rotate-0"
+            }`}
         />
       </button>
 
@@ -154,11 +173,10 @@ const StatusButton = ({ taskDetails, disabled = false }) => {
                 key={status}
                 className={`py-2 px-4 text-xs capitalize text-gray-700
                            cursor-pointer transition-all
-                           hover:bg-gray-50 ${
-                             isCurrentStatus
-                               ? `font-semibold ${statusColor}`
-                               : ""
-                           }`}
+                           hover:bg-gray-50 ${isCurrentStatus
+                    ? `font-semibold ${statusColor}`
+                    : ""
+                  }`}
                 onClick={() => handleStatusUpdate(status)}
               >
                 {status}
@@ -167,6 +185,13 @@ const StatusButton = ({ taskDetails, disabled = false }) => {
           })}
         </div>
       )}
+
+      <ReworkReasonModal
+        isOpen={isReworkModalOpen}
+        onClose={() => setIsReworkModalOpen(false)}
+        onSubmit={handleReworkSubmit}
+        isLoading={isLoading}
+      />
     </div>
   );
 };

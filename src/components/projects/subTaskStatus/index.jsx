@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import ReworkReasonModal from "../../shared/reworkReasonModal";
 
 const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null);
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
   const { isCompany } = useAuth();
 
@@ -15,11 +18,6 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
       label: "In Progress",
       color: "bg-blue-100 text-blue-800",
     },
-    // {
-    //   value: "completed",
-    //   label: "Completed",
-    //   color: "bg-green-100 text-green-800",
-    // },
     {
       value: "on-review",
       label: "On Review",
@@ -35,7 +33,6 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
       label: "In Progress",
       color: "bg-blue-100 text-blue-800",
     },
-
     {
       value: "on-review",
       label: "On Review",
@@ -73,11 +70,33 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
   const handleStatusChange = async (newStatus) => {
     if (!canEdit) return;
 
+    if (newStatus === "re-work") {
+      setPendingStatus(newStatus);
+      setIsReworkModalOpen(true);
+      setIsOpen(false);
+      return;
+    }
+
     try {
-      await updateSubTaskMutation.mutateAsync({ status: newStatus });
+      await updateSubTaskMutation.mutateAsync({
+        status: newStatus,
+      });
       setIsOpen(false);
     } catch (error) {
       console.error("Error updating subtask status:", error);
+    }
+  };
+
+  const handleReworkSubmit = async (reworkReason) => {
+    try {
+      await updateSubTaskMutation.mutateAsync({
+        status: pendingStatus,
+        reworkReason,
+      });
+      setIsReworkModalOpen(false);
+      setPendingStatus(null);
+    } catch (error) {
+      console.error("Error updating subtask status with rework:", error);
     }
   };
 
@@ -107,8 +126,8 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
                 key={status.value}
                 onClick={() => handleStatusChange(status.value)}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${status.value === subTask.status
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-700"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700"
                   }`}
               >
                 {status.label}
@@ -117,6 +136,13 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
           </div>
         </>
       )}
+
+      <ReworkReasonModal
+        isOpen={isReworkModalOpen}
+        onClose={() => setIsReworkModalOpen(false)}
+        onSubmit={handleReworkSubmit}
+        isLoading={updateSubTaskMutation.isLoading}
+      />
     </div>
   );
 };

@@ -166,6 +166,12 @@ const TaskCard = ({ task, filter }) => {
             >
               {task.priority?.toUpperCase()}
             </span>
+            {task.reworkCount > 0 && (
+              <span className="px-2 py-1 rounded-md text-xs font-medium border bg-red-50 text-red-600 border-red-200 flex items-center gap-1">
+                <FiClock className="w-3 h-3" />
+                REWORK: {task.reworkCount}
+              </span>
+            )}
             <span
               className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(
                 task.status
