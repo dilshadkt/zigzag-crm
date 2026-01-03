@@ -15,6 +15,8 @@ import RecurringTaskInfo from "./RecurringTaskInfo";
 import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
 import TaskAttachments from "./TaskAttachments";
+import ActivityTimeline from "./ActivityTimeline";
+import { FiActivity } from "react-icons/fi";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const { isCompany, user } = useAuth();
@@ -22,6 +24,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState(null);
   const [isReworkHistoryOpen, setIsReworkHistoryOpen] = useState(false);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const isAdmin = user?.role === "company-admin";
 
   const formatDate = (date) => {
@@ -160,6 +163,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                   </svg>
                   Rework: {taskDetails?.reworkCount || 0}
                 </span>
+                <span
+                  className="px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 cursor-pointer transition-all duration-200 bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100"
+                  onClick={() => setIsTimelineOpen(true)}
+                  title="View task activity timeline"
+                >
+                  <FiActivity className="w-3 h-3" />
+                  Timeline
+                </span>
               </div>
               {canEditTask && isCompany && (
                 <StatusButton
@@ -258,6 +269,18 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
             <p className="text-gray-500 text-sm">No rework history found.</p>
           </div>
         )}
+      </Modal>
+
+      {/* Activity Timeline Modal */}
+      <Modal
+        isOpen={isTimelineOpen}
+        onClose={() => setIsTimelineOpen(false)}
+        title="Task Activity Timeline"
+        size="lg"
+      >
+        <div className="max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
+          <ActivityTimeline activities={taskDetails?.activityLog} />
+        </div>
       </Modal>
     </>
   );

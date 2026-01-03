@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import SubTaskStatusButton from "../subTaskStatus";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
+import ActivityTimeline from "./ActivityTimeline";
+import { FiActivity } from "react-icons/fi";
 
 const SubtasksSection = ({
   subTasks,
@@ -17,8 +19,10 @@ const SubtasksSection = ({
   const [expandedSubTasks, setExpandedSubTasks] = useState(new Set());
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [reworkModalOpen, setReworkModalOpen] = useState(false);
+  const [timelineModalOpen, setTimelineModalOpen] = useState(false);
   const [historySubTask, setHistorySubTask] = useState(null);
   const [reworkSubTask, setReworkSubTask] = useState(null);
+  const [timelineSubTask, setTimelineSubTask] = useState(null);
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -165,6 +169,18 @@ const SubtasksSection = ({
                       </svg>
                       {subtask.reworkCount || 0}
                     </span>
+
+                    <button
+                      onClick={() => {
+                        setTimelineSubTask(subtask);
+                        setTimelineModalOpen(true);
+                      }}
+                      className="p-1 px-2 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
+                      title="View subtask activity timeline"
+                    >
+                      <FiActivity className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-semibold uppercase">Log</span>
+                    </button>
 
                     <SubTaskStatusButton
                       subTask={subtask}
@@ -636,6 +652,21 @@ const SubtasksSection = ({
             No rework history available.
           </div>
         )}
+      </Modal>
+
+      {/* Subtask Activity Timeline Modal */}
+      <Modal
+        isOpen={timelineModalOpen}
+        onClose={() => {
+          setTimelineModalOpen(false);
+          setTimelineSubTask(null);
+        }}
+        title={`Subtask Activity: ${timelineSubTask?.title || ""}`}
+        size="lg"
+      >
+        <div className="max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
+          <ActivityTimeline activities={timelineSubTask?.activityLog} />
+        </div>
       </Modal>
     </div>
   );
