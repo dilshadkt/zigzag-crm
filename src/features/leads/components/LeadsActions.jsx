@@ -5,6 +5,7 @@ import {
   FiColumns,
   FiDownload,
   FiMoreVertical,
+  FiPieChart,
 } from "react-icons/fi";
 import LeadsSearchBar from "./LeadsSearchBar";
 
@@ -19,6 +20,8 @@ const LeadsActions = ({
   onToggleLayout,
   onDownload,
   onMoreActions,
+  showDashboard,
+  onToggleDashboard,
   searchTerm,
   onSearchChange,
 }) => {
@@ -27,6 +30,14 @@ const LeadsActions = ({
       <LeadsSearchBar value={searchTerm} onChange={onSearchChange} />
 
       <div className="flex items-center  gap-x-2  justify-end">
+        <button
+          onClick={onToggleDashboard}
+          className={`hidden md:flex ${iconButtonClasses} ${showDashboard ? 'bg-slate-100 text-[#3f8cff] border-[#3f8cff]/30 shadow-inner' : ''}`}
+          aria-label="Toggle dashboard"
+          title={showDashboard ? "Hide Dashboard" : "Show Dashboard"}
+        >
+          <FiPieChart size={18} />
+        </button>
         <button
           onClick={onAddLead}
           className="md:inline-flex hidden  items-center gap-2 bg-[#3f8cff] text-white text-sm font-medium px-5 h-11 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"

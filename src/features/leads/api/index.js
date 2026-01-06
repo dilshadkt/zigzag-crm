@@ -140,6 +140,17 @@ export const useGetLeads = (params = {}) => {
   });
 };
 
+// Get lead statistics
+export const useGetLeadStats = () => {
+  return useQuery({
+    queryKey: ["leadStats"],
+    queryFn: async () => {
+      const response = await apiClient.get("/leads/stats");
+      return response.data;
+    },
+  });
+};
+
 // Get lead by ID
 export const useGetLeadById = (leadId) => {
   return useQuery({
@@ -163,6 +174,7 @@ export const useCreateLead = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
     },
   });
 };
@@ -178,6 +190,7 @@ export const useBulkCreateLeads = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
     },
   });
 };
@@ -194,6 +207,7 @@ export const useUpdateLead = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["leads"]);
       queryClient.invalidateQueries(["lead", variables.leadId]);
+      queryClient.invalidateQueries(["leadStats"]);
     },
   });
 };
@@ -209,6 +223,7 @@ export const useDeleteLead = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
     },
   });
 };

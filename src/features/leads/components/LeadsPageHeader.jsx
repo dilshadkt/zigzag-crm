@@ -11,6 +11,8 @@ const LeadsPageHeader = ({
   onToggleLayout,
   onDownload,
   onMoreActions,
+  showDashboard,
+  onToggleDashboard,
 }) => {
   return (
     <div className="flex flex-col gap-4 px-6 pb-3 pt-1 border-b border-slate-100">
@@ -26,6 +28,8 @@ const LeadsPageHeader = ({
           onToggleLayout={onToggleLayout}
           onDownload={onDownload}
           onMoreActions={onMoreActions}
+          showDashboard={showDashboard}
+          onToggleDashboard={onToggleDashboard}
         />
       </div>
     </div>

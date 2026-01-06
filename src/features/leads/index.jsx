@@ -14,8 +14,9 @@ import LeadUploadModal from "./components/LeadUploadModal";
 import AddLeadModal from "./components/AddLeadModal";
 import AssignLeadModal from "./components/AssignLeadModal";
 import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
+import LeadsDashboard from "./components/LeadsDashboard";
 import { useLeadsData } from "./hooks/useLeadsData";
-import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads } from "./api";
+import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats } from "./api";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -84,7 +85,13 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
+  const [activeStatusId, setActiveStatusId] = useState(null);
+  const [showDashboard, setShowDashboard] = useState(true);
   const navigate = useNavigate();
+
+  // Stats
+  const { data: statsData, isLoading: statsLoading } = useGetLeadStats();
+  const leadStats = statsData?.data;
 
   // Mutations
   const updateLeadMutation = useUpdateLead();
@@ -114,8 +121,14 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     page,
     limit: pageSize,
     search: debouncedSearch,
+    status: activeStatusId,
     appliedFilters,
   });
+
+  const handleStatusFilter = (statusId) => {
+    setActiveStatusId((prev) => (prev === statusId ? null : statusId));
+    setPage(1);
+  };
 
   // Initialize columns from generated columns
   useEffect(() => {
@@ -601,11 +614,20 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   };
 
   return (
-    <section className="flex flex-col gap-y-2 h-full overflow-hidden">
-      {/* dasbhard section  */}
-      <div className="bg-white rounded-3xl p-5"></div>
+    <section className="flex flex-col gap-y-3 h-full overflow-hidden">
+      {/* dashboard section  */}
+      {showDashboard && (
+        <div className="bg-white rounded-2xl p-3 px-4 border border-slate-100 ">
+          <LeadsDashboard
+            stats={leadStats}
+            isLoading={statsLoading}
+            activeStatusId={activeStatusId}
+            onStatusClick={handleStatusFilter}
+          />
+        </div>
+      )}
       <div className="relative bg-white h-full 
-      rounded-3xl border border-slate-100 overflow-hidden flex flex-col">
+      rounded-2xl border border-slate-100 overflow-hidden flex flex-col">
         <LeadsPageHeader
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -616,6 +638,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
           onToggleLayout={openColumnEditor}
           onDownload={handleAction("download")}
           onMoreActions={openLeadMenu}
+          showDashboard={showDashboard}
+          onToggleDashboard={() => setShowDashboard(!showDashboard)}
         />
         {isLoading ? (
           <LeadsTableShimmer columns={columns.filter((col) => col.visible)} />
