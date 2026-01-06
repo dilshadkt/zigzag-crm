@@ -28,7 +28,6 @@ import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/Dail
 const Dashboard = () => {
   const { companyId, user } = useAuth();
   const { hasPermission } = usePermissions();
-  console.log(user)
   const isEmployee = user?.role === "employee";
   const isCompanyAdmin = user?.role === "company-admin";
 
@@ -76,7 +75,6 @@ const Dashboard = () => {
   // Fetch projects based on user role with month filter
   const { data: companyProjects } = useCompanyProjects(
     isEmployee ? null : companyId,
-    3,
     taskMonth
   );
   const { data: employeeProjectsData } = useGetEmployeeProjects(
@@ -93,7 +91,6 @@ const Dashboard = () => {
   const projectsForChecklist = isEmployee
     ? employeeProjectsData?.projects || []
     : companyProjects || []; // Admin sees company projects
-
   const projects = isEmployee
     ? employeeProjectsData?.projects?.slice(0, 3) || []
     : companyProjects || [];
