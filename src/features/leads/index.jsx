@@ -601,133 +601,138 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   };
 
   return (
-    <div className="relative bg-white h-full rounded-3xl border border-slate-100 overflow-hidden flex flex-col">
-      <LeadsPageHeader
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onAddLead={handleAction("add-lead")}
-        onAddFilter={handleAction("add-filter")}
-        onRefresh={handleAction("refresh")}
-        isRefreshing={isRefetching}
-        onToggleLayout={openColumnEditor}
-        onDownload={handleAction("download")}
-        onMoreActions={openLeadMenu}
-      />
-      {isLoading ? (
-        <LeadsTableShimmer columns={columns.filter((col) => col.visible)} />
-      ) : (
-        <>
-          <LeadsTable
-            leads={visibleLeads}
-            columns={columns.filter((col) => col.visible)}
-            selectedLeadIds={selectedLeadIds}
-            onToggleSelect={handleToggleSelect}
-            onToggleSelectAll={handleToggleSelectAll}
-            onRowClick={onSelectLead}
-            onEdit={handleEdit}
-            onSendEmail={handleSendEmail}
-            onCreateTask={handleCreateTask}
-            onAssign={handleAssign}
-            onDelete={handleDelete}
-            onConvert={handleConvert}
-            onCopyURL={handleCopyURL}
-            statuses={statuses}
-            onStatusChange={handleStatusChange}
-            onCustomFieldChange={handleCustomFieldChange}
-            isEmployee={isEmployee}
-          />
-          <LeadsPagination
-            pageSize={pageSize}
-            onPageSizeChange={(newSize) => {
-              setPageSize(newSize);
-              setPage(1); // Reset to first page when changing page size
-            }}
-            currentPage={page}
-            onPageChange={setPage}
-            visibleCount={visibleLeads.length}
-            totalCount={pagination.total}
-          />
-        </>
-      )}
-
-      {isColumnEditorOpen && (
-        <div
-          className="absolute inset-0 bg-black/0 z-20"
-          onClick={closeColumnEditor}
-        >
-          <div
-            className="absolute right-6 top-5"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <LeadsColumnEditor
-              columns={columnDraft}
-              onToggleColumn={handleColumnToggle}
-              onReset={resetColumns}
-              onApply={applyColumns}
-              onClose={closeColumnEditor}
-              canToggleColumn={canToggleColumn}
+    <section className="flex flex-col gap-y-2 h-full overflow-hidden">
+      {/* dasbhard section  */}
+      <div className="bg-white rounded-3xl p-5"></div>
+      <div className="relative bg-white h-full 
+      rounded-3xl border border-slate-100 overflow-hidden flex flex-col">
+        <LeadsPageHeader
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onAddLead={handleAction("add-lead")}
+          onAddFilter={handleAction("add-filter")}
+          onRefresh={handleAction("refresh")}
+          isRefreshing={isRefetching}
+          onToggleLayout={openColumnEditor}
+          onDownload={handleAction("download")}
+          onMoreActions={openLeadMenu}
+        />
+        {isLoading ? (
+          <LeadsTableShimmer columns={columns.filter((col) => col.visible)} />
+        ) : (
+          <>
+            <LeadsTable
+              leads={visibleLeads}
+              columns={columns.filter((col) => col.visible)}
+              selectedLeadIds={selectedLeadIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
+              onRowClick={onSelectLead}
+              onEdit={handleEdit}
+              onSendEmail={handleSendEmail}
+              onCreateTask={handleCreateTask}
+              onAssign={handleAssign}
+              onDelete={handleDelete}
+              onConvert={handleConvert}
+              onCopyURL={handleCopyURL}
+              statuses={statuses}
+              onStatusChange={handleStatusChange}
+              onCustomFieldChange={handleCustomFieldChange}
+              isEmployee={isEmployee}
             />
-          </div>
-        </div>
-      )}
-
-      {isLeadMenuOpen && (
-        <div
-          className="absolute inset-0 bg-black/0 z-30"
-          onClick={closeLeadMenu}
-        >
-          <div
-            className="absolute right-6 top-18"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <LeadActionsMenu
-              onClose={closeLeadMenu}
-              onUpload={openUploadModal}
-              onDownloadTemplate={handleDownloadTemplate}
-              onSettings={() => {
-                closeLeadMenu();
-                onOpenSettings && onOpenSettings();
+            <LeadsPagination
+              pageSize={pageSize}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1); // Reset to first page when changing page size
               }}
+              currentPage={page}
+              onPageChange={setPage}
+              visibleCount={visibleLeads.length}
+              totalCount={pagination.total}
             />
+          </>
+        )}
+
+        {isColumnEditorOpen && (
+          <div
+            className="absolute inset-0 bg-black/0 z-20"
+            onClick={closeColumnEditor}
+          >
+            <div
+              className="absolute right-6 top-5"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <LeadsColumnEditor
+                columns={columnDraft}
+                onToggleColumn={handleColumnToggle}
+                onReset={resetColumns}
+                onApply={applyColumns}
+                onClose={closeColumnEditor}
+                canToggleColumn={canToggleColumn}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <LeadUploadModal
-        isOpen={isUploadModalOpen}
-        onClose={closeUploadModal}
-        file={selectedFile}
-        onFileSelect={setSelectedFile}
-        onUpload={handleUploadStart}
-        uploadProgress={uploadProgress}
-        isUploading={isUploading}
-      />
+        {isLeadMenuOpen && (
+          <div
+            className="absolute inset-0 bg-black/0 z-30"
+            onClick={closeLeadMenu}
+          >
+            <div
+              className="absolute right-6 top-18"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <LeadActionsMenu
+                onClose={closeLeadMenu}
+                onUpload={openUploadModal}
+                onDownloadTemplate={handleDownloadTemplate}
+                onSettings={() => {
+                  closeLeadMenu();
+                  onOpenSettings && onOpenSettings();
+                }}
+              />
+            </div>
+          </div>
+        )}
 
-      <AddLeadModal
-        isOpen={isAddLeadModalOpen}
-        onClose={() => setAddLeadModalOpen(false)}
-        onSuccess={handleLeadCreated}
-      />
+        <LeadUploadModal
+          isOpen={isUploadModalOpen}
+          onClose={closeUploadModal}
+          file={selectedFile}
+          onFileSelect={setSelectedFile}
+          onUpload={handleUploadStart}
+          uploadProgress={uploadProgress}
+          isUploading={isUploading}
+        />
 
-      <AssignLeadModal
-        isOpen={isAssignModalOpen}
-        onClose={() => {
-          setAssignModalOpen(false);
-          setSelectedLeadForAssign(null);
-        }}
-        onAssign={handleAssignConfirm}
-        currentOwner={selectedLeadForAssign?.owner}
-      />
+        <AddLeadModal
+          isOpen={isAddLeadModalOpen}
+          onClose={() => setAddLeadModalOpen(false)}
+          onSuccess={handleLeadCreated}
+        />
 
-      <LeadsFilterDrawer
-        isOpen={isFilterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        onApplyFilters={handleApplyFilters}
-        formFields={formFields}
-        statuses={statuses}
-        currentFilters={appliedFilters}
-      />
-    </div>
+        <AssignLeadModal
+          isOpen={isAssignModalOpen}
+          onClose={() => {
+            setAssignModalOpen(false);
+            setSelectedLeadForAssign(null);
+          }}
+          onAssign={handleAssignConfirm}
+          currentOwner={selectedLeadForAssign?.owner}
+        />
+
+        <LeadsFilterDrawer
+          isOpen={isFilterDrawerOpen}
+          onClose={() => setFilterDrawerOpen(false)}
+          onApplyFilters={handleApplyFilters}
+          formFields={formFields}
+          statuses={statuses}
+          currentFilters={appliedFilters}
+        />
+      </div>
+    </section>
   );
 };
 

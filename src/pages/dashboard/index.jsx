@@ -244,7 +244,7 @@ const Dashboard = () => {
           {/* project list section  */}
           <div className=" flex flex-col h-full gap-y-2 md:gap-y-3 mt-3">
             {projects?.length > 0 ? (
-              projects.map((project, index) => (
+              projects.slice(0, 3).map((project, index) => (
                 <ProjectCard
                   key={project?._id}
                   project={project}
