@@ -49,12 +49,15 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const canEditTask =
     isCompany || hasPermission("tasks", "edit") || isAssignedToTask;
 
+
   // Check permissions for subtask management
   const canManageSubtasks = isCompany || hasPermission("tasks", "create");
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
     useGetSubTasksByParentTask(taskDetails?._id);
+
+
 
   // Create subtask mutation
   const createSubTaskMutation = useCreateSubTask(taskDetails?._id);
@@ -172,7 +175,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                   Timeline
                 </span>
               </div>
-              {canEditTask && isCompany && (
+              {canEditTask && (
                 <StatusButton
                   taskDetails={taskDetails}
                   disabled={!canEditTask}
