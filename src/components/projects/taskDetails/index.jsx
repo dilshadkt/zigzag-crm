@@ -27,6 +27,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const isAdmin = user?.role === "company-admin";
 
+
   const formatDate = (date) => {
     if (!date) return "N/A";
     try {
@@ -179,7 +180,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                 <StatusButton
                   taskDetails={taskDetails}
                   disabled={!canEditTask}
-                  showAllOptions={canEditTask}
+                  showAllOptions={hasPermission("tasks", "edit")}
                 />
               )}
             </div>
@@ -196,7 +197,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
               onEditSubTask={handleEditSubTask}
               onDeleteSubTask={handleDeleteSubTask}
               isAdmin={isAdmin}
-              canManageSubtasks={canManageSubtasks}
+              canManageSubtasks={hasPermission("tasks", "create")}
             />
 
             <TaskAttachments taskDetails={taskDetails} />

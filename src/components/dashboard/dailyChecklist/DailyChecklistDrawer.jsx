@@ -53,9 +53,8 @@ const CircularProgress = ({ value, onClick }) => {
     );
 };
 
-const TaskItem = ({ project, task, isCompleted, onToggle }) => {
+const TaskItem = ({ project, task, isCompleted, onToggle, completedBy }) => {
     const [loading, setLoading] = useState(false);
-
     const handleToggle = async () => {
         setLoading(true);
         // Optimistic update handled by parent, but we keep local loading for safety
@@ -63,6 +62,18 @@ const TaskItem = ({ project, task, isCompleted, onToggle }) => {
         // We don't await the mutation here to keep UI snappy, 
         // rely on parent prop update for 'isCompleted'
         setTimeout(() => setLoading(false), 300); // minimal debounce
+    };
+
+    const getUserInitials = (user) => {
+        if (!user) return "?";
+        const first = user.firstName?.[0] || "";
+        const last = user.lastName?.[0] || "";
+        return (first + last).toUpperCase() || "?";
+    };
+
+    const getUserFullName = (user) => {
+        if (!user) return "Unknown User";
+        return `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Unknown User";
     };
 
     return (
@@ -92,10 +103,35 @@ const TaskItem = ({ project, task, isCompleted, onToggle }) => {
                     />
                 </svg>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 flex items-center justify-between">
                 <p className={`text-xs uppercase font-medium ${isCompleted ? "text-gray-400 line-through" : "text-gray-700"}`}>
                     {task.title}
                 </p>
+
+                {/* Show avatar when completed and has completedBy */}
+                {isCompleted && completedBy && (
+                    <div className="relative group">
+                        {completedBy.profileImage ? (
+                            <img
+                                src={completedBy.profileImage}
+                                alt={getUserFullName(completedBy)}
+                                className="w-6 h-6 rounded-full border-2 border-blue-100 object-cover"
+                            />
+                        ) : (
+                            <div className="w-6 h-6 rounded-full border-2 border-blue-100 bg-blue-500 flex items-center justify-center">
+                                <span className="text-[10px] font-bold text-white">
+                                    {getUserInitials(completedBy)}
+                                </span>
+                            </div>
+                        )}
+                        {/* Tooltip */}
+                        <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 whitespace-nowrap">
+                            <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg">
+                                {getUserFullName(completedBy)}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -127,17 +163,26 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
 
                     // Determine completion status: Check optimistic state first, then history
                     let isCompleted;
+                    let completedBy = null;
+
+                    const historyTask = historyForToday?.tasks?.find(t => t.title === def.title);
+
                     if (Object.prototype.hasOwnProperty.call(optimisticUpdates, key)) {
                         isCompleted = optimisticUpdates[key];
+                        // If optimistically marking as completed, we won't have completedBy yet
+                        // If optimistically unmarking, clear completedBy
+                        completedBy = isCompleted ? historyTask?.completedBy : null;
                     } else {
-                        isCompleted = historyForToday?.tasks?.find(t => t.title === def.title)?.completed || false;
+                        isCompleted = historyTask?.completed || false;
+                        completedBy = historyTask?.completedBy || null;
                     }
 
                     if (isCompleted) completedCount++;
                     allTasks.push({
                         project,
                         definition: def,
-                        isCompleted
+                        isCompleted,
+                        completedBy
                     });
                 });
             }
@@ -149,7 +194,7 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
     const progress = todayTasks.total > 0
         ? (todayTasks.completedCount / todayTasks.total) * 100
         : 0;
-
+    console.log(todayTasks)
     const mutation = useMutation({
         mutationFn: ({ projectId, taskTitle, completed }) =>
             updateDailyChecklistStatus(projectId, { date: currentDate, taskTitle, completed }),
@@ -186,7 +231,7 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
         });
         return Object.values(groups);
     }, [todayTasks.allTasks]);
-
+    console.log(tasksByProject)
     return (
         <>
             <CircularProgress value={progress} onClick={() => setIsOpen(true)} />
@@ -268,6 +313,7 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                                                 project={project}
                                                 task={item.definition}
                                                 isCompleted={item.isCompleted}
+                                                completedBy={item.completedBy}
                                                 onToggle={handleTaskToggle}
                                             />
                                         ))}
