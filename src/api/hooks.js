@@ -224,17 +224,26 @@ export const useProjectTasks = (projectId, monthKey = null) => {
 };
 
 //empoyee
-export const useEmpoyees = (page = 1, filters = null) => {
+export const useEmpoyees = (page = null, filters = null, search = "") => {
   return useQuery({
-    queryKey: ["employees", page, filters],
+    queryKey: ["employees", page, filters, search],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "10",
-      });
+      const params = new URLSearchParams();
+
+      if (page) {
+        params.append("page", page.toString());
+        params.append("limit", "10");
+      }
 
       if (filters) {
-        params.append("filters", JSON.stringify(filters));
+        params.append(
+          "filters",
+          typeof filters === "string" ? filters : JSON.stringify(filters)
+        );
+      }
+
+      if (search) {
+        params.append("search", search);
       }
 
       const response = await apiClient.get(`/employee?${params.toString()}`);

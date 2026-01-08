@@ -4,6 +4,8 @@ import { useEmpoyees } from "../../../api/hooks";
 import debounce from "lodash/debounce";
 
 const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
+
+  console.log(defaultSelectedEmployee);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -91,7 +93,7 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
                       checked={selectedEmployees.some(
                         (emp) => emp._id === employee._id
                       )}
-                      onChange={() => {}}
+                      onChange={() => { }}
                     />
                     <div className="flex flex-col">
                       <div className="flex items-center">
