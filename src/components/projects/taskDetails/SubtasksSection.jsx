@@ -185,6 +185,7 @@ const SubtasksSection = ({
                     <SubTaskStatusButton
                       subTask={subtask}
                       parentTaskId={taskDetails?._id}
+                      showAllOptions={canManageSubtasks}
                       canEdit={
                         (canManageSubtasks || isAssignedToSubTask) &&
                         (isAdmin ||

@@ -179,6 +179,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                 <StatusButton
                   taskDetails={taskDetails}
                   disabled={!canEditTask}
+                  showAllOptions={canEditTask}
                 />
               )}
             </div>

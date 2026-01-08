@@ -3,7 +3,12 @@ import { useUpdateSubTaskById } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 
-const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
+const SubTaskStatusButton = ({
+  subTask,
+  parentTaskId,
+  canEdit = true,
+  showAllOptions = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
@@ -60,8 +65,8 @@ const SubTaskStatusButton = ({ subTask, parentTaskId, canEdit = true }) => {
     },
   ];
 
-  // Get status options based on user role
-  const statusOptions = isCompany ? adminStatusOptions : employeeStatusOptions;
+  // Get status options based on user role or explicit override
+  const statusOptions = (isCompany || showAllOptions) ? adminStatusOptions : employeeStatusOptions;
 
   const currentStatus = adminStatusOptions.find(
     (status) => status.value === subTask.status

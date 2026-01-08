@@ -74,7 +74,7 @@ const statusColors = {
   },
 };
 
-const StatusButton = ({ taskDetails, disabled = false }) => {
+const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
@@ -84,8 +84,8 @@ const StatusButton = ({ taskDetails, disabled = false }) => {
     setMenuOpen(false)
   );
 
-  // Get status options based on user role
-  const statusOptions = isCompany ? adminStatusOptions : employeeStatusOptions;
+  // Get status options based on user role or explicit override
+  const statusOptions = (isCompany || showAllOptions) ? adminStatusOptions : employeeStatusOptions;
 
   // Close menu when clicking outside
   const handleClickOutside = (event) => {
