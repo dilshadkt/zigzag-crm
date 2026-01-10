@@ -17,6 +17,7 @@ const EventFilters = ({
   projectFilter,
   onProjectFilterChange,
   calendarData,
+  canEditTasks,
 }) => {
   const [isAssignerDropdownOpen, setIsAssignerDropdownOpen] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -190,7 +191,7 @@ const EventFilters = ({
   return (
     <div className="flex items-center gap-2 ml-auto mr-4">
       {/* Assigner Filter Dropdown */}
-      {!isEmployee && (
+      {canEditTasks && (
         <div className="relative" ref={assignerDropdownRef}>
           <button
             onClick={() => setIsAssignerDropdownOpen(!isAssignerDropdownOpen)}
@@ -202,9 +203,8 @@ const EventFilters = ({
               {getSelectedAssignerName()}
             </span>
             <IoChevronDown
-              className={`text-xs transition-transform duration-200 ${
-                isAssignerDropdownOpen ? "rotate-180" : ""
-              }`}
+              className={`text-xs transition-transform duration-200 ${isAssignerDropdownOpen ? "rotate-180" : ""
+                }`}
             />
           </button>
 
@@ -215,11 +215,10 @@ const EventFilters = ({
                 {/* All Assigners Option */}
                 <button
                   onClick={() => handleAssignerSelect(null)}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${
-                    !assignerFilter
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700"
-                  }`}
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${!assignerFilter
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700"
+                    }`}
                 >
                   All Assigners
                 </button>
@@ -232,11 +231,10 @@ const EventFilters = ({
                   <button
                     key={assigner.id}
                     onClick={() => handleAssignerSelect(assigner.id)}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${
-                      assignerFilter === assigner.id
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700"
-                    }`}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${assignerFilter === assigner.id
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700"
+                      }`}
                   >
                     {assigner?.avatar === "/api/placeholder/32/32" ? (
                       <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center">
@@ -269,9 +267,8 @@ const EventFilters = ({
           <MdFolder className="text-sm" />
           <span className="max-w-32 truncate">{getSelectedProjectName()}</span>
           <IoChevronDown
-            className={`text-xs transition-transform duration-200 ${
-              isProjectDropdownOpen ? "rotate-180" : ""
-            }`}
+            className={`text-xs transition-transform duration-200 ${isProjectDropdownOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
 
@@ -282,9 +279,8 @@ const EventFilters = ({
               {/* All Projects Option */}
               <button
                 onClick={() => handleProjectSelect(null)}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${
-                  !projectFilter ? "bg-blue-50 text-blue-700" : "text-gray-700"
-                }`}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${!projectFilter ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                  }`}
               >
                 All Projects
               </button>
@@ -298,11 +294,10 @@ const EventFilters = ({
                   <button
                     key={project.id}
                     onClick={() => handleProjectSelect(project.id)}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${
-                      projectFilter === project.id
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700"
-                    }`}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${projectFilter === project.id
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700"
+                      }`}
                   >
                     <div
                       className="w-3 h-3 rounded-full flex-shrink-0"
@@ -327,11 +322,10 @@ const EventFilters = ({
       {/* Tasks Filter */}
       <button
         onClick={() => onToggleFilter("tasks")}
-        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-          eventFilters.tasks
-            ? "bg-blue-100 text-blue-700 border border-blue-200"
-            : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
-        }`}
+        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${eventFilters.tasks
+          ? "bg-blue-100 text-blue-700 border border-blue-200"
+          : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+          }`}
         title="Toggle Tasks"
       >
         <MdTask className="text-sm" />
@@ -341,11 +335,10 @@ const EventFilters = ({
       {/* Subtasks Filter */}
       <button
         onClick={() => onToggleFilter("subtasks")}
-        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-          eventFilters.subtasks
-            ? "bg-green-100 text-green-700 border border-green-200"
-            : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
-        }`}
+        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${eventFilters.subtasks
+          ? "bg-green-100 text-green-700 border border-green-200"
+          : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+          }`}
         title="Toggle Subtasks"
       >
         <MdSubdirectoryArrowRight className="text-sm" />
@@ -355,11 +348,10 @@ const EventFilters = ({
       {/* Projects Filter */}
       <button
         onClick={() => onToggleFilter("projects")}
-        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-          eventFilters.projects
-            ? "bg-amber-100 text-amber-700 border border-amber-200"
-            : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
-        }`}
+        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${eventFilters.projects
+          ? "bg-amber-100 text-amber-700 border border-amber-200"
+          : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+          }`}
         title="Toggle Projects"
       >
         <MdFolder className="text-sm" />
@@ -369,11 +361,10 @@ const EventFilters = ({
       {/* Birthdays Filter */}
       <button
         onClick={() => onToggleFilter("birthdays")}
-        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-          eventFilters.birthdays
-            ? "bg-purple-100 text-purple-700 border border-purple-200"
-            : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
-        }`}
+        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${eventFilters.birthdays
+          ? "bg-purple-100 text-purple-700 border border-purple-200"
+          : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+          }`}
         title="Toggle Birthdays"
       >
         <FaGift className="text-sm" />

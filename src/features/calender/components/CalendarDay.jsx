@@ -13,6 +13,7 @@ const CalendarDay = ({
   onOpenModal,
   onMenuItemClick,
   isEmployee,
+  canCreateTask,
   weekIndex = 0, // Add weekIndex prop to determine if it's first row
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -65,9 +66,8 @@ const CalendarDay = ({
       {/* Date Number */}
       {item?.date && (
         <div
-          className={` w-4 md:w-6  h-4 md:h-6 rounded-full ${
-            isToday(item.fullDate) ? "bg-blue-500 text-white" : "text-gray-600"
-          } 
+          className={` w-4 md:w-6  h-4 md:h-6 rounded-full ${isToday(item.fullDate) ? "bg-blue-500 text-white" : "text-gray-600"
+            } 
           text-xs md:text-[13px] font-medium flexCenter absolute top-1 right-1`}
         >
           {item.date}
@@ -94,21 +94,23 @@ const CalendarDay = ({
       )}
 
       {/* More Button with Dropdown */}
-      <div className="absolute bottom-1 right-1" ref={dropdownRef}>
-        <button
-          onClick={toggleDropdown}
-          className="transition-all duration-200 cursor-pointer group-hover:block hidden
-                   p-1 rounded-full hover:bg-gray-100"
-        >
-          <IoMdMore className="text-gray-500 text-lg" />
-        </button>
+      {canCreateTask && (
+        <div className="absolute bottom-1 right-1" ref={dropdownRef}>
+          <button
+            onClick={toggleDropdown}
+            className="transition-all duration-200 cursor-pointer group-hover:block hidden
+                     p-1 rounded-full hover:bg-gray-100"
+          >
+            <IoMdMore className="text-gray-500 text-lg" />
+          </button>
 
-        <CalendarMenu
-          handleMenuItemClick={handleMenuItemClick}
-          isDropdownOpen={isDropdownOpen}
-          position={getMenuPosition()}
-        />
-      </div>
+          <CalendarMenu
+            handleMenuItemClick={handleMenuItemClick}
+            isDropdownOpen={isDropdownOpen}
+            position={getMenuPosition()}
+          />
+        </div>
+      )}
     </div>
   );
 };

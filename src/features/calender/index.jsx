@@ -9,6 +9,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import { useCalendarDataOptimized } from "./hooks/useCalendarDataOptimized";
 import {
   CalendarGrid,
@@ -44,8 +45,13 @@ const Calendar = () => {
   } = useSelector((state) => state.calendar);
 
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const isEmployee = user?.role === "employee";
+
+  // Permission checks
+  const canEditTasks = hasPermission("tasks", "edit");
+  const canCreateTask = hasPermission("tasks", "create");
 
   // Use persisted current date or fallback to current month (new Date())
   const [currentDate, setCurrentDate] = useState(() => {
@@ -184,10 +190,10 @@ const Calendar = () => {
 
   // Handle menu item click from calendar day
   const handleMenuItemClick = (action, date) => {
-    if (action === "create-task") {
+    if (action === "create-task" && canCreateTask) {
       setSelectedDateForTask(date);
       setShowModalTask(true);
-    } else if (action === "unscheduled-tasks") {
+    } else if (action === "unscheduled-tasks" && canCreateTask) {
       setSelectedDateForScheduling(date);
       setShowUnscheduledModal(true);
     }
@@ -251,6 +257,7 @@ const Calendar = () => {
           projectFilter={projectFilter}
           onProjectFilterChange={handleProjectFilterChange}
           calendarData={calendarData}
+          canEditTasks={canEditTasks}
         />
       </div>
       <div
@@ -278,6 +285,7 @@ const Calendar = () => {
           onOpenModal={openEventsModal}
           onMenuItemClick={handleMenuItemClick}
           isEmployee={isEmployee}
+          canCreateTask={canCreateTask}
         />
       </div>
       {/* Event Type Filters */}
@@ -304,9 +312,9 @@ const Calendar = () => {
         initialValues={
           selectedDateForTask
             ? {
-                startDate: format(selectedDateForTask, "yyyy-MM-dd"),
-                dueDate: format(selectedDateForTask, "yyyy-MM-dd"),
-              }
+              startDate: format(selectedDateForTask, "yyyy-MM-dd"),
+              dueDate: format(selectedDateForTask, "yyyy-MM-dd"),
+            }
             : {}
         }
       />

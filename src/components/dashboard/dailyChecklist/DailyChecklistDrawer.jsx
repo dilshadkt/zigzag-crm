@@ -53,9 +53,10 @@ const CircularProgress = ({ value, onClick }) => {
     );
 };
 
-const TaskItem = ({ project, task, isCompleted, onToggle, completedBy }) => {
+const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completedAt, disabled }) => {
     const [loading, setLoading] = useState(false);
     const handleToggle = async () => {
+        if (disabled) return;
         setLoading(true);
         // Optimistic update handled by parent, but we keep local loading for safety
         onToggle(project._id, task.title, !isCompleted);
@@ -83,8 +84,8 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy }) => {
                     type="checkbox"
                     checked={isCompleted}
                     onChange={handleToggle}
-                    disabled={loading}
-                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-blue-500 checked:bg-blue-500 hover:shadow-sm"
+                    disabled={loading || disabled}
+                    className={`peer h-5 w-5 rounded-md border border-gray-300 transition-all checked:border-blue-500 checked:bg-blue-500 hover:shadow-sm ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                 />
                 <svg
                     className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
@@ -108,28 +109,37 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy }) => {
                     {task.title}
                 </p>
 
-                {/* Show avatar when completed and has completedBy */}
-                {isCompleted && completedBy && (
-                    <div className="relative group">
-                        {completedBy.profileImage ? (
-                            <img
-                                src={completedBy.profileImage}
-                                alt={getUserFullName(completedBy)}
-                                className="w-6 h-6 rounded-full border-2 border-blue-100 object-cover"
-                            />
-                        ) : (
-                            <div className="w-6 h-6 rounded-full border-2 border-blue-100 bg-blue-500 flex items-center justify-center">
-                                <span className="text-[10px] font-bold text-white">
-                                    {getUserInitials(completedBy)}
-                                </span>
+                {/* Show avatar and time when completed */}
+                {isCompleted && (completedBy || completedAt) && (
+                    <div className="flex items-center gap-2">
+                        {completedAt && (
+                            <span className="text-[10px] text-gray-400 font-medium tabular-nums">
+                                {format(new Date(completedAt), "hh:mm a")}
+                            </span>
+                        )}
+                        {completedBy && (
+                            <div className="relative group">
+                                {completedBy.profileImage ? (
+                                    <img
+                                        src={completedBy.profileImage}
+                                        alt={getUserFullName(completedBy)}
+                                        className="w-6 h-6 rounded-full border border-blue-100 object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-6 h-6 rounded-full border border-blue-100 bg-blue-500 flex items-center justify-center">
+                                        <span className="text-[10px] font-bold text-white">
+                                            {getUserInitials(completedBy)}
+                                        </span>
+                                    </div>
+                                )}
+                                {/* Tooltip */}
+                                <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 whitespace-nowrap">
+                                    <div className="bg-gray-800 text-white text-[10px] px-2 py-1 rounded shadow-lg">
+                                        {getUserFullName(completedBy)}
+                                    </div>
+                                </div>
                             </div>
                         )}
-                        {/* Tooltip */}
-                        <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 whitespace-nowrap">
-                            <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg">
-                                {getUserFullName(completedBy)}
-                            </div>
-                        </div>
                     </div>
                 )}
             </div>
@@ -164,17 +174,19 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                     // Determine completion status: Check optimistic state first, then history
                     let isCompleted;
                     let completedBy = null;
+                    let completedAt = null;
 
                     const historyTask = historyForToday?.tasks?.find(t => t.title === def.title);
 
                     if (Object.prototype.hasOwnProperty.call(optimisticUpdates, key)) {
                         isCompleted = optimisticUpdates[key];
-                        // If optimistically marking as completed, we won't have completedBy yet
-                        // If optimistically unmarking, clear completedBy
+                        // If optimistically marking as completed, we won't have completedBy/At yet
                         completedBy = isCompleted ? historyTask?.completedBy : null;
+                        completedAt = isCompleted ? historyTask?.completedAt : null;
                     } else {
                         isCompleted = historyTask?.completed || false;
                         completedBy = historyTask?.completedBy || null;
+                        completedAt = historyTask?.completedAt || null;
                     }
 
                     if (isCompleted) completedCount++;
@@ -182,7 +194,8 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                         project,
                         definition: def,
                         isCompleted,
-                        completedBy
+                        completedBy,
+                        completedAt
                     });
                 });
             }
@@ -314,7 +327,9 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
                                                 task={item.definition}
                                                 isCompleted={item.isCompleted}
                                                 completedBy={item.completedBy}
+                                                completedAt={item.completedAt}
                                                 onToggle={handleTaskToggle}
+                                                disabled={!isToday(selectedDate)}
                                             />
                                         ))}
                                     </div>

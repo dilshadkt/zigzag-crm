@@ -8,6 +8,7 @@ const CalendarGrid = ({
   onOpenModal,
   onMenuItemClick,
   isEmployee,
+  canCreateTask,
 }) => {
   // Day name headers for the calendar
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -41,6 +42,7 @@ const CalendarGrid = ({
               onOpenModal={onOpenModal}
               onMenuItemClick={onMenuItemClick}
               isEmployee={isEmployee}
+              canCreateTask={canCreateTask}
               weekIndex={weekIndex}
             />
           );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useGetEmployeeTasks,
   useGetAllCompanyTasks,
@@ -10,7 +10,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useQueryClient } from "@tanstack/react-query";
-import { updateTaskById } from "../../api/service";
+import { updateTaskById, updateSubTaskById } from "../../api/service";
 import socketService from "../../services/socketService";
 import Task from "../../components/shared/task";
 import Header from "../../components/shared/header";
@@ -256,7 +256,24 @@ const Board = () => {
   const [selectedPriority, setSelectedPriority] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
   const [selectedAssignee, setSelectedAssignee] = useState("all");
+  const [selectedTypes, setSelectedTypes] = useState(["task", "subtask", "extra"]);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const typeDropdownRef = useRef(null);
   const [showModalTask, setShowModalTask] = useState(false);
+
+  // Handle clicking outside of type dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        typeDropdownRef.current &&
+        !typeDropdownRef.current.contains(event.target)
+      ) {
+        setIsTypeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Permission check for creating tasks
   const canCreateTask =
@@ -264,7 +281,8 @@ const Board = () => {
 
   // Use different hooks based on user role
   const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
-    useGetEmployeeTasks(user?.role !== "company-admin" ? user?._id : null);
+    useGetEmployeeTasks(user?.role !== "company-admin" ? user?._id : null, { taskMonth: selectedMonth });
+
 
   const { data: companyTasksData, isLoading: isLoadingCompanyTasks } =
     useGetAllCompanyTasks(
@@ -287,8 +305,10 @@ const Board = () => {
   const tasks =
     user?.role === "company-admin"
       ? companyTasksData?.tasks || []
-      : employeeTasksData?.tasks || [];
-
+      : [
+        ...(employeeTasksData?.tasks || []),
+        ...(employeeTasksData?.subTasks || []),
+      ];
   // Listen for real-time task status changes
   useEffect(() => {
     const handleTaskStatusChange = (data) => {
@@ -408,16 +428,31 @@ const Board = () => {
     const priorityMatch =
       selectedPriority === "all" ||
       task.priority?.toLowerCase() === selectedPriority.toLowerCase();
-    const monthMatch = task.taskMonth === selectedMonth;
+    const monthMatch = !task.taskMonth || task.taskMonth === selectedMonth;
     const assigneeMatch =
       selectedAssignee === "all" ||
       (task.assignedTo &&
         task.assignedTo.some((user) => user._id === selectedAssignee));
 
+    const isSubtask = task.itemType === "subtask";
+    const isExtraTask = task.taskGroup === "extraTask";
+    const isRegularTask = !isSubtask && !isExtraTask;
+
+    const typeMatch =
+      (selectedTypes.includes("task") && isRegularTask) ||
+      (selectedTypes.includes("subtask") && isSubtask) ||
+      (selectedTypes.includes("extra") && isExtraTask);
+
     return (
-      isActive && projectMatch && priorityMatch && monthMatch && assigneeMatch
+      isActive &&
+      projectMatch &&
+      priorityMatch &&
+      monthMatch &&
+      assigneeMatch &&
+      typeMatch
     );
   });
+
 
   const handleProjectChange = (e) => {
     setSelectedProject(e.target.value);
@@ -486,14 +521,20 @@ const Board = () => {
     ),
   };
 
+
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
     try {
+      const task = tasks.find((t) => t._id === taskId);
       const updateData = { status: newStatus };
       if (newOrder !== null) {
         updateData.order = newOrder;
       }
 
-      await updateTaskById(taskId, updateData);
+      if (task?.itemType === "subtask") {
+        await updateSubTaskById(taskId, updateData);
+      } else {
+        await updateTaskById(taskId, updateData);
+      }
       if (user?.role === "company-admin") {
         queryClient.invalidateQueries([
           "allCompanyTasks",
@@ -519,9 +560,19 @@ const Board = () => {
         : ["employeeTasks", user?._id];
 
     queryClient.setQueryData(queryKey, (oldData) => {
-      if (!oldData || !oldData.tasks) return oldData;
+      if (!oldData) return oldData;
 
-      const updatedTasks = oldData.tasks.map((task) => {
+      const updatedTasks = (oldData.tasks || []).map((task) => {
+        if (task._id === taskId) {
+          return {
+            ...task,
+            status: targetStatus,
+          };
+        }
+        return task;
+      });
+
+      const updatedSubTasks = (oldData.subTasks || []).map((task) => {
         if (task._id === taskId) {
           return {
             ...task,
@@ -534,6 +585,7 @@ const Board = () => {
       return {
         ...oldData,
         tasks: updatedTasks,
+        subTasks: updatedSubTasks,
       };
     });
 
@@ -692,6 +744,89 @@ const Board = () => {
               </div>
             </div>
           )}
+          <div className="relative" ref={typeDropdownRef}>
+            <button
+              onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+              className="flex items-center justify-between px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm min-w-[150px] hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <span className="text-gray-700">
+                {selectedTypes.length === 3
+                  ? "All Types"
+                  : selectedTypes.length === 0
+                    ? "No Types selected"
+                    : `${selectedTypes.length} Type${selectedTypes.length > 1 ? "s" : ""
+                    } selected`}
+              </span>
+              <svg
+                className={`w-4 h-4 ml-2 text-gray-400 transition-transform ${isTypeDropdownOpen ? "rotate-180" : ""
+                  }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {isTypeDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-[100] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                {[
+                  { id: "task", label: "Regular Tasks" },
+                  { id: "subtask", label: "Subtasks" },
+                  { id: "extra", label: "Extra Tasks" },
+                ].map((item) => (
+                  <label
+                    key={item.id}
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group"
+                  >
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedTypes.includes(item.id)}
+                        onChange={() => {
+                          setSelectedTypes((prev) =>
+                            prev.includes(item.id)
+                              ? prev.filter((t) => t !== item.id)
+                              : [...prev, item.id]
+                          );
+                        }}
+                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:bg-blue-600 checked:border-blue-600"
+                      />
+                      <svg
+                        className="absolute h-3.5 w-3.5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="3"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                      {item.label}
+                    </span>
+                  </label>
+                ))}
+                {selectedTypes.length !== 3 && (
+                  <button
+                    onClick={() => setSelectedTypes(["task", "subtask", "extra"])}
+                    className="mt-1 w-full text-left px-3 py-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium border-t border-gray-100"
+                  >
+                    Select All
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {canCreateTask && (
             <button
