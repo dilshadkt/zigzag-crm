@@ -5,17 +5,25 @@ import {
 } from "react-icons/md";
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
 import WorkLoad from "../../components/dashboard/workload";
-import NearestEvents from "../../components/dashboard/workload/events";
+import PendingWork from "../../components/dashboard/workload/events";
 import ActivityStream from "../../components/dashboard/activityStream";
+import NearestEvents from "../../components/dashboard/nearestEvents";
 import { Link } from "react-router-dom";
 import { useCompanyProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import ProjectCard from "../../components/shared/projectCard";
 import { useNavigate } from "react-router-dom";
+import DashboardCampaigns from "../../components/dashboard/campaigns";
+import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
 
 const CompanyDashboard = () => {
   const { companyId, user } = useAuth();
+  const { hasPermission } = usePermissions();
   const navigate = useNavigate();
+
+  // Check if user has permission to view daily checklist
+  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist");
 
   // Debug: Log companyId to ensure it's available
   useEffect(() => {
@@ -150,8 +158,7 @@ const CompanyDashboard = () => {
           <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
           <span
             className={`text-xs whitespace-nowrap md:text-base 
-              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${
-                !isCurrentMonth ? "text-blue-600 font-medium" : ""
+              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
               }`}
             onClick={resetToCurrentMonth}
             title={
@@ -182,8 +189,8 @@ const CompanyDashboard = () => {
         {/* Workload section */}
         <WorkLoad />
 
-        {/* Nearest event */}
-        <NearestEvents />
+        {/* Pending work / Nearest event */}
+        <PendingWork taskMonth={taskMonth} />
       </div>
 
       {/* Projects Section */}
@@ -210,7 +217,7 @@ const CompanyDashboard = () => {
                 </div>
               </div>
             ) : projects.length > 0 ? (
-              projects.map((project) => (
+              projects.slice(0, 3).map((project) => (
                 <ProjectCard
                   key={project?._id}
                   project={project}
@@ -227,10 +234,18 @@ const CompanyDashboard = () => {
               </div>
             )}
           </div>
+          {/* Campaigns Section */}
+          <DashboardCampaigns />
         </div>
-        {/* Activity stream */}
-        <ActivityStream />
+        {/* Sidebar: Activity stream and nearest events */}
+        <div className="flex flex-col gap-5 md:col-span-2">
+          <ActivityStream />
+          <NearestEvents selectedDate={selectedDate} />
+        </div>
       </div>
+
+      {/* Daily Checklist Drawer */}
+      {canViewDailyChecklist && <DailyChecklistDrawer projects={projects} />}
     </section>
   );
 };

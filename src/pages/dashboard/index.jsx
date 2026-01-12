@@ -34,9 +34,11 @@ const Dashboard = () => {
   const canCreateTask = hasPermission("tasks", "create");
   // User is considered "privileged" if they can both create and edit tasks
   const isPrivilegedUser = canEditTasks && canCreateTask;
-
   // If user is employee but has task admin privileges, treat them as non-employee (admin-view) for dashboard
-  const isEmployee = user?.role === "employee" && !isPrivilegedUser;
+  const isEmployee = user?.role === "employee";
+  const isEmployeeHasTaskAdmin = isEmployee && isPrivilegedUser;
+
+
   const isCompanyAdmin = user?.role === "company-admin";
 
   // Check if user has permission to view daily checklist

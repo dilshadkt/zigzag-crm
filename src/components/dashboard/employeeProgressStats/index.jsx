@@ -468,7 +468,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       )}
 
       {/* Quick Actions */}
-      {totalTasks === 0 && (
+      {/* {totalTasks === 0 && (
         <div className="text-center py-8">
           <div className="text-gray-400 text-4xl mb-3">📊</div>
           <h3 className="text-lg font-medium text-gray-500 mb-2">
@@ -478,7 +478,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
             Your task statistics will appear here once tasks are assigned.
           </p>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
