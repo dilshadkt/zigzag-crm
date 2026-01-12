@@ -434,7 +434,7 @@ const Board = () => {
       (task.assignedTo &&
         task.assignedTo.some((user) => user._id === selectedAssignee));
 
-    const isSubtask = task.itemType === "subtask";
+    const isSubtask = !!task.parentTask; // Subtasks have a parentTask property
     const isExtraTask = task.taskGroup === "extraTask";
     const isRegularTask = !isSubtask && !isExtraTask;
 
@@ -530,7 +530,7 @@ const Board = () => {
         updateData.order = newOrder;
       }
 
-      if (task?.itemType === "subtask") {
+      if (task?.parentTask) {
         await updateSubTaskById(taskId, updateData);
       } else {
         await updateTaskById(taskId, updateData);
@@ -885,7 +885,15 @@ const Board = () => {
                     task={task}
                     index={index}
                     onClick={(task) => {
-                      if (task.project) {
+                      // If it's a subtask (has parentTask), navigate to the parent task
+                      if (task?.parentTask) {
+                        if (task.project) {
+                          navigate(`/projects/${task.project._id}/${task.parentTask._id}`);
+                        } else {
+                          navigate(`/tasks/${task.parentTask._id}`);
+                        }
+                      } else if (task.project) {
+                        // Regular task with project
                         navigate(`/projects/${task.project._id}/${task._id}`);
                       } else {
                         // For board tasks without project, navigate to task details directly

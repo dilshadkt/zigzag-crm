@@ -310,7 +310,6 @@ const TaskOnReview = () => {
   };
 
   const handleTaskClick = (task) => {
-    console.log(task);
     if (task.type === "subtask") {
       // For subtasks, navigate to the parent task detail page
       if (task.parentTask?._id) {

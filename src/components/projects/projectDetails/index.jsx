@@ -45,7 +45,7 @@ const ProjectDetails = ({
   // Filter function to hide subtasks if needed
   const filterSubtasks = (tasks) => {
     if (!showSubtasks) {
-      return tasks.filter((task) => task?.itemType !== "subtask");
+      return tasks.filter((task) => !task?.parentTask); // Filter out subtasks (tasks with parentTask)
     }
     return tasks;
   };
@@ -75,8 +75,8 @@ const ProjectDetails = ({
   };
 
   const handleNavigateTask = (task) => {
-    // If it's a subtask, navigate to the parent task
-    if (task?.itemType === "subtask" && task?.parentTask) {
+    // If it's a subtask (has parentTask), navigate to the parent task
+    if (task?.parentTask) {
       navigate(`/projects/${activeProject._id}/${task.parentTask._id}`);
     } else {
       // Regular task navigation
