@@ -5,7 +5,6 @@ import debounce from "lodash/debounce";
 
 const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
 
-  console.log(defaultSelectedEmployee);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);

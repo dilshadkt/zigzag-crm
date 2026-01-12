@@ -47,11 +47,15 @@ const Calendar = () => {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
-  const isEmployee = user?.role === "employee";
 
   // Permission checks
   const canEditTasks = hasPermission("tasks", "edit");
   const canCreateTask = hasPermission("tasks", "create");
+
+  // User is considered "privileged" for calendar purposes if they can both create and edit tasks
+  const isPrivilegedUser = canEditTasks && canCreateTask;
+  // If user is employee but has task admin privileges, treat them as non-employee (admin-view) for calendar
+  const isEmployee = user?.role === "employee" && !isPrivilegedUser;
 
   // Use persisted current date or fallback to current month (new Date())
   const [currentDate, setCurrentDate] = useState(() => {

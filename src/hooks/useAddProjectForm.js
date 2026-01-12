@@ -16,7 +16,6 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     dailyChecklist: defaultValue?.dailyChecklist || [],
   };
 
-  console.log(defaultValue?.teams)
   const validationSchema = Yup.object().shape({
     name: Yup.string()
       .required("Name is required")

@@ -28,7 +28,15 @@ import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/Dail
 const Dashboard = () => {
   const { companyId, user } = useAuth();
   const { hasPermission } = usePermissions();
-  const isEmployee = user?.role === "employee";
+
+  // Permission checks
+  const canEditTasks = hasPermission("tasks", "edit");
+  const canCreateTask = hasPermission("tasks", "create");
+  // User is considered "privileged" if they can both create and edit tasks
+  const isPrivilegedUser = canEditTasks && canCreateTask;
+
+  // If user is employee but has task admin privileges, treat them as non-employee (admin-view) for dashboard
+  const isEmployee = user?.role === "employee" && !isPrivilegedUser;
   const isCompanyAdmin = user?.role === "company-admin";
 
   // Check if user has permission to view daily checklist
@@ -281,7 +289,9 @@ const Dashboard = () => {
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
       {canViewDailyChecklist && (
-        <DailyChecklistDrawer projects={projectsForChecklist} />
+        <DailyChecklistDrawer projects={projectsForChecklist}
+
+        />
       )}
     </section>
   );
