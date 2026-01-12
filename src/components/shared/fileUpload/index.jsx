@@ -48,7 +48,7 @@ const FileAndLinkUpload = ({
     if (
       file.type === "application/msword" ||
       file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
       return "doc";
     if (file.type.startsWith("video/")) return "video";
@@ -93,7 +93,7 @@ const FileAndLinkUpload = ({
 
   // Memoize the onChange callback to prevent unnecessary re-renders
   const handleChange = useCallback(() => {
-    const attachements = [
+    const attachments = [
       ...files?.map((file) => ({
         file: file.file,
         preview: file.preview,
@@ -104,7 +104,7 @@ const FileAndLinkUpload = ({
       ...links,
     ];
     if (onChange) {
-      onChange(attachements);
+      onChange(attachments);
     }
   }, [files, links, onChange]);
 
