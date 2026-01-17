@@ -53,7 +53,6 @@ const SortableStatsCard = ({ stat, onClick }) => {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
       onClick={onClick}
       className={`${stat.bgColor
         } rounded-xl p-4 flex flex-col items-center
@@ -81,8 +80,11 @@ const SortableStatsCard = ({ stat, onClick }) => {
       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <span className="text-xs text-gray-400">→</span>
       </div>
-      {/* Drag indicator */}
-      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      {/* Drag indicator with listeners */}
+      <div
+        {...listeners}
+        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-move"
+      >
         <span className="text-xs text-gray-400">⋮⋮</span>
       </div>
     </div>
