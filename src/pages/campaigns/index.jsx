@@ -22,9 +22,9 @@ const Campaigns = () => {
     const campaigns = campaignsData?.data || [];
 
     return (
-        <section className="flex flex-col h-full bg-[#F8FAFC]">
+        <section className="flex flex-col rounded-2xl overflow-hidden h-full bg-white">
             {/* Header Section */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="bg-white  rounded-t-2xl border-gray-200 px-6 py-4">
                 <div className="flexBetween mb-4">
                     <div className="flex items-center gap-4">
                         <Navigator />
@@ -74,7 +74,7 @@ const Campaigns = () => {
             </div>
 
             {/* Table Content */}
-            <div className="flex-1 overflow-hidden flex flex-col p-6">
+            <div className="flex-1 overflow-hidden flex flex-col ">
                 <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm flex flex-col h-full">
                     <div className="overflow-x-auto flex-1 custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1200px]">
