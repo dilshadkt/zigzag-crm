@@ -207,7 +207,6 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
     const progress = todayTasks.total > 0
         ? (todayTasks.completedCount / todayTasks.total) * 100
         : 0;
-    console.log(todayTasks)
     const mutation = useMutation({
         mutationFn: ({ projectId, taskTitle, completed }) =>
             updateDailyChecklistStatus(projectId, { date: currentDate, taskTitle, completed }),
@@ -244,7 +243,6 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
         });
         return Object.values(groups);
     }, [todayTasks.allTasks]);
-    console.log(tasksByProject)
     return (
         <>
             <CircularProgress value={progress} onClick={() => setIsOpen(true)} />

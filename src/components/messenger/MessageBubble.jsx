@@ -137,12 +137,7 @@ const MessageBubble = React.memo(
           message.metadata?.action?.includes("attachment_added");
         const attachments = message.metadata?.attachments || [];
 
-        console.log("🔍 [MessageBubble] System message rendering:", {
-          isAttachmentMessage,
-          attachmentCount: attachments.length,
-          metadata: message.metadata,
-          hasAttachments: attachments.length > 0,
-        });
+    
 
         return (
           <div

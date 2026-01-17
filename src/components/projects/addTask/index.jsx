@@ -96,10 +96,7 @@ const AddTask = ({
   const [showFlowAssigneeModal, setShowFlowAssigneeModal] = useState(false);
   const [missingFlowAssignees, setMissingFlowAssignees] = useState([]);
 
-  // Debug selectedProjectId changes
-  useEffect(() => {
-    console.log("SelectedProjectId changed:", selectedProjectId);
-  }, [selectedProjectId]);
+ 
   // Fetch project details when a project is selected
   const {
     data: selectedProjectData,
@@ -134,7 +131,6 @@ const AddTask = ({
 
   // Update selectedProjectId when values.project changes
   useEffect(() => {
-    console.log("Project value changed:", values?.project);
     setSelectedProjectId(values?.project || "");
   }, [values?.project]);
 
@@ -250,7 +246,6 @@ const AddTask = ({
     }
 
     if (!workDetails) {
-      console.log("No work details found for project:", selectedProjectId);
       return [];
     }
 

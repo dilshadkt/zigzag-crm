@@ -388,19 +388,13 @@ export const useChat = () => {
   const loadMessages = async (conversationId) => {
     // Check if messages are already loaded and not empty
     if (messages[conversationId] && messages[conversationId].length > 0) {
-      console.log(
-        "📋 Messages already loaded for conversation:",
-        conversationId
-      );
+     
       return; // Already loaded
     }
 
     // Check if we're already loading this conversation
     if (loadMessages._loading && loadMessages._loading.has(conversationId)) {
-      console.log(
-        "⏳ Already loading messages for conversation:",
-        conversationId
-      );
+    
       return;
     }
 
@@ -411,11 +405,9 @@ export const useChat = () => {
     loadMessages._loading.add(conversationId);
 
     try {
-      console.log("📥 Loading messages for conversation:", conversationId);
       const result = await chatService.getMessages(conversationId);
       if (result.success) {
         const rawMessages = result.data.messages || [];
-        console.log(`📦 Raw messages from API: ${rawMessages.length}`);
 
         // Deduplicate messages before transformation
         const uniqueMessages = [];
@@ -432,16 +424,12 @@ export const useChat = () => {
 
           // Skip if we've seen this exact ID
           if (seenIds.has(messageId)) {
-            console.log("🚫 Skipping duplicate message by ID:", messageId);
             return;
           }
 
           // Skip if we've seen this exact content and time combination
           if (seenContentTime.has(contentTimeKey)) {
-            console.log(
-              "🚫 Skipping duplicate message by content+time:",
-              contentTimeKey
-            );
+          
             return;
           }
 
@@ -450,19 +438,13 @@ export const useChat = () => {
           uniqueMessages.push(msg);
         });
 
-        console.log(
-          `📦 Unique messages after deduplication: ${uniqueMessages.length}`
-        );
-
+     
         const transformedMessages = transformMessageData(
           uniqueMessages,
           currentUserId
         );
 
-        console.log(
-          `📦 Loaded ${transformedMessages.length} messages for conversation:`,
-          conversationId
-        );
+      
 
         setMessages((prev) => ({
           ...prev,
@@ -484,14 +466,10 @@ export const useChat = () => {
   // Select a conversation
   const selectConversation = useCallback(
     async (conversation) => {
-      console.log("🎯 Selecting conversation:", conversation);
 
       // Leave previous conversation room
       if (selectedConversation?.id) {
-        console.log(
-          "🚪 Leaving previous conversation:",
-          selectedConversation.id
-        );
+     
         socketService.leaveConversation(selectedConversation.id);
       }
 
@@ -500,11 +478,7 @@ export const useChat = () => {
       setConversations((prev) =>
         prev.map((conv) => {
           if (conv.id === conversation.id || conv._id === conversation.id) {
-            console.log(
-              `🔄 Clearing unread count for conversation: ${conv.name} (was: ${
-                conv.unreadCount || conv.unread || 0
-              })`
-            );
+          
             return { ...conv, unreadCount: 0, unread: 0 };
           }
           return conv;
@@ -512,27 +486,21 @@ export const useChat = () => {
       );
 
       // Join new conversation room
-      console.log("🚪 Joining new conversation:", conversation.id);
       socketService.joinConversation(conversation.id);
 
       // Add a small delay to ensure room is joined before proceeding
       await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Load messages if not already loaded
-      console.log("📥 Loading messages for conversation:", conversation.id);
       await loadMessages(conversation.id);
 
       // Load pinned messages
       await loadPinnedMessages(conversation.id);
 
       // Mark messages as read
-      console.log(
-        "✅ Marking messages as read for conversation:",
-        conversation.id
-      );
+    
       try {
         await chatService.markMessagesAsRead(conversation.id);
-        console.log("✅ Messages marked as read successfully");
       } catch (error) {
         console.error("❌ Failed to mark messages as read:", error);
       }

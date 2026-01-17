@@ -14,7 +14,83 @@ import {
 } from "react-icons/fi";
 import { useGetCompanyStatsChecking } from "../../../api/hooks/dashboard";
 import { MdBusinessCenter } from "react-icons/md";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  useDroppable,
+  useDraggable
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+
+// Sortable Stats Card Component
+const SortableStatsCard = ({ stat, onClick }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: stat.id });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
+
+  const Icon = stat.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      className={`${stat.bgColor
+        } rounded-xl p-4 flex flex-col items-center
+       justify-center text-center cursor-pointer border-1 border-transparent
+         ${stat.borderColor
+        } transform group relative overflow-hidden transition-all duration-200
+         ${isDragging
+          ? "shadow-lg scale-105 rotate-2"
+          : "hover:scale-105"
+        }`}
+    >
+      <div className={`${stat.color} p-3 rounded-lg mb-3`}>
+        <Icon className="w-4 h-4 text-white" />
+      </div>
+      <div
+        className={`text-2xl font-bold ${stat.textColor} mb-2 `}
+      >
+        {stat.value}
+      </div>
+      <p className="text-sm font-medium text-gray-700 mb-1 ">
+        {stat.title}
+      </p>
+      <p className="text-xs text-gray-500">{stat.subtitle}</p>
+      {/* Hover indicator */}
+      <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <span className="text-xs text-gray-400">→</span>
+      </div>
+      {/* Drag indicator */}
+      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <span className="text-xs text-gray-400">⋮⋮</span>
+      </div>
+    </div>
+  );
+};
 
 const CompanyProgressStats = ({ taskMonth }) => {
   // Boolean: true if the given taskMonth is the current calendar month (formatted as "YYYY-MM")
@@ -41,6 +117,14 @@ const CompanyProgressStats = ({ taskMonth }) => {
   const [cardOrder, setCardOrder] = React.useState(null);
   const isInitialized = React.useRef(false);
 
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   // Refetch data when component mounts and when window gains focus
   React.useEffect(() => {
     const handleFocus = () => {
@@ -57,12 +141,20 @@ const CompanyProgressStats = ({ taskMonth }) => {
 
   // Function to handle drag end
   const handleDragEnd = React.useCallback(
-    (result) => {
-      if (!result.destination || !cardOrder) return;
+    (event) => {
+      const { active, over } = event;
 
-      const newOrder = Array.from(cardOrder);
-      const [reorderedItem] = newOrder.splice(result.source.index, 1);
-      newOrder.splice(result.destination.index, 0, reorderedItem);
+      if (!over || !cardOrder) return;
+
+      const activeId = active.id;
+      const overId = over.id;
+
+      if (activeId === overId) return;
+
+      const oldIndex = cardOrder.indexOf(activeId);
+      const newIndex = cardOrder.indexOf(overId);
+
+      const newOrder = arrayMove(cardOrder, oldIndex, newIndex);
 
       setCardOrder(newOrder);
       localStorage.setItem(
@@ -473,68 +565,23 @@ const CompanyProgressStats = ({ taskMonth }) => {
         </div>
       </div>
       {/* Company Statistics Grid */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="stats-grid" direction="horizontal">
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={`grid grid-cols-2 md:grid-cols-7 gap-2 md:gap-2 flex-1 transition-colors duration-200 ${snapshot.isDraggingOver ? "bg-blue-50" : ""
-                }`}
-            >
-              {orderedStats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <Draggable key={stat.id} draggableId={stat.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        onClick={stat.onClick}
-                        className={`${stat.bgColor
-                          } rounded-xl p-4 flex flex-col items-center
-                         justify-center text-center cursor-pointer border-1 border-transparent
-                           ${stat.borderColor
-                          } transform group relative overflow-hidden transition-all duration-200
-                           ${snapshot.isDragging
-                            ? "shadow-lg scale-105 rotate-2"
-                            : "hover:scale-105"
-                          }`}
-                        style={{
-                          ...provided.draggableProps.style,
-                        }}
-                      >
-                        <div className={`${stat.color} p-3 rounded-lg mb-3`}>
-                          <Icon className="w-4 h-4 text-white" />
-                        </div>
-                        <div
-                          className={`text-2xl font-bold ${stat.textColor} mb-2 `}
-                        >
-                          {stat.value}
-                        </div>
-                        <p className="text-sm font-medium text-gray-700 mb-1 ">
-                          {stat.title}
-                        </p>
-                        <p className="text-xs text-gray-500">{stat.subtitle}</p>
-                        {/* Hover indicator */}
-                        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <span className="text-xs text-gray-400">→</span>
-                        </div>
-                        {/* Drag indicator */}
-                        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <span className="text-xs text-gray-400">⋮⋮</span>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={cardOrder || []} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-2 md:gap-2 flex-1">
+            {orderedStats.map((stat) => (
+              <SortableStatsCard
+                key={stat.id}
+                stat={stat}
+                onClick={stat.onClick}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 };

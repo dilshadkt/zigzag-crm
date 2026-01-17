@@ -62,10 +62,7 @@ const VoiceMessage = ({ attachment, isOwn, messageId, attachmentIndex }) => {
               attachmentIndex,
               audioDuration
             );
-            console.log(
-              "✅ Updated voice message duration in database:",
-              audioDuration
-            );
+          
           } catch (error) {
             console.warn("⚠️ Failed to update duration in database:", error);
           }

@@ -37,7 +37,6 @@ const Task = ({
   isMoreOptions,
   onMoreOptions
 }) => {
-  console.log(task)
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
   const priorityColor =
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;

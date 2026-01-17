@@ -9,7 +9,6 @@ class SocketService {
   // Initialize socket connection
   connect(token) {
     if (this.socket?.connected) {
-      console.log("Socket already connected");
       return this.socket;
     }
 
@@ -79,26 +78,16 @@ class SocketService {
   // Join a conversation room
   joinConversation(conversationId) {
     if (this.socket && this.isConnected) {
-      console.log("🚪 Joining conversation:", conversationId);
-      console.log("🔗 Socket connected:", this.socket.connected);
-      console.log("🔗 Socket ID:", this.socket.id);
 
       this.socket.emit("join_conversation", conversationId);
 
       // Add a listener for successful room join (if backend sends confirmation)
       this.socket.once("joined_conversation", (data) => {
-        console.log("✅ Successfully joined conversation:", data);
       });
 
       // Add a small delay to check if room was joined
       setTimeout(() => {
-        console.log("🏠 Socket rooms after join attempt:", this.socket.rooms);
-        // Note: socket.rooms might not be available on client side in some socket.io versions
-        // This is mainly for debugging purposes
 
-        // Let's also check if we can get room info another way
-        console.log("🔍 Socket adapter rooms:", this.socket.adapter?.rooms);
-        console.log("🔍 Socket manager rooms:", this.socket.manager?.rooms);
       }, 100);
     } else {
       console.error("❌ Cannot join conversation: Socket not connected");
