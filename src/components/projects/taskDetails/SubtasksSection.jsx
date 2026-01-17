@@ -4,6 +4,7 @@ import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
 import ActivityTimeline from "./ActivityTimeline";
 import { FiActivity } from "react-icons/fi";
+import { usePermissions } from "../../../hooks/usePermissions";
 
 const SubtasksSection = ({
   subTasks,
@@ -16,6 +17,7 @@ const SubtasksSection = ({
   isAdmin,
   canManageSubtasks,
 }) => {
+  const { hasPermission } = usePermissions();
   const [expandedSubTasks, setExpandedSubTasks] = useState(new Set());
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [reworkModalOpen, setReworkModalOpen] = useState(false);
@@ -23,6 +25,9 @@ const SubtasksSection = ({
   const [historySubTask, setHistorySubTask] = useState(null);
   const [reworkSubTask, setReworkSubTask] = useState(null);
   const [timelineSubTask, setTimelineSubTask] = useState(null);
+
+  // Check if user can delete subtasks (company admin or has tasks delete permission)
+  const canDeleteSubtasks = isCompany || hasPermission("tasks", "delete");
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -209,8 +214,8 @@ const SubtasksSection = ({
                         </svg>
                       </button>
                     )}
-                    {/* Only company admins can delete subtasks */}
-                    {isCompany && (
+                    {/* Users with delete permission can delete subtasks */}
+                    {canDeleteSubtasks && (
                       <button
                         onClick={() => onDeleteSubTask(subtask._id)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-700 p-1"

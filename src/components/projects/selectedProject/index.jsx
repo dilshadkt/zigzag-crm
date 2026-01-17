@@ -27,7 +27,6 @@ const SelectedProject = ({ currentProject }) => {
   const canEditProject = isCompany || hasPermission("projects", "edit");
   const canDeleteProject = isCompany || hasPermission("projects", "delete");
   const canPauseProject = isCompany || hasPermission("projects", "edit");
-
   const formatedDate = (isoDate) => {
     const date = new Date(isoDate);
     const formattedDate = date.toLocaleDateString("en-US", {
