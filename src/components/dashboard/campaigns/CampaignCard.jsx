@@ -50,7 +50,7 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
             <div className="flex justify-between items-start">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg ${getStatusColor(campaign.status)}`}>
+                        <span className={`text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-lg ${getStatusColor(campaign.status)}`}>
                             {campaign.status || "Planned"}
                         </span>
                         <span className="text-[10px] font-bold text-gray-400 border-l border-gray-200 pl-2">
@@ -62,8 +62,8 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
                     </h3>
                 </div>
                 <div className="flex flex-col items-end">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Budget</span>
-                    <span className="text-sm font-black text-gray-900">
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-tighter">Budget</span>
+                    <span className="text-sm font-semibold text-gray-900">
                         {formatCurrency(budget)}
                     </span>
                 </div>
@@ -72,15 +72,15 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
             <div className="grid grid-cols-3 gap-2 bg-white/50 rounded-2xl p-3 border border-gray-100/50">
                 <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Results</span>
-                    <span className="text-xs font-black text-gray-800">{(campaign.totalResults || 0).toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-gray-800">{(campaign.totalResults || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Spent</span>
-                    <span className="text-xs font-black text-blue-600">₹{(campaign.amountSpent || 0).toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-blue-600">₹{(campaign.amountSpent || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">CPR</span>
-                    <span className="text-xs font-black text-gray-800">₹{(campaign.cpr || 0).toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-gray-800">₹{(campaign.cpr || 0).toFixed(2)}</span>
                 </div>
             </div>
 
@@ -99,7 +99,7 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
                                 return (
                                     <div
                                         key={lead._id || index}
-                                        className={`flex h-7 w-7 rounded-xl ring-2 ring-white ${color.bg} items-center justify-center text-[10px] font-black ${color.text} shadow-sm`}
+                                        className={`flex h-7 w-7 rounded-xl ring-2 ring-white ${color.bg} items-center justify-center text-[10px] font-semibold ${color.text} shadow-sm`}
                                     >
                                         {initial.toUpperCase()}
                                     </div>
@@ -111,7 +111,7 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
                             </div>
                         )}
                         {leadCount > 3 && (
-                            <div className="flex h-7 w-7 rounded-xl ring-2 ring-white bg-gray-50 items-center justify-center text-[10px] font-black text-gray-500 shadow-sm">
+                            <div className="flex h-7 w-7 rounded-xl ring-2 ring-white bg-gray-50 items-center justify-center text-[10px] font-semibold text-gray-500 shadow-sm">
                                 +{leadCount - 3}
                             </div>
                         )}
