@@ -228,6 +228,11 @@ const PERMISSION_CATEGORIES = {
         label: "View Daily Checklist",
         description: "Can view the daily checklist drawer on dashboard",
       },
+      {
+        key: "viewCampaignDetails",
+        label: "View Campaign Details",
+        description: "Can view campaign details and analytics on dashboard",
+      },
     ],
   },
 };

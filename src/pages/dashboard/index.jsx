@@ -44,6 +44,9 @@ const Dashboard = () => {
   // Check if user has permission to view daily checklist
   const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist");
 
+  // Check if user has permission to view campaign details
+  const canViewCampaignDetails = hasPermission("dashboard", "viewCampaignDetails");
+
   // Get user-specific localStorage key
   const getStorageKey = (userId) => {
     return userId
@@ -278,7 +281,7 @@ const Dashboard = () => {
             )}
           </div>
           {/* Campaigns Section */}
-          {!isEmployee && <DashboardCampaigns />}
+          {(isCompanyAdmin || canViewCampaignDetails) && <DashboardCampaigns />}
         </div>
         {/* activity stream and nearest events - only show for non-employees */}
         {!isEmployee && (
