@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   useDeleteAllCompanyTasks,
   useDeleteAllCompanyProjects,
   useDeleteAllCompanyEmployees,
+  useUpdateProfile,
 } from "../../../api/hooks";
 import { toast } from "react-hot-toast";
 import Modal from "../../../components/shared/modal";
+import { useDispatch } from "react-redux";
+import { updateUser } from "../../../store/slice/authSlice";
 import {
   FiTrash2,
   FiAlertTriangle,
@@ -15,10 +18,14 @@ import {
   FiCheckSquare,
   FiShield,
   FiDatabase,
+  FiCamera,
+  FiLoader,
 } from "react-icons/fi";
 
 const Account = () => {
   const { user } = useAuth();
+  const dispatch = useDispatch();
+  const fileInputRef = useRef(null);
   const isCompanyAdmin = user?.role === "company-admin";
 
   // Delete mutations
@@ -26,11 +33,49 @@ const Account = () => {
   const deleteAllProjects = useDeleteAllCompanyProjects();
   const deleteAllEmployees = useDeleteAllCompanyEmployees();
 
+  // Profile update mutation
+  const updateProfileMutation = useUpdateProfile((data) => {
+    if (data.success) {
+      dispatch(updateUser(data.employee));
+      toast.success("Profile image updated successfully");
+    }
+  });
+
   // Modal states
   const [showDeleteTasksModal, setShowDeleteTasksModal] = useState(false);
   const [showDeleteProjectsModal, setShowDeleteProjectsModal] = useState(false);
   const [showDeleteEmployeesModal, setShowDeleteEmployeesModal] =
     useState(false);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+
+    try {
+      await updateProfileMutation.mutateAsync(formData);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update profile image");
+    }
+  };
 
   // Handle delete operations
   const handleDeleteAllTasks = async () => {
@@ -140,20 +185,50 @@ const Account = () => {
           {/* Account Information */}
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
             <div className="flex items-center gap-3 mb-4">
-              <div
-                className="w-10 h-10 rounded-full overflow-hidden bg-gray-900
-               flex items-center justify-center"
-              >
-                {user?.profileImage ? (
-                  <img
-                    src={user.profileImage}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <FiUsers className="w-5 h-5 text-blue-600" />
-                )}
+              <div className="relative group">
+                <div
+                  className={`w-14 h-14 rounded-full overflow-hidden bg-gray-900
+                    flex items-center justify-center cursor-pointer border-2 border-white shadow-sm
+                    hover:brightness-75 transition-all duration-200 ${updateProfileMutation.isLoading ? 'opacity-50' : ''}`}
+                  onClick={handleAvatarClick}
+                >
+                  {user?.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={`${user.firstName} ${user.lastName}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="bg-blue-100 w-full h-full flex items-center justify-center">
+                      <FiUsers className="w-6 h-6 text-blue-600" />
+                    </div>
+                  )}
+
+                  {/* Hover Overlay */}
+                  {!updateProfileMutation.isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FiCamera className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+
+                  {/* Loading State */}
+                  {updateProfileMutation.isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <FiLoader className="w-5 h-5 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
+
               <div>
                 <h2 className=" font-semibold text-gray-900">
                   Account Information

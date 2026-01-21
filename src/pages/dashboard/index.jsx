@@ -46,7 +46,6 @@ const Dashboard = () => {
 
   // Check if user has permission to view campaign details
   const canViewCampaignDetails = hasPermission("dashboard", "viewCampaignDetails");
-
   // Get user-specific localStorage key
   const getStorageKey = (userId) => {
     return userId

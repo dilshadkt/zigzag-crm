@@ -243,9 +243,40 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
   const { mutate: updatePermissions, isLoading: isSaving } =
     useUpdatePermissions(companyId);
 
-  // Initialize permissions from role
+  // Initialize permissions from role with default structure
   useEffect(() => {
-    setPermissions(role.permissions || {});
+    const initializePermissions = (rolePermissions) => {
+      const defaultPermissions = {
+        tasks: {},
+        projects: {},
+        employees: {},
+        vacations: {},
+        attendance: {},
+        leads: {},
+        settings: {},
+        dashboard: {},
+      };
+
+      // Merge existing permissions with defaults
+      const mergedPermissions = { ...defaultPermissions };
+
+      if (rolePermissions) {
+        Object.keys(rolePermissions).forEach((category) => {
+          if (mergedPermissions[category]) {
+            mergedPermissions[category] = {
+              ...mergedPermissions[category],
+              ...rolePermissions[category],
+            };
+          } else {
+            mergedPermissions[category] = rolePermissions[category];
+          }
+        });
+      }
+
+      return mergedPermissions;
+    };
+
+    setPermissions(initializePermissions(role.permissions));
   }, [role]);
 
   const handlePermissionToggle = (category, permissionKey) => {
