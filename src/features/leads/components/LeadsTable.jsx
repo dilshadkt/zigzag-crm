@@ -1,3 +1,5 @@
+import { useRef, useMemo } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import LeadRow from "./LeadRow";
 
 const headerClasses =
@@ -32,10 +34,28 @@ const LeadsTable = ({
 
   const showEmptyState = leads.length === 0;
 
+  const parentRef = useRef(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: leads.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64, // Estimate height of a row
+    overscan: 10,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? totalSize - virtualRows[virtualRows.length - 1].end
+      : 0;
+
   return (
-    <div className="overflow-x-auto h-full">
-      <table className="min-w-full">
-        <thead className="bg-slate-50 text-slate-500">
+    <div className="overflow-x-auto h-full overflow-y-auto" ref={parentRef}>
+      <table className="min-w-full border-separate border-spacing-0">
+        <thead className="bg-slate-50 text-slate-500 sticky top-0 z-30">
           <tr>
             <th className={headerClasses}>
               <input
@@ -71,30 +91,43 @@ const LeadsTable = ({
               </td>
             </tr>
           ) : (
-            leads.map((lead) => {
-              const leadId = String(lead._id || lead.id);
-              return (
-                <LeadRow
-                  key={leadId}
-                  lead={lead}
-                  columns={columns}
-                  isSelected={selectedLeadIds.includes(leadId)}
-                  onToggle={onToggleSelect}
-                  onRowClick={onRowClick}
-                  onEdit={onEdit}
-                  onSendEmail={onSendEmail}
-                  onCreateTask={onCreateTask}
-                  onAssign={onAssign}
-                  onDelete={onDelete}
-                  onConvert={onConvert}
-                  onCopyURL={onCopyURL}
-                  statuses={statuses}
-                  onStatusChange={onStatusChange}
-                  onCustomFieldChange={onCustomFieldChange}
-                  isEmployee={isEmployee}
-                />
-              );
-            })
+            <>
+              {paddingTop > 0 && (
+                <tr>
+                  <td colSpan={columns.length + 2} style={{ height: `${paddingTop}px` }} />
+                </tr>
+              )}
+              {virtualRows.map((virtualRow) => {
+                const lead = leads[virtualRow.index];
+                const leadId = String(lead._id || lead.id);
+                return (
+                  <LeadRow
+                    key={leadId}
+                    lead={lead}
+                    columns={columns}
+                    isSelected={selectedLeadIds.includes(leadId)}
+                    onToggle={onToggleSelect}
+                    onRowClick={onRowClick}
+                    onEdit={onEdit}
+                    onSendEmail={onSendEmail}
+                    onCreateTask={onCreateTask}
+                    onAssign={onAssign}
+                    onDelete={onDelete}
+                    onConvert={onConvert}
+                    onCopyURL={onCopyURL}
+                    statuses={statuses}
+                    onStatusChange={onStatusChange}
+                    onCustomFieldChange={onCustomFieldChange}
+                    isEmployee={isEmployee}
+                  />
+                );
+              })}
+              {paddingBottom > 0 && (
+                <tr>
+                  <td colSpan={columns.length + 2} style={{ height: `${paddingBottom}px` }} />
+                </tr>
+              )}
+            </>
           )}
         </tbody>
       </table>

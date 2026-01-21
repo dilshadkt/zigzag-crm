@@ -1,4 +1,5 @@
-import React from "react";
+import React, { memo } from "react";
+// ... (rest of imports)
 import { useNavigate } from "react-router-dom";
 import {
   FiClock,
@@ -10,9 +11,10 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
-const TaskCard = ({ task, filter }) => {
+const TaskCard = memo(({ task, filter }) => {
   const navigate = useNavigate();
 
+  // ... (rest of component logic)
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "high":
@@ -62,20 +64,16 @@ const TaskCard = ({ task, filter }) => {
   };
 
   const handleTaskClick = (task) => {
-    // Check if it's a subtask (either has parentTask or isSubTask flag)
     if (task.parentTask && task.parentTask._id) {
-      // If it's a subtask, navigate to the parent task
       if (task.project) {
         navigate(`/projects/${task.project._id}/${task.parentTask._id}`);
       } else {
         navigate(`/tasks/${task.parentTask._id}`);
       }
     } else {
-      // Regular task navigation
       if (task.project) {
         navigate(`/projects/${task.project._id}/${task._id}`);
       } else {
-        // For tasks without project, navigate to task details directly
         navigate(`/tasks/${task._id}`);
       }
     }
@@ -252,6 +250,6 @@ const TaskCard = ({ task, filter }) => {
       </div>
     </div>
   );
-};
+});
 
 export default TaskCard;

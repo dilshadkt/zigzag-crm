@@ -41,6 +41,7 @@ const File = ({ file, handleRemove, disable }) => {
         <img
           src={file.preview}
           alt={file.title}
+          loading="lazy"
           className="max-w-full max-h-[70vh] object-contain"
         />
       );
@@ -75,7 +76,7 @@ const File = ({ file, handleRemove, disable }) => {
 
   return (
     <>
-      <div 
+      <div
         className="h-36 relative rounded-xl bg-[#2155A3]/20 overflow-hidden cursor-pointer"
         onClick={handleFileClick}
       >
@@ -83,6 +84,7 @@ const File = ({ file, handleRemove, disable }) => {
           <img
             src={file.preview}
             alt={file.title}
+            loading="lazy"
             className="w-full h-full object-cover opacity-80"
           />
         ) : isPDF ? (
@@ -117,12 +119,12 @@ const File = ({ file, handleRemove, disable }) => {
 
       {/* Modal for all file types */}
       {showModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 bg-opacity-75 
           flex items-center justify-center z-[1000]"
           onClick={() => setShowModal(false)}
         >
-          <div 
+          <div
             className="bg-white p-6 rounded-lg max-w-4xl w-full mx-4 relative"
             onClick={(e) => e.stopPropagation()}
           >

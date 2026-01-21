@@ -1,6 +1,7 @@
+import React, { memo } from "react";
 import Progress from "../progress";
 
-const EmployeeCard = ({ employee, index, className }) => {
+const EmployeeCard = memo(({ employee, index, className }) => {
   return (
     <div
       key={employee._id || index}
@@ -20,6 +21,7 @@ const EmployeeCard = ({ employee, index, className }) => {
           <img
             src={employee?.profile || `/image/dummy/avatar1.svg`}
             alt=""
+            loading="lazy"
             className="w-full h-full object-cover "
           />
         </div>
@@ -33,6 +35,6 @@ const EmployeeCard = ({ employee, index, className }) => {
       </div>
     </div>
   );
-};
+});
 
 export default EmployeeCard;

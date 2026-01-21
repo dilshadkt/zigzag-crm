@@ -193,12 +193,13 @@ const Sidebar = () => {
        gap-x-2 rounded-[14px] cursor-pointer bg-[#3F8CFF] text-white w-fit px-5 py-2
     text-sm font-medium"
           >
-            <img src={assetPath("icons/chat.svg")} alt="" className="w-4" />
+            <img src={assetPath("icons/chat.svg")} alt="" loading="lazy" className="w-4" />
             <span>Support</span>
           </button>
           <img
             src="/image/support.svg"
             alt=""
+            loading="lazy"
             className="absolute w-22 -top-10"
           />
         </div>
@@ -233,7 +234,7 @@ const Sidebar = () => {
               </button>
             </div>
             <div className="mt-4">
-              <img src="/image/support.png" alt="" />
+              <img src="/image/support.png" alt="" loading="lazy" />
             </div>
             <p className="text-gray-600 mt-3">
               Describe your question and our specialists will answer you within

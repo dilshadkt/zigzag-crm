@@ -1,20 +1,19 @@
-import { Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
-import { Toaster } from "react-hot-toast";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 // Layout Imports (Still static as they wrap many routes)
-import DashboardLayout from "../layouts/dashboard";
 import AuthLayout from "../layouts/auth";
-import WelcomeLayout from "../layouts/welcome";
+import DashboardLayout from "../layouts/dashboard";
 import ProjectDetailLayout from "../layouts/projectDetail";
-import TaskDetailLayout from "../layouts/taskDetail";
 import SettingsLayout from "../layouts/settings";
+import TaskDetailLayout from "../layouts/taskDetail";
+import WelcomeLayout from "../layouts/welcome";
 
 // Shared Components
-import { ProtectedRoute } from "../components/protectedRoute";
-import RouteAccess from "../components/withRoleAccess/RouteAccess";
-import WithRoleAcess from "../components/withRoleAccess";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { ProtectedRoute } from "../components/protectedRoute";
+import WithRoleAcess from "../components/withRoleAccess";
+import RouteAccess from "../components/withRoleAccess/RouteAccess";
 
 // Lazy Loaded Pages
 const Dashboard = lazy(() => import("../pages/dashboard"));

@@ -41,7 +41,32 @@ const Dashboard = React.lazy(() => import("../pages/dashboard"));
 </Suspense>
 ```
 
-## Results in Zigzag CRM
-- **Initial Bundle Size**: Reduced significantly.
-- **Time to Interactive**: Improved by loading non-critical routes on demand.
-- **User Experience**: Smoother navigation between sections with immediate visual feedback during transitions.
+## Advanced Optimization Strategies (Implemented)
+
+### 1. Network Caching (TanStack Query)
+We have optimized how data is fetched from the server. By default, React Query marks data as "stale" immediately, causing a refetch every time a component mounts.
+- **Implemented**: We set a global `staleTime` of 2 minutes. This means if you switch between the Dashboard and Projects within 2 minutes, the application will use the cached data instead of making a new API call.
+- **Benefit**: Reduced server load and instant page transitions for the user.
+
+### 2. Component Memoization
+In large lists (like the Task Board or Employee List), React can sometimes re-render items unnecessarily.
+- **Implemented**: Wrapped key components like `Task`, `TaskCard`, `LeadRow`, and `EmployeeCard` in `React.memo()`.
+- **Benefit**: Prevents redundant re-renders when parent components update but item data remains the same.
+
+### 3. Image Optimization
+The CRM handles many user avatars and project attachments.
+- **Implemented**: Added native `loading="lazy"` attribute to all key images (avatars, thumbnails, attachments).
+- **Benefit**: Faster page loads as images are only downloaded when they enter the viewport.
+
+### 4. List Virtualization
+When displaying hundreds of leads or tasks, rendering them all in the DOM can slow down the browser.
+- **Implemented**: Used `@tanstack/react-virtual` in:
+  - `LeadsTable` (Main Leads list)
+  - `ProjectList` (Project Details tasks)
+  - `Droppable` (Task Board columns)
+  - `TaskList` (General task lists)
+- **Benefit**: Handles thousands of items with zero lag by only rendering what's visible.
+
+### 5. Dependency Management
+- **Lodash**: Modular imports used (e.g., `import debounce from 'lodash/debounce'`).
+- **Icons**: Tree-shaking friendly imports from `react-icons`.

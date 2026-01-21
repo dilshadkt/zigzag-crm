@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 import { FiMoreVertical } from "react-icons/fi";
+// ... (rest of imports)
 import LeadStatusBadge from "./LeadStatusBadge";
 import LeadRowContextMenu from "./LeadRowContextMenu";
 import StatusDropdown from "./StatusDropdown";
@@ -8,18 +9,16 @@ import SelectFieldDropdown from "./SelectFieldDropdown";
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
 
-// Helper function to get nested value from object path
+// ... (helper functions)
 const getNestedValue = (obj, path) => {
   return path.split(".").reduce((current, key) => {
     return current && current[key] !== undefined ? current[key] : null;
   }, obj);
 };
 
-// Format date
 const formatDate = (date) => {
   if (!date) return "—";
   if (typeof date === "string") {
-    // Try to parse ISO date string
     const parsed = new Date(date);
     if (!isNaN(parsed.getTime())) {
       return parsed.toLocaleDateString("en-US", {
@@ -48,9 +47,7 @@ const columnRenderers = {
       {lead.name || lead.contact?.name || "—"}
     </div>
   ),
-  "contact.name": (
-    lead // Keep for backward compat if needed
-  ) => (
+  "contact.name": (lead) => (
     <div className="text-[13px] font-medium text-slate-900">
       {lead.name || lead.contact?.name || "—"}
     </div>
@@ -123,7 +120,7 @@ const columnRenderers = {
   },
 };
 
-const LeadRow = ({
+const LeadRow = memo(({
   lead,
   columns,
   isSelected,
@@ -172,22 +169,17 @@ const LeadRow = ({
   };
 
   const renderCellValue = (column, lead) => {
-    // Use custom renderer if available
     if (columnRenderers[column.key]) {
       const renderer = columnRenderers[column.key];
-      // Pass statuses and onStatusChange for status column
       if (column.key === "status") {
         return renderer(lead, statuses, onStatusChange);
       }
       return renderer(lead);
     }
 
-    // Fallback to direct property access (works for flattened custom fields)
     const value = lead[column.key];
 
-    // Handle select/dropdown fields with options
     if ((column.type === "select" || column.fieldType === "select") && column.options && column.options.length > 0) {
-      // If value is empty, use the first option as default
       const displayValue = (value === undefined || value === null || value === "")
         ? column.options[0]
         : value;
@@ -210,7 +202,6 @@ const LeadRow = ({
       return <div className="text-[13px] text-slate-500">—</div>;
     }
 
-    // Format based on field type
     if (column.type === "number" || column.fieldType === "number") {
       return (
         <div className="text-[13px] whitespace-nowrap text-slate-900">
@@ -292,6 +283,6 @@ const LeadRow = ({
       />
     </>
   );
-};
+});
 
 export default LeadRow;

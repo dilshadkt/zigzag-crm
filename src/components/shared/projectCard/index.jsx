@@ -216,6 +216,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
               <img
                 src={project?.thumbImg}
                 alt=""
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -229,14 +230,14 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
           <div className="flexBetween">
             <div className="flexStart gap-x-4">
               <div className="flexStart gap-x-2">
-                <img src="/icons/calender2.svg" alt="" className="w-5" />
+                <img src="/icons/calender2.svg" alt="" loading="lazy" className="w-5" />
                 <span className="text-xs text-[#7D8592]">
                   Created {formatDate(project?.createdAt)}
                 </span>
               </div>
               {viewMore && (
                 <div className="flexStart gap-x-2">
-                  <img src="/icons/calender2.svg" alt="" className="w-5" />
+                  <img src="/icons/calender2.svg" alt="" loading="lazy" className="w-5" />
                   <span className="text-xs text-[#7D8592]">
                     Ended {formatDate(project?.endDate)}
                   </span>
@@ -331,13 +332,13 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                     }}
                   >
                     <div
-                      className={`w-7 h-7 rounded-full overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out ${
-                        hoveredIndex === index ? "scale-125" : "scale-100"
-                      }`}
+                      className={`w-7 h-7 rounded-full overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out ${hoveredIndex === index ? "scale-125" : "scale-100"
+                        }`}
                     >
                       <img
                         src={team?.profileImage}
                         alt={team?.name || team?.firstName || ""}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>

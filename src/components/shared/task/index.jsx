@@ -1,4 +1,5 @@
-import React from "react";
+import React, { memo } from "react";
+// ... (rest of imports)
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { FiMoreVertical } from "react-icons/fi";
@@ -25,7 +26,7 @@ const getProgressValue = (status) => {
   }
 };
 
-const Task = ({
+const Task = memo(({
   task,
   onClick,
   isBoardView,
@@ -167,6 +168,7 @@ const Task = ({
                       <img
                         src={user?.profileImage}
                         alt={user?.firstName}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -322,6 +324,7 @@ const Task = ({
                     <img
                       src={user?.profileImage}
                       alt={user?.firstName}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -379,6 +382,6 @@ flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
       </div>
     </div>
   );
-};
+});
 
 export default Task;

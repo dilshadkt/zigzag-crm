@@ -8,12 +8,14 @@ const UserProfile = ({ user }) => {
           <img
             src={user?.profile}
             alt=""
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (
           <img
             src={`/image/noProfile.svg`}
             alt=""
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         )}

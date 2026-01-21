@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   useGetEmployeeTasks,
   useGetAllCompanyTasks,
@@ -143,6 +144,7 @@ const DropZone = ({ onDrop, position, status, isVisible }) => {
 const Droppable = ({ id, title, children, onDrop, tasks }) => {
   const [isOver, setIsOver] = useState(false);
   const [draggedTask, setDraggedTask] = useState(null);
+  const parentRef = useRef(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -191,6 +193,17 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
   };
 
   const childrenArray = React.Children.toArray(children);
+
+  const rowVirtualizer = useVirtualizer({
+    count: childrenArray.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 140, // Height of Task card + DropZone
+    overscan: 5,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+
   const config = statusConfig[id];
 
   return (
@@ -212,6 +225,7 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
         {title}
       </div>
       <div
+        ref={parentRef}
         className="space-y-1 min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
         data-droppable-id={id}
       >
@@ -222,17 +236,35 @@ const Droppable = ({ id, title, children, onDrop, tasks }) => {
           isVisible={isOver && draggedTask?.sourceStatus !== id}
         />
 
-        {childrenArray.map((child, index) => (
-          <React.Fragment key={child.key || index}>
-            {child}
-            <DropZone
-              onDrop={onDrop}
-              position={index + 1}
-              status={id}
-              isVisible={isOver}
-            />
-          </React.Fragment>
-        ))}
+        <div
+          style={{
+            height: `${totalSize}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {virtualRows.map((virtualRow) => (
+            <div
+              key={virtualRow.key}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {childrenArray[virtualRow.index]}
+              <DropZone
+                onDrop={onDrop}
+                position={virtualRow.index + 1}
+                status={id}
+                isVisible={isOver}
+              />
+            </div>
+          ))}
+        </div>
 
         {childrenArray.length === 0 && (
           <DropZone

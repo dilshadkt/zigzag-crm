@@ -6,7 +6,15 @@ import { Provider } from "react-redux";
 import store from "./store/store.js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes: keep data fresh but reduce redundant refetches
+      refetchOnWindowFocus: false, // Don't refetch on tab switch by default
+      retry: 1, // Limit retries to 1 for faster failure feedback
+    },
+  },
+});
 
 if (typeof window !== "undefined" && window.desktop) {
   const basePath = import.meta.env.BASE_URL.replace(/\/?$/, "/");

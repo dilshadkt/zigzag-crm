@@ -8,6 +8,7 @@ const UserProfile = ({ user }) => {
         <img
           src={user?.profileImage}
           alt=""
+          loading="lazy"
           className="w-full h-full object-cover scale-90"
         />
       </div>
@@ -16,7 +17,7 @@ const UserProfile = ({ user }) => {
         className="hidden lg:flexStart gap-x-3.5 cursor-pointer"
       >
         <span className="text-sm font-medium">{user?.firstName}</span>
-        <img src="/icons/arrowDown.svg" alt="" className="w-5" />
+        <img src="/icons/arrowDown.svg" alt="" loading="lazy" className="w-5" />
       </Link>
     </div>
   );

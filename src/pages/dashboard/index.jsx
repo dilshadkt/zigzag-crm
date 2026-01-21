@@ -179,7 +179,7 @@ const Dashboard = () => {
           >
             <MdOutlineKeyboardArrowLeft className="w-4 h-4" />
           </button>
-          <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
+          <img src="/icons/calender.svg" alt="" loading="lazy" className="w-4 md:w-5" />
           <span
             className={`text-xs whitespace-nowrap md:text-base 
               cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
