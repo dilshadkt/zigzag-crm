@@ -62,14 +62,14 @@ const SettingsLayout = () => {
 
         {/* Settings info page  */}
         <div className="flex-1 md:overflow-y-auto h-full  gap-y-2  flex flex-col">
-          {!isEmployee && (
+          {/* {!isEmployee && (
             <div className="flexStart gap-x-3 ">
               <FaArrowLeft className=" text-[#3F8CFF] text-lg hover:scale-85 cursor-pointer " />
               <h4 className="text-lg font-medium">
                 {isEmployee ? "My Workspace" : "Settings"}
               </h4>
             </div>
-          )}
+          )} */}
 
           {isEmployee ? (
             // Employee view - show employee-specific content
@@ -90,29 +90,25 @@ const SettingsLayout = () => {
                       key={index}
                       onClick={() => setSelected(setting.id)}
                       className={`flexStart px-4 group text-[#7D8592] 
-                  rounded-xl py-[10px] relative mr-1 ${
-                    selected === setting.id && `bg-[#F4F9FD]`
-                  } hover:bg-[#F4F9FD] gap-x-3`}
+                  rounded-xl py-[10px] relative mr-1 ${selected === setting.id && `bg-[#F4F9FD]`
+                        } hover:bg-[#F4F9FD] gap-x-3`}
                     >
                       <setting.icon
-                        className={` ${
-                          selected === setting.id && `text-[#3F8CFF]`
-                        }
+                        className={` ${selected === setting.id && `text-[#3F8CFF]`
+                          }
                          group-hover:text-[#3F8CFF] text-lg`}
                       />
                       <span
                         className={`group-hover:text-gray-800 group-hover:translate-x-1
-                  transition-all duration-300 text-[15px] ${
-                    selected === setting.id && `text-[#3F8CFF]`
-                  }`}
+                  transition-all duration-300 text-[15px] ${selected === setting.id && `text-[#3F8CFF]`
+                          }`}
                       >
                         {setting.title}
                       </span>
                       <div
                         className={`absolute h-full bg-[#3F8CFF] w-1 
-                   ${
-                     setting.id === selected ? `block` : `hidden`
-                   } -right-[11px] rounded-full top-0 bottom-0`}
+                   ${setting.id === selected ? `block` : `hidden`
+                          } -right-[11px] rounded-full top-0 bottom-0`}
                       ></div>
                     </Link>
                   ))
