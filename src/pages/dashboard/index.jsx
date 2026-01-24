@@ -6,6 +6,7 @@ import {
 } from "react-icons/md";
 import WorkLoad from "../../components/dashboard/workload";
 import PendingWork from "../../components/dashboard/workload/events";
+import NearestEvents from "../../components/dashboard/nearestEvents";
 // import EmployeeWorkDetails from "../../components/dashboard/employeeWorkDetails";
 import { useCompanyProjects, useGetEmployeeProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";

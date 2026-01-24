@@ -10,7 +10,7 @@ import {
   useGetEmployeeBirthdays,
 } from "../../../api/hooks";
 
-const OldNearestEvents = ({ selectedDate }) => {
+const NearestEvents = ({ selectedDate }) => {
   const currentDate = selectedDate || new Date();
 
   const { data: projectsData, isLoading: projectsLoading } =
@@ -240,4 +240,4 @@ const OldNearestEvents = ({ selectedDate }) => {
   );
 };
 
-export default OldNearestEvents;
+export default NearestEvents;
