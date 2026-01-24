@@ -171,10 +171,7 @@ const Sidebar = () => {
                       {taskCount}
                     </span>
                   )}
-                  <span
-                    className="absolute hidden group-hover:block
-            -right-2.5 h-full w-1 bg-[#3F8CFF]"
-                  ></span>
+
                 </li>
               );
             })

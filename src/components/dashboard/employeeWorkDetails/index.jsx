@@ -113,7 +113,7 @@ const EmployeeWorkDetails = () => {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h5 className="font-medium text-gray-800 text-sm">
+                  <h5 className="font-medium  text-gray-800 text-sm">
                     {subTask.title}
                   </h5>
                   <span
