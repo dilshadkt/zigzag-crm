@@ -1,8 +1,13 @@
 import React from "react";
 import { FiFilter } from "react-icons/fi";
 import CampaignRow from "./CampaignRow";
+import CampaignsTableSkeleton from "./CampaignsTableSkeleton";
 
 const CampaignsTable = ({ campaigns, isLoading }) => {
+  if (isLoading) {
+    return <CampaignsTableSkeleton />;
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm flex flex-col h-full">
       <div className="overflow-x-auto flex-1 custom-scrollbar">
@@ -45,18 +50,7 @@ const CampaignsTable = ({ campaigns, isLoading }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {isLoading ? (
-              <tr>
-                <td colSpan="10" className="py-32">
-                  <div className="flexCenter flex-col gap-3">
-                    <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-blue-600/20 border-t-blue-600"></div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                      Loading performance data...
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            ) : campaigns.length > 0 ? (
+            {campaigns.length > 0 ? (
               campaigns.map((campaign) => (
                 <CampaignRow key={campaign._id} campaign={campaign} />
               ))

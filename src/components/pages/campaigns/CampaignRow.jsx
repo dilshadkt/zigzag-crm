@@ -8,18 +8,21 @@ const CampaignRow = ({ campaign }) => {
     switch (status) {
       case "active":
         return {
-          dot: "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]",
+          dot: "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)] animate-pulse",
           text: "text-green-700",
+          glow: "relative",
         };
       case "paused":
         return {
           dot: "bg-orange-500",
           text: "text-orange-700",
+          glow: "",
         };
       default:
         return {
           dot: "bg-gray-300",
           text: "text-gray-500",
+          glow: "",
         };
     }
   };
@@ -53,7 +56,12 @@ const CampaignRow = ({ campaign }) => {
       </td>
       <td className="py-4 px-5">
         <div className="flex items-center gap-2">
-          <div className={`h-2 w-2 rounded-full ${statusStyles.dot}`}></div>
+          <div className={`${statusStyles.glow} flex items-center justify-center`}>
+            {campaign.status === "active" && (
+              <div className="absolute h-2 w-2 rounded-full bg-green-500 animate-ping opacity-75"></div>
+            )}
+            <div className={`h-2 w-2 rounded-full ${statusStyles.dot} relative z-10`}></div>
+          </div>
           <span
             className={`text-[11px] font-bold uppercase tracking-wider ${statusStyles.text}`}
           >

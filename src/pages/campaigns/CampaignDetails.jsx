@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useGetCampaignById, useUpdateCampaign, useDeleteCampaign, useAddLeadsToCampaign, useRemoveLeadFromCampaign } from "../../api/campaignDetails";
-import Navigator from "../../components/shared/navigator";
-import { FiCalendar, FiDollarSign, FiEdit2, FiTrash2, FiSave, FiX, FiCheckCircle } from "react-icons/fi";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import PrimaryButton from "../../components/shared/buttons/primaryButton";
+import { FiCalendar, FiCheckCircle, FiDollarSign, FiEdit2, FiSave, FiTrash2, FiX, FiChevronDown } from "react-icons/fi";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign } from "../../api/campaignDetails";
 import AddLeadsModal from "../../components/campaigns/AddLeadsModal";
+import Navigator from "../../components/shared/navigator";
 
 const CampaignDetails = () => {
     const { id } = useParams();
@@ -19,6 +18,8 @@ const CampaignDetails = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
     const [isAddLeadsModalOpen, setIsAddLeadsModalOpen] = useState(false);
+    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+    const statusDropdownRef = useRef(null);
 
     const handleAddLeads = (leadIds) => {
         addLeads({ id, leads: leadIds }, {
@@ -79,6 +80,45 @@ const CampaignDetails = () => {
                 }
             });
         }
+    };
+
+    const handleStatusChange = (newStatus) => {
+        updateCampaign({ id, data: { status: newStatus } }, {
+            onSuccess: () => {
+                toast.success("Campaign status updated");
+                setIsStatusDropdownOpen(false);
+            },
+            onError: () => {
+                toast.error("Failed to update status");
+            }
+        });
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+                setIsStatusDropdownOpen(false);
+            }
+        };
+
+        if (isStatusDropdownOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }
+    }, [isStatusDropdownOpen]);
+
+    const statusOptions = [
+        { value: "planned", label: "Planned", color: "bg-gray-100 text-gray-600" },
+        { value: "active", label: "Active", color: "bg-green-100 text-green-700" },
+        { value: "paused", label: "Paused", color: "bg-orange-100 text-orange-700" },
+        { value: "completed", label: "Completed", color: "bg-blue-100 text-blue-700" },
+        { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-700" },
+    ];
+
+    const getStatusColor = (status) => {
+        const statusOption = statusOptions.find(opt => opt.value === status);
+        return statusOption?.color || "bg-gray-100 text-gray-600";
     };
 
     if (isLoading) return <div className="flexCenter h-full">Loading...</div>;
@@ -288,13 +328,31 @@ const CampaignDetails = () => {
                                         <div>
                                             <h2 className="text-2xl font-bold text-gray-800 mb-1">{campaign.name}</h2>
                                             <div className="flex items-center gap-2">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest
-                                                    ${campaign.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                        campaign.status === 'paused' ? 'bg-orange-100 text-orange-700' :
-                                                            'bg-gray-100 text-gray-600'}
-                                                `}>
-                                                    {campaign.status}
-                                                </span>
+                                                <div className="relative" ref={statusDropdownRef}>
+                                                    <button
+                                                        onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                                                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 hover:opacity-80 transition-all cursor-pointer ${getStatusColor(campaign.status)}`}
+                                                    >
+                                                        {campaign.status}
+                                                        <FiChevronDown className="text-xs" />
+                                                    </button>
+                                                    {isStatusDropdownOpen && (
+                                                        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 min-w-[160px] overflow-hidden">
+                                                            {statusOptions.map((option) => (
+                                                                <button
+                                                                    key={option.value}
+                                                                    onClick={() => handleStatusChange(option.value)}
+                                                                    className={`w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors flex items-center gap-2 ${
+                                                                        campaign.status === option.value ? 'bg-blue-50' : ''
+                                                                    }`}
+                                                                >
+                                                                    <span className={`w-2 h-2 rounded-full ${option.color.split(' ')[0]}`}></span>
+                                                                    {option.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <span className="text-xs text-gray-400">• Created by {campaign.createdBy?.firstName || "System"}</span>
                                             </div>
                                         </div>

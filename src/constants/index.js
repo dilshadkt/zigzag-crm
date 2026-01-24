@@ -21,6 +21,7 @@ import {
   FiLayout,
   FiActivity,
   FiCheckCircle,
+  FiTarget,
 } from "react-icons/fi";
 import { MdOutlineLeaderboard } from "react-icons/md";  
 
@@ -80,6 +81,13 @@ export const SIDE_MENU = [
     icon: MdOutlineLeaderboard,
     path: "/leads",
     routeKey: "leads",
+  },
+  {
+    id: 15,
+    title: "Campaigns",
+    icon: FiTarget,
+    path: "/campaigns",
+    routeKey: "campaigns",
   },
   {
     id: 8,

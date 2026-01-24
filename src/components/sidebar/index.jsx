@@ -77,11 +77,12 @@ const Sidebar = () => {
       return true;
     }
 
-    // Dashboard, Board, and Settings are always accessible to everyone
+    // Dashboard, Board, Settings, and Campaigns are always accessible to everyone
     if (
       item.routeKey === "dashboard" ||
       item.routeKey === "board" ||
-      item.routeKey === "settings"
+      item.routeKey === "settings" ||
+      item.routeKey === "campaigns"
     ) {
       return true;
     }

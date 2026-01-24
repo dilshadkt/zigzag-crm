@@ -8,7 +8,7 @@ import { FiTarget } from "react-icons/fi";
 const DashboardCampaigns = () => {
     // Fetch last 3 active or planned campaigns
     const { data: campaignsData, isLoading } = useGetCampaigns({
-        limit: 3,
+        limit: 2,
         sort: 'createdAt',
         // You might want to filter by active status if needed, but for now showing recent
     });
@@ -32,7 +32,7 @@ const DashboardCampaigns = () => {
                 </Link>
             </div>
 
-            <div className="mt-3 clear-start bg-white h-[480px] overflow-y-auto rounded-3xl p-4">
+            <div className="mt-3 clear-start bg-white overflow-y-auto rounded-3xl p-4">
                 {campaigns.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">

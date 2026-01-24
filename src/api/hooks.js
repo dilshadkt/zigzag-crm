@@ -1374,6 +1374,41 @@ export const useGetAllCompanyTasks = (companyId, taskMonth, options = {}) => {
   });
 };
 
+// Hook for fetching external tasks (tasks with project: null)
+export const useExternalTasks = (companyId, enabled = true) => {
+  return useQuery({
+    queryKey: ["externalTasks", companyId],
+    queryFn: async () => {
+      try {
+        // Fetch all company tasks and filter for external ones (project: null)
+        const response = await apiClient.get("/tasks/company/all");
+        const responseData = response.data || {};
+        const allTasks = responseData.tasks || [];
+        
+        // Filter tasks where project is null, undefined, or empty
+        // Handle both cases: project as null or project as populated object that is null
+        const externalTasks = allTasks.filter((task) => {
+          // Check if project is null, undefined, or if it's an object with null _id
+          return !task.project || 
+                 task.project === null || 
+                 (typeof task.project === 'object' && !task.project._id);
+        });
+        
+        return externalTasks;
+      } catch (error) {
+        // If endpoint requires admin access and user doesn't have it, return empty array
+        console.warn("Failed to fetch external tasks:", error);
+        return [];
+      }
+    },
+    enabled: !!companyId && enabled,
+    staleTime: 1000 * 60 * 1, // 1 minute
+    cacheTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+};
+
 export const useGetCompanyTasksFiltered = (
   companyId,
   taskMonth,
