@@ -196,7 +196,21 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [showProgressTooltip, setShowProgressTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState("top");
+  const [failedImages, setFailedImages] = useState(new Set());
   const progressRef = useRef(null);
+
+  const handleImageError = (index) => {
+    setFailedImages((prev) => new Set([...prev, index]));
+  };
+
+  const getTeamMemberName = (team) => {
+    return team?.name || team?.firstName || `${team?.firstName || ""} ${team?.lastName || ""}`.trim() || "U";
+  };
+
+  const getFirstLetter = (team) => {
+    const name = getTeamMemberName(team);
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
     <div
@@ -335,16 +349,23 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                       className={`w-7 h-7 rounded-full overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out ${hoveredIndex === index ? "scale-125" : "scale-100"
                         }`}
                     >
-                      <img
-                        src={team?.profileImage}
-                        alt={team?.name || team?.firstName || ""}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
+                      {!failedImages.has(index) && team?.profileImage ? (
+                        <img
+                          src={team?.profileImage}
+                          alt={getTeamMemberName(team)}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                          onError={() => handleImageError(index)}
+                        />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-gray-200 flexCenter text-gray-800 font-semibold text-xs">
+                          {getFirstLetter(team)}
+                        </div>
+                      )}
                     </div>
                     {hoveredIndex === index && (
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap pointer-events-none z-50">
-                        {team?.name || team?.firstName || "Team Member"}
+                        {getTeamMemberName(team)}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
                           <div className="border-4 border-transparent border-t-gray-900"></div>
                         </div>

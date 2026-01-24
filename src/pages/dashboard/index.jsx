@@ -1,22 +1,18 @@
 import React, { lazy, Suspense, useState, useEffect } from "react";
 import Header from "../../components/shared/header";
 import {
-  MdOutlineKeyboardArrowRight,
   MdOutlineKeyboardArrowLeft,
+  MdOutlineKeyboardArrowRight,
 } from "react-icons/md";
 import WorkLoad from "../../components/dashboard/workload";
 import PendingWork from "../../components/dashboard/workload/events";
-import ActivityStream from "../../components/dashboard/activityStream";
-import NearestEvents from "../../components/dashboard/nearestEvents";
 // import EmployeeWorkDetails from "../../components/dashboard/employeeWorkDetails";
-import { Link, useNavigate } from "react-router-dom";
 import { useCompanyProjects, useGetEmployeeProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import ProjectCard from "../../components/shared/projectCard";
 import EmployeeProgressStats from "../../components/dashboard/employeeProgressStats";
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
-import DashboardCampaigns from "../../components/dashboard/campaigns";
+import DashboardProjects from "../../components/dashboard/dashboardProjects";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(() =>
@@ -106,8 +102,6 @@ const Dashboard = () => {
   const projects = isEmployee
     ? employeeProjectsData?.projects?.slice(0, 3) || []
     : companyProjects || [];
-
-  const navigate = useNavigate();
 
   // Persist the selected date whenever it changes (only if user is available)
   useEffect(() => {
@@ -233,63 +227,14 @@ const Dashboard = () => {
 
       {/* Employee Progress Statistics - Only for employees */}
 
-      <div
-        className={`w-full grid gap-y-5 md:gap-x-6 mt-5 ${isEmployee ? "grid-cols-1" : " grid-cols-1  md:grid-cols-7"
-          }`}
-      >
-        <div
-          className={` md:h-[470px] pb-3 pt-5 flex flex-col rounded-3xl ${isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
-            }`}
-        >
-          <div className="flexBetween w-full ">
-            <h4 className="font-semibold text-lg text-gray-800">
-              {isEmployee ? "My Projects" : "Projects"}
-            </h4>
-            <Link
-              to={isEmployee ? "/my-projects" : "/projects-analytics"}
-              className="text-[#3F8CFF] text-sm cursor-pointer flexStart gap-x-2"
-            >
-              <span>View all</span>
-              <MdOutlineKeyboardArrowRight />
-            </Link>
-          </div>
-          {/* project list section  */}
-          <div className=" flex flex-col h-full gap-y-2 md:gap-y-3 mt-3">
-            {projects?.length > 0 ? (
-              projects.slice(0, 3).map((project, index) => (
-                <ProjectCard
-                  key={project?._id}
-                  project={project}
-                  onClick={() => {
-                    if (user?.role === "employee") {
-                      navigate(`/projects/${project?._id}`);
-                    } else {
-                      navigate(`/projects-analytics/${project?._id}`);
-                    }
-                  }}
-                />
-              ))
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-center">
-                  {isEmployee
-                    ? "No projects assigned to you"
-                    : "No projects available"}
-                </p>
-              </div>
-            )}
-          </div>
-          {/* Campaigns Section */}
-          {(isCompanyAdmin || canViewCampaignDetails) && <DashboardCampaigns />}
-        </div>
-        {/* activity stream and nearest events - only show for non-employees */}
-        {!isEmployee && (
-          <div className="flex flex-col gap-5 md:col-span-2">
-            <ActivityStream />
-            <NearestEvents selectedDate={selectedDate} />
-          </div>
-        )}
-      </div>
+      <DashboardProjects
+        isEmployee={isEmployee}
+        projects={projects}
+        user={user}
+        isCompanyAdmin={isCompanyAdmin}
+        canViewCampaignDetails={canViewCampaignDetails}
+        selectedDate={selectedDate}
+      />
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
       {canViewDailyChecklist && (
