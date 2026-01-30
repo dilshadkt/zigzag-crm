@@ -26,3 +26,17 @@ export const useGetCampaigns = (params) => {
         },
     });
 };
+
+export const useSyncFacebookAds = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async () => {
+            const response = await apiClient.post("/campaigns/sync-facebook");
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["campaigns"]);
+        },
+    });
+};

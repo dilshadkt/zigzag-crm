@@ -1,948 +1,109 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-  useGetEmployeeTasks,
-  useGetAllCompanyTasks,
-  useCreateTaskFromBoard,
-  useUpdateTaskOrder,
-  useGetEmployeeProjects,
-  useCompanyProjects,
-} from "../../api/hooks";
-import { useAuth } from "../../hooks/useAuth";
-import { usePermissions } from "../../hooks/usePermissions";
-import { useQueryClient } from "@tanstack/react-query";
-import { updateTaskById, updateSubTaskById } from "../../api/service";
-import socketService from "../../services/socketService";
-import Task from "../../components/shared/task";
-import Header from "../../components/shared/header";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import MonthSelector from "../../components/shared/MonthSelector";
-import { getCurrentMonthKey } from "../../lib/dateUtils";
+
+// Components
 import AddTask from "../../components/projects/addTask";
-import { uploadSingleFile } from "../../api/service";
-import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
-import { assetPath } from "../../utils/assetPath";
+import BoardFilters from "./components/BoardFilters";
+import DroppableColumn from "./components/DroppableColumn";
+import DraggableTask from "./components/DraggableTask";
+import BoardSkeleton from "./components/BoardSkeleton";
+import { statusConfig } from "./components/StatusConfig";
 
-// Status configuration
-const statusConfig = {
-  todo: {
-    title: "Active Tasks",
-    color: "bg-orange-100 text-orange-800",
-  },
-  "in-progress": {
-    title: "In Progress",
-    color: "bg-blue-100 text-blue-800",
-  },
-  "on-review": {
-    title: "On Review",
-    color: "bg-purple-100 text-purple-800",
-  },
-  "on-hold": {
-    title: "On Hold",
-    color: "bg-yellow-100 text-yellow-800",
-  },
-  "re-work": {
-    title: "Re-work",
-    color: "bg-red-100 text-red-800",
-  },
-  approved: {
-    title: "Approved",
-    color: "bg-emerald-100 text-emerald-800",
-  },
-  "client-approved": {
-    title: "Client Approved",
-    color: "bg-teal-100 text-teal-800",
-  },
-  completed: {
-    title: "Completed",
-    color: "bg-green-100 text-green-800",
-  },
-};
-
-const DraggableTask = ({ task, onClick, index }) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = (e) => {
-    e.dataTransfer.setData(
-      "application/json",
-      JSON.stringify({
-        taskId: task._id,
-        sourceStatus: task.status,
-        sourceIndex: index,
-      })
-    );
-    e.dataTransfer.effectAllowed = "move";
-    setIsDragging(true);
-    e.currentTarget.style.opacity = "0.7";
-  };
-
-  const handleDragEnd = (e) => {
-    e.currentTarget.style.opacity = "1";
-    setIsDragging(false);
-  };
-
-  return (
-    <div
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      className="transition-opacity duration-200 ease-out cursor-grab active:cursor-grabbing"
-      style={{
-        opacity: isDragging ? 0.7 : 1,
-      }}
-    >
-      <Task task={task} isBoardView={true} onClick={() => onClick(task)} />
-    </div>
-  );
-};
-
-const DropZone = ({ onDrop, position, status, isVisible }) => {
-  const [isOver, setIsOver] = useState(false);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = "move";
-    setIsOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOver(false);
-
-    const taskDataString = e.dataTransfer.getData("application/json");
-    if (taskDataString) {
-      try {
-        const taskData = JSON.parse(taskDataString);
-        onDrop(taskData, status, position);
-      } catch (error) {
-        console.error("Error parsing task data:", error);
-      }
-    }
-  };
-
-  if (!isVisible) return null;
-
-  return (
-    <div
-      className={`h-2 transition-all duration-200 ease-out ${isOver ? "bg-blue-300 rounded-full mx-2" : "bg-transparent"
-        }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    />
-  );
-};
-
-const Droppable = ({ id, title, children, onDrop, tasks }) => {
-  const [isOver, setIsOver] = useState(false);
-  const [draggedTask, setDraggedTask] = useState(null);
-  const parentRef = useRef(null);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    const taskData = e.dataTransfer.types.includes("application/json");
-    if (taskData) {
-      e.dataTransfer.dropEffect = "move";
-      setIsOver(true);
-
-      try {
-        const taskDataString = e.dataTransfer.getData("application/json");
-        if (taskDataString) {
-          setDraggedTask(JSON.parse(taskDataString));
-        }
-      } catch (error) {
-        // Ignore parsing errors during drag over
-      }
-    }
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-      setIsOver(false);
-      setDraggedTask(null);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsOver(false);
-    setDraggedTask(null);
-
-    const taskDataString = e.dataTransfer.getData("application/json");
-    if (taskDataString) {
-      try {
-        const taskData = JSON.parse(taskDataString);
-        onDrop(taskData, id, tasks.length);
-      } catch (error) {
-        console.error("Error parsing task data:", error);
-      }
-    }
-  };
-
-  const childrenArray = React.Children.toArray(children);
-
-  const rowVirtualizer = useVirtualizer({
-    count: childrenArray.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 140, // Height of Task card + DropZone
-    overscan: 5,
-  });
-
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const totalSize = rowVirtualizer.getTotalSize();
-
-  const config = statusConfig[id];
-
-  return (
-    <div
-      className={`flex-shrink-0 w-80 rounded-lg p-4 transition-all duration-200 ease-out
-                  ${isOver
-          ? "bg-blue-50 border-2 border-blue-300"
-          : "bg-gray-50 border-2 border-transparent"
-        }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      data-droppable-id={id}
-    >
-      <div
-        className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${config?.color || "bg-gray-200 text-gray-800"
-          }`}
-      >
-        {title}
-      </div>
-      <div
-        ref={parentRef}
-        className="space-y-1 min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
-        data-droppable-id={id}
-      >
-        <DropZone
-          onDrop={onDrop}
-          position={0}
-          status={id}
-          isVisible={isOver && draggedTask?.sourceStatus !== id}
-        />
-
-        <div
-          style={{
-            height: `${totalSize}px`,
-            width: "100%",
-            position: "relative",
-          }}
-        >
-          {virtualRows.map((virtualRow) => (
-            <div
-              key={virtualRow.key}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              {childrenArray[virtualRow.index]}
-              <DropZone
-                onDrop={onDrop}
-                position={virtualRow.index + 1}
-                status={id}
-                isVisible={isOver}
-              />
-            </div>
-          ))}
-        </div>
-
-        {childrenArray.length === 0 && (
-          <DropZone
-            onDrop={onDrop}
-            position={0}
-            status={id}
-            isVisible={isOver}
-          />
-        )}
-      </div>
-    </div>
-  );
-};
+// Hooks
+import { useBoard } from "./hooks/useBoard";
 
 const Board = () => {
-  const { user } = useAuth();
-  const { hasPermission } = usePermissions();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [selectedProject, setSelectedProject] = useState("all");
-  const [selectedPriority, setSelectedPriority] = useState("all");
-  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
-  const [selectedAssignee, setSelectedAssignee] = useState("all");
-  const [selectedTypes, setSelectedTypes] = useState(["task", "subtask", "extra"]);
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-  const typeDropdownRef = useRef(null);
-  const [showModalTask, setShowModalTask] = useState(false);
+  const {
+    user,
+    selectedProject,
+    setSelectedProject,
+    selectedPriority,
+    setSelectedPriority,
+    selectedMonth,
+    setSelectedMonth,
+    selectedAssignee,
+    setSelectedAssignee,
+    selectedTypes,
+    setSelectedTypes,
+    searchQuery,
+    setSearchQuery,
+    showModalTask,
+    setShowModalTask,
+    canCreateTask,
+    isLoading,
+    tasksByStatus,
+    projects,
+    assignees,
+    isCreatingTask,
+    handleRefresh,
+    handleAddTask,
+    handleTaskDrop,
+  } = useBoard();
 
-  // Handle clicking outside of type dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        typeDropdownRef.current &&
-        !typeDropdownRef.current.contains(event.target)
-      ) {
-        setIsTypeDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Permission check for creating tasks
-  const canCreateTask =
-    user?.role === "company-admin" || hasPermission("tasks", "create");
-
-  // Use different hooks based on user role
-  const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
-    useGetEmployeeTasks(user?.role !== "company-admin" ? user?._id : null, { taskMonth: selectedMonth });
-
-
-  const { data: companyTasksData, isLoading: isLoadingCompanyTasks } =
-    useGetAllCompanyTasks(
-      user?.role === "company-admin" ? user?.company : null,
-      selectedMonth
-    );
-
-  // Use different project hooks based on user role
-  const { data: projectsData } =
-    user?.role === "company-admin"
-      ? useCompanyProjects(user?.company)
-      : useGetEmployeeProjects(user?._id);
-  const { mutate: updateOrder } = useUpdateTaskOrder();
-  const { mutate: createTask, isLoading: isCreatingTask } =
-    useCreateTaskFromBoard(() => {
-      setShowModalTask(false);
-    });
-
-  // Get tasks based on user role
-  const tasks =
-    user?.role === "company-admin"
-      ? companyTasksData?.tasks || []
-      : [
-        ...(employeeTasksData?.tasks || []),
-        ...(employeeTasksData?.subTasks || []),
-      ];
-  // Listen for real-time task status changes
-  useEffect(() => {
-    const handleTaskStatusChange = (data) => {
-      console.log("📋 Task status changed in board:", data);
-
-      // Refresh the appropriate query based on user role
-      if (user?.role === "company-admin") {
-        queryClient.invalidateQueries([
-          "allCompanyTasks",
-          user?.company,
-          selectedMonth,
-        ]);
-      } else {
-        queryClient.invalidateQueries(["employeeTasks", user?._id]);
-      }
-
-      // Also invalidate tasks on review query when status changes to/from "on-review"
-      if (data.newStatus === "on-review" || data.oldStatus === "on-review") {
-        queryClient.invalidateQueries(["tasksOnReview"]);
-      }
-
-      // Show a toast notification for task status changes
-      if (data.updatedBy && data.updatedBy._id !== user?._id) {
-        // Only show notification if it wasn't the current user who changed the status
-        const notification = document.createElement("div");
-        notification.className =
-          "fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full";
-        notification.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div>
-              <div class="font-medium">Task Status Updated</div>
-              <div class="text-sm opacity-90">"${data.taskTitle}" moved to ${data.newStatus} by ${data.updatedBy.name}</div>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
-          notification.classList.remove("translate-x-full");
-        }, 100);
-
-        // Remove after 5 seconds
-        setTimeout(() => {
-          notification.classList.add("translate-x-full");
-          setTimeout(() => {
-            document.body.removeChild(notification);
-          }, 300);
-        }, 5000);
-      }
-    };
-
-    const handleNewNotification = (data) => {
-      console.log("🔔 New notification in board:", data);
-      // Refresh if it's a task-related notification
-      if (data.type === "task_review" || data.type === "task_updated") {
-        if (user?.role === "company-admin") {
-          queryClient.invalidateQueries([
-            "allCompanyTasks",
-            user?.company,
-            selectedMonth,
-          ]);
-        } else {
-          queryClient.invalidateQueries(["employeeTasks", user?._id]);
-        }
-      }
-    };
-
-    // Set up socket listeners
-    socketService.onTaskStatusChange(handleTaskStatusChange);
-    socketService.onNewNotification(handleNewNotification);
-
-    // Cleanup listeners on unmount
-    return () => {
-      socketService.offTaskStatusChange(handleTaskStatusChange);
-      socketService.offNewNotification(handleNewNotification);
-    };
-  }, [queryClient, user?.role, user?.company, user?._id, selectedMonth]);
-
-  const projects =
-    user?.role === "company-admin"
-      ? projectsData || []
-      : projectsData?.projects || [];
-
-  // Extract unique assignees from tasks
-  const assignees = React.useMemo(() => {
-    const users = {};
-    tasks.forEach((task) => {
-      (task.assignedTo || []).forEach((user) => {
-        if (user && user._id) {
-          users[user._id] = user;
-        }
-      });
-    });
-    return Object.values(users);
-  }, [tasks]);
-
-  // Filter tasks based on selected project, priority, month, and assignee
-  const filteredTasks = tasks.filter((task) => {
-    // Only show active tasks
-    const isActive = task.active !== false; // Show tasks that are active or don't have active field
-
-    // Handle project filtering - include board tasks when "all" is selected
-    let projectMatch = false;
-    if (selectedProject === "all") {
-      // Show all tasks including board tasks (project: null) and project tasks
-      projectMatch = true;
-    } else if (selectedProject === "other") {
-      // Show only board tasks (project: null) when "other" is selected
-      projectMatch = !task.project;
-    } else {
-      // Show tasks for specific project
-      projectMatch = task.project?._id === selectedProject;
-    }
-
-    const priorityMatch =
-      selectedPriority === "all" ||
-      task.priority?.toLowerCase() === selectedPriority.toLowerCase();
-    const monthMatch = !task.taskMonth || task.taskMonth === selectedMonth;
-    const assigneeMatch =
-      selectedAssignee === "all" ||
-      (task.assignedTo &&
-        task.assignedTo.some((user) => user._id === selectedAssignee));
-
-    const isSubtask = !!task.parentTask; // Subtasks have a parentTask property
-    const isExtraTask = task.taskGroup === "extraTask";
-    const isRegularTask = !isSubtask && !isExtraTask;
-
-    const typeMatch =
-      (selectedTypes.includes("task") && isRegularTask) ||
-      (selectedTypes.includes("subtask") && isSubtask) ||
-      (selectedTypes.includes("extra") && isExtraTask);
-
-    return (
-      isActive &&
-      projectMatch &&
-      priorityMatch &&
-      monthMatch &&
-      assigneeMatch &&
-      typeMatch
-    );
-  });
-
-
-  const handleProjectChange = (e) => {
-    setSelectedProject(e.target.value);
-  };
-
-  const handlePriorityChange = (e) => {
-    setSelectedPriority(e.target.value);
-  };
-
-  const handleMonthChange = (month) => {
-    setSelectedMonth(month);
-  };
-
-  const handleAddTask = async (values, { resetForm }) => {
-    try {
-      const updatedValues = cleanTaskData(values);
-      updatedValues.creator = user?._id;
-
-      // Process attachments if any
-      if (values?.attachments && values.attachments.length > 0) {
-        const processedAttachments = await processAttachments(
-          values.attachments,
-          uploadSingleFile
-        );
-        updatedValues.attachments = processedAttachments;
-      }
-
-      // Handle project field
-      if (values.project === "other" || !values.project) {
-        updatedValues.project = null;
-        // Remove project-specific fields for "Other" project
-        delete updatedValues.taskGroup;
-        delete updatedValues.extraTaskWorkType;
-        delete updatedValues.taskFlow;
-      }
-
-      // Create the task
-      createTask(updatedValues, {
-        onSuccess: () => {
-          resetForm();
-        },
-        onError: (error) => {
-          console.error("Failed to create task:", error);
-          alert("Failed to create task. Please try again.");
-        },
-      });
-    } catch (error) {
-      console.error("Error processing task data:", error);
-      alert("Failed to process task data. Please try again.");
-    }
-  };
-
-  // Group tasks by status
-  const tasksByStatus = {
-    todo: filteredTasks.filter((task) => task.status === "todo"),
-    "in-progress": filteredTasks.filter(
-      (task) => task.status === "in-progress"
-    ),
-    completed: filteredTasks.filter((task) => task.status === "completed"),
-    "on-review": filteredTasks.filter((task) => task.status === "on-review"),
-    "on-hold": filteredTasks.filter((task) => task.status === "on-hold"),
-    "re-work": filteredTasks.filter((task) => task.status === "re-work"),
-    approved: filteredTasks.filter((task) => task.status === "approved"),
-    "client-approved": filteredTasks.filter(
-      (task) => task.status === "client-approved"
-    ),
-  };
-
-
-  const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
-    try {
-      const task = tasks.find((t) => t._id === taskId);
-      const updateData = { status: newStatus };
-      if (newOrder !== null) {
-        updateData.order = newOrder;
-      }
-
-      if (task?.parentTask) {
-        await updateSubTaskById(taskId, updateData);
-      } else {
-        await updateTaskById(taskId, updateData);
-      }
-      if (user?.role === "company-admin") {
-        queryClient.invalidateQueries([
-          "allCompanyTasks",
-          user?.company,
-          selectedMonth,
-        ]);
-      } else {
-        queryClient.invalidateQueries(["employeeTasks", user?._id]);
-      }
-    } catch (error) {
-      console.error("Failed to update task:", error);
-      alert("Failed to update task status. Please try again.");
-    }
-  };
-
-  const handleTaskDrop = async (taskData, targetStatus, targetPosition) => {
-    const { taskId, sourceStatus, sourceIndex } = taskData;
-
-    // Optimistically update the UI based on user role
-    const queryKey =
-      user?.role === "company-admin"
-        ? ["allCompanyTasks", user?.company, selectedMonth]
-        : ["employeeTasks", user?._id];
-
-    queryClient.setQueryData(queryKey, (oldData) => {
-      if (!oldData) return oldData;
-
-      const updatedTasks = (oldData.tasks || []).map((task) => {
-        if (task._id === taskId) {
-          return {
-            ...task,
-            status: targetStatus,
-          };
-        }
-        return task;
-      });
-
-      const updatedSubTasks = (oldData.subTasks || []).map((task) => {
-        if (task._id === taskId) {
-          return {
-            ...task,
-            status: targetStatus,
-          };
-        }
-        return task;
-      });
-
-      return {
-        ...oldData,
-        tasks: updatedTasks,
-        subTasks: updatedSubTasks,
-      };
-    });
-
-    try {
-      if (sourceStatus === targetStatus) {
-        // Same column reordering
-        const targetTasks = tasksByStatus[targetStatus];
-        const reorderedTasks = [...targetTasks];
-        const [movedTask] = reorderedTasks.splice(sourceIndex, 1);
-        const adjustedPosition =
-          targetPosition > sourceIndex ? targetPosition - 1 : targetPosition;
-        reorderedTasks.splice(adjustedPosition, 0, movedTask);
-
-        // Update order for affected tasks
-        reorderedTasks.forEach((task, index) => {
-          updateOrder({ taskId: task._id, newOrder: index });
-        });
-      } else {
-        // Different column - update status
-        await handleTaskUpdate(taskId, targetStatus, targetPosition);
-      }
-    } catch (error) {
-      console.error("Failed to update task:", error);
-      if (user?.role === "company-admin") {
-        queryClient.invalidateQueries([
-          "allCompanyTasks",
-          user?.company,
-          selectedMonth,
-        ]);
-      } else {
-        queryClient.invalidateQueries(["employeeTasks", user?._id]);
-      }
-      alert("Failed to update task. Please try again.");
-    }
-  };
-
-  if (isLoadingEmployeeTasks || isLoadingCompanyTasks) {
-    return (
-      <div className="animate-pulse">
-        <div className="h-6 bg-gray-200 rounded mb-4 w-1/4"></div>
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
-          ))}
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <BoardSkeleton />;
   }
+
   return (
-    <div className="col-span-4  overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="flexBetween  ">
-        <Header className={"whitespace-nowrap"}>Task Board</Header>
-        <div className=" hidden md:flex gap-2 2xl:gap-3 items-center">
-          <MonthSelector
-            selectedMonth={selectedMonth}
-            onMonthChange={handleMonthChange}
-          />
-          <div className="relative">
-            <select
-              value={selectedProject}
-              onChange={handleProjectChange}
-              className="appearance-none px-4 py-2 bg-white border
-               border-gray-200 rounded-lg text-sm
-               max-w-[200px] w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
-            >
-              <option value="all">All Projects</option>
-              {projects?.map((project) => (
-                <option key={project._id} value={project._id}>
-                  {project.name}
-                </option>
-              ))}
-              <option value="other">Other Tasks</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
+    <div className="col-span-4 overflow-hidden flex flex-col">
+      <BoardFilters
+        selectedMonth={selectedMonth}
+        onMonthChange={setSelectedMonth}
+        selectedProject={selectedProject}
+        onProjectChange={setSelectedProject}
+        projects={projects}
+        selectedPriority={selectedPriority}
+        onPriorityChange={setSelectedPriority}
+        user={user}
+        selectedAssignee={selectedAssignee}
+        onAssigneeChange={setSelectedAssignee}
+        assignees={assignees}
+        selectedTypes={selectedTypes}
+        onTypesChange={setSelectedTypes}
+        canCreateTask={canCreateTask}
+        onAddTaskClick={() => setShowModalTask(true)}
+        onRefresh={handleRefresh}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
-          <div className="relative">
-            <select
-              value={selectedPriority}
-              onChange={handlePriorityChange}
-              className="appearance-none px-4 py-2
-              max-w-[200px] w-full bg-white border
-               border-gray-200 rounded-lg text-sm focus:outline-none 
-               focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
-            >
-              <option value="all">All Priorities</option>
-              <option value="high">High Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="low">Low Priority</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-
-          {user?.role === "company-admin" && (
-            <div className="relative">
-              <select
-                value={selectedAssignee}
-                onChange={(e) => setSelectedAssignee(e.target.value)}
-                className="appearance-none px-4 py-2 bg-white border
-                 border-gray-200 rounded-lg text-sm focus:outline-none
-                 max-w-[200px] w-full focus:ring-2 focus:ring-blue-500
-                  focus:border-transparent pr-10 cursor-pointer hover:border-gray-300 transition-colors"
-              >
-                <option value="all">All Assignees</option>
-                {assignees.map((user) => (
-                  <option key={user._id} value={user._id}>
-                    {user.firstName || user.lastName
-                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                      : user.email}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
-          )}
-          <div className="relative" ref={typeDropdownRef}>
-            <button
-              onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-              className="flex items-center justify-between px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm min-w-[150px] hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <span className="text-gray-700">
-                {selectedTypes.length === 3
-                  ? "All Types"
-                  : selectedTypes.length === 0
-                    ? "No Types selected"
-                    : `${selectedTypes.length} Type${selectedTypes.length > 1 ? "s" : ""
-                    } selected`}
-              </span>
-              <svg
-                className={`w-4 h-4 ml-2 text-gray-400 transition-transform ${isTypeDropdownOpen ? "rotate-180" : ""
-                  }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-
-            {isTypeDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-[100] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                {[
-                  { id: "task", label: "Regular Tasks" },
-                  { id: "subtask", label: "Subtasks" },
-                  { id: "extra", label: "Extra Tasks" },
-                ].map((item) => (
-                  <label
-                    key={item.id}
-                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group"
-                  >
-                    <div className="relative flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedTypes.includes(item.id)}
-                        onChange={() => {
-                          setSelectedTypes((prev) =>
-                            prev.includes(item.id)
-                              ? prev.filter((t) => t !== item.id)
-                              : [...prev, item.id]
-                          );
-                        }}
-                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:bg-blue-600 checked:border-blue-600"
-                      />
-                      <svg
-                        className="absolute h-3.5 w-3.5 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                      {item.label}
-                    </span>
-                  </label>
-                ))}
-                {selectedTypes.length !== 3 && (
-                  <button
-                    onClick={() => setSelectedTypes(["task", "subtask", "extra"])}
-                    className="mt-1 w-full text-left px-3 py-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium border-t border-gray-100"
-                  >
-                    Select All
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {canCreateTask && (
-            <button
-              onClick={() => setShowModalTask(true)}
-              className="h-fit px-5 p-2 bg-blue-600 
-              whitespace-nowrap cursor-pointer text-sm text-white rounded-lg"
-            >
-              + Add Task
-            </button>
-          )}
-          <button
-            onClick={() => {
-              if (user?.role === "company-admin") {
-                queryClient.invalidateQueries([
-                  "allCompanyTasks",
-                  user?.company,
-                  selectedMonth,
-                ]);
-              } else {
-                queryClient.invalidateQueries(["employeeTasks", user?._id]);
-              }
-            }}
-            className="p-2 bg-white h-fit hover:bg-gray-50 transition-colors rounded-lg border border-gray-200"
-          >
-            <img
-              src={assetPath("icons/refresh.svg")}
-              alt="Refresh"
-              className="w-5 h-5"
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Board View */}
-      <div
-        className="flex h-[calc(100vh-180px)] md:mt-4 overflow-x-auto 
-      pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
-       project-details-scroll"
-      >
+      <div className="flex h-[calc(100vh-180px)] md:mt-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 project-details-scroll">
         {Object.entries(statusConfig).map(([status, config]) => {
-          const tasks = tasksByStatus[status] || [];
-          const taskCount = tasks.length;
-
+          const columnTasks = tasksByStatus[status] || [];
           return (
-            <Droppable
+            <DroppableColumn
               key={status}
               id={status}
-              title={`${config.title} (${taskCount})`}
+              title={`${config.title} (${columnTasks.length})`}
               onDrop={handleTaskDrop}
-              tasks={tasks}
+              tasks={columnTasks}
             >
-              {tasks.length > 0 ? (
-                tasks.map((task, index) => (
+              {columnTasks.length > 0 ? (
+                columnTasks.map((task, index) => (
                   <DraggableTask
                     key={task._id}
                     task={task}
                     index={index}
-                    onClick={(task) => {
-                      // If it's a subtask (has parentTask), navigate to the parent task
-                      if (task?.parentTask) {
-                        if (task.project) {
-                          navigate(`/projects/${task.project._id}/${task.parentTask._id}`);
-                        } else {
-                          navigate(`/tasks/${task.parentTask._id}`);
-                        }
-                      } else if (task.project) {
-                        // Regular task with project
-                        navigate(`/projects/${task.project._id}/${task._id}`);
+                    onClick={(t) => {
+                      if (t?.parentTask) {
+                        navigate(t.project ? `/projects/${t.project._id}/${t.parentTask._id}` : `/tasks/${t.parentTask._id}`);
+                      } else if (t.project) {
+                        navigate(`/projects/${t.project._id}/${t._id}`);
                       } else {
-                        // For board tasks without project, navigate to task details directly
-                        navigate(`/tasks/${task._id}`);
+                        navigate(`/tasks/${t._id}`);
                       }
                     }}
                   />
                 ))
               ) : (
-                <div className="text-center text-gray-500 py-4 text-sm">
-                  No {config.title.toLowerCase()}
-                </div>
+                <div className="text-center text-gray-500 py-4 text-sm">No {config.title.toLowerCase()}</div>
               )}
-            </Droppable>
+            </DroppableColumn>
           );
         })}
       </div>
+
       <AddTask
         isOpen={showModalTask}
         setShowModalTask={setShowModalTask}
@@ -952,7 +113,6 @@ const Board = () => {
         selectedMonth={selectedMonth}
         isLoading={isCreatingTask}
         showProjectSelection={true}
-      // You may want to pass other props as needed
       />
     </div>
   );

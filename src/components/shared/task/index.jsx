@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 // ... (rest of imports)
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
@@ -11,6 +11,34 @@ const priorityColors = {
   low: "#00D097", // green
   medium: "#FFBD21", // yellow
   high: "#FF4D4F", // red
+};
+
+const UserAvatar = ({ user, size = "w-6 h-6", border = "border-2 border-white", textClass = "text-[10px]" }) => {
+  const [error, setError] = useState(false);
+  const initials = (user?.firstName?.[0] || user?.email?.[0] || "?").toUpperCase();
+
+  if (!user?.profileImage || error) {
+    return (
+      <div
+        className={`${size} rounded-full ${border} bg-blue-100 flex items-center justify-center ${textClass} font-bold text-blue-600 shrink-0`}
+        title={user?.firstName || user?.email}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${size} overflow-hidden rounded-full ${border} shrink-0`} title={user.firstName}>
+      <img
+        src={user.profileImage}
+        alt={user.firstName}
+        onError={() => setError(true)}
+        loading="lazy"
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
 };
 
 const getProgressValue = (status) => {
@@ -160,21 +188,10 @@ const Task = memo(({
               {task?.assignedTo?.length > 0 ? (
                 <div className="flex -space-x-1">
                   {task.assignedTo.slice(0, 3).map((user, index) => (
-                    <div
-                      key={user._id || index}
-                      className="w-6 h-6 overflow-hidden rounded-full border-2 border-white"
-                      title={user.firstName}
-                    >
-                      <img
-                        src={user?.profileImage}
-                        alt={user?.firstName}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    <UserAvatar key={user._id || index} user={user} />
                   ))}
                   {task.assignedTo.length > 3 && (
-                    <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 text-xs flexCenter font-medium text-gray-600">
+                    <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 text-[10px] flexCenter font-medium text-gray-600 shrink-0">
                       +{task.assignedTo.length - 3}
                     </div>
                   )}
@@ -316,18 +333,11 @@ const Task = memo(({
             <div className="flex items-center gap-1">
               <div className="flex -space-x-1">
                 {task.assignedTo.slice(0, 2).map((user, index) => (
-                  <div
+                  <UserAvatar
                     key={user._id || index}
-                    className="w-6 h-6 overflow-hidden rounded-full border border-white"
-                    title={user.firstName}
-                  >
-                    <img
-                      src={user?.profileImage}
-                      alt={user?.firstName}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                    user={user}
+                    border="border border-white"
+                  />
                 ))}
               </div>
               {task.assignedTo.length > 2 && (

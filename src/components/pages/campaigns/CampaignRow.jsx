@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { FiRefreshCw } from "react-icons/fi";
 
 const CampaignRow = ({ campaign }) => {
   const navigate = useNavigate();
@@ -45,13 +46,37 @@ const CampaignRow = ({ campaign }) => {
       </td>
       <td className="py-4 px-5">
         <div className="flex flex-col">
-          <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-            {campaign.name}
-          </span>
-          <span className="text-[10px] font-medium text-gray-400 mt-0.5 line-clamp-1">
-            {campaign.platform || "Platform Organic"} •{" "}
-            {campaign.task?.title || "Untracked Task"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+              {campaign.name}
+            </span>
+            {campaign.facebookAdId && (
+              <span
+                className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-bold uppercase tracking-tighter"
+                title="Synced from Facebook"
+              >
+                FB
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[10px] font-medium text-gray-400 line-clamp-1">
+              {campaign.platform || "Platform Organic"} •{" "}
+              {campaign.task?.title || "Untracked Task"}
+            </span>
+            {campaign.lastSyncedAt && (
+              <span
+                className="text-[9px] text-gray-400 flex items-center gap-1"
+                title={`Last synced: ${new Date(campaign.lastSyncedAt).toLocaleString()}`}
+              >
+                <FiRefreshCw className="w-2.5 h-2.5" />
+                {new Date(campaign.lastSyncedAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+            )}
+          </div>
         </div>
       </td>
       <td className="py-4 px-5">

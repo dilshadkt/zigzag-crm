@@ -1,5 +1,5 @@
 import React from "react";
-import { FiSearch, FiPlus } from "react-icons/fi";
+import { FiSearch, FiPlus, FiRefreshCw } from "react-icons/fi";
 import Navigator from "../../shared/navigator";
 
 const CampaignsHeader = ({
@@ -9,6 +9,9 @@ const CampaignsHeader = ({
   setStatusFilter,
   totalCampaigns,
   onAddCampaign,
+  onSyncFacebook,
+  isSyncing = false,
+  lastSyncedAt = null,
 }) => {
   const statusOptions = ["", "planned", "active", "completed", "paused"];
 
@@ -38,6 +41,25 @@ const CampaignsHeader = ({
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <button
+            onClick={onSyncFacebook}
+            disabled={isSyncing}
+            className={`px-4 py-2.5 border border-gray-200 font-semibold rounded-xl transition-colors flex items-center gap-2 text-sm ${
+              isSyncing
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+            }`}
+            title={
+              lastSyncedAt
+                ? `Last synced: ${new Date(lastSyncedAt).toLocaleString()}`
+                : "Sync Facebook ads"
+            }
+          >
+            <FiRefreshCw
+              className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`}
+            />
+            {isSyncing ? "Syncing..." : "Sync Facebook"}
+          </button>
           <button
             onClick={onAddCampaign}
             className="px-5 py-2.5 bg-[#3F8CFF] text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm"
