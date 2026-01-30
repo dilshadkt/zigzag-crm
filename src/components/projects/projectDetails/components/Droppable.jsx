@@ -78,7 +78,7 @@ const Droppable = ({
     const rowVirtualizer = useVirtualizer({
         count: childrenArray.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 140, // Height of Task card + DropZone
+        estimateSize: () => 160, // Increased height to prevent overlap
         overscan: 5,
     });
 
@@ -112,7 +112,7 @@ const Droppable = ({
             </div>
             <div
                 ref={parentRef}
-                className="space-y-1 min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
+                className="min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
                 data-droppable-id={id}
             >
                 {/* Drop zone at the beginning - only if it's the very top of the list or empty */}
@@ -134,13 +134,15 @@ const Droppable = ({
                     {virtualRows.map((virtualRow) => (
                         <div
                             key={virtualRow.key}
+                            data-index={virtualRow.index}
+                            ref={rowVirtualizer.measureElement}
                             style={{
                                 position: "absolute",
                                 top: 0,
                                 left: 0,
                                 width: "100%",
-                                height: `${virtualRow.size}px`,
                                 transform: `translateY(${virtualRow.start}px)`,
+                                paddingBottom: "8px", // gap-y-2 spacing
                             }}
                         >
                             {childrenArray[virtualRow.index]}

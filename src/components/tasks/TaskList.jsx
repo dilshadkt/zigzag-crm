@@ -22,7 +22,7 @@ const TaskList = ({
   const rowVirtualizer = useVirtualizer({
     count: visibleTasks.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 100, // Estimate height of a TaskCard
+    estimateSize: () => 180, // Increased estimate size for more complex TaskCard
     overscan: 10,
   });
 
@@ -51,14 +51,15 @@ const TaskList = ({
           return (
             <div
               key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
                 width: "100%",
-                height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
-                paddingBottom: "8px", // Space-y-2 equivalent
+                paddingBottom: "16px", // Increased padding for better separation in list view
               }}
             >
               <TaskCard task={task} filter={filter} />

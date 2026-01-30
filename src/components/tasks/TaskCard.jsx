@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 // ... (rest of imports)
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,6 +10,33 @@ import {
   FiPause,
   FiCheckCircle,
 } from "react-icons/fi";
+
+const UserAvatar = ({ user, size = "w-5 h-5" }) => {
+  const [error, setError] = useState(false);
+  const initials = (user?.firstName?.[0] || user?.email?.[0] || "?").toUpperCase();
+
+  if (!user?.profileImage || error) {
+    return (
+      <div
+        className={`${size} rounded-full border border-white bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 shrink-0 hover:scale-125 transition-all duration-300`}
+        title={`${user?.firstName || ""} ${user?.lastName || ""}`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${size} rounded-full overflow-hidden hover:scale-125 transition-all duration-300 cursor-pointer border border-white shrink-0`} title={`${user.firstName} ${user.lastName}`}>
+      <img
+        src={user.profileImage}
+        alt={user.firstName}
+        onError={() => setError(true)}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+};
 
 const TaskCard = memo(({ task, filter }) => {
   const navigate = useNavigate();
@@ -192,19 +219,10 @@ const TaskCard = memo(({ task, filter }) => {
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-1">
                     {task.assignedTo.slice(0, 2).map((user, index) => (
-                      <div
+                      <UserAvatar
                         key={user._id || index}
-                        onClick={(e) => handleProfileClick(e, user)}
-                        className="w-5 h-5 rounded-full overflow-hidden hover:scale-125
-                        transition-all duration-300 cursor-pointer border border-white"
-                        title={`${user.firstName} ${user.lastName}`}
-                      >
-                        <img
-                          src={user?.profileImage}
-                          alt={user?.firstName}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                        user={user}
+                      />
                     ))}
                   </div>
                   <span>
