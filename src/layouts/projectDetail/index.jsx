@@ -85,7 +85,7 @@ const ProjectDetailLayout = () => {
            rounded-full translate-y-0.5 flex items-center
             justify-center hover:bg-white"
           >
-            <Navigator />
+            <Navigator to="/projects" />
           </div>
 
           <Header>{projectData?.name}</Header>

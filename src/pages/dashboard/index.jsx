@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from "react";
+import React, { lazy, Suspense, useState } from "react";
 import Header from "../../components/shared/header";
 import {
   MdOutlineKeyboardArrowLeft,
@@ -43,36 +43,11 @@ const Dashboard = () => {
 
   // Check if user has permission to view campaign details
   const canViewCampaignDetails = hasPermission("dashboard", "viewCampaignDetails");
-  // Get user-specific localStorage key
-  const getStorageKey = (userId) => {
-    return userId
-      ? `dashboard-selected-date-${userId}`
-      : "dashboard-selected-date";
-  };
-
-  // State for managing the selected month with persistence
-  // Default to current date initially - will be updated when user loads
+  // State for managing the selected month
+  // Default to current date initially
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date();
   });
-
-  // Initialize selectedDate from localStorage when user is available
-  useEffect(() => {
-    if (user?._id) {
-      const storageKey = getStorageKey(user._id);
-      const savedDate = localStorage.getItem(storageKey);
-      if (savedDate) {
-        const parsedDate = new Date(savedDate);
-        // Validate that the date is valid
-        if (!isNaN(parsedDate.getTime())) {
-          setSelectedDate(parsedDate);
-        }
-      } else {
-        // If no saved date for this user, default to current date
-        setSelectedDate(new Date());
-      }
-    }
-  }, [user?._id]); // Only run when user ID changes
 
   // Calculate taskMonth in YYYY-MM format
   const taskMonth = `${selectedDate.getFullYear()}-${(
@@ -94,7 +69,6 @@ const Dashboard = () => {
   // Determine which projects to show - For Checklist using ALL projects not just sliced ones
   // We need a list of ALL active projects for the checklist, not just the top 3
   // However, useGetEmployeeProjects by default might return all or paginated.
-  // The hook implementation with `useGetEmployeeProjects(..., taskMonth)` returns objects.
   // The slice(0,3) is only for display on dashboard cards.
   // We should pass the FULL list to the drawer.
   const projectsForChecklist = isEmployee
@@ -103,14 +77,6 @@ const Dashboard = () => {
   const projects = isEmployee
     ? employeeProjectsData?.projects?.slice(0, 3) || []
     : companyProjects || [];
-
-  // Persist the selected date whenever it changes (only if user is available)
-  useEffect(() => {
-    if (user?._id) {
-      const storageKey = getStorageKey(user._id);
-      localStorage.setItem(storageKey, selectedDate.toISOString());
-    }
-  }, [selectedDate, user?._id]);
 
   // Navigation functions for month selection
   const goToPreviousMonth = () => {

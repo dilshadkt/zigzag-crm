@@ -2,11 +2,11 @@ import React from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 
-const Navigator = ({ title }) => {
+const Navigator = ({ title, to = -1 }) => {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate(to);
   };
 
   return (
