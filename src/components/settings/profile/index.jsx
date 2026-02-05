@@ -17,6 +17,7 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(user?.profileImage || "");
+  const [imgError, setImgError] = useState(false);
   const fileInputRef = useRef(null);
   const {
     user: currentUser,
@@ -174,6 +175,7 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
 
       if (!selectedImageFile) {
         setPreviewImage(user?.profileImage || "");
+        setImgError(false);
       }
     }
   }, [user, resetForm, selectedImageFile]);
@@ -188,6 +190,7 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
   useEffect(() => {
     if (!selectedImageFile) {
       setPreviewImage(user?.profileImage || "");
+      setImgError(false);
       return;
     }
 
@@ -245,12 +248,18 @@ rounded-3xl  flex flex-col "
         <div className="flex justify-between">
           <div className="relative group">
             <Progress size={54} currentValue={user?.progressValue ?? 0} />
-            <img
-              src={previewImage || "/icons/profile.svg"}
-              alt={`${user?.firstName || "User"} profile`}
-              className="absolute top-0 left-0 right-0
-              scale-85 bottom-0 w-full h-full  object-cover rounded-full"
-            />
+            <div className="absolute top-0 left-0 right-0 scale-85 bottom-0 w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-black text-white text-xl font-bold">
+              {previewImage && !imgError ? (
+                <img
+                  src={previewImage}
+                  alt={`${user?.firstName || "User"} profile`}
+                  className="w-full h-full object-cover"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                user?.firstName?.charAt(0).toUpperCase() || "U"
+              )}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -281,11 +290,10 @@ rounded-3xl  flex flex-col "
                   !deleteEmployeeMutation.isLoading &&
                   setShowDeleteConfirm(true)
                 }
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                  deleteEmployeeMutation.isLoading
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${deleteEmployeeMutation.isLoading
                     ? "bg-red-300 cursor-not-allowed"
                     : "bg-red-500 hover:bg-red-600 hover:scale-105 active:scale-95"
-                } shadow-sm`}
+                  } shadow-sm`}
                 disabled={deleteEmployeeMutation.isLoading}
                 title="Delete Employee"
               >

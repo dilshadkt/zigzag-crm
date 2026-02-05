@@ -72,6 +72,10 @@ const SelectedProject = ({ currentProject }) => {
     });
   };
 
+  const handleProfileTeamClick = (id) => {
+    navigate(`/employees/${id}`);
+  };
+
   return (
     <div
       className="col-span-1  bg-white md:overflow-y-auto text-[#0A1629]
@@ -126,9 +130,10 @@ rounded-3xl  flex flex-col  p-4"
           {currentProject?.teams?.length > 0 && (
             <div className="flex flex-col gap-y-2">
               <span className="text-sm text-[#91929E]">Team </span>
-              <div className=" flexStart">
+              <div className=" flexStart  ">
                 {currentProject?.teams.map((team, index) => (
                   <div
+                    onClick={() => handleProfileTeamClick(team._id)}
                     key={team?._id}
                     className="w-6 h-6 group cursor-pointer relative  rounded-full hover:scale-150
                     transition-all duration-300  bg-black text-white flexCenter border border-white"

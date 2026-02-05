@@ -1,7 +1,9 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import Progress from "../progress";
 
 const EmployeeCard = memo(({ employee, index, className }) => {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div
       key={employee._id || index}
@@ -16,14 +18,21 @@ const EmployeeCard = memo(({ employee, index, className }) => {
         <div
           className="absolute
      top-0 left-0 right-0 bottom-0 w-full h-full 
-      rounded-full rounded-full w-6 h-6  scale-85 flexCenter overflow-hidden"
+      rounded-full  scale-85 flexCenter overflow-hidden bg-black text-white"
         >
-          <img
-            src={employee?.profile || `/image/dummy/avatar1.svg`}
-            alt=""
-            loading="lazy"
-            className="w-full h-full object-cover "
-          />
+          {employee?.profile && !imgError ? (
+            <img
+              src={employee?.profile}
+              alt={employee?.name}
+              loading="lazy"
+              className="w-full h-full object-cover "
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span className="text-xl font-bold uppercase">
+              {employee?.name?.charAt(0) || "U"}
+            </span>
+          )}
         </div>
       </div>
       <div className="flex flex-col items-center gap-y-1 mt-2">
