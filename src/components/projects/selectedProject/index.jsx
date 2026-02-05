@@ -22,6 +22,12 @@ const SelectedProject = ({ currentProject }) => {
   const deleteProject = useDeleteProject();
   const pauseProject = usePauseProject();
   const resumeProject = useResumeProject();
+  const [failedImages, setFailedImages] = useState({});
+
+  const handleImageError = (id) => {
+    if (!id) return;
+    setFailedImages((prev) => ({ ...prev, [id]: true }));
+  };
 
   // Permission checks
   const canEditProject = isCompany || hasPermission("projects", "edit");
@@ -96,12 +102,20 @@ rounded-3xl  flex flex-col  p-4"
               <div className="flex flex-col gap-y-2">
                 <span className="text-sm text-[#91929E]">Reporter </span>
                 <div className="flexStart gap-x-3 ">
-                  <div className="w-6 h-6 rounded-full overflow-hidden flexCenter">
-                    <img
-                      src={currentProject?.creator?.profileImage}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-6 h-6 rounded-full overflow-hidden flexCenter bg-black text-white text-[10px]">
+                    {currentProject?.creator?.profileImage &&
+                      !failedImages[currentProject?.creator?._id] ? (
+                      <img
+                        src={currentProject?.creator?.profileImage}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={() =>
+                          handleImageError(currentProject?.creator?._id)
+                        }
+                      />
+                    ) : (
+                      currentProject?.creator?.firstName?.slice(0, 1)
+                    )}
                   </div>
                   <span>{currentProject?.creator?.firstName}</span>
                 </div>
@@ -130,11 +144,12 @@ rounded-3xl  flex flex-col  p-4"
                     >
                       {team?.firstName}
                     </div>
-                    {team?.profileImage ? (
+                    {team?.profileImage && !failedImages[team?._id] ? (
                       <img
                         src={team?.profileImage}
                         alt={team?.firstName}
                         className="w-full h-full rounded-full object-cover"
+                        onError={() => handleImageError(team?._id)}
                       />
                     ) : (
                       team?.firstName?.slice(0, 1)
@@ -189,8 +204,8 @@ rounded-3xl  flex flex-col  p-4"
                       ? "Resuming..."
                       : "Pausing..."
                     : currentProject?.status === "paused"
-                    ? "Resume Project"
-                    : "Pause Project"
+                      ? "Resume Project"
+                      : "Pause Project"
                 }
                 className="w-full text-white bg-gray-400 hover:bg-gray-800 cursor-pointer mt-4 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 onclick={handleToggleProjectStatus}
