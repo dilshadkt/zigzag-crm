@@ -118,8 +118,8 @@ const TimeDisplay = React.memo(({ time, label, className = "" }) => {
 const EmployeeRow = React.memo(({ attendance }) => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationDetails, setLocationDetails] = useState(null);
+  const [imgError, setImgError] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-
   const employee = attendance.employee;
 
   // Memoized location handler
@@ -182,19 +182,22 @@ const EmployeeRow = React.memo(({ attendance }) => {
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10">
-              {employee?.profileImage ? (
-                <img
-                  className="h-10 w-10 rounded-full object-cover"
-                  src={employee.profileImage}
-                  alt={employeeName}
-                />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-700">
-                    {employeeName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
+              <div className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
+                {employee?.profileImage && !imgError ? (
+                  <img
+                    className="h-full w-full object-cover"
+                    src={employee.profileImage}
+                    alt={employeeName}
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-[#3F8CFF] text-white">
+                    <span className="text-sm font-medium">
+                      {employeeName.charAt(0).toUpperCase() || "?"}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="ml-4">
               <div className="text-sm font-medium text-gray-900">

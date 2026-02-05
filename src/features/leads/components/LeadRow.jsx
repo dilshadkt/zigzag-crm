@@ -36,6 +36,47 @@ const formatDate = (date) => {
   });
 };
 
+const OwnerCell = ({ owner }) => {
+  const [imgError, setImgError] = useState(false);
+
+  if (!owner) {
+    return <div className="text-[13px] text-slate-500">—</div>;
+  }
+
+  const ownerName = owner.firstName
+    ? `${owner.firstName} ${owner.lastName || ""}`.trim()
+    : owner.name || "Unknown";
+
+  const initials = ownerName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-slate-100">
+        {owner.profileImage && !imgError ? (
+          <img
+            src={owner.profileImage}
+            alt={ownerName}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-[#3F8CFF] text-white">
+            <span className="text-[10px] font-medium">
+              {initials}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="text-[13px] text-slate-600 truncate">{ownerName}</div>
+    </div>
+  );
+};
+
 const columnRenderers = {
   createdAt: (lead) => (
     <div className="text-xs whitespace-nowrap font-semibold text-slate-500">
@@ -84,40 +125,7 @@ const columnRenderers = {
       {lead.phone || lead.contact?.phone || "—"}
     </div>
   ),
-  owner: (lead) => {
-    const owner = lead.owner;
-    if (!owner) {
-      return <div className="text-[13px] text-slate-500">—</div>;
-    }
-
-    const ownerName = owner.firstName
-      ? `${owner.firstName} ${owner.lastName || ""}`.trim()
-      : owner.name || "Unknown";
-
-    return (
-      <div className="flex items-center gap-2">
-        {owner.profileImage ? (
-          <img
-            src={owner.profileImage}
-            alt={ownerName}
-            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-            <span className="text-[10px] font-medium text-slate-600">
-              {ownerName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2)}
-            </span>
-          </div>
-        )}
-        <div className="text-[13px] text-slate-600 truncate">{ownerName}</div>
-      </div>
-    );
-  },
+  owner: (lead) => <OwnerCell owner={lead.owner} />,
 };
 
 const LeadRow = memo(({
