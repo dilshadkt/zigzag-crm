@@ -15,6 +15,31 @@ import { usePermissions } from "../../../hooks/usePermissions";
 import { assetPath } from "../../../utils/assetPath";
 import "./taskInfo.css";
 
+const TaskUserAvatar = ({ user, size = "w-8 h-8", fontSize = "text-[10px]" }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const initial = user?.firstName?.slice(0, 1) || user?.name?.slice(0, 1) || "?";
+
+  if (!user?.profileImage || imgError) {
+    return (
+      <div
+        className={`${size} rounded-full flexCenter ${fontSize} bg-black uppercase text-white font-semibold`}
+      >
+        {initial}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={user.profileImage}
+      alt={user.firstName || user.name}
+      className={`${size} w-full h-full object-cover rounded-full`}
+      onError={() => setImgError(true)}
+    />
+  );
+};
+
 const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
   const { user, isCompany } = useAuth();
   const { hasPermission } = usePermissions();
@@ -94,14 +119,14 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
               <>
                 <span className="text-sm text-[#91929E]">Created By</span>
                 <div className="flexStart gap-x-3">
-                  <div className="w-6 h-6 rounded-full bg-gray-300 overflow-hidden">
-                    <img
-                      src={taskDetails?.creator?.profileImage}
-                      alt=""
-                      className="w-full h-full object-cover"
+                  <div className="rounded-full w-10 bg-gray-300 h-10 overflow-hidden">
+                    <TaskUserAvatar
+                      user={taskDetails.creator}
+                      size="w-6 h-6"
+                      fontSize="text-[8px]"
                     />
                   </div>
-                  <span>{taskDetails?.creator?.name}</span>
+                  {/* <span>{taskDetails?.creator?.name}</span> */}
                 </div>
               </>
             )}
@@ -117,32 +142,17 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
                     title={`${user?.firstName} ${user?.lastName || ""}`}
                     style={{ zIndex: taskDetails.assignedTo.length - index }}
                   >
-                    {!user?.profileImage ? (
-                      <span
-                        className="w-full h-full flexCenter text-[10px] 
-                        bg-black uppercase
-                      text-white font-semibold rounded-full"
-                      >
-                        {user?.firstName?.slice(0, 1)}
-                      </span>
-                    ) : (
-                      <img
-                        src={user?.profileImage}
-                        alt={user?.firstName}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+                    <TaskUserAvatar user={user} />
                   </div>
                 ))}
                 {taskDetails.assignedTo.length > 4 && (
                   <div
                     className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 text-xs flexCenter font-medium text-gray-600 relative z-10 hover:z-20 transition-all duration-200 hover:scale-110"
-                    title={`+${
-                      taskDetails.assignedTo.length - 4
-                    } more: ${taskDetails.assignedTo
-                      .slice(4)
-                      .map((user) => user.firstName)
-                      .join(", ")}`}
+                    title={`+${taskDetails.assignedTo.length - 4
+                      } more: ${taskDetails.assignedTo
+                        .slice(4)
+                        .map((user) => user.firstName)
+                        .join(", ")}`}
                   >
                     +{taskDetails.assignedTo.length - 4}
                   </div>
@@ -206,12 +216,11 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
               {/* Current Due Date with click to view history */}
               <div className="relative inline-block">
                 <span
-                  className={`text-sm text-[#0A1629] ${
-                    taskDetails?.dueDateHistory &&
+                  className={`text-sm text-[#0A1629] ${taskDetails?.dueDateHistory &&
                     taskDetails.dueDateHistory.length > 0
-                      ? "cursor-pointer hover:text-blue-600 transition-colors underline decoration-dotted"
-                      : ""
-                  }`}
+                    ? "cursor-pointer hover:text-blue-600 transition-colors underline decoration-dotted"
+                    : ""
+                    }`}
                   onClick={() => {
                     if (
                       taskDetails?.dueDateHistory &&
@@ -347,13 +356,12 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
       <Modal
         isOpen={showDueDateHistoryModal}
         onClose={() => setShowDueDateHistoryModal(false)}
-        title={`Due Date Change History (${
-          taskDetails?.dueDateHistory?.length || 0
-        })`}
+        title={`Due Date Change History (${taskDetails?.dueDateHistory?.length || 0
+          })`}
       >
         <div className="flex flex-col gap-4">
           {taskDetails?.dueDateHistory &&
-          taskDetails.dueDateHistory.length > 0 ? (
+            taskDetails.dueDateHistory.length > 0 ? (
             <div
               className="space-y-4 overflow-y-auto pr-2 custom-scrollbar"
               style={{ maxHeight: "500px" }}
