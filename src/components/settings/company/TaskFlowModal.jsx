@@ -4,13 +4,14 @@ import { useCreateTaskFlow, useUpdateTaskFlow } from "../../../api/hooks";
 
 const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   const [name, setName] = useState(taskFlow?.name || "");
+  const [localError, setLocalError] = useState("");
   const [flows, setFlows] = useState(
     taskFlow?.flows?.length > 0
       ? taskFlow.flows.map((flow) => ({
-          taskName: flow.taskName || "",
-          assignee: flow.assignee?._id || flow.assignee || "",
-          weightage: flow.weightage || 1,
-        }))
+        taskName: flow.taskName || "",
+        assignee: flow.assignee?._id || flow.assignee || "",
+        weightage: flow.weightage !== undefined ? flow.weightage : 1,
+      }))
       : [{ taskName: "", assignee: "", weightage: 1 }]
   );
   const { data: employeesData } = useEmpoyees(1);
@@ -54,22 +55,32 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
     );
   };
   const addFlow = () =>
-    setFlows((prev) => [...prev, { taskName: "", assignee: "" }]);
+    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1 }]);
   const removeFlow = (idx) =>
     setFlows((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Submit clicked:", { name, flows, companyId, taskFlow });
+    setLocalError("");
 
     if (!name.trim()) {
-      console.log("Name is empty");
+      setLocalError("Task flow name is required");
       return;
     }
 
-    if (flows.some((f) => !f.taskName.trim() || !f.assignee || !f.weightage)) {
-      console.log("Some flows are incomplete:", flows);
-      return;
+    for (let i = 0; i < flows.length; i++) {
+      const f = flows[i];
+      if (
+        !f.taskName.trim() ||
+        !f.assignee ||
+        f.weightage === undefined ||
+        f.weightage === null
+      ) {
+        setLocalError(
+          `Flow ${i + 1} must have taskName, assignee, and weightage`
+        );
+        return;
+      }
     }
 
     console.log("Submitting task flow:", { name, flows });
@@ -89,7 +100,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-xl mx-4">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -179,19 +190,20 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                     {/* Weightage */}
                     <input
                       type="number"
-                      min="1"
+                      min="0"
                       max="10"
                       className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-center"
                       value={flow.weightage}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
                         handleFlowChange(
                           idx,
                           "weightage",
-                          parseInt(e.target.value) || 1
-                        )
-                      }
+                          isNaN(val) ? 0 : val
+                        );
+                      }}
                       placeholder="Weight"
-                      title="Task weightage (1-10)"
+                      title="Task weightage (0-10)"
                     />
 
                     {/* Arrow */}
@@ -281,7 +293,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
             </div>
 
             {/* Error Display */}
-            {(createTaskFlow.error || updateTaskFlow.error) && (
+            {(createTaskFlow.error || updateTaskFlow.error || localError) && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3">
                 <div className="flex items-center">
                   <svg
@@ -298,8 +310,9 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                     />
                   </svg>
                   <div className="text-sm text-red-800">
-                    {(createTaskFlow.error || updateTaskFlow.error)?.response
-                      ?.data?.message ||
+                    {localError ||
+                      (createTaskFlow.error || updateTaskFlow.error)?.response
+                        ?.data?.message ||
                       (createTaskFlow.error || updateTaskFlow.error)?.message}
                   </div>
                 </div>

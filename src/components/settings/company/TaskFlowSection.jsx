@@ -111,9 +111,8 @@ const TaskFlowSection = ({
             {taskFlows.map((flow) => (
               <div
                 key={flow._id}
-                className={`px-4 py-4 hover:bg-gray-50 transition-colors duration-150 ${
-                  !flow.isActive ? "bg-gray-25 opacity-75" : ""
-                }`}
+                className={`px-4 py-4 hover:bg-gray-50 transition-colors duration-150 ${!flow.isActive ? "bg-gray-25 opacity-75" : ""
+                  }`}
               >
                 <div className="grid grid-cols-12 gap-4 items-start">
                   {/* Flow Name */}
@@ -170,7 +169,7 @@ const TaskFlowSection = ({
                                   {step.taskName}
                                 </span>
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 border border-orange-200">
-                                  W{step.weightage || 1}
+                                  W{step.weightage !== undefined ? step.weightage : 1}
                                 </span>
                                 <svg
                                   className="w-3 h-3 text-gray-400"
@@ -187,9 +186,8 @@ const TaskFlowSection = ({
                                 </svg>
                                 <span className="text-xs text-gray-600 truncate max-w-[120px]">
                                   {step.assignee?.name ||
-                                    `${step.assignee?.firstName || ""} ${
-                                      step.assignee?.lastName || ""
-                                    }`.trim() ||
+                                    `${step.assignee?.firstName || ""} ${step.assignee?.lastName || ""
+                                      }`.trim() ||
                                     "Unassigned"}
                                 </span>
                               </div>
@@ -219,16 +217,14 @@ const TaskFlowSection = ({
                   {/* Status */}
                   <div className="col-span-2">
                     <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium border ${
-                        flow.isActive
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium border ${flow.isActive
                           ? "bg-green-100 text-green-800 border-green-200"
                           : "bg-red-100 text-red-800 border-red-200"
-                      }`}
+                        }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                          flow.isActive ? "bg-green-400" : "bg-red-400"
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${flow.isActive ? "bg-green-400" : "bg-red-400"
+                          }`}
                       ></span>
                       {flow.isActive ? "Active" : "Inactive"}
                     </span>
