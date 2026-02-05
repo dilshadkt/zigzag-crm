@@ -50,6 +50,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const canEditTask =
     isCompany || hasPermission("tasks", "edit") || isAssignedToTask;
 
+  // Check permissions for task status change
+  const canChangeStatus =
+    isCompany ||
+    hasPermission("tasks", "changeStatus") ||
+    isAssignedToTask ||
+    hasPermission("tasks", "edit");
 
   // Check permissions for subtask management
   const canManageSubtasks = isCompany || hasPermission("tasks", "create");
@@ -57,6 +63,17 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
     useGetSubTasksByParentTask(taskDetails?._id);
+
+  // Filter subtasks based on user role and permissions
+  const visibleSubTasks = React.useMemo(() => {
+    if (isCompany || isAdmin || hasPermission("tasks", "view") || isAssignedToTask) {
+      return subTasks;
+    }
+    // For regular users not assigned to the parent task, only show subtasks assigned to them
+    return subTasks.filter(subTask =>
+      subTask.assignedTo?.some(assigned => (assigned._id || assigned) === user?._id)
+    );
+  }, [subTasks, isCompany, isAdmin, hasPermission, isAssignedToTask, user?._id]);
 
 
 
@@ -176,11 +193,11 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                   Timeline
                 </span>
               </div>
-              {canEditTask && (
+              {canChangeStatus && (
                 <StatusButton
                   taskDetails={taskDetails}
-                  disabled={!canEditTask}
-                  showAllOptions={hasPermission("tasks", "edit")}
+                  disabled={!canChangeStatus}
+                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus")}
                 />
               )}
             </div>
@@ -189,7 +206,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
             <TaskDescription taskDetails={taskDetails} />
 
             <SubtasksSection
-              subTasks={subTasks}
+              subTasks={visibleSubTasks}
               subTasksLoading={subTasksLoading}
               user={user}
               isCompany={isCompany}
@@ -197,7 +214,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
               onEditSubTask={handleEditSubTask}
               onDeleteSubTask={handleDeleteSubTask}
               isAdmin={isAdmin}
-              canManageSubtasks={hasPermission("tasks", "create")}
+              canManageSubtasks={hasPermission("tasks", "create") || isAssignedToTask}
             />
 
             <TaskAttachments taskDetails={taskDetails} />

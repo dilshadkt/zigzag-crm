@@ -68,22 +68,22 @@ const SubtasksSection = ({
   // Determine if subtask should be visible to current user
   const getSubTaskVisibility = (subtask) => {
     const isAssignedToSubTask = subtask.assignedTo?.some(
-      (assignedUser) => assignedUser._id === user?.id
+      (assignedUser) => (assignedUser._id || assignedUser) === user?._id
     );
 
-    // Show if user is assigned to subtask, has view permission, or is admin
-    return isAssignedToSubTask || canManageSubtasks || isAdmin;
+    // Show if user is assigned to subtask, has view/create permission, is assigned to parent task, or is admin
+    return isAssignedToSubTask || canManageSubtasks || isAdmin || hasPermission("tasks", "view");
   };
 
   // Get subtask styling classes based on assignment and admin status
   const getSubTaskClasses = (subtask) => {
     const isAssignedToSubTask = subtask.assignedTo?.some(
-      (assignedUser) => assignedUser._id === user?.id
+      (assignedUser) => (assignedUser._id || assignedUser) === user?._id
     );
 
     if (isAssignedToSubTask) {
       return "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300";
-    } else if (canManageSubtasks || isAdmin) {
+    } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view")) {
       return "bg-gray-50 hover:bg-gray-100";
     } else {
       return "hidden";
@@ -109,7 +109,7 @@ const SubtasksSection = ({
           {subTasks.filter(getSubTaskVisibility).map((subtask) => {
             // Check if current user is assigned to this subtask
             const isAssignedToSubTask = subtask.assignedTo?.some(
-              (assignedUser) => assignedUser._id === user?.id
+              (assignedUser) => (assignedUser._id || assignedUser) === user?._id
             );
 
             return (
@@ -190,12 +190,18 @@ const SubtasksSection = ({
                     <SubTaskStatusButton
                       subTask={subtask}
                       parentTaskId={taskDetails?._id}
-                      showAllOptions={canManageSubtasks}
+                      showAllOptions={
+                        isCompany ||
+                        isAdmin ||
+                        hasPermission("tasks", "changeStatus") ||
+                        hasPermission("tasks", "edit")
+                      }
                       canEdit={
-                        (canManageSubtasks || isAssignedToSubTask) &&
-                        (isAdmin ||
-                          canManageSubtasks ||
-                          subtask.status !== "completed")
+                        isCompany ||
+                        isAdmin ||
+                        hasPermission("tasks", "changeStatus") ||
+                        hasPermission("tasks", "edit") ||
+                        isAssignedToSubTask
                       }
                     />
                     {/* Edit button for users with permission and assigned users */}
