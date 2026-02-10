@@ -247,11 +247,10 @@ const FilterDrawer = ({
                       onClick={() =>
                         handleLocalMultiSelectFilter("status", button.value)
                       }
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
-                        isActive
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${isActive
                           ? `${button.color}`
                           : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       <Icon className="text-xs" />
                       <span>{button.label}</span>
@@ -359,11 +358,10 @@ const FilterDrawer = ({
                       onClick={() =>
                         handleLocalMultiSelectFilter("priority", button.value)
                       }
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
-                        isActive
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${isActive
                           ? `${button.color}`
                           : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       <span>{button.label}</span>
                     </button>

@@ -14,7 +14,7 @@ const CompanyTasksHeader = ({
     hasActiveFilters,
 }) => {
     return (
-        <div className="sticky top-0 bg-[#f4f9fd]">
+        <div className="sticky top-0 z-50 bg-[#f4f9fd]">
             <div className="flex sticky top-0 items-start justify-between">
                 <div className="flex items-center sticky top-0 gap-x-2">
                     <Navigator />
@@ -23,7 +23,7 @@ const CompanyTasksHeader = ({
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">{taskCount} tasks</p>
                 </div>
-                <div className="flex items-center gap-x-2">
+                <div className="flex items-center gap-x-2 relative">
                     <SuperFilterPanel
                         users={users}
                         projects={projects}
