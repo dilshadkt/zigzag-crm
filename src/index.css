@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 @plugin "daisyui" {
   themes: light --default;
 }
@@ -8,12 +9,15 @@
   .flexCenter {
     @apply flex items-center justify-center;
   }
+
   .flexBetween {
     @apply flex items-center justify-between;
   }
+
   .flexStart {
     @apply flex items-center justify-start;
   }
+
   .flexEnd {
     @apply flex items-center justify-end;
   }
@@ -25,12 +29,14 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
+
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
@@ -43,6 +49,7 @@
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
@@ -54,19 +61,26 @@
 
   /* Hide scrollbar utility */
   .scrollbar-hide {
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* Internet Explorer 10+ */
+    scrollbar-width: none;
+    /* Firefox */
   }
+
   .scrollbar-hide::-webkit-scrollbar {
-    display: none; /* Safari and Chrome */
+    display: none;
+    /* Safari and Chrome */
   }
 }
+
 button {
   cursor: pointer;
 }
+
 @theme {
   --font-display: "Nunito Sans", "sans-serif";
 }
+
 @theme {
   --color-primary: "#F4F9FD";
 }
@@ -95,6 +109,7 @@ button {
   font-weight: 400;
   font-style: normal;
 }
+
 .nunito-sans-medium {
   font-family: "Nunito Sans", serif;
   font-optical-sizing: auto;
@@ -113,18 +128,24 @@ button {
   font-weight: 700;
   font-style: normal;
 }
+
 body {
   font-family: "Nunito Sans", sans-serif;
 }
+
 ::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, and Opera */
+  display: none;
+  /* Chrome, Safari, and Opera */
 }
 
 ::-webkit-scrollbar {
   /* For most modern browsers */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  overflow: -moz-scrollbars-none; /* Older Firefox (optional fallback) */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+  overflow: -moz-scrollbars-none;
+  /* Older Firefox (optional fallback) */
 }
 
 /* Custom horizontal scrollbar for project details */
@@ -159,6 +180,39 @@ body {
 }
 
 .element {
-  border: 2px solid; /* Set border width */
+  border: 2px solid;
+  /* Set border width */
   border-image: linear-gradient(to right, #ff7e5f, #feb47b) 1;
+}
+
+@keyframes enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes leave {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.animate-enter {
+  animation: enter 0.3s ease-out;
+}
+
+.animate-leave {
+  animation: leave 0.3s ease-in forwards;
 }
