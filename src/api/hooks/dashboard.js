@@ -24,3 +24,16 @@ export const useGetUserStatsChecking = (taskMonth) => {
     },
   });
 };
+
+export const useGetCompletionTrend = (userId = null, days = 14) => {
+  return useQuery({
+    queryKey: ["completionTrend", userId, days],
+    queryFn: async () => {
+      let url = userId
+        ? `/dashboard/completion-trend?userId=${userId}&days=${days}`
+        : `/dashboard/completion-trend?days=${days}`;
+      const response = await apiClient.get(url);
+      return response.data;
+    },
+  });
+};

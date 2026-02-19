@@ -3,7 +3,7 @@ import SubTaskStatusButton from "../subTaskStatus";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
 
 const SubtasksSection = ({
@@ -28,6 +28,14 @@ const SubtasksSection = ({
 
   // Check if user can delete subtasks (company admin or has tasks delete permission)
   const canDeleteSubtasks = isCompany || hasPermission("tasks", "delete");
+
+  const formatTime = (minutes) => {
+    if (!minutes) return "0m";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -126,11 +134,11 @@ const SubtasksSection = ({
                     </h6>
                     {isAssignedToSubTask && (
                       <span
-                        className="px-2 py-1 bg-blue-100 text-blue-500 text-xs font-medium 
+                        className="px-2 py-0.5 bg-blue-100 text-blue-500 text-[10px] font-medium 
                       rounded-full flex items-center gap-1"
                       >
                         <svg
-                          className="w-3 h-3"
+                          className="w-2.5 h-2.5"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -140,7 +148,31 @@ const SubtasksSection = ({
                             clipRule="evenodd"
                           />
                         </svg>
-                        Assigned to me
+                        Assigned
+                      </span>
+                    )}
+
+                    {subtask?.totalActualTime > 0 && (
+                      <span
+                        className="px-2 py-0.5 text-[10px] font-semibold rounded-full border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
+                        title={`Total actual time spent: ${formatTime(subtask.totalActualTime)}`}
+                      >
+                        <FiClock className="w-2.5 h-2.5" />
+                        {formatTime(subtask.totalActualTime)}
+                      </span>
+                    )}
+                    {subtask?.performance > 0 && (
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border flex items-center gap-1 ${subtask.performance >= 100
+                          ? "bg-green-50 text-green-600 border-green-100"
+                          : subtask.performance >= 70
+                            ? "bg-yellow-50 text-yellow-600 border-yellow-100"
+                            : "bg-red-50 text-red-600 border-red-100"
+                          }`}
+                        title={`Performance: ${subtask.performance}% (Estimate vs Actual)`}
+                      >
+                        <FiTarget className="w-2.5 h-2.5" />
+                        {subtask.performance}%
                       </span>
                     )}
                   </div>

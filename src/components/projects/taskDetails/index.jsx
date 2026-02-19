@@ -16,7 +16,7 @@ import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
 import TaskAttachments from "./TaskAttachments";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget } from "react-icons/fi";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
   const { isCompany, user } = useAuth();
@@ -39,6 +39,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
     } catch {
       return "N/A";
     }
+  };
+
+  const formatTime = (minutes) => {
+    if (!minutes) return "0m";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
   };
 
   // Check if current user is assigned to this task
@@ -192,6 +200,29 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                   <FiActivity className="w-3 h-3" />
                   Timeline
                 </span>
+                {taskDetails?.totalActualTime > 0 && (
+                  <span
+                    className="px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
+                    title={`Total actual time spent: ${formatTime(taskDetails.totalActualTime)}`}
+                  >
+                    <FiClock className="w-3 h-3" />
+                    {formatTime(taskDetails.totalActualTime)}
+                  </span>
+                )}
+                {taskDetails?.performance > 0 && (
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 ${taskDetails.performance >= 100
+                      ? "bg-green-50 text-green-600 border-green-100"
+                      : taskDetails.performance >= 70
+                        ? "bg-yellow-50 text-yellow-600 border-yellow-100"
+                        : "bg-red-50 text-red-600 border-red-100"
+                      }`}
+                    title={`Performance: ${taskDetails.performance}% (Estimate vs Actual)`}
+                  >
+                    <FiTarget className="w-3 h-3" />
+                    Perf: {taskDetails.performance}%
+                  </span>
+                )}
               </div>
               {canChangeStatus && (
                 <StatusButton

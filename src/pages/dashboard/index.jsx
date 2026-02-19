@@ -14,6 +14,7 @@ import { usePermissions } from "../../hooks/usePermissions";
 import EmployeeProgressStats from "../../components/dashboard/employeeProgressStats";
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
 import DashboardProjects from "../../components/dashboard/dashboardProjects";
+import CompletionTrendChart from "../../components/dashboard/performanceChart";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(() =>
@@ -172,6 +173,11 @@ const Dashboard = () => {
         ) : isCompanyAdmin ? (
           <CompanyProgressStats taskMonth={taskMonth} />
         ) : null}
+      </div>
+
+      {/* Performance Section - On-time Completion & Rework Trend */}
+      <div className="w-full mt-5">
+        <CompletionTrendChart userId={isEmployee ? user?._id : null} />
       </div>
 
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5">

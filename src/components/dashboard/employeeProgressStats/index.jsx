@@ -458,11 +458,20 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         <h4 className="font-semibold text-lg text-gray-800">
           My Task Progress
         </h4>
-        <div className="flex items-center gap-2">
-          <div className="text-2xl font-bold text-blue-600">
-            {completionRate}%
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-blue-600">
+              {completionRate}%
+            </div>
+            <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">Total<br />Done</div>
           </div>
-          <div className="text-xs text-gray-500">Task Completion</div>
+          <div className="h-8 w-px bg-gray-100 mx-1"></div>
+          <div className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-teal-600">
+              {statistics.onTimeCompletionRate || 0}%
+            </div>
+            <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">On-Time<br />Rate</div>
+          </div>
         </div>
       </div>
 

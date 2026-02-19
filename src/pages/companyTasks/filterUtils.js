@@ -32,6 +32,8 @@ export const getFilterTitle = (filter) => {
             return "Upcoming 3 Days Tasks";
         case "on-hold":
             return "On Hold Tasks";
+        case "paused":
+            return "Paused Tasks";
         default:
             return "All Tasks";
     }
@@ -58,6 +60,8 @@ export const getFilterIcon = (filter) => {
             return FiCalendar;
         case "upcoming":
             return FiCalendar;
+        case "paused":
+            return FiPause;
         default:
             return FiFlag;
     }
@@ -84,6 +88,8 @@ export const getFilterColor = (filter) => {
             return "text-gray-600";
         case "upcoming":
             return "text-cyan-600";
+        case "paused":
+            return "text-gray-600";
         default:
             return "text-gray-600";
     }

@@ -19,14 +19,18 @@ const PinnedMessages = ({
     if (!date) return "";
     const messageDate = new Date(date);
     const today = new Date();
-    const diffTime = Math.abs(today - messageDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const messageMidnight = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate());
+
+    const diffTime = todayMidnight - messageMidnight;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
       return "Today";
-    } else if (diffDays === 2) {
+    } else if (diffDays === 1) {
       return "Yesterday";
-    } else if (diffDays <= 7) {
+    } else if (diffDays > 0 && diffDays <= 7) {
       return `${diffDays} days ago`;
     } else {
       return messageDate.toLocaleDateString();
@@ -69,9 +73,8 @@ const PinnedMessages = ({
                             message.sender?.avatar ||
                             "/api/placeholder/24/24"
                           }
-                          alt={`${message.sender?.firstName || ""} ${
-                            message.sender?.lastName || ""
-                          }`}
+                          alt={`${message.sender?.firstName || ""} ${message.sender?.lastName || ""
+                            }`}
                           className="w-5 h-5 rounded-full object-cover"
                         />
                         <span className="text-xs font-medium text-gray-700 truncate">

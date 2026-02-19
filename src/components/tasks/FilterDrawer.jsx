@@ -238,6 +238,12 @@ const FilterDrawer = ({
                     icon: FiAlertCircle,
                     color: "bg-red-100 text-red-700 border-red-200",
                   },
+                  {
+                    value: "paused",
+                    label: "Paused",
+                    icon: FiPause,
+                    color: "bg-gray-100 text-gray-700 border-gray-200",
+                  },
                 ].map((button) => {
                   const Icon = button.icon;
                   const isActive = localFilters.status.includes(button.value);
@@ -248,8 +254,8 @@ const FilterDrawer = ({
                         handleLocalMultiSelectFilter("status", button.value)
                       }
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${isActive
-                          ? `${button.color}`
-                          : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                        ? `${button.color}`
+                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
                         }`}
                     >
                       <Icon className="text-xs" />
@@ -307,6 +313,11 @@ const FilterDrawer = ({
                     label: "Completed",
                     color: "bg-green-100 text-green-800",
                   },
+                  {
+                    value: "paused",
+                    label: "Paused",
+                    color: "bg-gray-100 text-gray-800",
+                  },
                 ].map((status) => (
                   <label
                     key={status.value}
@@ -359,8 +370,8 @@ const FilterDrawer = ({
                         handleLocalMultiSelectFilter("priority", button.value)
                       }
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${isActive
-                          ? `${button.color}`
-                          : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                        ? `${button.color}`
+                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
                         }`}
                     >
                       <span>{button.label}</span>

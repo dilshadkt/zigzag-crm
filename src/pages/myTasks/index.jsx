@@ -22,6 +22,7 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiArrowLeft,
+  FiTarget,
 } from "react-icons/fi";
 import { groupTasksByCompletionDate, formatGroupLabel } from "./taskGroupingUtils";
 
@@ -547,9 +548,19 @@ const MyTasks = () => {
         return "bg-orange-100 text-orange-800";
       case "re-work":
         return "bg-red-100 text-red-800";
+      case "paused":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const formatTime = (minutes) => {
+    if (!minutes) return "0m";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
   };
 
   const formatDate = (dateString) => {
@@ -576,11 +587,14 @@ const MyTasks = () => {
   };
 
   const getDaysOverdue = (dueDate) => {
+    if (!dueDate) return 0;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate);
-    const diffTime = today - due;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    due.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - due.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
   };
 
   const handleTaskClick = (task) => {
@@ -763,14 +777,20 @@ const MyTasks = () => {
                               )}
                               <div className="flex items-center gap-1">
                                 <FiCheckCircle className="w-4 h-4 text-green-600" />
-                                {task.completedAt ? (
-                                  <span>Completed {formatDateTime(task.completedAt)}</span>
-                                ) : task.updatedAt ? (
-                                  <span>Updated {formatDateTime(task.updatedAt)}</span>
-                                ) : (
-                                  <span>Completed</span>
-                                )}
+                                <span>Completed</span>
                               </div>
+                              {task.totalActualTime > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <FiClock className="w-4 h-4" />
+                                  <span>{formatTime(task.totalActualTime)}</span>
+                                </div>
+                              )}
+                              {task.performance > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <FiTarget className="w-4 h-4" />
+                                  <span>Perf: {task.performance}%</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -843,6 +863,23 @@ const MyTasks = () => {
                             </span>
                           )}
                         </div>
+                        {task.totalActualTime > 0 && (
+                          <div className="flex items-center gap-1">
+                            <FiClock className="w-4 h-4" />
+                            <span>{formatTime(task.totalActualTime)}</span>
+                          </div>
+                        )}
+                        {task.performance > 0 && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <FiTarget className="w-4 h-4" />
+                            <span className={`font-semibold ${task.performance >= 100
+                              ? "text-green-600"
+                              : task.performance >= 70
+                                ? "text-yellow-600"
+                                : "text-red-600"
+                              }`}>Perf: {task.performance}%</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

@@ -9,6 +9,7 @@ import {
   FiPlay,
   FiPause,
   FiCheckCircle,
+  FiTarget,
 } from "react-icons/fi";
 
 const UserAvatar = ({ user, size = "w-5 h-5" }) => {
@@ -69,9 +70,19 @@ const TaskCard = memo(({ task, filter }) => {
         return "text-red-600 bg-red-50 border-red-200";
       case "on-review":
         return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "paused":
+        return "text-gray-600 bg-gray-50 border-gray-200";
       default:
         return "text-gray-600 bg-gray-50 border-gray-200";
     }
+  };
+
+  const formatTime = (minutes) => {
+    if (!minutes) return "0m";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
   };
 
   const formatDate = (dateString) => {
@@ -83,11 +94,14 @@ const TaskCard = memo(({ task, filter }) => {
   };
 
   const getDaysOverdue = (dueDate) => {
+    if (!dueDate) return 0;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate);
-    const diffTime = today - due;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    due.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - due.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
   };
 
   const handleTaskClick = (task) => {
@@ -204,6 +218,18 @@ const TaskCard = memo(({ task, filter }) => {
             >
               {task.status?.replace("-", " ").toUpperCase()}
             </span>
+            {task.totalActualTime > 0 && (
+              <span className="px-2 py-1 rounded-md text-xs font-medium border bg-orange-50 text-orange-600 border-orange-200 flex items-center gap-1">
+                <FiClock className="w-3 h-3" />
+                {formatTime(task.totalActualTime)}
+              </span>
+            )}
+            {task.performance > 0 && (
+              <span className={`px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1 ${task.performance >= 100 ? "bg-green-50 text-green-600 border-green-200" : "bg-yellow-50 text-yellow-600 border-yellow-200"}`}>
+                <FiTarget className="w-3 h-3" />
+                {task.performance}%
+              </span>
+            )}
           </div>
 
           {task.description && (

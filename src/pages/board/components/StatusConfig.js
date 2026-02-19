@@ -15,6 +15,10 @@ export const statusConfig = {
         title: "On Hold",
         color: "bg-yellow-100 text-yellow-800",
     },
+    paused: {
+        title: "Paused",
+        color: "bg-gray-100 text-gray-800",
+    },
     "re-work": {
         title: "Re-work",
         color: "bg-red-100 text-red-800",

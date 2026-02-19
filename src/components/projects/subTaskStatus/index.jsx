@@ -24,6 +24,11 @@ const SubTaskStatusButton = ({
       color: "bg-blue-100 text-blue-800",
     },
     {
+      value: "paused",
+      label: "Paused",
+      color: "bg-gray-100 text-gray-800",
+    },
+    {
       value: "on-review",
       label: "On Review",
       color: "bg-purple-100 text-purple-800",
@@ -42,6 +47,11 @@ const SubTaskStatusButton = ({
       value: "on-review",
       label: "On Review",
       color: "bg-purple-100 text-purple-800",
+    },
+    {
+      value: "paused",
+      label: "Paused",
+      color: "bg-gray-100 text-gray-800",
     },
     {
       value: "on-hold",

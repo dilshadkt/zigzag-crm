@@ -178,8 +178,10 @@ const MyProjects = () => {
   const getDaysRemaining = (dueDate) => {
     if (!dueDate) return null;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate);
-    const diffTime = due - today;
+    due.setHours(0, 0, 0, 0);
+    const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -237,11 +239,10 @@ const MyProjects = () => {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${
-              hasActiveFilters()
+            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${hasActiveFilters()
                 ? "border-blue-500 bg-blue-50 text-blue-600"
                 : "border-gray-200 hover:border-gray-300"
-            }`}
+              }`}
           >
             <FiFilter className="w-4 h-4" />
             Filters
@@ -401,13 +402,12 @@ const MyProjects = () => {
                             Due: {formatDate(project.endDate)}
                             {daysRemaining !== null && (
                               <span
-                                className={`ml-1 ${
-                                  daysRemaining < 0
+                                className={`ml-1 ${daysRemaining < 0
                                     ? "text-red-500"
                                     : daysRemaining <= 7
-                                    ? "text-orange-500"
-                                    : "text-green-500"
-                                }`}
+                                      ? "text-orange-500"
+                                      : "text-green-500"
+                                  }`}
                               >
                                 ({daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : `${daysRemaining} days left`})
                               </span>

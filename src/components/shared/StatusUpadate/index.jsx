@@ -8,12 +8,14 @@ import ReworkReasonModal from "../reworkReasonModal";
 const employeeStatusOptions = [
   "todo",
   "in-progress",
+  "paused",
   // "completed",
   "on-review",
 ];
 const adminStatusOptions = [
   "todo",
   "in-progress",
+  "paused",
   "on-review",
   "on-hold",
   "re-work",
@@ -53,6 +55,12 @@ const statusColors = {
     bg: "bg-yellow-50",
     border: "border-yellow-200",
     hover: "hover:bg-yellow-100",
+  },
+  paused: {
+    text: "text-gray-500",
+    bg: "bg-gray-50",
+    border: "border-gray-200",
+    hover: "hover:bg-gray-100",
   },
   "re-work": {
     text: "text-red-500",

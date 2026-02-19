@@ -73,9 +73,11 @@ const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
   const getDaysOverdue = (dueDate) => {
     if (!dueDate) return 0;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate);
-    const diffTime = today - due;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    due.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - due.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
 

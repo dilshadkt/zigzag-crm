@@ -335,11 +335,14 @@ const MySubTasks = ({ filter: propFilter }) => {
   };
 
   const getDaysOverdue = (dueDate) => {
+    if (!dueDate) return 0;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate);
-    const diffTime = today - due;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    due.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - due.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
   };
 
   const handleSubTaskClick = (subTask) => {
@@ -417,11 +420,10 @@ const MySubTasks = ({ filter: propFilter }) => {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${
-              hasActiveFilters()
+            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${hasActiveFilters()
                 ? "border-blue-500 bg-blue-50 text-blue-600"
                 : "border-gray-200 hover:border-gray-300"
-            }`}
+              }`}
           >
             <FiFilter className="w-4 h-4" />
             Filters
