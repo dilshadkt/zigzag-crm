@@ -175,10 +175,12 @@ const Dashboard = () => {
         ) : null}
       </div>
 
-      {/* Performance Section - On-time Completion & Rework Trend */}
-      <div className="w-full mt-5">
-        <CompletionTrendChart userId={isEmployee ? user?._id : null} />
-      </div>
+      {/* Performance Section - On-time Completion & Rework Trend - Admin Only */}
+      {!isEmployee || isEmployeeHasTaskAdmin ? (
+        <div className="w-full mt-5">
+          <CompletionTrendChart userId={isEmployee ? user?._id : null} />
+        </div>
+      ) : null}
 
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5">
         {/* work load section or employee work details */}

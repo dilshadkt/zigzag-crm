@@ -12,6 +12,59 @@ import {
 import { useGetCompletionTrend } from "../../../api/hooks/dashboard";
 import { FiActivity, FiChevronDown, FiZap, FiTarget } from "react-icons/fi";
 
+const RangeSelector = ({ range, setRange }) => (
+    <div className="relative">
+        <select
+            value={range}
+            onChange={(e) => setRange(Number(e.target.value))}
+            className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-[10px] font-bold py-1.5 pl-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer hover:bg-white"
+        >
+            <option value={7}>7 Days</option>
+            <option value={14}>14 Days</option>
+            <option value={30}>30 Days</option>
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+            <FiChevronDown className="w-3 h-3" />
+        </div>
+    </div>
+);
+
+const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        const successRate = data.dailyTarget > 0
+            ? Math.round((data.dailyActual / data.dailyTarget) * 100)
+            : data.dailyActual > 0 ? 100 : 0;
+
+        return (
+            <div className="bg-white/95 backdrop-blur-sm p-4 rounded-2xl  border border-gray-100 min-w-[160px] shadow-xl">
+                <p className="text-[11px] font-black text-gray-900 mb-3 border-b border-gray-50 pb-2">
+                    {new Date(data.date).toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
+                </p>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Target</span>
+                        <span className="text-xs font-bold text-indigo-600">{data.dailyTarget}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Completed</span>
+                        <span className="text-xs font-bold text-emerald-600">{data.dailyActual}</span>
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-gray-50 flex justify-between items-center">
+                        <span className="text-[10px] font-black text-gray-900 uppercase">Efficiency</span>
+                        <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${successRate >= 100 ? 'bg-emerald-50 text-emerald-600' :
+                            successRate >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
+                            }`}>
+                            {successRate}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 const CompletionTrendChart = ({ userId = null }) => {
     const [range, setRange] = useState(14);
     const { data, isLoading } = useGetCompletionTrend(userId, range);
@@ -30,67 +83,14 @@ const CompletionTrendChart = ({ userId = null }) => {
 
     const chartData = data?.data || [];
 
-    const RangeSelector = () => (
-        <div className="relative">
-            <select
-                value={range}
-                onChange={(e) => setRange(Number(e.target.value))}
-                className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-[10px] font-bold py-1.5 pl-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer hover:bg-white"
-            >
-                <option value={7}>7 Days</option>
-                <option value={14}>14 Days</option>
-                <option value={30}>30 Days</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                <FiChevronDown className="w-3 h-3" />
-            </div>
-        </div>
-    );
-
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            const data = payload[0].payload;
-            const successRate = data.dailyTarget > 0
-                ? Math.round((data.dailyActual / data.dailyTarget) * 100)
-                : data.dailyActual > 0 ? 100 : 0;
-
-            return (
-                <div className="bg-white/95 backdrop-blur-sm p-4 rounded-2xl  border border-gray-100 min-w-[160px]">
-                    <p className="text-[11px] font-black text-gray-900 mb-3 border-b border-gray-50 pb-2">
-                        {new Date(data.date).toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
-                    </p>
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase">Target</span>
-                            <span className="text-xs font-bold text-indigo-600">{data.dailyTarget}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase">Completed</span>
-                            <span className="text-xs font-bold text-emerald-600">{data.dailyActual}</span>
-                        </div>
-                        <div className="pt-2 mt-2 border-t border-gray-50 flex justify-between items-center">
-                            <span className="text-[10px] font-black text-gray-900 uppercase">Efficiency</span>
-                            <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${successRate >= 100 ? 'bg-emerald-50 text-emerald-600' :
-                                successRate >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
-                                }`}>
-                                {successRate}%
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        return null;
-    };
-
     const totalTarget = chartData.reduce((acc, curr) => acc + curr.dailyTarget, 0);
     const totalActual = chartData.reduce((acc, curr) => acc + curr.dailyActual, 0);
     const overallEfficiency = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full  relative">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full relative">
             {/* CHART 1: PRODUCTIVITY PULSE (Daily Target vs. Actual) */}
-            <div className="bg-white rounded-3xl p-6  border border-gray-100 flex flex-col min-h-[440px]">
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 flex flex-col min-h-[460px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-50 rounded-2xl">
@@ -101,10 +101,10 @@ const CompletionTrendChart = ({ userId = null }) => {
                             <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Target vs. Actual Completion</p>
                         </div>
                     </div>
-                    <RangeSelector />
+                    <RangeSelector range={range} setRange={setRange} />
                 </div>
 
-                <div className="w-full flex-1 h-[300px]">
+                <div className="w-full h-[280px] relative">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }} barGap={range > 14 ? 2 : 4}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -140,7 +140,7 @@ const CompletionTrendChart = ({ userId = null }) => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-around bg-gray-50/30 rounded-2xl p-3">
+                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-around bg-gray-50/30 rounded-2xl p-3">
                     <div className="flex flex-col items-center">
                         <span className="text-[10px] font-bold text-gray-400 uppercase">Total Target</span>
                         <span className="text-sm font-black text-indigo-600">{totalTarget}</span>
@@ -157,7 +157,7 @@ const CompletionTrendChart = ({ userId = null }) => {
             </div>
 
             {/* CHART 2: QUALITY AUDIT (Rework Pulse) */}
-            <div className="bg-white rounded-3xl p-6  border border-gray-100 flex flex-col min-h-[440px]">
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 flex flex-col min-h-[460px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-red-50 rounded-2xl">
@@ -168,10 +168,10 @@ const CompletionTrendChart = ({ userId = null }) => {
                             <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Rework Distribution Pulse</p>
                         </div>
                     </div>
-                    <RangeSelector />
+                    <RangeSelector range={range} setRange={setRange} />
                 </div>
 
-                <div className="w-full flex-1 h-[300px]">
+                <div className="w-full h-[280px] relative">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -222,17 +222,17 @@ const CompletionTrendChart = ({ userId = null }) => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between px-4 bg-gray-50/30 rounded-2xl p-3">
+                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between px-4 bg-gray-50/30 rounded-2xl p-3">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">Critical Days: {chartData.filter(d => d.dailyRework > 2).length}</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase">Critical: {chartData.filter(d => d.dailyRework > 2).length}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="p-1 px-2 bg-indigo-100 rounded text-[9px] font-black text-indigo-700">TOTAL: {chartData.reduce((acc, curr) => acc + curr.dailyRework, 0)}</div>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">Clean Days: {chartData.filter(d => d.dailyRework === 0).length}</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase">Clean: {chartData.filter(d => d.dailyRework === 0).length}</span>
                     </div>
                 </div>
             </div>
@@ -241,3 +241,4 @@ const CompletionTrendChart = ({ userId = null }) => {
 };
 
 export default CompletionTrendChart;
+
