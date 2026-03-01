@@ -36,9 +36,9 @@ const Prjects = () => {
   );
 
   // Use different hooks based on user role
-  const { data: companyProjects, isSuccess: isCompanySuccess } =
+  const { data: companyProjects, isSuccess: isCompanySuccess, isLoading: isCompanyLoading } =
     useCompanyProjects(user?.role === "company-admin" ? companyId : null);
-  const { data: employeeProjects, isSuccess: isEmployeeSuccess } =
+  const { data: employeeProjects, isSuccess: isEmployeeSuccess, isLoading: isEmployeeLoading } =
     useGetEmployeeProjects(user?.role !== "company-admin" ? user?._id : null);
 
   // Combine the results based on user role
@@ -109,8 +109,9 @@ const Prjects = () => {
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [showModalTask, setShowModalTask] = useState(false);
 
-  const hasNoProject = !projects || projects.length === 0;
-  const isLoading = projectLoading || tasksLoading;
+  const projectsLoading = user?.role === "company-admin" ? isCompanyLoading : isEmployeeLoading;
+  const hasNoProject = isSuccess && (!projects || projects.length === 0);
+  const isLoading = projectsLoading || projectLoading || tasksLoading;
 
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
 
