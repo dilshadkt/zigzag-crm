@@ -152,6 +152,8 @@ export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
         .then((res) => res.data?.projects);
     },
     enabled: !!companyId,
+    staleTime: 5 * 60 * 1000, // 5 minutes fresh
+    gcTime: 15 * 60 * 1000,  // 15 minutes cache
   });
 };
 
@@ -196,10 +198,8 @@ export const useProjectDetails = (projectId, monthKey = null) => {
       return apiClient.get(url).then((res) => res.data?.project);
     },
     enabled: !!projectId,
-    // staleTime: 1000 * 60 * 2, // 2 minutes (Prevents frequent refetches)
-    // cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
-    // refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
-    // refetchOnReconnect: false, // Prevents refetch when network reconnects
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -267,6 +267,8 @@ export const useGetAllEmployees = (enabled = true) => {
       return response.data;
     },
     enabled,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000,   // 30 minutes cache
   });
 };
 // task
@@ -491,6 +493,8 @@ export const useGetEmployeeProjects = (employeeId, monthKey = null) => {
         });
     },
     enabled: !!employeeId, // Only run if employeeId exists and is not null
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 };
 
@@ -1384,16 +1388,16 @@ export const useExternalTasks = (companyId, enabled = true) => {
         const response = await apiClient.get("/tasks/company/all");
         const responseData = response.data || {};
         const allTasks = responseData.tasks || [];
-        
+
         // Filter tasks where project is null, undefined, or empty
         // Handle both cases: project as null or project as populated object that is null
         const externalTasks = allTasks.filter((task) => {
           // Check if project is null, undefined, or if it's an object with null _id
-          return !task.project || 
-                 task.project === null || 
-                 (typeof task.project === 'object' && !task.project._id);
+          return !task.project ||
+            task.project === null ||
+            (typeof task.project === 'object' && !task.project._id);
         });
-        
+
         return externalTasks;
       } catch (error) {
         // If endpoint requires admin access and user doesn't have it, return empty array

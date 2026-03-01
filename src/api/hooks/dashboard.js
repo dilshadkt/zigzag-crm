@@ -10,6 +10,9 @@ export const useGetCompanyStatsChecking = (companyId, taskMonth) => {
       );
       return response.data;
     },
+    enabled: !!companyId && !!taskMonth,
+    staleTime: 1 * 20 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -22,6 +25,9 @@ export const useGetUserStatsChecking = (taskMonth) => {
       );
       return response.data;
     },
+    enabled: !!taskMonth,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -35,5 +41,7 @@ export const useGetCompletionTrend = (userId = null, days = 14) => {
       const response = await apiClient.get(url);
       return response.data;
     },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 };
