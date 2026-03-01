@@ -8,6 +8,8 @@ import TaskInfo from "../../components/projects/taskInfo";
 import { useProject } from "../../hooks/useProject";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 
+import TaskOverViewShimmer from "./TaskOverViewShimmer";
+
 const TaskOverView = () => {
   const { taskId } = useParams();
   const [showModalTask, setShowModalTask] = useState(false);
@@ -33,12 +35,7 @@ const TaskOverView = () => {
   };
   // loading shimmer
   if (isLoading) {
-    return (
-      <section className="col-span-4 overflow-hidden grid grid-cols-4   ">
-        <div className="col-span-3 bg-white rounded-3xl mr-5 flex flex-col"></div>
-        <div className="col-span-1 bg-white rounded-3xl px-2 justify-between  py-5 flex flex-col"></div>
-      </section>
-    );
+    return <TaskOverViewShimmer />;
   }
 
   return (

@@ -25,10 +25,10 @@ const ProjectDetailLayout = () => {
   const [showModalTask, setShowModalTask] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
   const { taskId } = useParams();
-  const { data: projectData } = useProjectDetails(projectId, {
+  const { data: projectData, isLoading: projectLoading } = useProjectDetails(projectId, {
     enabled: !!projectId,
   });
-  const { data: tasksData, refetch: refetchTasks } = useProjectTasks(
+  const { data: tasksData, refetch: refetchTasks, isLoading: tasksLoading } = useProjectTasks(
     projectData?._id,
     selectedMonth,
     {
@@ -111,13 +111,17 @@ const ProjectDetailLayout = () => {
       </div>
       <div className="w-full h-full  gap-y-6 md:gap-y-0 overflow-y-auto md:overflow-hidden md:gap-x-5  grid grid-cols-1 md:grid-cols-5">
         {/* current project section  */}
-        <SelectedProject currentProject={projectData} />
+        <SelectedProject
+          currentProject={projectData}
+          isLoading={projectLoading}
+        />
         {/* project overview page  */}
         <Outlet
           context={{
             projectData: { ...projectData, tasks: tasksData || [] },
             selectedMonth,
             refetchTasks,
+            isLoading: projectLoading || tasksLoading,
           }}
         />
         <AddTask

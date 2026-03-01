@@ -13,7 +13,9 @@ import {
 import Modal from "../../shared/modal";
 import { assetPath } from "../../../utils/assetPath";
 
-const SelectedProject = ({ currentProject }) => {
+import { SelectedProjectShimmer } from "../ProjectDetailShimmer";
+
+const SelectedProject = ({ currentProject, isLoading }) => {
   const navigate = useNavigate();
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
@@ -23,6 +25,10 @@ const SelectedProject = ({ currentProject }) => {
   const pauseProject = usePauseProject();
   const resumeProject = useResumeProject();
   const [failedImages, setFailedImages] = useState({});
+
+  if (isLoading) {
+    return <SelectedProjectShimmer />;
+  }
 
   const handleImageError = (id) => {
     if (!id) return;

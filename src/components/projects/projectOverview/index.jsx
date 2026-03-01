@@ -96,9 +96,8 @@ const DraggableTask = ({
       draggable={canDrag}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className={`transition-opacity duration-200 ease-out ${
-        canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
-      }`}
+      className={`transition-opacity duration-200 ease-out ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+        }`}
       style={{
         opacity: isDragging ? 0.7 : 1,
       }}
@@ -159,13 +158,12 @@ const DropZone = ({ onDrop, position, status, isVisible, canDrop }) => {
 
   return (
     <div
-      className={`h-2 transition-all duration-200 ease-out ${
-        isOver && canDrop
+      className={`h-2 transition-all duration-200 ease-out ${isOver && canDrop
           ? "bg-blue-300 rounded-full mx-2"
           : canDrop
-          ? "bg-transparent"
-          : "bg-red-200 rounded-full mx-2"
-      }`}
+            ? "bg-transparent"
+            : "bg-red-200 rounded-full mx-2"
+        }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -250,22 +248,20 @@ const Droppable = ({
     <div
       className={`flex-shrink-0 w-80 rounded-lg p-4  transition-all
          duration-200 ease-out
-                  ${
-                    isOver && canDrop
-                      ? "bg-blue-50 border-2 border-blue-300"
-                      : isOver && !canDrop
-                      ? "bg-red-50 border-2 border-red-300"
-                      : "bg-gray-50 border-2 border-transparent"
-                  }`}
+                  ${isOver && canDrop
+          ? "bg-blue-50 border-2 border-blue-300"
+          : isOver && !canDrop
+            ? "bg-red-50 border-2 border-red-300"
+            : "bg-gray-50 border-2 border-transparent"
+        }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       data-droppable-id={id}
     >
       <div
-        className={`font-medium text-sm text-center  py-2 px-4 rounded-lg mb-4 ${
-          config?.color || "bg-gray-200 text-gray-800"
-        }`}
+        className={`font-medium text-sm text-center  py-2 px-4 rounded-lg mb-4 ${config?.color || "bg-gray-200 text-gray-800"
+          }`}
       >
         {title}
         {!canDrop && !isCompany && (
@@ -314,7 +310,9 @@ const Droppable = ({
   );
 };
 
-const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
+import { ProjectOverViewShimmer } from "../ProjectDetailShimmer";
+
+const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }) => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -324,6 +322,11 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
   const [showSubtasks, setShowSubtasks] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
   const { isCompany, user } = useAuth();
+
+  // If loading, show shimmer
+  if (isLoading) {
+    return <ProjectOverViewShimmer isBoardView={isBoardView} />;
+  }
 
   // Check if current month has work details
   const hasWorkDetailsForCurrentMonth = () => {
@@ -598,11 +601,10 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
           />
           <button
             onClick={() => setShowSubtasks(!showSubtasks)}
-            className={`p-2 rounded-lg border transition-colors ${
-              showSubtasks
+            className={`p-2 rounded-lg border transition-colors ${showSubtasks
                 ? "bg-blue-50 border-blue-300 text-blue-600"
                 : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-            }`}
+              }`}
             title={showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
           >
             <svg
@@ -667,9 +669,9 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh }) => {
                 No Work Details for{" "}
                 {selectedMonth
                   ? new Date(selectedMonth + "-01").toLocaleDateString(
-                      "en-US",
-                      { month: "long", year: "numeric" }
-                    )
+                    "en-US",
+                    { month: "long", year: "numeric" }
+                  )
                   : "Current Month"}
               </h4>
               <p className="text-blue-700 mb-3">
