@@ -230,8 +230,9 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
         </div>
 
         <PrimaryButton
-          onclick={() => setShowModalProject(false)}
+          onclick={() => !isSubmitting && setShowModalProject(false)}
           icon={"/icons/cancel.svg"}
+          disable={isSubmitting}
           className={"absolute bg-[#F4F9FD] right-[30px] top-[30px]"}
         />
 
@@ -242,6 +243,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
               key="prev-btn"
               type="button"
               title="Previous"
+              disable={isSubmitting}
               onclick={() => {
                 const currentIndex = tabs.findIndex(
                   (tab) => tab.id === activeTab
@@ -259,6 +261,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
               key="next-btn"
               type="button"
               title="Next"
+              disable={isSubmitting}
               onclick={(e) => {
                 e?.preventDefault();
                 const currentIndex = tabs.findIndex(
@@ -274,13 +277,9 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
             <PrimaryButton
               key="submit-btn"
               type="submit"
-              title={
-                isSubmitting
-                  ? "Loading..."
-                  : isEditMode
-                    ? "Save Changes"
-                    : "Save Project"
-              }
+              loading={isSubmitting}
+              disable={isSubmitting}
+              title={isEditMode ? "Save Changes" : "Save Project"}
               className="text-white px-4"
             />
           )}
