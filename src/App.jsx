@@ -7,14 +7,16 @@ import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 import socketService from "./services/socketService";
 import AppRoutes from "./routes/AppRoutes";
 import { assetPath } from "./utils/assetPath";
+import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
 
 const isDesktop = typeof window !== "undefined" && window.desktop;
 const Router = isDesktop ? HashRouter : BrowserRouter;
 
 function App() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth); // Get loading and isAuthenticated state from Redux
+  const { loading, user } = useSelector((state) => state.auth); // Get loading and isAuthenticated state from Redux
   const [isAuthChecked, setIsAuthChecked] = useState(false); // Track if auth check is complete
+  const [showFixProfileModal, setShowFixProfileModal] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -29,6 +31,18 @@ function App() {
             companyId: user?.company,
           })
         );
+
+        // Check if profile image is accessible
+        if (user?.profileImage) {
+          try {
+            const imgResponse = await fetch(user.profileImage, { method: "HEAD" });
+            if (imgResponse.status === 403) {
+              setShowFixProfileModal(true);
+            }
+          } catch (err) {
+            console.error("Error checking profile image:", err);
+          }
+        }
 
         // Initialize socket connection after successful authentication
         const token = localStorage.getItem("token");
@@ -62,6 +76,15 @@ function App() {
       <Router>
         <AppRoutes />
       </Router>
+
+      {showFixProfileModal && (
+        <FixProfileImageModal
+          isOpen={showFixProfileModal}
+          onClose={() => setShowFixProfileModal(false)}
+          user={user}
+        />
+      )}
+
       <Toaster
         position="top-right"
         toastOptions={{
