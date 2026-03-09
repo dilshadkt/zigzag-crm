@@ -45,3 +45,17 @@ export const useGetCompletionTrend = (userId = null, days = 14) => {
     gcTime: 15 * 60 * 1000,
   });
 };
+export const useTodayTasks = (userId = null) => {
+  return useQuery({
+    queryKey: ["todayTasks", userId],
+    queryFn: async () => {
+      const url = userId
+        ? `/dashboard/today-tasks?userId=${userId}`
+        : "/dashboard/today-tasks";
+      const response = await apiClient.get(url);
+      return response.data;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000,
+  });
+};

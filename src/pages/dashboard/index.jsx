@@ -22,6 +22,7 @@ const EmployeeWorkDetails = lazy(() =>
 );
 
 import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
+import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
@@ -205,7 +206,13 @@ const Dashboard = () => {
       />
 
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5 pb-5">
-        <div className="hidden md:block md:col-span-5"></div>
+        <div className="md:col-span-5">
+          {!isEmployee || isEmployeeHasTaskAdmin ? (
+            <EmployeeTodayTasks />
+          ) : (
+            <div className="hidden md:block"></div>
+          )}
+        </div>
         {/* nearest event - now after projects */}
         <div className="md:col-span-2">
           {isEmployee ? (
