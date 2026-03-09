@@ -223,7 +223,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                     Perf: {taskDetails.performance}%
                   </span>
                 )}
-                {taskDetails?.requiresClientApproval && (
+                {(taskDetails?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.requiresClientApproval)) && (
                   <span
                     className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 shadow-sm"
                     title="This task requires final client approval"

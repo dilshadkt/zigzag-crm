@@ -93,7 +93,9 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
   );
 
   // Get status options based on user role or explicit override
-  const statusOptions = (isCompany || showAllOptions) ? adminStatusOptions : employeeStatusOptions;
+  const statusOptions = (isCompany || showAllOptions)
+    ? adminStatusOptions.filter(status => status !== "client-approved" || (taskDetails?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.requiresClientApproval)))
+    : employeeStatusOptions;
 
   // Close menu when clicking outside
   const handleClickOutside = (event) => {

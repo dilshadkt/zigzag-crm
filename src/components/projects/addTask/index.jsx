@@ -71,6 +71,7 @@ const AddTask = ({
       recurringEndDate: initialValues.recurringEndDate || "",
       maxRecurrences: initialValues.maxRecurrences || "",
       dueDateChangeReason: initialValues.dueDateChangeReason || "",
+      requiresClientApproval: initialValues.requiresClientApproval || false,
     };
   };
 
@@ -201,6 +202,7 @@ const AddTask = ({
           setShowFlowAssigneeModal(true);
         } else {
           setFieldValue("assignedTo", uniqueAssignees);
+          setFieldValue("requiresClientApproval", selectedFlow.flows.some(step => step.requiresClientApproval));
         }
       }
     }
@@ -865,6 +867,24 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     isLoadingEmployees)
                 }
               />
+
+              <div className="flex items-center gap-2 mb-2 mt-4 px-1">
+                <input
+                  type="checkbox"
+                  id="requiresClientApproval"
+                  name="requiresClientApproval"
+                  checked={values.requiresClientApproval}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+                <label
+                  htmlFor="requiresClientApproval"
+                  className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                >
+                  Requires Client Approval
+                </label>
+              </div>
 
               {/* Recurring Task Section */}
               <div className="border-t border-gray-200 pt-4 mt-4">

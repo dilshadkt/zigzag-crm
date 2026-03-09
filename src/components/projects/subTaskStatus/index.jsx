@@ -8,6 +8,7 @@ const SubTaskStatusButton = ({
   parentTaskId,
   canEdit = true,
   showAllOptions = false,
+  parentTaskFlow = [],
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
@@ -82,15 +83,18 @@ const SubTaskStatusButton = ({
 
   // Get status options based on user role or explicit override
   const statusOptions = (isCompany || showAllOptions)
-    ? adminStatusOptions.filter(opt => opt.value !== "client-approved" || subTask.requiresClientApproval)
+    ? adminStatusOptions.filter(opt => opt.value !== "client-approved" || (subTask.requiresClientApproval || parentTaskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() && flow.requiresClientApproval)))
     : employeeStatusOptions;
 
   const currentStatus = adminStatusOptions.find(
     (status) => status.value === subTask.status
   );
 
+  // Check if subtask is locked (sequential flow dependency)
+  const isLocked = subTask.isLocked && !isCompany;
+
   const handleStatusChange = async (newStatus) => {
-    if (!canEdit) return;
+    if (!canEdit || isLocked) return;
 
     if (newStatus === "re-work") {
       setPendingStatus(newStatus);
@@ -125,12 +129,17 @@ const SubTaskStatusButton = ({
   return (
     <div className="relative">
       <button
-        onClick={() => canEdit && setIsOpen(!isOpen)}
-        className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${currentStatus?.color || "bg-gray-100 text-gray-800"
-          } ${!canEdit ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
-        disabled={updateSubTaskMutation.isLoading || !canEdit}
-        title={!canEdit ? "You can only edit subtasks assigned to you" : ""}
+        onClick={() => canEdit && !isLocked && setIsOpen(!isOpen)}
+        className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 shadow-sm flex items-center gap-1.5 ${currentStatus?.color || "bg-gray-100 text-gray-800"
+          } ${(!canEdit || isLocked) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover:scale-105 active:scale-95"}`}
+        disabled={updateSubTaskMutation.isLoading || !canEdit || isLocked}
+        title={isLocked ? "This subtask is locked until preceding tasks are completed" : (!canEdit ? "You can only edit subtasks assigned to you" : "")}
       >
+        {isLocked && (
+          <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+          </svg>
+        )}
         {updateSubTaskMutation.isLoading
           ? "Updating..."
           : currentStatus?.label || "To Do"}

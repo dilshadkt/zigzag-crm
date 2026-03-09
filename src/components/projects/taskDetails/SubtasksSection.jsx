@@ -89,6 +89,12 @@ const SubtasksSection = ({
       (assignedUser) => (assignedUser._id || assignedUser) === user?._id
     );
 
+    const isLocked = subtask.isLocked && !isCompany;
+
+    if (isLocked) {
+      return "bg-gray-100/40 border-gray-200 opacity-60 grayscale-[0.2] cursor-not-allowed";
+    }
+
     if (isAssignedToSubTask) {
       return "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300";
     } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view")) {
@@ -129,7 +135,12 @@ const SubtasksSection = ({
               >
                 <div className="flexBetween mb-2">
                   <div className="flex items-center gap-2">
-                    <h6 className="font-medium text-gray-800">
+                    <h6 className={`font-medium flex items-center gap-1.5 ${subtask.isLocked && !isCompany ? 'text-gray-400' : 'text-gray-800'}`}>
+                      {subtask.isLocked && !isCompany && (
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
                       {subtask.title}
                     </h6>
                     {isAssignedToSubTask && (
@@ -175,7 +186,7 @@ const SubtasksSection = ({
                         {subtask.performance}%
                       </span>
                     )}
-                    {subtask?.requiresClientApproval && (
+                    {(subtask?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresClientApproval)) && (
                       <span
                         className="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-bold 
                       rounded-full flex items-center gap-1 border border-purple-200"
@@ -234,6 +245,7 @@ const SubtasksSection = ({
                     <SubTaskStatusButton
                       subTask={subtask}
                       parentTaskId={taskDetails?._id}
+                      parentTaskFlow={taskDetails?.taskFlow}
                       showAllOptions={
                         isCompany ||
                         isAdmin ||
