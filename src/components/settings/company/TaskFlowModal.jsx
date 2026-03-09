@@ -11,8 +11,9 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
         taskName: flow.taskName || "",
         assignee: flow.assignee?._id || flow.assignee || "",
         weightage: flow.weightage !== undefined ? flow.weightage : 1,
+        requiresClientApproval: !!flow.requiresClientApproval,
       }))
-      : [{ taskName: "", assignee: "", weightage: 1 }]
+      : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]
   );
   const { data: employeesData } = useEmpoyees(1);
   const employees = employeesData?.employees || [];
@@ -32,7 +33,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
     console.log("Task flow created successfully");
     // Reset form
     setName("");
-    setFlows([{ taskName: "", assignee: "", weightage: 1 }]);
+    setFlows([{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]);
     onClose();
   });
 
@@ -55,7 +56,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
     );
   };
   const addFlow = () =>
-    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1 }]);
+    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]);
   const removeFlow = (idx) =>
     setFlows((prev) => prev.filter((_, i) => i !== idx));
 
@@ -239,6 +240,17 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                         </option>
                       ))}
                     </select>
+
+                    {/* Client Approval Checkbox */}
+                    <div className="flex items-center gap-1 min-w-fit" title="Client approval needed for this step">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        checked={flow.requiresClientApproval}
+                        onChange={(e) => handleFlowChange(idx, "requiresClientApproval", e.target.checked)}
+                      />
+                      <span className="text-[10px] text-gray-500 uppercase font-medium">Apprvl</span>
+                    </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-1">

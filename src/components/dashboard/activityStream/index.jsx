@@ -101,18 +101,16 @@ const ActivityStream = () => {
       case "project_created":
         return `Created new project "${activity.project.name}"`;
       case "project_updated":
-        return `Updated project "${activity.project.name}" (${
-          activity.project.progress || 0
-        }% complete)`;
+        return `Updated project "${activity.project.name}" (${activity.project.progress || 0
+          }% complete)`;
       case "subtask_change":
         return (
           activity.description ||
           `Updated subtask "${activity.subTask?.title || "Unknown"}"`
         );
       case "file_attachment":
-        return `Added ${activity.attachments?.length || 1} file(s) to "${
-          activity.task.title
-        }"`;
+        return `Added ${activity.attachments?.length || 1} file(s) to "${activity.task.title
+          }"`;
       default:
         return activity.description || "Performed an action";
     }
@@ -290,7 +288,7 @@ const ActivityStream = () => {
 
   if (isLoading) {
     return (
-      <div className="flex mt-5 h-[450px] flex-col relative col-span-2 mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
+      <div className="flex mt-5 h-[450px] flex-col relative mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
         <h4 className="font-semibold text-lg text-gray-800">Activity Stream</h4>
         <div className="flex h-full gap-y-6 overflow-y-auto flex-col mt-4">
           {[1, 2, 3].map((_, index) => (
@@ -313,7 +311,7 @@ const ActivityStream = () => {
   const activities = activitiesData?.data || [];
 
   return (
-    <div className="flex mt-5 h-[450px] flex-col relative col-span-2 mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
+    <div className="flex mt-5 h-[450px] flex-col relative mb-3 bg-white pt-5 pb-10 px-4 rounded-3xl">
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-col">
           <h4 className="font-semibold text-lg text-gray-800">
@@ -321,9 +319,8 @@ const ActivityStream = () => {
           </h4>
           <div
             className="text-[10px] text-gray-500 mr-2 flex items-center gap-1 cursor-help"
-            title={`Last updated: ${
-              dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : "Never"
-            }. Auto-refreshes every 3 minutes.`}
+            title={`Last updated: ${dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : "Never"
+              }. Auto-refreshes every 3 minutes.`}
           >
             <span>
               Updated {dataUpdatedAt ? formatTimeAgo(dataUpdatedAt) : "Never"}
@@ -337,17 +334,15 @@ const ActivityStream = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className={`p-1.5 rounded-lg border transition-colors ${
-              isRefreshing
+            className={`p-1.5 rounded-lg border transition-colors ${isRefreshing
                 ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
                 : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
-            }`}
+              }`}
             title="Refresh activities"
           >
             <FaSync
-              className={`w-3 h-3 ${
-                isRefreshing || isFetching ? "animate-spin" : ""
-              }`}
+              className={`w-3 h-3 ${isRefreshing || isFetching ? "animate-spin" : ""
+                }`}
             />
           </button>
           <div className="relative">
@@ -387,9 +382,8 @@ const ActivityStream = () => {
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="22" fill="%23E5E7EB"/><text x="22" y="28" text-anchor="middle" font-size="16" font-family="Arial" fill="%236B7280">${
-                          activity.user.firstName?.charAt(0) || "?"
-                        }</text></svg>`;
+                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="22" fill="%23E5E7EB"/><text x="22" y="28" text-anchor="middle" font-size="16" font-family="Arial" fill="%236B7280">${activity.user.firstName?.charAt(0) || "?"
+                          }</text></svg>`;
                       }}
                     />
                   ) : (

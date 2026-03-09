@@ -30,6 +30,7 @@ const AddSubTask = ({
     ...(initialValues || {}),
     parentTaskId: parentTaskId,
     dueDateChangeReason: initialValues?.dueDateChangeReason || "",
+    requiresClientApproval: initialValues?.requiresClientApproval || false,
   };
 
   // Get project social media data if not provided in projectData
@@ -141,9 +142,8 @@ const AddSubTask = ({
     <div className="fixed left-0 right-0 top-0 bottom-0 bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter">
       <div
         className={`p-10 bg-white pt-12 px-12 flex flex-col
-        rounded-3xl max-w-[584px] w-full ${
-          isAssignee ? `` : `h-full`
-        } relative`}
+        rounded-3xl max-w-[584px] w-full ${isAssignee ? `` : `h-full`
+          } relative`}
       >
         {isLoading && (
           <div className="h-full flexCenter">
@@ -426,7 +426,7 @@ const AddSubTask = ({
                               name={`publishUrls.${platform.platform.toLowerCase()}`}
                               value={
                                 values.publishUrls?.[
-                                  platform.platform.toLowerCase()
+                                platform.platform.toLowerCase()
                                 ] || ""
                               }
                               onChange={handleChange}
@@ -481,15 +481,34 @@ const AddSubTask = ({
                     value={values?.assignedTo || []}
                     options={
                       teams?.map((user) => ({
-                        label: `${user?.firstName || user?.name} (${
-                          user.position
-                        })`,
+                        label: `${user?.firstName || user?.name} (${user.position
+                          })`,
                         value: user._id,
                       })) || []
                     }
                     placeholder="Select Assignees"
                     disabled={isLoading}
                   />
+                )}
+
+                {!isAssignee && (
+                  <div className="flex items-center gap-2 mb-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="requiresClientApproval"
+                      name="requiresClientApproval"
+                      checked={values.requiresClientApproval}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      disabled={isLoading}
+                    />
+                    <label
+                      htmlFor="requiresClientApproval"
+                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                    >
+                      Requires Client Approval
+                    </label>
+                  </div>
                 )}
 
                 <div className="mt-auto pt-4">
@@ -526,23 +545,23 @@ const AddSubTask = ({
               <span className="font-semibold">
                 {initialValues?.dueDate
                   ? new Date(initialValues.dueDate).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      }
-                    )
+                    "en-US",
+                    {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    }
+                  )
                   : "N/A"}
               </span>{" "}
               to{" "}
               <span className="font-semibold">
                 {pendingNewDueDate
                   ? new Date(pendingNewDueDate).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })
                   : "N/A"}
               </span>
               . Please provide a reason for this change.

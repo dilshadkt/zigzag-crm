@@ -24,6 +24,11 @@ const EmployeeWorkDetails = () => {
       return bRank - aRank;
     }) || [];
 
+  const completedItems = [
+    ...(todaySubTasks?.completedTasks || []),
+    ...(todaySubTasks?.completedSubTasks || []),
+  ].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
   const formatTime = (dateString) => {
     if (!dateString) return "No due date";
     const date = new Date(dateString);
@@ -66,6 +71,10 @@ const EmployeeWorkDetails = () => {
     switch (status?.toLowerCase()) {
       case "completed":
         return "bg-green-100 text-green-600";
+      case "approved":
+        return "bg-emerald-100 text-emerald-600";
+      case "on-review":
+        return "bg-purple-100 text-purple-600";
       case "in-progress":
         return "bg-blue-100 text-blue-600";
       case "todo":
@@ -75,111 +84,136 @@ const EmployeeWorkDetails = () => {
     }
   };
 
-  const handleSubTaskClick = (subTask) => {
-    // Navigate to the parent task detail page with the correct URL structure
-    navigate(
-      `/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`
-    );
+  const handleSubTaskClick = (item) => {
+    // If it's a subtask, it has a parentTask field
+    // If it's a task, it doesn't (or it is the parent task)
+    const isSubTask = !!item.parentTask;
+    const projectId = item.project?._id || item.project;
+
+    if (isSubTask) {
+      navigate(
+        `/projects/${projectId}/${item.parentTask._id || item.parentTask}?subTaskId=${item._id}`
+      );
+    } else {
+      navigate(`/projects/${projectId}/${item._id}`);
+    }
   };
 
-  return (
-    <div className="px-4 col-span-5  bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
-      <div className="flexBetween">
-        <h4 className="font-semibold text-lg text-gray-800">Today's Work</h4>
-        {todaySubTasks?.subTasks?.length > 0 && (
-          <Link
-            to={"/today-tasks"}
-            className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-2"
+  const TaskCard = ({ item }) => (
+    <div
+      onClick={() => handleSubTaskClick(item)}
+      className="flex items-center justify-between p-4 bg-[#F4F9FD] rounded-2xl hover:bg-[#E6EDF5] transition-colors cursor-pointer"
+    >
+      <div className="flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <h5 className="font-medium text-gray-800 text-sm">
+            {item.title}
+          </h5>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
+              item.priority
+            )}`}
           >
-            <span>View all subtasks</span>
-            <MdOutlineKeyboardArrowRight />
-          </Link>
+            {item.priority || "Medium"}
+          </span>
+        </div>
+
+        {item.description && (
+          <p className="text-gray-600 text-xs mb-2 line-clamp-2">
+            {item.description}
+          </p>
         )}
+
+        <div className="flex items-center gap-4 text-xs text-gray-500">
+          <span>Due: {formatTime(item.dueDate)}</span>
+          {item.project && (
+            <span className="text-[#3F8CFF]">
+              Project:{" "}
+              {item.project.displayName || item.project.name}
+            </span>
+          )}
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="w-full h-full flex items-center justify-center py-8">
-          <div className="animate-pulse text-gray-500">
-            Loading today's subtasks...
+      <div className="flex flex-col items-end gap-2">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+            item.status
+          )}`}
+        >
+          {item.status === "todo"
+            ? "Pending"
+            : item.status || "Pending"}
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="px-5 bg-white h-full pb-5 pt-5 flex flex-col rounded-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+        {/* Today's Work Section */}
+        <div className="flex flex-col h-full">
+          <div className="flexBetween mb-4">
+            <h4 className="font-semibold text-lg text-gray-800">Today's Work</h4>
+            {todaySubTasks?.subTasks?.length > 0 && (
+              <Link
+                to={"/today-tasks"}
+                className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-2"
+              >
+                <span>View all</span>
+                <MdOutlineKeyboardArrowRight />
+              </Link>
+            )}
           </div>
-        </div>
-      ) : todaySubTasks?.subTasks?.length > 0 ? (
-        <div className="w-full flex flex-col gap-3 mt-3 max-h-96 overflow-y-auto">
-          {sortedSubTasks.map((subTask, index) => (
-            <div
-              onClick={() => handleSubTaskClick(subTask)}
-              key={subTask._id || index}
-              className="flex items-center justify-between p-4 bg-[#F4F9FD] rounded-2xl hover:bg-[#E6EDF5] transition-colors cursor-pointer"
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h5 className="font-medium  text-gray-800 text-sm">
-                    {subTask.title}
-                  </h5>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                      subTask.priority
-                    )}`}
-                  >
-                    {subTask.priority || "Medium"}
-                  </span>
-                </div>
 
-                {subTask.description && (
-                  <p className="text-gray-600 text-xs mb-2 line-clamp-2">
-                    {subTask.description}
-                  </p>
-                )}
-
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span>Due: {formatTime(subTask.dueDate)}</span>
-                  {subTask.project && (
-                    <span className="text-[#3F8CFF]">
-                      Project:{" "}
-                      {subTask.project.displayName || subTask.project.name}
-                    </span>
-                  )}
-                  {subTask.parentTask && (
-                    <span className="text-gray-600">
-                      Task: {subTask.parentTask.title}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col items-end gap-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    subTask.status
-                  )}`}
-                >
-                  {subTask.status === "todo"
-                    ? "Pending"
-                    : subTask.status || "Pending"}
-                </span>
-
-                {/* {subTask.timeEstimate && (
-                  <span className="text-xs text-gray-500">
-                    {subTask.timeEstimate}h estimated
-                  </span>
-                )} */}
+          {isLoading ? (
+            <div className="w-full h-full flex items-center justify-center py-8">
+              <div className="animate-pulse text-gray-500">Loading...</div>
+            </div>
+          ) : sortedSubTasks.length > 0 ? (
+            <div className="w-full flex flex-col gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+              {sortedSubTasks.map((subTask, index) => (
+                <TaskCard key={subTask._id || index} item={subTask} />
+              ))}
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center py-8 bg-[#F4F9FD] rounded-2xl">
+              <div className="text-center">
+                <div className="text-gray-400 text-3xl mb-2">✅</div>
+                <h3 className="text-md font-medium text-gray-500">No work for today</h3>
               </div>
             </div>
-          ))}
+          )}
         </div>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center py-8">
-          <div className="text-center">
-            <div className="text-gray-400 text-4xl mb-3">✅</div>
-            <h3 className="text-lg font-medium text-gray-500 mb-2">
-              No subtasks for today
-            </h3>
-            <p className="text-gray-500 text-sm">
-              You're all caught up! Enjoy your day.
-            </p>
+
+        {/* Today's Completed Section */}
+        <div className="flex flex-col h-full border-l border-gray-50 pl-2 md:pl-4">
+          <div className="flexBetween mb-4">
+            <h4 className="font-semibold text-lg text-gray-800">Completed Today</h4>
+            <span className="text-gray-400 text-sm">{completedItems.length} tasks</span>
           </div>
+
+          {isLoading ? (
+            <div className="w-full h-full flex items-center justify-center py-8">
+              <div className="animate-pulse text-gray-500">Loading...</div>
+            </div>
+          ) : completedItems.length > 0 ? (
+            <div className="w-full flex flex-col gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+              {completedItems.map((item, index) => (
+                <TaskCard key={item._id || index} item={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center py-8 bg-[#F4F9FD] rounded-2xl">
+              <div className="text-center">
+                <div className="text-gray-400 text-3xl mb-2">🕒</div>
+                <h3 className="text-md font-medium text-gray-500">No completed tasks yet</h3>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

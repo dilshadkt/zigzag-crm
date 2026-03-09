@@ -69,6 +69,11 @@ const SubTaskStatusButton = ({
       color: "bg-emerald-100 text-emerald-800",
     },
     {
+      value: "client-approved",
+      label: "Client Approved",
+      color: "bg-indigo-100 text-indigo-800",
+    },
+    {
       value: "completed",
       label: "Completed",
       color: "bg-green-100 text-green-800",
@@ -76,7 +81,9 @@ const SubTaskStatusButton = ({
   ];
 
   // Get status options based on user role or explicit override
-  const statusOptions = (isCompany || showAllOptions) ? adminStatusOptions : employeeStatusOptions;
+  const statusOptions = (isCompany || showAllOptions)
+    ? adminStatusOptions.filter(opt => opt.value !== "client-approved" || subTask.requiresClientApproval)
+    : employeeStatusOptions;
 
   const currentStatus = adminStatusOptions.find(
     (status) => status.value === subTask.status

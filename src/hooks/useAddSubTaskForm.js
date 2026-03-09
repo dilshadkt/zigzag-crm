@@ -20,6 +20,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     publishUrls: defaultValue?.publishUrls || {},
     parentTaskId: defaultValue?.parentTaskId || "",
     dueDateChangeReason: defaultValue?.dueDateChangeReason || "",
+    requiresClientApproval: defaultValue?.requiresClientApproval || false,
   };
 
   const validationSchema = Yup.object().shape({
@@ -32,6 +33,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     copyOfDescription: Yup.string(),
     ideas: Yup.string(),
     publishUrls: Yup.object(),
+    requiresClientApproval: Yup.boolean(),
   });
 
   const formik = useFormik({

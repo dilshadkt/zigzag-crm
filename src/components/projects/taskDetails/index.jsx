@@ -223,6 +223,17 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                     Perf: {taskDetails.performance}%
                   </span>
                 )}
+                {taskDetails?.requiresClientApproval && (
+                  <span
+                    className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 shadow-sm"
+                    title="This task requires final client approval"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z" />
+                    </svg>
+                    Client Approval Required
+                  </span>
+                )}
               </div>
               {canChangeStatus && (
                 <StatusButton

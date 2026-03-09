@@ -9,7 +9,7 @@ const WorkLoad = () => {
   const employees = data?.employees?.slice(0, 8) || [];
 
   return (
-    <div className="px-4 md:col-span-5  bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
+    <div className="px-4 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Workload</h4>
         {employees.length > 0 && (

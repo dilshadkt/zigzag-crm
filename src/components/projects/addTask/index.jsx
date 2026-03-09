@@ -989,6 +989,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   onChange={(files) => setFieldValue("attachments", files)}
                   disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
+
                 <div className="flexEnd">
                   <PrimaryButton
                     type="submit"

@@ -44,7 +44,7 @@ const NearestEvents = ({ taskMonth }) => {
 
   if (isLoading) {
     return (
-      <div className="flex h-[470px] flex-col md:col-span-2 bg-white py-5 px-4 rounded-3xl">
+      <div className="flex h-[470px] flex-col bg-white py-5 px-4 rounded-3xl">
         <div className="flexBetween">
           <h4 className="font-semibold text-lg text-gray-800">
             Pending Work
@@ -63,7 +63,7 @@ const NearestEvents = ({ taskMonth }) => {
   }
 
   return (
-    <div className="flex h-[470px] flex-col md:col-span-2 bg-white py-5 px-4 rounded-3xl">
+    <div className="flex h-[470px] flex-col bg-white py-5 px-4 rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Pending Work</h4>
         <Link

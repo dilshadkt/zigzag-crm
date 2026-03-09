@@ -125,9 +125,8 @@ const NearestEvents = ({ selectedDate }) => {
       case "project":
         return `Project Deadline • ${event.progress}% Complete`;
       case "task":
-        return `Task ${
-          event.status ? `• ${event.status.replace("-", " ")}` : ""
-        }${event.projectName ? ` • ${event.projectName}` : ""}`;
+        return `Task ${event.status ? `• ${event.status.replace("-", " ")}` : ""
+          }${event.projectName ? ` • ${event.projectName}` : ""}`;
       case "birthday":
         return "Birthday Celebration";
       default:
@@ -165,7 +164,7 @@ const NearestEvents = ({ selectedDate }) => {
   }
 
   return (
-    <div className="flex h-[470px]  md:col-span-2 flex-col bg-white py-5 px-4 rounded-3xl">
+    <div className="flex h-[470px] flex-col bg-white py-5 px-4 rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-lg text-gray-800">Nearest Events</h4>
         <Link

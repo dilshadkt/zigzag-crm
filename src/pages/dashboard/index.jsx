@@ -183,24 +183,17 @@ const Dashboard = () => {
       ) : null}
 
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5">
-        {/* work load section or employee work details */}
-        {isEmployee ? (
-          <Suspense fallback={<div>Loading Employee Work Details...</div>}>
-            <EmployeeWorkDetails />
-          </Suspense>
-        ) : (
-          <WorkLoad />
-        )}
-
-        {/* nearest event */}
-        {isEmployee ? (
-          <NearestEvents selectedDate={selectedDate} />
-        ) : (
-          <PendingWork taskMonth={taskMonth} />
-        )}
+        {/* work load section or employee work details - now full width */}
+        <div className="md:col-span-7">
+          {isEmployee ? (
+            <Suspense fallback={<div>Loading Employee Work Details...</div>}>
+              <EmployeeWorkDetails />
+            </Suspense>
+          ) : (
+            <WorkLoad />
+          )}
+        </div>
       </div>
-
-      {/* Employee Progress Statistics - Only for employees */}
 
       <DashboardProjects
         isEmployee={isEmployee}
@@ -210,6 +203,18 @@ const Dashboard = () => {
         canViewCampaignDetails={canViewCampaignDetails}
         selectedDate={selectedDate}
       />
+
+      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5 pb-5">
+        <div className="hidden md:block md:col-span-5"></div>
+        {/* nearest event - now after projects */}
+        <div className="md:col-span-2">
+          {isEmployee ? (
+            <NearestEvents selectedDate={selectedDate} />
+          ) : (
+            <PendingWork taskMonth={taskMonth} />
+          )}
+        </div>
+      </div>
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
       {canViewDailyChecklist && (
