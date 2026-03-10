@@ -56,11 +56,30 @@ const Prjects = () => {
     selectProject,
     selectedMonth
   );
+  // Add computed progress to tasks based on subtasks
+  const enhancedTasks = (projectTasks || []).map(task => {
+    if (task?.itemType === "subtask") return task;
+
+    const subtasks = (projectTasks || []).filter(t =>
+      t?.itemType === "subtask" &&
+      (t.parentTask?._id === task._id || t.parentTask === task._id)
+    );
+
+    if (!subtasks || subtasks.length === 0) return task;
+
+    const completedSubtasks = subtasks.filter(t =>
+      ["completed", "approved", "client-approved"].includes(t.status?.toLowerCase())
+    );
+
+    const computedProgress = Math.round((completedSubtasks.length / subtasks.length) * 100);
+    return { ...task, computedProgress };
+  });
+
   // Combine project data with tasks
   const projectWithTasks = activeProject
     ? {
       ...activeProject,
-      tasks: projectTasks || [],
+      tasks: enhancedTasks,
     }
     : null;
 

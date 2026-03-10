@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useGetTaskById, useUpdateTaskById } from "../../api/hooks";
+import {
+  useGetTaskById,
+  useUpdateTaskById,
+  useGetSubTasksByParentTask,
+} from "../../api/hooks";
 import { uploadSingleFile } from "../../api/service";
 import AddTask from "../../components/projects/addTask";
 import TaskDetails from "../../components/projects/taskDetails";
@@ -15,7 +19,18 @@ const TaskOverView = () => {
   const [showModalTask, setShowModalTask] = useState(false);
   const { activeProject: selectProject } = useProject();
   const { data: taskDetails, isLoading } = useGetTaskById(taskId);
+  const { data: subTasks = [] } = useGetSubTasksByParentTask(taskId);
   const { mutate } = useUpdateTaskById(taskId, () => setShowModalTask(false));
+
+  const computedProgress = React.useMemo(() => {
+    if (!subTasks || subTasks.length === 0) return 0;
+    const completedSubtasks = subTasks.filter((t) =>
+      ["completed", "approved", "client-approved"].includes(
+        t.status?.toLowerCase()
+      )
+    );
+    return Math.round((completedSubtasks.length / subTasks.length) * 100);
+  }, [subTasks]);
 
   const handleTaskEdit = async (values, { setSubmitting }) => {
     try {
@@ -44,9 +59,13 @@ const TaskOverView = () => {
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}
         teams={taskDetails?.teams}
+        computedProgress={computedProgress}
       />
       {/* task info  */}
-      <TaskInfo taskDetails={taskDetails} />
+      <TaskInfo
+        taskDetails={taskDetails}
+        computedProgress={computedProgress}
+      />
       {/* add task modal  */}
       <AddTask
         isEdit={true}

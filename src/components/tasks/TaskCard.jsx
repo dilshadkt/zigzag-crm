@@ -230,6 +230,12 @@ const TaskCard = memo(({ task, filter }) => {
                 {task.performance}%
               </span>
             )}
+            {task.computedProgress !== undefined && (
+              <span className="px-2 py-1 rounded-md text-xs font-medium border bg-green-50 text-green-600 border-green-200 flex items-center gap-1">
+                <FiCheckCircle className="w-3 h-3" />
+                {task.computedProgress}% DONE
+              </span>
+            )}
           </div>
 
           {task.description && (

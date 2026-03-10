@@ -159,10 +159,10 @@ const DropZone = ({ onDrop, position, status, isVisible, canDrop }) => {
   return (
     <div
       className={`h-2 transition-all duration-200 ease-out ${isOver && canDrop
-          ? "bg-blue-300 rounded-full mx-2"
-          : canDrop
-            ? "bg-transparent"
-            : "bg-red-200 rounded-full mx-2"
+        ? "bg-blue-300 rounded-full mx-2"
+        : canDrop
+          ? "bg-transparent"
+          : "bg-red-200 rounded-full mx-2"
         }`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -395,46 +395,65 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           }
         }
       }
-
       return true;
     });
   };
+  // Enhance tasks with computedProgress
+  const enhancedTasks = (currentProject?.tasks || []).map((task) => {
+    if (task?.itemType === "subtask") return task;
+
+    const subtasks = (currentProject?.tasks || []).filter(
+      (t) =>
+        t?.itemType === "subtask" &&
+        (t.parentTask?._id === task._id || t.parentTask === task._id)
+    );
+
+    if (!subtasks || subtasks.length === 0) return task;
+
+    const completedSubtasks = subtasks.filter((t) =>
+      ["completed", "approved", "client-approved"].includes(
+        t.status?.toLowerCase()
+      )
+    );
+
+    const computedProgress = Math.round(
+      (completedSubtasks.length / subtasks.length) * 100
+    );
+    return { ...task, computedProgress };
+  });
 
   // Group tasks by status with filtering applied
   const tasksByStatus = {
     todo:
-      filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "todo")
-      ) || [],
+      filterTasks(enhancedTasks.filter((task) => task?.status === "todo")) ||
+      [],
     "in-progress":
       filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "in-progress")
+        enhancedTasks.filter((task) => task?.status === "in-progress")
       ) || [],
     "on-review":
       filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "on-review")
+        enhancedTasks.filter((task) => task?.status === "on-review")
       ) || [],
     "on-hold":
       filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "on-hold")
+        enhancedTasks.filter((task) => task?.status === "on-hold")
       ) || [],
     "re-work":
       filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "re-work")
+        enhancedTasks.filter((task) => task?.status === "re-work")
       ) || [],
     approved:
       filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "approved")
+        enhancedTasks.filter((task) => task?.status === "approved")
       ) || [],
     "client-approved":
       filterTasks(
-        currentProject?.tasks?.filter(
-          (task) => task?.status === "client-approved"
-        )
+        enhancedTasks.filter((task) => task?.status === "client-approved")
       ) || [],
     completed:
       filterTasks(
-        currentProject?.tasks?.filter((task) => task?.status === "completed")
+        enhancedTasks.filter((task) => task?.status === "completed")
       ) || [],
   };
 
@@ -602,8 +621,8 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           <button
             onClick={() => setShowSubtasks(!showSubtasks)}
             className={`p-2 rounded-lg border transition-colors ${showSubtasks
-                ? "bg-blue-50 border-blue-300 text-blue-600"
-                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              ? "bg-blue-50 border-blue-300 text-blue-600"
+              : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
             title={showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
           >

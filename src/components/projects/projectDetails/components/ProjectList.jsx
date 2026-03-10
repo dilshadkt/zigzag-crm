@@ -47,9 +47,10 @@ const ProjectList = ({
     return (
         <div
             ref={parentRef}
-            className="flex flex-col h-full gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto"
+            className="flex flex-col h-full gap-y-4 mt-4  rounded-xl overflow-hidden overflow-y-auto"
         >
             <div
+                className="flex flex-col gap-y-2"
                 style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
                     width: "100%",
@@ -62,16 +63,16 @@ const ProjectList = ({
                         <div
                             key={virtualRow.key}
                             style={{
-                                position: "absolute",
+                                // position: "absolute",
                                 top: 0,
                                 left: 0,
                                 width: "100%",
-                                height: `${virtualRow.size}px`,
-                                transform: `translateY(${virtualRow.start}px)`,
+                                // height: `${virtualRow.size}px`,
+                                // transform: `translateY(${virtualRow.start}px)`,
                             }}
                         >
                             {item.type === "header" ? (
-                                <div className="min-h-10 font-medium sticky top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter mx-2">
+                                <div className="min-h-10 font-medium sticky my-2 top-0 z-50 text-gray-800 rounded-xl bg-[#E6EDF5] flexCenter mx-2">
                                     {item.title}
                                 </div>
                             ) : (

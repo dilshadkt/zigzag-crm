@@ -69,7 +69,7 @@ const Task = memo(({
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
   const priorityColor =
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
-  const progressValue = getProgressValue(task?.status);
+  const progressValue = task?.computedProgress !== undefined ? task.computedProgress : getProgressValue(task?.status);
   const isExtraTask = task?.taskGroup === "extraTask";
 
   const handleDragStart = (e) => {
@@ -209,7 +209,10 @@ const Task = memo(({
                 <span className="text-xs font-medium">{task?.priority}</span>
               </div>
             </div>
-            <Progress size={24} strokeWidth={2} currentValue={progressValue} />
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+              {progressValue}%
+              <Progress size={24} strokeWidth={2} currentValue={progressValue} />
+            </div>
           </div>
         </div>
       </div>
@@ -302,7 +305,10 @@ const Task = memo(({
         </div>
 
         <div className="visible md:hidden">
-          <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-gray-700">{progressValue}%</span>
+            <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+          </div>
         </div>
 
         {/* Parent Task Info for Subtasks in List View */}
@@ -386,7 +392,10 @@ flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
               <FiMoreVertical size={20} className="text-gray-500" />
             </button>
           ) : (
-            <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-gray-700">{progressValue}%</span>
+              <Progress size={30} strokeWidth={2} currentValue={progressValue} />
+            </div>
           )}
         </div>
       </div>

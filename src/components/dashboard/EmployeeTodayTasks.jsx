@@ -23,8 +23,7 @@ const EmployeeTodayTasks = () => {
         <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 h-[470px] flex flex-col">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
-                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <FaTasks className="text-blue-500" />
+                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                         Employees Today Tasks
                     </h3>
                     <p className="text-sm text-gray-500">Real-time task tracking for all employees</p>

@@ -5,6 +5,7 @@ import {
   useUpdateTaskById,
   useGetAllEmployees,
   useCompanyProjects,
+  useGetSubTasksByParentTask,
 } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { uploadSingleFile } from "../../api/service";
@@ -18,7 +19,18 @@ const TaskDetailPage = () => {
   const { user } = useAuth();
   const [showModalTask, setShowModalTask] = useState(false);
   const { data: taskDetails, isLoading } = useGetTaskById(taskId);
+  const { data: subTasks = [] } = useGetSubTasksByParentTask(taskId);
   const { mutate } = useUpdateTaskById(taskId, () => setShowModalTask(false));
+
+  const computedProgress = React.useMemo(() => {
+    if (!subTasks || subTasks.length === 0) return 0;
+    const completedSubtasks = subTasks.filter((t) =>
+      ["completed", "approved", "client-approved"].includes(
+        t.status?.toLowerCase()
+      )
+    );
+    return Math.round((completedSubtasks.length / subTasks.length) * 100);
+  }, [subTasks]);
 
   // Check if task has a project
   const hasProject = !!taskDetails?.project;
@@ -66,9 +78,13 @@ const TaskDetailPage = () => {
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}
         teams={teams}
+        computedProgress={computedProgress}
       />
       {/* task info */}
-      <TaskInfo taskDetails={taskDetails} />
+      <TaskInfo
+        taskDetails={taskDetails}
+        computedProgress={computedProgress}
+      />
       {/* add task modal */}
       <AddTask
         isEdit={true}

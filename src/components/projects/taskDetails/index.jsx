@@ -18,7 +18,7 @@ import TaskAttachments from "./TaskAttachments";
 import ActivityTimeline from "./ActivityTimeline";
 import { FiActivity, FiClock, FiTarget } from "react-icons/fi";
 
-const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
+const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress }) => {
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
@@ -163,12 +163,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
         </div>
         <div className="flex flex-col h-full bg-white  overflow-hidden  rounded-3xl mt-5 p-6 pb-4">
           <div className="overflow-y-auto flex flex-col  h-full   gap-y-1 ">
-            <span className="text-sm text-[#91929E] uppercase">
-              {taskDetails?._id?.slice(0, 8)}
-            </span>
-            <div className="flexBetween">
-              <div className="flex items-center gap-3">
-                <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
+
+            <div className="flex items-center justify-between mb-2">
+
+              <span className="text-sm text-[#91929E] uppercase">
+                {taskDetails?._id?.slice(0, 8)}
+              </span>
+              <div className="flex items-center gap-2">
                 <span
                   className={`px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 cursor-pointer transition-all duration-200 ${taskDetails?.reworkCount > 0
                     ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
@@ -223,9 +224,10 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                     Perf: {taskDetails.performance}%
                   </span>
                 )}
+
                 {(taskDetails?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.requiresClientApproval)) && (
                   <span
-                    className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 shadow-sm"
+                    className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
                     title="This task requires final client approval"
                   >
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -234,6 +236,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams }) => {
                     Client Approval Required
                   </span>
                 )}
+              </div>
+            </div>
+            <div className="flexBetween">
+              <div className="flex items-center gap-3">
+                <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
+
               </div>
               {canChangeStatus && (
                 <StatusButton

@@ -40,7 +40,7 @@ const TaskUserAvatar = ({ user, size = "w-8 h-8", fontSize = "text-[10px]" }) =>
   );
 };
 
-const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
+const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
   const { user, isCompany } = useAuth();
   const { hasPermission } = usePermissions();
   const isEmployee = user?.role === "employee";
@@ -174,6 +174,21 @@ const TaskInfo = ({ taskDetails, onTaskDeleted }) => {
             <div className="flexStart gap-x-1 text-[#FFBD21]">
               <IoArrowUpOutline className="text-xl" />
               <span className="text-sm">{taskDetails?.priority}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl mt-5 p-4 bg-[#F4F9FD] flex flex-col">
+          <h4 className="font-medium">Subtask Completion</h4>
+          <div className="flexStart gap-x-3 my-3">
+            <Progress size={33} strokeWidth={2} currentValue={computedProgress || 0} />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">
+                {computedProgress || 0}% Completed
+              </span>
+              <span className="text-xs text-[#91929E]">
+                Based on subtasks status
+              </span>
             </div>
           </div>
         </div>
