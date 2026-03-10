@@ -51,7 +51,7 @@ const AddTask = ({
       task_description: initialValues.task_description || "",
       project: initialValues.project?._id || initialValues.project || null,
       taskGroup: initialValues.taskGroup || "",
-      taskFlow: initialValues.taskFlow || "",
+      taskFlow: initialValues.taskFlow?._id || initialValues.taskFlow || "",
       extraTaskWorkType: initialValues.extraTaskWorkType || "",
       // taskMonth: isEdit ? selectedMonth : initialValues.selectedMonth || "",
       taskMonth: selectedMonth || "",

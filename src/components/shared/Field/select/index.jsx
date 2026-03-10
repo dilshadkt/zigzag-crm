@@ -155,7 +155,9 @@ const Select = ({
           }
         )}
       >
-        {selected}
+        {typeof selected === "object" && selected !== null
+          ? selected.label || selected.name || "Object Selected"
+          : selected}
         <MdKeyboardArrowDown className="text-[#7D8592] text-lg absolute top-0 bottom-0 my-auto right-4" />
         {isMenuOpen && (
           <ul
