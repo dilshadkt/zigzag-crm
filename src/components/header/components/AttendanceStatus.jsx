@@ -32,7 +32,7 @@ const AttendanceStatus = ({
         <span className="text-xs font-medium text-gray-600">
           {isOnBreak ? "On Break" : "Active Shift"}
         </span>
-        <span className="text-sm font-mono font-bold text-gray-800">
+        <span className="hidden md:inline text-sm font-mono font-bold text-gray-800">
           {formatShiftTime(shiftElapsedTime)}
         </span>
         

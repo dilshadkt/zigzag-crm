@@ -197,22 +197,25 @@ const DashboardHeader = () => {
       {/* Right Side Actions */}
       <div className="flexEnd gap-x-2">
         {/* Attendance Status */}
-        <AttendanceStatus
-          isShiftActive={isShiftActive}
-          isOnBreak={isOnBreak}
-          shiftElapsedTime={shiftElapsedTime}
-          isClockingOut={isClockingOut}
-          clockOutError={clockOutError}
-          onEndShift={endShift}
-          onStartBreak={handleStartBreak}
-          onEndBreak={handleEndBreak}
-          isStartingBreak={isStartingBreak}
-          isEndingBreak={isEndingBreak}
-        />
+        <div className="hidden md:block">
+          <AttendanceStatus
+            isShiftActive={isShiftActive}
+            isOnBreak={isOnBreak}
+            shiftElapsedTime={shiftElapsedTime}
+            isClockingOut={isClockingOut}
+            clockOutError={clockOutError}
+            onEndShift={endShift}
+            onStartBreak={handleStartBreak}
+            onEndBreak={handleEndBreak}
+            isStartingBreak={isStartingBreak}
+            isEndingBreak={isEndingBreak}
+          />
+        </div>
 
         {/* Action Buttons */}
         <ActionButtons
           isShiftActive={isShiftActive}
+          isOnBreak={isOnBreak}
           statusLoading={statusLoading}
           isClockingIn={isClockingIn}
           onAttendanceClick={handleAttendanceClick}

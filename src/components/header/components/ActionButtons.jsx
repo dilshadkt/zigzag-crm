@@ -8,6 +8,7 @@ import {
 
 const ActionButtons = ({
   isShiftActive,
+  isOnBreak,
   statusLoading,
   isClockingIn,
   onAttendanceClick,
@@ -44,7 +45,16 @@ const ActionButtons = ({
         {statusLoading ? (
           <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         ) : (
-          <IoFingerPrintOutline className="w-5 h-5 text-gray-600" />
+          <>
+            <IoFingerPrintOutline className="w-5 h-5 text-gray-600" />
+            {isShiftActive && (
+              <div
+                className={`absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse md:hidden ${
+                  isOnBreak ? "bg-yellow-500" : "bg-green-500"
+                }`}
+              ></div>
+            )}
+          </>
         )}
       </button>
 

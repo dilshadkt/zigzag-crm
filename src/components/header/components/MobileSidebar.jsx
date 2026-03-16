@@ -24,7 +24,7 @@ const MobileSidebar = ({
         onClick={(e) => {
           e.stopPropagation();
         }}
-        className="bg-white w-[220px] overflow-hidden flex flex-col justify-between rounded-3xl h-dvh p-3"
+        className="bg-white w-[220px] overflow-hidden flex flex-col justify-between rounded-3xl h-[calc(100dvh-80px)] mt-16 p-3"
       >
         <div className="flex flex-col h-full overflow-y-auto">
           <img src={logo} alt="" className="w-10" />
