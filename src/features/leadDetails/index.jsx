@@ -9,7 +9,10 @@ import LeadAttachments from "./components/LeadAttachments";
 import LeadEmails from "./components/LeadEmails";
 import LeadActivityPanel from "./components/LeadActivityPanel";
 import LeadQuickActions from "./components/LeadQuickActions";
-import { useUploadLeadAttachment, useLogLeadActivity } from "../leads/api";
+import { useUploadLeadAttachment, useLogLeadActivity, useAddLeadNote, useUpdateLead, useGetLeadStatuses } from "../leads/api";
+import LeadInteractionModal from "./components/LeadInteractionModal";
+import { useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Emails"];
 
@@ -22,12 +25,37 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   const attachments = lead.details?.attachments || [];
   const phoneNumber = lead.contact?.phone || lead.details?.contact?.phone;
 
-  // Upload attachment mutation
+  // Mutations
   const { mutateAsync: uploadAttachment, isLoading: isUploadingAttachment } =
     useUploadLeadAttachment();
-
-  // Log activity mutation
   const { mutate: logActivity } = useLogLeadActivity();
+  const { mutate: addNote } = useAddLeadNote();
+  const { mutate: updateLead } = useUpdateLead();
+
+  // Get statuses for the modal
+  const { data: statusesData } = useGetLeadStatuses();
+  const statuses = statusesData?.data || [];
+
+  // Interaction tracking state
+  const [isInteractionModalOpen, setIsInteractionModalOpen] = useState(false);
+  const [interactionType, setInteractionType] = useState(null); // 'call' or 'whatsapp'
+  const [hasPendingInteraction, setHasPendingInteraction] = useState(false);
+
+  // Detect when user returns to app
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && hasPendingInteraction) {
+        // Short delay to let the UI settle
+        setTimeout(() => {
+          setIsInteractionModalOpen(true);
+          setHasPendingInteraction(false);
+        }, 800);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [hasPendingInteraction]);
 
   const handleAddNote = (newNote) => {
     // This is called for optimistic updates, but the real data comes from API refetch
@@ -54,6 +82,9 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   const handleCallClick = () => {
     if (!leadId) return;
 
+    setInteractionType("call");
+    setHasPendingInteraction(true);
+
     logActivity(
       {
         leadId,
@@ -76,6 +107,9 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   const handleWhatsappClick = () => {
     if (!leadId) return;
 
+    setInteractionType("whatsapp");
+    setHasPendingInteraction(true);
+
     logActivity(
       {
         leadId,
@@ -93,6 +127,35 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
         },
       }
     );
+  };
+
+  const handleSaveInteraction = ({ note, statusId }) => {
+    if (!leadId) return;
+
+    // 1. Add note if provided
+    if (note.trim()) {
+      addNote({
+        leadId,
+        noteData: { text: note.trim() }
+      }, {
+        onSuccess: () => {
+          toast.success("Note added successfully");
+        }
+      });
+    }
+
+    // 2. Update status if changed
+    const currentStatusId = lead.status?._id || lead.status?.id || lead.status;
+    if (statusId && statusId !== currentStatusId) {
+      updateLead({
+        leadId,
+        leadData: { status: statusId }
+      }, {
+        onSuccess: () => {
+          toast.success("Lead status updated");
+        }
+      });
+    }
   };
 
   const tabContent = useMemo(() => {
@@ -157,7 +220,11 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           <LeadActivityPanel
             activity={lead.details?.activities || lead.details?.activity || []}
           />
-          <LeadQuickActions />
+          <LeadQuickActions 
+            onCall={handleCallClick}
+            onWhatsapp={handleWhatsappClick}
+            phoneNumber={phoneNumber}
+          />
         </div>
       </div>
 
@@ -189,6 +256,15 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           </a>
         </div>
       )}
+      {/* Interaction Follow-up Modal */}
+      <LeadInteractionModal
+        isOpen={isInteractionModalOpen}
+        onClose={() => setIsInteractionModalOpen(false)}
+        onSave={handleSaveInteraction}
+        lead={lead}
+        statuses={statuses}
+        interactionType={interactionType}
+      />
     </div>
   );
 };

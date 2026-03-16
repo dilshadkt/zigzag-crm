@@ -12,16 +12,25 @@ class SocketService {
       return this.socket;
     }
 
-    const baseURL =
-      process.env.NODE_ENV === "production"
+    const getBaseURL = () => {
+      if (import.meta.env.VITE_SOCKET_URL) {
+        return import.meta.env.VITE_SOCKET_URL;
+      }
+      return process.env.NODE_ENV === "production"
         ? "https://crm.zigzagdigitalsolutions.com"
         : "http://localhost:5000";
+    };
+
+    const baseURL = getBaseURL();
 
     this.socket = io(baseURL, {
       auth: {
         token: token,
       },
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     this.socket.on("connect", () => {

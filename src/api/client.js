@@ -1,8 +1,14 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return "http://localhost:5000/api";
+};
+
 const apiClient = axios.create({
-  baseURL: "https://crm.zigzagdigitalsolutions.com/api",
-  // baseURL: "http://localhost:5000/api",
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
   },
@@ -11,9 +17,13 @@ const apiClient = axios.create({
 // Request interceptor to add token if available
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token"); // Retrieve token from localStorage
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Set Authorization header
+    try {
+      const token = localStorage.getItem("token"); // Retrieve token from localStorage
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`; // Set Authorization header
+      }
+    } catch (e) {
+      console.error("LocalStorage access failed:", e);
     }
     return config;
   },
@@ -26,11 +36,13 @@ apiClient.interceptors.response.use(
   (error) => {
     const isDesktop = typeof window !== "undefined" && window.desktop;
     const redirectToSignIn = () => {
-      if (isDesktop) {
-        if (!window.location.href.includes("#/auth/signin")) {
-          window.location.hash = "/auth/signin";
-        }
-      } else if (!window.location.href.includes("/auth/signin")) {
+      // Use react-router if possible, but since we are outside a component, 
+      // we use window.location.
+      const signinPath = isDesktop ? "#/auth/signin" : "/auth/signin";
+
+      if (isDesktop && !window.location.hash.includes("/auth/signin")) {
+        window.location.hash = "/auth/signin";
+      } else if (!isDesktop && !window.location.pathname.includes("/auth/signin")) {
         window.location.href = "/auth/signin";
       }
     };
@@ -39,10 +51,12 @@ apiClient.interceptors.response.use(
       error.response?.status === 401 ||
       error.response?.data?.message === "Invalid token"
     ) {
-      localStorage.removeItem("token");
+      try {
+        localStorage.removeItem("token");
+      } catch (e) { }
       redirectToSignIn();
     }
-    return Promise.reject(error || "Something went wrong");
+    return Promise.reject(error?.response?.data || error?.message || "Something went wrong");
   }
 );
 

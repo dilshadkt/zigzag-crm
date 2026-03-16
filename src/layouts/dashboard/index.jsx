@@ -11,8 +11,8 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     // Request notification permission on mount
-    if (Notification.permission !== "granted") {
-      Notification.requestPermission();
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      Notification.requestPermission().catch(e => console.log("Notification permission request failed", e));
     }
 
     // Handler for new notifications
@@ -30,7 +30,7 @@ const DashboardLayout = () => {
       }
 
       // Show browser notification
-      if (Notification.permission === "granted") {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
         const icon =
           notification.data?.senderImage ||
           notification.data?.assignedBy?.profileImage ||
@@ -39,10 +39,14 @@ const DashboardLayout = () => {
           notification.data?.approvedBy?.profileImage ||
           "/icons/alert.svg";
 
-        new Notification(notification.title, {
-          body: notification.message,
-          icon: icon,
-        });
+        try {
+          new Notification(notification.title, {
+            body: notification.message,
+            icon: icon,
+          });
+        } catch (e) {
+          console.error("Failed to show browser notification:", e);
+        }
       }
     };
 

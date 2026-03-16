@@ -532,30 +532,37 @@ const LeadOverviewSection = ({ lead }) => {
               Contact and lead information. Click edit to modify.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {statuses && statuses.length > 0 ? (
-              <StatusDropdown
-                status={lead.status || leadDetails?.status}
-                statuses={statuses}
-                onStatusChange={handleStatusChange}
-              />
-            ) : (
-              <LeadStatusBadge status={lead.status || leadDetails?.status} />
-            )}
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:border-[#3f8cff] hover:text-[#3f8cff] transition-colors"
-              >
-                <FiEdit2 size={16} />
-                Edit
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+            {/* Status Dropdown / Badge Row */}
+            <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+              {statuses && statuses.length > 0 ? (
+                <StatusDropdown
+                  status={lead.status || leadDetails?.status}
+                  statuses={statuses}
+                  onStatusChange={handleStatusChange}
+                />
+              ) : (
+                <LeadStatusBadge status={lead.status || leadDetails?.status} />
+              )}
+              
+              {!isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:border-[#3f8cff] hover:text-[#3f8cff] transition-colors"
+                >
+                  <FiEdit2 size={16} />
+                  Edit
+                </button>
+              )}
+            </div>
+
+            {/* Edit Actions Row - Stacks on mobile */}
+            {isEditing && (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleCancel}
                   disabled={isUpdating}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:border-slate-300 transition-colors disabled:opacity-50"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-full border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
                 >
                   <FiX size={16} />
                   Cancel
@@ -563,7 +570,7 @@ const LeadOverviewSection = ({ lead }) => {
                 <button
                   onClick={handleSave}
                   disabled={isUpdating}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#3f8cff] text-white text-sm font-semibold hover:bg-[#2f6bff] transition-colors disabled:opacity-50"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:py-2 rounded-full bg-[#3f8cff] text-white text-sm font-semibold hover:bg-[#2f6bff] shadow-sm transition-colors disabled:opacity-50"
                 >
                   <FiSave size={16} />
                   {isUpdating ? "Saving..." : "Save"}

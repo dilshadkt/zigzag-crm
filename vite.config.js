@@ -13,6 +13,12 @@ const isElectronBuild = process.env.BUILD_TARGET === "electron";
 export default defineConfig({
   base: isElectronBuild ? "./" : "/",
   plugins: [react(), tailwindcss()],
+  build: {
+    target: "es2020",
+    outDir: "dist",
+    assetsDir: "assets",
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

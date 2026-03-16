@@ -22,16 +22,16 @@ const LeadDetailsShimmer = () => {
           animation: shimmer 1.5s infinite;
         }
       `}</style>
-      <div className="bg-white rounded-3xl border border-slate-100 h-full flex flex-col shadow-sm overflow-hidden">
-        <div className="h-full overflow-hidden flex gap-6 p-6">
+      <div className="lg:bg-white rounded-3xl lg:border border-slate-100 h-full flex flex-col lg:shadow-sm overflow-hidden bg-slate-50/30">
+        <div className="h-full overflow-hidden flex flex-col lg:flex-row gap-4 lg:gap-6 p-4 lg:p-6">
           {/* Main Content Area */}
-          <div className="lg:col-span-3 space-y-3 w-full h-full overflow-y-auto flex flex-col">
+          <div className="lg:col-span-3 space-y-3 lg:space-y-4 w-full h-full lg:overflow-y-auto flex flex-col">
             {/* Header with Back Button and Tabs */}
-            <div className="flex items-center gap-x-2">
-              <ShimmerBox className="w-10 h-10 rounded-full" />
-              <div className="flex gap-2">
+            <div className="flex items-center gap-x-2 overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
+              <ShimmerBox className="w-10 h-10 rounded-full flex-shrink-0 hidden lg:block" />
+              <div className="flex gap-2 flex-nowrap">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <ShimmerBox key={i} className="h-10 w-24 rounded-full" />
+                  <ShimmerBox key={i} className="h-10 w-24 sm:w-28 rounded-full flex-shrink-0" />
                 ))}
               </div>
             </div>
@@ -41,12 +41,12 @@ const LeadDetailsShimmer = () => {
               {/* AI Suggestions Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Conversation Coach Card */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 lg:p-6 space-y-4">
                   <div className="flex items-center gap-2">
                     <ShimmerBox className="w-8 h-8 rounded-full" />
                     <div className="flex-1 space-y-2">
-                      <ShimmerBox className="h-5 w-40" />
-                      <ShimmerBox className="h-3 w-24" />
+                      <ShimmerBox className="h-5 w-32 sm:w-40" />
+                      <ShimmerBox className="h-3 w-20 sm:w-24" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -58,18 +58,18 @@ const LeadDetailsShimmer = () => {
                     ))}
                   </div>
                   <div className="flex gap-3 flex-wrap">
-                    <ShimmerBox className="h-10 w-32 rounded-xl" />
-                    <ShimmerBox className="h-10 w-28 rounded-xl" />
+                    <ShimmerBox className="h-10 w-28 sm:w-32 rounded-xl" />
+                    <ShimmerBox className="h-10 w-24 sm:w-28 rounded-xl" />
                   </div>
                 </div>
 
                 {/* Deal Stage Card */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 lg:p-6 space-y-4">
                   <div className="flex items-center gap-2">
                     <ShimmerBox className="w-8 h-8 rounded-full" />
                     <div className="flex-1 space-y-2">
-                      <ShimmerBox className="h-5 w-36" />
-                      <ShimmerBox className="h-3 w-28" />
+                      <ShimmerBox className="h-5 w-32 sm:w-36" />
+                      <ShimmerBox className="h-3 w-24 sm:w-28" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -81,32 +81,32 @@ const LeadDetailsShimmer = () => {
                     ))}
                   </div>
                   <div className="flex gap-3 flex-wrap">
-                    <ShimmerBox className="h-10 w-40 rounded-xl" />
-                    <ShimmerBox className="h-10 w-28 rounded-xl" />
+                    <ShimmerBox className="h-10 w-32 sm:w-40 rounded-xl" />
+                    <ShimmerBox className="h-10 w-24 sm:w-28 rounded-xl" />
                   </div>
                 </div>
               </div>
 
               {/* Lead Overview Section */}
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 lg:p-6 space-y-6">
                 {/* Header */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="space-y-2">
-                    <ShimmerBox className="h-6 w-32" />
-                    <ShimmerBox className="h-4 w-64" />
+                    <ShimmerBox className="h-6 w-28 sm:w-32" />
+                    <ShimmerBox className="h-4 w-48 sm:w-64" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <ShimmerBox className="h-8 w-24 rounded-full" />
-                    <ShimmerBox className="h-10 w-20 rounded-full" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <ShimmerBox className="h-8 w-20 sm:w-24 rounded-full" />
+                    <ShimmerBox className="h-10 w-16 sm:w-20 rounded-full" />
                   </div>
                 </div>
 
                 {/* Fields Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="space-y-2">
-                      <ShimmerBox className="h-3 w-20" />
-                      <ShimmerBox className="h-5 w-32" />
+                      <ShimmerBox className="h-3 w-16 sm:w-20" />
+                      <ShimmerBox className="h-5 w-24 sm:w-32" />
                     </div>
                   ))}
                 </div>
@@ -114,8 +114,8 @@ const LeadDetailsShimmer = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="min-w-[350px] flex flex-col space-y-3">
+          {/* Sidebar - Hidden on mobile */}
+          <div className="min-w-[350px] hidden lg:flex flex-col space-y-3">
             {/* Activity Panel */}
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
               <ShimmerBox className="h-6 w-32" />

@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
 });
 
 if (typeof window !== "undefined" && window.desktop) {
-  const basePath = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+  const basePath = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
 
   window.addEventListener(
     "error",
