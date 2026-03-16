@@ -223,6 +223,8 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           <LeadQuickActions 
             onCall={handleCallClick}
             onWhatsapp={handleWhatsappClick}
+            onEmail={() => setActiveTab("Emails")}
+            onNotes={() => setActiveTab("Notes")}
             phoneNumber={phoneNumber}
           />
         </div>
