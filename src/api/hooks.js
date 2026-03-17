@@ -2400,3 +2400,12 @@ export const useGlobalSearch = (query) => {
     staleTime: 1000 * 60, // 1 minute
   });
 };
+
+export const useGetServerUsage = () => {
+  return useQuery({
+    queryKey: ["serverUsage"],
+    queryFn: () =>
+      apiClient.get("/system-settings/usage").then((res) => res.data?.data),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};

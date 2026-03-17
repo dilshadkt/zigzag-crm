@@ -67,6 +67,7 @@ const CompanyDashboard = lazy(() => import("../pages/companyDashboard"));
 const LeadsPage = lazy(() => import("../pages/leads"));
 const LeadDetailsPage = lazy(() => import("../pages/leads/LeadDetails"));
 const LeadSettingsPage = lazy(() => import("../pages/leads/LeadSettings"));
+const Billing = lazy(() => import("../pages/settings/billing"));
 
 const AppRoutes = () => {
   return (
@@ -300,6 +301,14 @@ const AppRoutes = () => {
               element={
                 <RouteAccess>
                   <Safety />
+                </RouteAccess>
+              }
+            />
+            <Route
+              path="billing"
+              element={
+                <RouteAccess>
+                  <Billing />
                 </RouteAccess>
               }
             />

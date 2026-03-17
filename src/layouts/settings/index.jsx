@@ -23,6 +23,12 @@ const SettingsLayout = () => {
   // Filter settings based on user's route access
   const accessibleSettings = SETTINGS.filter((setting) => {
     const fullPath = `/settings/${setting.path}`;
+
+    // Restrict Billing & Usage to admins only
+    if (setting.path === "billing" && user?.role !== "company-admin") {
+      return false;
+    }
+
     return hasAccessToRoute(fullPath);
   });
 

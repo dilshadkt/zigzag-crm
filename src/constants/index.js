@@ -389,6 +389,7 @@ import { FaRegUser } from "react-icons/fa6";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { BsBuildings } from "react-icons/bs";
 import { AiOutlineSafety } from "react-icons/ai";
+import { MdPayments } from "react-icons/md";
 
 export const SETTINGS = [
   {
@@ -414,5 +415,11 @@ export const SETTINGS = [
     title: "Security",
     icon: AiOutlineSafety,
     path: "safety",
+  },
+  {
+    id: 5,
+    title: "Billing & Usage",
+    icon: MdPayments,
+    path: "billing",
   },
 ];
