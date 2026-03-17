@@ -7,7 +7,7 @@ import Description from "../Field/description";
 import { useUpdateSubTaskById, useGetProjectSocialMedia } from "../../../api/hooks";
 import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare, FiChevronDown, FiChevronUp } from "react-icons/fi";
 
-const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = false }) => {
+const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = false, isCompany = false, isAdmin = false }) => {
   const fileInputRef = useRef(null);
   const menuRef = useRef(null);
   const [selectedAttachment, setSelectedAttachment] = useState(null);
@@ -55,6 +55,11 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isContentSubTask = subTask.title?.toLowerCase() === "content";
+  const isPublishSubTask = subTask.title?.toLowerCase() === "publish";
+
+  const prevStatusRef = useRef(subTask?.status);
+
   // Update content values when subTask changes
   useEffect(() => {
     setContentValues({
@@ -63,7 +68,20 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
       ideas: subTask?.ideas || "",
     });
     setUrlValues(subTask?.publishUrls || {});
-  }, [subTask]);
+
+    // Check if status changed to 'on-review' for a publish subtask
+    // Skip this automation for Admins/Company owners
+    if (
+      !isCompany && !isAdmin &&
+      isPublishSubTask && 
+      subTask?.status === "on-review" && 
+      prevStatusRef.current !== "on-review" &&
+      prevStatusRef.current !== undefined
+    ) {
+      setShowURLModal(true);
+    }
+    prevStatusRef.current = subTask?.status;
+  }, [subTask, isPublishSubTask, isCompany, isAdmin]);
 
   const {
     isUploading,
@@ -145,8 +163,6 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     }));
   };
 
-  const isContentSubTask = subTask.title?.toLowerCase() === "content";
-  const isPublishSubTask = subTask.title?.toLowerCase() === "publish";
 
   const getFileIcon = (type) => {
     switch (type) {
@@ -241,7 +257,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                       <span>Add Contents</span>
                     </button>
                   )}
-                  {isPublishSubTask && (
+                  {isPublishSubTask && (isCompany || isAdmin || subTask?.status === "on-review") && (
                     <button
                       onClick={() => {
                         setShowMenu(false);
@@ -480,7 +496,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                     <FiLink className="w-3 h-3" />
                     Publish URLs
                   </h6>
-                  {canEdit && (
+                  {canEdit && (isCompany || isAdmin || subTask?.status === "on-review") && (
                     <button
                       onClick={() => setShowURLModal(true)}
                       className="opacity-0 group-hover/section:opacity-100 transition-opacity p-1 text-green-600 hover:bg-green-50 rounded-md"

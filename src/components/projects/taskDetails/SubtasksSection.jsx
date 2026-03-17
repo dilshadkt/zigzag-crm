@@ -429,6 +429,8 @@ const SubtasksSection = ({
                   parentTaskId={taskDetails?._id}
                   canEdit={canManageSubtasks || isAssignedToSubTask}
                   projectData={taskDetails?.project}
+                  isCompany={isCompany}
+                  isAdmin={isAdmin}
                 />
               </div>
             );
