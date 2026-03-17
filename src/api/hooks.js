@@ -2390,3 +2390,13 @@ export const useGetProjectSocialMedia = (projectId) => {
     cacheTime: 1000 * 60 * 10, // 10 minutes
   });
 };
+
+export const useGlobalSearch = (query) => {
+  return useQuery({
+    queryKey: ["globalSearch", query],
+    queryFn: () =>
+      apiClient.get(`/search?query=${query}`).then((res) => res.data?.results),
+    enabled: !!query && query.length >= 2,
+    staleTime: 1000 * 60, // 1 minute
+  });
+};
