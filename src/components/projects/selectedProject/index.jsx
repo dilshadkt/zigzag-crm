@@ -90,12 +90,13 @@ rounded-3xl  flex flex-col  p-4"
       <div className="flex flex-col overflow-y-auto">
         <div className="flexBetween">
           <span className="text-sm text-[#91929E] ">Project Number</span>
-          <PrimaryButton
-            disable={!canEditProject}
-            icon={assetPath("icons/edit.svg")}
-            onclick={handleEditClick}
-            className="bg-[#F4F9FD]"
-          />
+          {canEditProject && (
+            <PrimaryButton
+              icon={assetPath("icons/edit.svg")}
+              onclick={handleEditClick}
+              className="bg-[#F4F9FD]"
+            />
+          )}
         </div>
         <span className="-translate-y-1.5 mt-2 uppercase">
           {currentProject?._id?.slice(0, 7)}
@@ -134,9 +135,9 @@ rounded-3xl  flex flex-col  p-4"
           </div>
 
           {currentProject?.teams?.length > 0 && (
-            <div className="flex flex-col gap-y-2">
+            <div className="flex flex-col overflow-hidden py-5 gap-y-2">
               <span className="text-sm text-[#91929E]">Team </span>
-              <div className=" flexStart  ">
+              <div className=" flexStart flex-wrap gap-y-2 ">
                 {currentProject?.teams.map((team, index) => (
                   <div
                     onClick={() => handleProfileTeamClick(team._id)}

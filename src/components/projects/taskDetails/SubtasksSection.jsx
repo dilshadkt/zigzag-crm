@@ -3,7 +3,7 @@ import SubTaskStatusButton from "../subTaskStatus";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget, FiEdit3, FiLink } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
 
 const SubtasksSection = ({
@@ -16,9 +16,9 @@ const SubtasksSection = ({
   onDeleteSubTask,
   isAdmin,
   canManageSubtasks,
+  canEditTask,
 }) => {
   const { hasPermission } = usePermissions();
-  const [expandedSubTasks, setExpandedSubTasks] = useState(new Set());
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [reworkModalOpen, setReworkModalOpen] = useState(false);
   const [timelineModalOpen, setTimelineModalOpen] = useState(false);
@@ -62,15 +62,7 @@ const SubtasksSection = ({
 
   // Toggle expanded state for a subtask
   const toggleSubTaskExpanded = (subtaskId) => {
-    setExpandedSubTasks((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(subtaskId)) {
-        newSet.delete(subtaskId);
-      } else {
-        newSet.add(subtaskId);
-      }
-      return newSet;
-    });
+    // Deprecated for now as content is shown by default
   };
 
   // Determine if subtask should be visible to current user
@@ -143,6 +135,40 @@ const SubtasksSection = ({
                       )}
                       {subtask.title}
                     </h6>
+
+                    {/* Content Indicators */}
+                    <div className="flex items-center gap-1.5 ml-1">
+                      {subtask.copyOfDescription && (
+                        <div 
+                          className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
+                          title="Has Content Description"
+                        >
+                          <FiEdit3 className="w-2.5 h-2.5" />
+                          Content
+                        </div>
+                      )}
+                      {subtask.ideas && (
+                        <div 
+                          className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-md text-[9px] font-bold uppercase"
+                          title="Has Ideas"
+                        >
+                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3a1 1 0 012 0v2a1 1 0 11-2 0V5zM9 9a1 1 0 000 2v3a1 1 0 102 0v-3a1 1 0 00-2 0z" />
+                          </svg>
+                          Ideas
+                        </div>
+                      )}
+                      {subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0 && (
+                        <div 
+                          className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[9px] font-bold uppercase"
+                          title={`${Object.keys(subtask.publishUrls).length} Publish URLs`}
+                        >
+                          <FiLink className="w-2.5 h-2.5" />
+                          URLs ({Object.keys(subtask.publishUrls).length})
+                        </div>
+                      )}
+                    </div>
+
                     {isAssignedToSubTask && (
                       <span
                         className="px-2 py-0.5 bg-blue-100 text-blue-500 text-[10px] font-medium 
@@ -261,7 +287,9 @@ const SubtasksSection = ({
                       }
                     />
                     {/* Edit button for users with permission and assigned users */}
-                    {(canManageSubtasks || isAssignedToSubTask) && (
+                    {canEditTask && 
+                      subtask.title?.toLowerCase() !== "content" && 
+                      subtask.title?.toLowerCase() !== "publish" && (
                       <button
                         onClick={() => onEditSubTask(subtask)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
@@ -305,164 +333,6 @@ const SubtasksSection = ({
                   </p>
                 )}
 
-                {/* Show More button and expanded content */}
-                {hasAdditionalContent(subtask) && (
-                  <>
-                    <button
-                      onClick={() => toggleSubTaskExpanded(subtask._id)}
-                      className="text-xs text-blue-600 hover:text-blue-800 mb-2 flex items-center gap-1 transition-colors"
-                    >
-                      {expandedSubTasks.has(subtask._id) ? (
-                        <>
-                          <svg
-                            className="w-3 h-3"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Show Less
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="w-3 h-3"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Show More
-                        </>
-                      )}
-                    </button>
-
-                    {/* Expanded content */}
-                    {expandedSubTasks.has(subtask._id) && (
-                      <div className="mb-3 p-3 bg-white rounded-lg border border-gray-200 space-y-3">
-                        {/* Content for Description */}
-                        {subtask.copyOfDescription && (
-                          <div>
-                            <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                              <svg
-                                className="w-3 h-3 text-blue-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Content for Description
-                            </h6>
-                            <p className="text-xs text-gray-600">
-                              {subtask.copyOfDescription}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Description for Publishing */}
-                        {subtask.description && (
-                          <div>
-                            <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                              <svg
-                                className="w-3 h-3 text-green-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Description for Publishing
-                            </h6>
-                            <p className="text-xs text-gray-600">
-                              {subtask.description}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Ideas */}
-                        {subtask.ideas && (
-                          <div>
-                            <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                              <svg
-                                className="w-3 h-3 text-yellow-600"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Ideas
-                            </h6>
-                            <p className="text-xs text-gray-600">
-                              {subtask.ideas}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Publish URLs */}
-                        {subtask.publishUrls &&
-                          Object.keys(subtask.publishUrls).length > 0 && (
-                            <div>
-                              <h6 className="text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                                <svg
-                                  className="w-3 h-3 text-purple-600"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5a2 2 0 11-2.828 2.828l-1.5 1.5a4 4 0 105.656 5.656l1.5-1.5a1 1 0 001.414-1.414l-1.5-1.5a2 2 0 112.828-2.828l1.5 1.5z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                Publish URLs
-                              </h6>
-                              <div className="space-y-1">
-                                {Object.entries(subtask.publishUrls).map(
-                                  ([platform, url]) => (
-                                    <div
-                                      key={platform}
-                                      className="flex items-center justify-between"
-                                    >
-                                      <span className="text-xs text-gray-600 capitalize">
-                                        {platform}:
-                                      </span>
-                                      <a
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-blue-600 hover:text-blue-800 truncate ml-2"
-                                      >
-                                        {url}
-                                      </a>
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </>
-                )}
 
                 <div className="flex justify-between text-xs text-gray-500">
                   <div className="flex items-center gap-1">
@@ -558,6 +428,7 @@ const SubtasksSection = ({
                   subTask={subtask}
                   parentTaskId={taskDetails?._id}
                   canEdit={canManageSubtasks || isAssignedToSubTask}
+                  projectData={taskDetails?.project}
                 />
               </div>
             );

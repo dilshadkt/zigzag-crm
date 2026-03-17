@@ -56,7 +56,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
 
   // Check permissions for task editing
   const canEditTask =
-    isCompany || hasPermission("tasks", "edit") || isAssignedToTask;
+    isCompany || hasPermission("tasks", "edit");
 
   // Check permissions for task status change
   const canChangeStatus =
@@ -144,24 +144,30 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   return (
     <>
       <div className="col-span-3 overflow-y-auto  mr-5 flex flex-col">
-        <div className="flexBetween">
-          <h4 className="text-lg font-medium">Task Details</h4>
+        <div className="flexBetween ">
+          {
+            canEditTask && canManageSubtasks && (
+              <h4 className="text-lg font-medium mb-5">Task Details</h4>
+            )
+          }
           <div className="flex gap-2">
-            <PrimaryButton
-              disable={!canManageSubtasks}
-              className={"bg-[#3F8CFF] text-white"}
-              title="Add Subtask"
-              onclick={handleAddSubTask}
-            />
-            <PrimaryButton
-              disable={!canEditTask}
-              className={"bg-white "}
-              icon={"/icons/edit.svg"}
-              onclick={() => setShowModalTask(true)}
-            />
+            {canManageSubtasks && (
+              <PrimaryButton
+                className={"bg-[#3F8CFF] text-white"}
+                title="Add Subtask"
+                onclick={handleAddSubTask}
+              />
+            )}
+            {canEditTask && (
+              <PrimaryButton
+                className={"bg-white "}
+                icon={"/icons/edit.svg"}
+                onclick={() => setShowModalTask(true)}
+              />
+            )}
           </div>
         </div>
-        <div className="flex flex-col h-full bg-white  overflow-hidden  rounded-3xl mt-5 p-6 pb-4">
+        <div className="flex flex-col h-full bg-white  overflow-hidden  rounded-3xl  p-6 pb-4">
           <div className="overflow-y-auto flex flex-col  h-full   gap-y-1 ">
 
             <div className="flex items-center justify-between mb-2">
@@ -264,7 +270,8 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
               onEditSubTask={handleEditSubTask}
               onDeleteSubTask={handleDeleteSubTask}
               isAdmin={isAdmin}
-              canManageSubtasks={hasPermission("tasks", "create") || isAssignedToTask}
+              canManageSubtasks={canManageSubtasks}
+              canEditTask={canEditTask}
             />
 
             <TaskAttachments taskDetails={taskDetails} />

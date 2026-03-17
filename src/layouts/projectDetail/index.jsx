@@ -98,15 +98,16 @@ const ProjectDetailLayout = () => {
               activeProject={projectData}
             />
           )}
-          <div className="hidden md:block">
-            <PrimaryButton
-              disable={!canCreateTask}
-              className={" px-5 text-white"}
-              title={"Add Task"}
-              icon={"/icons/add.svg"}
-              onclick={() => setShowModalTask(true)}
-            />
-          </div>
+          {canCreateTask && (
+            <div className="hidden md:block">
+              <PrimaryButton
+                className={" px-5 text-white"}
+                title={"Add Task"}
+                icon={"/icons/add.svg"}
+                onclick={() => setShowModalTask(true)}
+              />
+            </div>
+          )}
         </div>
       </div>
       <div className="w-full h-full  gap-y-6 md:gap-y-0 overflow-y-auto md:overflow-hidden md:gap-x-5  grid grid-cols-1 md:grid-cols-5">
