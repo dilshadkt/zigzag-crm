@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { IoArrowUpOutline } from "react-icons/io5";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +10,7 @@ import {
   useDeleteProject,
   usePauseProject,
   useResumeProject,
+  useGetProjectFields,
 } from "../../../api/hooks";
 import Modal from "../../shared/modal";
 import { assetPath } from "../../../utils/assetPath";
@@ -17,7 +19,7 @@ import { SelectedProjectShimmer } from "../ProjectDetailShimmer";
 
 const SelectedProject = ({ currentProject, isLoading }) => {
   const navigate = useNavigate();
-  const { isCompany, user } = useAuth();
+  const { isCompany, companyId, user } = useAuth();
   const { hasPermission } = usePermissions();
   const isEmployee = user?.role === "employee";
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -25,6 +27,8 @@ const SelectedProject = ({ currentProject, isLoading }) => {
   const pauseProject = usePauseProject();
   const resumeProject = useResumeProject();
   const [failedImages, setFailedImages] = useState({});
+
+  const { data: projectFields } = useGetProjectFields(companyId);
 
   if (isLoading) {
     return <SelectedProjectShimmer />;
@@ -54,28 +58,30 @@ const SelectedProject = ({ currentProject, isLoading }) => {
     navigate(`/projects/${projectId}/edit`);
   };
 
-  const handleToggleProjectStatus = () => {
+  const handleToggleProjectStatus = async () => {
     const isPaused = currentProject?.status === "paused";
     const mutation = isPaused ? resumeProject : pauseProject;
     const action = isPaused ? "resumed" : "paused";
 
-    mutation.mutate(currentProject._id, {
-      onSuccess: () => {
-        console.log(`Project ${action} successfully`);
-      },
-      onError: (error) => {
-        console.error(`Failed to ${action} project:`, error);
-      },
-    });
+    try {
+      await mutation.mutateAsync(currentProject._id);
+      toast.success(`Project ${action} successfully`);
+    } catch (error) {
+      console.error(`Failed to ${action} project:`, error);
+      toast.error(error?.response?.data?.message || `Failed to ${action} project`);
+    }
   };
 
-  const handleDeleteProject = () => {
-    deleteProject.mutate(currentProject._id, {
-      onSuccess: () => {
-        setIsDeleteModalOpen(false);
-        navigate("/projects");
-      },
-    });
+  const handleDeleteProject = async () => {
+    try {
+      await deleteProject.mutateAsync(currentProject._id);
+      toast.success("Project deleted successfully");
+      setIsDeleteModalOpen(false);
+      navigate("/projects");
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      toast.error(error?.response?.data?.message || "Failed to delete project");
+    }
   };
 
   const handleProfileTeamClick = (id) => {
@@ -208,6 +214,57 @@ rounded-3xl  flex flex-col  p-4"
                 (file) => file.type === "link"
               )}
             />
+
+            {/* Custom Project Fields - Enhanced Display */}
+            {currentProject?.customFields &&
+              Object.keys(currentProject.customFields).length > 0 &&
+              projectFields && (
+                <div className="flex flex-col gap-y-4 mt-4 border-t pt-5 border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center gap-x-2">
+                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-[#91929E]">
+                      Additional Information
+                    </h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-y-4">
+                    {projectFields.map((field) => {
+                      const value = currentProject.customFields[field.key];
+                      // Skip if value is truly empty
+                      if (value === undefined || value === null || value === "")
+                        return null;
+
+                      return (
+                        <div 
+                          key={field._id} 
+                          className="flex flex-col gap-y-1.5 p-3 rounded-2xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="text-[11px] font-semibold text-[#91929E] uppercase tracking-tight">
+                            {field.label}
+                          </span>
+                          <div className="text-sm font-medium text-[#0A1629]">
+                            {field.type === "checkbox" ? (
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold ${value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {value ? "Yes" : "No"}
+                              </span>
+                            ) : field.type === "url" ? (
+                              <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
+                                {value}
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                              </a>
+                            ) : (
+                              <span className="break-words line-clamp-3" title={value}>
+                                {value}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
             {canPauseProject && (
               <PrimaryButton
                 title={
@@ -221,7 +278,10 @@ rounded-3xl  flex flex-col  p-4"
                 }
                 className="w-full text-white bg-gray-400 hover:bg-gray-800 cursor-pointer mt-4 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 onclick={handleToggleProjectStatus}
+                loading={pauseProject.isPending || resumeProject.isPending || pauseProject.isLoading || resumeProject.isLoading}
                 disable={
+                  pauseProject.isPending ||
+                  resumeProject.isPending ||
                   pauseProject.isLoading ||
                   resumeProject.isLoading ||
                   currentProject?.status === "completed"
@@ -249,6 +309,12 @@ rounded-3xl  flex flex-col  p-4"
             Are you sure you want to delete this project? This action cannot be
             undone and will also delete all associated tasks.
           </p>
+          {deleteProject.isError && (
+            <p className="text-red-500 text-sm">
+              {deleteProject.error?.response?.data?.message ||
+                "Failed to delete project. Please try again."}
+            </p>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={() => setIsDeleteModalOpen(false)}
@@ -258,10 +324,10 @@ rounded-3xl  flex flex-col  p-4"
             </button>
             <button
               onClick={handleDeleteProject}
-              disabled={deleteProject.isLoading}
+              disabled={deleteProject.isPending || deleteProject.isLoading}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {deleteProject.isLoading ? "Deleting..." : "Delete"}
+              {deleteProject.isPending || deleteProject.isLoading ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>

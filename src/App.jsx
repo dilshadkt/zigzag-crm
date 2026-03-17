@@ -33,14 +33,20 @@ function App() {
         );
 
         // Check if profile image is accessible
-        if (user?.profileImage) {
+        if (user?.profileImage && typeof user.profileImage === "string" && user.profileImage.startsWith("http")) {
           try {
-            const imgResponse = await fetch(user.profileImage, { method: "HEAD" });
+            const imgResponse = await fetch(user.profileImage, { 
+              method: "HEAD",
+              cache: 'no-cache'
+            });
             if (imgResponse.status === 403) {
               setShowFixProfileModal(true);
             }
           } catch (err) {
-            console.error("Error checking profile image:", err);
+            // Only log if it's not a CORS/Network error which is common for HEAD requests to some external storages
+            if (err.name !== 'TypeError') {
+              console.error("Error checking profile image:", err);
+            }
           }
         }
 

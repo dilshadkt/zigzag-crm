@@ -49,6 +49,7 @@ const EmployeeDetails = lazy(() => import("../pages/employeeDetails/EmployeeDeta
 const ProjectsAnalytics = lazy(() => import("../pages/projectAnalytics"));
 const ProjectAnalyticsDetails = lazy(() => import("../pages/ProjectAnalyticsDetails"));
 const Company = lazy(() => import("../pages/settings/company"));
+const Master = lazy(() => import("../pages/settings/master"));
 const Notification = lazy(() => import("../pages/settings/notification"));
 const Safety = lazy(() => import("../pages/settings/safety"));
 const NotificationsPage = lazy(() => import("../pages/notifications"));
@@ -270,7 +271,6 @@ const AppRoutes = () => {
               </RouteAccess>
             }
           >
-            <Route index element={<Navigate to={"/settings/company"} />} />
             <Route index element={<Navigate to="account" replace />} />
             <Route
               path="account"
@@ -296,6 +296,15 @@ const AppRoutes = () => {
                 </RouteAccess>
               }
             />
+            <Route
+              path="master"
+              element={
+                <RouteAccess>
+                  <Master />
+                </RouteAccess>
+              }
+            />
+
             <Route
               path="safety"
               element={

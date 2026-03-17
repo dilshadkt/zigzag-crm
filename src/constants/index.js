@@ -385,7 +385,7 @@ export const EMPOYEES = [
     profile: "avatar8.svg",
   },
 ];
-import { FaRegUser } from "react-icons/fa6";
+import { FaRegUser, FaDatabase } from "react-icons/fa6";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { BsBuildings } from "react-icons/bs";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -421,5 +421,11 @@ export const SETTINGS = [
     title: "Billing & Usage",
     icon: MdPayments,
     path: "billing",
+  },
+  {
+    id: 6,
+    title: "Master",
+    icon: FaDatabase,
+    path: "master",
   },
 ];

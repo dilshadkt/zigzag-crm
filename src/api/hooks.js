@@ -67,6 +67,11 @@ import {
   deleteAllCompanyTasks,
   deleteAllCompanyProjects,
   deleteAllCompanyEmployees,
+  // Project Field imports
+  getProjectFields,
+  createProjectField,
+  updateProjectField,
+  deleteProjectField,
 } from "./service";
 import { format } from "date-fns";
 import { useAuth } from "../hooks/useAuth";
@@ -2409,3 +2414,48 @@ export const useGetServerUsage = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
+
+// Project Field Hooks
+export const useGetProjectFields = (companyId) => {
+  return useQuery({
+    queryKey: ["projectFields", companyId],
+    queryFn: () => getProjectFields(companyId),
+    enabled: !!companyId,
+    select: (data) => data?.fields || [],
+  });
+};
+
+export const useCreateProjectField = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (fieldData) => createProjectField(companyId, fieldData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["projectFields", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useUpdateProjectField = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fieldId, fieldData }) =>
+      updateProjectField(companyId, fieldId, fieldData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["projectFields", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useDeleteProjectField = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (fieldId) => deleteProjectField(companyId, fieldId),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["projectFields", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+

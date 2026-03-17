@@ -1006,3 +1006,25 @@ export const deleteAllCompanyEmployees = async () => {
     throw error;
   }
 };
+
+// Project Field API entries
+export const getProjectFields = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/project-fields`);
+  return response.data;
+};
+
+export const createProjectField = async (companyId, fieldData) => {
+  const response = await apiClient.post(`/companies/${companyId}/project-fields`, fieldData);
+  return response.data;
+};
+
+export const updateProjectField = async (companyId, fieldId, fieldData) => {
+  const response = await apiClient.put(`/companies/${companyId}/project-fields/${fieldId}`, fieldData);
+  return response.data;
+};
+
+export const deleteProjectField = async (companyId, fieldId) => {
+  const response = await apiClient.delete(`/companies/${companyId}/project-fields/${fieldId}`);
+  return response.data;
+};
+

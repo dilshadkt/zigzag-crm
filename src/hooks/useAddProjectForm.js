@@ -14,6 +14,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     workDetails: defaultValue?.workDetails || {},
     socialMedia: defaultValue?.socialMedia || {},
     dailyChecklist: defaultValue?.dailyChecklist || [],
+    customFields: defaultValue?.customFields || {},
   };
 
   const validationSchema = Yup.object().shape({

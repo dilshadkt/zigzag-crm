@@ -14,6 +14,9 @@ import MonthlyWorkDetailsForm from "../monthlyWorkDetailsForm";
 
 import DailyChecklistForm from "../dailyChecklistForm";
 
+import { useGetProjectFields } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
+
 const AddProject = ({
   setShowModalProject,
   initialValues,
@@ -21,6 +24,7 @@ const AddProject = ({
   isOpen,
   isEditMode = false,
 }) => {
+  const { companyId } = useAuth();
   const {
     values,
     errors,
@@ -30,7 +34,10 @@ const AddProject = ({
     setFieldValue,
     isSubmitting,
   } = useAddProjectForm(initialValues, onSubmit); // Pass initialValues and onSubmit to the hook
-  const [activeTab, setActiveTab] = useState("basic"); // "basic", "workDetails", "socialMedia", "checklist"
+
+  const { data: projectFields } = useGetProjectFields(companyId);
+
+  const [activeTab, setActiveTab] = useState("basic"); // "basic", "workDetails", "socialMedia", "checklist", "customFields"
   if (!isOpen) {
     return null;
   }
@@ -38,6 +45,7 @@ const AddProject = ({
   // Tabs for better organization
   const tabs = [
     { id: "basic", label: "Basic Info" },
+    ...(projectFields && projectFields.length > 0 ? [{ id: "customFields", label: "Additional Info" }] : []),
     { id: "workDetails", label: "Work Details" },
     { id: "socialMedia", label: "Social Media" },
     { id: "checklist", label: "Daily Checklist" },
@@ -213,6 +221,86 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                 errors={errors}
                 touched={touched}
               />
+            </div>
+          )}
+
+          {/* Custom Fields Tab */}
+          {activeTab === "customFields" && (
+            <div className="col-span-5 overflow-y-auto pr-4">
+              <div className="grid grid-cols-2 gap-6">
+                {projectFields?.map((field) => {
+                  const fieldKey = `customFields.${field.key}`;
+                  const fieldValue = values.customFields?.[field.key] ?? "";
+
+                  if (field.type === "textarea") {
+                    return (
+                      <div key={field._id} className="col-span-2">
+                        <Description
+                          title={field.label}
+                          placeholder={field.placeholder}
+                          value={{ [field.key]: fieldValue }}
+                          name={field.key}
+                          onChange={(e) => setFieldValue(fieldKey, e.target.value)}
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (field.type === "select") {
+                    return (
+                      <Select
+                        key={field._id}
+                        title={field.label}
+                        options={field.options || []}
+                        value={fieldValue}
+                        name={field.key}
+                        onChange={(e) => setFieldValue(fieldKey, e.target.value)}
+                      />
+                    );
+                  }
+
+                  if (field.type === "checkbox") {
+                    return (
+                      <div key={field._id} className="flex items-center gap-x-3 py-4">
+                        <input
+                          type="checkbox"
+                          id={field.key}
+                          checked={!!fieldValue}
+                          onChange={(e) => setFieldValue(fieldKey, e.target.checked)}
+                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor={field.key} className="text-sm font-medium text-gray-700">
+                          {field.label}
+                        </label>
+                      </div>
+                    );
+                  }
+
+                  if (field.type === "date") {
+                    return (
+                      <DatePicker
+                        key={field._id}
+                        title={field.label}
+                        value={fieldValue}
+                        name={field.key}
+                        onChange={(e) => setFieldValue(fieldKey, e.target.value)}
+                      />
+                    );
+                  }
+
+                  return (
+                    <Input
+                      key={field._id}
+                      title={field.label}
+                      placeholder={field.placeholder}
+                      value={{ [field.key]: fieldValue }}
+                      name={field.key}
+                      onchange={(e) => setFieldValue(fieldKey, e.target.value)}
+                      type={field.type}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )}
 
