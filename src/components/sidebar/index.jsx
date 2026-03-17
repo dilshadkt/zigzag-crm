@@ -13,6 +13,8 @@ import {
   useGetClientReviewTasks,
 } from "../../api/hooks";
 import { assetPath } from "../../utils/assetPath";
+const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings"];
+
 const Sidebar = () => {
   const { user } = useAuth();
   const { userPosition } = useRouteAccess();
@@ -77,13 +79,8 @@ const Sidebar = () => {
       return true;
     }
 
-    // Dashboard, Board, Settings, and Campaigns are always accessible to everyone
-    if (
-      item.routeKey === "dashboard" ||
-      item.routeKey === "board" ||
-      item.routeKey === "settings" ||
-      item.routeKey === "campaigns"
-    ) {
+    // Certain routes are always accessible to everyone
+    if (ALWAYS_ACCESSIBLE_ROUTES.includes(item.routeKey)) {
       return true;
     }
 
@@ -101,10 +98,7 @@ const Sidebar = () => {
   if (user?.role !== "company-admin") {
     SIDE_MENU.forEach((item) => {
       const allowedRoutes = userPosition?.allowedRoutes || [];
-      const isAlwaysAccessible =
-        item.routeKey === "dashboard" ||
-        item.routeKey === "board" ||
-        item.routeKey === "settings";
+      const isAlwaysAccessible = ALWAYS_ACCESSIBLE_ROUTES.includes(item.routeKey);
       const hasRouteAccess = allowedRoutes.includes(item.routeKey);
       const hasAccess = isAlwaysAccessible || hasRouteAccess;
     });

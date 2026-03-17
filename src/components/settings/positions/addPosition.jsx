@@ -61,12 +61,12 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
 
   const routeOptions = [
     { value: "projects", label: "Clients", icon: "📁" },
-    { value: "board", label: "Board", icon: "📋" },
     { value: "calendar", label: "Calendar", icon: "📅" },
     { value: "vacations", label: "Vacations", icon: "🏖️" },
     { value: "employees", label: "Employees", icon: "👥" },
     { value: "messenger", label: "Messenger", icon: "💬" },
     { value: "leads", label: "Leads", icon: "🎯" },
+    { value: "campaigns", label: "Campaigns", icon: "🚀" },
     { value: "task-on-review", label: "Task on Review", icon: "👀" },
     { value: "task-on-publish", label: "Task on Publish", icon: "☁️" },
     { value: "client-review", label: "Client Review", icon: "✅" },
@@ -235,8 +235,6 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                             <p className="text-xs text-gray-500">
                               {route.value === "projects"
                                 ? "Client and project management"
-                                : route.value === "board"
-                                ? "Task board and workflow management"
                                 : route.value === "calendar"
                                 ? "Schedule and events management"
                                 : route.value === "vacations"
@@ -247,6 +245,8 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                                 ? "Internal messaging and communication"
                                 : route.value === "leads"
                                 ? "Lead management and CRM"
+                                : route.value === "campaigns"
+                                ? "Marketing and campaign management"
                                 : route.value === "task-on-review"
                                 ? "Tasks pending review and approval"
                                 : route.value === "task-on-publish"
