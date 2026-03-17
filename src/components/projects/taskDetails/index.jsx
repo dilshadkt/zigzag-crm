@@ -168,7 +168,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
           </div>
         </div>
         <div className="flex flex-col h-full bg-white  overflow-hidden  rounded-3xl  p-6 pb-4">
-          <div className="overflow-y-auto flex flex-col  h-full   gap-y-1 ">
+          <div className="overflow-y-auto flex flex-col  h-full   gap-y-1 custom-scrollbar">
 
             <div className="flex items-center justify-between mb-2">
 

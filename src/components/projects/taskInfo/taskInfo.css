@@ -1,19 +1,21 @@
-/* Custom scrollbar styling for tooltip */
+/* Custom scrollbar styling for tooltip - Matched with global style */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1F2937;
-  border-radius: 3px;
+  background: #f8fafc; /* slate-50 */
+  border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4B5563;
-  border-radius: 3px;
+  background: #e2e8f0; /* slate-200 */
+  border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
+  background: #cbd5e1; /* slate-300 */
 }
+
 

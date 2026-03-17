@@ -133,20 +133,40 @@ body {
   font-family: "Nunito Sans", sans-serif;
 }
 
+/* Global Scrollbar Design */
 ::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari, and Opera */
+  width: 5px;
+  height: 5px;
+  display: block;
 }
 
-::-webkit-scrollbar {
-  /* For most modern browsers */
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* Internet Explorer 10+ */
-  overflow: -moz-scrollbars-none;
-  /* Older Firefox (optional fallback) */
+::-webkit-scrollbar-track {
+  background: #f8fafc; /* slate-50 */
+  border-radius: 10px;
 }
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0; /* slate-200 */
+  border-radius: 10px;
+  border: 1px solid #f8fafc;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1; /* slate-300 */
+}
+
+/* Firefox Global Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 #f8fafc;
+}
+
+/* Custom Scrollbar Utility (Alias for global style) */
+.custom-scrollbar {
+  /* Inherits global style */
+}
+
+
 
 /* Custom horizontal scrollbar for project details */
 .project-details-scroll {
