@@ -291,8 +291,7 @@ const SubtasksSection = ({
                       isAdmin={isAdmin}
                     />
                     {/* Edit button for users with permission and assigned users */}
-                    {(canEditTask || isAdmin) && 
-                      (isAdmin || isCompany || (subtask.title?.toLowerCase() !== "content" && subtask.title?.toLowerCase() !== "publish")) && (
+                    {(canEditTask || isAdmin) && (
                       <button
                         onClick={() => onEditSubTask(subtask)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
