@@ -9,6 +9,8 @@ const SubTaskStatusButton = ({
   canEdit = true,
   showAllOptions = false,
   parentTaskFlow = [],
+  canEditTask = false,
+  isAdmin = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
@@ -91,7 +93,8 @@ const SubTaskStatusButton = ({
   );
 
   // Check if subtask is locked (sequential flow dependency)
-  const isLocked = subTask.isLocked && !isCompany;
+  // Bypass lock if user is company, admin, or has edit permission
+  const isLocked = subTask.isLocked && !isCompany && !isAdmin && !canEditTask;
 
   const handleStatusChange = async (newStatus) => {
     if (!canEdit || isLocked) return;
@@ -126,16 +129,23 @@ const SubTaskStatusButton = ({
     }
   };
 
+  const isBypassed = subTask.isLocked && (isCompany || isAdmin || canEditTask);
+
   return (
     <div className="relative">
       <button
         onClick={() => canEdit && !isLocked && setIsOpen(!isOpen)}
         className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 shadow-sm flex items-center gap-1.5 ${currentStatus?.color || "bg-gray-100 text-gray-800"
-          } ${(!canEdit || isLocked) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover:scale-105 active:scale-95"}`}
+          } ${(!canEdit || isLocked) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover:scale-105 active:scale-95"} ${isBypassed ? "border border-blue-400" : ""}`}
         disabled={updateSubTaskMutation.isLoading || !canEdit || isLocked}
-        title={isLocked ? "This subtask is locked until preceding tasks are completed" : (!canEdit ? "You can only edit subtasks assigned to you" : "")}
+        title={isLocked ? "This subtask is locked until preceding tasks are completed" : (!canEdit ? "You can only edit subtasks assigned to you" : isBypassed ? "Locked subtask (Bypassed due to permissions)" : "")}
       >
-        {isLocked && (
+        {subTask.isLocked && !isLocked ? (
+          // Show unlocked icon if it's normally locked but bypassed
+          <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 016 0v2H7V7z" />
+          </svg>
+        ) : isLocked && (
           <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
           </svg>

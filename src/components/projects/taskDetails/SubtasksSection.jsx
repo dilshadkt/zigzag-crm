@@ -81,7 +81,7 @@ const SubtasksSection = ({
       (assignedUser) => (assignedUser._id || assignedUser) === user?._id
     );
 
-    const isLocked = subtask.isLocked && !isCompany;
+    const isLocked = subtask.isLocked && !isCompany && !isAdmin && !canEditTask;
 
     if (isLocked) {
       return "bg-gray-100/40 border-gray-200 opacity-60 grayscale-[0.2] cursor-not-allowed";
@@ -118,6 +118,8 @@ const SubtasksSection = ({
               (assignedUser) => (assignedUser._id || assignedUser) === user?._id
             );
 
+            const isLocked = subtask.isLocked && !isCompany && !isAdmin && !canEditTask;
+
             return (
               <div
                 key={subtask._id}
@@ -127,8 +129,8 @@ const SubtasksSection = ({
               >
                 <div className="flexBetween mb-2">
                   <div className="flex items-center gap-2">
-                    <h6 className={`font-medium flex items-center gap-1.5 ${subtask.isLocked && !isCompany ? 'text-gray-400' : 'text-gray-800'}`}>
-                      {subtask.isLocked && !isCompany && (
+                    <h6 className={`font-medium flex items-center gap-1.5 ${isLocked ? 'text-gray-400' : 'text-gray-800'}`}>
+                      {isLocked && (
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                         </svg>
@@ -285,6 +287,8 @@ const SubtasksSection = ({
                         hasPermission("tasks", "edit") ||
                         isAssignedToSubTask
                       }
+                      canEditTask={canEditTask}
+                      isAdmin={isAdmin}
                     />
                     {/* Edit button for users with permission and assigned users */}
                     {(canEditTask || isAdmin) && 
