@@ -185,12 +185,16 @@ const CompanyDashboard = () => {
         <CompanyProgressStats taskMonth={taskMonth} />
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5">
+      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 mt-5">
         {/* Workload section */}
-        <WorkLoad />
+        <div className="col-span-1 md:col-span-2">
+          <WorkLoad />
+        </div>
 
         {/* Pending work / Nearest event */}
-        <PendingWork taskMonth={taskMonth} />
+        <div className="col-span-1">
+          <PendingWork taskMonth={taskMonth} />
+        </div>
       </div>
 
       {/* Projects Section */}
