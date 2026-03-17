@@ -66,7 +66,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     hasPermission("tasks", "edit");
 
   // Check permissions for subtask management
-  const canManageSubtasks = isCompany || hasPermission("tasks", "create");
+  const canManageSubtasks = isCompany || isAdmin || hasPermission("tasks", "create");
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =

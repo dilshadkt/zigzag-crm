@@ -28,6 +28,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     recurringInterval: defaultValue?.recurringInterval || 1,
     recurringEndDate: defaultValue?.recurringEndDate || "",
     maxRecurrences: defaultValue?.maxRecurrences || "",
+    customFields: defaultValue?.customFields || [],
   };
 
   const validationSchema = Yup.object().shape({
@@ -66,6 +67,12 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     ]),
     recurringInterval: Yup.number().min(1, "Interval must be at least 1"),
     maxRecurrences: Yup.number().min(1, "Must be at least 1 recurrence"),
+    customFields: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string().required("Label is required"),
+        value: Yup.string(),
+      })
+    ),
   });
 
   const handleSubmit = (values, formikBag) => {

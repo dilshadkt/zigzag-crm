@@ -59,3 +59,14 @@ export const useTodayTasks = (userId = null) => {
     gcTime: 5 * 60 * 1000,
   });
 };
+
+export const useEmployeesTodayStatus = () => {
+  return useQuery({
+    queryKey: ["employeesTodayStatus"],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/employees-today-status");
+      return response.data;
+    },
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+};

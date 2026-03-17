@@ -57,6 +57,36 @@ const TaskDescription = ({ taskDetails }) => {
         </div>
       )}
 
+      {/* Dynamic Custom Fields */}
+      {taskDetails.customFields && taskDetails.customFields.filter(f => f.value && f.value.trim() !== "").length > 0 && (
+        <div className="mt-6 flex flex-wrap gap-4">
+          {taskDetails.customFields.filter(f => f.value && f.value.trim() !== "").map((field, index) => (
+            <div key={index} className="flex-1 min-w-[200px] bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 transition-all hover:bg-blue-50">
+              <h5 className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-2">
+                {field.label}
+              </h5>
+              <div className="flex items-center gap-2">
+                {field.label.toLowerCase().includes("url") || field.value?.toString().startsWith("http") ? (
+                  <a
+                    href={field.value.startsWith("http") ? field.value : `https://${field.value}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 font-medium hover:underline flex items-center gap-1.5 break-all text-sm"
+                  >
+                    <span>{field.value}</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                ) : (
+                  <p className="text-gray-700 font-medium text-sm">{field.value}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Recurring Task Instances */}
       {taskDetails.recurringInstances &&
         taskDetails.recurringInstances.length > 0 && (

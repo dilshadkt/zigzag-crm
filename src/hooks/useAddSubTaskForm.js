@@ -21,6 +21,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     parentTaskId: defaultValue?.parentTaskId || "",
     dueDateChangeReason: defaultValue?.dueDateChangeReason || "",
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
+    customFields: defaultValue?.customFields || [],
   };
 
   const validationSchema = Yup.object().shape({
@@ -34,6 +35,12 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     ideas: Yup.string(),
     publishUrls: Yup.object(),
     requiresClientApproval: Yup.boolean(),
+    customFields: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string().required("Label is required"),
+        value: Yup.string(),
+      })
+    ),
   });
 
   const formik = useFormik({

@@ -15,6 +15,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
   const [showMenu, setShowMenu] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
   const [showURLModal, setShowURLModal] = useState(false);
+  const [showCustomFieldsModal, setShowCustomFieldsModal] = useState(false);
   const [contentValues, setContentValues] = useState({
     copyOfDescription: subTask?.copyOfDescription || "",
     description: subTask?.description || "",
@@ -22,6 +23,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
   });
 
   const [urlValues, setUrlValues] = useState(subTask?.publishUrls || {});
+  const [customFieldsValues, setCustomFieldsValues] = useState(subTask?.customFields || []);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasPublishUrls = subTask.publishUrls && 
@@ -68,6 +70,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
       ideas: subTask?.ideas || "",
     });
     setUrlValues(subTask?.publishUrls || {});
+    setCustomFieldsValues(subTask?.customFields || []);
 
     // Check if status changed to 'on-review' for a publish subtask
     // Skip this automation for Admins/Company owners
@@ -161,6 +164,21 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
       ...prev,
       [platform]: value,
     }));
+  };
+
+  const handleSaveCustomFields = async () => {
+    try {
+      await updateSubTask.mutateAsync({ customFields: customFieldsValues });
+      setShowCustomFieldsModal(false);
+    } catch (error) {
+      console.error("Failed to update custom fields:", error);
+    }
+  };
+
+  const handleCustomFieldChange = (index, value) => {
+    const newFields = [...customFieldsValues];
+    newFields[index] = { ...newFields[index], value };
+    setCustomFieldsValues(newFields);
   };
 
 
@@ -267,6 +285,18 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                     >
                       <FiLink className="text-green-500" />
                       <span>Add URLs</span>
+                    </button>
+                  )}
+                  {customFieldsValues && customFieldsValues.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowCustomFieldsModal(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <FiEdit3 className="text-purple-500" />
+                      <span>Manage Fields</span>
                     </button>
                   )}
                 </div>
@@ -726,6 +756,54 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
             <PrimaryButton
               title={updateSubTask.isLoading ? "Saving..." : "Save URLs"}
               onclick={handleSaveURLs}
+              disable={updateSubTask.isLoading}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Custom Fields Management Modal */}
+      <Modal
+        isOpen={showCustomFieldsModal}
+        onClose={() => setShowCustomFieldsModal(false)}
+        title="Manage Custom Fields"
+        size="md"
+      >
+        <div className="space-y-4 py-2">
+          {customFieldsValues && customFieldsValues.length > 0 ? (
+            <div className="space-y-4">
+              {customFieldsValues.map((field, index) => (
+                <div key={index} className="flex flex-col gap-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest pl-1.5">
+                    {field.label}
+                  </label>
+                  <input
+                    type={field.type || "text"}
+                    className="rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:border-blue-300 transition-all"
+                    value={field.value || ""}
+                    onChange={(e) => handleCustomFieldChange(index, e.target.value)}
+                    placeholder={`Enter value for ${field.label}`}
+                    disabled={updateSubTask.isLoading}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+             <div className="text-center py-6">
+              <p className="text-sm text-gray-500">No custom fields found</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={() => setShowCustomFieldsModal(false)}
+              className="px-6 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              Cancel
+            </button>
+            <PrimaryButton
+              title={updateSubTask.isLoading ? "Saving..." : "Save Fields"}
+              onclick={handleSaveCustomFields}
               disable={updateSubTask.isLoading}
             />
           </div>

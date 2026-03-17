@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Description from "../../shared/Field/description";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Select from "../../shared/Field/select";
 import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
@@ -31,6 +32,7 @@ const AddSubTask = ({
     parentTaskId: parentTaskId,
     dueDateChangeReason: initialValues?.dueDateChangeReason || "",
     requiresClientApproval: initialValues?.requiresClientApproval || false,
+    customFields: initialValues?.customFields || [],
   };
 
   // Get project social media data if not provided in projectData
@@ -66,6 +68,19 @@ const AddSubTask = ({
       console.error("Error submitting subtask:", error);
     }
   });
+
+  // Handle automatic custom fields based on subtask title
+  useEffect(() => {
+    if (values.title?.toLowerCase().includes("shooting")) {
+      const hasUrlField = values.customFields?.some(field => field.label?.toLowerCase().includes("url") || field.label?.toLowerCase().includes("shooting"));
+      if (!hasUrlField) {
+        setFieldValue("customFields", [
+          ...(values.customFields || []),
+          { label: "Shooting URL", value: "", type: "url" }
+        ]);
+      }
+    }
+  }, [values.title, setFieldValue]);
 
   // State for due date change reason modal
   const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
@@ -438,6 +453,78 @@ const AddSubTask = ({
                     )}
                   </div>
                 )}
+
+                {/* Dynamic Custom Fields Section */}
+                <div className="border-t border-gray-200 pt-4 mt-2">
+                  <div className="flexBetween mb-3">
+                    <h5 className="text-sm font-medium text-gray-700">
+                      Additional Fields (e.g. Shooting URL)
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newFields = [...(values.customFields || []), { label: "", value: "", type: "text" }];
+                        setFieldValue("customFields", newFields);
+                      }}
+                      className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-all"
+                    >
+                      <FiPlus className="w-3 h-3" /> Add Field
+                    </button>
+                  </div>
+
+                  {values.customFields && values.customFields.length > 0 ? (
+                    <div className="space-y-3">
+                      {values.customFields.map((field, index) => (
+                        <div key={index} className="flex gap-2 items-end bg-gray-50 p-3 rounded-xl border border-gray-100 relative group">
+                          <div className="flex-1">
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Field Label</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Shooting URL"
+                              value={field.label}
+                              onChange={(e) => {
+                                const newFields = [...values.customFields];
+                                newFields[index].label = e.target.value;
+                                setFieldValue("customFields", newFields);
+                              }}
+                              className={`w-full text-sm bg-white border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400 ${errors.customFields && errors.customFields[index]?.label ? 'border-red-400' : 'border-gray-200'}`}
+                            />
+                            {errors.customFields && errors.customFields[index]?.label && (
+                              <span className="text-[10px] text-red-500 mt-1 block">{errors.customFields[index].label}</span>
+                            )}
+                          </div>
+                          <div className="flex-[2]">
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Field Value</label>
+                            <input
+                              type={field.type || "text"}
+                              placeholder="Enter value..."
+                              value={field.value}
+                              onChange={(e) => {
+                                const newFields = [...values.customFields];
+                                newFields[index].value = e.target.value;
+                                setFieldValue("customFields", newFields);
+                              }}
+                              className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFields = values.customFields.filter((_, i) => i !== index);
+                              setFieldValue("customFields", newFields);
+                            }}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Remove field"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic py-2">No additional fields added.</p>
+                  )}
+                </div>
 
                 <div className="grid gap-x-4 grid-cols-2">
                   <DatePicker

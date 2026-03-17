@@ -23,6 +23,8 @@ const EmployeeWorkDetails = lazy(() =>
 
 import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
 import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
+import EmployeesTodayStatus from "../../components/dashboard/EmployeesTodayStatus";
+import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
@@ -205,6 +207,13 @@ const Dashboard = () => {
         selectedDate={selectedDate}
       />
 
+      {/* Team Daily Status - Admin Only */}
+      {(!isEmployee || isEmployeeHasTaskAdmin) && (
+        <div className="w-full mt-5">
+           <EmployeesTodayStatus />
+        </div>
+      )}
+
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5 pb-5">
         <div className="md:col-span-5">
           {!isEmployee || isEmployeeHasTaskAdmin ? (
@@ -213,12 +222,15 @@ const Dashboard = () => {
             <div className="hidden md:block"></div>
           )}
         </div>
-        {/* nearest event - now after projects */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 flex flex-col gap-6">
           {isEmployee ? (
             <NearestEvents selectedDate={selectedDate} />
           ) : (
             <PendingWork taskMonth={taskMonth} />
+          )}
+          
+          {(!isEmployee || isEmployeeHasTaskAdmin) && (
+            <TodayReworkTasks />
           )}
         </div>
       </div>

@@ -27,7 +27,7 @@ const SubtasksSection = ({
   const [timelineSubTask, setTimelineSubTask] = useState(null);
 
   // Check if user can delete subtasks (company admin or has tasks delete permission)
-  const canDeleteSubtasks = isCompany || hasPermission("tasks", "delete");
+  const canDeleteSubtasks = isCompany || isAdmin || hasPermission("tasks", "delete");
 
   const formatTime = (minutes) => {
     if (!minutes) return "0m";
@@ -287,9 +287,8 @@ const SubtasksSection = ({
                       }
                     />
                     {/* Edit button for users with permission and assigned users */}
-                    {canEditTask && 
-                      subtask.title?.toLowerCase() !== "content" && 
-                      subtask.title?.toLowerCase() !== "publish" && (
+                    {(canEditTask || isAdmin) && 
+                      (isAdmin || isCompany || (subtask.title?.toLowerCase() !== "content" && subtask.title?.toLowerCase() !== "publish")) && (
                       <button
                         onClick={() => onEditSubTask(subtask)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
@@ -331,6 +330,30 @@ const SubtasksSection = ({
                   <p className="text-sm text-gray-600 mb-2">
                     {subtask.description}
                   </p>
+                )}
+
+                {/* Subtask Custom Fields */}
+                {subtask.customFields && subtask.customFields.filter(f => f.value && f.value.trim() !== "").length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {subtask.customFields.filter(f => f.value && f.value.trim() !== "").map((field, idx) => (
+                      <div key={idx} className="bg-white/60 border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">{field.label}</span>
+                        {field.label.toLowerCase().includes("url") || field.value?.toString().startsWith("http") ? (
+                          <a
+                            href={field.value.startsWith("http") ? field.value : `https://${field.value}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                          >
+                            {field.value}
+                            <FiLink className="w-2.5 h-2.5" />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-700 font-medium">{field.value}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
 
 
