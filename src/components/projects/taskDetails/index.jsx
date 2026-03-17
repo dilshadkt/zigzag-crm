@@ -147,7 +147,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
         <div className="flexBetween ">
           {
             canEditTask && canManageSubtasks && (
-              <h4 className="text-lg font-medium mb-5">Task Details</h4>
+              <h4 className="text-lg font-medium ">Task Details</h4>
             )
           }
           <div className="flex gap-2">
@@ -259,7 +259,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
             </div>
 
             <RecurringTaskInfo taskDetails={taskDetails} />
-            <TaskDescription taskDetails={taskDetails} />
+            <TaskDescription taskDetails={taskDetails} subTasks={visibleSubTasks} />
 
             <SubtasksSection
               subTasks={visibleSubTasks}
