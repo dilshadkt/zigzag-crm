@@ -192,7 +192,7 @@ const DashboardHeader = () => {
       </button>
 
       {/* Search Bar */}
-      <SearchBar />
+      <SearchBar accessiblePages={filteredSidebar} />
 
       {/* Right Side Actions */}
       <div className="flexEnd gap-x-2">

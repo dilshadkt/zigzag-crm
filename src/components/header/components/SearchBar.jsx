@@ -4,7 +4,7 @@ import { useGlobalSearch } from "../../../api/hooks";
 import { SIDE_MENU } from "../../../constants";
 import { FiSearch, FiFile, FiCheckSquare, FiArrowRight } from "react-icons/fi";
 
-const SearchBar = () => {
+const SearchBar = ({ accessiblePages = [] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showResults, setShowResults] = useState(false);
   const navigate = useNavigate();
@@ -12,8 +12,9 @@ const SearchBar = () => {
 
   const { data: searchResults, isLoading } = useGlobalSearch(searchTerm);
 
-  // Filter local routes
-  const filteredRoutes = SIDE_MENU.filter((item) =>
+  // Filter local routes based on accessible pages
+  const itemsToSearch = accessiblePages.length > 0 ? accessiblePages : SIDE_MENU;
+  const filteredRoutes = itemsToSearch.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   ).slice(0, 3);
 
