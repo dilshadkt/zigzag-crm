@@ -5,13 +5,9 @@ import ModalLayout from "../../shared/modal";
 import Input from "../../shared/Field/input";
 import Select from "../../shared/Field/select";
 
-const fieldTypeOptions = [
-  { value: "text", label: "Text" },
-  { value: "number", label: "Number" },
-  { value: "date", label: "Date" },
-  { value: "email", label: "Email" },
-  { value: "url", label: "URL" }
-];
+// fieldTypeOptions moved inside component for cleaner access if needed, or keeping it global is fine but it was duplicated.
+// Removing the redundant global one as it's redefined below.
+
 
 const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
   const isEditing = !!field;
@@ -40,14 +36,14 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
 
   const handleSubmit = (values, { setSubmitting }) => {
     const fieldKey = values.key || values.label.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-    
+
     const fieldData = {
       label: values.label,
       type: values.type,
       required: values.isRequired,
       placeholder: values.placeholder,
       key: fieldKey,
-      options: values.type === "select" 
+      options: values.type === "select"
         ? values.options.split(",").map(opt => opt.trim()).filter(opt => opt !== "")
         : []
     };
@@ -65,6 +61,7 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
     { value: "email", label: "Email" },
     { value: "select", label: "Select (Dropdown)" },
     { value: "checkbox", label: "Checkbox (Yes/No)" },
+    { value: "dynamic_list", label: "Dynamic List (Multi-Entry)" },
   ];
 
   return (

@@ -4,6 +4,7 @@ import Input from "../../shared/Field/input";
 import DatePicker from "../../shared/Field/date";
 import Select from "../../shared/Field/select";
 import Description from "../../shared/Field/description";
+import DynamicList from "../../shared/Field/dynamicList";
 import { useAddProjectForm } from "../../../hooks/useAddProjectForm";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import AddEmployee from "../addEmployee";
@@ -275,6 +276,19 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                       </div>
                     );
                   }
+                  if (field.type === "dynamic_list") {
+                    return (
+                      <div key={field._id} className="col-span-2">
+                        <DynamicList
+                          title={field.label}
+                          placeholder={field.placeholder}
+                          value={fieldValue || [""]}
+                          name={field.key}
+                          onChange={(newList) => setFieldValue(fieldKey, newList)}
+                        />
+                      </div>
+                    );
+                  }
 
                   if (field.type === "date") {
                     return (
@@ -299,6 +313,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                       type={field.type}
                     />
                   );
+
                 })}
               </div>
             </div>

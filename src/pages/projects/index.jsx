@@ -147,7 +147,7 @@ const Prjects = () => {
   );
 
   return (
-    <section className="flex flex-col h-full gap-y-3">
+    <section className="flex flex-col h-full gap-y-2">
       <ProjectHeading
         setShowModalProject={setShowModalProject}
         selectedMonth={selectedMonth}
@@ -160,7 +160,7 @@ const Prjects = () => {
       ) : (
         <div
           className="w-full h-full overflow-y-auto gap-y-3 md:gap-y-0 
-         md:overflow-hidden md:gap-x-5 grid grid-cols-1 md:grid-cols-5"
+         md:overflow-hidden md:gap-x-3 grid grid-cols-1 md:grid-cols-5"
         >
           {/* current project section  */}
           {!isTimelineExpanded && (

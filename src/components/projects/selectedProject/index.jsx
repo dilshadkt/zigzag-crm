@@ -247,6 +247,14 @@ rounded-3xl  flex flex-col  p-4"
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold ${value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                 {value ? "Yes" : "No"}
                               </span>
+                            ) : field.type === "dynamic_list" && Array.isArray(value) ? (
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {value.map((item, i) => item && (
+                                  <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-semibold border border-blue-100 shadow-sm">
+                                    {item}
+                                  </span>
+                                ))}
+                              </div>
                             ) : field.type === "url" ? (
                               <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
                                 {value}
@@ -257,6 +265,7 @@ rounded-3xl  flex flex-col  p-4"
                                 {value}
                               </span>
                             )}
+
                           </div>
                         </div>
                       );

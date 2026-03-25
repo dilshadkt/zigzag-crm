@@ -60,7 +60,7 @@ const DashboardLayout = () => {
   }, [queryClient]);
 
   return (
-    <main className="bg-[#F4F9FD] gap-x-2 h-screen overflow-hidden flex ">
+    <main className="bg-[#F4F9FD]  h-screen overflow-hidden flex ">
       <Sidebar />
       <section className="w-full gap-y-4 md:gap-y-3 h-full overflow-auto flex flex-col p-2 md:p-3  ">
         <DashboardHeader />

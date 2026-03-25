@@ -70,6 +70,7 @@ const EditProject = () => {
               other: [],
             },
             dailyChecklist: currentProject?.dailyChecklist || [],
+            customFields: currentProject?.customFields || {},
           }}
         />
       </div>
