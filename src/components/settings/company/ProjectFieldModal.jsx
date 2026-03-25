@@ -62,6 +62,9 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
     { value: "select", label: "Select (Dropdown)" },
     { value: "checkbox", label: "Checkbox (Yes/No)" },
     { value: "dynamic_list", label: "Dynamic List (Multi-Entry)" },
+    { value: "file", label: "File Upload" },
+    { value: "image", label: "Image Upload" },
+    { value: "url", label: "URL/Link" },
   ];
 
   return (

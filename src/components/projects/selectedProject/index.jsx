@@ -260,6 +260,28 @@ rounded-3xl  flex flex-col  p-4"
                                 {value}
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                               </a>
+                            ) : field.type === "image" ? (
+                              <div className="mt-1">
+                                <a href={value} target="_blank" rel="noreferrer" className="block w-full">
+                                  <img 
+                                    src={value} 
+                                    alt={field.label} 
+                                    className="w-full max-h-48 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity"
+                                  />
+                                </a>
+                              </div>
+                            ) : field.type === "file" ? (
+                              <a 
+                                href={value} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mt-1 truncate group"
+                              >
+                                <div className="p-1.5 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                  <img src="/icons/file.svg" alt="" className="w-4 h-4" />
+                                </div>
+                                <span className="truncate underline underline-offset-4">{value.split('/').pop()}</span>
+                              </a>
                             ) : (
                               <span className="break-words line-clamp-3" title={value}>
                                 {value}

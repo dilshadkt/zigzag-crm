@@ -5,6 +5,7 @@ import DatePicker from "../../shared/Field/date";
 import Select from "../../shared/Field/select";
 import Description from "../../shared/Field/description";
 import DynamicList from "../../shared/Field/dynamicList";
+import FileUpload from "../../shared/Field/file";
 import { useAddProjectForm } from "../../../hooks/useAddProjectForm";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import AddEmployee from "../addEmployee";
@@ -298,6 +299,22 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                         value={fieldValue}
                         name={field.key}
                         onChange={(e) => setFieldValue(fieldKey, e.target.value)}
+                      />
+                    );
+                  }
+
+                   if (field.type === "file" || field.type === "image") {
+                    return (
+                      <FileUpload
+                        key={field._id}
+                        title={field.label}
+                        type={field.type}
+                        placeholder={field.placeholder || `Select ${field.type}`}
+                        value={{ [field.key]: fieldValue }}
+                        name={field.key}
+                        onchange={(e) => setFieldValue(fieldKey, e.target.value)}
+                        errors={errors.customFields}
+                        touched={touched.customFields}
                       />
                     );
                   }
