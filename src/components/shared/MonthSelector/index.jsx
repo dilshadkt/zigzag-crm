@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format, subMonths, addMonths } from "date-fns";
+import { MdDateRange, MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { IoChevronDown } from "react-icons/io5";
 
 const MonthSelector = ({
   selectedMonth,
@@ -8,6 +10,7 @@ const MonthSelector = ({
   activeProject = null,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Default to current month if no month is selected
   const currentDate = selectedMonth ? new Date(selectedMonth) : new Date();
@@ -47,6 +50,21 @@ const MonthSelector = ({
     }
   }, [selectedMonth, onMonthChange, availableMonths]);
 
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
   // Generate months list based on available months or fallback to default range
   const getMonthsList = () => {
     if (availableMonths.length > 0) {
@@ -60,10 +78,12 @@ const MonthSelector = ({
     } else {
       // Fallback to default range when no project is selected
       const months = [];
+      const now = new Date();
+      // Show a range around now
       for (let i = -6; i <= 6; i++) {
         const date = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + i,
+          now.getFullYear(),
+          now.getMonth() + i,
           1
         );
         months.push(date);
@@ -80,30 +100,28 @@ const MonthSelector = ({
     setIsOpen(false);
   };
 
-  const goToPreviousMonth = () => {
+  const goToPreviousMonth = (e) => {
+    e.stopPropagation();
     if (availableMonths.length > 0) {
-      // Find current index and go to previous available month
       const currentIndex = availableMonths.indexOf(selectedMonth);
       if (currentIndex > 0) {
         onMonthChange(availableMonths[currentIndex - 1]);
       }
     } else {
-      // Fallback behavior
       const newDate = subMonths(currentDate, 1);
       const monthKey = format(newDate, "yyyy-MM");
       onMonthChange(monthKey);
     }
   };
 
-  const goToNextMonth = () => {
+  const goToNextMonth = (e) => {
+    e.stopPropagation();
     if (availableMonths.length > 0) {
-      // Find current index and go to next available month
       const currentIndex = availableMonths.indexOf(selectedMonth);
       if (currentIndex < availableMonths.length - 1) {
         onMonthChange(availableMonths[currentIndex + 1]);
       }
     } else {
-      // Fallback behavior
       const newDate = addMonths(currentDate, 1);
       const monthKey = format(newDate, "yyyy-MM");
       onMonthChange(monthKey);
@@ -112,12 +130,12 @@ const MonthSelector = ({
 
   const goToCurrentMonth = () => {
     const currentMonthKey = format(new Date(), "yyyy-MM");
-    // Only go to current month if it's available in the project
     if (
       availableMonths.length === 0 ||
       availableMonths.includes(currentMonthKey)
     ) {
       onMonthChange(currentMonthKey);
+      setIsOpen(false);
     }
   };
 
@@ -133,121 +151,64 @@ const MonthSelector = ({
       : true;
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Month Display Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-2 md:px-4 py-2
-         bg-white border border-gray-300 rounded-lg
-          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium transition-all duration-200 hover:border-gray-300 min-w-[120px]"
       >
-        <svg
-          className="w-4 h-4 "
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-        <span className="font-medium text-xs md:text-base">
-          {selectedMonth ? format(currentDate, "MMMM") : "Select Month"}
+        <MdDateRange className="text-gray-400 text-sm" />
+        <span className="font-medium text-gray-700 truncate">
+          {selectedMonth ? format(currentDate, "MMMM yyyy") : "Select Month"}
         </span>
-        {availableMonths.length > 0 && (
-          <span className="text-xs hidden md:block text-gray-500 bg-gray-100 px-1 rounded">
-            {availableMonths.length} month
-            {availableMonths.length !== 1 ? "s" : ""}
-          </span>
-        )}
-        <svg
-          className={`w-4 h-4 hidden md:block transition-transform ${isOpen ? "rotate-180" : ""
-            }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <IoChevronDown className={`text-gray-400 transition-transform duration-200 ml-auto ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-64 
-         bg-white border border-gray-300 rounded-lg shadow-lg z-[1000]"
+          className="absolute left-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-[100] py-1 animate-in fade-in slide-in-from-bottom-1 duration-200"
         >
           {/* Header with navigation */}
-          <div className="flex items-center justify-between p-3 border-b border-gray-200">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 mb-1">
             <button
               onClick={goToPreviousMonth}
               disabled={!canGoPrevious}
-              className={`p-1 rounded ${canGoPrevious
-                ? "hover:bg-gray-100"
-                : "opacity-50 cursor-not-allowed"
+              className={`p-1 rounded-lg transition-colors ${canGoPrevious
+                ? "hover:bg-gray-100 text-gray-600"
+                : "text-gray-300 cursor-not-allowed"
                 }`}
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <MdChevronLeft className="text-xl" />
             </button>
-            <span className="font-medium text-sm">
+            <span className="font-bold text-xs text-gray-800">
               {format(currentDate, "MMMM yyyy")}
             </span>
             <button
               onClick={goToNextMonth}
               disabled={!canGoNext}
-              className={`p-1 rounded ${canGoNext
-                ? "hover:bg-gray-100"
-                : "opacity-50 cursor-not-allowed"
+              className={`p-1 rounded-lg transition-colors ${canGoNext
+                ? "hover:bg-gray-100 text-gray-600"
+                : "text-gray-300 cursor-not-allowed"
                 }`}
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <MdChevronRight className="text-xl" />
             </button>
           </div>
 
           {/* Quick actions */}
-          <div className="p-2 border-b border-gray-200">
+          <div className="px-2 pb-1">
             <button
               onClick={goToCurrentMonth}
-              className="w-full text-left px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+              className="w-full text-left px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors"
             >
               Current Month
             </button>
           </div>
 
           {/* Month list */}
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-56 overflow-y-auto scrollbar-thin px-1">
+            <div className="h-px bg-gray-100 mb-1 mx-2" />
             {months.map((month, index) => {
               const monthKey = format(month, "yyyy-MM");
               const isSelected = selectedMonth === monthKey;
@@ -261,38 +222,33 @@ const MonthSelector = ({
                   key={index}
                   onClick={() => handleMonthSelect(month)}
                   disabled={!isAvailable}
-                  className={`w-full text-left px-3 py-2 text-sm ${isSelected ? "bg-blue-50 text-blue-600 font-medium" : ""
-                    } ${isCurrentMonth ? "font-semibold" : ""} ${isAvailable
-                      ? "hover:bg-gray-50"
-                      : "opacity-50 cursor-not-allowed"
-                    }`}
+                  className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected 
+                    ? "bg-blue-50 text-blue-700 font-bold" 
+                    : isAvailable ? "hover:bg-gray-50 text-gray-700" : "text-gray-300 cursor-not-allowed"
+                  }`}
                 >
-                  {format(month, "MMMM yyyy")}
-                  {isCurrentMonth && !isSelected && " (Current)"}
-                  {!isAvailable && " (No data)"}
+                  <span>{format(month, "MMMM yyyy")}</span>
+                  {isCurrentMonth && !isSelected && (
+                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase font-bold tracking-tighter">Current</span>
+                  )}
                 </button>
               );
             })}
           </div>
 
           {/* Clear selection */}
-          <div className="p-2 border-t border-gray-200">
+          <div className="mt-1 px-2 pt-1 border-t border-gray-100">
             <button
               onClick={() => {
                 onMonthChange(null);
                 setIsOpen(false);
               }}
-              className="w-full text-left px-2 py-1 text-sm text-gray-500 hover:bg-gray-50 rounded"
+              className="w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 rounded-lg transition-colors hover:text-red-500"
             >
               Clear Selection
             </button>
           </div>
         </div>
-      )}
-
-      {/* Backdrop to close dropdown */}
-      {isOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}
     </div>
   );
