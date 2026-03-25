@@ -54,7 +54,8 @@ const TaskOverView = () => {
   }
 
   return (
-    <section className="col-span-4  gap-y-6 md:gap-y-0 md:overflow-hidden grid grid-cols-1 md:grid-cols-4   ">
+    <section className="col-span-4  gap-y-6 md:gap-y-0 md:overflow-hidden
+     grid grid-cols-1 md:grid-cols-4">
       <TaskDetails
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}

@@ -110,7 +110,7 @@ const ProjectDetailLayout = () => {
           )}
         </div>
       </div>
-      <div className="w-full h-full  gap-y-6 md:gap-y-0 overflow-y-auto md:overflow-hidden md:gap-x-5  grid grid-cols-1 md:grid-cols-5">
+      <div className="w-full h-full  gap-y-6 md:gap-y-0 overflow-y-auto md:overflow-hidden md:gap-x-3  grid grid-cols-1 md:grid-cols-5">
         {/* current project section  */}
         <SelectedProject
           currentProject={projectData}

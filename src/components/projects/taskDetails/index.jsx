@@ -143,8 +143,8 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
 
   return (
     <>
-      <div className="col-span-3 overflow-y-auto  mr-5 flex flex-col">
-        <div className="flexBetween ">
+      <div className="col-span-3 overflow-y-auto  mr-3 flex flex-col">
+        <div className={`flexBetween  ${canEditTask && canManageSubtasks ? "mb-2" : ""}`}>
           {
             canEditTask && canManageSubtasks && (
               <h4 className="text-lg font-medium ">Task Details</h4>
