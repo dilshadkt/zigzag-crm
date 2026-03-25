@@ -253,7 +253,7 @@ const Calendar = () => {
   return (
     <section className="flex flex-col  h-full">
       <div className="hidden md:flex mb-2">
-        <EventFilters
+        {/* <EventFilters
           eventFilters={eventFilters}
           onToggleFilter={handleToggleEventFilter}
           assignerFilter={assignerFilter}
@@ -262,7 +262,7 @@ const Calendar = () => {
           onProjectFilterChange={handleProjectFilterChange}
           calendarData={calendarData}
           canEditTasks={canEditTasks}
-        />
+        /> */}
       </div>
       <div
         className="w-full h-full  flex flex-col overflow-hidden

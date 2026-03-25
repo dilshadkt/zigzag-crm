@@ -46,7 +46,7 @@ const Board = () => {
   }
 
   return (
-    <div className="col-span-4 overflow-hidden flex flex-col">
+    <div className="col-span-4 overflow-hidden h-full flex flex-col">
       <BoardFilters
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
@@ -68,7 +68,8 @@ const Board = () => {
         onSearchChange={setSearchQuery}
       />
 
-      <div className="flex h-[calc(100vh-180px)] md:mt-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 project-details-scroll">
+      <div className="flex h-full  overflow-x-auto pb-2 scrollbar-thin 
+      scrollbar-thumb-gray-300 scrollbar-track-gray-100 project-details-scroll">
         {Object.entries(statusConfig).map(([status, config]) => {
           const columnTasks = tasksByStatus[status] || [];
           return (

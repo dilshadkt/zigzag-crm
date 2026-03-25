@@ -70,11 +70,11 @@ const DroppableColumn = ({ id, title, children, onDrop, tasks }) => {
 
     return (
         <div
-            className={`flex-shrink-0 w-80  rounded-lg p-4 transition-all duration-200 ease-out
+            className={`flex-shrink-0 w-80  pt-3 px-1  rounded-lg  transition-all duration-200 ease-out
                   ${isOver
                     ? "bg-blue-50 border-2 border-blue-300"
                     : "bg-gray-50 border-2 border-transparent"
-                }`}
+                } `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -88,7 +88,7 @@ const DroppableColumn = ({ id, title, children, onDrop, tasks }) => {
             </div>
             <div
                 ref={parentRef}
-                className="min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
+                className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
                 data-droppable-id={id}
             >
                 <DropZone
