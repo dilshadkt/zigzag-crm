@@ -1,7 +1,7 @@
 import { FaWhatsapp } from "react-icons/fa";
 import { FiPhone, FiMail, FiClipboard } from "react-icons/fi";
 
-const LeadQuickActions = ({ onCall, onWhatsapp, onEmail, onNotes, phoneNumber }) => {
+const LeadQuickActions = ({ onCall, onWhatsapp, onEmail, onNotes, onFollowup, phoneNumber }) => {
   const actions = [
     { 
       label: "Email", 
@@ -28,6 +28,13 @@ const LeadQuickActions = ({ onCall, onWhatsapp, onEmail, onNotes, phoneNumber })
         if (phoneNumber) {
           window.location.href = `tel:${phoneNumber}`;
         }
+      }
+    },
+    { 
+      label: "Follow-up", 
+      icon: FiClipboard,
+      onClick: () => {
+        if (onFollowup) onFollowup();
       }
     },
     { 

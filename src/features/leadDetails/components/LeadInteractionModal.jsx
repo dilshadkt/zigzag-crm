@@ -12,6 +12,8 @@ const LeadInteractionModal = ({
 }) => {
   const [note, setNote] = useState("");
   const [statusId, setStatusId] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [isFollowUp, setIsFollowUp] = useState(false);
   
   useEffect(() => {
     if (lead?.status) {
@@ -20,25 +22,34 @@ const LeadInteractionModal = ({
     }
     if (isOpen) {
       setNote("");
+      setScheduledDate("");
+      setIsFollowUp(interactionType === 'followup');
     }
   }, [lead, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave({ note, statusId });
+    onSave({ 
+      note, 
+      statusId, 
+      scheduled: scheduledDate,
+      isFollowUp 
+    });
     onClose();
   };
 
   const getTitle = () => {
     if (interactionType === 'call') return "How was the call?";
     if (interactionType === 'whatsapp') return "WhatsApp Follow-up";
+    if (interactionType === 'followup') return "Schedule Follow-up";
     return "Log Interaction";
   };
 
   const getPlaceholder = () => {
     if (interactionType === 'call') return "Add a note about the call...";
     if (interactionType === 'whatsapp') return "Add a note about your conversation...";
+    if (interactionType === 'followup') return "Reason for follow-up...";
     return "Enter your note here...";
   };
 
@@ -96,6 +107,40 @@ const LeadInteractionModal = ({
               ))}
             </div>
           </div>
+          {/* Follow-up Specific Fields */}
+          {(interactionType === 'followup' || interactionType === 'call' || interactionType === 'whatsapp') && (
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-slate-700">
+                  Mark as Follow-up Lead?
+                </label>
+                <button
+                  onClick={() => setIsFollowUp(!isFollowUp)}
+                  className={`w-12 h-6 rounded-full transition-all relative ${
+                    isFollowUp ? 'bg-[#3f8cff]' : 'bg-slate-200'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
+                    isFollowUp ? 'left-7' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+
+              {isFollowUp && (
+                <div className="animate-in slide-in-from-top-2 duration-200">
+                  <label className="block text-sm font-bold text-slate-700 mb-3">
+                    Next Follow-up Date & Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="w-full px-4 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-[#3f8cff]/10 focus:border-[#3f8cff] outline-none transition-all text-slate-600 bg-slate-50/50"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="p-6 pb-10 sm:pb-6 pt-2 flex flex-col gap-3">

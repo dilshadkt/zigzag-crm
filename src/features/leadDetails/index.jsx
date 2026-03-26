@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FiArrowLeft, FiPhone } from "react-icons/fi";
+import { FiArrowLeft, FiPhone, FiClipboard } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import LeadDetailTabs from "./components/LeadDetailTabs";
 import LeadOverviewSection from "./components/LeadOverviewSection";
@@ -129,7 +129,13 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
     );
   };
 
-  const handleSaveInteraction = ({ note, statusId }) => {
+  const handleFollowupClick = () => {
+    if (!leadId) return;
+    setInteractionType("followup");
+    setIsInteractionModalOpen(true);
+  };
+
+  const handleSaveInteraction = ({ note, statusId, scheduled, isFollowUp }) => {
     if (!leadId) return;
 
     // 1. Add note if provided
@@ -144,15 +150,28 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
       });
     }
 
-    // 2. Update status if changed
+    // 2. Update status and follow-up data
     const currentStatusId = lead.status?._id || lead.status?.id || lead.status;
-    if (statusId && statusId !== currentStatusId) {
+    const currentScheduled = lead.scheduled;
+    const currentIsFollowUp = lead.isFollowUp;
+
+    const needsUpdate = 
+      (statusId && statusId !== currentStatusId) || 
+      scheduled !== undefined || 
+      isFollowUp !== currentIsFollowUp;
+
+    if (needsUpdate) {
+      const updateData = {};
+      if (statusId && statusId !== currentStatusId) updateData.status = statusId;
+      if (scheduled !== undefined) updateData.scheduled = scheduled;
+      if (isFollowUp !== undefined) updateData.isFollowUp = isFollowUp;
+
       updateLead({
         leadId,
-        leadData: { status: statusId }
+        leadData: updateData
       }, {
         onSuccess: () => {
-          toast.success("Lead status updated");
+          toast.success("Lead updated successfully");
         }
       });
     }
@@ -244,6 +263,7 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
             onWhatsapp={handleWhatsappClick}
             onEmail={() => setActiveTab("Emails")}
             onNotes={() => setActiveTab("Notes")}
+            onFollowup={handleFollowupClick}
             phoneNumber={phoneNumber}
           />
         </div>
@@ -275,6 +295,16 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           >
             <FiPhone size={24} />
           </a>
+
+          {/* Follow-up Button */}
+          <button
+            onClick={handleFollowupClick}
+            className="w-14 h-14 bg-indigo-500 text-white rounded-full 
+            shadow-lg flex items-center justify-center hover:bg-indigo-600 transition-colors"
+            aria-label="Schedule Follow-up"
+          >
+            <FiClipboard size={24} />
+          </button>
         </div>
       )}
       {/* Interaction Follow-up Modal */}
