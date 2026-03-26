@@ -15,7 +15,7 @@ const LeadsPageHeader = ({
   onToggleDashboard,
 }) => {
   return (
-    <div className="flex flex-col gap-4 px-6 pb-3 pt-1 border-b border-slate-100">
+    <div className="flex flex-col gap-2 md:gap-4 px-3 md:px-6 pb-2 md:pb-3 pt-1 border-b border-slate-100">
       <div className="flex flex-wrap gap-3 items-center justify-between"></div>
       <div className="flex justify-end">
         <LeadsActions

@@ -6,7 +6,7 @@ const ShimmerBox = ({ className = "", rounded = "rounded-md" }) => (
   </div>
 );
 
-const LeadsTableShimmer = ({ columns }) => {
+const LeadsTableShimmer = ({ columns, scrollContainerId }) => {
   return (
     <>
       <style>{`
@@ -24,7 +24,7 @@ const LeadsTableShimmer = ({ columns }) => {
       `}</style>
       <div className="h-full flex flex-col">
         {/* Table View - Desktop */}
-        <div className="hidden lg:block overflow-x-auto h-full">
+        <div className={`hidden lg:block overflow-x-auto ${!scrollContainerId ? 'h-full' : ''}`}>
           <table className="min-w-full border-separate border-spacing-0">
             <thead className="bg-slate-50 text-slate-500 sticky top-0 z-20">
               <tr>
@@ -73,7 +73,7 @@ const LeadsTableShimmer = ({ columns }) => {
         </div>
 
         {/* Card View - Mobile */}
-        <div className="lg:hidden flex flex-col h-full bg-slate-50/30 overflow-y-auto">
+        <div className={`lg:hidden flex flex-col bg-slate-50/30 ${!scrollContainerId ? 'h-full overflow-y-auto' : ''}`}>
           {[1, 2, 3, 4, 5].map((index) => (
             <div key={index} className="p-4 bg-white border-b border-slate-100 space-y-4">
               <div className="flex items-center justify-between">

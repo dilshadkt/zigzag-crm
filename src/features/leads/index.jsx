@@ -614,148 +614,156 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   };
 
   return (
-    <section className="flex flex-col gap-y-3 h-full overflow-hidden">
-      {/* dashboard section  */}
-      {showDashboard && (
-        <div className="bg-white rounded-2xl p-3 px-4 border border-slate-100 ">
-          <LeadsDashboard
-            stats={leadStats}
-            isLoading={statsLoading}
-            activeStatusId={activeStatusId}
-            onStatusClick={handleStatusFilter}
-          />
+    <section className="h-full overflow-hidden">
+      <div className="h-full overflow-y-auto scrollbar-hide flex flex-col gap-y-3" id="leads-scroll-container">
+        {/* dashboard section  */}
+        {showDashboard && (
+          <div className="shrink-0 bg-white rounded-2xl p-2 md:p-3 md:px-4 border border-slate-100 overflow-x-auto
+           touch-pan-x scrollbar-hide">
+            <LeadsDashboard
+              stats={leadStats}
+              isLoading={statsLoading}
+              activeStatusId={activeStatusId}
+              onStatusClick={handleStatusFilter}
+            />
+          </div>
+        )}
+        <div className="relative bg-white overflow-y-auto min-h-full 
+        rounded-2xl border border-slate-100 flex flex-col">
+          <div className="sticky top-0 z-40 bg-white rounded-t-2xl">
+            <LeadsPageHeader
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onAddLead={handleAction("add-lead")}
+              onAddFilter={handleAction("add-filter")}
+              onRefresh={handleAction("refresh")}
+              isRefreshing={isRefetching}
+              onToggleLayout={openColumnEditor}
+              onDownload={handleAction("download")}
+              onMoreActions={openLeadMenu}
+              showDashboard={showDashboard}
+              onToggleDashboard={() => setShowDashboard(!showDashboard)}
+            />
+          </div>
+          {isLoading ? (
+            <LeadsTableShimmer columns={columns.filter((col) => col.visible)} scrollContainerId="leads-scroll-container" />
+          ) : (
+            <>
+              <LeadsTable
+                scrollContainerId="leads-scroll-container"
+                leads={visibleLeads}
+                columns={columns.filter((col) => col.visible)}
+                selectedLeadIds={selectedLeadIds}
+                onToggleSelect={handleToggleSelect}
+                onToggleSelectAll={handleToggleSelectAll}
+                onRowClick={onSelectLead}
+                onEdit={handleEdit}
+                onSendEmail={handleSendEmail}
+                onCreateTask={handleCreateTask}
+                onAssign={handleAssign}
+                onDelete={handleDelete}
+                onConvert={handleConvert}
+                onCopyURL={handleCopyURL}
+                statuses={statuses}
+                onStatusChange={handleStatusChange}
+                onCustomFieldChange={handleCustomFieldChange}
+                isEmployee={isEmployee}
+              />
+              <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">
+                <LeadsPagination
+                  pageSize={pageSize}
+                  onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setPage(1); // Reset to first page when changing page size
+                  }}
+                  currentPage={page}
+                  onPageChange={setPage}
+                  visibleCount={visibleLeads.length}
+                  totalCount={pagination.total}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {isColumnEditorOpen && (
+        <div
+          className="absolute inset-0 bg-black/0 z-20"
+          onClick={closeColumnEditor}
+        >
+          <div
+            className="absolute right-6 top-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <LeadsColumnEditor
+              columns={columnDraft}
+              onToggleColumn={handleColumnToggle}
+              onReset={resetColumns}
+              onApply={applyColumns}
+              onClose={closeColumnEditor}
+              canToggleColumn={canToggleColumn}
+            />
+          </div>
         </div>
       )}
-      <div className="relative bg-white h-full 
-      rounded-2xl border border-slate-100 overflow-hidden flex flex-col">
-        <LeadsPageHeader
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onAddLead={handleAction("add-lead")}
-          onAddFilter={handleAction("add-filter")}
-          onRefresh={handleAction("refresh")}
-          isRefreshing={isRefetching}
-          onToggleLayout={openColumnEditor}
-          onDownload={handleAction("download")}
-          onMoreActions={openLeadMenu}
-          showDashboard={showDashboard}
-          onToggleDashboard={() => setShowDashboard(!showDashboard)}
-        />
-        {isLoading ? (
-          <LeadsTableShimmer columns={columns.filter((col) => col.visible)} />
-        ) : (
-          <>
-            <LeadsTable
-              leads={visibleLeads}
-              columns={columns.filter((col) => col.visible)}
-              selectedLeadIds={selectedLeadIds}
-              onToggleSelect={handleToggleSelect}
-              onToggleSelectAll={handleToggleSelectAll}
-              onRowClick={onSelectLead}
-              onEdit={handleEdit}
-              onSendEmail={handleSendEmail}
-              onCreateTask={handleCreateTask}
-              onAssign={handleAssign}
-              onDelete={handleDelete}
-              onConvert={handleConvert}
-              onCopyURL={handleCopyURL}
-              statuses={statuses}
-              onStatusChange={handleStatusChange}
-              onCustomFieldChange={handleCustomFieldChange}
-              isEmployee={isEmployee}
-            />
-            <LeadsPagination
-              pageSize={pageSize}
-              onPageSizeChange={(newSize) => {
-                setPageSize(newSize);
-                setPage(1); // Reset to first page when changing page size
+
+      {isLeadMenuOpen && (
+        <div
+          className="absolute inset-0 bg-black/0 z-30"
+          onClick={closeLeadMenu}
+        >
+          <div
+            className="absolute right-6 top-18"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <LeadActionsMenu
+              onClose={closeLeadMenu}
+              onUpload={openUploadModal}
+              onDownloadTemplate={handleDownloadTemplate}
+              onSettings={() => {
+                closeLeadMenu();
+                onOpenSettings && onOpenSettings();
               }}
-              currentPage={page}
-              onPageChange={setPage}
-              visibleCount={visibleLeads.length}
-              totalCount={pagination.total}
             />
-          </>
-        )}
-
-        {isColumnEditorOpen && (
-          <div
-            className="absolute inset-0 bg-black/0 z-20"
-            onClick={closeColumnEditor}
-          >
-            <div
-              className="absolute right-6 top-5"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <LeadsColumnEditor
-                columns={columnDraft}
-                onToggleColumn={handleColumnToggle}
-                onReset={resetColumns}
-                onApply={applyColumns}
-                onClose={closeColumnEditor}
-                canToggleColumn={canToggleColumn}
-              />
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {isLeadMenuOpen && (
-          <div
-            className="absolute inset-0 bg-black/0 z-30"
-            onClick={closeLeadMenu}
-          >
-            <div
-              className="absolute right-6 top-18"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <LeadActionsMenu
-                onClose={closeLeadMenu}
-                onUpload={openUploadModal}
-                onDownloadTemplate={handleDownloadTemplate}
-                onSettings={() => {
-                  closeLeadMenu();
-                  onOpenSettings && onOpenSettings();
-                }}
-              />
-            </div>
-          </div>
-        )}
+      <LeadUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={closeUploadModal}
+        file={selectedFile}
+        onFileSelect={setSelectedFile}
+        onUpload={handleUploadStart}
+        uploadProgress={uploadProgress}
+        isUploading={isUploading}
+      />
 
-        <LeadUploadModal
-          isOpen={isUploadModalOpen}
-          onClose={closeUploadModal}
-          file={selectedFile}
-          onFileSelect={setSelectedFile}
-          onUpload={handleUploadStart}
-          uploadProgress={uploadProgress}
-          isUploading={isUploading}
-        />
+      <AddLeadModal
+        isOpen={isAddLeadModalOpen}
+        onClose={() => setAddLeadModalOpen(false)}
+        onSuccess={handleLeadCreated}
+      />
 
-        <AddLeadModal
-          isOpen={isAddLeadModalOpen}
-          onClose={() => setAddLeadModalOpen(false)}
-          onSuccess={handleLeadCreated}
-        />
+      <AssignLeadModal
+        isOpen={isAssignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedLeadForAssign(null);
+        }}
+        onAssign={handleAssignConfirm}
+        currentOwner={selectedLeadForAssign?.owner}
+      />
 
-        <AssignLeadModal
-          isOpen={isAssignModalOpen}
-          onClose={() => {
-            setAssignModalOpen(false);
-            setSelectedLeadForAssign(null);
-          }}
-          onAssign={handleAssignConfirm}
-          currentOwner={selectedLeadForAssign?.owner}
-        />
-
-        <LeadsFilterDrawer
-          isOpen={isFilterDrawerOpen}
-          onClose={() => setFilterDrawerOpen(false)}
-          onApplyFilters={handleApplyFilters}
-          formFields={formFields}
-          statuses={statuses}
-          currentFilters={appliedFilters}
-        />
-      </div>
+      <LeadsFilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        onApplyFilters={handleApplyFilters}
+        formFields={formFields}
+        statuses={statuses}
+        currentFilters={appliedFilters}
+      />
     </section>
   );
 };

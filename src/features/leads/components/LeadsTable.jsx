@@ -1,6 +1,7 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import LeadRow from "./LeadRow";
+import LeadCard from "./LeadCard";
 
 const headerClasses =
   "px-6 py-3 text-left text-xs whitespace-nowrap font-semibold uppercase sticky top-0 z-20 bg-slate-50 tracking-wide text-slate-500";
@@ -26,6 +27,7 @@ const LeadsTable = ({
   onStatusChange,
   onCustomFieldChange,
   isEmployee = false,
+  scrollContainerId,
 }) => {
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
   const isAllSelected =
@@ -38,12 +40,23 @@ const LeadsTable = ({
 
   const rowVirtualizer = useVirtualizer({
     count: leads.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 64, // Estimate height of a row
+    getScrollElement: () =>
+      scrollContainerId
+        ? document.getElementById(scrollContainerId)
+        : parentRef.current,
+    estimateSize: () => 48, // Reduced estimate height for desktop row
     overscan: 10,
   });
 
   const virtualRows = rowVirtualizer.getVirtualItems();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const totalSize = rowVirtualizer.getTotalSize();
 
   const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
@@ -52,8 +65,56 @@ const LeadsTable = ({
       ? totalSize - virtualRows[virtualRows.length - 1].end
       : 0;
 
+  if (isMobile) {
+    return (
+      <div
+        className={`flex flex-col gap-1.5 px-3 py-2 ${!scrollContainerId ? 'h-full overflow-y-auto' : ''}`}
+        ref={!scrollContainerId ? parentRef : null}
+      >
+        {showEmptyState ? (
+          <div className="px-6 py-12 text-center text-sm text-slate-500 bg-white rounded-xl border border-slate-100">
+            No leads found. Try adjusting your filters or create a new lead.
+          </div>
+        ) : (
+          <>
+            <div style={{ height: `${paddingTop}px` }} />
+            {virtualRows.map((virtualRow) => {
+              const lead = leads[virtualRow.index];
+              const leadId = String(lead._id || lead.id);
+              return (
+                <LeadCard
+                  key={leadId}
+                  lead={lead}
+                  columns={columns}
+                  isSelected={selectedLeadIds.includes(leadId)}
+                  onToggle={onToggleSelect}
+                  onRowClick={onRowClick}
+                  onEdit={onEdit}
+                  onSendEmail={onSendEmail}
+                  onCreateTask={onCreateTask}
+                  onAssign={onAssign}
+                  onDelete={onDelete}
+                  onConvert={onConvert}
+                  onCopyURL={onCopyURL}
+                  statuses={statuses}
+                  onStatusChange={onStatusChange}
+                  onCustomFieldChange={onCustomFieldChange}
+                  isEmployee={isEmployee}
+                />
+              );
+            })}
+            <div style={{ height: `${paddingBottom}px` }} />
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto h-full overflow-y-auto" ref={parentRef}>
+    <div
+      className={`overflow-x-auto ${!scrollContainerId ? 'h-full overflow-y-auto' : ''}`}
+      ref={!scrollContainerId ? parentRef : null}
+    >
       <table className="min-w-full border-separate border-spacing-0">
         <thead className="bg-slate-50 text-slate-500 sticky top-0 z-30">
           <tr>

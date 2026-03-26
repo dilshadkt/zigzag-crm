@@ -69,6 +69,9 @@ const LeadsPage = lazy(() => import("../pages/leads"));
 const LeadDetailsPage = lazy(() => import("../pages/leads/LeadDetails"));
 const LeadSettingsPage = lazy(() => import("../pages/leads/LeadSettings"));
 const Billing = lazy(() => import("../pages/settings/billing"));
+const LeadDashboard = lazy(() => import("../pages/dashboard/LeadDashboard"));
+const EmployeeDashboard = lazy(() => import("../pages/dashboard/EmployeeDashboard"));
+const CostDashboard = lazy(() => import("../pages/dashboard/CostDashboard"));
 
 const AppRoutes = () => {
   return (
@@ -95,6 +98,30 @@ const AppRoutes = () => {
             element={
               <RouteAccess>
                 <CompanyDashboard />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="lead-dashboard"
+            element={
+              <RouteAccess>
+                <LeadDashboard />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="employee-dashboard"
+            element={
+              <RouteAccess>
+                <EmployeeDashboard />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="cost-dashboard"
+            element={
+              <RouteAccess>
+                <CostDashboard />
               </RouteAccess>
             }
           />

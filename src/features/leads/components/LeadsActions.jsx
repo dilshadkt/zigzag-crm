@@ -10,7 +10,7 @@ import {
 import LeadsSearchBar from "./LeadsSearchBar";
 
 const iconButtonClasses =
-  "h-11 w-11 flex  items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors";
+  "h-9 w-9 md:h-11 md:w-11 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors";
 
 const LeadsActions = ({
   onAddLead,
@@ -40,17 +40,19 @@ const LeadsActions = ({
         </button>
         <button
           onClick={onAddLead}
-          className="md:inline-flex hidden  items-center gap-2 bg-[#3f8cff] text-white text-sm font-medium px-5 h-11 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"
+          className="flex items-center justify-center bg-[#3f8cff] text-white h-9 w-9 md:h-11 md:w-auto md:px-5 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"
+          aria-label="Add lead"
         >
-          <FiPlus size={16} />
-          Add Lead
+          <FiPlus size={18} className="md:w-[16px]" />
+          <span className="hidden md:inline ml-2">Add Lead</span>
         </button>
         <button
           onClick={onAddFilter}
-          className="md:inline-flex hidden  items-center gap-2 border border-slate-200 text-slate-700 text-sm font-medium px-4 h-11 rounded-full hover:border-slate-300 transition-colors"
+          className="flex items-center justify-center border border-slate-200 text-slate-700 h-9 w-9 md:h-11 md:w-auto md:px-4 rounded-full hover:border-slate-300 transition-colors"
+          aria-label="Add filter"
         >
-          <FiFilter size={16} />
-          Add Filter
+          <FiFilter size={16} className="md:w-[16px]" />
+          <span className="hidden md:inline ml-2">Filter</span>
         </button>
         <button
           onClick={onRefresh}

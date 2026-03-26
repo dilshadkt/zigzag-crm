@@ -23,7 +23,7 @@ import {
   FiCheckCircle,
   FiTarget,
 } from "react-icons/fi";
-import { MdOutlineLeaderboard } from "react-icons/md";  
+import { MdOutlineLeaderboard, MdPayments } from "react-icons/md";
 
 export const SIDE_MENU = [
   {
@@ -32,6 +32,32 @@ export const SIDE_MENU = [
     icon: FiHome,
     path: "/",
     routeKey: "dashboard",
+    children: [
+      {
+        id: 101,
+        title: "Main Dashboard",
+        path: "/",
+        routeKey: "dashboard",
+      },
+      {
+        id: 102,
+        title: "Lead Dashboard",
+        path: "/lead-dashboard",
+        routeKey: "lead-dashboard",
+      },
+      // {
+      //   id: 103,
+      //   title: "Employee Dashboard",
+      //   path: "/employee-dashboard",
+      //   routeKey: "employee-dashboard",
+      // },
+      // {
+      //   id: 104,
+      //   title: "Cost Dashboard",
+      //   path: "/cost-dashboard",
+      //   routeKey: "cost-dashboard",
+      // },
+    ],
   },
   {
     id: 2,
@@ -389,7 +415,6 @@ import { FaRegUser, FaDatabase } from "react-icons/fa6";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { BsBuildings } from "react-icons/bs";
 import { AiOutlineSafety } from "react-icons/ai";
-import { MdPayments } from "react-icons/md";
 
 export const SETTINGS = [
   {

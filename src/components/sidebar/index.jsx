@@ -6,7 +6,11 @@ import PrimaryButton from "../shared/buttons/primaryButton";
 import { useAuth } from "../../hooks/useAuth";
 import { useRouteAccess } from "../../hooks/useRouteAccess";
 import { usePermissions } from "../../hooks/usePermissions";
-import { MdDashboard } from "react-icons/md";
+import {
+  MdDashboard,
+  MdKeyboardArrowDown,
+  MdKeyboardArrowRight,
+} from "react-icons/md";
 import {
   useGetTasksOnReview,
   useGetTasksOnPublish,
@@ -48,22 +52,47 @@ const Sidebar = () => {
   const isCompanyAdmin = user?.role === "company-admin";
   const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
 
-  // Build sidebar menu items - only add Company Dashboard if user has permission (but NOT for admins)
-  const sidebarMenuItems = [...SIDE_MENU];
+  // Build sidebar menu items - restrict Dashboard sub-items and handle Company Dashboard
+  const sidebarMenuItems = SIDE_MENU.map((item) => {
+    // If the item is "Dashboard", check if sub-items should be shown
+    if (item.routeKey === "dashboard") {
+      // ONLY Company Admin sees sub-items under the main "Dashboard"
+      if (isCompanyAdmin) {
+        return item;
+      }
+      // Others see a flat "Dashboard" link
+      const { children, ...rest } = item;
+      return rest;
+    }
+    return item;
+  });
 
   // IMPORTANT: Only add Company Dashboard menu item if user has the permission AND is NOT a company admin
   if (canAccessAdminDashboard) {
-    // Insert Company Dashboard after Dashboard
     const dashboardIndex = sidebarMenuItems.findIndex(
       (item) => item.routeKey === "dashboard"
     );
+    
+    // Get the sub-items template from SIDE_MENU
+    const dashboardItem = SIDE_MENU.find(i => i.routeKey === "dashboard");
+    const subItems = dashboardItem?.children || [];
+
     if (dashboardIndex !== -1) {
       sidebarMenuItems.splice(dashboardIndex + 1, 0, {
         id: 13,
         title: "Company Dashboard",
         icon: MdDashboard,
-        path: "/company-dashboard",
         routeKey: "company-dashboard",
+        children: [
+          {
+            id: 1301,
+            title: "Company Overview",
+            path: "/company-dashboard",
+            routeKey: "company-dashboard",
+          },
+          // Add Lead, Employee, and Cost dashboards (skipping the main dashboard which is redundant here)
+          ...subItems.filter(child => child.routeKey !== 'dashboard')
+        ],
       });
     }
   }
@@ -108,6 +137,27 @@ const Sidebar = () => {
   const { pathname } = useLocation();
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [openMenus, setOpenMenus] = useState(() => {
+    const initialOpenMenus = {};
+    filteredSidebar.forEach((item) => {
+      if (item.children) {
+        const isChildActive = item.children.some(
+          (child) => pathname === child.path
+        );
+        if (isChildActive) {
+          initialOpenMenus[item.title] = true;
+        }
+      }
+    });
+    return initialOpenMenus;
+  });
+
+  const toggleMenu = (title) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
 
   const handleLogout = () => {
     navigate("/auth/signin");
@@ -121,22 +171,26 @@ const Sidebar = () => {
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
             filteredSidebar.map((item, index) => {
+              const hasChildren = item.children && item.children.length > 0;
+              const isOpen = openMenus[item.title];
+              const isActive = pathname === item.path || (hasChildren && item.children.some(child => pathname === child.path));
+
               // Get count for "Task on Review", "Task on Publish", and "Client Review" menu items
-              const getTaskCount = () => {
+              const getTaskCount = (menuItem) => {
                 if (
-                  item.routeKey === "task-on-review" &&
+                  menuItem.routeKey === "task-on-review" &&
                   tasksOnReviewData?.tasks?.length
                 ) {
                   return tasksOnReviewData.tasks.length;
                 }
                 if (
-                  item.routeKey === "task-on-publish" &&
+                  menuItem.routeKey === "task-on-publish" &&
                   tasksOnPublishData?.tasks?.length
                 ) {
                   return tasksOnPublishData.tasks.length;
                 }
                 if (
-                  item.routeKey === "client-review" &&
+                  menuItem.routeKey === "client-review" &&
                   clientReviewData?.tasks?.length
                 ) {
                   return clientReviewData.tasks.length;
@@ -144,29 +198,76 @@ const Sidebar = () => {
                 return null;
               };
 
-              const taskCount = getTaskCount();
+              const taskCount = getTaskCount(item);
 
               return (
-                <li
-                  key={index}
-                  onClick={() => navigate(item.path)}
-                  className={` relative cursor-pointer px-2 py-[10px] flexStart
-          gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${pathname === item.path && `bg-[#ECF3FF] text-[#3F8CFF]`
-                    }`}
-                >
-                  <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
-                  <span
-                    className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
-            transition-all duration-300 text-sm flex-1"
+                <li key={index} className="flex flex-col gap-y-1">
+                  <div
+                    onClick={() => {
+                      if (hasChildren) {
+                        toggleMenu(item.title);
+                      } else {
+                        navigate(item.path);
+                      }
+                    }}
+                    className={` relative cursor-pointer px-2 py-[10px] flexStart
+          gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${isActive && `bg-[#ECF3FF] text-[#3F8CFF]`
+                      }`}
                   >
-                    {item.title}
-                  </span>
-                  {taskCount !== null && taskCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs px-1 py-0.5 rounded-full min-w-[20px] text-center">
-                      {taskCount}
+                    <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
+                    <span
+                      className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
+            transition-all duration-300 text-sm flex-1"
+                    >
+                      {item.title}
                     </span>
-                  )}
+                    {taskCount !== null && taskCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-1 py-0.5 rounded-full min-w-[20px] text-center">
+                        {taskCount}
+                      </span>
+                    )}
+                    {hasChildren && (
+                      <div className="text-gray-400">
+                        {isOpen ? (
+                          <MdKeyboardArrowDown className="text-xl" />
+                        ) : (
+                          <MdKeyboardArrowRight className="text-xl" />
+                        )}
+                      </div>
+                    )}
+                  </div>
 
+                  {/* Render Sub-items */}
+                  {hasChildren && isOpen && (
+                    <ul className="flex flex-col gap-y-1   border-[#F4F9FD]">
+                      {item.children.map((child, childIdx) => {
+                        const childTaskCount = getTaskCount(child);
+                        const isChildActive = pathname === child.path;
+
+                        return (
+                          <li
+                            key={childIdx}
+                            onClick={() => navigate(child.path)}
+                            className={`relative cursor-pointer px-3 py-[8px] flexStart
+                    gap-x-3 rounded-[8px] hover:bg-[#ECF3FF] group ${isChildActive && `text-[#3F8CFF]`
+                              }`}
+                          >
+                            <span
+                              className={`group-hover:text-[#3F8CFF] group-hover:translate-x-1
+                      transition-all duration-300 text-[13px] flex-1 ${isChildActive ? 'font-medium' : ''}`}
+                            >
+                              {child.title}
+                            </span>
+                            {childTaskCount !== null && childTaskCount > 0 && (
+                              <span className="bg-red-500 text-white text-[10px] px-1 py-0.5 rounded-full min-w-[16px] text-center">
+                                {childTaskCount}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })
