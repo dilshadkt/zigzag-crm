@@ -67,21 +67,23 @@ const Master = () => {
   };
 
   return (
-    <div className="h-fit md:h-full md:overflow-y-auto flex flex-col">
+    <div className="h-full overflow-y-auto flex flex-col pr-1">
       {/* Project Fields Header */}
       <ProjectFieldsHeader
         fieldsCount={customFields ? customFields.length : 0}
         onAdd={() => setShowFieldModal(true)}
       />
 
-      {/* Project Fields Section */}
-      <ProjectFieldsSection
-        fields={customFields || []}
-        isLoading={isLoading}
-        error={error}
-        onEdit={handleEditField}
-        onDelete={handleDeleteField}
-      />
+      {/* Content Section */}
+      <div className="flex-1 space-y-4">
+        <ProjectFieldsSection
+          fields={customFields || []}
+          isLoading={isLoading}
+          error={error}
+          onEdit={handleEditField}
+          onDelete={handleDeleteField}
+        />
+      </div>
 
       {/* Project Field Modal */}
       {showFieldModal && (

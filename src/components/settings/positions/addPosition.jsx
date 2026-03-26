@@ -2,377 +2,189 @@ import React from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { useCreatePosition, useUpdatePosition } from "../../../api/hooks";
-import { toast } from "react-toastify";
-import PrimaryButton from "../../../components/shared/buttons/primaryButton";
+import { toast } from "react-hot-toast";
+import ModalLayout from "../../shared/modal";
+import { FiShield, FiLayout, FiCalendar, FiUsers, FiMessageSquare, FiTarget, FiZap, FiEye, FiCloud, FiCheck, FiMap, FiClock, FiPlus, FiGrid, FiBarChart2, FiFileText } from "react-icons/fi";
 
 const validationSchema = Yup.object().shape({
-  name: Yup.string().required("Position name is required"),
+  name: Yup.string().required("Position identity required"),
   allowedRoutes: Yup.array().of(Yup.string()),
 });
 
 const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
-  const { mutate: createPosition, isLoading: isCreating } =
-    useCreatePosition(companyId);
-  const { mutate: updatePosition, isLoading: isUpdating } =
-    useUpdatePosition(companyId);
+  const { mutate: createPosition, isLoading: isCreating } = useCreatePosition(companyId);
+  const { mutate: updatePosition, isLoading: isUpdating } = useUpdatePosition(companyId);
+
+  const routeOptions = [
+    { value: "projects", label: "Client Hub", icon: <FiLayout />, desc: "Client & project management" },
+    { value: "board", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards" },
+    { value: "calendar", label: "Timeline", icon: <FiCalendar />, desc: "Global scheduling system" },
+    { value: "vacations", label: "Time Off", icon: <FiMap />, desc: "Leave & vacation management" },
+    { value: "employees", label: "Team Directory", icon: <FiUsers />, desc: "Workforce data management" },
+    { value: "messenger", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub" },
+    { value: "leads", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking" },
+    { value: "campaigns", label: "Marketing", icon: <FiZap />, desc: "Outreach & campaign data" },
+    { value: "task-on-review", label: "Quality Control", icon: <FiEye />, desc: "Peer review dashboard" },
+    { value: "task-on-publish", label: "Production", icon: <FiCloud />, desc: "Ready for deployment" },
+    { value: "client-review", label: "Approvals", icon: <FiCheck />, desc: "External feedback cycle" },
+    { value: "attendance", label: "Time Tracking", icon: <FiClock />, desc: "Attendance analytics" },
+    { value: "workload", label: "Workload", icon: <FiBarChart2 />, desc: "Team capacity & distribution" },
+    { value: "events", label: "Company Events", icon: <FiCalendar />, desc: "Corporate events & meets" },
+    { value: "sticky-notes", label: "Quick Notes", icon: <FiFileText />, desc: "Personal scratchpad" },
+    { value: "timer", label: "Active Timer", icon: <FiClock />, desc: "Task time logging" },
+  ];
 
   const handleSubmit = (values, { resetForm }) => {
-    const positionData = {
-      ...values,
-      companyId,
-    };
+    const positionData = { ...values, companyId };
 
     if (initialValues) {
       updatePosition(
-        { id: initialValues._id, data: positionData },
+        { id: initialValues._id, ...positionData },
         {
           onSuccess: () => {
-            toast.success("Position updated successfully");
-            handleClose(resetForm);
+            toast.success("Role config updated");
+            setShowModal(false);
           },
-          onError: (error) => {
-            toast.error(
-              error.response?.data?.message || "Error updating position"
-            );
-          },
+          onError: (error) => toast.error(error.response?.data?.message || "Role update failed"),
         }
       );
     } else {
       createPosition(positionData, {
         onSuccess: () => {
-          toast.success("Position created successfully");
-          handleClose(resetForm);
+          toast.success("New role established");
+          resetForm();
+          setShowModal(false);
         },
-        onError: (error) => {
-          toast.error(
-            error.response?.data?.message || "Error creating position"
-          );
-        },
+        onError: (error) => toast.error(error.response?.data?.message || "Role deployment failed"),
       });
     }
   };
 
-  const handleClose = (resetForm) => {
-    resetForm();
-    setShowModal(false);
-  };
-
-  if (!isOpen) return null;
-
-  const routeOptions = [
-    { value: "projects", label: "Clients", icon: "📁" },
-    { value: "calendar", label: "Calendar", icon: "📅" },
-    { value: "vacations", label: "Vacations", icon: "🏖️" },
-    { value: "employees", label: "Employees", icon: "👥" },
-    { value: "messenger", label: "Messenger", icon: "💬" },
-    { value: "leads", label: "Leads", icon: "🎯" },
-    { value: "campaigns", label: "Campaigns", icon: "🚀" },
-    { value: "task-on-review", label: "Task on Review", icon: "👀" },
-    { value: "task-on-publish", label: "Task on Publish", icon: "☁️" },
-    { value: "client-review", label: "Client Review", icon: "✅" },
-    { value: "attendance", label: "Attendance", icon: "👆" },
-  ];
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                {initialValues ? "Edit Position" : "Add New Position"}
-              </h2>
-              <p className="text-xs text-gray-600">
-                {initialValues
-                  ? "Update position details and permissions"
-                  : "Create a new position with specific permissions"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleClose(() => {})}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+    <ModalLayout
+      isOpen={isOpen}
+      setIsOpen={setShowModal}
+      maxWidth="sm:max-w-2xl"
+      title={initialValues ? "Adjust Role Policy" : "Define New Organization Role"}
+    >
+      <Formik
+        initialValues={{
+          name: initialValues?.name || "",
+          allowedRoutes: initialValues?.allowedRoutes || [],
+        }}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+        enableReinitialize={true}
+      >
+        {({ errors, touched, values, setFieldValue }) => (
+          <Form className="w-full flex flex-col gap-5">
+            <div className="space-y-5 px-1">
+              {/* Role Title */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight ml-1">
+                  Role Descriptor Name
+                </label>
+                <div className="relative group">
+                  <Field
+                    name="name"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 text-[13px] font-bold transition-all duration-200 outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/5 placeholder:text-gray-300"
+                    placeholder="e.g. Lead Strategist, Senior Creative"
+                  />
+                  <FiShield className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-400 transition-colors" />
+                </div>
+                {errors.name && touched.name && (
+                  <span className="text-[10px] font-bold text-red-500 ml-1 uppercase">{errors.name}</span>
+                )}
+              </div>
 
-        <Formik
-          initialValues={{
-            name: initialValues?.name || "",
-            allowedRoutes: initialValues?.allowedRoutes || [],
-          }}
-          validationSchema={validationSchema}
-          onSubmit={handleSubmit}
-          enableReinitialize={true}
-          validateOnMount={true}
-          initialTouched={{
-            name: true,
-            allowedRoutes: true,
-          }}
-        >
-          {({ errors, touched, isSubmitting, values, setFieldValue }) => (
-            <Form className="flex flex-col flex-1 overflow-hidden">
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Position Name Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <h3 className="text-sm font-semibold text-gray-900">
-                      Position Details
-                    </h3>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-medium text-gray-700">
-                      Position Name *
-                    </label>
-                    <Field
-                      type="text"
-                      name="name"
-                      className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
-                      placeholder="e.g. Senior Developer, Marketing Manager"
-                    />
-                    {errors.name && touched.name && (
-                      <p className="text-red-500 text-xs flex items-center space-x-1">
-                        <svg
-                          className="w-3 h-3"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>{errors.name}</span>
-                      </p>
-                    )}
-                  </div>
+              {/* Scope/Permissions */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between ml-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+                    Authorized System Scopes
+                  </label>
+                  <span className="text-[10px] items-center gap-1 font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md flex border border-blue-100 uppercase">
+                    <FiGrid className="w-2.5 h-2.5" /> {values.allowedRoutes.length} Scopes
+                  </span>
                 </div>
 
-                {/* Permissions Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        Access Permissions
-                      </h3>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {values.allowedRoutes.length} selected
-                    </span>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                      <p className="text-xs text-blue-700">
-                        <strong>Note:</strong> Dashboard, Board, and Settings
-                        are always accessible to all users and don't need to be
-                        selected here.
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-3">
-                      Select which additional areas this position can access
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-2">
-                      {routeOptions.map((route) => (
-                        <label
-                          key={route.value}
-                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all cursor-pointer group"
-                        >
+                <div className="grid grid-cols-2 gap-2">
+                  {routeOptions.map((route) => {
+                    const isActive = values.allowedRoutes.includes(route.value);
+                    return (
+                      <label
+                        key={route.value}
+                        className={`flex flex-col p-3 rounded-2xl border transition-all duration-300 cursor-pointer ${
+                          isActive 
+                            ? "bg-white border-blue-200 shadow-md shadow-blue-500/5 ring-1 ring-blue-500/10" 
+                            : "bg-gray-50/50 border-gray-100 hover:border-gray-200 hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[13px] transition-colors ${
+                            isActive ? "bg-blue-500 text-white" : "bg-white border border-gray-100 text-gray-400"
+                          }`}>
+                            {route.icon}
+                          </div>
+                          <span className={`text-[12px] font-bold truncate ${isActive ? "text-gray-800" : "text-gray-500"}`}>
+                            {route.label}
+                          </span>
                           <Field
                             type="checkbox"
                             name="allowedRoutes"
                             value={route.value}
-                            checked={values.allowedRoutes.includes(route.value)}
+                            className="hidden"
+                            checked={isActive}
                             onChange={(e) => {
-                              const newRoutes = e.target.checked
+                              const next = e.target.checked 
                                 ? [...values.allowedRoutes, route.value]
-                                : values.allowedRoutes.filter(
-                                    (r) => r !== route.value
-                                  );
-                              setFieldValue("allowedRoutes", newRoutes);
+                                : values.allowedRoutes.filter(r => r !== route.value);
+                              setFieldValue("allowedRoutes", next);
                             }}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 transition-all"
                           />
-                          <span className="text-lg">{route.icon}</span>
-                          <div className="flex-1">
-                            <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-                              {route.label}
-                            </span>
-                            <p className="text-xs text-gray-500">
-                              {route.value === "projects"
-                                ? "Client and project management"
-                                : route.value === "calendar"
-                                ? "Schedule and events management"
-                                : route.value === "vacations"
-                                ? "Time-off and vacation management"
-                                : route.value === "employees"
-                                ? "Employee management and profiles"
-                                : route.value === "messenger"
-                                ? "Internal messaging and communication"
-                                : route.value === "leads"
-                                ? "Lead management and CRM"
-                                : route.value === "campaigns"
-                                ? "Marketing and campaign management"
-                                : route.value === "task-on-review"
-                                ? "Tasks pending review and approval"
-                                : route.value === "task-on-publish"
-                                ? "Tasks ready for publishing"
-                                : route.value === "client-review"
-                                ? "Client feedback and review process"
-                                : route.value === "attendance"
-                                ? "Employee attendance tracking"
-                                : "System access and management"}
-                            </p>
-                          </div>
-                          {values.allowedRoutes.includes(route.value) && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                {values.allowedRoutes.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <svg
-                        className="w-4 h-4 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <h4 className="text-xs font-semibold text-blue-900">
-                        Permission Summary
-                      </h4>
-                    </div>
-                    <p className="text-xs text-blue-700">
-                      This position will have access to{" "}
-                      <strong>{values.allowedRoutes.length}</strong> area
-                      {values.allowedRoutes.length !== 1 ? "s" : ""} of the
-                      system.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="p-6 border-t border-gray-200 bg-gray-50">
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => handleClose(() => {})}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={
-                      isCreating ||
-                      isUpdating ||
-                      isSubmitting ||
-                      !values.name.trim()
-                    }
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                  >
-                    {isCreating || isUpdating ? (
-                      <span className="flex items-center justify-center space-x-2">
-                        <svg
-                          className="w-4 h-4 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        <span>
-                          {initialValues ? "Updating..." : "Creating..."}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center space-x-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                        <span>
-                          {initialValues
-                            ? "Update Position"
-                            : "Create Position"}
-                        </span>
-                      </span>
-                    )}
-                  </button>
+                          {isActive && <FiCheck className="ml-auto w-3.5 h-3.5 text-blue-500" />}
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-medium leading-[1.3] pl-9">
+                          {route.desc}
+                        </p>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
-            </Form>
-          )}
-        </Formik>
-      </div>
-    </div>
+
+              {/* Policy Note */}
+              <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-3 flex gap-3">
+                <FiPlus className="text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] font-medium text-amber-700/80 leading-relaxed uppercase tracking-tight">
+                  Note: Base system access (Dashboard, Board & General Settings) is implicitly granted to all organization roles.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 mt-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-[12px] font-bold text-gray-500 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isCreating || isUpdating}
+                className="px-6 py-2 text-[12px] font-bold text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {isCreating || isUpdating 
+                  ? "Configuring Role..." 
+                  : initialValues ? "Update Security Policy" : "Establish Role Scope"}
+              </button>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </ModalLayout>
   );
 };
 

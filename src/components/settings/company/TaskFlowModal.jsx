@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useEmpoyees } from "../../../api/hooks";
 import { useCreateTaskFlow, useUpdateTaskFlow } from "../../../api/hooks";
+import ModalLayout from "../../shared/modal";
+import { FiPlus, FiTrash2, FiLayers, FiUser, FiHash, FiCheckCircle, FiInfo, FiChevronRight } from "react-icons/fi";
 
 const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   const [name, setName] = useState(taskFlow?.name || "");
@@ -15,10 +17,10 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
       }))
       : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]
   );
+  
   const { data: employeesData } = useEmpoyees(1);
   const employees = employeesData?.employees || [];
 
-  // Available task types for dropdown
   const taskTypes = [
     "content",
     "design",
@@ -30,33 +32,24 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   ];
 
   const createTaskFlow = useCreateTaskFlow(companyId, () => {
-    console.log("Task flow created successfully");
-    // Reset form
     setName("");
     setFlows([{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]);
     onClose();
   });
 
   const updateTaskFlow = useUpdateTaskFlow(companyId, () => {
-    console.log("Task flow updated successfully");
     onClose();
   });
-
-  // Add error handling
-  if (createTaskFlow.error) {
-    console.error("Task flow creation error:", createTaskFlow.error);
-  }
-  if (updateTaskFlow.error) {
-    console.error("Task flow update error:", updateTaskFlow.error);
-  }
 
   const handleFlowChange = (idx, field, value) => {
     setFlows((prev) =>
       prev.map((f, i) => (i === idx ? { ...f, [field]: value } : f))
     );
   };
+
   const addFlow = () =>
     setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]);
+    
   const removeFlow = (idx) =>
     setFlows((prev) => prev.filter((_, i) => i !== idx));
 
@@ -65,314 +58,194 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
     setLocalError("");
 
     if (!name.trim()) {
-      setLocalError("Task flow name is required");
+      setLocalError("Pipeline name is required");
       return;
     }
 
     for (let i = 0; i < flows.length; i++) {
       const f = flows[i];
-      if (
-        !f.taskName.trim() ||
-        !f.assignee ||
-        f.weightage === undefined ||
-        f.weightage === null
-      ) {
-        setLocalError(
-          `Flow ${i + 1} must have taskName, assignee, and weightage`
-        );
+      if (!f.taskName.trim() || !f.assignee) {
+        setLocalError(`Stage ${i + 1} requires a task type and assignee`);
         return;
       }
     }
 
-    console.log("Submitting task flow:", { name, flows });
-
     if (taskFlow) {
-      // Update existing task flow
       updateTaskFlow.mutate({
         taskFlowId: taskFlow._id,
         taskFlowData: { name, flows },
       });
     } else {
-      // Create new task flow
       createTaskFlow.mutate({ name, flows });
     }
   };
 
-  if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-xl mx-4">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {taskFlow ? "Edit Task Flow" : "Create Task Flow"}
-            </h2>
-            <button
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              onClick={onClose}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Task Flow Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
+    <ModalLayout
+      isOpen={isOpen}
+      setIsOpen={onClose}
+      maxWidth="sm:max-w-2xl"
+      title={taskFlow ? "Edit Pipeline Workflow" : "Configure New Pipeline"}
+    >
+      <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
+        <div className="space-y-5">
+          {/* Pipeline Identity */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight ml-1">
+              Pipeline Identity Name
+            </label>
+            <div className="relative">
               <input
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                placeholder="Enter task flow name"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl py-2 px-3 text-[13px] font-medium transition-all duration-200 outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/5 placeholder:text-gray-300"
+                placeholder="e.g. standard Content Production, VIP Design Flow"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300">
+                <FiLayers className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Workflow Chain */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between ml-1">
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+                Process Chain Stages
+              </label>
+              <button
+                type="button"
+                onClick={addFlow}
+                className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase flex items-center gap-1 transition-colors"
+              >
+                <FiPlus className="w-3 h-3" /> Add Stage
+              </button>
             </div>
 
-            {/* Flow Steps */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  Steps
-                </label>
-                <span className="text-xs text-gray-500">
-                  {flows.length} step{flows.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {flows.map((flow, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    {/* Step Number */}
-                    <div className="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-gray-600">
-                        {idx + 1}
-                      </span>
+            <div className="flex flex-col gap-2">
+              {flows.map((flow, idx) => (
+                <div 
+                  key={idx} 
+                  className="group flex flex-col gap-2 p-3 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-white hover:border-blue-100 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 relative"
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Stage Number */}
+                    <div className="w-6 h-6 shrink-0 bg-white border border-gray-100 rounded-lg flex items-center justify-center text-[10px] font-bold text-gray-400">
+                      {idx + 1}
                     </div>
 
-                    {/* Task Type */}
-                    <select
-                      className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                      value={flow.taskName}
-                      onChange={(e) =>
-                        handleFlowChange(idx, "taskName", e.target.value)
-                      }
-                      required
-                    >
-                      <option value="">Task Type</option>
-                      {taskTypes.map((taskType) => (
-                        <option
-                          key={taskType}
-                          value={taskType}
-                          className="capitalize"
-                        >
-                          {taskType}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Weightage */}
-                    <input
-                      type="number"
-                      min="0"
-                      max="10"
-                      className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-center"
-                      value={flow.weightage}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        handleFlowChange(
-                          idx,
-                          "weightage",
-                          isNaN(val) ? 0 : val
-                        );
-                      }}
-                      placeholder="Weight"
-                      title="Task weightage (0-10)"
-                    />
-
-                    {/* Arrow */}
-                    <div className="text-gray-400">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {/* Task Selection */}
+                    <div className="flex-1">
+                      <select
+                        className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-bold text-gray-700 outline-none focus:border-blue-400 transition-colors cursor-pointer appearance-none"
+                        value={flow.taskName}
+                        onChange={(e) => handleFlowChange(idx, "taskName", e.target.value)}
+                        required
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                        <option value="">Select Stage Type</option>
+                        {taskTypes.map((type) => (
+                          <option key={type} value={type} className="capitalize">{type}</option>
+                        ))}
+                      </select>
                     </div>
 
-                    {/* Assignee */}
-                    <select
-                      className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                      value={flow.assignee}
-                      onChange={(e) =>
-                        handleFlowChange(idx, "assignee", e.target.value)
-                      }
-                      required
-                    >
-                      <option value="">Assignee</option>
-                      {employees.map((emp) => (
-                        <option key={emp._id} value={emp._id}>
-                          {emp.name}
-                        </option>
-                      ))}
-                    </select>
+                    <FiChevronRight className="text-gray-300 shrink-0" />
 
-                    {/* Client Approval Checkbox */}
-                    <div className="flex items-center gap-1 min-w-fit" title="Client approval needed for this step">
+                    {/* Assignee Selection */}
+                    <div className="flex-1 relative">
+                      <select
+                        className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-bold text-gray-700 outline-none focus:border-blue-400 transition-colors cursor-pointer appearance-none"
+                        value={flow.assignee}
+                        onChange={(e) => handleFlowChange(idx, "assignee", e.target.value)}
+                        required
+                      >
+                        <option value="">Stage Lead (Assignee)</option>
+                        {employees.map((emp) => (
+                          <option key={emp._id} value={emp._id}>{emp.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Weightage Small */}
+                    <div className="w-16 flex flex-col gap-1 shrink-0">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          className="w-full bg-white border border-gray-200 rounded-lg pl-6 pr-2 py-1.5 text-[12px] font-bold text-gray-700 outline-none focus:border-blue-400 transition-colors"
+                          value={flow.weightage}
+                          onChange={(e) => handleFlowChange(idx, "weightage", parseInt(e.target.value) || 0)}
+                        />
+                        <FiHash className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-300 w-3 h-3" />
+                      </div>
+                    </div>
+
+                    {/* Remove Action */}
+                    {flows.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeFlow(idx)}
+                        className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <FiTrash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Settings Bar */}
+                  <div className="flex items-center gap-4 pl-9 mt-1">
+                    <label className="flex items-center gap-1.5 cursor-pointer group/opt">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        className="peer sr-only"
                         checked={flow.requiresClientApproval}
                         onChange={(e) => handleFlowChange(idx, "requiresClientApproval", e.target.checked)}
                       />
-                      <span className="text-[10px] text-gray-500 uppercase font-medium">Apprvl</span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-1">
-                      {flows.length > 1 && (
-                        <button
-                          type="button"
-                          className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                          onClick={() => removeFlow(idx)}
-                          title="Remove step"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                      {idx === flows.length - 1 && (
-                        <button
-                          type="button"
-                          className="p-1 text-green-500 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
-                          onClick={addFlow}
-                          title="Add step"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Error Display */}
-            {(createTaskFlow.error || updateTaskFlow.error || localError) && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <div className="flex items-center">
-                  <svg
-                    className="w-4 h-4 text-red-400 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <div className="text-sm text-red-800">
-                    {localError ||
-                      (createTaskFlow.error || updateTaskFlow.error)?.response
-                        ?.data?.message ||
-                      (createTaskFlow.error || updateTaskFlow.error)?.message}
+                      <div className="w-3.5 h-3.5 rounded border border-gray-300 peer-checked:bg-blue-500 peer-checked:border-blue-500 flex items-center justify-center transition-all">
+                        <FiCheckCircle className="text-white w-2.5 h-2.5 opacity-0 peer-checked:opacity-100" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 group-hover/opt:text-gray-600 transition-colors uppercase tracking-wider">
+                        Client Review Bridge
+                      </span>
+                    </label>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
-              <button
-                type="button"
-                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                disabled={createTaskFlow.isLoading || updateTaskFlow.isLoading}
-              >
-                {createTaskFlow.isLoading || updateTaskFlow.isLoading ? (
-                  <>
-                    <svg
-                      className="animate-spin w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                    Saving...
-                  </>
-                ) : taskFlow ? (
-                  "Update"
-                ) : (
-                  "Create"
-                )}
-              </button>
+              ))}
             </div>
-          </form>
+          </div>
+
+          {/* Error Message */}
+          {localError && (
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
+              <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
+                <FiInfo className="text-red-500 w-3.5 h-3.5" />
+              </div>
+              <p className="text-[11px] font-bold text-red-700 uppercase">{localError}</p>
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+
+        {/* Form Actions */}
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-[12px] font-bold text-gray-500 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 text-[12px] font-bold text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-[0.98] disabled:opacity-50"
+            disabled={createTaskFlow.isLoading || updateTaskFlow.isLoading}
+          >
+            {createTaskFlow.isLoading || updateTaskFlow.isLoading 
+              ? "Saving Configuration..." 
+              : taskFlow ? "Update Pipeline" : "Deploy Pipeline"}
+          </button>
+        </div>
+      </form>
+    </ModalLayout>
   );
 };
 

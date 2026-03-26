@@ -1,4 +1,5 @@
 import React from "react";
+import { FiEdit3, FiTrash2, FiRotateCcw, FiLayers, FiArrowRight, FiUser } from "react-icons/fi";
 
 const TaskFlowSection = ({
   taskFlows,
@@ -10,315 +11,201 @@ const TaskFlowSection = ({
 }) => {
   const getTaskTypeColor = (taskType) => {
     const colors = {
-      content: "bg-purple-100 text-purple-800 border-purple-200",
-      design: "bg-pink-100 text-pink-800 border-pink-200",
-      publish: "bg-green-100 text-green-800 border-green-200",
-      campaign: "bg-orange-100 text-orange-800 border-orange-200",
-      motion: "bg-blue-100 text-blue-800 border-blue-200",
-      "video editing": "bg-indigo-100 text-indigo-800 border-indigo-200",
-      "video shooting": "bg-teal-100 text-teal-800 border-teal-200",
+      content: "bg-purple-50 text-purple-600 border-purple-100",
+      design: "bg-pink-50 text-pink-600 border-pink-100",
+      publish: "bg-green-50 text-green-600 border-green-100",
+      campaign: "bg-orange-50 text-orange-600 border-orange-100",
+      motion: "bg-blue-50 text-blue-600 border-blue-100",
+      "video editing": "bg-indigo-50 text-indigo-600 border-indigo-100",
+      "video shooting": "bg-teal-50 text-teal-600 border-teal-100",
     };
-    return colors[taskType] || "bg-gray-100 text-gray-800 border-gray-200";
+    return colors[taskType?.toLowerCase()] || "bg-gray-50 text-gray-500 border-gray-100";
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-48 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+        <p className="mt-4 text-[13px] font-medium text-gray-400">Loading pipelines...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50/50 border border-red-100 rounded-2xl p-6 flex flex-col items-center text-center">
+        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+          <FiTrash2 className="text-red-500 w-5 h-5" />
+        </div>
+        <h3 className="text-[14px] font-bold text-red-900 mb-1">Failed to load flows</h3>
+        <p className="text-[12px] text-red-600/70 max-w-xs">{error.message}</p>
+      </div>
+    );
+  }
+
+  const flowsList = taskFlows || [];
+
+  if (flowsList.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm border-dashed px-6 text-center">
+        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+          <FiLayers className="w-6 h-6 text-gray-300" />
+        </div>
+        <h3 className="text-[15px] font-bold text-gray-800 mb-1">No Task Flows</h3>
+        <p className="text-[12px] text-gray-500 max-w-xs">
+          Pipeline flows help you automate task assignment across different departments.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="mt-4">
-      {isLoading ? (
-        <div className="flex flex-col justify-center items-center h-32 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <img
-            src="/icons/loading.svg"
-            alt="Loading"
-            className="w-8 h-8 mb-2"
-          />
-          <p className="text-gray-500 text-xs">Loading task flows...</p>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center">
-            <svg
-              className="w-5 h-5 text-red-400 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div className="text-sm text-red-800">
-              Error loading task flows: {error.message}
-            </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+      {/* Table Header Section */}
+      <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50 uppercase">
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-3">
+            <h3 className="text-[11px] font-bold text-gray-400 tracking-tight">
+              Pipeline Name
+            </h3>
+          </div>
+          <div className="col-span-6">
+            <h3 className="text-[11px] font-bold text-gray-400 tracking-tight">
+              Workflow Chain & Assignees
+            </h3>
+          </div>
+          <div className="col-span-2">
+            <h3 className="text-[11px] font-bold text-gray-400 tracking-tight">
+              Status
+            </h3>
+          </div>
+          <div className="col-span-1 text-right">
+            <h3 className="text-[11px] font-bold text-gray-400 tracking-tight pr-1">
+              Cmd
+            </h3>
           </div>
         </div>
-      ) : !taskFlows || taskFlows.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-32 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-            <svg
-              className="w-6 h-6 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-              />
-            </svg>
-          </div>
-          <h3 className="text-sm font-medium text-gray-900 mb-1">
-            No task flows found
-          </h3>
-          <p className="text-xs text-gray-500 text-center max-w-sm">
-            Create your first task flow to streamline your workflow and assign
-            tasks efficiently.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Table Header */}
-          <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <div className="grid grid-cols-12 gap-4">
+      </div>
+
+      {/* Pipeline List */}
+      <div className="divide-y divide-gray-50">
+        {flowsList.map((flow) => (
+          <div
+            key={flow._id}
+            className={`px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group ${
+              !flow.isActive ? "bg-gray-50/30 opacity-60" : ""
+            }`}
+          >
+            <div className="grid grid-cols-12 gap-4 items-center">
+              {/* Flow Name */}
               <div className="col-span-3">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
-                  Task Flow Name
-                </h3>
-              </div>
-              <div className="col-span-5">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
-                  Workflow Steps
-                </h3>
-              </div>
-              <div className="col-span-2">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
-                  Status
-                </h3>
-              </div>
-              <div className="col-span-2">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider text-right">
-                  Actions
-                </h3>
-              </div>
-            </div>
-          </div>
-
-          {/* Task Flow Rows */}
-          <div className="divide-y divide-gray-100">
-            {taskFlows.map((flow) => (
-              <div
-                key={flow._id}
-                className={`px-4 py-4 hover:bg-gray-50 transition-colors duration-150 ${!flow.isActive ? "bg-gray-25 opacity-75" : ""
-                  }`}
-              >
-                <div className="grid grid-cols-12 gap-4 items-start">
-                  {/* Flow Name */}
-                  <div className="col-span-3">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                          />
-                        </svg>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-semibold text-gray-900 truncate">
-                          {flow.name}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {flow.flows?.length || 0} step
-                          {(flow.flows?.length || 0) !== 1 ? "s" : ""}
-                        </div>
-                      </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center text-white text-[12px] font-bold shadow-sm shadow-purple-500/20 group-hover:scale-105 transition-transform">
+                    <FiLayers className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex flex-col">
+                    <div className="text-[13px] font-bold text-gray-800 truncate leading-tight mb-0.5">
+                      {flow.name}
                     </div>
-                  </div>
-
-                  {/* Workflow Steps */}
-                  <div className="col-span-5">
-                    <div className="space-y-2">
-                      {flow.flows && flow.flows.length > 0 ? (
-                        <div className="flex flex-col space-y-2">
-                          {flow.flows.slice(0, 3).map((step, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center space-x-2"
-                            >
-                              <div className="flex-shrink-0 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-600">
-                                  {idx + 1}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2 flex-1">
-                                <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${getTaskTypeColor(
-                                    step.taskName
-                                  )}`}
-                                >
-                                  {step.taskName}
-                                </span>
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 border border-orange-200">
-                                  W{step.weightage !== undefined ? step.weightage : 1}
-                                </span>
-                                <svg
-                                  className="w-3 h-3 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5l7 7-7 7"
-                                  />
-                                </svg>
-                                <span className="text-xs text-gray-600 truncate max-w-[120px]">
-                                  {step.assignee?.name ||
-                                    `${step.assignee?.firstName || ""} ${step.assignee?.lastName || ""
-                                      }`.trim() ||
-                                    "Unassigned"}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                          {flow.flows.length > 3 && (
-                            <div className="flex items-center space-x-2">
-                              <div className="flex-shrink-0 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
-                                <span className="text-xs font-medium text-gray-400">
-                                  ...
-                                </span>
-                              </div>
-                              <span className="text-xs text-gray-500">
-                                +{flow.flows.length - 3} more steps
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-400 italic">
-                          No steps defined
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="col-span-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium border ${flow.isActive
-                          ? "bg-green-100 text-green-800 border-green-200"
-                          : "bg-red-100 text-red-800 border-red-200"
-                        }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${flow.isActive ? "bg-green-400" : "bg-red-400"
-                          }`}
-                      ></span>
-                      {flow.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="col-span-2 text-right">
-                    <div className="flex items-center justify-end space-x-1">
-                      {flow.isActive && (
-                        <button
-                          onClick={() => onEdit(flow)}
-                          className="inline-flex items-center p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors duration-150"
-                          title="Edit task flow"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                      {flow.isActive ? (
-                        <button
-                          onClick={() => onDelete(flow)}
-                          className="inline-flex items-center p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150"
-                          title="Delete task flow"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => onRestore(flow)}
-                          className="inline-flex items-center p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors duration-150"
-                          title="Restore task flow"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            />
-                          </svg>
-                        </button>
-                      )}
+                    <div className="text-[10px] text-gray-400 font-mono tracking-tighter opacity-70">
+                      {flow.flows?.length || 0} stages defined
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Task Flow Footer */}
-      {taskFlows && taskFlows.length > 0 && (
-        <div className="px-4 py-3 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="flex items-center justify-between text-xs text-gray-600">
-            <span>
-              Showing {taskFlows.length} task flow
-              {taskFlows.length !== 1 ? "s" : ""}
-            </span>
-            <span>
-              {taskFlows.filter((f) => f.isActive).length} active,{" "}
-              {taskFlows.filter((f) => !f.isActive).length} inactive
-            </span>
+              {/* Workflow Chain */}
+              <div className="col-span-6">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {flow.flows?.slice(0, 3).map((step, idx) => (
+                    <React.Fragment key={idx}>
+                      <div className="flex items-center gap-1.5 bg-gray-50/50 border border-gray-100 pl-1 pr-2 py-0.5 rounded-md max-w-[140px]">
+                        <span className={`text-[9px] font-bold uppercase py-0.5 px-1 rounded-sm border ${getTaskTypeColor(step.taskName)}`}>
+                          {step.taskName?.substring(0, 3)}
+                        </span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[10px] font-bold text-gray-700 truncate">
+                            {step.assignee?.name || "Unassigned"}
+                          </span>
+                        </div>
+                      </div>
+                      {idx < Math.min(flow.flows.length - 1, 2) && (
+                        <FiArrowRight className="text-gray-300 w-3 h-3 flex-shrink-0" />
+                      )}
+                    </React.Fragment>
+                  ))}
+                  {flow.flows?.length > 3 && (
+                    <span className="text-[10px] font-bold text-gray-400 ml-1">
+                      +{flow.flows.length - 3} more
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="col-span-2">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${
+                    flow.isActive
+                      ? "bg-green-50 text-green-600 border-green-100"
+                      : "bg-red-50 text-red-500 border-red-100"
+                  }`}
+                >
+                  <span className={`w-1 h-1 rounded-full mr-1.5 ${flow.isActive ? "bg-green-500" : "bg-red-500"}`} />
+                  {flow.isActive ? "Active" : "Paused"}
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="col-span-1 text-right">
+                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => onEdit(flow)}
+                    className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Edit pipeline"
+                  >
+                    <FiEdit3 className="w-3.5 h-3.5" />
+                  </button>
+                  {flow.isActive ? (
+                    <button
+                      onClick={() => onDelete(flow)}
+                      className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      title="Archive pipeline"
+                    >
+                      <FiTrash2 className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onRestore(flow)}
+                      className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                      title="Restore pipeline"
+                    >
+                      <FiRotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer statistics */}
+      <div className="px-5 py-2.5 border-t border-gray-50 bg-gray-50/20 flex justify-between items-center">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+          Configured pipelines: {flowsList.length}
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="text-[10px] text-gray-400 font-bold uppercase">{flowsList.filter(f => f.isActive).length} Production</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+            <span className="text-[10px] text-gray-400 font-bold uppercase">{flowsList.filter(f => !f.isActive).length} Testing</span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

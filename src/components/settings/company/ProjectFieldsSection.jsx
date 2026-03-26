@@ -1,4 +1,20 @@
 import React from "react";
+import { 
+  FiEdit3, 
+  FiTrash2, 
+  FiSettings, 
+  FiAlertCircle, 
+  FiDatabase,
+  FiType,
+  FiCalendar,
+  FiList,
+  FiCheckSquare,
+  FiUpload,
+  FiLink,
+  FiHash,
+  FiMail,
+  FiChevronRight
+} from "react-icons/fi";
 
 const ProjectFieldsSection = ({
   fields = [],
@@ -7,189 +23,170 @@ const ProjectFieldsSection = ({
   onEdit,
   onDelete,
 }) => {
+  const getFieldIcon = (type) => {
+    switch (type) {
+      case 'text': return <FiType className="w-4.5 h-4.5" />;
+      case 'number': return <FiHash className="w-4.5 h-4.5" />;
+      case 'date': return <FiCalendar className="w-4.5 h-4.5" />;
+      case 'select': return <FiList className="w-4.5 h-4.5" />;
+      case 'checkbox': return <FiCheckSquare className="w-4.5 h-4.5" />;
+      case 'file': return <FiUpload className="w-4.5 h-4.5" />;
+      case 'image': return <FiUpload className="w-4.5 h-4.5" />;
+      case 'email': return <FiMail className="w-4.5 h-4.5" />;
+      case 'url': return <FiLink className="w-4.5 h-4.5" />;
+      default: return <FiDatabase className="w-4.5 h-4.5" />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-48 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="relative">
+          <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+        <p className="mt-4 text-[13px] font-medium text-gray-500">Retrieving system fields...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white border border-red-50 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+            <FiAlertCircle className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <h3 className="text-[14px] font-bold text-gray-800">Connection Error</h3>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              Could not fetch custom fields. {error.message}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!fields || fields.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm border-dashed">
+        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+          <FiDatabase className="w-6 h-6 text-gray-300" />
+        </div>
+        <h3 className="text-[15px] font-bold text-gray-800 mb-1">
+          No Custom Fields
+        </h3>
+        <p className="text-[12px] text-gray-500 text-center max-w-sm px-6">
+          Add custom fields to capture specific project data like tracking numbers, budgets, or special requirements.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="mt-4">
-      {isLoading ? (
-        <div className="flex flex-col justify-center items-center h-32 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <img
-            src="/icons/loading.svg"
-            alt="Loading"
-            className="w-8 h-8 mb-2"
-          />
-          <p className="text-gray-500 text-xs">Loading custom fields...</p>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center">
-            <svg
-              className="w-5 h-5 text-red-400 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div className="text-sm text-red-800">
-              Error loading custom fields: {error.message}
-            </div>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+      {/* Table Header Section */}
+      <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-5">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+              Field Label & System Key
+            </h3>
+          </div>
+          <div className="col-span-3">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+              Input Property
+            </h3>
+          </div>
+          <div className="col-span-2">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+              Type
+            </h3>
+          </div>
+          <div className="col-span-2 text-right">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight pr-2">
+              Action
+            </h3>
           </div>
         </div>
-      ) : !fields || fields.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-32 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-            <svg
-              className="w-6 h-6 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-              />
-            </svg>
-          </div>
-          <h3 className="text-sm font-medium text-gray-900 mb-1">
-            No custom fields found
-          </h3>
-          <p className="text-xs text-gray-500 text-center max-w-sm">
-            Create custom fields to capture additional details when adding new projects.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Table Header */}
-          <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-4">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
-                  Field Label
-                </h3>
-              </div>
-              <div className="col-span-3">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
-                  Type
-                </h3>
-              </div>
-              <div className="col-span-3">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider">
-                  Is Required
-                </h3>
-              </div>
-              <div className="col-span-2">
-                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wider text-right">
-                  Actions
-                </h3>
-              </div>
-            </div>
-          </div>
+      </div>
 
-          {/* Custom Field Rows */}
-          <div className="divide-y divide-gray-100">
-            {fields.map((field) => (
-              <div
-                key={field._id || field.id}
-                className={`px-4 py-4 hover:bg-gray-50 transition-colors duration-150`}
-              >
-                <div className="grid grid-cols-12 gap-4 items-center">
-                  {/* Field Label */}
-                  <div className="col-span-4">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                        </svg>
-                      </div>
-                      <div className="min-w-0 flex-1 flex flex-col justify-center">
-                        <div className="text-sm font-semibold text-gray-900 truncate">
-                          {field.label}
-                        </div>
-                      </div>
+      {/* Field List */}
+      <div className="divide-y divide-gray-50">
+        {fields.map((field) => (
+          <div
+            key={field._id || field.id}
+            className="px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group"
+          >
+            <div className="grid grid-cols-12 gap-4 items-center">
+              {/* Field Label */}
+              <div className="col-span-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-gray-100 text-gray-500 shadow-sm group-hover:border-blue-100 group-hover:text-blue-500 transition-colors">
+                    {getFieldIcon(field.type)}
+                  </div>
+                  <div className="min-w-0 flex flex-col">
+                    <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
+                      {field.label}
                     </div>
-                  </div>
-
-                  {/* Field Type */}
-                  <div className="col-span-3">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                      {field.type}
-                    </span>
-                  </div>
-
-                  {/* Required Status */}
-                  <div className="col-span-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium border ${field.isRequired
-                        ? "bg-indigo-100 text-indigo-800 border-indigo-200"
-                        : "bg-gray-100 text-gray-600 border-gray-200"
-                        }`}
-                    >
-                      {field.isRequired ? "Yes" : "Optional"}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="col-span-2 text-right">
-                    <div className="flex items-center justify-end space-x-1">
-                      <button
-                        onClick={() => onEdit(field)}
-                        className="inline-flex items-center p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors duration-150"
-                        title="Edit custom field"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => onDelete(field)}
-                        className="inline-flex items-center p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150"
-                        title="Delete custom field"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                    <div className="text-[10px] text-gray-400 font-mono tracking-tighter truncate opacity-70">
+                      key: {field.key || field.label.toLowerCase().replace(/\s+/g, '_')}
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* Footer */}
-          {fields && fields.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 text-xs text-gray-600">
-              Showing {fields.length} custom field{fields.length !== 1 ? "s" : ""}
+              {/* Required Status */}
+              <div className="col-span-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${field.isRequired
+                      ? "bg-blue-50 text-blue-600 border-blue-100"
+                      : "bg-gray-50 text-gray-400 border-gray-100"
+                      }`}
+                  >
+                    {field.isRequired ? "Required" : "Optional"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Field Type */}
+              <div className="col-span-2">
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                  {field.type?.replace('_', ' ')}
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="col-span-2 text-right">
+                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
+                  <button
+                    onClick={() => onEdit(field)}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-100 transition-all"
+                    title="Configure field"
+                  >
+                    <FiEdit3 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(field)}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all"
+                    title="Remove field"
+                  >
+                    <FiTrash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
+
+      {/* Table Footer */}
+      <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/20">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
+          Managed custom data points: {fields.length}
+        </p>
+      </div>
     </div>
   );
 };
