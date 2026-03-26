@@ -112,7 +112,7 @@ const Droppable = ({
             </div>
             <div
                 ref={parentRef}
-                className="min-h-[200px] max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
+                className="min-h-[200px] h-full pb-16 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
                 data-droppable-id={id}
             >
                 {/* Drop zone at the beginning - only if it's the very top of the list or empty */}
