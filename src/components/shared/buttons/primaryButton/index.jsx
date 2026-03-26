@@ -24,7 +24,13 @@ const PrimaryButton = ({
         className
       )}
     >
-      {icon && <img src={icon} alt="" className="w-5" />}
+      {icon && (
+        typeof icon === "string" ? (
+          <img src={icon} alt="" className="w-5" />
+        ) : (
+          <span className="text-xl flexCenter">{icon}</span>
+        )
+      )}
       {title && <span className="text-sm">{title}</span>}
       {loading && <img src="/icons/loader.svg" alt="" className="w-5" />}
     </button>

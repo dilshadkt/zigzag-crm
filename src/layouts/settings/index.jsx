@@ -52,13 +52,13 @@ const SettingsLayout = () => {
 
   return (
     <section className="flex flex-col  h-full gap-y-3">
-      <div className="flexBetween ">
+      {/* <div className="flexBetween ">
         <Header>{isEmployee ? "My Profile" : "Settings"}</Header>
         <PrimaryButton
           icon={"/icons/settings.svg"}
           className={"mt-3 bg-white"}
         />
-      </div>
+      </div> */}
       <div
         className="w-full h-full  md:overflow-hidden gap-x-5  gap-y-5 md:gap-y-0
        flex flex-col md:flex-row"
@@ -68,14 +68,7 @@ const SettingsLayout = () => {
 
         {/* Settings info page  */}
         <div className="flex-1 md:overflow-y-auto h-full  gap-y-2  flex flex-col">
-          {/* {!isEmployee && (
-            <div className="flexStart gap-x-3 ">
-              <FaArrowLeft className=" text-[#3F8CFF] text-lg hover:scale-85 cursor-pointer " />
-              <h4 className="text-lg font-medium">
-                {isEmployee ? "My Workspace" : "Settings"}
-              </h4>
-            </div>
-          )} */}
+
 
           {isEmployee ? (
             // Employee view - show employee-specific content
@@ -84,9 +77,9 @@ const SettingsLayout = () => {
             </div>
           ) : (
             // Admin view - show regular settings
-            <div className=" flex flex-col gap-y-5 md:gap-y-0 md:flex-row h-full md:overflow-y-auto  gap-x-5">
+            <div className=" flex flex-col gap-y-5 md:gap-y-0 md:flex-row h-full md:overflow-y-auto  gap-x-3  ">
               <div
-                className=" w-full md:w-[250px] rounded-3xl
+                className=" w-full md:w-[200px] rounded-3xl
                bg-white p-2 flex flex-col gap-y-1  pt-5"
               >
                 {accessibleSettings.length > 0 ? (
@@ -97,16 +90,16 @@ const SettingsLayout = () => {
                       onClick={() => setSelected(setting.id)}
                       className={`flexStart px-4 group text-[#7D8592] 
                   rounded-xl py-[10px] relative mr-1 ${selected === setting.id && `bg-[#F4F9FD]`
-                        } hover:bg-[#F4F9FD] gap-x-3`}
+                        } hover:bg-[#F4F9FD]  gap-x-3`}
                     >
                       <setting.icon
                         className={` ${selected === setting.id && `text-[#3F8CFF]`
                           }
-                         group-hover:text-[#3F8CFF] text-lg`}
+                         group-hover:text-[#3F8CFF] text-base`}
                       />
                       <span
                         className={`group-hover:text-gray-800 group-hover:translate-x-1
-                  transition-all duration-300 text-[15px] ${selected === setting.id && `text-[#3F8CFF]`
+                  transition-all duration-300 text-[14px] ${selected === setting.id && `text-[#3F8CFF]`
                           }`}
                       >
                         {setting.title}

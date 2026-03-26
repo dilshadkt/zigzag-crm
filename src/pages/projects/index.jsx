@@ -13,7 +13,6 @@ import AddProject from "../../components/projects/addProject";
 import AddTask from "../../components/projects/addTask";
 import CurrentProject from "../../components/projects/currentProject";
 import ProjectDetails from "../../components/projects/projectDetails";
-import ProjectHeading from "../../components/projects/projectHeader";
 import { useAuth } from "../../hooks/useAuth";
 import { useProject } from "../../hooks/useProject";
 import { usePermissions } from "../../hooks/usePermissions";
@@ -148,37 +147,29 @@ const Prjects = () => {
 
   return (
     <section className="flex flex-col h-full gap-y-2">
-      <ProjectHeading
-        setShowModalProject={setShowModalProject}
-        selectedMonth={selectedMonth}
-        onMonthChange={setSelectedMonth}
-        setShowModalTask={setShowModalTask}
-        activeProject={projectWithTasks}
-      />
-      {hasNoProject ? (
-        <NoTask>There are no Projects</NoTask>
-      ) : (
-        <div
-          className="w-full h-full overflow-y-auto gap-y-3 md:gap-y-0 
+      <div
+        className="w-full h-full overflow-y-auto gap-y-3 md:gap-y-0 
          md:overflow-hidden md:gap-x-3 grid grid-cols-1 md:grid-cols-5"
-        >
-          {/* current project section  */}
-          {!isTimelineExpanded && (
-            <CurrentProject projects={projects} selectProject={selectProject} />
-          )}
-          {/* project detail page  */}
-          <ProjectDetails
-            activeProject={projectWithTasks || projects}
-            activeTasks={activeTasks}
-            completedTasks={completedTasks}
-            progressTasks={progressTasks}
-            setShowModalFilter={setShowModalFilter}
-            selectedMonth={selectedMonth}
-            isTimelineExpanded={isTimelineExpanded}
-            setIsTimelineExpanded={setIsTimelineExpanded}
-          />
-        </div>
-      )}
+      >
+        {/* current project section  */}
+        {!isTimelineExpanded && !hasNoProject && (
+          <CurrentProject projects={projects} selectProject={selectProject} />
+        )}
+        {/* project detail page  */}
+        <ProjectDetails
+          activeProject={projectWithTasks}
+          activeTasks={activeTasks}
+          completedTasks={completedTasks}
+          progressTasks={progressTasks}
+          setShowModalFilter={setShowModalFilter}
+          setShowModalProject={setShowModalProject}
+          setShowModalTask={setShowModalTask}
+          selectedMonth={selectedMonth}
+          onMonthChange={setSelectedMonth}
+          isTimelineExpanded={isTimelineExpanded}
+          setIsTimelineExpanded={setIsTimelineExpanded}
+        />
+      </div>
 
       {/* filter menu  */}
       <FilterMenu
