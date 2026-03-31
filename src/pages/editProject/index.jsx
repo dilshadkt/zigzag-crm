@@ -43,7 +43,7 @@ const EditProject = () => {
             taskGroup: currentProject?.taskGroup || "",
             startDate: currentProject?.startDate || "",
             endDate: currentProject?.endDate || "",
-            periority: currentProject?.periority || "",
+            priority: currentProject?.priority || "",
             assignee: currentProject?.teams || "",
             description: currentProject?.description || "",
             attachments: currentProject?.attachments,

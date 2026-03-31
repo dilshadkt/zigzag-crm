@@ -87,7 +87,9 @@ const LeadDetailsPage = () => {
         : user.email || "Unknown User";
 
       return {
-        label: activity.title || activity.description || activity.type,
+        label: activity.title && activity.description && activity.title !== activity.description
+          ? `${activity.title}: ${activity.description}`
+          : activity.title || activity.description || activity.type,
         date: new Date(activity.createdAt).toLocaleString("en-US", {
           month: "short",
           day: "numeric",
@@ -150,7 +152,9 @@ const LeadDetailsPage = () => {
               year: "numeric",
             })
             : "",
-          owner: lead.owner?.firstName || lead.owner?.name || "Unknown",
+          salesPerson: lead.owner 
+            ? `${lead.owner.firstName || ''} ${lead.owner.lastName || ''}`.trim() || lead.owner.name 
+            : "Unassigned",
         },
         notes: transformedNotes,
         attachments: transformedAttachments,

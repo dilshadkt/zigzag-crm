@@ -4,6 +4,7 @@ import {
   FiFileText,
   FiUserCheck,
   FiMessageSquare,
+  FiCalendar,
 } from "react-icons/fi";
 
 const iconMap = {
@@ -25,6 +26,7 @@ const iconMap = {
   status_changed: FiUserCheck,
   meeting_scheduled: FiMessageSquare,
   meeting_completed: FiMessageSquare,
+  followup_scheduled: FiCalendar,
   converted: FiUserCheck,
 };
 
@@ -64,9 +66,11 @@ const LeadActivityPanel = ({ activity }) => {
               });
             }
 
-            // Get title - use title, description, or type as fallback
+            // Get title - combine title and description if both are available
             const activityTitle =
-              item.title || item.description || item.type || "Activity";
+              item.title && item.description && item.title !== item.description
+                ? `${item.title}: ${item.description}`
+                : item.title || item.description || item.type || "Activity";
 
             return (
               <div

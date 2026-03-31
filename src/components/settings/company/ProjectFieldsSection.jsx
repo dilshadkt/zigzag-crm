@@ -15,6 +15,116 @@ import {
   FiMail,
   FiChevronRight
 } from "react-icons/fi";
+import { MdDragIndicator } from "react-icons/md";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+const SortableFieldItem = ({ field, getFieldIcon, onEdit, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field._id || field.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group bg-white border-b border-gray-50 last:border-b-0 ${isDragging ? "shadow-lg scale-[1.01]" : ""}`}
+    >
+      <div className="grid grid-cols-12 gap-4 items-center">
+        {/* Field Label */}
+        <div className="col-span-5">
+          <div className="flex items-center gap-3">
+            <div 
+              {...attributes} 
+              {...listeners}
+              className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors"
+            >
+              <MdDragIndicator className="w-5 h-5" />
+            </div>
+            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-gray-100 text-gray-500 shadow-sm group-hover:border-blue-100 group-hover:text-blue-500 transition-colors">
+              {getFieldIcon(field.type)}
+            </div>
+            <div className="min-w-0 flex flex-col">
+              <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
+                {field.label}
+              </div>
+              <div className="text-[10px] text-gray-400 font-mono tracking-tighter truncate opacity-70">
+                key: {field.key || field.label.toLowerCase().replace(/\s+/g, '_')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Required Status */}
+        <div className="col-span-3">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${field.isRequired
+                ? "bg-blue-50 text-blue-600 border-blue-100"
+                : "bg-gray-50 text-gray-400 border-gray-100"
+                }`}
+            >
+              {field.isRequired ? "Required" : "Optional"}
+            </span>
+          </div>
+        </div>
+
+        {/* Field Type */}
+        <div className="col-span-2">
+          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+            {field.type?.replace('_', ' ')}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="col-span-2 text-right">
+          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity pr-1 font-sans">
+            <button
+              onClick={() => onEdit(field)}
+              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-100 transition-all cursor-pointer"
+              title="Configure field"
+            >
+              <FiEdit3 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => onDelete(field)}
+              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all cursor-pointer"
+              title="Remove field"
+            >
+              <FiTrash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProjectFieldsSection = ({
   fields = [],
@@ -22,7 +132,25 @@ const ProjectFieldsSection = ({
   error,
   onEdit,
   onDelete,
+  onReorder
 }) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = fields.findIndex((f) => (f._id || f.id) === active.id);
+      const newIndex = fields.findIndex((f) => (f._id || f.id) === over.id);
+      const newItems = arrayMove(fields, oldIndex, newIndex);
+      if (onReorder) onReorder(newItems);
+    }
+  };
+
   const getFieldIcon = (type) => {
     switch (type) {
       case 'text': return <FiType className="w-4.5 h-4.5" />;
@@ -84,11 +212,14 @@ const ProjectFieldsSection = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col font-sans">
       {/* Table Header Section */}
       <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-5">
+          <div className="col-span-1 pl-1">
+            {/* Grip placeholder */}
+          </div>
+          <div className="col-span-4 pl-3">
             <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
               Field Label & System Key
             </h3>
@@ -111,75 +242,29 @@ const ProjectFieldsSection = ({
         </div>
       </div>
 
-      {/* Field List */}
-      <div className="divide-y divide-gray-50">
-        {fields.map((field) => (
-          <div
-            key={field._id || field.id}
-            className="px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group"
-          >
-            <div className="grid grid-cols-12 gap-4 items-center">
-              {/* Field Label */}
-              <div className="col-span-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center border border-gray-100 text-gray-500 shadow-sm group-hover:border-blue-100 group-hover:text-blue-500 transition-colors">
-                    {getFieldIcon(field.type)}
-                  </div>
-                  <div className="min-w-0 flex flex-col">
-                    <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
-                      {field.label}
-                    </div>
-                    <div className="text-[10px] text-gray-400 font-mono tracking-tighter truncate opacity-70">
-                      key: {field.key || field.label.toLowerCase().replace(/\s+/g, '_')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Required Status */}
-              <div className="col-span-3">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${field.isRequired
-                      ? "bg-blue-50 text-blue-600 border-blue-100"
-                      : "bg-gray-50 text-gray-400 border-gray-100"
-                      }`}
-                  >
-                    {field.isRequired ? "Required" : "Optional"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Field Type */}
-              <div className="col-span-2">
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-tight bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-                  {field.type?.replace('_', ' ')}
-                </span>
-              </div>
-
-              {/* Actions */}
-              <div className="col-span-2 text-right">
-                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
-                  <button
-                    onClick={() => onEdit(field)}
-                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-100 transition-all"
-                    title="Configure field"
-                  >
-                    <FiEdit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(field)}
-                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all"
-                    title="Remove field"
-                  >
-                    <FiTrash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* Field List with DnD */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={fields.map((f) => f._id || f.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="divide-y divide-gray-50">
+            {fields.map((field) => (
+              <SortableFieldItem
+                key={field._id || field.id}
+                field={field}
+                getFieldIcon={getFieldIcon}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Table Footer */}
       <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/20">

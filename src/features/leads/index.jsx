@@ -86,6 +86,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [activeStatusId, setActiveStatusId] = useState(null);
+  const [activeAction, setActiveAction] = useState(null);
   const [showDashboard, setShowDashboard] = useState(true);
   const navigate = useNavigate();
 
@@ -97,8 +98,34 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const updateLeadMutation = useUpdateLead();
   const deleteLeadMutation = useDeleteLead();
 
-  // Debounce search term
-  useEffect(() => {
+    const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
+  
+    // Handle URL filters on mount
+    useEffect(() => {
+        const scheduled = searchParams.get('scheduled');
+        const minScore = searchParams.get('minScore');
+        
+        if (scheduled === 'today') {
+            setAppliedFilters({
+                scheduled: { operator: 'today', value: 'today' }
+            });
+            setActiveAction('followup');
+            toast.success("Showing today's follow-ups");
+        } else if (minScore) {
+            setAppliedFilters({
+                score: { operator: 'greaterThan', value: minScore }
+            });
+            setActiveAction('hot');
+            toast.success(`Showing leads with score > ${minScore}`);
+        }
+        
+        // Clear params from URL to avoid re-applying on refresh if not desired, 
+        // but typically we keep them. User asked to "list the lead who need to follow up"
+        // so applying it on mount is better.
+    }, []);
+
+    // Debounce search term
+    useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(1); // Reset to first page when search changes
@@ -127,7 +154,35 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
 
   const handleStatusFilter = (statusId) => {
     setActiveStatusId((prev) => (prev === statusId ? null : statusId));
+    setAppliedFilters({});
+    setActiveAction(null);
     setPage(1);
+  };
+
+  const handleActionFilter = (action) => {
+    setActiveAction((prev) => (prev === action ? null : action));
+    setActiveStatusId(null);
+    setPage(1);
+
+    switch (action) {
+        case 'hot':
+            setAppliedFilters({ score: { operator: 'greaterThan', value: '70' } });
+            break;
+        case 'weak':
+            setAppliedFilters({ score: { operator: 'lessThan', value: '30' } });
+            break;
+        case 'followup':
+            setAppliedFilters({ scheduled: { operator: 'today', value: 'today' } });
+            break;
+        case 'today':
+            setAppliedFilters({ createdAt: { operator: 'today', value: 'today' } });
+            break;
+        case 'week':
+            setAppliedFilters({ createdAt: { operator: 'last7days', value: 'last7days' } });
+            break;
+        default:
+            setAppliedFilters({});
+    }
   };
 
   // Initialize columns from generated columns
@@ -625,6 +680,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
               isLoading={statsLoading}
               activeStatusId={activeStatusId}
               onStatusClick={handleStatusFilter}
+              activeAction={activeAction}
+              onActionClick={handleActionFilter}
             />
           </div>
         )}

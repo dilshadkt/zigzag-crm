@@ -239,19 +239,22 @@ const LeadRow = memo(({
         className="border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50/70 transition-colors group"
         onClick={() => onRowClick && onRowClick(lead)}
       >
-        <td className="px-6 py-3.5">
-          <input
-            type="checkbox"
-            className={checkboxClasses}
-            checked={isSelected}
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-            onChange={(event) => {
-              event.stopPropagation();
-              onToggle(lead._id || lead.id);
-            }}
-          />
+        <td 
+          className="px-6 py-1.5 cursor-pointer text-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(lead._id || lead.id);
+          }}
+        >
+          <div className="flex items-center justify-center p-2 rounded-lg hover:bg-slate-200/50 transition-colors">
+            <input
+              type="checkbox"
+              className={checkboxClasses}
+              checked={isSelected}
+              onChange={() => {}} // Controlled via td's onClick
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         </td>
         {columns
           .filter((col) => col.visible)

@@ -58,12 +58,14 @@ const LeadInteractionModal = ({
       <div className="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800">{getTitle()}</h3>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-white rounded-full transition-colors text-slate-400 hover:text-slate-600 shadow-sm sm:shadow-none"
-          >
-            <FiX size={20} />
-          </button>
+          {interactionType !== 'call' && interactionType !== 'whatsapp' && (
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-white rounded-full transition-colors text-slate-400 hover:text-slate-600 shadow-sm sm:shadow-none"
+            >
+              <FiX size={20} />
+            </button>
+          )}
         </div>
 
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
@@ -151,12 +153,14 @@ const LeadInteractionModal = ({
             <FiSave size={20} />
             Save Log
           </button>
-          <button
-            onClick={onClose}
-            className="w-full px-6 py-5 rounded-2xl border border-slate-200 text-slate-500 font-bold hover:bg-slate-50 transition-all active:scale-[0.97]"
-          >
-            Maybe Later
-          </button>
+          {interactionType !== 'call' && interactionType !== 'whatsapp' && (
+            <button
+              onClick={onClose}
+              className="w-full px-6 py-5 rounded-2xl border border-slate-200 text-slate-500 font-bold hover:bg-slate-50 transition-all active:scale-[0.97]"
+            >
+              Maybe Later
+            </button>
+          )}
         </div>
       </div>
     </div>

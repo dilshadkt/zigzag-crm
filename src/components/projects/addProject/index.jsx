@@ -68,7 +68,7 @@ const AddProject = ({
             "name",
             "startDate",
             "endDate",
-            "periority",
+            "priority",
             "description",
             "teams",
           ].includes(key)
@@ -152,10 +152,10 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                   title="Priority"
                   options={["low", "medium", "high"]}
                   errors={errors}
-                  name={"periority"}
+                  name={"priority"}
                   onChange={handleChange}
                   touched={touched}
-                  value={values.periority !== null ? values.periority : "low"}
+                  value={values.priority !== null ? values.priority : "low"}
                 />
                 <Description
                   errors={errors}

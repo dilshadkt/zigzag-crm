@@ -20,7 +20,7 @@ const TaskDetailPage = () => {
   const [showModalTask, setShowModalTask] = useState(false);
   const { data: taskDetails, isLoading } = useGetTaskById(taskId);
   const { data: subTasks = [] } = useGetSubTasksByParentTask(taskId);
-  const { mutate } = useUpdateTaskById(taskId, () => setShowModalTask(false));
+  const { mutate, isLoading: isUpdating } = useUpdateTaskById(taskId, () => setShowModalTask(false));
 
   const computedProgress = React.useMemo(() => {
     if (!subTasks || subTasks.length === 0) return 0;
@@ -90,7 +90,7 @@ const TaskDetailPage = () => {
         isEdit={true}
         isOpen={showModalTask}
         onSubmit={handleTaskEdit}
-        isLoading={isLoading}
+        isLoading={isUpdating}
         setShowModalTask={setShowModalTask}
         teams={teams}
         initialValues={taskDetails}

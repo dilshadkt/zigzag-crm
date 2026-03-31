@@ -15,6 +15,7 @@ import {
   useGetTasksOnReview,
   useGetTasksOnPublish,
   useGetClientReviewTasks,
+  useGetUnreadMessageCount,
 } from "../../api/hooks";
 import { assetPath } from "../../utils/assetPath";
 const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings"];
@@ -47,20 +48,37 @@ const Sidebar = () => {
     taskMonth: getCurrentMonth(),
   });
 
+  // Fetch unread messages count
+  const { data: unreadMessageCount = 0 } = useGetUnreadMessageCount();
+
   // Check if user has admin dashboard access permission
   // IMPORTANT: Company admins should NOT see this option - only non-admin users with permission
   const isCompanyAdmin = user?.role === "company-admin";
   const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
 
-  // Build sidebar menu items - restrict Dashboard sub-items and handle Company Dashboard
   const sidebarMenuItems = SIDE_MENU.map((item) => {
     // If the item is "Dashboard", check if sub-items should be shown
     if (item.routeKey === "dashboard") {
-      // ONLY Company Admin sees sub-items under the main "Dashboard"
+      // ONLY Company Admin sees all sub-items under the main "Dashboard"
       if (isCompanyAdmin) {
         return item;
       }
-      // Others see a flat "Dashboard" link
+      
+      // For others, check if they have specific dashboard permissions (like lead-dashboard)
+      const allowedRoutes = userPosition?.allowedRoutes || [];
+      const hasDashboardChildren = item.children?.some(child => 
+        child.routeKey !== "dashboard" && allowedRoutes.includes(child.routeKey)
+      );
+
+      if (hasDashboardChildren) {
+        // Return dashboard with only allowed children
+        const allowedChildren = item.children.filter(child => 
+          child.routeKey === "dashboard" || allowedRoutes.includes(child.routeKey)
+        );
+        return { ...item, children: allowedChildren };
+      }
+
+      // If no specific dashboard permissions, return a flat "Dashboard" link
       const { children, ...rest } = item;
       return rest;
     }
@@ -194,6 +212,9 @@ const Sidebar = () => {
                   clientReviewData?.tasks?.length
                 ) {
                   return clientReviewData.tasks.length;
+                }
+                if (menuItem.routeKey === "messenger" && unreadMessageCount > 0) {
+                  return unreadMessageCount;
                 }
                 return null;
               };

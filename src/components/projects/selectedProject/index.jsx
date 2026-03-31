@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { IoArrowUpOutline } from "react-icons/io5";
+import { FaInstagram, FaFacebook, FaYoutube, FaLinkedin, FaTwitter, FaGlobe, FaCheckCircle, FaCalendarAlt } from "react-icons/fa";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useNavigate } from "react-router-dom";
 import FileAndLinkUpload from "../../shared/fileUpload";
@@ -17,6 +18,38 @@ import { assetPath } from "../../../utils/assetPath";
 
 import { SelectedProjectShimmer } from "../ProjectDetailShimmer";
 
+const SocialIcon = ({ platform }) => {
+  const iconClass = "text-xl";
+  switch (platform.toLowerCase()) {
+    case "instagram": return <FaInstagram className={`text-pink-600 ${iconClass}`} />;
+    case "facebook": return <FaFacebook className={`text-blue-700 ${iconClass}`} />;
+    case "youtube": return <FaYoutube className={`text-red-600 ${iconClass}`} />;
+    case "linkedin": return <FaLinkedin className={`text-blue-800 ${iconClass}`} />;
+    case "twitter": return <FaTwitter className={`text-sky-500 ${iconClass}`} />;
+    default: return (
+      <div className="min-w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-[10px] font-bold rounded-lg uppercase px-1 shadow-sm border border-gray-200">
+        {platform.slice(0, 3).toUpperCase()}
+      </div>
+    );
+  }
+};
+
+const getSocialUrl = (platform, handle) => {
+  if (!handle) return null;
+  if (handle.startsWith("http")) return handle;
+
+  const h = handle.startsWith("@") ? handle.slice(1) : handle;
+
+  switch (platform.toLowerCase()) {
+    case "instagram": return `https://www.instagram.com/${h}`;
+    case "facebook": return `https://www.facebook.com/${h}`;
+    case "youtube": return `https://www.youtube.com/${handle.startsWith('@') ? handle : '@' + handle}`;
+    case "twitter": return `https://www.twitter.com/${h}`;
+    case "linkedin": return `https://www.linkedin.com/company/${h}`;
+    default: return null;
+  }
+};
+
 const SelectedProject = ({ currentProject, isLoading }) => {
   const navigate = useNavigate();
   const { isCompany, companyId, user } = useAuth();
@@ -29,6 +62,16 @@ const SelectedProject = ({ currentProject, isLoading }) => {
   const [failedImages, setFailedImages] = useState({});
 
   const { data: projectFields } = useGetProjectFields(companyId);
+
+  const hasCustomFields = projectFields?.some(field => {
+    const value = currentProject?.customFields?.[field.key];
+    return value !== undefined && value !== null && value !== "";
+  });
+
+  const managedSocials = Object.entries(currentProject?.socialMedia || {})
+    .filter(([k, v]) => k !== 'other' && k !== '_id' && k !== '__v' && v?.manage);
+  const managedOthers = currentProject?.socialMedia?.other?.filter(v => v.manage) || [];
+  const hasSocialMedia = managedSocials.length > 0 || managedOthers.length > 0;
 
   if (isLoading) {
     return <SelectedProjectShimmer />;
@@ -216,85 +259,192 @@ rounded-3xl  flex flex-col  p-4"
             />
 
             {/* Custom Project Fields - Enhanced Display */}
-            {currentProject?.customFields &&
-              Object.keys(currentProject.customFields).length > 0 &&
-              projectFields && (
-                <div className="flex flex-col gap-y-4 mt-4 border-t pt-5 border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <div className="flex items-center gap-x-2">
-                    <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-[#91929E]">
-                      Additional Information
-                    </h4>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-y-4">
-                    {projectFields.map((field) => {
-                      const value = currentProject.customFields[field.key];
-                      // Skip if value is truly empty
-                      if (value === undefined || value === null || value === "")
-                        return null;
-
-                      return (
-                        <div 
-                          key={field._id} 
-                          className="flex flex-col gap-y-1.5 p-3 rounded-2xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-colors"
-                        >
-                          <span className="text-[11px] font-semibold text-[#91929E] uppercase tracking-tight">
-                            {field.label}
-                          </span>
-                          <div className="text-sm font-medium text-[#0A1629]">
-                            {field.type === "checkbox" ? (
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold ${value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {value ? "Yes" : "No"}
-                              </span>
-                            ) : field.type === "dynamic_list" && Array.isArray(value) ? (
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {value.map((item, i) => item && (
-                                  <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-semibold border border-blue-100 shadow-sm">
-                                    {item}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : field.type === "url" ? (
-                              <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                                {value}
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                              </a>
-                            ) : field.type === "image" ? (
-                              <div className="mt-1">
-                                <a href={value} target="_blank" rel="noreferrer" className="block w-full">
-                                  <img 
-                                    src={value} 
-                                    alt={field.label} 
-                                    className="w-full max-h-48 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity"
-                                  />
-                                </a>
-                              </div>
-                            ) : field.type === "file" ? (
-                              <a 
-                                href={value} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mt-1 truncate group"
-                              >
-                                <div className="p-1.5 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                  <img src="/icons/file.svg" alt="" className="w-4 h-4" />
-                                </div>
-                                <span className="truncate underline underline-offset-4">{value.split('/').pop()}</span>
-                              </a>
-                            ) : (
-                              <span className="break-words line-clamp-3" title={value}>
-                                {value}
-                              </span>
-                            )}
-
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+            {hasCustomFields && projectFields && (
+              <div className="flex flex-col gap-y-4 mt-4 border-t pt-5 border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="flex items-center gap-x-2">
+                  <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-[#91929E]">
+                    Additional Information
+                  </h4>
                 </div>
-              )}
+
+                <div className="grid grid-cols-1 gap-y-4">
+                  {projectFields.map((field) => {
+                    const value = currentProject.customFields[field.key];
+                    // Skip if value is truly empty
+                    if (value === undefined || value === null || value === "")
+                      return null;
+
+                    return (
+                      <div
+                        key={field._id}
+                        className="flex flex-col gap-y-1.5 p-3 rounded-2xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="text-[11px] font-semibold text-[#91929E] uppercase tracking-tight">
+                          {field.label}
+                        </span>
+                        <div className="text-sm font-medium text-[#0A1629]">
+                          {field.type === "checkbox" ? (
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold ${value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {value ? "Yes" : "No"}
+                            </span>
+                          ) : field.type === "dynamic_list" && Array.isArray(value) ? (
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {value.map((item, i) => item && (
+                                <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-semibold border border-blue-100 shadow-sm">
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          ) : field.type === "url" ? (
+                            <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
+                              {value}
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            </a>
+                          ) : field.type === "image" ? (
+                            <div className="mt-1">
+                              <a href={value} target="_blank" rel="noreferrer" className="block w-full">
+                                <img
+                                  src={value}
+                                  alt={field.label}
+                                  className="w-full max-h-48 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity"
+                                />
+                              </a>
+                            </div>
+                          ) : field.type === "file" ? (
+                            <a
+                              href={value}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mt-1 truncate group"
+                            >
+                              <div className="p-1.5 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                <img src="/icons/file.svg" alt="" className="w-4 h-4" />
+                              </div>
+                              <span className="truncate underline underline-offset-4">{value.split('/').pop()}</span>
+                            </a>
+                          ) : (
+                            <span className="break-words line-clamp-3" title={value}>
+                              {value}
+                            </span>
+                          )}
+
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Social Media Section */}
+            {hasSocialMedia && (
+              <div className="flex flex-col gap-y-3 mt-6 border-t pt-5 border-gray-100">
+                <div className="flex flex-wrap gap-4">
+                  {managedSocials.map(([platform, data]) => {
+                    const url = getSocialUrl(platform, data.handle);
+                    return url ? (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={data.handle || platform}
+                        className="transition-transform hover:scale-110 cursor-alias"
+                      >
+                        <SocialIcon platform={platform} />
+                      </a>
+                    ) : (
+                      <div
+                        key={platform}
+                        title={data.handle || platform}
+                        className="opacity-60 grayscale-[50%]"
+                      >
+                        <SocialIcon platform={platform} />
+                      </div>
+                    );
+                  })}
+
+                  {managedOthers.map((item) => {
+                    const url = item.handle?.startsWith("http") ? item.handle : null;
+                    return url ? (
+                      <a
+                        key={item._id}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={item.handle || item.platform}
+                        className="transition-transform hover:scale-110 cursor-alias"
+                      >
+                        <SocialIcon platform={item.platform} />
+                      </a>
+                    ) : (
+                      <div
+                        key={item._id}
+                        title={item.handle || item.platform}
+                        className="opacity-60"
+                      >
+                        <SocialIcon platform={item.platform} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Work Progress Section */}
+            {currentProject?.workDetails?.length > 0 && (
+              <div className="flex flex-col gap-y-3 mt-4 border-t pt-5 border-gray-100">
+                <div className="flex flex-col gap-y-1">
+                  {[...currentProject.workDetails].reverse().slice(0, 3).map((detail) => (
+                    <div
+                      key={detail._id}
+                      className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <FaCalendarAlt className="text-orange-400 text-xs" />
+                          <span className="text-[10px] font-bold text-gray-700 uppercase">
+                            {new Date(detail.month + "-01").toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(detail).map(([key, value]) => {
+                          if (["month", "year", "monthNumber", "_id", "other", "__v"].includes(key)) return null;
+                          if (value && typeof value === 'object' && (value.total > 0 || value.count > 0)) {
+                            return (
+                              <div
+                                key={key}
+                                className="flex justify-between items-center p-2 bg-white rounded-xl border border-gray-100/50 "
+                              >
+                                <span className="capitalize text-[10px] font-medium text-gray-500">
+                                  {key.replace(/([A-Z])/g, ' $1')}
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-[#0A1629]">
+                                    {value.completed || 0}/{value.total || 0}
+                                  </span>
+                                  {value.completed >= value.total && value.total > 0 && (
+                                    <FaCheckCircle className="text-green-500 text-[10px]" />
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  {currentProject.workDetails.length > 3 && (
+                    <button className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-tighter text-left ml-1">
+                      + View all history
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {canPauseProject && (
               <PrimaryButton

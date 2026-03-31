@@ -6,7 +6,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     thumbImg: defaultValue?.thumbImg || null,
     startDate: defaultValue?.startDate || "",
     endDate: defaultValue?.endDate || "",
-    periority: defaultValue?.periority || "low",
+    priority: defaultValue?.priority || "low",
     assignee: defaultValue?.assignee || "",
     attachments: defaultValue?.attachments || [],
     description: defaultValue?.description || "",
@@ -39,7 +39,7 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
         if (!startDate || !value) return true;
         return new Date(value) > new Date(startDate);
       }),
-    periority: Yup.string()
+    priority: Yup.string()
       .required("Priority is required")
       .oneOf(['low', 'medium', 'high'], 'Priority must be low, medium, or high'),
     teams: Yup.array()

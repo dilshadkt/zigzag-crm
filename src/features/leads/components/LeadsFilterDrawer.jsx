@@ -35,6 +35,8 @@ const LeadsFilterDrawer = ({
         { key: "source", label: "Source", type: "text" },
         { key: "createdAt", label: "Created Date", type: "date" },
         { key: "updatedAt", label: "Last Updated", type: "date" },
+        { key: "scheduled", label: "Scheduled Follow-up", type: "date" },
+        { key: "score", label: "Lead Score", type: "number" },
         { key: "budget", label: "Budget", type: "number" },
         ...formFields
             .filter((field) =>
@@ -71,6 +73,7 @@ const LeadsFilterDrawer = ({
                     { value: "equals", label: "On" },
                     { value: "before", label: "Before" },
                     { value: "after", label: "After" },
+                    { value: "today", label: "Today" },
                     { value: "between", label: "Between" },
                     { value: "last7days", label: "Last 7 days" },
                     { value: "last30days", label: "Last 30 days" },
@@ -203,7 +206,7 @@ const LeadsFilterDrawer = ({
         if (fieldData.type === "date") {
             // For preset date ranges, no input needed
             if (
-                ["last7days", "last30days", "thisMonth", "lastMonth"].includes(
+                ["last7days", "last30days", "thisMonth", "lastMonth", "today"].includes(
                     filter.operator
                 )
             ) {

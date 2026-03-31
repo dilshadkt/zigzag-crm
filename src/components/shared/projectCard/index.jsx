@@ -260,7 +260,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
             </div>
             <div className="flexEnd text-[#FFBD21] text-xs gap-x-2 pr-2">
               <IoArrowUpOutline className="text-lg" />
-              <span>{project?.periority}</span>
+              <span>{project?.priority}</span>
             </div>
           </div>
           <div className="absolute  right-5 top-5 w-fit">

@@ -158,13 +158,15 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
             : `cursor-pointer ${colorScheme.hover}`
           }`}
         disabled={disabled}
-        title={disabled ? "You can only edit tasks assigned to you" : ""}
+        title={disabled ? "You do not have permission to change status" : ""}
       >
         <span className="capitalize">{taskDetails?.status}</span>
-        <IoIosArrowDown
-          className={`transform transition-transform ${menuOpen ? "rotate-180" : "rotate-0"
-            }`}
-        />
+        {!disabled && (
+          <IoIosArrowDown
+            className={`transform transition-transform ${menuOpen ? "rotate-180" : "rotate-0"
+              }`}
+          />
+        )}
       </button>
 
       {/* Dropdown Menu */}

@@ -72,7 +72,9 @@ import {
   createProjectField,
   updateProjectField,
   deleteProjectField,
+  reorderProjectFields,
 } from "./service";
+import { getUnreadCount } from "./chatService";
 import { format } from "date-fns";
 import { useAuth } from "../hooks/useAuth";
 
@@ -1499,6 +1501,18 @@ export const useGetTasksOnPublish = (filters = {}) => {
   });
 };
 
+// Get Total Unread Message Count hook
+export const useGetUnreadMessageCount = () => {
+  return useQuery({
+    queryKey: ["unreadMessageCount"],
+    queryFn: () => getUnreadCount(),
+    refetchInterval: 1000 * 30, // Refetch every 30 seconds
+    refetchOnWindowFocus: true,
+    select: (data) => data?.count || 0,
+  });
+};
+
+
 // Get Client Review Tasks Hook - for the client-review page
 export const useGetClientReviewTasks = (filters = {}) => {
   return useQuery({
@@ -2452,6 +2466,17 @@ export const useDeleteProjectField = (companyId, onSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (fieldId) => deleteProjectField(companyId, fieldId),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["projectFields", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useReorderProjectFields = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (fieldIds) => reorderProjectFields(companyId, fieldIds),
     onSuccess: (...args) => {
       queryClient.invalidateQueries(["projectFields", companyId]);
       if (onSuccess) onSuccess(...args);

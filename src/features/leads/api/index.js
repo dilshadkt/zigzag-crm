@@ -207,6 +207,7 @@ export const useUpdateLead = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["leads"]);
       queryClient.invalidateQueries(["lead", variables.leadId]);
+      queryClient.invalidateQueries(["leadActivities", variables.leadId]);
       queryClient.invalidateQueries(["leadStats"]);
     },
   });

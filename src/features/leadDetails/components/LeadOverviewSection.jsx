@@ -683,8 +683,8 @@ const LeadOverviewSection = ({ lead }) => {
             {leadDetails?.created && (
               <LabelValue label="Created" value={leadDetails.created} />
             )}
-            {leadDetails?.owner && (
-              <LabelValue label="Owner" value={leadDetails.owner} />
+            {leadDetails?.salesPerson && (
+              <LabelValue label="Sales Person" value={leadDetails.salesPerson} />
             )}
           </div>
         )}

@@ -12,18 +12,27 @@ import {
   useCreateProjectField,
   useUpdateProjectField,
   useDeleteProjectField,
+  useReorderProjectFields,
 } from "../../../api/hooks";
 
 const Master = () => {
   const { companyId } = useAuth();
   const [showFieldModal, setShowFieldModal] = useState(false);
   const [selectedField, setSelectedField] = useState(null);
+  const [localFields, setLocalFields] = useState([]);
 
   const {
     data: customFields,
     isLoading,
     error,
   } = useGetProjectFields(companyId);
+
+  // Sync local fields when query data changes
+  React.useEffect(() => {
+    if (customFields) {
+      setLocalFields(customFields);
+    }
+  }, [customFields]);
 
   const createField = useCreateProjectField(companyId, () => {
     toast.success("Custom field added successfully");
@@ -37,6 +46,10 @@ const Master = () => {
 
   const deleteField = useDeleteProjectField(companyId, () => {
     toast.success("Custom field deleted successfully");
+  });
+
+  const reorderFields = useReorderProjectFields(companyId, () => {
+    toast.success("Fields reordered successfully");
   });
 
   const handleEditField = (field) => {
@@ -53,6 +66,13 @@ const Master = () => {
   const handleFieldModalClose = () => {
     setShowFieldModal(false);
     setSelectedField(null);
+  };
+
+  const handleReorder = (newOrder) => {
+    // Optimistic update
+    setLocalFields(newOrder);
+    // Send to backend
+    reorderFields.mutate(newOrder.map((f) => f._id || f.id));
   };
 
   const handleSaveField = (values) => {
@@ -77,11 +97,12 @@ const Master = () => {
       {/* Content Section */}
       <div className="flex-1 space-y-4">
         <ProjectFieldsSection
-          fields={customFields || []}
+          fields={localFields || []}
           isLoading={isLoading}
           error={error}
           onEdit={handleEditField}
           onDelete={handleDeleteField}
+          onReorder={handleReorder}
         />
       </div>
 

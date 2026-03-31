@@ -15,4 +15,5 @@ export const CHAT_ENDPOINTS = {
   EMPLOYEES: "chat/employees",
   CREATE_DIRECT: "chat/direct/create",
   ENSURE_PROJECT_CHATS: "chat/ensure-project-chats",
+  UNREAD_COUNT: "chat/unread-count",
 };

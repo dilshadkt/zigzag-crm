@@ -16,7 +16,7 @@ import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
 import TaskAttachments from "./TaskAttachments";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget, FiFlag } from "react-icons/fi";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress }) => {
   const { isCompany, user } = useAuth();
@@ -54,19 +54,20 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     (assignedUser) => assignedUser._id === user?._id
   );
 
+  // Check if current user is the creator of this task
+  const isCreatorOfTask = (taskDetails?.createdBy?._id || taskDetails?.createdBy) === user?._id;
+
   // Check permissions for task editing
   const canEditTask =
-    isCompany || hasPermission("tasks", "edit");
+    isCompany || hasPermission("tasks", "edit") || isCreatorOfTask;
 
   // Check permissions for task status change
   const canChangeStatus =
     isCompany ||
-    hasPermission("tasks", "changeStatus") ||
-    isAssignedToTask ||
-    hasPermission("tasks", "edit");
+    hasPermission("tasks", "changeStatus");
 
   // Check permissions for subtask management
-  const canManageSubtasks = isCompany || isAdmin || hasPermission("tasks", "create");
+  const canManageSubtasks = isCompany || isAdmin || hasPermission("tasks", "create") || isCreatorOfTask;
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
@@ -231,6 +232,20 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                   </span>
                 )}
 
+                {taskDetails?.priority && (
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 ${taskDetails.priority.toLowerCase() === "high" || taskDetails.priority.toLowerCase() === "urgent"
+                      ? "bg-rose-50 text-rose-600 border-rose-100"
+                      : taskDetails.priority.toLowerCase() === "medium"
+                        ? "bg-amber-50 text-amber-600 border-amber-100"
+                        : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                      }`}
+                    title={`Priority: ${taskDetails.priority}`}
+                  >
+                    <FiFlag className="w-3 h-3" />
+                    {taskDetails.priority}
+                  </span>
+                )}
                 {(taskDetails?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.requiresClientApproval)) && (
                   <span
                     className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
@@ -249,13 +264,11 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                 <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
 
               </div>
-              {canChangeStatus && (
-                <StatusButton
-                  taskDetails={taskDetails}
-                  disabled={!canChangeStatus}
-                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus")}
-                />
-              )}
+              <StatusButton
+                taskDetails={taskDetails}
+                disabled={!canChangeStatus}
+                showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask}
+              />
             </div>
 
             <RecurringTaskInfo taskDetails={taskDetails} />
@@ -293,7 +306,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
             : createSubTaskMutation.isLoading
         }
         isEdit={!!editingSubTask}
-        initialValues={editingSubTask}
+        initialValues={
+          editingSubTask || {
+            startDate: taskDetails?.startDate,
+            dueDate: taskDetails?.dueDate,
+            priority: taskDetails?.priority,
+          }
+        }
         projectData={taskDetails.project} // <-- Pass projectData here
       />
 

@@ -282,10 +282,7 @@ const SubtasksSection = ({
                       }
                       canEdit={
                         isCompany ||
-                        isAdmin ||
-                        hasPermission("tasks", "changeStatus") ||
-                        hasPermission("tasks", "edit") ||
-                        isAssignedToSubTask
+                        hasPermission("tasks", "changeStatus")
                       }
                       canEditTask={canEditTask}
                       isAdmin={isAdmin}

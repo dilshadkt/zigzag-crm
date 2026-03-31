@@ -42,16 +42,21 @@ const LeadCard = memo(({
         >
             <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                            e.stopPropagation();
-                            onToggle(lead._id || lead.id);
-                        }}
-                        className="h-3.5 w-3.5 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40"
-                    />
+                    <div 
+                      className="p-3 -m-3 hover:bg-slate-100/50 rounded-lg transition-colors cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle(lead._id || lead.id);
+                      }}
+                    >
+                      <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}} 
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40 block"
+                      />
+                    </div>
                     <div>
                         <h3 className="text-[13px] font-bold text-slate-900 leading-tight">{leadName}</h3>
                         <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">

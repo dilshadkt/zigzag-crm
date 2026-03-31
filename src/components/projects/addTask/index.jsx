@@ -57,7 +57,7 @@ const AddTask = ({
       taskMonth: selectedMonth || "",
       startDate: initialValues.startDate || "",
       dueDate: initialValues.dueDate || "",
-      periority: initialValues.priority || "Low",
+      priority: initialValues.priority || "Low",
       assignedTo: initialValues.assignedTo
         ? Array.isArray(initialValues.assignedTo)
           ? initialValues.assignedTo.map((user) => user._id || user)
@@ -851,9 +851,9 @@ rounded-3xl max-w-[584px] w-full h-full relative"
               </div>
               <Select
                 errors={errors}
-                name={"periority"}
+                name={"priority"}
                 touched={touched}
-                value={values?.periority || "Low"}
+                value={values?.priority || "Low"}
                 onChange={handleChange}
                 title="Priority"
                 options={["Low", "Medium", "High"]}

@@ -23,6 +23,7 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
     { value: "employees", label: "Team Directory", icon: <FiUsers />, desc: "Workforce data management" },
     { value: "messenger", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub" },
     { value: "leads", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking" },
+    { value: "lead-dashboard", label: "Lead Dashboard", icon: <FiBarChart2 />, desc: "Sales & performance analytics hub" },
     { value: "campaigns", label: "Marketing", icon: <FiZap />, desc: "Outreach & campaign data" },
     { value: "task-on-review", label: "Quality Control", icon: <FiEye />, desc: "Peer review dashboard" },
     { value: "task-on-publish", label: "Production", icon: <FiCloud />, desc: "Ready for deployment" },

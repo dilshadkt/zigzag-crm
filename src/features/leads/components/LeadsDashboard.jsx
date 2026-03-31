@@ -74,7 +74,7 @@ const StatusCard = ({ name, count, color, isLoading, isActive, onClick }) => {
     );
 };
 
-const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick }) => {
+const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick, onActionClick, activeAction }) => {
     return (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
             {/* Primary Stats - Click to clear filters */}
@@ -84,8 +84,11 @@ const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick }) => 
                 icon={Users}
                 color="#6366f1"
                 isLoading={isLoading}
-                isActive={!activeStatusId}
-                onClick={() => onStatusClick(null)}
+                isActive={!activeStatusId && !activeAction}
+                onClick={() => {
+                    onStatusClick(null);
+                    onActionClick(null);
+                }}
             />
 
             <div className="w-px h-6 bg-slate-200/60 mx-0.5 flex-shrink-0" />
@@ -102,11 +105,54 @@ const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick }) => 
                             count={status.count}
                             color={status.color}
                             isActive={activeStatusId === status._id}
-                            onClick={() => onStatusClick(status._id)}
+                            onClick={() => {
+                                onActionClick(null);
+                                onStatusClick(status._id);
+                            }}
                         />
                     ))
                 )}
             </div>
+
+            <div className="w-px h-6 bg-slate-200/60 mx-0.5 flex-shrink-0" />
+
+            {/* AI/Actionable Stats */}
+            <StatCard
+                title="Hot Leads"
+                value={stats?.hotLeads?.count || 0}
+                icon={TrendingUp}
+                color="#f97316"
+                isLoading={isLoading}
+                isActive={activeAction === 'hot'}
+                onClick={() => {
+                    onStatusClick(null);
+                    onActionClick('hot');
+                }}
+            />
+            <StatCard
+                title="Follow-ups"
+                value={stats?.todayFollowUps?.count || 0}
+                icon={Calendar}
+                color="#10b981"
+                isLoading={isLoading}
+                isActive={activeAction === 'followup'}
+                onClick={() => {
+                    onStatusClick(null);
+                    onActionClick('followup');
+                }}
+            />
+            <StatCard
+                title="Weak Leads"
+                value={stats?.weakLeads?.count || 0}
+                icon={Clock}
+                color="#64748b"
+                isLoading={isLoading}
+                isActive={activeAction === 'weak'}
+                onClick={() => {
+                    onStatusClick(null);
+                    onActionClick('weak');
+                }}
+            />
 
             <div className="w-px h-6 bg-slate-200/60 mx-0.5 flex-shrink-0" />
 
@@ -117,6 +163,11 @@ const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick }) => 
                 icon={Clock}
                 color="#f59e0b"
                 isLoading={isLoading}
+                isActive={activeAction === 'today'}
+                onClick={() => {
+                    onStatusClick(null);
+                    onActionClick('today');
+                }}
             />
             <StatCard
                 title="Last 7 Days"
@@ -124,6 +175,11 @@ const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick }) => 
                 icon={Calendar}
                 color="#10b981"
                 isLoading={isLoading}
+                isActive={activeAction === 'week'}
+                onClick={() => {
+                    onStatusClick(null);
+                    onActionClick('week');
+                }}
             />
         </div>
     );

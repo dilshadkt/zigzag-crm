@@ -118,16 +118,20 @@ const LeadsTable = ({
       <table className="min-w-full border-separate border-spacing-0">
         <thead className="bg-slate-50 text-slate-500 sticky top-0 z-30">
           <tr>
-            <th className={headerClasses}>
-              <input
-                type="checkbox"
-                className={checkboxClasses}
-                checked={isAllSelected}
-                onChange={() =>
-                  onToggleSelectAll(!isAllSelected, visibleLeadIds)
-                }
-                aria-label="Select all leads"
-              />
+            <th 
+              className={`${headerClasses} cursor-pointer hover:bg-slate-100 transition-colors`}
+              onClick={() => onToggleSelectAll(!isAllSelected, visibleLeadIds)}
+            >
+              <div className="flex items-center justify-center -m-3 p-3">
+                <input
+                  type="checkbox"
+                  className={checkboxClasses}
+                  checked={isAllSelected}
+                  onChange={() => {}} // Controlled by the th's onClick
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Select all leads"
+                />
+              </div>
             </th>
             {columns.map((column) => (
               <th key={column.key} className={headerClasses}>

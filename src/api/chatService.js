@@ -15,6 +15,20 @@ export const getConversations = async () => {
   }
 };
 
+// Get total unread message count for the current user
+export const getUnreadCount = async () => {
+  try {
+    const response = await apiClient.get(`/${CHAT_ENDPOINTS.UNREAD_COUNT}`);
+    return { success: true, count: response.data.count };
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to fetch unread count",
+    };
+  }
+};
+
+
 // Get detailed conversation information
 export const getConversationDetails = async (conversationId) => {
   try {

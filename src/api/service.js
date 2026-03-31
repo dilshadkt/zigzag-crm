@@ -206,7 +206,7 @@ export const createTask = async (taskData, projectId) => {
     project: `${projectId}`,
     attachments: taskData?.attachments,
     assignedTo: taskData?.assignedTo,
-    priority: taskData?.periority,
+    priority: taskData?.priority,
     dueDate: taskData?.dueDate,
     startDate: taskData?.startDate,
     taskGroup: taskData?.taskGroup,
@@ -236,7 +236,7 @@ export const createTaskFromBoard = async (taskData) => {
     copyOfDescription: taskData?.copyOfDescription,
     attachments: taskData?.attachments,
     assignedTo: taskData?.assignedTo,
-    priority: taskData?.periority,
+    priority: taskData?.priority,
     dueDate: taskData?.dueDate,
     startDate: taskData?.startDate,
     taskMonth: taskData?.taskMonth,
@@ -1025,6 +1025,11 @@ export const updateProjectField = async (companyId, fieldId, fieldData) => {
 
 export const deleteProjectField = async (companyId, fieldId) => {
   const response = await apiClient.delete(`/companies/${companyId}/project-fields/${fieldId}`);
+  return response.data;
+};
+
+export const reorderProjectFields = async (companyId, fieldIds) => {
+  const response = await apiClient.put(`/companies/${companyId}/project-fields/reorder`, { fieldIds });
   return response.data;
 };
 
