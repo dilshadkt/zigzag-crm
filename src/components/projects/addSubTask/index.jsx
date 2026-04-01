@@ -32,6 +32,7 @@ const AddSubTask = ({
     parentTaskId: parentTaskId,
     dueDateChangeReason: initialValues?.dueDateChangeReason || "",
     requiresClientApproval: initialValues?.requiresClientApproval || false,
+    requiresWorkLink: initialValues?.requiresWorkLink || false,
     customFields: initialValues?.customFields || [],
   };
 
@@ -81,6 +82,23 @@ const AddSubTask = ({
       }
     }
   }, [values.title, setFieldValue]);
+
+  // Handle automatic work link field based on requiresWorkLink option
+  useEffect(() => {
+    if (values.requiresWorkLink) {
+      const hasWorkLinkField = values.customFields?.some(field => 
+        field.label?.toLowerCase().includes("work link") || 
+        field.label?.toLowerCase().includes("google drive") ||
+        field.label?.toLowerCase().includes("link")
+      );
+      if (!hasWorkLinkField) {
+        setFieldValue("customFields", [
+          ...(values.customFields || []),
+          { label: "Work Link", value: "", type: "url" }
+        ]);
+      }
+    }
+  }, [values.requiresWorkLink, setFieldValue]);
 
   // State for due date change reason modal
   const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
@@ -594,6 +612,26 @@ const AddSubTask = ({
                       className="text-sm font-medium text-gray-700 cursor-pointer select-none"
                     >
                       Requires Client Approval
+                    </label>
+                  </div>
+                )}
+
+                {!isAssignee && (
+                  <div className="flex items-center gap-2 mb-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="requiresWorkLink"
+                      name="requiresWorkLink"
+                      checked={values.requiresWorkLink}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                      disabled={isLoading}
+                    />
+                    <label
+                      htmlFor="requiresWorkLink"
+                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                    >
+                      Requires Work Link
                     </label>
                   </div>
                 )}

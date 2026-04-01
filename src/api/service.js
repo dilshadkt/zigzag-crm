@@ -220,6 +220,8 @@ export const createTask = async (taskData, projectId) => {
     recurringInterval: taskData?.recurringInterval,
     recurringEndDate: taskData?.recurringEndDate,
     maxRecurrences: taskData?.maxRecurrences,
+    requiresClientApproval: taskData?.requiresClientApproval,
+    customFields: taskData?.customFields,
   };
   if (taskData?.taskFlow) {
     data.taskFlow = taskData.taskFlow; // Only add if present
@@ -251,6 +253,8 @@ export const createTaskFromBoard = async (taskData) => {
     recurringInterval: taskData?.recurringInterval,
     recurringEndDate: taskData?.recurringEndDate,
     maxRecurrences: taskData?.maxRecurrences,
+    requiresClientApproval: taskData?.requiresClientApproval,
+    customFields: taskData?.customFields,
   };
 
   // Handle project field based on selection
@@ -397,16 +401,7 @@ export const updateDailyChecklistStatus = async (projectId, data) => {
 // SubTask API functions
 export const createSubTask = async (subTaskData) => {
   try {
-    const response = await apiClient.post("/subtasks", {
-      title: subTaskData.title,
-      description: subTaskData.description,
-      parentTaskId: subTaskData.parentTaskId,
-      assignedTo: subTaskData.assignedTo,
-      priority: subTaskData.priority,
-      startDate: subTaskData.startDate,
-      dueDate: subTaskData.dueDate,
-      timeEstimate: subTaskData.timeEstimate,
-    });
+    const response = await apiClient.post("/subtasks", subTaskData);
     return response.data;
   } catch (error) {
     console.error("Error creating subtask:", error);

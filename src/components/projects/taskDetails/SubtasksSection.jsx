@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import SubTaskStatusButton from "../subTaskStatus";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
+import WorkLinkModal from "../../shared/workLinkModal";
 import ActivityTimeline from "./ActivityTimeline";
 import { FiActivity, FiClock, FiTarget, FiEdit3, FiLink } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
+import { useUpdateSubTaskById } from "../../../api/hooks";
+import { toast } from "react-hot-toast";
 
 const SubtasksSection = ({
   subTasks,
@@ -25,6 +28,39 @@ const SubtasksSection = ({
   const [historySubTask, setHistorySubTask] = useState(null);
   const [reworkSubTask, setReworkSubTask] = useState(null);
   const [timelineSubTask, setTimelineSubTask] = useState(null);
+  const [workLinkSubTask, setWorkLinkSubTask] = useState(null);
+  const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
+
+  // Status-agnostic update for work link
+  const updateSubTaskMutation = useUpdateSubTaskById(workLinkSubTask?._id, taskDetails?._id);
+
+  const handleWorkLinkSubmit = async (workLink) => {
+    try {
+      let updatedFields = [...(workLinkSubTask.customFields || [])];
+      const linkFieldIndex = updatedFields.findIndex(f => 
+        f.label?.toLowerCase().includes("work link") || 
+        f.label?.toLowerCase().includes("google drive") ||
+        f.label?.toLowerCase().includes("link")
+      );
+
+      if (linkFieldIndex !== -1) {
+        updatedFields[linkFieldIndex].value = workLink;
+      } else {
+        updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
+      }
+
+      await updateSubTaskMutation.mutateAsync({
+        customFields: updatedFields,
+      });
+      
+      setIsWorkLinkModalOpen(false);
+      setWorkLinkSubTask(null);
+      toast.success("Work link updated successfully!");
+    } catch (error) {
+      console.error("Error updating work link:", error);
+      toast.error("Failed to update work link");
+    }
+  };
 
   // Check if user can delete subtasks (company admin or has tasks delete permission)
   const canDeleteSubtasks = isCompany || isAdmin || hasPermission("tasks", "delete");
@@ -225,6 +261,20 @@ const SubtasksSection = ({
                         </svg>
                         Approval Required
                       </span>
+                    )}
+                    {(subtask?.requiresWorkLink || taskDetails?.taskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink)) && (
+                      <button
+                        onClick={() => {
+                          setWorkLinkSubTask(subtask);
+                          setIsWorkLinkModalOpen(true);
+                        }}
+                        className="px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold 
+                      rounded-full flex items-center gap-1 border border-orange-200 hover:bg-orange-200 transition-colors"
+                        title="Work link (Google Drive, etc.) is mandatory for this subtask. Click to add/update."
+                      >
+                        <FiLink className="w-2.5 h-2.5" />
+                        Link Required
+                      </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -633,6 +683,16 @@ const SubtasksSection = ({
           <ActivityTimeline activities={timelineSubTask?.activityLog} />
         </div>
       </Modal>
+
+      <WorkLinkModal
+        isOpen={isWorkLinkModalOpen}
+        onClose={() => {
+          setIsWorkLinkModalOpen(false);
+          setWorkLinkSubTask(null);
+        }}
+        onSubmit={handleWorkLinkSubmit}
+        isLoading={updateSubTaskMutation.isLoading}
+      />
     </div>
   );
 };

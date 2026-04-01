@@ -14,8 +14,9 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
         assignee: flow.assignee?._id || flow.assignee || "",
         weightage: flow.weightage !== undefined ? flow.weightage : 1,
         requiresClientApproval: !!flow.requiresClientApproval,
+        requiresWorkLink: !!flow.requiresWorkLink,
       }))
-      : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]
+      : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]
   );
   
   const { data: employeesData } = useEmpoyees(1);
@@ -33,7 +34,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
 
   const createTaskFlow = useCreateTaskFlow(companyId, () => {
     setName("");
-    setFlows([{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]);
+    setFlows([{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]);
     onClose();
   });
 
@@ -48,7 +49,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   };
 
   const addFlow = () =>
-    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false }]);
+    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]);
     
   const removeFlow = (idx) =>
     setFlows((prev) => prev.filter((_, i) => i !== idx));
@@ -206,6 +207,21 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                       </div>
                       <span className="text-[10px] font-bold text-gray-400 group-hover/opt:text-gray-600 transition-colors uppercase tracking-wider">
                         Client Review Bridge
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer group/opt">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={flow.requiresWorkLink}
+                        onChange={(e) => handleFlowChange(idx, "requiresWorkLink", e.target.checked)}
+                      />
+                      <div className="w-3.5 h-3.5 rounded border border-gray-300 peer-checked:bg-purple-500 peer-checked:border-purple-500 flex items-center justify-center transition-all">
+                        <FiCheckCircle className="text-white w-2.5 h-2.5 opacity-0 peer-checked:opacity-100" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 group-hover/opt:text-gray-600 transition-colors uppercase tracking-wider">
+                        Work Link Mandatory
                       </span>
                     </label>
                   </div>

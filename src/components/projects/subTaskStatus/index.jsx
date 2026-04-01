@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
+import WorkLinkModal from "../../shared/workLinkModal";
+import { toast } from "react-hot-toast";
 
 const SubTaskStatusButton = ({
   subTask,
@@ -14,6 +16,7 @@ const SubTaskStatusButton = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
+  const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
   const { isCompany } = useAuth();
@@ -83,9 +86,19 @@ const SubTaskStatusButton = ({
     },
   ];
 
+  // Check if work link is required (from subtask itself or inherited from parent task flow)
+  const isWorkLinkRequired = subTask.requiresWorkLink || (parentTaskFlow?.flows?.some(flow => 
+    flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() && flow.requiresWorkLink
+  ));
+
+  // Check if client approval is required
+  const isClientApprovalRequired = subTask.requiresClientApproval || (parentTaskFlow?.flows?.some(flow => 
+    flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() && flow.requiresClientApproval
+  ));
+
   // Get status options based on user role or explicit override
   const statusOptions = (isCompany || showAllOptions)
-    ? adminStatusOptions.filter(opt => opt.value !== "client-approved" || (subTask.requiresClientApproval || parentTaskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() && flow.requiresClientApproval)))
+    ? adminStatusOptions.filter(opt => opt.value !== "client-approved" || isClientApprovalRequired)
     : employeeStatusOptions;
 
   const currentStatus = adminStatusOptions.find(
@@ -104,6 +117,40 @@ const SubTaskStatusButton = ({
       setIsReworkModalOpen(true);
       setIsOpen(false);
       return;
+    }
+
+    if (newStatus === "on-review" && isWorkLinkRequired) {
+      // Check if link already exists in custom fields or publish URLs
+      const hasLink = (subTask.customFields || []).some(f => 
+        (f.label?.toLowerCase().includes("work link") || f.label?.toLowerCase().includes("google drive") || f.label?.toLowerCase().includes("url")) && 
+        f.value && f.value.toString().trim() !== ""
+      ) || (subTask.publishUrls && Object.values(subTask.publishUrls).some(v => v && typeof v === 'string' && v.trim() !== ""));
+
+      if (!hasLink) {
+        setPendingStatus(newStatus);
+        setIsWorkLinkModalOpen(true);
+        setIsOpen(false);
+        return;
+      }
+    }
+
+    // Additional check for completed status if work link is required
+    if (newStatus === "completed" && isWorkLinkRequired) {
+      const hasLink = (subTask.customFields || []).some(f => 
+        (f.label?.toLowerCase().includes("work link") || f.label?.toLowerCase().includes("google drive") || f.label?.toLowerCase().includes("url")) && 
+        f.value && f.value.toString().trim() !== ""
+      ) || (subTask.publishUrls && Object.values(subTask.publishUrls).some(v => v && typeof v === 'string' && v.trim() !== ""));
+      
+      if (!hasLink) {
+        toast.error("Work link is mandatory for this subtask. Please add it first.", {
+          duration: 4000,
+          position: "top-center"
+        });
+        setPendingStatus("on-review"); // Move to review first if missing link? Or just block.
+        setIsWorkLinkModalOpen(true);
+        setIsOpen(false);
+        return;
+      }
     }
 
     try {
@@ -126,6 +173,36 @@ const SubTaskStatusButton = ({
       setPendingStatus(null);
     } catch (error) {
       console.error("Error updating subtask status with rework:", error);
+    }
+  };
+
+  const handleWorkLinkSubmit = async (workLink) => {
+    try {
+      // Update custom fields with the new work link
+      let updatedFields = [...(subTask.customFields || [])];
+      const linkFieldIndex = updatedFields.findIndex(f => 
+        f.label?.toLowerCase().includes("work link") || 
+        f.label?.toLowerCase().includes("google drive") ||
+        f.label?.toLowerCase().includes("link")
+      );
+
+      if (linkFieldIndex !== -1) {
+        updatedFields[linkFieldIndex].value = workLink;
+      } else {
+        updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
+      }
+
+      await updateSubTaskMutation.mutateAsync({
+        status: pendingStatus,
+        customFields: updatedFields,
+      });
+      
+      setIsWorkLinkModalOpen(false);
+      setPendingStatus(null);
+      toast.success("Work link submitted and status updated!");
+    } catch (error) {
+      console.error("Error updating subtask status with work link:", error);
+      toast.error("Failed to update work link");
     }
   };
 
@@ -182,6 +259,13 @@ const SubTaskStatusButton = ({
         isOpen={isReworkModalOpen}
         onClose={() => setIsReworkModalOpen(false)}
         onSubmit={handleReworkSubmit}
+        isLoading={updateSubTaskMutation.isLoading}
+      />
+
+      <WorkLinkModal
+        isOpen={isWorkLinkModalOpen}
+        onClose={() => setIsWorkLinkModalOpen(false)}
+        onSubmit={handleWorkLinkSubmit}
         isLoading={updateSubTaskMutation.isLoading}
       />
     </div>
