@@ -33,8 +33,54 @@ export const getLeadStats = async () => {
   return response.data;
 };
 
+export const getLeadById = async (leadId) => {
+  const response = await apiClient.get(`/leads/${leadId}`);
+  return response.data;
+};
+
+export const getLeadNotes = async (leadId) => {
+  const response = await apiClient.get(`/leads/${leadId}/notes`);
+  return response.data;
+};
+
+export const addLeadNote = async ({ leadId, noteData }) => {
+  const response = await apiClient.post(`/leads/${leadId}/notes`, noteData);
+  return response.data;
+};
+
+export const getLeadAttachments = async (leadId) => {
+  const response = await apiClient.get(`/leads/${leadId}/attachments`);
+  return response.data;
+};
+
+export const getLeadActivities = async (leadId) => {
+  const response = await apiClient.get(`/leads/${leadId}/activities`);
+  return response.data;
+};
+
+export const uploadLeadAttachment = async ({ leadId, file }) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await apiClient.post(`/leads/${leadId}/attachments`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
+export const logLeadActivity = async ({ leadId, ...activityData }) => {
+  const response = await apiClient.post(`/leads/${leadId}/activities`, activityData);
+  return response.data;
+};
+
 export const getLeadFormConfig = async () => {
   const response = await apiClient.get("/leads/settings/form-config");
+  return response.data;
+};
+
+export const updateLeadFormConfig = async (config) => {
+  const response = await apiClient.put("/leads/settings/form-config", { fields: config });
   return response.data;
 };
 
@@ -154,10 +200,87 @@ export const useGetLeadStats = () => {
   });
 };
 
+export const useGetLeadById = (leadId) => {
+  return useQuery({
+    queryKey: ["lead", leadId],
+    queryFn: () => getLeadById(leadId),
+    enabled: !!leadId,
+  });
+};
+
+export const useGetLeadNotes = (leadId) => {
+  return useQuery({
+    queryKey: ["leadNotes", leadId],
+    queryFn: () => getLeadNotes(leadId),
+    enabled: !!leadId,
+  });
+};
+
+export const useAddLeadNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, noteData }) => addLeadNote({ leadId, noteData }),
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["leadNotes", leadId]);
+      queryClient.invalidateQueries(["lead", leadId]);
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+    },
+  });
+};
+
+export const useGetLeadAttachments = (leadId) => {
+  return useQuery({
+    queryKey: ["leadAttachments", leadId],
+    queryFn: () => getLeadAttachments(leadId),
+    enabled: !!leadId,
+  });
+};
+
+export const useGetLeadActivities = (leadId) => {
+  return useQuery({
+    queryKey: ["leadActivities", leadId],
+    queryFn: () => getLeadActivities(leadId),
+    enabled: !!leadId,
+  });
+};
+
+export const useUploadLeadAttachment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, file }) => uploadLeadAttachment({ leadId, file }),
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["leadAttachments", leadId]);
+      queryClient.invalidateQueries(["lead", leadId]);
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+    },
+  });
+};
+
+export const useLogLeadActivity = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, ...activityData }) => logLeadActivity({ leadId, ...activityData }),
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+      queryClient.invalidateQueries(["lead", leadId]);
+    },
+  });
+};
+
 export const useGetLeadFormConfig = () => {
   return useQuery({
     queryKey: ["leadFormConfig"],
     queryFn: getLeadFormConfig,
+  });
+};
+
+export const useUpdateLeadFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateLeadFormConfig,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadFormConfig"]);
+    },
   });
 };
 

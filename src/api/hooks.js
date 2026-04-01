@@ -2496,3 +2496,70 @@ export const useReorderProjectFields = (companyId, onSuccess) => {
   });
 };
 
+// Lead Form Config Hooks
+export const useGetLeadFormConfig = () => {
+  return useQuery({
+    queryKey: ["leadFormConfig"],
+    queryFn: () => apiClient.get("/leads/settings/form-config").then((res) => res.data),
+  });
+};
+
+export const useUpdateLeadFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (config) =>
+      apiClient
+        .put("/leads/settings/form-config", { fields: config })
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadFormConfig"]);
+    },
+  });
+};
+
+// Lead Status Hooks
+export const useGetLeadStatuses = () => {
+  return useQuery({
+    queryKey: ["leadStatuses"],
+    queryFn: () =>
+      apiClient.get("/leads/settings/statuses").then((res) => res.data),
+  });
+};
+
+export const useCreateLeadStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (statusData) =>
+      apiClient.post("/leads/settings/statuses", statusData).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadStatuses"]);
+    },
+  });
+};
+
+export const useUpdateLeadStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ statusId, statusData }) =>
+      apiClient
+        .put(`/leads/settings/statuses/${statusId}`, statusData)
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadStatuses"]);
+    },
+  });
+};
+
+export const useDeleteLeadStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (statusId) =>
+      apiClient
+        .delete(`/leads/settings/statuses/${statusId}`)
+        .then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadStatuses"]);
+    },
+  });
+};
+
