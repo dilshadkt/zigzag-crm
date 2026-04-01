@@ -1,6 +1,48 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../api/client";
 
+// --- LEADS CORE API ---
+
+export const getLeads = async (params = {}) => {
+  const response = await apiClient.get("/leads", { params });
+  return response.data;
+};
+
+export const createLead = async (leadData) => {
+  const response = await apiClient.post("/leads", leadData);
+  return response.data;
+};
+
+export const bulkCreateLeads = async (leadsData) => {
+  const response = await apiClient.post("/leads/bulk", leadsData);
+  return response.data;
+};
+
+export const updateLead = async (leadId, leadData) => {
+  const response = await apiClient.put(`/leads/${leadId}`, leadData);
+  return response.data;
+};
+
+export const deleteLead = async (leadId) => {
+  const response = await apiClient.delete(`/leads/${leadId}`);
+  return response.data;
+};
+
+export const getLeadStats = async () => {
+  const response = await apiClient.get("/leads/stats");
+  return response.data;
+};
+
+export const getLeadFormConfig = async () => {
+  const response = await apiClient.get("/leads/settings/form-config");
+  return response.data;
+};
+
+export const getLeadStatuses = async () => {
+  const response = await apiClient.get("/leads/settings/statuses");
+  return response.data;
+};
+
 // --- LEAD SCORING RULES API ---
 
 export const getLeadScoringRules = async (companyId) => {
@@ -51,6 +93,80 @@ export const reorderLeadAssignmentRules = async (companyId, ruleIds) => {
 };
 
 // --- HOOKS ---
+
+// Lead Hooks
+export const useGetLeads = (params = {}) => {
+  return useQuery({
+    queryKey: ["leads", params],
+    queryFn: () => getLeads(params),
+  });
+};
+
+export const useCreateLead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createLead,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
+      queryClient.invalidateQueries(["leadAssignmentRules"]);
+    },
+  });
+};
+
+export const useBulkCreateLeads = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkCreateLeads,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
+    },
+  });
+};
+
+export const useUpdateLead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, leadData }) => updateLead(leadId, leadData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
+    },
+  });
+};
+
+export const useDeleteLead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteLead,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
+    },
+  });
+};
+
+export const useGetLeadStats = () => {
+  return useQuery({
+    queryKey: ["leadStats"],
+    queryFn: getLeadStats,
+  });
+};
+
+export const useGetLeadFormConfig = () => {
+  return useQuery({
+    queryKey: ["leadFormConfig"],
+    queryFn: getLeadFormConfig,
+  });
+};
+
+export const useGetLeadStatuses = () => {
+  return useQuery({
+    queryKey: ["leadStatuses"],
+    queryFn: getLeadStatuses,
+  });
+};
 
 // Scoring Hooks
 export const useGetLeadScoringRules = (companyId) => {

@@ -82,10 +82,10 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     formFields.forEach((field) => {
       const value = formValues[field.id]; // Values keyed by ID in frontend state
-      
+
       // Check required fields
       if (field.required) {
         if (value === undefined || value === null || value === "" || (field.type === "checkbox" && !value)) {
@@ -129,12 +129,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     };
 
     const customFields = {};
-    
+
     formFields.forEach((field) => {
       const fieldId = String(field.id); // Frontend ID
       const fieldKey = field.key || fieldId; // Backend Key
       const fieldValue = formValues[fieldId];
-      
+
       if (fieldValue === undefined || fieldValue === null || fieldValue === "") {
         return; // Skip empty fields
       }
@@ -154,15 +154,15 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
         contact.phone = stringValue;
         return;
       }
-      
+
       // Map Company Name (common field)
       if (fieldKey === "company" || field.label.toLowerCase() === "company" || field.label.toLowerCase() === "company name") {
-         contact.company = stringValue;
-         // Also add to custom fields if it's a custom field actually
-         if (fieldKey !== "company") {
-             customFields[fieldKey] = fieldValue;
-         }
-         return;
+        contact.company = stringValue;
+        // Also add to custom fields if it's a custom field actually
+        if (fieldKey !== "company") {
+          customFields[fieldKey] = fieldValue;
+        }
+        return;
       }
 
       // Everything else goes to customFields keyed by the STABLE KEY
