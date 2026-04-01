@@ -938,6 +938,20 @@ export const restoreTaskFlow = async (companyId, taskFlowId) => {
   }
 };
 
+// Permanently delete a task flow
+export const permanentDeleteTaskFlow = async (companyId, taskFlowId) => {
+  try {
+    const response = await apiClient.delete(
+      `/companies/${companyId}/task-flows/${taskFlowId}/hard`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error permanently deleting task flow:", error);
+    throw error;
+  }
+};
+
+
 // Company-wide delete operations
 export const deleteAllCompanyTasks = async () => {
   try {

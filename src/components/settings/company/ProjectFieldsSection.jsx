@@ -162,6 +162,7 @@ const ProjectFieldsSection = ({
       case 'image': return <FiUpload className="w-4.5 h-4.5" />;
       case 'email': return <FiMail className="w-4.5 h-4.5" />;
       case 'url': return <FiLink className="w-4.5 h-4.5" />;
+      case 'dynamic_list': return <FiSettings className="w-4.5 h-4.5" />;
       default: return <FiDatabase className="w-4.5 h-4.5" />;
     }
   };

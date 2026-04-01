@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 
-const Modal = ({ isOpen, onClose, title, children, maxWidth = "sm:max-w-lg" }) => {
-  // ... (useEffect for escape key and body scroll remains the same)
+const Modal = ({ isOpen, onClose, setIsOpen, title, children, maxWidth = "sm:max-w-lg" }) => {
+  const closeAction = onClose || setIsOpen;
+
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && closeAction) closeAction();
     };
 
     if (isOpen) {
@@ -17,7 +18,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "sm:max-w-lg" }) =
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, closeAction]);
 
   if (!isOpen) return null;
 
@@ -26,7 +27,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "sm:max-w-lg" }) =
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
-        onClick={onClose}
+        onClick={() => closeAction && closeAction()}
         aria-hidden="true"
       />
 
@@ -50,10 +51,10 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "sm:max-w-lg" }) =
               {title}
             </h3>
             <button
-              onClick={onClose}
-              className="rounded-xl p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all duration-200"
+              onClick={() => closeAction && closeAction()}
+              className="rounded-xl p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all duration-200 outline-none"
             >
-              <IoClose className="h-5 w-5" aria-hidden="true" />
+              <IoClose className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
 
@@ -68,3 +69,4 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "sm:max-w-lg" }) =
 };
 
 export default Modal;
+

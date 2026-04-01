@@ -5,6 +5,7 @@ import {
   useGetTaskFlows,
   useDeleteTaskFlow,
   useRestoreTaskFlow,
+  usePermanentDeleteTaskFlow,
   useGetPositions,
   useDeletePosition,
   useRestorePosition,
@@ -17,6 +18,8 @@ import TaskFlowSection from "../../../components/settings/company/TaskFlowSectio
 import PositionHeader from "../../../components/settings/company/PositionHeader";
 import PositionTable from "../../../components/settings/company/PositionTable";
 import AddPosition from "../../../components/settings/positions/addPosition";
+import Modal from "../../../components/shared/modal";
+import { FiTrash2, FiAlertCircle } from "react-icons/fi";
 
 const Company = () => {
   const { companyId } = useAuth();
@@ -31,6 +34,9 @@ const Company = () => {
   } = useGetTaskFlows(companyId);
   const { mutate: deleteTaskFlow } = useDeleteTaskFlow(companyId);
   const { mutate: restoreTaskFlow } = useRestoreTaskFlow(companyId);
+  const { mutate: permanentDeleteTaskFlow } = usePermanentDeleteTaskFlow(companyId);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [taskFlowToDelete, setTaskFlowToDelete] = useState(null);
 
   // Positions State
   const [showPositionModal, setShowPositionModal] = useState(false);
@@ -41,12 +47,10 @@ const Company = () => {
 
   // Task Flow Handlers
   const handleDeleteTaskFlow = (taskFlow) => {
-    if (window.confirm("Are you sure you want to delete this task flow?")) {
-      deleteTaskFlow(taskFlow._id, {
-        onSuccess: () => toast.success("Task flow deleted"),
-        onError: (err) => toast.error(err.response?.data?.message || "Error deleting task flow"),
-      });
-    }
+    deleteTaskFlow(taskFlow._id, {
+      onSuccess: () => toast.success("Task flow deactivated"),
+      onError: (err) => toast.error(err.response?.data?.message || "Error deactivating task flow"),
+    });
   };
 
   const handleRestoreTaskFlow = (taskFlow) => {
@@ -64,6 +68,24 @@ const Company = () => {
   const handleTaskFlowModalClose = () => {
     setShowTaskFlowModal(false);
     setSelectedTaskFlow(null);
+  };
+
+  const handlePermanentDeleteClick = (taskFlow) => {
+    setTaskFlowToDelete(taskFlow);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmPermanentDelete = () => {
+    if (taskFlowToDelete) {
+      permanentDeleteTaskFlow(taskFlowToDelete._id, {
+        onSuccess: () => {
+          toast.success("Task flow permanently deleted");
+          setShowDeleteConfirmModal(false);
+          setTaskFlowToDelete(null);
+        },
+        onError: (err) => toast.error(err.response?.data?.message || "Error deleting task flow"),
+      });
+    }
   };
 
   // Position Handlers
@@ -128,6 +150,7 @@ const Company = () => {
             onEdit={handleEditTaskFlow}
             onDelete={handleDeleteTaskFlow}
             onRestore={handleRestoreTaskFlow}
+            onPermanentDelete={handlePermanentDeleteClick}
           />
         </div>
       </div>
@@ -150,6 +173,39 @@ const Company = () => {
           companyId={companyId}
         />
       )}
+
+      {/* Permanent Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        title="Delete Task Flow"
+      >
+        <div className="flex flex-col items-center py-4 text-center">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+            <FiAlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h3 className="text-[16px] font-bold text-gray-800 mb-2">Are you sure?</h3>
+          <p className="text-[13px] text-gray-500 max-w-xs mb-8">
+            You are about to permanently delete <span className="font-bold text-gray-700">"{taskFlowToDelete?.name}"</span>. 
+            This action cannot be undone.
+          </p>
+          <div className="flex items-center gap-3 w-full">
+            <button
+              onClick={() => setShowDeleteConfirmModal(false)}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmPermanentDelete}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white text-[13px] font-bold hover:bg-red-600 shadow-sm shadow-red-500/20 transition-all flex items-center justify-center gap-2"
+            >
+              <FiTrash2 className="w-4 h-4" />
+              Delete Flow
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

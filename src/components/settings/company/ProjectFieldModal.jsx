@@ -2,7 +2,7 @@ import React from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import ModalLayout from "../../shared/modal";
-import { FiX, FiCheck, FiInfo, FiHash, FiType, FiList, FiCalendar, FiCheckSquare, FiUpload, FiLink, FiMail } from "react-icons/fi";
+import { FiX, FiCheck, FiInfo, FiHash, FiType, FiList, FiCalendar, FiCheckSquare, FiUpload, FiLink, FiMail, FiSettings } from "react-icons/fi";
 
 const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
   const isEditing = !!field;
@@ -66,9 +66,10 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
     <ModalLayout
       isOpen={isOpen}
       setIsOpen={onClose}
+      maxWidth="sm:max-w-2xl"
       title={isEditing ? "Edit Custom Field" : "Create New Custom Field"}
     >
-      <div className="w-[480px]">
+      <div className="w-[560px]">
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}

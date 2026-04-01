@@ -64,6 +64,7 @@ import {
   updateTaskFlow,
   deleteTaskFlow,
   restoreTaskFlow,
+  permanentDeleteTaskFlow,
   deleteAllCompanyTasks,
   deleteAllCompanyProjects,
   deleteAllCompanyEmployees,
@@ -127,6 +128,17 @@ export const useRestoreTaskFlow = (companyId, onSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (taskFlowId) => restoreTaskFlow(companyId, taskFlowId),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["taskFlows", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const usePermanentDeleteTaskFlow = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskFlowId) => permanentDeleteTaskFlow(companyId, taskFlowId),
     onSuccess: (...args) => {
       queryClient.invalidateQueries(["taskFlows", companyId]);
       if (onSuccess) onSuccess(...args);

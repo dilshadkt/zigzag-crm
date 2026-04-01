@@ -1,5 +1,5 @@
 import React from "react";
-import { FiEdit3, FiTrash2, FiRotateCcw, FiLayers, FiArrowRight, FiUser } from "react-icons/fi";
+import { FiEdit3, FiTrash2, FiRotateCcw, FiLayers, FiArrowRight, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 
 const TaskFlowSection = ({
   taskFlows,
@@ -8,6 +8,7 @@ const TaskFlowSection = ({
   onEdit,
   onDelete,
   onRestore,
+  onPermanentDelete,
 }) => {
   const getTaskTypeColor = (taskType) => {
     const colors = {
@@ -166,23 +167,26 @@ const TaskFlowSection = ({
                   >
                     <FiEdit3 className="w-3.5 h-3.5" />
                   </button>
-                  {flow.isActive ? (
-                    <button
-                      onClick={() => onDelete(flow)}
-                      className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                      title="Archive pipeline"
-                    >
-                      <FiTrash2 className="w-3.5 h-3.5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onRestore(flow)}
-                      className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
-                      title="Restore pipeline"
-                    >
-                      <FiRotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+
+                  <button
+                    onClick={() => flow.isActive ? onDelete(flow) : onRestore(flow)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      flow.isActive 
+                        ? "text-gray-400 hover:text-purple-600 hover:bg-purple-50" 
+                        : "text-purple-600 bg-purple-50 hover:bg-purple-100"
+                    }`}
+                    title={flow.isActive ? "Deactivate pipeline" : "Activate pipeline"}
+                  >
+                    {flow.isActive ? <FiEye className="w-3.5 h-3.5" /> : <FiEyeOff className="w-3.5 h-3.5" />}
+                  </button>
+
+                  <button
+                    onClick={() => onPermanentDelete(flow)}
+                    className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                    title="Delete permanently"
+                  >
+                    <FiTrash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
