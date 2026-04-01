@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
-export const useAddProjectForm = (defaultValue, onSubmit) => {
+export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) => {
   const initialValues = {
     name: defaultValue?.name || "",
     thumbImg: defaultValue?.thumbImg || null,
@@ -16,6 +16,35 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
     dailyChecklist: defaultValue?.dailyChecklist || [],
     customFields: defaultValue?.customFields || {},
   };
+
+  // Build dynamic validation schema for custom fields
+  const customFieldsSchema = (projectFields || []).reduce((acc, field) => {
+    if (field.required) {
+      let schema;
+      switch (field.type) {
+        case "number":
+          schema = Yup.number().typeError(`${field.label} must be a number`).required(`${field.label} is required`);
+          break;
+        case "email":
+          schema = Yup.string().email("Invalid email format").required(`${field.label} is required`);
+          break;
+        case "dynamic_list":
+          schema = Yup.array()
+            .min(1, `${field.label} must have at least one item`)
+            .of(Yup.string().required("Item cannot be empty"))
+            .required(`${field.label} is required`);
+          break;
+        case "checkbox":
+          // Checkbox is usually not "required" in the traditional sense unless it's "must accept terms"
+          schema = Yup.boolean();
+          break;
+        default:
+          schema = Yup.string().required(`${field.label} is required`);
+      }
+      acc[field.key] = schema;
+    }
+    return acc;
+  }, {});
 
   const validationSchema = Yup.object().shape({
     name: Yup.string()
@@ -49,13 +78,16 @@ export const useAddProjectForm = (defaultValue, onSubmit) => {
       .required("Description is required")
       .min(10, "Description must be at least 10 characters")
       .max(1000, "Description must not exceed 1000 characters"),
+    customFields: Yup.object().shape(customFieldsSchema),
   });
+
   const formik = useFormik({
     initialValues,
     enableReinitialize: true,
     validationSchema,
     onSubmit,
   });
+
   return {
     ...formik,
     formik, // Return the formik instance

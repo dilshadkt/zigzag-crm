@@ -85,12 +85,12 @@ const SortableFieldItem = ({ field, getFieldIcon, onEdit, onDelete }) => {
         <div className="col-span-3">
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${field.isRequired
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${field.required
                 ? "bg-blue-50 text-blue-600 border-blue-100"
                 : "bg-gray-50 text-gray-400 border-gray-100"
                 }`}
             >
-              {field.isRequired ? "Required" : "Optional"}
+              {field.required ? "Required" : "Optional"}
             </span>
           </div>
         </div>
