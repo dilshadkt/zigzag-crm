@@ -1,344 +1,62 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../../api/client";
 
-// Get lead form configuration
-export const useGetLeadFormConfig = () => {
-  return useQuery({
-    queryKey: ["leadFormConfig"],
-    queryFn: async () => {
-      const response = await apiClient.get("/leads/settings/form-config");
-      return response.data;
-    },
-    // staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+// --- LEAD SCORING RULES API ---
+
+export const getLeadScoringRules = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/lead-scoring-rules`);
+  return response.data;
 };
 
-// Update lead form configuration
-export const useUpdateLeadFormConfig = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (fields) => {
-      const response = await apiClient.put("/leads/settings/form-config", {
-        fields,
-      });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leadFormConfig"]);
-    },
-  });
+export const createLeadScoringRule = async (companyId, ruleData) => {
+  const response = await apiClient.post(`/companies/${companyId}/lead-scoring-rules`, ruleData);
+  return response.data;
 };
 
-// Get all lead statuses
-export const useGetLeadStatuses = () => {
-  return useQuery({
-    queryKey: ["leadStatuses"],
-    queryFn: async () => {
-      const response = await apiClient.get("/leads/settings/statuses");
-      return response.data;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+export const updateLeadScoringRule = async (companyId, ruleId, ruleData) => {
+  const response = await apiClient.put(`/companies/${companyId}/lead-scoring-rules/${ruleId}`, ruleData);
+  return response.data;
 };
 
-// Create lead status
-export const useCreateLeadStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (statusData) => {
-      const response = await apiClient.post(
-        "/leads/settings/statuses",
-        statusData
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leadStatuses"]);
-    },
-  });
+export const deleteLeadScoringRule = async (companyId, ruleId) => {
+  const response = await apiClient.delete(`/companies/${companyId}/lead-scoring-rules/${ruleId}`);
+  return response.data;
 };
 
-// Update lead status
-export const useUpdateLeadStatus = () => {
-  const queryClient = useQueryClient();
+// --- LEAD ASSIGNMENT RULES API ---
 
-  return useMutation({
-    mutationFn: async ({ statusId, statusData }) => {
-      const response = await apiClient.put(
-        `/leads/settings/statuses/${statusId}`,
-        statusData
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      // Invalidate statuses query to refetch updated statuses
-      queryClient.invalidateQueries(["leadStatuses"]);
-      // Invalidate leads query so all leads show updated status
-      // This will cause leads to refetch with updated status data
-      queryClient.invalidateQueries(["leads"]);
-      // Invalidate individual lead queries
-      queryClient.invalidateQueries({ queryKey: ["lead"] });
-    },
-  });
+export const getLeadAssignmentRules = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/lead-assignment-rules`);
+  return response.data;
 };
 
-// Delete lead status
-export const useDeleteLeadStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (statusId) => {
-      const response = await apiClient.delete(
-        `/leads/settings/statuses/${statusId}`
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leadStatuses"]);
-    },
-  });
+export const createLeadAssignmentRule = async (companyId, ruleData) => {
+  const response = await apiClient.post(`/companies/${companyId}/lead-assignment-rules`, ruleData);
+  return response.data;
 };
 
-// Get all leads
-export const useGetLeads = (params = {}) => {
-  const {
-    page = 1,
-    limit = 15,
-    search,
-    status,
-    owner,
-    source,
-    sortBy = "createdAt",
-    sortOrder = "desc",
-    filters,
-  } = params;
-
-  return useQuery({
-    queryKey: [
-      "leads",
-      { page, limit, search, status, owner, source, sortBy, sortOrder, filters },
-    ],
-    queryFn: async () => {
-      const response = await apiClient.get("/leads", {
-        params: {
-          page,
-          limit,
-          search,
-          status,
-          owner,
-          source,
-          sortBy,
-          sortOrder,
-          filters: filters ? JSON.stringify(filters) : undefined,
-        },
-      });
-      return response.data;
-    },
-    keepPreviousData: true,
-  });
+export const updateLeadAssignmentRule = async (companyId, ruleId, ruleData) => {
+  const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/${ruleId}`, ruleData);
+  return response.data;
 };
 
-// Get lead statistics
-export const useGetLeadStats = () => {
-  return useQuery({
-    queryKey: ["leadStats"],
-    queryFn: async () => {
-      const response = await apiClient.get("/leads/stats");
-      return response.data;
-    },
-  });
+export const deleteLeadAssignmentRule = async (companyId, ruleId) => {
+  const response = await apiClient.delete(`/companies/${companyId}/lead-assignment-rules/${ruleId}`);
+  return response.data;
 };
 
-// Get lead by ID
-export const useGetLeadById = (leadId) => {
-  return useQuery({
-    queryKey: ["lead", leadId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/leads/${leadId}`);
-      return response.data;
-    },
-    enabled: !!leadId,
-  });
+export const reorderLeadAssignmentRules = async (companyId, ruleIds) => {
+  const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/reorder`, { ruleIds });
+  return response.data;
 };
 
-// Create lead
-export const useCreateLead = () => {
-  const queryClient = useQueryClient();
+// --- HOOKS ---
 
-  return useMutation({
-    mutationFn: async (leadData) => {
-      const response = await apiClient.post("/leads", leadData);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
-    },
-  });
-};
-
-// Bulk create leads
-export const useBulkCreateLeads = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (leadsData) => {
-      const response = await apiClient.post("/leads/bulk", { leads: leadsData });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
-    },
-  });
-};
-
-// Update lead
-export const useUpdateLead = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ leadId, leadData }) => {
-      const response = await apiClient.put(`/leads/${leadId}`, leadData);
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["lead", variables.leadId]);
-      queryClient.invalidateQueries(["leadActivities", variables.leadId]);
-      queryClient.invalidateQueries(["leadStats"]);
-    },
-  });
-};
-
-// Delete lead
-export const useDeleteLead = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (leadId) => {
-      const response = await apiClient.delete(`/leads/${leadId}`);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
-    },
-  });
-};
-
-// Add note to lead
-export const useAddLeadNote = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ leadId, noteData }) => {
-      const response = await apiClient.post(`/leads/${leadId}/notes`, noteData);
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(["lead", variables.leadId]);
-      queryClient.invalidateQueries(["leadNotes", variables.leadId]);
-    },
-  });
-};
-
-// Get lead notes
-export const useGetLeadNotes = (leadId) => {
-  return useQuery({
-    queryKey: ["leadNotes", leadId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/leads/${leadId}/notes`);
-      return response.data;
-    },
-    enabled: !!leadId,
-  });
-};
-
-// Upload lead attachment
-export const useUploadLeadAttachment = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ leadId, file }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await apiClient.post(
-        `/leads/${leadId}/attachments`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(["lead", variables.leadId]);
-      queryClient.invalidateQueries(["leadAttachments", variables.leadId]);
-    },
-  });
-};
-
-// Get lead attachments
-export const useGetLeadAttachments = (leadId) => {
-  return useQuery({
-    queryKey: ["leadAttachments", leadId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/leads/${leadId}/attachments`);
-      return response.data;
-    },
-    enabled: !!leadId,
-  });
-};
-
-// Get lead activities
-export const useGetLeadActivities = (leadId, params = {}) => {
-  return useQuery({
-    queryKey: ["leadActivities", leadId, params],
-    queryFn: async () => {
-      const response = await apiClient.get(`/leads/${leadId}/activities`, {
-        params,
-      });
-      return response.data;
-    },
-    enabled: !!leadId,
-  });
-};
-
-// Log lead activity manually
-export const useLogLeadActivity = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ leadId, type, title, description, metadata }) => {
-      const response = await apiClient.post(`/leads/${leadId}/activities`, {
-        type,
-        title,
-        description,
-        metadata,
-      });
-      return response.data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(["lead", variables.leadId]);
-      queryClient.invalidateQueries(["leadActivities", variables.leadId]);
-    },
-  });
-};
-
-// ==================== SCORING RULES ====================
-
+// Scoring Hooks
 export const useGetLeadScoringRules = (companyId) => {
   return useQuery({
     queryKey: ["leadScoringRules", companyId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/companies/${companyId}/lead-scoring-rules`);
-      return response.data;
-    },
+    queryFn: () => getLeadScoringRules(companyId),
     enabled: !!companyId,
   });
 };
@@ -346,10 +64,7 @@ export const useGetLeadScoringRules = (companyId) => {
 export const useCreateLeadScoringRule = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (ruleData) => {
-      const response = await apiClient.post(`/companies/${companyId}/lead-scoring-rules`, ruleData);
-      return response.data;
-    },
+    mutationFn: (ruleData) => createLeadScoringRule(companyId, ruleData),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadScoringRules", companyId]);
     },
@@ -359,10 +74,7 @@ export const useCreateLeadScoringRule = (companyId) => {
 export const useUpdateLeadScoringRule = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ ruleId, ruleData }) => {
-      const response = await apiClient.put(`/companies/${companyId}/lead-scoring-rules/${ruleId}`, ruleData);
-      return response.data;
-    },
+    mutationFn: ({ ruleId, ruleData }) => updateLeadScoringRule(companyId, ruleId, ruleData),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadScoringRules", companyId]);
     },
@@ -372,25 +84,18 @@ export const useUpdateLeadScoringRule = (companyId) => {
 export const useDeleteLeadScoringRule = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (ruleId) => {
-      const response = await apiClient.delete(`/companies/${companyId}/lead-scoring-rules/${ruleId}`);
-      return response.data;
-    },
+    mutationFn: (ruleId) => deleteLeadScoringRule(companyId, ruleId),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadScoringRules", companyId]);
     },
   });
 };
 
-// ==================== ASSIGNMENT RULES ====================
-
+// Assignment Hooks
 export const useGetLeadAssignmentRules = (companyId) => {
   return useQuery({
     queryKey: ["leadAssignmentRules", companyId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/companies/${companyId}/lead-assignment-rules`);
-      return response.data;
-    },
+    queryFn: () => getLeadAssignmentRules(companyId),
     enabled: !!companyId,
   });
 };
@@ -398,10 +103,7 @@ export const useGetLeadAssignmentRules = (companyId) => {
 export const useCreateLeadAssignmentRule = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (ruleData) => {
-      const response = await apiClient.post(`/companies/${companyId}/lead-assignment-rules`, ruleData);
-      return response.data;
-    },
+    mutationFn: (ruleData) => createLeadAssignmentRule(companyId, ruleData),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
     },
@@ -411,23 +113,7 @@ export const useCreateLeadAssignmentRule = (companyId) => {
 export const useUpdateLeadAssignmentRule = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ ruleId, ruleData }) => {
-      const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/${ruleId}`, ruleData);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
-    },
-  });
-};
-
-export const useReorderLeadAssignmentRules = (companyId) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (orderedIds) => {
-      const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/reorder`, { orderedIds });
-      return response.data;
-    },
+    mutationFn: ({ ruleId, ruleData }) => updateLeadAssignmentRule(companyId, ruleId, ruleData),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
     },
@@ -437,10 +123,17 @@ export const useReorderLeadAssignmentRules = (companyId) => {
 export const useDeleteLeadAssignmentRule = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (ruleId) => {
-      const response = await apiClient.delete(`/companies/${companyId}/lead-assignment-rules/${ruleId}`);
-      return response.data;
+    mutationFn: (ruleId) => deleteLeadAssignmentRule(companyId, ruleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
     },
+  });
+};
+
+export const useReorderLeadAssignmentRules = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ruleIds) => reorderLeadAssignmentRules(companyId, ruleIds),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
     },
