@@ -47,6 +47,9 @@ const Dashboard = () => {
 
   // Check if user has permission to view campaign details
   const canViewCampaignDetails = hasPermission("dashboard", "viewCampaignDetails");
+
+  // Check if user has viewAll tasks permission
+  const canViewAllTasks = hasPermission("tasks", "viewAll");
   // State for managing the selected month
   // Default to current date initially
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -169,11 +172,11 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Progress Stats Section - Show different components based on user role */}
+      {/* Progress Stats Section - Show different components based on user role and permissions */}
       <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
-        {isEmployee ? (
+        {isEmployee && !canViewAllTasks ? (
           <EmployeeProgressStats taskMonth={taskMonth} />
-        ) : isCompanyAdmin ? (
+        ) : isCompanyAdmin || (isEmployee && canViewAllTasks) ? (
           <CompanyProgressStats taskMonth={taskMonth} />
         ) : null}
       </div>

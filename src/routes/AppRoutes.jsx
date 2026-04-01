@@ -234,7 +234,10 @@ const AppRoutes = () => {
           <Route
             path="company-tasks"
             element={
-              <WithRoleAcess allowedRoles={["company-admin"]}>
+              <WithRoleAcess 
+                allowedRoles={["company-admin"]} 
+                requiredPermission={{ category: "tasks", action: "viewAll" }}
+              >
                 <CompanyTasks />
               </WithRoleAcess>
             }
@@ -243,7 +246,10 @@ const AppRoutes = () => {
             path="company-today-tasks"
             element={
               <RouteAccess>
-                <WithRoleAcess allowedRoles={["company-admin"]}>
+                <WithRoleAcess 
+                  allowedRoles={["company-admin"]}
+                  requiredPermission={{ category: "tasks", action: "viewAll" }}
+                >
                   <CompanyTasks filter="today" />
                 </WithRoleAcess>
               </RouteAccess>

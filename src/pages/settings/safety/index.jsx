@@ -35,6 +35,7 @@ const PERMISSION_CATEGORIES = {
       { key: "edit", label: "Edit Task", description: "Can edit existing tasks" },
       { key: "delete", label: "Delete Task", description: "Can delete tasks" },
       { key: "view", label: "View Task", description: "Can view task details" },
+      { key: "viewAll", label: "View All Tasks", description: "Can view all company tasks" },
       { key: "assign", label: "Assign Task", description: "Can assign tasks to team members" },
       { key: "changeStatus", label: "Change Status", description: "Can change task status" },
     ],

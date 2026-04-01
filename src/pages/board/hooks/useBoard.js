@@ -17,9 +17,12 @@ import { processAttachments, cleanTaskData } from "../../../lib/attachmentUtils"
 import { statusConfig } from "../components/StatusConfig";
 
 export const useBoard = () => {
-    const { user } = useAuth();
+    const { user, companyId } = useAuth();
     const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
+
+    // Check if user has viewAll tasks permission
+    const canViewAllTasks = user?.role === "company-admin" || hasPermission("tasks", "viewAll");
 
     // Filter States
     const [selectedProject, setSelectedProject] = useState("all");
@@ -35,17 +38,17 @@ export const useBoard = () => {
 
     // Data Fetching
     const { data: employeeTasksData, isLoading: isLoadingEmployeeTasks } =
-        useGetEmployeeTasks(user?.role !== "company-admin" ? user?._id : null, { taskMonth: selectedMonth });
+        useGetEmployeeTasks(!canViewAllTasks ? user?._id : null, { taskMonth: selectedMonth });
 
     const { data: companyTasksData, isLoading: isLoadingCompanyTasks } =
         useGetAllCompanyTasks(
-            user?.role === "company-admin" ? user?.company : null,
+            canViewAllTasks ? companyId : null,
             selectedMonth
         );
 
     const { data: projectsData } =
-        user?.role === "company-admin"
-            ? useCompanyProjects(user?.company)
+        canViewAllTasks
+            ? useCompanyProjects(companyId)
             : useGetEmployeeProjects(user?._id);
 
     const { mutate: updateOrder } = useUpdateTaskOrder();
@@ -54,9 +57,9 @@ export const useBoard = () => {
             setShowModalTask(false);
         });
 
-    // Get tasks based on user role
+    // Get tasks based on user role and permissions
     const tasks = useMemo(() => {
-        return user?.role === "company-admin"
+        return canViewAllTasks
             ? companyTasksData?.tasks || []
             : [
                 ...(employeeTasksData?.tasks || []),
@@ -67,8 +70,8 @@ export const useBoard = () => {
     // Real-time Updates
     useEffect(() => {
         const handleTaskStatusChange = (data) => {
-            if (user?.role === "company-admin") {
-                queryClient.invalidateQueries(["allCompanyTasks", user?.company, selectedMonth]);
+            if (canViewAllTasks) {
+                queryClient.invalidateQueries(["allCompanyTasks", companyId, selectedMonth]);
             } else {
                 queryClient.invalidateQueries(["employeeTasks", user?._id]);
             }
@@ -100,8 +103,8 @@ export const useBoard = () => {
 
         const handleNewNotification = (data) => {
             if (data.type === "task_review" || data.type === "task_updated") {
-                if (user?.role === "company-admin") {
-                    queryClient.invalidateQueries(["allCompanyTasks", user?.company, selectedMonth]);
+                if (canViewAllTasks) {
+                    queryClient.invalidateQueries(["allCompanyTasks", companyId, selectedMonth]);
                 } else {
                     queryClient.invalidateQueries(["employeeTasks", user?._id]);
                 }
@@ -115,9 +118,9 @@ export const useBoard = () => {
             socketService.offTaskStatusChange(handleTaskStatusChange);
             socketService.offNewNotification(handleNewNotification);
         };
-    }, [queryClient, user?.role, user?.company, user?._id, selectedMonth]);
+    }, [queryClient, canViewAllTasks, companyId, user?._id, selectedMonth]);
 
-    const projects = user?.role === "company-admin" ? projectsData || [] : projectsData?.projects || [];
+    const projects = canViewAllTasks ? projectsData || [] : projectsData?.projects || [];
 
     const assignees = useMemo(() => {
         const users = {};
@@ -161,8 +164,8 @@ export const useBoard = () => {
 
     // Handlers
     const handleRefresh = () => {
-        if (user?.role === "company-admin") {
-            queryClient.invalidateQueries(["allCompanyTasks", user?.company, selectedMonth]);
+        if (canViewAllTasks) {
+            queryClient.invalidateQueries(["allCompanyTasks", companyId, selectedMonth]);
         } else {
             queryClient.invalidateQueries(["employeeTasks", user?._id]);
         }
@@ -223,8 +226,8 @@ export const useBoard = () => {
 
     const handleTaskDrop = async (taskData, targetStatus, targetPosition) => {
         const { taskId, sourceStatus, sourceIndex } = taskData;
-        const queryKey = user?.role === "company-admin"
-            ? ["allCompanyTasks", user?.company, selectedMonth]
+        const queryKey = canViewAllTasks
+            ? ["allCompanyTasks", companyId, selectedMonth]
             : ["employeeTasks", user?._id];
 
         queryClient.setQueryData(queryKey, (oldData) => {

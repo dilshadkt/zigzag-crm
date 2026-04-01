@@ -19,9 +19,9 @@ import { usePermissions } from "../../hooks/usePermissions";
 //   return WithRoleAccess;
 // };
 
-function WithRoleAcess({ children, allowedRoles, allowedRoutes }) {
+function WithRoleAcess({ children, allowedRoles, allowedRoutes, requiredPermission }) {
   const { user } = useAuth();
-  const { hasAdminDashboardAccess } = usePermissions();
+  const { hasAdminDashboardAccess, hasPermission, userPermissions } = usePermissions();
   const location = useLocation();
 
   if (!user) {
@@ -29,7 +29,6 @@ function WithRoleAcess({ children, allowedRoles, allowedRoutes }) {
   }
 
   // Check role-based access if allowedRoles is provided
-  // Allow access if user has the role OR (if checking for company-admin role) has admin dashboard access permission
   if (allowedRoles) {
     const hasRole = allowedRoles.includes(user.role);
     
@@ -38,8 +37,14 @@ function WithRoleAcess({ children, allowedRoles, allowedRoutes }) {
     if (allowedRoles.includes("company-admin")) {
       hasAdminAccess = hasAdminDashboardAccess();
     }
+
+    // Check for specific permission if provided
+    let hasExtraPermission = false;
+    if (requiredPermission) {
+      hasExtraPermission = hasPermission(requiredPermission.category, requiredPermission.action);
+    }
     
-    if (!hasRole && !hasAdminAccess) {
+    if (!hasRole && !hasAdminAccess && !hasExtraPermission) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
