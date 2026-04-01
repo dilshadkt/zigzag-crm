@@ -746,7 +746,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
 
       {isColumnEditorOpen && (
         <div
-          className="absolute inset-0 bg-black/0 z-20"
+          className="absolute inset-0 bg-black/0 z-50"
           onClick={closeColumnEditor}
         >
           <div
@@ -767,7 +767,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
 
       {isLeadMenuOpen && (
         <div
-          className="absolute inset-0 bg-black/0 z-30"
+          className="absolute inset-0 bg-black/0 z-50"
           onClick={closeLeadMenu}
         >
           <div

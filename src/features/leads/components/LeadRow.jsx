@@ -239,8 +239,8 @@ const LeadRow = memo(({
         className="border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50/70 transition-colors group"
         onClick={() => onRowClick && onRowClick(lead)}
       >
-        <td 
-          className="px-6 py-1.5 cursor-pointer text-center"
+        <td
+          className="px-6 py-2 cursor-pointer text-center"
           onClick={(e) => {
             e.stopPropagation();
             onToggle(lead._id || lead.id);
@@ -251,7 +251,7 @@ const LeadRow = memo(({
               type="checkbox"
               className={checkboxClasses}
               checked={isSelected}
-              onChange={() => {}} // Controlled via td's onClick
+              onChange={() => { }} // Controlled via td's onClick
               onClick={(e) => e.stopPropagation()}
             />
           </div>

@@ -48,25 +48,25 @@ const LeadFormPreviewPanel = ({
   };
 
   return (
-    <div className="bg-slate-50 rounded-3xl p-4 space-y-3 h-max xl:sticky xl:top-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-800">Live Preview</p>
+    <div className="bg-gray-50 rounded-2xl p-3 space-y-2 h-max xl:sticky xl:top-2 shadow-inner border border-slate-100">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-[13px] font-bold text-slate-700 uppercase tracking-tight">Form Preview</p>
         {previewMessage && (
-          <span className="text-xs font-semibold text-emerald-600">
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
             {previewMessage}
           </span>
         )}
       </div>
-      <form className="space-y-3" onSubmit={handleValidate}>
+      <form className="space-y-2.5 bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm" onSubmit={handleValidate}>
         {fields.map((field) => (
           <div key={field.id} className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-tight ml-0.5">
               {field.label}
-              {field.required && <span className="text-red-500">*</span>}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             {renderField(field, previewValues, setPreviewValues)}
             {previewErrors[field.id] && (
-              <span className="text-xs text-red-500">
+              <span className="text-[10px] font-bold text-red-500 px-1">
                 {previewErrors[field.id]}
               </span>
             )}
@@ -74,9 +74,9 @@ const LeadFormPreviewPanel = ({
         ))}
         <button
           type="submit"
-          className="w-full h-11 rounded-2xl bg-slate-900 text-white text-sm font-semibold"
+          className="w-full h-10 rounded-xl bg-slate-900 text-white text-[12px] font-bold shadow-md shadow-slate-900/10 hover:bg-slate-800 transition-all active:scale-[0.98] mt-2"
         >
-          Validate Form
+          Test Validation
         </button>
       </form>
     </div>
@@ -91,7 +91,7 @@ const renderField = (field, previewValues, setPreviewValues) => {
   if (field.type === "textarea") {
     return (
       <textarea
-        className="h-24 rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-[#3f8cff]"
+        className="h-20 rounded-xl border border-slate-200 px-3 py-2 text-[12px] font-medium focus:outline-none focus:border-blue-500 transition-all"
         placeholder={field.placeholder || `Enter ${field.label}`}
         value={previewValues[field.id] || ""}
         onChange={(e) => handleChange(e.target.value)}
@@ -117,13 +117,14 @@ const renderField = (field, previewValues, setPreviewValues) => {
 
   if (field.type === "checkbox") {
     return (
-      <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+      <label className="inline-flex items-center gap-2 text-[12px] font-medium text-slate-600 cursor-pointer">
         <input
           type="checkbox"
           checked={!!previewValues[field.id]}
           onChange={(e) => handleChange(e.target.checked)}
+          className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
         />
-        Enable {field.label}
+        Confirmed {field.label}
       </label>
     );
   }
@@ -132,7 +133,7 @@ const renderField = (field, previewValues, setPreviewValues) => {
     return (
       <input
         type="date"
-        className="h-11 rounded-2xl border border-slate-200 px-3 text-sm focus:outline-none focus:border-[#3f8cff]"
+        className="h-9 rounded-xl border border-slate-200 px-3 text-[12px] font-medium focus:outline-none focus:border-blue-500 transition-all"
         placeholder={field.placeholder || `Select ${field.label}`}
         value={previewValues[field.id] || ""}
         onChange={(e) => handleChange(e.target.value)}
@@ -143,7 +144,7 @@ const renderField = (field, previewValues, setPreviewValues) => {
   return (
     <input
       type={field.type}
-      className="h-11 rounded-2xl border border-slate-200 px-3 text-sm focus:outline-none focus:border-[#3f8cff]"
+      className="h-9 rounded-xl border border-slate-200 px-3 text-[12px] font-medium focus:outline-none focus:border-blue-500 transition-all"
       placeholder={field.placeholder || `Enter ${field.label}`}
       value={previewValues[field.id] || ""}
       onChange={(e) => handleChange(e.target.value)}

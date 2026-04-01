@@ -11,7 +11,7 @@ const LeadsSearchBar = ({ value, onChange, placeholder = "Search" }) => {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full h-9 md:h-11 rounded-full bg-slate-50 border border-slate-200 pl-10 pr-4 text-[13px] md:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#3f8cff] focus:ring-2 focus:ring-[#3f8cff]/20 transition-all"
+        className="w-full h-7 md:h-10 rounded-full bg-slate-50 border border-slate-200 pl-10 pr-4 text-[13px] md:text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#3f8cff] focus:ring-2 focus:ring-[#3f8cff]/20 transition-all"
         type="text"
       />
     </div>

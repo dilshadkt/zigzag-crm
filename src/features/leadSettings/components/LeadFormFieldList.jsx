@@ -56,31 +56,31 @@ const SortableFieldItem = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`space-y-3 border rounded-2xl p-4 ${isMandatory ? "border-blue-200 bg-blue-50/30" : "border-slate-100"
-        } ${isDragging ? "shadow-lg" : ""}`}
+      className={`space-y-2 border rounded-xl p-2.5 ${isMandatory ? "border-blue-100 bg-blue-50/50" : "border-slate-100 bg-white"
+        } ${isDragging ? "shadow-lg scale-[1.01]" : ""}`}
     >
       <div className="flex items-start gap-3">
         {/* Drag Handle */}
         <button
           {...attributes}
           {...listeners}
-          className="mt-3 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors"
+          className="mt-2.5 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
           title="Drag to reorder"
         >
-          <FiMenu size={20} />
+          <FiMenu size={16} />
         </button>
 
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-2">
           {isMandatory && (
-            <div className="flex items-center gap-1 mb-2">
-              <FiLock size={12} className="text-blue-600" />
-              <span className="text-xs font-semibold text-blue-600">
-                System Field (Cannot be deleted)
+            <div className="flex items-center gap-1.5 mb-1.5 opacity-80">
+              <FiLock size={10} className="text-blue-600" />
+              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">
+                System Requirement
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <input
               value={field.label}
               onChange={(event) => {
@@ -100,7 +100,7 @@ const SortableFieldItem = ({
                   onUpdateField(field.id, { label: event.target.value });
                 }
               }}
-              className="h-11 rounded-2xl border border-slate-200 px-3 text-sm focus:outline-none focus:border-[#3f8cff]"
+              className="h-8.5 rounded-lg border border-slate-200 px-2.5 text-[12px] font-bold focus:outline-none focus:border-blue-500 transition-all bg-white"
             />
             <CustomSelect
               value={field.type}
@@ -128,13 +128,13 @@ const SortableFieldItem = ({
               onChange={(event) =>
                 onUpdateField(field.id, { placeholder: event.target.value })
               }
-              placeholder="Placeholder"
-              className="h-11 rounded-2xl border border-slate-200 px-3 text-sm focus:outline-none focus:border-[#3f8cff]"
+              placeholder="Hint text"
+              className="h-8.5 rounded-lg border border-slate-200 px-2.5 text-[12px] font-medium focus:outline-none focus:border-blue-500 transition-all bg-white"
             />
           </div>
 
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <label className="flex items-center gap-2 text-sm text-slate-600">
+            <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-tight cursor-pointer">
               <input
                 type="checkbox"
                 checked={field.required}
@@ -143,47 +143,49 @@ const SortableFieldItem = ({
                     required: event.target.checked,
                   });
                 }}
-                className="w-4 h-4 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]"
+                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="flex items-center gap-1">
-                Required field
+              <span className="flex items-center gap-1.5 pt-0.5">
+                Required Field
                 {isMandatory && (
-                  <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium">
-                    <FiLock size={12} />
-                    System Field
+                  <span className="inline-flex items-center gap-1 text-[9px] text-blue-500 font-extrabold uppercase bg-blue-100/50 px-1.5 py-0.5 rounded">
+                    <FiLock size={10} />
+                    System
                   </span>
                 )}
               </span>
             </label>
-            <button
-              className={`${isMandatory
-                  ? "text-slate-300 cursor-not-allowed opacity-50"
-                  : "text-slate-400 hover:text-red-500"
-                }`}
-              onClick={() => {
-                if (isMandatory) {
-                  alert(
-                    "This is a system field and cannot be deleted. However, you can uncheck 'Required' if you want to make it optional."
-                  );
-                  return;
+            <div className="flex items-center gap-1">
+              <button
+                className={`p-1.5 rounded-lg transition-all ${isMandatory
+                  ? "text-slate-200 cursor-not-allowed"
+                  : "text-slate-400 hover:text-red-500 hover:bg-red-50"
+                  }`}
+                onClick={() => {
+                  if (isMandatory) {
+                    alert(
+                      "This is a system field and cannot be deleted. However, you can uncheck 'Required' if you want to make it optional."
+                    );
+                    return;
+                  }
+                  if (
+                    window.confirm(
+                      `Are you sure you want to remove "${field.label}"?`
+                    )
+                  ) {
+                    onRemoveField(field.id);
+                  }
+                }}
+                disabled={isMandatory}
+                title={
+                  isMandatory
+                    ? "System fields cannot be deleted"
+                    : "Remove field"
                 }
-                if (
-                  window.confirm(
-                    `Are you sure you want to remove "${field.label}"?`
-                  )
-                ) {
-                  onRemoveField(field.id);
-                }
-              }}
-              disabled={isMandatory}
-              title={
-                isMandatory
-                  ? "System fields cannot be deleted"
-                  : "Remove field"
-              }
-            >
-              <FiTrash2 size={18} />
-            </button>
+              >
+                <FiTrash2 size={16} />
+              </button>
+            </div>
           </div>
 
           {field.type === "select" && (

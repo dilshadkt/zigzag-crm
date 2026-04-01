@@ -97,28 +97,27 @@ const LeadFormBuilder = ({
   };
 
   return (
-    <div className="relative bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5">
+    <div className="relative bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-slate-900">
-            Lead Form Builder
+        <div className="flex flex-col gap-1">
+          <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">
+            Lead Form Structure
           </h3>
-          <p className="text-sm text-slate-500">
-            Define what information you need from leads. Configure fields at
-            left and see a live preview on the right.
+          <p className="text-[11px] font-medium text-slate-400">
+            Configure custom fields for lead capture and preview the layout.
           </p>
         </div>
         <button
           onClick={handleReset}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-2xl hover:bg-slate-50 hover:border-slate-400 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-[0.98]"
           title="Reset form and start fresh"
         >
-          <FiRotateCcw size={16} />
+          <FiRotateCcw size={14} />
           Reset Form
         </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div className="space-y-4">
           <LeadFormNewFieldPanel
             newField={newField}

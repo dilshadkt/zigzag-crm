@@ -141,7 +141,7 @@ const SubtasksSection = ({
                     {/* Content Indicators */}
                     <div className="flex items-center gap-1.5 ml-1">
                       {subtask.copyOfDescription && (
-                        <div 
+                        <div
                           className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
                           title="Has Content Description"
                         >
@@ -150,7 +150,7 @@ const SubtasksSection = ({
                         </div>
                       )}
                       {subtask.ideas && (
-                        <div 
+                        <div
                           className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-md text-[9px] font-bold uppercase"
                           title="Has Ideas"
                         >
@@ -161,7 +161,7 @@ const SubtasksSection = ({
                         </div>
                       )}
                       {subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0 && (
-                        <div 
+                        <div
                           className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[9px] font-bold uppercase"
                           title={`${Object.keys(subtask.publishUrls).length} Publish URLs`}
                         >
@@ -282,7 +282,8 @@ const SubtasksSection = ({
                       }
                       canEdit={
                         isCompany ||
-                        hasPermission("tasks", "changeStatus")
+                        hasPermission("tasks", "changeStatus") ||
+                        isAssignedToSubTask
                       }
                       canEditTask={canEditTask}
                       isAdmin={isAdmin}

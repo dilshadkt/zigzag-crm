@@ -329,3 +329,120 @@ export const useLogLeadActivity = () => {
     },
   });
 };
+
+// ==================== SCORING RULES ====================
+
+export const useGetLeadScoringRules = (companyId) => {
+  return useQuery({
+    queryKey: ["leadScoringRules", companyId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/companies/${companyId}/lead-scoring-rules`);
+      return response.data;
+    },
+    enabled: !!companyId,
+  });
+};
+
+export const useCreateLeadScoringRule = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ruleData) => {
+      const response = await apiClient.post(`/companies/${companyId}/lead-scoring-rules`, ruleData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadScoringRules", companyId]);
+    },
+  });
+};
+
+export const useUpdateLeadScoringRule = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ruleId, ruleData }) => {
+      const response = await apiClient.put(`/companies/${companyId}/lead-scoring-rules/${ruleId}`, ruleData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadScoringRules", companyId]);
+    },
+  });
+};
+
+export const useDeleteLeadScoringRule = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ruleId) => {
+      const response = await apiClient.delete(`/companies/${companyId}/lead-scoring-rules/${ruleId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadScoringRules", companyId]);
+    },
+  });
+};
+
+// ==================== ASSIGNMENT RULES ====================
+
+export const useGetLeadAssignmentRules = (companyId) => {
+  return useQuery({
+    queryKey: ["leadAssignmentRules", companyId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/companies/${companyId}/lead-assignment-rules`);
+      return response.data;
+    },
+    enabled: !!companyId,
+  });
+};
+
+export const useCreateLeadAssignmentRule = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ruleData) => {
+      const response = await apiClient.post(`/companies/${companyId}/lead-assignment-rules`, ruleData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
+    },
+  });
+};
+
+export const useUpdateLeadAssignmentRule = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ruleId, ruleData }) => {
+      const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/${ruleId}`, ruleData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
+    },
+  });
+};
+
+export const useReorderLeadAssignmentRules = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (orderedIds) => {
+      const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/reorder`, { orderedIds });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
+    },
+  });
+};
+
+export const useDeleteLeadAssignmentRule = (companyId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ruleId) => {
+      const response = await apiClient.delete(`/companies/${companyId}/lead-assignment-rules/${ruleId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
+    },
+  });
+};

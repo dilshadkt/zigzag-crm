@@ -3,6 +3,8 @@ import LeadSettingsTabs from "./components/LeadSettingsTabs";
 import LeadStatusList from "./components/LeadStatusList";
 import LeadFormBuilder from "./components/LeadFormBuilder";
 import EditStatusModal from "./components/EditStatusModal";
+import LeadScoringRules from "./components/LeadScoringRules";
+import LeadAssignmentRules from "./components/LeadAssignmentRules";
 import {
   useGetLeadFormConfig,
   useUpdateLeadFormConfig,
@@ -239,22 +241,22 @@ const LeadSettingsFeature = () => {
 
   return (
     <div className="bg-slate-50 min-h-full">
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-3">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 md:p-5 space-y-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div className="flex items-center gap-x-2">
             <button
               title="back to list"
               onClick={() => navigate("/leads")}
-              className="w-10 h-10 rounded-full bg-gray-50 border border-slate-200 flex
+              className="w-8 h-8 rounded-full bg-gray-50 border border-slate-200 flex
               cursor-pointer items-center  group justify-center hover:bg-[#3f8cff]"
             >
-              <FiArrowLeft size={16} className="group-hover:text-white" />
+              <FiArrowLeft size={14} className="group-hover:text-white" />
             </button>
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Configure your lead process
+            <h1 className="text-[17px] font-bold text-slate-900 leading-none">
+              Lead Process Config
             </h1>
           </div>
-          <p className="text-sm text-slate-500">{statusSummary}</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">{statusSummary}</p>
         </div>
         <LeadSettingsTabs
           tabs={LEAD_SETTINGS_TABS}
@@ -288,6 +290,10 @@ const LeadSettingsFeature = () => {
               onReplaceFields={replaceFields}
               onResetFields={handleResetFields}
             />
+          ) : activeTab === "Scoring Rules" ? (
+            <LeadScoringRules fields={formFields} />
+          ) : activeTab === "Assignment Rules" ? (
+            <LeadAssignmentRules fields={formFields} />
           ) : (
             <div className="bg-slate-50 rounded-3xl min-h-96 flex items-center justify-center p-10 text-center text-slate-500 border border-dashed border-slate-200">
               {activeTab} configuration coming soon.
