@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { FiArrowLeft, FiPhone, FiClipboard } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import LeadDetailTabs from "./components/LeadDetailTabs";
@@ -11,7 +11,6 @@ import LeadActivityPanel from "./components/LeadActivityPanel";
 import LeadQuickActions from "./components/LeadQuickActions";
 import { useUploadLeadAttachment, useLogLeadActivity, useAddLeadNote, useUpdateLead, useGetLeadStatuses } from "../leads/api";
 import LeadInteractionModal from "./components/LeadInteractionModal";
-import { useEffect } from "react";
 import { toast } from "react-hot-toast";
 
 const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Emails"];
@@ -41,6 +40,22 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   const [interactionType, setInteractionType] = useState(null); // 'call' or 'whatsapp'
   const [hasPendingInteraction, setHasPendingInteraction] = useState(false);
 
+  // Load pending interaction from localStorage on mount or lead change
+  useEffect(() => {
+    if (leadId) {
+      const saved = localStorage.getItem(`pending_interaction_${leadId}`);
+      if (saved) {
+        try {
+          const { type } = JSON.parse(saved);
+          setInteractionType(type);
+          setIsInteractionModalOpen(true);
+        } catch (e) {
+          console.error("Error parsing saved interaction", e);
+        }
+      }
+    }
+  }, [leadId]);
+
   // Detect when user returns to app
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -56,6 +71,26 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [hasPendingInteraction]);
+
+  // Block navigation when modal is open (preventing user from going back)
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (isInteractionModalOpen) {
+        // Force the user to stay by pushing current state back
+        window.history.pushState(null, null, window.location.href);
+      }
+    };
+
+    if (isInteractionModalOpen) {
+      // Add an extra entry to history so "back" returns to the same page
+      window.history.pushState(null, null, window.location.href);
+      window.addEventListener('popstate', handlePopState);
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isInteractionModalOpen]);
 
   const handleAddNote = (newNote) => {
     // This is called for optimistic updates, but the real data comes from API refetch
@@ -84,6 +119,8 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
 
     setInteractionType("call");
     setHasPendingInteraction(true);
+    // Persist immediately in case of refresh during the call
+    localStorage.setItem(`pending_interaction_${leadId}`, JSON.stringify({ type: 'call' }));
 
     logActivity(
       {
@@ -109,6 +146,8 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
 
     setInteractionType("whatsapp");
     setHasPendingInteraction(true);
+    // Persist immediately in case of refresh during WhatsApp conversation
+    localStorage.setItem(`pending_interaction_${leadId}`, JSON.stringify({ type: 'whatsapp' }));
 
     logActivity(
       {
@@ -133,6 +172,8 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
     if (!leadId) return;
     setInteractionType("followup");
     setIsInteractionModalOpen(true);
+    // Persist even for manual follow-up until logged
+    localStorage.setItem(`pending_interaction_${leadId}`, JSON.stringify({ type: 'followup' }));
   };
 
   const handleSaveInteraction = ({ note, statusId, scheduled, isFollowUp }) => {
@@ -175,6 +216,9 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
         }
       });
     }
+
+    // Interaction successfully saved, clear persistence
+    localStorage.removeItem(`pending_interaction_${leadId}`);
   };
 
   const tabContent = useMemo(() => {
