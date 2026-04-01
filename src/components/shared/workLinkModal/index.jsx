@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import Modal from "../modal";
 import { FiLink } from "react-icons/fi";
 
-const WorkLinkModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
-    const [workLink, setWorkLink] = useState("");
+const WorkLinkModal = ({ isOpen, onClose, onSubmit, isLoading, initialValue = "" }) => {
+    const [workLink, setWorkLink] = useState(initialValue);
 
     useEffect(() => {
         if (isOpen) {
-            setWorkLink("");
+            setWorkLink(initialValue);
         }
-    }, [isOpen]);
+    }, [isOpen, initialValue]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

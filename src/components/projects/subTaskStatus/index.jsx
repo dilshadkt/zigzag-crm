@@ -21,6 +21,16 @@ const SubTaskStatusButton = ({
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
   const { isCompany } = useAuth();
 
+  const getCurrentLink = (subt) => {
+    if (!subt) return "";
+    const field = (subt.customFields || []).find(f => 
+      f.label?.toLowerCase().includes("work link") || 
+      f.label?.toLowerCase().includes("google drive") ||
+      f.label?.toLowerCase().includes("link")
+    );
+    return field?.value || "";
+  };
+
   // Status options for employees
   const employeeStatusOptions = [
     { value: "todo", label: "To Do", color: "bg-gray-100 text-gray-800" },
@@ -267,6 +277,7 @@ const SubTaskStatusButton = ({
         onClose={() => setIsWorkLinkModalOpen(false)}
         onSubmit={handleWorkLinkSubmit}
         isLoading={updateSubTaskMutation.isLoading}
+        initialValue={getCurrentLink(subTask)}
       />
     </div>
   );

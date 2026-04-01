@@ -34,6 +34,16 @@ const SubtasksSection = ({
   // Status-agnostic update for work link
   const updateSubTaskMutation = useUpdateSubTaskById(workLinkSubTask?._id, taskDetails?._id);
 
+  const getCurrentLink = (subtask) => {
+    if (!subtask) return "";
+    const field = (subtask.customFields || []).find(f => 
+      f.label?.toLowerCase().includes("work link") || 
+      f.label?.toLowerCase().includes("google drive") ||
+      f.label?.toLowerCase().includes("link")
+    );
+    return field?.value || "";
+  };
+
   const handleWorkLinkSubmit = async (workLink) => {
     try {
       let updatedFields = [...(workLinkSubTask.customFields || [])];
@@ -268,12 +278,14 @@ const SubtasksSection = ({
                           setWorkLinkSubTask(subtask);
                           setIsWorkLinkModalOpen(true);
                         }}
-                        className="px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold 
-                      rounded-full flex items-center gap-1 border border-orange-200 hover:bg-orange-200 transition-colors"
-                        title="Work link (Google Drive, etc.) is mandatory for this subtask. Click to add/update."
+                        className={`px-2 py-0.5 text-[10px] font-bold 
+                      rounded-full flex items-center gap-1 border transition-colors ${getCurrentLink(subtask) 
+                          ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100" 
+                          : "bg-orange-100 text-orange-600 border-orange-200 hover:bg-orange-200"}`}
+                        title={getCurrentLink(subtask) ? "Work link provided. Click to edit." : "Work link is mandatory for this subtask. Click to add."}
                       >
                         <FiLink className="w-2.5 h-2.5" />
-                        Link Required
+                        {getCurrentLink(subtask) ? "Work Link Attached" : "Link Required"}
                       </button>
                     )}
                   </div>
@@ -692,6 +704,7 @@ const SubtasksSection = ({
         }}
         onSubmit={handleWorkLinkSubmit}
         isLoading={updateSubTaskMutation.isLoading}
+        initialValue={getCurrentLink(workLinkSubTask)}
       />
     </div>
   );
