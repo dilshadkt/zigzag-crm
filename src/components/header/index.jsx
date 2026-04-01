@@ -78,7 +78,37 @@ const DashboardHeader = () => {
   const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
 
   // Build sidebar menu items - only add Company Dashboard if user has permission (but NOT for admins)
-  const sidebarMenuItems = [...SIDE_MENU];
+  const sidebarMenuItems = SIDE_MENU.map((item) => {
+    // If the item is "Dashboard", check if sub-items should be shown
+    if (item.routeKey === "dashboard") {
+      // ONLY Company Admin sees all sub-items under the main "Dashboard"
+      if (isCompanyAdmin) {
+        return item;
+      }
+
+      // For others, check if they have specific dashboard permissions (like lead-dashboard)
+      const allowedRoutes = userPosition?.allowedRoutes || [];
+      const hasDashboardChildren = item.children?.some(
+        (child) =>
+          child.routeKey !== "dashboard" && allowedRoutes.includes(child.routeKey)
+      );
+
+      if (hasDashboardChildren) {
+        // Return dashboard with only allowed children
+        const allowedChildren = item.children.filter(
+          (child) =>
+            child.routeKey === "dashboard" ||
+            allowedRoutes.includes(child.routeKey)
+        );
+        return { ...item, children: allowedChildren };
+      }
+
+      // If no specific dashboard permissions, return a flat "Dashboard" link
+      const { children, ...rest } = item;
+      return rest;
+    }
+    return item;
+  });
 
   // IMPORTANT: Only add Company Dashboard menu item if user has the permission AND is NOT a company admin
   if (canAccessAdminDashboard) {
