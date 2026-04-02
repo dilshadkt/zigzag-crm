@@ -89,9 +89,12 @@ const EmployeeSettings = () => {
       )}
 
       <div className="flex-1 overflow-y-auto">
-        {activePage === "Overview" && (
-          <Overview projects={projects} tasks={allTasks} user={user} />
-        )}
+        {activePage === "Overview" &&
+          (isLoadingProjects ? (
+            <OverviewSkeleton />
+          ) : (
+            <Overview projects={projects} tasks={allTasks} user={user} />
+          ))}
         {activePage === "Projects" && (
           <Projects projects={projects} isLoading={isLoadingProjects} />
         )}
@@ -101,6 +104,27 @@ const EmployeeSettings = () => {
     </div>
   );
 };
+
+const OverviewSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    <div className="grid grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="bg-gray-50 rounded-2xl h-24" />
+      ))}
+    </div>
+    <div className="space-y-4">
+      <div className="flexBetween">
+        <div className="h-6 w-32 bg-gray-100 rounded-lg" />
+        <div className="h-4 w-16 bg-gray-50 rounded-lg" />
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-28 bg-gray-50 rounded-2xl w-full" />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const Overview = ({ projects, tasks, user }) => {
   const navigate = useNavigate();
