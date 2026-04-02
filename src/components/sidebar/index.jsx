@@ -23,7 +23,7 @@ const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings"];
 const Sidebar = () => {
   const { user } = useAuth();
   const { userPosition } = useRouteAccess();
-  const { hasAdminDashboardAccess } = usePermissions();
+  const { hasAdminDashboardAccess, hasPermission } = usePermissions();
 
   // Get current month in YYYY-MM format for tasks on review
   const getCurrentMonth = () => {
@@ -82,6 +82,60 @@ const Sidebar = () => {
       const { children, ...rest } = item;
       return rest;
     }
+
+    // Transform Settings for Employees (non-admin users)
+    if (item.routeKey === "settings" && !isCompanyAdmin) {
+      const settingsChildren = [
+        {
+          id: 1201,
+          title: "Profile",
+          path: "/settings/account",
+          routeKey: "settings",
+        },
+      ];
+
+      // My Company related management
+      if (
+        hasPermission("settings", "manageCompany") || 
+        hasPermission("settings", "managePositions") || 
+        hasPermission("settings", "manageTaskFlows")
+      ) {
+        settingsChildren.push({
+          id: 1204,
+          title: "My Company",
+          path: "/settings/company",
+          routeKey: "settings",
+        });
+      }
+
+      // Security (Security Hub)
+      if (hasPermission("settings", "manageSecurity") || hasPermission("settings", "manageRoles")) {
+        settingsChildren.push({
+          id: 1205,
+          title: "Security",
+          path: "/settings/safety",
+          routeKey: "settings",
+        });
+      }
+
+      // Master configuration
+      if (hasPermission("settings", "manageMaster")) {
+        settingsChildren.push({
+          id: 1206,
+          title: "Master",
+          path: "/settings/master",
+          routeKey: "settings",
+        });
+      }
+
+      // Return a collapsible settings menu
+      return { 
+        ...item, 
+        children: settingsChildren,
+        path: undefined // Remove direct path so it only toggles
+      };
+    }
+
     return item;
   });
 

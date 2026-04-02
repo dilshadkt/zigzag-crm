@@ -98,9 +98,12 @@ const PERMISSION_CATEGORIES = {
     label: "Settings & Configuration",
     icon: <FiSettings />,
     permissions: [
-      { key: "manageRoles", label: "Manage Roles", description: "Can manage roles and permissions" },
-      { key: "manageCompany", label: "Manage Company", description: "Can manage company settings" },
-      { key: "viewSettings", label: "View Settings", description: "Can view settings" },
+      { key: "manageAccount", label: "Account Access", description: "Can manage personal profile and account settings" },
+      { key: "manageCompany", label: "Company Settings", description: "Can manage general company profile and details" },
+      { key: "managePositions", label: "Position Management", description: "Can manage employee positions and role definitions" },
+      { key: "manageTaskFlows", label: "Workflow Management", description: "Can manage task statuses and company workflows" },
+      { key: "manageSecurity", label: "Security Hub", description: "Can manage system roles, permissions, and security policies" },
+      { key: "manageMaster", label: "Master Data", description: "Can manage system-level master configuration and data" },
     ],
   },
   dashboard: {

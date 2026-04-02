@@ -20,9 +20,14 @@ import PositionTable from "../../../components/settings/company/PositionTable";
 import AddPosition from "../../../components/settings/positions/addPosition";
 import Modal from "../../../components/shared/modal";
 import { FiTrash2, FiAlertCircle } from "react-icons/fi";
+import { usePermissions } from "../../../hooks/usePermissions";
 
 const Company = () => {
   const { companyId } = useAuth();
+  const { hasPermission } = usePermissions();
+
+  const canManagePositions = hasPermission("settings", "managePositions");
+  const canManageTaskFlows = hasPermission("settings", "manageTaskFlows");
 
   // Task Flow State
   const [showTaskFlowModal, setShowTaskFlowModal] = useState(false);
@@ -118,42 +123,60 @@ const Company = () => {
   return (
     <div className="h-full overflow-y-auto flex flex-col pr-1">
       {/* Position Management Section */}
-      <div className="mb-6">
-        <PositionHeader
-          positionsCount={positionsData?.positions?.length || 0}
-          onAdd={() => setShowPositionModal(true)}
-        />
-        <div className="px-1">
-          <PositionTable
-            positions={positionsData}
-            isLoading={isPositionsLoading}
-            onEdit={handleEditPosition}
-            onDelete={handleDeletePosition}
-            onRestore={handleRestorePosition}
+      {canManagePositions && (
+        <div className="mb-6">
+          <PositionHeader
+            positionsCount={positionsData?.positions?.length || 0}
+            onAdd={() => setShowPositionModal(true)}
           />
+          <div className="px-1">
+            <PositionTable
+              positions={positionsData}
+              isLoading={isPositionsLoading}
+              onEdit={handleEditPosition}
+              onDelete={handleDeletePosition}
+              onRestore={handleRestorePosition}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="w-full h-px bg-gray-100 my-4 px-4" />
+      {canManagePositions && canManageTaskFlows && (
+        <div className="w-full h-px bg-gray-100 my-4 px-4" />
+      )}
 
       {/* Task Flow Section */}
-      <div className="mb-6">
-        <TaskFlowHeader
-          taskFlowsCount={taskFlows ? taskFlows.length : 0}
-          onAdd={() => setShowTaskFlowModal(true)}
-        />
-        <div className="px-1">
-          <TaskFlowSection
-            taskFlows={taskFlows}
-            isLoading={isTaskFlowsLoading}
-            error={taskFlowsError}
-            onEdit={handleEditTaskFlow}
-            onDelete={handleDeleteTaskFlow}
-            onRestore={handleRestoreTaskFlow}
-            onPermanentDelete={handlePermanentDeleteClick}
+      {canManageTaskFlows && (
+        <div className="mb-6">
+          <TaskFlowHeader
+            taskFlowsCount={taskFlows ? taskFlows.length : 0}
+            onAdd={() => setShowTaskFlowModal(true)}
           />
+          <div className="px-1">
+            <TaskFlowSection
+              taskFlows={taskFlows}
+              isLoading={isTaskFlowsLoading}
+              error={taskFlowsError}
+              onEdit={handleEditTaskFlow}
+              onDelete={handleDeleteTaskFlow}
+              onRestore={handleRestoreTaskFlow}
+              onPermanentDelete={handlePermanentDeleteClick}
+            />
+          </div>
         </div>
-      </div>
+      )}
+
+      {!canManagePositions && !canManageTaskFlows && (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+            <FiAlertCircle className="w-8 h-8 text-gray-300" />
+          </div>
+          <h3 className="text-[16px] font-bold text-gray-800 mb-1">Restricted Content</h3>
+          <p className="text-[13px] text-gray-400 max-w-xs">
+            You do not have permission to access management features for positions or task flows.
+          </p>
+        </div>
+      )}
 
       {/* Modals */}
       {showTaskFlowModal && (
