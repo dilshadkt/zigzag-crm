@@ -75,6 +75,7 @@ const DashboardHeader = () => {
   // Check if user has admin dashboard access permission
   // IMPORTANT: Company admins should NOT see this option - only non-admin users with permission
   const isCompanyAdmin = user?.role === "company-admin";
+  const showHeaderActions = isCompanyAdmin || isShiftActive;
   const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
 
   // Build sidebar menu items - only add Company Dashboard if user has permission (but NOT for admins)
@@ -217,12 +218,15 @@ const DashboardHeader = () => {
   return (
     <div className="bg-white lg:bg-transparent rounded-xl py-1 md:py-0 flexBetween">
       {/* Mobile Logo */}
-      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
-        <img src={logo} alt="" className="w-10 h-10 ml-3" />
-      </button>
+      {showHeaderActions && (
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
+          <img src={logo} alt="" className="w-10 h-10 ml-3" />
+        </button>
+      )}
 
       {/* Search Bar */}
-      <SearchBar accessiblePages={filteredSidebar} />
+      {showHeaderActions && <SearchBar accessiblePages={filteredSidebar} />}
+      {!showHeaderActions && <div className="flex-1 md:hidden" />} {/* Spacer for mobile */}
 
       {/* Right Side Actions */}
       <div className="flexEnd gap-x-2">

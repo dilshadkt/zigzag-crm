@@ -10,6 +10,7 @@ const AttendanceModal = ({
   isProcessingAttendance,
   clockInError,
   onClockIn,
+  isClosable = true,
 }) => {
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
@@ -243,18 +244,32 @@ const AttendanceModal = ({
           </div>
         )}
 
-        <button
-          onClick={() => {
-            onClose();
-            setSwipeProgress(0);
-            setAttendanceError(null);
-            setIsSwipeCompleted(false);
-          }}
-          className="w-full py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isClockingIn || isProcessingAttendance}
-        >
-          {isClockingIn || isProcessingAttendance ? "Processing..." : "Cancel"}
-        </button>
+        {isClosable ? (
+          <button
+            onClick={() => {
+              onClose();
+              setSwipeProgress(0);
+              setAttendanceError(null);
+              setIsSwipeCompleted(false);
+            }}
+            className="w-full py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isClockingIn || isProcessingAttendance}
+          >
+            {isClockingIn || isProcessingAttendance ? "Processing..." : "Cancel"}
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] text-gray-400 text-center uppercase font-bold tracking-widest mt-2 mb-2">
+              Mandatory Check-in Required
+            </p>
+            <button
+              onClick={() => (window.location.href = "/auth/signin")}
+              className="w-full py-2 text-red-500 hover:text-red-600 transition-colors text-sm font-medium border border-red-50 rounded-xl bg-red-50/30"
+            >
+              Logout from Session
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
