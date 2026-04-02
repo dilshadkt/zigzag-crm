@@ -99,7 +99,7 @@ const DashboardLayout = () => {
       )}
 
       {/* Loading Overlay */}
-      {attendance.statusLoading && (
+      {!isCompanyAdmin && attendance.statusLoading && (
         <div className="fixed inset-0 z-[9999] flexCenter bg-white/60 backdrop-blur-sm">
           <div className="flexCenter flex-col gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

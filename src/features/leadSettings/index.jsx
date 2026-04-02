@@ -18,7 +18,7 @@ const LeadSettingsFeature = () => {
   const { data: formConfig, isLoading } = useGetLeadFormConfig();
   
   // Extract fields from config for use in rules
-  const fields = formConfig?.fields || [];
+  const fields = formConfig?.data?.fields || formConfig?.fields || [];
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 p-3 md:p-6 space-y-4">

@@ -56,7 +56,7 @@ const SortableFieldItem = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`space-y-2 border rounded-xl p-2.5 ${isMandatory ? "border-blue-100 bg-blue-50/50" : "border-slate-100 bg-white"
+      className={`space-y-2 border rounded-xl p-2.5 ${isMandatory ? "border-blue-100 bg-white shadow-sm" : "border-slate-100 bg-white"
         } ${isDragging ? "shadow-lg scale-[1.01]" : ""}`}
     >
       <div className="flex items-start gap-3">
@@ -256,7 +256,11 @@ const SortableLeadFormFieldList = ({
   const [optionDrafts, setOptionDrafts] = useState({});
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })

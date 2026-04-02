@@ -11,7 +11,7 @@ const LeadFormFieldList = () => {
   const { data: config, isLoading } = useGetLeadFormConfig();
   const updateConfig = useUpdateLeadFormConfig();
 
-  const fields = config?.fields || [];
+  const fields = config?.data?.fields || config?.fields || [];
 
   const handleAddField = async (newField) => {
     const updatedFields = [...fields, { ...newField, id: Date.now().toString() }];
