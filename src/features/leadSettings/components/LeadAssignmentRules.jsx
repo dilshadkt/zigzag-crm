@@ -28,10 +28,10 @@ const LeadAssignmentRules = ({ fields = [] }) => {
   const rules = response?.data || [];
 
   const { data: empRes } = useGetAllEmployees();
-  const employees = empRes?.data || [];
+  const employees = empRes?.employees || (Array.isArray(empRes?.data) ? empRes.data : (Array.isArray(empRes) ? empRes : []));
   const employeeOptions = employees.map(emp => ({
-    value: emp._id,
-    label: `${emp.firstName} ${emp.lastName}`
+    value: emp._id || emp.id,
+    label: emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email || "Unknown User"
   }));
 
   const createRule = useCreateLeadAssignmentRule(companyId);

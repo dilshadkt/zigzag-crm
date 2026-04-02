@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiRotateCcw } from "react-icons/fi";
 import { FIELD_TYPES } from "../constants";
 import LeadFormNewFieldPanel from "./LeadFormNewFieldPanel";
-import LeadFormFieldList from "./LeadFormFieldList";
+import SortableLeadFormFieldList from "./SortableLeadFormFieldList";
 import LeadFormPreviewPanel from "./LeadFormPreviewPanel";
 import LeadFormAIHelper from "./LeadFormAIHelper";
 
@@ -129,7 +129,7 @@ const LeadFormBuilder = ({
             onAddField={handleAddField}
           />
 
-          <LeadFormFieldList
+          <SortableLeadFormFieldList
             fields={fields}
             onUpdateField={onUpdateField}
             onRemoveField={onRemoveField}

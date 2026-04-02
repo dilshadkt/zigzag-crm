@@ -10,7 +10,8 @@ import {
 } from "../../../api/hooks";
 
 const LeadStatusList = () => {
-  const { data: statuses = [], isLoading } = useGetLeadStatuses();
+  const { data: response, isLoading } = useGetLeadStatuses();
+  const statuses = response?.data || [];
   const createStatus = useCreateLeadStatus();
   const updateStatus = useUpdateLeadStatus();
   const deleteStatus = useDeleteLeadStatus();
