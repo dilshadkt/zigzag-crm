@@ -34,8 +34,15 @@ const SubtasksSection = ({
   // Status-agnostic update for work link
   const updateSubTaskMutation = useUpdateSubTaskById(workLinkSubTask?._id, taskDetails?._id);
 
+  const isWorkLinkRequired = (subtask) => {
+    return subtask?.requiresWorkLink || 
+           taskDetails?.taskFlow?.flows?.some(flow => 
+             flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink
+           );
+  };
+
   const getCurrentLink = (subtask) => {
-    if (!subtask) return "";
+    if (!subtask || !isWorkLinkRequired(subtask)) return "";
     const field = (subtask.customFields || []).find(f => 
       f.label?.toLowerCase().includes("work link") || 
       f.label?.toLowerCase().includes("google drive") ||
@@ -272,7 +279,7 @@ const SubtasksSection = ({
                         Approval Required
                       </span>
                     )}
-                    {(subtask?.requiresWorkLink || taskDetails?.taskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink)) && (
+                    {isWorkLinkRequired(subtask) && (
                       <button
                         onClick={() => {
                           setWorkLinkSubTask(subtask);
@@ -396,9 +403,24 @@ const SubtasksSection = ({
                 )}
 
                 {/* Subtask Custom Fields */}
-                {subtask.customFields && subtask.customFields.filter(f => f.value && f.value.trim() !== "").length > 0 && (
+                {subtask.customFields && subtask.customFields.filter(f => {
+                  if (!f.value || f.value.trim() === "") return false;
+                  // If it's a work link related field, only show it if requiresWorkLink is true
+                  const isWorkLinkField = f.label?.toLowerCase().includes("work link") || 
+                                         f.label?.toLowerCase().includes("google drive") ||
+                                         f.label?.toLowerCase().includes("link");
+                  if (isWorkLinkField) return isWorkLinkRequired(subtask);
+                  return true;
+                }).length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {subtask.customFields.filter(f => f.value && f.value.trim() !== "").map((field, idx) => (
+                    {subtask.customFields.filter(f => {
+                      if (!f.value || f.value.trim() === "") return false;
+                      const isWorkLinkField = f.label?.toLowerCase().includes("work link") || 
+                                             f.label?.toLowerCase().includes("google drive") ||
+                                             f.label?.toLowerCase().includes("link");
+                      if (isWorkLinkField) return isWorkLinkRequired(subtask);
+                      return true;
+                    }).map((field, idx) => (
                       <div key={idx} className="bg-white/60 border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm">
                         <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">{field.label}</span>
                         {field.label.toLowerCase().includes("url") || field.value?.toString().startsWith("http") ? (

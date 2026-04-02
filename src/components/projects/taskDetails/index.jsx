@@ -4,19 +4,22 @@ import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
 import StatusButton from "../../shared/StatusUpadate";
 import Modal from "../../shared/modal";
+import WorkLinkModal from "../../shared/workLinkModal";
 import AddSubTask from "../addSubTask";
 import {
   useCreateSubTask,
   useGetSubTasksByParentTask,
   useDeleteSubTask,
   useUpdateSubTaskById,
+  useUpdateTaskById,
 } from "../../../api/hooks";
 import RecurringTaskInfo from "./RecurringTaskInfo";
 import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
 import TaskAttachments from "./TaskAttachments";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget, FiFlag } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget, FiFlag, FiLink } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress }) => {
   const { isCompany, user } = useAuth();
@@ -25,7 +28,52 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const [editingSubTask, setEditingSubTask] = useState(null);
   const [isReworkHistoryOpen, setIsReworkHistoryOpen] = useState(false);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+  const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const isAdmin = user?.role === "company-admin";
+
+  const updateTaskMutation = useUpdateTaskById(taskDetails?._id);
+
+  const isWorkLinkRequired = (task) => {
+    return task?.requiresWorkLink || 
+           task?.taskFlow?.flows?.some(flow => flow.requiresWorkLink);
+  };
+
+  const getCurrentLink = (task) => {
+    if (!task || !isWorkLinkRequired(task)) return "";
+    const field = (task.customFields || []).find(f => 
+      f.label?.toLowerCase().includes("work link") || 
+      f.label?.toLowerCase().includes("google drive") ||
+      f.label?.toLowerCase().includes("link")
+    );
+    return field?.value || "";
+  };
+
+  const handleWorkLinkSubmit = async (workLink) => {
+    try {
+      let updatedFields = [...(taskDetails.customFields || [])];
+      const linkFieldIndex = updatedFields.findIndex(f => 
+        f.label?.toLowerCase().includes("work link") || 
+        f.label?.toLowerCase().includes("google drive") ||
+        f.label?.toLowerCase().includes("link")
+      );
+
+      if (linkFieldIndex !== -1) {
+        updatedFields[linkFieldIndex].value = workLink;
+      } else {
+        updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
+      }
+
+      await updateTaskMutation.mutateAsync({
+        customFields: updatedFields,
+      });
+      
+      setIsWorkLinkModalOpen(false);
+      toast.success("Work link updated successfully!");
+    } catch (error) {
+      console.error("Error updating work link:", error);
+      toast.error("Failed to update work link");
+    }
+  };
 
 
   const formatDate = (date) => {
@@ -246,16 +294,46 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                     {taskDetails.priority}
                   </span>
                 )}
-                {(taskDetails?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.requiresClientApproval)) && (
+                {(taskDetails?.requiresClientApproval ||
+                  taskDetails?.taskFlow?.flows?.some(
+                    (flow) => flow.requiresClientApproval
+                  )) && (
                   <span
                     className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
                     title="This task requires final client approval"
                   >
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z" />
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z"
+                      />
                     </svg>
                     Client Approval Required
                   </span>
+                )}
+                {isWorkLinkRequired(taskDetails) && (
+                  <button
+                    onClick={() => setIsWorkLinkModalOpen(true)}
+                    className={`px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 transition-all duration-200 ${
+                      getCurrentLink(taskDetails)
+                        ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                        : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                    }`}
+                    title={
+                      getCurrentLink(taskDetails)
+                        ? "Work link provided. Click to edit/remove."
+                        : "Work link is required for this task. Click to add."
+                    }
+                  >
+                    <FiLink className="w-3.5 h-3.5" />
+                    {getCurrentLink(taskDetails)
+                      ? "Work Link Attached"
+                      : "Link Required"}
+                  </button>
                 )}
               </div>
             </div>
@@ -380,6 +458,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
           <ActivityTimeline activities={taskDetails?.activityLog} />
         </div>
       </Modal>
+
+      <WorkLinkModal
+        isOpen={isWorkLinkModalOpen}
+        onClose={() => setIsWorkLinkModalOpen(false)}
+        onSubmit={handleWorkLinkSubmit}
+        isLoading={updateTaskMutation.isLoading}
+        initialValue={getCurrentLink(taskDetails)}
+      />
     </>
   );
 };

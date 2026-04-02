@@ -28,6 +28,8 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     recurringInterval: defaultValue?.recurringInterval || 1,
     recurringEndDate: defaultValue?.recurringEndDate || "",
     maxRecurrences: defaultValue?.maxRecurrences || "",
+    requiresClientApproval: defaultValue?.requiresClientApproval || false,
+    requiresWorkLink: defaultValue?.requiresWorkLink || false,
     customFields: defaultValue?.customFields || [],
   };
 
@@ -56,6 +58,8 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     dueDate: Yup.string().required("Due date is required"),
     priority: Yup.string().required("Priority is required"),
     assignedTo: Yup.array().min(1, "At least one assignee is required"),
+    requiresClientApproval: Yup.boolean(),
+    requiresWorkLink: Yup.boolean(),
     copyOfDescription: Yup.string(),
     description: Yup.string(),
     // Recurring validations

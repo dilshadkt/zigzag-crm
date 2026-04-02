@@ -13,6 +13,22 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
       contentSubTask.description ||
       contentSubTask.ideas);
 
+  const isWorkLinkRequired = (task) => {
+    return (
+      task?.requiresWorkLink ||
+      task?.taskFlow?.flows?.some((flow) => flow.requiresWorkLink)
+    );
+  };
+
+  const isWorkLinkField = (field) => {
+    const label = field.label?.toLowerCase() || "";
+    return (
+      label.includes("work link") ||
+      label.includes("google drive") ||
+      label.includes("link")
+    );
+  };
+
   return (
     <>
       {/* Parent Recurring Task Info */}
@@ -118,11 +134,18 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
 
       {/* Dynamic Custom Fields */}
       {taskDetails.customFields &&
-        taskDetails.customFields.filter((f) => f.value && f.value.trim() !== "")
-          .length > 0 && (
+        taskDetails.customFields.filter((f) => {
+          if (!f.value || f.value.trim() === "") return false;
+          if (isWorkLinkField(f)) return isWorkLinkRequired(taskDetails);
+          return true;
+        }).length > 0 && (
           <div className="mt-6 flex flex-wrap gap-4">
             {taskDetails.customFields
-              .filter((f) => f.value && f.value.trim() !== "")
+              .filter((f) => {
+                if (!f.value || f.value.trim() === "") return false;
+                if (isWorkLinkField(f)) return isWorkLinkRequired(taskDetails);
+                return true;
+              })
               .map((field, index) => (
                 <div
                   key={index}

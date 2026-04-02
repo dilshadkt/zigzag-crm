@@ -21,6 +21,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     parentTaskId: defaultValue?.parentTaskId || "",
     dueDateChangeReason: defaultValue?.dueDateChangeReason || "",
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
+    requiresWorkLink: defaultValue?.requiresWorkLink || false,
     customFields: defaultValue?.customFields || [],
   };
 
@@ -35,6 +36,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     ideas: Yup.string(),
     publishUrls: Yup.object(),
     requiresClientApproval: Yup.boolean(),
+    requiresWorkLink: Yup.boolean(),
     customFields: Yup.array().of(
       Yup.object().shape({
         label: Yup.string().required("Label is required"),
