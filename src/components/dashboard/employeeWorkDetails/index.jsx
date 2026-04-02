@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { useGetEmployeeSubTasksToday } from "../../../api/hooks";
@@ -17,12 +17,13 @@ const EmployeeWorkDetails = () => {
     low: 1,
   };
 
-  const sortedSubTasks =
+  const sortedSubTasks = useMemo(() => 
     todaySubTasks?.subTasks?.slice()?.sort((a, b) => {
       const aRank = priorityRank[a?.priority?.toLowerCase()] || 0;
       const bRank = priorityRank[b?.priority?.toLowerCase()] || 0;
       return bRank - aRank;
-    }) || [];
+    }) || []
+  , [todaySubTasks]);
 
   const completedItems = [
     ...(todaySubTasks?.completedTasks || []),
@@ -36,17 +37,9 @@ const EmployeeWorkDetails = () => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Check if it's today
-    if (date.toDateString() === today.toDateString()) {
-      return "Today";
-    }
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
 
-    // Check if it's tomorrow
-    if (date.toDateString() === tomorrow.toDateString()) {
-      return "Tomorrow";
-    }
-
-    // For other dates, show the full date
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -56,37 +49,25 @@ const EmployeeWorkDetails = () => {
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case "high":
-        return "bg-red-100 text-red-600 border-red-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-600 border-yellow-200";
-      case "low":
-        return "bg-green-100 text-green-600 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-600 border-gray-200";
+      case "high": return "bg-red-100 text-red-600 border-red-200";
+      case "medium": return "bg-yellow-100 text-yellow-600 border-yellow-200";
+      case "low": return "bg-green-100 text-green-600 border-green-200";
+      default: return "bg-gray-100 text-gray-600 border-gray-200";
     }
   };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-600";
-      case "approved":
-        return "bg-emerald-100 text-emerald-600";
-      case "on-review":
-        return "bg-purple-100 text-purple-600";
-      case "in-progress":
-        return "bg-blue-100 text-blue-600";
-      case "todo":
-        return "bg-orange-100 text-orange-600";
-      default:
-        return "bg-gray-100 text-gray-600";
+      case "completed": return "bg-green-100 text-green-600";
+      case "approved": return "bg-emerald-100 text-emerald-600";
+      case "on-review": return "bg-purple-100 text-purple-600";
+      case "in-progress": return "bg-blue-100 text-blue-600";
+      case "todo": return "bg-orange-100 text-orange-600";
+      default: return "bg-gray-100 text-gray-600";
     }
   };
 
   const handleSubTaskClick = (item) => {
-    // If it's a subtask, it has a parentTask field
-    // If it's a task, it doesn't (or it is the parent task)
     const isSubTask = !!item.parentTask;
     const projectId = item.project?._id || item.project;
 
@@ -128,8 +109,7 @@ const EmployeeWorkDetails = () => {
           <span>Due: {formatTime(item.dueDate)}</span>
           {item.project && (
             <span className="text-[#3F8CFF]">
-              Project:{" "}
-              {item.project.displayName || item.project.name}
+              Project: {item.project.displayName || item.project.name}
             </span>
           )}
         </div>
@@ -141,9 +121,7 @@ const EmployeeWorkDetails = () => {
             item.status
           )}`}
         >
-          {item.status === "todo"
-            ? "Pending"
-            : item.status || "Pending"}
+          {item.status === "todo" ? "Pending" : item.status || "Pending"}
         </span>
       </div>
     </div>
@@ -219,3 +197,4 @@ const EmployeeWorkDetails = () => {
 };
 
 export default EmployeeWorkDetails;
+

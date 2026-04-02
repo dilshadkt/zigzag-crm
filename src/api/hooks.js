@@ -74,6 +74,7 @@ import {
   updateProjectField,
   deleteProjectField,
   reorderProjectFields,
+  submitSubTaskPendingReason,
 } from "./service";
 import { getUnreadCount } from "./chatService";
 import { format } from "date-fns";
@@ -2251,8 +2252,13 @@ export const useDeleteAllCompanyEmployees = () => {
 
 // Custom hook for managing attendance state
 export const useAttendanceManager = () => {
+  const { user } = useAuth();
   const { data: currentStatus, isLoading: statusLoading } =
     useGetCurrentAttendanceStatus();
+  const { data: todaySubTasks, isLoading: tasksLoading } = useGetEmployeeSubTasksToday(
+    user?._id || null
+  );
+  
   const clockInMutation = useClockIn();
   const clockOutMutation = useClockOut();
   const startBreakMutation = useStartBreak();
@@ -2270,11 +2276,22 @@ export const useAttendanceManager = () => {
 
   const isOnBreak = currentStatus?.attendance?.status === "break";
 
+  // Calculate if end shift is blocked by pending tasks without reasons
+  const pendingTasksWithoutReason = (todaySubTasks?.subTasks || []).filter(
+    (task) => 
+      !task.hasPendingReasonToday && 
+      !["on-review", "approved", "completed", "client-approved"].includes(task.status)
+  );
+
+  const isEndShiftBlocked = pendingTasksWithoutReason.length > 0;
+  const pendingTasksWithoutReasonCount = pendingTasksWithoutReason.length;
+
   const shiftStartTime = currentStatus?.attendance?.clockInTime
     ? new Date(currentStatus.attendance.clockInTime)
     : null;
 
   const handleClockIn = async (locationData = {}, deviceInfo = {}) => {
+    // ... no changes to handleClockIn ...
     // Prevent multiple simultaneous calls using ref (immediate check)
     if (isClockInInProgress.current || clockInMutation.isPending) {
       console.log("Clock in already in progress, ignoring request");
@@ -2308,6 +2325,11 @@ export const useAttendanceManager = () => {
   };
 
   const handleClockOut = async (locationData = {}, workDescription = "") => {
+    // If blocked, prevent clock out
+    if (isEndShiftBlocked) {
+      throw new Error(`Cannot end shift. You have ${pendingTasksWithoutReasonCount} pending task(s) without a reason.`);
+    }
+
     // Prevent multiple simultaneous calls using ref (immediate check)
     if (isClockOutInProgress.current || clockOutMutation.isPending) {
       console.log("Clock out already in progress, ignoring request");
@@ -2337,6 +2359,7 @@ export const useAttendanceManager = () => {
   };
 
   const handleStartBreak = async (reason = "") => {
+    // ... no changes to handleStartBreak ...
     // Prevent multiple simultaneous calls using ref (immediate check)
     if (isStartBreakInProgress.current || startBreakMutation.isPending) {
       console.log("Start break already in progress, ignoring request");
@@ -2387,6 +2410,10 @@ export const useAttendanceManager = () => {
     isOnBreak,
     shiftStartTime,
     statusLoading,
+    isEndShiftBlocked,
+    pendingTasksWithoutReasonCount,
+    pendingTasksWithoutReason,
+    todaySubTasks,
 
     // Actions
     handleClockIn,
@@ -2496,6 +2523,17 @@ export const useReorderProjectFields = (companyId, onSuccess) => {
   });
 };
 
+export const useSubmitPendingReason = (subTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (reason) => submitSubTaskPendingReason(subTaskId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["subTask", subTaskId]);
+      queryClient.invalidateQueries(["employeeSubTasksToday"]);
+    },
+  });
+};
+
 // Lead Form Config Hooks
 export const useGetLeadFormConfig = () => {
   return useQuery({
@@ -2562,4 +2600,5 @@ export const useDeleteLeadStatus = () => {
     },
   });
 };
+
 

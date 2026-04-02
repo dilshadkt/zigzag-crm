@@ -213,7 +213,7 @@ const Dashboard = () => {
       {/* Team Daily Status - Admin Only */}
       {(!isEmployee || isEmployeeHasTaskAdmin) && (
         <div className="w-full mt-5">
-           <EmployeesTodayStatus />
+          <EmployeesTodayStatus />
         </div>
       )}
 
@@ -231,7 +231,7 @@ const Dashboard = () => {
           ) : (
             <PendingWork taskMonth={taskMonth} />
           )}
-          
+
           {(!isEmployee || isEmployeeHasTaskAdmin) && (
             <TodayReworkTasks />
           )}

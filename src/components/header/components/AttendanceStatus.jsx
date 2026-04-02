@@ -68,6 +68,7 @@ const AttendanceStatus = ({
             {isClockingOut ? "Ending..." : "End Shift"}
           </span>
         </button>
+
         <div
           className={`absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse ${
             isOnBreak ? "bg-yellow-500" : "bg-green-500"
@@ -79,7 +80,7 @@ const AttendanceStatus = ({
       <EndShiftModal
         isOpen={showEndShiftModal}
         onClose={() => setShowEndShiftModal(false)}
-        user={null} // We don't need user info for end shift
+        user={null}
         isClockingOut={isClockingOut}
         clockOutError={clockOutError}
         onEndShift={onEndShift}

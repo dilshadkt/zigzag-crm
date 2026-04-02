@@ -60,6 +60,8 @@ const DashboardHeader = () => {
     isEndingBreak,
     clockInError,
     clockOutError,
+    isEndShiftBlocked,
+    pendingTasksWithoutReasonCount,
   } = useAttendanceManager();
 
   // Prevent multiple modal opens
@@ -243,6 +245,8 @@ const DashboardHeader = () => {
             onEndBreak={handleEndBreak}
             isStartingBreak={isStartingBreak}
             isEndingBreak={isEndingBreak}
+            isEndShiftBlocked={isEndShiftBlocked}
+            pendingTasksWithoutReasonCount={pendingTasksWithoutReasonCount}
           />
         </div>
 

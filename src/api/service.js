@@ -1042,3 +1042,13 @@ export const reorderProjectFields = async (companyId, fieldIds) => {
   return response.data;
 };
 
+export const submitSubTaskPendingReason = async (subTaskId, reason) => {
+  try {
+    const response = await apiClient.post(`/subtasks/${subTaskId}/pending-reason`, { reason });
+    return response.data;
+  } catch (error) {
+    console.error("Error submitting subtask pending reason:", error);
+    throw error;
+  }
+};
+
