@@ -188,12 +188,26 @@ const AppRoutes = () => {
           </Route>
 
           {/* Campaign Routes */}
-          <Route path="campaigns" element={<Campaigns />} />
-          <Route path="campaigns/:id" element={<CampaignDetails />} />
+          <Route
+            path="campaigns"
+            element={
+              <RouteAccess>
+                <Campaigns />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="campaigns/:id"
+            element={
+              <RouteAccess>
+                <CampaignDetails />
+              </RouteAccess>
+            }
+          />
 
-          <Route path="calender" element={<Calendar />} />
-          <Route path="vacations" element={<Vacations />} />
-          <Route path="employees" element={<Employees />} />
+          <Route path="calender" element={<RouteAccess><Calendar /></RouteAccess>} />
+          <Route path="vacations" element={<RouteAccess><Vacations /></RouteAccess>} />
+          <Route path="employees" element={<RouteAccess><Employees /></RouteAccess>} />
           <Route
             path="leads"
             element={
@@ -218,19 +232,75 @@ const AppRoutes = () => {
               </RouteAccess>
             }
           />
-          <Route path="attendance" element={<Attendance />} />
+          <Route
+            path="attendance"
+            element={
+              <RouteAccess>
+                <Attendance />
+              </RouteAccess>
+            }
+          />
           <Route path="employees/:employeeId" element={<EmployeeDetails />} />
           <Route
             path="employees/:employeeId/subtasks"
             element={<EmployeeSubTasks />}
           />
-          <Route path="messenger" element={<Messenger />} />
-          <Route path="task-on-review" element={<TaskOnReview />} />
-          <Route path="task-on-publish" element={<TaskOnPublish />} />
-          <Route path="client-review" element={<ClientReview />} />
-          <Route path="infoPortal" element={<InfoPortal />} />
-          <Route path="events" element={<Events />} />
-          <Route path="workload" element={<WorkLoad />} />
+          <Route
+            path="messenger"
+            element={
+              <RouteAccess>
+                <Messenger />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="task-on-review"
+            element={
+              <RouteAccess>
+                <TaskOnReview />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="task-on-publish"
+            element={
+              <RouteAccess>
+                <TaskOnPublish />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="client-review"
+            element={
+              <RouteAccess>
+                <ClientReview />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="infoPortal"
+            element={
+              <RouteAccess>
+                <InfoPortal />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="events"
+            element={
+              <RouteAccess>
+                <Events />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="workload"
+            element={
+              <RouteAccess>
+                <WorkLoad />
+              </RouteAccess>
+            }
+          />
           <Route
             path="company-tasks"
             element={
@@ -295,7 +365,14 @@ const AppRoutes = () => {
               </WithRoleAcess>
             }
           />
-          <Route path="board" element={<Board />} />
+          <Route
+            path="board"
+            element={
+              <RouteAccess>
+                <Board />
+              </RouteAccess>
+            }
+          />
           <Route
             path="settings"
             element={
