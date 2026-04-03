@@ -26,9 +26,10 @@ const LeadsTable = ({
   statuses,
   onStatusChange,
   onCustomFieldChange,
-  isEmployee = false,
+  canManage = false,
   scrollContainerId,
 }) => {
+  console.log(leads?.length)
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
   const isAllSelected =
     visibleLeadIds.length > 0 &&
@@ -99,7 +100,7 @@ const LeadsTable = ({
                   statuses={statuses}
                   onStatusChange={onStatusChange}
                   onCustomFieldChange={onCustomFieldChange}
-                  isEmployee={isEmployee}
+                  canManage={canManage}
                 />
               );
             })}
@@ -118,7 +119,7 @@ const LeadsTable = ({
       <table className="min-w-full border-separate border-spacing-0">
         <thead className="bg-slate-50 text-slate-500 sticky top-0 z-30">
           <tr>
-            <th 
+            <th
               className={`${headerClasses} cursor-pointer hover:bg-slate-100 transition-colors`}
               onClick={() => onToggleSelectAll(!isAllSelected, visibleLeadIds)}
             >
@@ -127,7 +128,7 @@ const LeadsTable = ({
                   type="checkbox"
                   className={checkboxClasses}
                   checked={isAllSelected}
-                  onChange={() => {}} // Controlled by the th's onClick
+                  onChange={() => { }} // Controlled by the th's onClick
                   onClick={(e) => e.stopPropagation()}
                   aria-label="Select all leads"
                 />
@@ -138,7 +139,7 @@ const LeadsTable = ({
                 {column.label}
               </th>
             ))}
-            {!isEmployee && (
+            {canManage && (
               <th className={headerClasses} style={{ width: "60px" }}>
                 {/* Actions column */}
               </th>
@@ -149,7 +150,7 @@ const LeadsTable = ({
           {showEmptyState ? (
             <tr className="h-[400px]">
               <td
-                colSpan={columns.length + (isEmployee ? 1 : 2)}
+                colSpan={columns.length + (canManage ? 2 : 1)}
                 className="px-6 py-12 text-center text-sm text-slate-500"
               >
                 No leads found. Try adjusting your filters or create a new lead.
@@ -183,7 +184,7 @@ const LeadsTable = ({
                     statuses={statuses}
                     onStatusChange={onStatusChange}
                     onCustomFieldChange={onCustomFieldChange}
-                    isEmployee={isEmployee}
+                    canManage={canManage}
                   />
                 );
               })}

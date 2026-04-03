@@ -37,12 +37,33 @@ const StatusDropdown = ({ status, statuses, onStatusChange, disabled = false }) 
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
 
+  // Handle exclusive dropdown: close others when this one opens
+  useEffect(() => {
+    const handleCloseOthers = () => {
+      if (isOpen) setIsOpen(false);
+    };
+    window.addEventListener("close-all-lead-dropdowns", handleCloseOthers);
+    return () => window.removeEventListener("close-all-lead-dropdowns", handleCloseOthers);
+  }, [isOpen]);
+
   const handleStatusSelect = (selectedStatus) => {
     if (onStatusChange && selectedStatus) {
       const statusId = selectedStatus._id || selectedStatus.id;
       onStatusChange(statusId);
     }
     setIsOpen(false);
+  };
+
+  const toggleDropdown = (e) => {
+    e.stopPropagation();
+    if (!disabled) {
+      const nextState = !isOpen;
+      if (nextState) {
+        // Dispatch event to close all other open dropdowns
+        window.dispatchEvent(new CustomEvent("close-all-lead-dropdowns"));
+      }
+      setIsOpen(nextState);
+    }
   };
 
   if (!statuses || statuses.length === 0) {
@@ -54,12 +75,7 @@ const StatusDropdown = ({ status, statuses, onStatusChange, disabled = false }) 
     <div className="relative inline-block" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!disabled) {
-            setIsOpen(!isOpen);
-          }
-        }}
+        onClick={toggleDropdown}
         disabled={disabled}
         className="inline-flex items-center gap-1.5 focus:outline-none"
         onMouseDown={(e) => e.stopPropagation()}
@@ -75,8 +91,8 @@ const StatusDropdown = ({ status, statuses, onStatusChange, disabled = false }) 
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 top-full mt-2 z-50 min-w-[180px] rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
-          <div className="max-h-60 overflow-auto">
+        <div className="absolute left-0 top-full mt-2 z-50 min-w-[220px] rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+          <div className="max-h-60 overflow-y-auto flex flex-col">
             {statuses.map((statusOption) => {
               const statusId = statusOption._id || statusOption.id;
               const isSelected = statusId === currentStatusId;

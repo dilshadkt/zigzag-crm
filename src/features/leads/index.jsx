@@ -64,7 +64,10 @@ const clearColumnVisibility = () => {
 const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
+  const canManageAllLeads = isAdmin || user?.permissions?.leads?.viewAll;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
@@ -149,6 +152,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     limit: pageSize,
     search: debouncedSearch,
     status: activeStatusId,
+    // Only filter by owner if user is employee AND NOT allowed to see all leads
+    owner: isEmployee && !canManageAllLeads ? user._id : null,
     appliedFilters,
   });
 
@@ -724,7 +729,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
                 statuses={statuses}
                 onStatusChange={handleStatusChange}
                 onCustomFieldChange={handleCustomFieldChange}
-                isEmployee={isEmployee}
+                canManage={canManageAllLeads}
               />
               <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">
                 <LeadsPagination

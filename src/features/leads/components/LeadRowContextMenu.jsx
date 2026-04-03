@@ -53,6 +53,14 @@ const LeadRowContextMenu = ({
   }, [visible, position]);
 
   useEffect(() => {
+    const handleCloseOthers = () => {
+      if (visible) onClose();
+    };
+    window.addEventListener("close-all-lead-dropdowns", handleCloseOthers);
+    return () => window.removeEventListener("close-all-lead-dropdowns", handleCloseOthers);
+  }, [visible, onClose]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         onClose();

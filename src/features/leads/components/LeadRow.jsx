@@ -144,7 +144,7 @@ const LeadRow = memo(({
   statuses,
   onStatusChange,
   onCustomFieldChange,
-  isEmployee = false,
+  canManage = false,
 }) => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
@@ -161,6 +161,8 @@ const LeadRow = memo(({
         x: rect.right - 180, // Position menu to the left of button
         y: rect.bottom + 5, // Position menu below button
       });
+      // Dispatch event to close all other open dropdowns
+      window.dispatchEvent(new CustomEvent("close-all-lead-dropdowns"));
     }
     setIsContextMenuOpen(true);
   };
@@ -265,7 +267,7 @@ const LeadRow = memo(({
               {renderCellValue(column, lead)}
             </td>
           ))}
-        {!isEmployee && (
+        {canManage && (
           <td className="px-4 py-1.5">
             <div className="flex items-center justify-end">
               <button

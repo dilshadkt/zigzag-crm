@@ -29,11 +29,33 @@ const SelectFieldDropdown = ({ value, options, onValueChange, isPlaceholder = fa
         return () => document.removeEventListener("keydown", handleEscape);
     }, [isOpen]);
 
+    // Handle exclusive dropdown: close others when this one opens
+    useEffect(() => {
+        const handleCloseOthers = () => {
+            if (isOpen) setIsOpen(false);
+        };
+        window.addEventListener("close-all-lead-dropdowns", handleCloseOthers);
+        return () => window.removeEventListener("close-all-lead-dropdowns", handleCloseOthers);
+    }, [isOpen]);
+
     const handleOptionSelect = (selectedOption) => {
         if (onValueChange && selectedOption) {
             onValueChange(selectedOption);
         }
         setIsOpen(false);
+    };
+
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!disabled) {
+            const nextState = !isOpen;
+            if (nextState) {
+                // Dispatch event to close all other open dropdowns
+                window.dispatchEvent(new CustomEvent("close-all-lead-dropdowns"));
+            }
+            setIsOpen(nextState);
+        }
     };
 
     if (!options || options.length === 0) {
@@ -52,13 +74,7 @@ const SelectFieldDropdown = ({ value, options, onValueChange, isPlaceholder = fa
         >
             <button
                 type="button"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (!disabled) {
-                        setIsOpen(!isOpen);
-                    }
-                }}
+                onClick={toggleDropdown}
                 onMouseDown={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -84,11 +100,11 @@ const SelectFieldDropdown = ({ value, options, onValueChange, isPlaceholder = fa
 
             {isOpen && !disabled && (
                 <div
-                    className="absolute left-0 top-full mt-2 z-50 min-w-[160px] rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden"
+                    className="absolute left-0 top-full mt-2 z-50 min-w-[200px] rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                 >
-                    <div className="max-h-60 overflow-auto">
+                    <div className="max-h-60 overflow-y-auto flex flex-col">
                         {options.map((option, index) => {
                             const isSelected = option === value;
 
