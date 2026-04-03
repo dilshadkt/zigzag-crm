@@ -4,7 +4,12 @@ import apiClient from "../../../api/client";
 // --- LEADS CORE API ---
 
 export const getLeads = async (params = {}) => {
-  const response = await apiClient.get("/leads", { params });
+  // Stringify filters object if it exists to ensure proper transmission to backend
+  const processedParams = { ...params };
+  if (processedParams.filters && typeof processedParams.filters === 'object') {
+    processedParams.filters = JSON.stringify(processedParams.filters);
+  }
+  const response = await apiClient.get("/leads", { params: processedParams });
   return response.data;
 };
 
