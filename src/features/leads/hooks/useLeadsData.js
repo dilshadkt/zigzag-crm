@@ -124,10 +124,11 @@ export const useLeadsData = (filters = {}) => {
     // Fallback: Default system columns (old way)
     const systemColumns = [
       { key: "createdAt", label: "Created On", visible: true, isSystem: true },
-      { key: "contact.name", label: "Name", visible: true, isSystem: true },
+      { key: "name", label: "Name", visible: true, isSystem: true },
       { key: "status", label: "Status", visible: true, isSystem: true },
-      { key: "contact.phone", label: "Phone", visible: true, isSystem: true },
-      { key: "contact.email", label: "Email", visible: false, isSystem: true },
+      { key: "phone", label: "Phone", visible: true, isSystem: true },
+      { key: "email", label: "Email", visible: false, isSystem: true },
+      { key: "owner", label: "Owner", visible: true, isSystem: true },
     ];
 
     // Generate columns from form fields

@@ -188,13 +188,15 @@ const LeadRow = memo(({
     const value = lead[column.key];
 
     if ((column.type === "select" || column.fieldType === "select") && column.options && column.options.length > 0) {
-      const displayValue = (value === undefined || value === null || value === "")
-        ? column.options[0]
+      const isPlaceholder = (value === undefined || value === null || value === "");
+      const displayValue = isPlaceholder
+        ? `Select ${column.label || 'option'}`
         : value;
 
       return (
         <SelectFieldDropdown
           value={displayValue}
+          isPlaceholder={isPlaceholder}
           options={column.options}
           onValueChange={(newValue) => {
             if (onCustomFieldChange) {
@@ -259,7 +261,7 @@ const LeadRow = memo(({
         {columns
           .filter((col) => col.visible)
           .map((column) => (
-            <td key={column.key} className="px-4 py-1.5">
+            <td key={column.key} className="px-4 py-1.5 whitespace-nowrap">
               {renderCellValue(column, lead)}
             </td>
           ))}

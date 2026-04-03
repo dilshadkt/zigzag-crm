@@ -145,6 +145,7 @@ export const useGetLeads = (params = {}) => {
   return useQuery({
     queryKey: ["leads", params],
     queryFn: () => getLeads(params),
+    placeholderData: (previousData) => previousData,
   });
 };
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 
-const SelectFieldDropdown = ({ value, options, onValueChange, disabled = false, column }) => {
+const SelectFieldDropdown = ({ value, options, onValueChange, isPlaceholder = false, disabled = false, column }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -64,9 +64,13 @@ const SelectFieldDropdown = ({ value, options, onValueChange, disabled = false, 
                     e.preventDefault();
                 }}
                 disabled={disabled}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3f8cff]/20"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border transition-colors focus:outline-none focus:ring-2 focus:ring-[#3f8cff]/20 ${
+                    isPlaceholder ? "border-dashed border-slate-300" : "border-slate-200 shadow-sm"
+                }`}
             >
-                <span className="text-[13px] whitespace-nowrap font-medium text-slate-700">
+                <span className={`text-[13px] whitespace-nowrap font-medium ${
+                    isPlaceholder ? "text-slate-400 italic" : "text-slate-700"
+                }`}>
                     {displayValue}
                 </span>
                 {!disabled && (
