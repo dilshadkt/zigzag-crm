@@ -11,6 +11,7 @@ import {
 } from "../../api/hooks";
 import Dropdown from "../../components/shared/dropdown";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import Tasks from "../../components/employee/Tasks";
 import Overview from "../../components/employee/Overview";
 import Projects from "../../components/employee/Projects";
@@ -22,9 +23,13 @@ import { EmployeeHeader } from "./Header";
 const EmployeeDetails = () => {
   const { employeeId } = useParams();
   const { user } = useAuth();
-  const isAdmin = user?.role === "company-admin";
+  const { hasPermission, isAdmin } = usePermissions();
+  const canEdit = hasPermission("employees", "edit");
+  const canDelete = hasPermission("employees", "delete");
+  const isOwnProfile = user?._id === employeeId;
+
   const [activePage, setActivePage] = useState(
-    isAdmin ? "Overview" : "Projects"
+    isAdmin() || canEdit ? "Overview" : "Projects"
   );
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -133,12 +138,13 @@ const EmployeeDetails = () => {
             progressValue: employee.progressValue,
             skype: employee.skype,
           }}
-          disableEdit={!isAdmin}
+          disableEdit={!canEdit && !isOwnProfile}
+          canDelete={canDelete}
           employeeId={employeeId}
         />
         <div className="flex-1 flex flex-col gap-y-5">
           <EmployeeHeader
-            isAdmin={isAdmin}
+            isAdmin={isAdmin() || canEdit}
             activePage={activePage}
             setActivePage={setActivePage}
             subTasksCount={subTasksCount}
@@ -150,7 +156,7 @@ const EmployeeDetails = () => {
             setSelectedProject={setSelectedProject}
           />
           <div className="w-full h-full overflow-y-auto">
-            {activePage === "Overview" && isAdmin && (
+            {(activePage === "Overview" && (isAdmin() || canEdit)) && (
               <Overview
                 subTasks={filteredSubTasks}
                 employeeId={employeeId}

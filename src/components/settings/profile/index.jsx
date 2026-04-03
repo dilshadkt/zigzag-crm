@@ -12,7 +12,7 @@ import { useUpdateProfile, useDeleteEmployee } from "../../../api/hooks";
 import { loginSuccess } from "../../../store/slice/authSlice";
 import { toast } from "react-hot-toast";
 
-const UserProfile = ({ user, disableEdit, employeeId }) => {
+const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
@@ -28,12 +28,12 @@ const UserProfile = ({ user, disableEdit, employeeId }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Check if we're on the employee details page and user is admin
+  // Check if we're on the employee details page and user is admin or has delete permission
   const isEmployeePage = location.pathname.includes("/employees/");
   const isAdmin = currentUser?.role === "company-admin";
   const isOwnProfile =
     currentUser?._id === employeeId || currentUser?._id === user?._id;
-  const showDeleteButton = isEmployeePage && isAdmin && !isOwnProfile;
+  const showDeleteButton = isEmployeePage && (isAdmin || canDelete) && !isOwnProfile;
 
   // Determine which employeeId to use for updates
   const targetEmployeeId = isOwnProfile ? null : employeeId;
