@@ -9,20 +9,18 @@ const EditProject = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { data: currentProject } = useProjectDetails(projectId || undefined);
-  const { mutate } = useUpdateProject(currentProject?._id, () => {
+  const { mutateAsync } = useUpdateProject(currentProject?._id, () => {
     navigate(`/projects/${projectId}`);
   });
-  const handleEditProject = async (values, { setSubmitting }) => {
+  const handleEditProject = async (values) => {
     try {
       const updatedValues = {
         ...values,
-        teams: values.teams.map((team) => team._id),
+        teams: values?.teams?.map((team) => team?._id) || [],
       };
-      mutate(updatedValues);
+      await mutateAsync(updatedValues);
     } catch (error) {
       console.error("Error submitting form:", error);
-    } finally {
-      setSubmitting(false);
     }
   };
 

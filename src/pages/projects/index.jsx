@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   useAddProject,
@@ -28,6 +29,7 @@ const Prjects = () => {
   const { activeProject: selectProject } = useProject();
   const { hasPermission } = usePermissions();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Month selection state - default to current month
   const [selectedMonth, setSelectedMonth] = useState(
@@ -91,9 +93,12 @@ const Prjects = () => {
 
   const handleAddProject = async (values, { resetForm }) => {
     try {
-      await addProject.mutateAsync(values);
+      const response = await addProject.mutateAsync(values);
       setShowModalProject(false);
       resetForm();
+      if (response?.project?._id) {
+        navigate(`/projects/${response.project._id}`);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -110,11 +115,15 @@ const Prjects = () => {
     );
     updatedValues.attachments = processedValue;
 
-    createTask.mutate(updatedValues, {
-      onSuccess: () => {
-        resetForm();
-      },
-    });
+    try {
+      const response = await createTask.mutateAsync(updatedValues);
+      resetForm();
+      if (response?.data?.task?._id) {
+        navigate(`/projects/${selectProject}/${response.data.task._id}`);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   useEffect(() => {

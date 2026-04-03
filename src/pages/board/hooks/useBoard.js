@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
     useGetEmployeeTasks,
@@ -20,6 +21,7 @@ export const useBoard = () => {
     const { user, companyId } = useAuth();
     const { hasPermission } = usePermissions();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     // Check if user has viewAll tasks permission
     const canViewAllTasks = user?.role === "company-admin" || hasPermission("tasks", "viewAll");
@@ -52,7 +54,7 @@ export const useBoard = () => {
             : useGetEmployeeProjects(user?._id);
 
     const { mutate: updateOrder } = useUpdateTaskOrder();
-    const { mutate: createTask, isLoading: isCreatingTask } =
+    const { mutateAsync: createTask, isLoading: isCreatingTask } =
         useCreateTaskFromBoard(() => {
             setShowModalTask(false);
         });
@@ -187,13 +189,16 @@ export const useBoard = () => {
                 delete updatedValues.taskFlow;
             }
 
-            createTask(updatedValues, {
-                onSuccess: () => resetForm(),
-                onError: (error) => {
-                    console.error("Failed to create task:", error);
-                    alert("Failed to create task. Please try again.");
-                },
-            });
+            const response = await createTask(updatedValues);
+            resetForm();
+            if (response?.data?.task) {
+                const t = response.data.task;
+                if (t.project) {
+                    navigate(`/projects/${t.project}/${t._id}`);
+                } else {
+                    navigate(`/tasks/${t._id}`);
+                }
+            }
         } catch (error) {
             console.error("Error processing task data:", error);
             alert("Failed to process task data. Please try again.");

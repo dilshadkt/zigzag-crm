@@ -426,7 +426,15 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
               type="submit"
               loading={isSubmitting}
               disable={isSubmitting}
-              title={isEditMode ? "Save Changes" : "Save Project"}
+              title={
+                isSubmitting
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Saving..."
+                  : isEditMode
+                  ? "Save Changes"
+                  : "Save Project"
+              }
               className="text-white px-4"
             />
           )}
