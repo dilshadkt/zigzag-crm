@@ -33,7 +33,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   const formFields = useMemo(() => {
     const fields = formConfigData?.data?.fields || [];
     if (fields.length === 0) {
-      // Default fallback if no config exists (should typically be handled by API default)
+      // Default fallback if no config exists
       return [
         {
           id: "system_name",
@@ -56,12 +56,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           key: "system_phone",
           label: "Phone Number",
           type: "tel",
-          required: true, // Mandatory now
+          required: true,
           placeholder: "Enter phone number",
         },
         {
           id: "company_1",
-          key: "company", // Legacy fallback key
+          key: "company",
           label: "Company",
           type: "text",
           required: false,
@@ -69,12 +69,15 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
         },
       ];
     }
-    // Ensure all fields have IDs and keys
-    return fields.map((field, index) => ({
-      ...field,
-      id: String(field.id || `field_${index}`),
-      key: field.key || field.id || `field_${index}`,
-    }));
+    // Normalize: ensure every field has an `id` (MongoDB returns `_id`)
+    return fields.map((field, index) => {
+      const id = field.id || field._id?.toString?.() || field._id || `field_${index}`;
+      return {
+        ...field,
+        id,
+        key: field.key || id,
+      };
+    });
   }, [formConfigData?.data?.fields]);
 
   const statuses = statusesData?.data || [];

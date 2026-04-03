@@ -2527,14 +2527,14 @@ export const useSubmitPendingReason = (subTaskId) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (reason) => submitSubTaskPendingReason(subTaskId, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["subTask", subTaskId]);
-      queryClient.invalidateQueries(["employeeSubTasksToday"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(["subTask", subTaskId]);
+      await queryClient.invalidateQueries(["employeeSubTasksToday"]);
     },
   });
 };
 
-// Lead Form Config Hooks
+// Lead Form Config Hooks (backward compatible — returns active form)
 export const useGetLeadFormConfig = () => {
   return useQuery({
     queryKey: ["leadFormConfig"],
@@ -2549,11 +2549,101 @@ export const useUpdateLeadFormConfig = () => {
       apiClient
         .put("/leads/settings/form-config", { fields: config })
         .then((res) => res.data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leadFormConfig"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfig"] });
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
     },
   });
 };
+
+// Multi-Form Config Hooks
+export const useGetAllFormConfigs = () => {
+  return useQuery({
+    queryKey: ["leadFormConfigs"],
+    queryFn: () => apiClient.get("/leads/settings/form-configs").then((res) => res.data),
+  });
+};
+
+export const useCreateFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData) =>
+      apiClient.post("/leads/settings/form-configs", formData).then((res) => res.data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
+    },
+  });
+};
+
+export const useGetFormConfigById = (configId) => {
+  return useQuery({
+    queryKey: ["formConfigById", configId],
+    queryFn: () =>
+      apiClient.get(`/leads/settings/form-configs/${configId}`).then((res) => res.data),
+    enabled: !!configId,
+  });
+};
+
+export const useUpdateFormConfigById = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ configId, ...data }) =>
+      apiClient
+        .put(`/leads/settings/form-configs/${configId}`, data)
+        .then((res) => res.data),
+    onSuccess: async (_, { configId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
+      await queryClient.invalidateQueries({ queryKey: ["formConfigById", configId] });
+      // Also invalidate the active-form singleton so scoring/assignment fields stay fresh
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfig"] });
+    },
+  });
+};
+
+export const useActivateFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (configId) =>
+      apiClient
+        .put(`/leads/settings/form-configs/${configId}/activate`)
+        .then((res) => res.data),
+    onSuccess: async (_, configId) => {
+      // Invalidate everything related to form configs to ensure total UI sync
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfig"] });
+      await queryClient.invalidateQueries({ queryKey: ["formConfigById"] });
+    },
+  });
+};
+
+export const useDeactivateFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (configId) =>
+      apiClient
+        .put(`/leads/settings/form-configs/${configId}/deactivate`)
+        .then((res) => res.data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfig"] });
+      await queryClient.invalidateQueries({ queryKey: ["formConfigById"] });
+    },
+  });
+};
+
+export const useDeleteFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (configId) =>
+      apiClient
+        .delete(`/leads/settings/form-configs/${configId}`)
+        .then((res) => res.data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
+    },
+  });
+};
+
 
 // Lead Status Hooks
 export const useGetLeadStatuses = () => {
