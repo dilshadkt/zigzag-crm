@@ -1,5 +1,9 @@
 // Location utility functions for attendance tracking
 
+// Simple memory cache to prevent redundant API calls to Nominatim
+const locationCache = new Map();
+const CACHE_TIMEOUT = 5000; // 5 seconds
+
 /**
  * Reverse geocoding using OpenStreetMap Nominatim API
  * @param {number} latitude - Latitude coordinate
@@ -8,6 +12,21 @@
  * @returns {Promise<string|Object>} Formatted address string or detailed location object
  */
 export const reverseGeocode = async (latitude, longitude, detailed = false) => {
+  const cacheKey = `${latitude},${longitude},${detailed}`;
+  const now = Date.now();
+
+  // Check cache first
+  if (locationCache.has(cacheKey)) {
+    const cached = locationCache.get(cacheKey);
+    if (now - cached.timestamp < CACHE_TIMEOUT) {
+      console.log("Returning cached address lookup");
+      return cached.data;
+    }
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&extratags=1&namedetails=1`,
@@ -15,19 +34,26 @@ export const reverseGeocode = async (latitude, longitude, detailed = false) => {
         headers: {
           "User-Agent": "Dooura-CRM/1.0", // Required by Nominatim
         },
+        signal: controller.signal,
       }
     );
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 429) {
+        throw new Error("Too many location requests. Please wait a moment.");
+      }
+      throw new Error(`Location service error: ${response.status}`);
     }
 
     const data = await response.json();
+    let result = null;
 
     if (data && data.display_name) {
       if (detailed) {
         // Return detailed location object
-        return {
+        result = {
           // Basic info
           displayName: data.display_name,
           placeId: data.place_id,
@@ -116,14 +142,24 @@ export const reverseGeocode = async (latitude, longitude, detailed = false) => {
         };
       } else {
         // Return just the formatted address string (backward compatibility)
-        return formatShortAddress(data.address) || data.display_name;
+        result = formatShortAddress(data.address) || data.display_name;
       }
+    }
+
+    if (result) {
+      locationCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
     }
 
     return detailed ? null : "Address not found";
   } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      console.warn("Location lookup timed out");
+      return detailed ? null : "Location request timed out";
+    }
     console.warn("Reverse geocoding failed:", error.message);
-    return detailed ? null : "Address lookup failed";
+    return detailed ? null : `Address lookup failed: ${error.message}`;
   }
 };
 

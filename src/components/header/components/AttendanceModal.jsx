@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { IoFingerPrintOutline } from "react-icons/io5";
 import { getUserLocation, getDeviceInfo } from "../../../utils/locationUtils";
 
@@ -95,51 +95,70 @@ const AttendanceModal = ({
     document.addEventListener("touchend", handleSwipeEnd);
   };
 
+  // Use a ref to track processing state synchronously and prevent race conditions
+  const isMarkingRef = useRef(false);
+
   const markAttendance = async () => {
-    // Prevent multiple API calls - check both flags
-    if (isProcessingAttendance || isClockingIn || isSwipeCompleted) {
+    // Prevent multiple API calls using both refs and state
+    if (
+      isMarkingRef.current ||
+      isProcessingAttendance ||
+      isClockingIn ||
+      isSwipeCompleted
+    ) {
+      console.log("Attendance marking already in progress, skipping...");
       return;
     }
 
-    // Set processing state immediately to prevent concurrent calls
+    // Set processing flag immediately (synchronously)
+    isMarkingRef.current = true;
     setIsSwipeCompleted(true);
 
     try {
       setAttendanceError(null);
 
+      console.log("Fetching user location...");
       const location = await getUserLocation();
       const deviceInfo = getDeviceInfo();
 
+      console.log("Submitting clock-in request...");
       const result = await onClockIn(location, deviceInfo);
 
       if (result && result.success) {
+        console.log("Clock-in successful");
         // Auto-close modal after successful clock in
         setTimeout(() => {
           onClose();
           setSwipeProgress(0);
           setIsSwipeCompleted(false);
-        }, 1000); // Give user time to see success state
+          isMarkingRef.current = false;
+        }, 1000);
       } else {
+        console.warn("Clock-in failed:", result?.message);
         // If result doesn't indicate success, reset to allow retry
         setSwipeProgress(0);
         setIsSwipeCompleted(false);
+        isMarkingRef.current = false;
       }
     } catch (error) {
       console.error("Failed to mark attendance:", error);
-      
+
       // Extract error message from response
       let errorMessage = "Failed to clock in. Please try again.";
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
       } else if (error?.message) {
         errorMessage = error.message;
       }
-      
+
       setAttendanceError(errorMessage);
 
       // Reset states on error to allow retry
       setSwipeProgress(0);
       setIsSwipeCompleted(false);
+      isMarkingRef.current = false;
     }
   };
 
