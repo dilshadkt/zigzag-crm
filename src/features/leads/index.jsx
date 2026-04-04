@@ -328,6 +328,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
           "contact.name",
           "name",
           "status",
+          "score",
           "contact.phone",
           "phone",
         ].includes(col.key),

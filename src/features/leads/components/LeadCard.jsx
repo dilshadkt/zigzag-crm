@@ -25,6 +25,7 @@ const LeadCard = memo(({
     const leadPhone = lead.phone || lead.contact?.phone;
     const leadStatus = lead.status || "Unknown";
     const owner = lead.owner;
+    const leadScore = lead.score ?? 0;
 
     const formatDate = (date) => {
         if (!date) return "—";
@@ -72,6 +73,25 @@ const LeadCard = memo(({
                         onStatusChange={(statusId) => onStatusChange(lead, statusId)}
                         compact={true}
                     />
+                    <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ring-1 ${
+                        leadScore >= 76 ? 'bg-emerald-50 ring-emerald-200' :
+                        leadScore >= 51 ? 'bg-blue-50 ring-blue-200' :
+                        leadScore >= 26 ? 'bg-amber-50 ring-amber-200' :
+                        'bg-red-50 ring-red-200'
+                    }`}>
+                        <div className={`w-1 h-1 rounded-full ${
+                            leadScore >= 76 ? 'bg-emerald-500' :
+                            leadScore >= 51 ? 'bg-blue-500' :
+                            leadScore >= 26 ? 'bg-amber-500' :
+                            'bg-red-500'
+                        }`} />
+                        <span className={`text-[10px] font-bold ${
+                            leadScore >= 76 ? 'text-emerald-700' :
+                            leadScore >= 51 ? 'text-blue-700' :
+                            leadScore >= 26 ? 'text-amber-700' :
+                            'text-red-600'
+                        }`}>{leadScore}</span>
+                    </div>
                     <button
                         onClick={(e) => {
                             e.stopPropagation();

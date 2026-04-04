@@ -126,6 +126,25 @@ const columnRenderers = {
     </div>
   ),
   owner: (lead) => <OwnerCell owner={lead.owner} />,
+  score: (lead) => {
+    const score = lead.score ?? 0;
+    let bgColor, textColor, ringColor;
+    if (score >= 76) {
+      bgColor = "bg-emerald-50"; textColor = "text-emerald-700"; ringColor = "ring-emerald-200";
+    } else if (score >= 51) {
+      bgColor = "bg-blue-50"; textColor = "text-blue-700"; ringColor = "ring-blue-200";
+    } else if (score >= 26) {
+      bgColor = "bg-amber-50"; textColor = "text-amber-700"; ringColor = "ring-amber-200";
+    } else {
+      bgColor = "bg-red-50"; textColor = "text-red-600"; ringColor = "ring-red-200";
+    }
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg ${bgColor} ring-1 ${ringColor}`}>
+        <div className={`w-1.5 h-1.5 rounded-full ${score >= 76 ? 'bg-emerald-500' : score >= 51 ? 'bg-blue-500' : score >= 26 ? 'bg-amber-500' : 'bg-red-500'}`} />
+        <span className={`text-[12px] font-bold ${textColor}`}>{score}</span>
+      </div>
+    );
+  },
 };
 
 const LeadRow = memo(({

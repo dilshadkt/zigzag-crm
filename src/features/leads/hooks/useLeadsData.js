@@ -85,6 +85,8 @@ export const useLeadsData = (filters = {}) => {
       validKeys.add("createdAt");
       // Always allow status (system meta - often managed outside form)
       validKeys.add("status");
+      // Always allow score (system meta - lead scoring)
+      validKeys.add("score");
       // Always allow owner (system meta)
       validKeys.add("owner");
 
@@ -115,7 +117,7 @@ export const useLeadsData = (filters = {}) => {
             options: fieldData?.options || col.options || [],
             // Default visibility logic
             visible: col.isSystem
-              ? ["createdAt", "name", "status", "phone", "owner"].includes(col.key)
+              ? ["createdAt", "name", "status", "score", "phone", "owner"].includes(col.key)
               : false, // Custom fields hidden by default
           };
         });
@@ -126,6 +128,7 @@ export const useLeadsData = (filters = {}) => {
       { key: "createdAt", label: "Created On", visible: true, isSystem: true },
       { key: "name", label: "Name", visible: true, isSystem: true },
       { key: "status", label: "Status", visible: true, isSystem: true },
+      { key: "score", label: "Score", visible: true, isSystem: true, type: "score" },
       { key: "phone", label: "Phone", visible: true, isSystem: true },
       { key: "email", label: "Email", visible: false, isSystem: true },
       { key: "owner", label: "Owner", visible: true, isSystem: true },

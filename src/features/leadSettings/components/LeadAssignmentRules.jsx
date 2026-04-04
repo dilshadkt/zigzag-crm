@@ -48,6 +48,7 @@ const LeadAssignmentRules = ({ fields = [] }) => {
   })).concat([
     { value: "source", label: "Lead Source" },
     { value: "budget", label: "Budget" },
+    { value: "score", label: "Lead Score" },
   ]);
 
   const handleAddNew = () => {

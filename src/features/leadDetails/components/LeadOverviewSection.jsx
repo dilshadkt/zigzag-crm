@@ -545,6 +545,22 @@ const LeadOverviewSection = ({ lead }) => {
                 <LeadStatusBadge status={lead.status || leadDetails?.status} />
               )}
               
+              {/* Lead Score Badge */}
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ring-1 ${
+                (lead.score ?? 0) >= 76 ? 'bg-emerald-50 ring-emerald-200 text-emerald-700' :
+                (lead.score ?? 0) >= 51 ? 'bg-blue-50 ring-blue-200 text-blue-700' :
+                (lead.score ?? 0) >= 26 ? 'bg-amber-50 ring-amber-200 text-amber-700' :
+                'bg-red-50 ring-red-200 text-red-600'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  (lead.score ?? 0) >= 76 ? 'bg-emerald-500' :
+                  (lead.score ?? 0) >= 51 ? 'bg-blue-500' :
+                  (lead.score ?? 0) >= 26 ? 'bg-amber-500' :
+                  'bg-red-500'
+                }`} />
+                <span className="text-xs font-bold">Score: {lead.score ?? 0}</span>
+              </div>
+              
               {!isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
