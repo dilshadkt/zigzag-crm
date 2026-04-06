@@ -275,7 +275,6 @@ const LeadRow = memo(({
               className={checkboxClasses}
               checked={isSelected}
               onChange={() => { }} // Controlled via td's onClick
-              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </td>

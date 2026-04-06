@@ -129,7 +129,6 @@ const LeadsTable = ({
                   className={checkboxClasses}
                   checked={isAllSelected}
                   onChange={() => { }} // Controlled by the th's onClick
-                  onClick={(e) => e.stopPropagation()}
                   aria-label="Select all leads"
                 />
               </div>

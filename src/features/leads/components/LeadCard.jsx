@@ -54,7 +54,6 @@ const LeadCard = memo(({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => {}} 
-                          onClick={(e) => e.stopPropagation()}
                           className="h-3.5 w-3.5 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40 block"
                       />
                     </div>
