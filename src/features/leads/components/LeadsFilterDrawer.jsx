@@ -16,15 +16,22 @@ const LeadsFilterDrawer = ({
     useEffect(() => {
         if (Object.keys(currentFilters).length > 0) {
             const initialFilters = Object.entries(currentFilters).map(
-                ([key, value], index) => ({
-                    id: index,
-                    field: key,
-                    operator: "equals",
-                    value: value,
-                })
+                ([key, val], index) => {
+                    const operator = (val && typeof val === 'object') ? (val.operator || "equals") : "equals";
+                    const value = (val && typeof val === 'object') ? val.value : val;
+                    return {
+                        id: index,
+                        field: key,
+                        operator,
+                        value,
+                    };
+                }
             );
             setFilters(initialFilters);
             setFilterCount(initialFilters.length);
+        } else {
+            setFilters([]);
+            setFilterCount(0);
         }
     }, [currentFilters]);
 

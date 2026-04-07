@@ -108,6 +108,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   useEffect(() => {
     const scheduled = searchParams.get('scheduled');
     const minScore = searchParams.get('minScore');
+    const ownerId = searchParams.get('owner');
 
     if (scheduled === 'today') {
       setAppliedFilters({
@@ -121,6 +122,11 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
       });
       setActiveAction('hot');
       toast.success(`Showing leads with score > ${minScore}`);
+    } else if (ownerId) {
+      setAppliedFilters({
+        owner: { operator: 'equals', value: ownerId }
+      });
+      toast.success("Filtering leads by assigned employee");
     }
 
     // Clear params from URL to avoid re-applying on refresh if not desired, 
@@ -153,8 +159,9 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     limit: pageSize,
     search: debouncedSearch,
     status: activeStatusId,
-    // Only filter by owner if user is employee AND NOT allowed to see all leads
-    owner: isEmployee && !canManageAllLeads ? user._id : null,
+    // Only force own owner if user is employee AND NOT allowed to see all leads
+    // Otherwise allow filtering by owner from appliedFilters (dashboard click)
+    owner: (isEmployee && !canManageAllLeads) ? user._id : (appliedFilters.owner?.value || null),
     appliedFilters,
   });
   const handleStatusFilter = (statusId) => {

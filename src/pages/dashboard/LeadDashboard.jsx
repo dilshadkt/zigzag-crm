@@ -232,7 +232,11 @@ const LeadDashboardPage = () => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto scrollbar-hide pr-1">
                                 {stats?.employeeLeads?.map((emp, i) => (
-                                    <div key={emp._id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-[#3f8cff]/20 transition-all h-fit">
+                                    <div
+                                        key={emp._id}
+                                        onClick={() => navigate(`/leads?owner=${emp._id}`)}
+                                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-[#3f8cff]/20 transition-all h-fit cursor-pointer group/emp"
+                                    >
                                         <div className="flex items-center gap-2.5 overflow-hidden">
                                             <div className="relative">
                                                 {emp.profileImage ? (
