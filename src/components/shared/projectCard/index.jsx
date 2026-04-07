@@ -222,8 +222,8 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
         className={`bg-white   rounded-3xl grid gap-y-4 md:gap-y-0 md:grid-cols-2`}
       >
         <div
-          className="p-4  py-5 h-full flex gap-y-4 flex-col border-b md:border-r 
-       relative border-[#E4E6E8] "
+          className="p-4  py-5 h-full flex gap-y-4 flex-col  md:border-r 
+       relative border-[#E4E6E8]/60 "
         >
           <div className="flexStart  gap-x-3.5">
             <div className="w-12 h-12 rounded-2xl overflow-hidden">

@@ -14,7 +14,7 @@ const TodayReworkTasks = () => {
     const allReworkItems = [...reworkTasks, ...reworkSubTasks];
 
     return (
-        <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 flex flex-col h-[400px]">
+        <div className="bg-white rounded-[2rem] p-5  border border-gray-100 flex flex-col h-[400px]">
             <div className="flex flex-col gap-3 mb-4">
                 <div>
                     <h3 className="text-base font-bold text-red-600 flex items-center gap-2">
@@ -75,9 +75,8 @@ const ReworkItem = ({ item }) => {
             <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            isSubTask ? "bg-purple-100 text-purple-600" : "bg-red-100 text-red-600"
-                        }`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${isSubTask ? "bg-purple-100 text-purple-600" : "bg-red-100 text-red-600"
+                            }`}>
                             {isSubTask ? "Subtask" : "Task"}
                         </span>
                         <span className="text-[10px] text-gray-400 truncate max-w-[150px]">
@@ -112,7 +111,7 @@ const ReworkItem = ({ item }) => {
                         </div>
                     )}
                 </div>
-                
+
                 <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">
                     Needs Rework
                 </span>

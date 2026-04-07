@@ -20,13 +20,13 @@ const EmployeeTodayTasks = () => {
     const completedItems = [...completedTasks, ...completedSubTasks];
 
     return (
-        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 h-[470px] flex flex-col">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="bg-white rounded-[2rem] p-4  border border-gray-100 h-[470px] flex flex-col">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3">
                 <div>
                     <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                         Employees Today Tasks
                     </h3>
-                    <p className="text-sm text-gray-500">Real-time task tracking for all employees</p>
+                    {/* <p className="text-sm text-gray-500">Real-time task tracking for all employees</p> */}
                 </div>
 
                 <div className="relative min-w-[200px]">
@@ -53,9 +53,9 @@ const EmployeeTodayTasks = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 flex-1 overflow-hidden">
                 {/* Active Today */}
-                <div className="flex flex-col h-full bg-slate-50 rounded-2xl p-4 overflow-hidden">
+                <div className="flex flex-col h-full bg-slate-50 rounded-2xl p-3 overflow-hidden">
                     <div className="flex items-center justify-between mb-4 px-2">
                         <h4 className="font-semibold text-gray-700 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>

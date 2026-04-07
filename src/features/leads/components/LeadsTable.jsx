@@ -29,7 +29,6 @@ const LeadsTable = ({
   canManage = false,
   scrollContainerId,
 }) => {
-  console.log(leads?.length)
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
   const isAllSelected =
     visibleLeadIds.length > 0 &&
@@ -157,13 +156,14 @@ const LeadsTable = ({
             </tr>
           ) : (
             <>
-              {paddingTop > 0 && (
+              {paddingTop > 0.5 && (
                 <tr>
-                  <td colSpan={columns.length + 2} style={{ height: `${paddingTop}px` }} />
+                  <td colSpan={columns.length + (canManage ? 2 : 1)} style={{ height: `${paddingTop}px`, padding: 0 }} />
                 </tr>
               )}
               {virtualRows.map((virtualRow) => {
                 const lead = leads[virtualRow.index];
+                if (!lead) return null;
                 const leadId = String(lead._id || lead.id);
                 return (
                   <LeadRow
@@ -184,12 +184,13 @@ const LeadsTable = ({
                     onStatusChange={onStatusChange}
                     onCustomFieldChange={onCustomFieldChange}
                     canManage={canManage}
+                    index={virtualRow.index}
                   />
                 );
               })}
-              {paddingBottom > 0 && (
+              {paddingBottom > 0.5 && (
                 <tr>
-                  <td colSpan={columns.length + 2} style={{ height: `${paddingBottom}px` }} />
+                  <td colSpan={columns.length + (canManage ? 2 : 1)} style={{ height: `${paddingBottom}px`, padding: 0 }} />
                 </tr>
               )}
             </>

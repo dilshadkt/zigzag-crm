@@ -164,6 +164,7 @@ const LeadRow = memo(({
   onStatusChange,
   onCustomFieldChange,
   canManage = false,
+  index,
 }) => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
@@ -270,6 +271,7 @@ const LeadRow = memo(({
           }}
         >
           <div className="flex items-center justify-center p-2 rounded-lg hover:bg-slate-200/50 transition-colors">
+            {/* Display index for debugging/tracking if needed, or just the checkbox */}
             <input
               type="checkbox"
               className={checkboxClasses}

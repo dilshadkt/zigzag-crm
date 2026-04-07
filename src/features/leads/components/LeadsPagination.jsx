@@ -1,4 +1,4 @@
-const PAGE_SIZE_OPTIONS = [15, 30, 50];
+const PAGE_SIZE_OPTIONS = [15, 30, 50, 100, 150];
 
 const LeadsPagination = ({
   pageSize,

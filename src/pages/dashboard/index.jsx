@@ -217,7 +217,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5 pb-5">
+      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
         <div className="md:col-span-5">
           {!isEmployee || isEmployeeHasTaskAdmin ? (
             <EmployeeTodayTasks />

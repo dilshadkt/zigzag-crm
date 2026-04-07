@@ -11,12 +11,12 @@ const EmployeesTodayStatus = () => {
   const inactiveEmployees = employees.filter(emp => emp.pendingCount === 0 && emp.completedCount === 0);
 
   return (
-    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex flex-col h-[550px]">
-      <div className="mb-4">
+    <div className="bg-white rounded-[2rem] p-5  border border-gray-100 flex flex-col h-[550px]">
+      <div className="mb-3">
         <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
           Team Daily Status
         </h3>
-        <p className="text-xs text-gray-500 line-clamp-1">Finished vs still working</p>
+        {/* <p className="text-xs text-gray-500 line-clamp-1">Finished vs still working</p> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-hidden">

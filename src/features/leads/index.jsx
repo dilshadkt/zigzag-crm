@@ -97,38 +97,39 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const { data: statsData, isLoading: statsLoading } = useGetLeadStats();
   const leadStats = statsData?.data;
 
+
   // Mutations
   const updateLeadMutation = useUpdateLead();
   const deleteLeadMutation = useDeleteLead();
 
-    const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
-  
-    // Handle URL filters on mount
-    useEffect(() => {
-        const scheduled = searchParams.get('scheduled');
-        const minScore = searchParams.get('minScore');
-        
-        if (scheduled === 'today') {
-            setAppliedFilters({
-                scheduled: { operator: 'today', value: 'today' }
-            });
-            setActiveAction('followup');
-            toast.success("Showing today's follow-ups");
-        } else if (minScore) {
-            setAppliedFilters({
-                score: { operator: 'greaterThan', value: minScore }
-            });
-            setActiveAction('hot');
-            toast.success(`Showing leads with score > ${minScore}`);
-        }
-        
-        // Clear params from URL to avoid re-applying on refresh if not desired, 
-        // but typically we keep them. User asked to "list the lead who need to follow up"
-        // so applying it on mount is better.
-    }, []);
+  const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
 
-    // Debounce search term
-    useEffect(() => {
+  // Handle URL filters on mount
+  useEffect(() => {
+    const scheduled = searchParams.get('scheduled');
+    const minScore = searchParams.get('minScore');
+
+    if (scheduled === 'today') {
+      setAppliedFilters({
+        scheduled: { operator: 'today', value: 'today' }
+      });
+      setActiveAction('followup');
+      toast.success("Showing today's follow-ups");
+    } else if (minScore) {
+      setAppliedFilters({
+        score: { operator: 'greaterThan', value: minScore }
+      });
+      setActiveAction('hot');
+      toast.success(`Showing leads with score > ${minScore}`);
+    }
+
+    // Clear params from URL to avoid re-applying on refresh if not desired, 
+    // but typically we keep them. User asked to "list the lead who need to follow up"
+    // so applying it on mount is better.
+  }, []);
+
+  // Debounce search term
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(1); // Reset to first page when search changes
@@ -156,7 +157,6 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     owner: isEmployee && !canManageAllLeads ? user._id : null,
     appliedFilters,
   });
-
   const handleStatusFilter = (statusId) => {
     setActiveStatusId((prev) => (prev === statusId ? null : statusId));
     setAppliedFilters({});
@@ -170,23 +170,23 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     setPage(1);
 
     switch (action) {
-        case 'hot':
-            setAppliedFilters({ score: { operator: 'greaterThan', value: '70' } });
-            break;
-        case 'weak':
-            setAppliedFilters({ score: { operator: 'lessThan', value: '30' } });
-            break;
-        case 'followup':
-            setAppliedFilters({ scheduled: { operator: 'today', value: 'today' } });
-            break;
-        case 'today':
-            setAppliedFilters({ createdAt: { operator: 'today', value: 'today' } });
-            break;
-        case 'week':
-            setAppliedFilters({ createdAt: { operator: 'last7days', value: 'last7days' } });
-            break;
-        default:
-            setAppliedFilters({});
+      case 'hot':
+        setAppliedFilters({ score: { operator: 'greaterThan', value: '70' } });
+        break;
+      case 'weak':
+        setAppliedFilters({ score: { operator: 'lessThan', value: '30' } });
+        break;
+      case 'followup':
+        setAppliedFilters({ scheduled: { operator: 'today', value: 'today' } });
+        break;
+      case 'today':
+        setAppliedFilters({ createdAt: { operator: 'today', value: 'today' } });
+        break;
+      case 'week':
+        setAppliedFilters({ createdAt: { operator: 'last7days', value: 'last7days' } });
+        break;
+      default:
+        setAppliedFilters({});
     }
   };
 
@@ -259,6 +259,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const { mutate: bulkCreateLeads, isLoading: isBulkCreating } = useBulkCreateLeads();
 
   const visibleLeads = leads;
+
 
   const handleToggleSelect = (leadId) => {
     setSelectedLeadIds((prev) => {
@@ -691,7 +692,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
             />
           </div>
         )}
-        <div className="relative bg-white overflow-y-auto min-h-full 
+        <div className="relative bg-white min-h-full 
         rounded-2xl border border-slate-100 flex flex-col">
           <div className="sticky top-0 z-40 bg-white rounded-t-2xl">
             <LeadsPageHeader
@@ -709,29 +710,30 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
             />
           </div>
           {isLoading ? (
-            <LeadsTableShimmer columns={columns.filter((col) => col.visible)} scrollContainerId="leads-scroll-container" />
+            <LeadsTableShimmer columns={columns.filter((col) => col.visible)} />
           ) : (
             <>
-              <LeadsTable
-                scrollContainerId="leads-scroll-container"
-                leads={visibleLeads}
-                columns={columns.filter((col) => col.visible)}
-                selectedLeadIds={selectedLeadIds}
-                onToggleSelect={handleToggleSelect}
-                onToggleSelectAll={handleToggleSelectAll}
-                onRowClick={onSelectLead}
-                onEdit={handleEdit}
-                onSendEmail={handleSendEmail}
-                onCreateTask={handleCreateTask}
-                onAssign={handleAssign}
-                onDelete={handleDelete}
-                onConvert={handleConvert}
-                onCopyURL={handleCopyURL}
-                statuses={statuses}
-                onStatusChange={handleStatusChange}
-                onCustomFieldChange={handleCustomFieldChange}
-                canManage={canManageAllLeads}
-              />
+              <div className="flex-1 min-h-0">
+                <LeadsTable
+                  leads={visibleLeads}
+                  columns={columns.filter((col) => col.visible)}
+                  selectedLeadIds={selectedLeadIds}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleSelectAll={handleToggleSelectAll}
+                  onRowClick={onSelectLead}
+                  onEdit={handleEdit}
+                  onSendEmail={handleSendEmail}
+                  onCreateTask={handleCreateTask}
+                  onAssign={handleAssign}
+                  onDelete={handleDelete}
+                  onConvert={handleConvert}
+                  onCopyURL={handleCopyURL}
+                  statuses={statuses}
+                  onStatusChange={handleStatusChange}
+                  onCustomFieldChange={handleCustomFieldChange}
+                  canManage={canManageAllLeads}
+                />
+              </div>
               <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">
                 <LeadsPagination
                   pageSize={pageSize}
