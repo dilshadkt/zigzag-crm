@@ -102,7 +102,7 @@ const LeadDashboardPage = () => {
                     value={stats?.hotLeads?.count}
                     icon={Flame}
                     color="orange"
-                    onClick={() => navigate('/leads?minScore=70')}
+                    onClick={() => navigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
                 />
                 <StatCard
                     title="Today's Follow-ups"
@@ -378,7 +378,7 @@ const LeadDashboardPage = () => {
                             )}
                         </div>
                         <button
-                            onClick={() => navigate('/leads?minScore=70')}
+                            onClick={() => navigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
                             className="w-full py-2.5 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50"
                         >
                             View All High Score Leads
