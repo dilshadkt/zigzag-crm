@@ -2644,6 +2644,28 @@ export const useDeleteFormConfig = () => {
   });
 };
 
+// Dashboard Config Hooks
+export const useGetDashboardConfig = () => {
+  return useQuery({
+    queryKey: ["dashboardConfig"],
+    queryFn: () => apiClient.get("/leads/settings/dashboard-config").then((res) => res.data),
+  });
+};
+
+export const useUpdateDashboardConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (configData) =>
+      apiClient
+        .put("/leads/settings/dashboard-config", configData)
+        .then((res) => res.data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["dashboardConfig"] });
+      await queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+    },
+  });
+};
+
 
 // Lead Status Hooks
 export const useGetLeadStatuses = () => {

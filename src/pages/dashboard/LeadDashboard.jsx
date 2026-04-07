@@ -184,16 +184,19 @@ const LeadDashboardPage = () => {
                                      </PieChart>
                                  </ResponsiveContainer>
                              </div>
-                             <div className="grid grid-cols-2 gap-2 mt-2">
-                                 {stats?.statusStats?.slice(0, 4).map((status, i) => (
-                                     <div key={status._id} className="flex items-center gap-1.5">
-                                         <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: status.color || COLORS[i % COLORS.length] }}></div>
-                                         <span className="text-[10px] font-medium text-slate-600 truncate">{status.name}</span>
+                             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2 overflow-y-auto max-h-[60px] scrollbar-hide">
+                                 {stats?.statusStats?.map((status, i) => (
+                                     <div key={status._id} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
+                                         <div className="flex items-center gap-1.5 overflow-hidden">
+                                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: status.color || COLORS[i % COLORS.length] }}></div>
+                                             <span className="text-[10px] font-bold text-slate-600 truncate">{status.name}</span>
+                                         </div>
+                                         <span className="text-[10px] font-black text-[#3f8cff] bg-blue-50 px-1 rounded-[4px]">{status.count || 0}</span>
                                      </div>
                                  ))}
                              </div>
                          </div>
-
+ 
                          {/* Overall Progress */}
                          <div className="bg-white p-5 rounded-[14px] border border-slate-100 flex flex-col h-[320px]">
                              <h3 className="text-sm font-bold text-slate-800 mb-4">Overall Growth</h3>
@@ -219,6 +222,83 @@ const LeadDashboardPage = () => {
                              </div>
                          </div>
                      </div>
+ 
+                     {/* Custom Dynamic Widgets */}
+                     {stats?.customWidgets && stats.customWidgets.length > 0 && (
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             {stats.customWidgets.map((widget) => (
+                                 <div key={widget.widgetId} className="bg-white p-5 rounded-[14px] border border-slate-100 flex flex-col h-[320px]">
+                                     <h3 className="text-sm font-bold text-slate-800 mb-4">{widget.title}</h3>
+                                     <div className="flex-1 min-h-0">
+                                         <ResponsiveContainer width="100%" height="100%">
+                                             {widget.type === 'bar' ? (
+                                                 <BarChart data={widget.data}>
+                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                     <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                                                     <YAxis hide />
+                                                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
+                                                     <Bar dataKey="count" fill="#3f8cff" radius={[4, 4, 0, 0]} barSize={16} />
+                                                 </BarChart>
+                                             ) : widget.type === 'pie' ? (
+                                                 <PieChart>
+                                                     <Pie data={widget.data} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="count" nameKey="_id">
+                                                         {widget.data.map((entry, index) => (
+                                                             <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                                                         ))}
+                                                     </Pie>
+                                                     <Tooltip />
+                                                 </PieChart>
+                                             ) : (
+                                                 <AreaChart data={widget.data}>
+                                                     <defs>
+                                                         <linearGradient id={`color-${widget.widgetId}`} x1="0" y1="0" x2="0" y2="1">
+                                                             <stop offset="5%" stopColor="#3f8cff" stopOpacity={0.1} />
+                                                             <stop offset="95%" stopColor="#3f8cff" stopOpacity={0} />
+                                                         </linearGradient>
+                                                     </defs>
+                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                     <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                                                     <YAxis hide />
+                                                     <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
+                                                     <Area type="monotone" dataKey="count" stroke="#3f8cff" strokeWidth={2} fillOpacity={1} fill={`url(#color-${widget.widgetId})`} />
+                                                 </AreaChart>
+                                             )}
+                                         </ResponsiveContainer>
+                                     </div>
+                                     {widget.type === 'pie' ? (
+                                         <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-4 overflow-y-auto max-h-[80px] scrollbar-hide px-1">
+                                             {widget.data.map((entry, index) => (
+                                                 <div key={index} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
+                                                     <div className="flex items-center gap-1.5 overflow-hidden">
+                                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color || COLORS[index % COLORS.length] }}></div>
+                                                         <span className="text-[10px] font-bold text-slate-600 truncate">{entry._id || 'N/A'}</span>
+                                                     </div>
+                                                     <span className="text-[10px] font-black text-[#3f8cff] bg-blue-50 px-1 rounded-[4px]">{entry.count || 0}</span>
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     ) : (
+                                         <div className="mt-4 space-y-1 overflow-y-auto max-h-[80px] scrollbar-hide px-1">
+                                             {widget.data.slice(0, 5).map((entry, index) => (
+                                                 <div key={index} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
+                                                     <span className="text-[10px] font-bold text-slate-600 truncate">{entry._id || 'N/A'}</span>
+                                                     <div className="flex items-center gap-2">
+                                                         <div className="h-1 bg-blue-100 rounded-full w-12 overflow-hidden">
+                                                             <div 
+                                                                 className="h-full bg-[#3f8cff]" 
+                                                                 style={{ width: `${Math.min(100, (entry.count / (widget.data[0]?.count || 1)) * 100)}%` }}
+                                                             ></div>
+                                                         </div>
+                                                         <span className="text-[10px] font-black text-[#3f8cff] min-w-[20px] text-right">{entry.count || 0}</span>
+                                                     </div>
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     )}
+                                 </div>
+                             ))}
+                         </div>
+                     )}
 
                      {/* Employee Leaderboard - Admins Only */}
                     {isAdmin && (
