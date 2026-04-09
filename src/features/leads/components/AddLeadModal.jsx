@@ -6,10 +6,12 @@ import {
   useGetLeadStatuses,
   useCreateLead,
 } from "../api";
+import { useCompanyActiveProjects } from "../../../api/hooks";
 
-const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
+const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
+  const { data: projects = [] } = useCompanyActiveProjects();
 
   // Stable handler for form value changes
   const handleFormValueChange = useCallback((updater) => {
@@ -18,16 +20,18 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
 
   // Use React Query hooks
   const { data: formConfigData, isLoading: formConfigLoading } =
-    useGetLeadFormConfig();
+    useGetLeadFormConfig(formValues.project);
   const { data: statusesData } = useGetLeadStatuses();
   const { mutate: createLead, isLoading: isSubmitting } = useCreateLead();
 
   useEffect(() => {
     if (isOpen) {
-      setFormValues({});
+      setFormValues({
+        project: projectId || "",
+      });
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, projectId]);
 
   // Get form fields from config - memoized to prevent recreation
   const formFields = useMemo(() => {
@@ -187,6 +191,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
       services: formValues.services || "",
       budget: formValues.budget ? Number(formValues.budget) : undefined,
       notes: formValues.notes || "",
+      project: formValues.project || null,
     };
 
     createLead(leadData, {
@@ -260,6 +265,25 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Client (Project)
+              </label>
+              <select
+                value={formValues.project}
+                onChange={(e) => handleFormValueChange(prev => ({ ...prev, project: e.target.value }))}
+                className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#3f8cff]/10 focus:border-[#3f8cff] transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1rem]"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
+              >
+                <option value="">Select a client</option>
+                {projects?.map((project) => (
+                  <option key={project._id} value={project._id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <DynamicLeadForm
               fields={formFields}
               values={formValues}

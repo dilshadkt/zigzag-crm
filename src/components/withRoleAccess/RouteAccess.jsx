@@ -6,6 +6,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
   const { user } = useAuth();
   const { hasAdminDashboardAccess } = usePermissions();
   const location = useLocation();
+  const currentPath = location.pathname;
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -14,6 +15,19 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
   // Company admins have full access regardless of position
   if (user.role === "company-admin") {
     return children;
+  }
+
+  // Client access
+  if (user.role === "client") {
+    const isAllowed = [
+      "/portal/dashboard",
+      "/leads",
+      "/campaigns",
+    ].some(
+      (path) => currentPath === path || currentPath.startsWith(path + "/")
+    );
+
+    return isAllowed ? children : <Navigate to="/portal/dashboard" replace />;
   }
 
   // For employees, check position and position details
@@ -26,7 +40,6 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     return <Navigate to={fallbackPath} replace />;
   }
 
-  const currentPath = location.pathname;
   const allowedRoutes = user.positionDetails.allowedRoutes || [];
   const canAccessAdminDashboard = hasAdminDashboardAccess();
 

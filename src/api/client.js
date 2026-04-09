@@ -36,14 +36,19 @@ apiClient.interceptors.response.use(
   (error) => {
     const isDesktop = typeof window !== "undefined" && window.desktop;
     const redirectToSignIn = () => {
-      // Use react-router if possible, but since we are outside a component, 
-      // we use window.location.
-      const signinPath = isDesktop ? "#/auth/signin" : "/auth/signin";
+      // Check if we are on a portal route
+      const isPortalRoute = window.location.pathname.includes('portal') ||
+        window.location.pathname.includes('client') ||
+        window.location.hash.includes('portal') ||
+        window.location.hash.includes('client');
 
-      if (isDesktop && !window.location.hash.includes("/auth/signin")) {
-        window.location.hash = "/auth/signin";
-      } else if (!isDesktop && !window.location.pathname.includes("/auth/signin")) {
-        window.location.href = "/auth/signin";
+      const targetPath = isPortalRoute ? "/portal/login" : "/auth/signin";
+      const desktopPath = isDesktop ? `#${targetPath}` : targetPath;
+
+      if (isDesktop && !window.location.hash.includes(targetPath)) {
+        window.location.hash = targetPath;
+      } else if (!isDesktop && !window.location.pathname.includes(targetPath)) {
+        window.location.href = targetPath;
       }
     };
 

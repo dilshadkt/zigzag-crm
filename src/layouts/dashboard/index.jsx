@@ -15,7 +15,8 @@ const DashboardLayout = () => {
   const attendance = useAttendanceManager();
   
   const isCompanyAdmin = user?.role === "company-admin";
-  const showContent = isCompanyAdmin || attendance.isShiftActive;
+  const isClient = user?.role === "client";
+  const showContent = isCompanyAdmin || isClient || attendance.isShiftActive;
 
   useEffect(() => {
     // Request notification permission on mount
@@ -69,10 +70,10 @@ const DashboardLayout = () => {
 
   return (
     <main className="bg-[#F4F9FD] h-screen overflow-hidden flex relative">
-      <Sidebar />
-      <section className="w-full gap-y-4 md:gap-y-3 h-full overflow-auto flex flex-col p-2 md:p-3 relative">
-        <DashboardHeader />
-        <div className="px-1 w-full h-full overflow-auto ">
+      {!isClient && <Sidebar />}
+      <section className={`w-full gap-y-4 md:gap-y-3 h-full overflow-auto flex flex-col relative ${isClient ? 'p-0' : 'p-2 md:p-3'}`}>
+        {!isClient && <DashboardHeader />}
+        <div className={`px-1 w-full h-full overflow-auto ${isClient ? 'p-4' : ''}`}>
           <Outlet />
         </div>
       </section>

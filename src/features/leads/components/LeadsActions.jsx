@@ -24,6 +24,7 @@ const LeadsActions = ({
   onToggleDashboard,
   searchTerm,
   onSearchChange,
+  isClient,
 }) => {
   return (
     <div className="flex items-center  w-full justify-between">
@@ -38,14 +39,16 @@ const LeadsActions = ({
         >
           <FiPieChart size={18} />
         </button>
-        <button
-          onClick={onAddLead}
-          className="flex items-center justify-center bg-[#3f8cff] text-white h-9 w-9 md:h-11 md:w-auto md:px-5 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"
-          aria-label="Add lead"
-        >
-          <FiPlus size={18} className="md:w-[16px]" />
-          <span className="hidden md:inline ml-2">Add Lead</span>
-        </button>
+        {!isClient && (
+          <button
+            onClick={onAddLead}
+            className="flex items-center justify-center bg-[#3f8cff] text-white h-9 w-9 md:h-11 md:w-auto md:px-5 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"
+            aria-label="Add lead"
+          >
+            <FiPlus size={18} className="md:w-[16px]" />
+            <span className="hidden md:inline ml-2">Add Lead</span>
+          </button>
+        )}
         <button
           onClick={onAddFilter}
           className="flex items-center justify-center border border-slate-200 text-slate-700 h-9 w-9 md:h-11 md:w-auto md:px-4 rounded-full hover:border-slate-300 transition-colors"
@@ -76,7 +79,7 @@ const LeadsActions = ({
         >
           <FiDownload size={18} />
         </button>
-        {onMoreActions && (
+        {onMoreActions && !isClient && (
           <button
             onClick={onMoreActions}
             className={`  hidden  md:flex  ${iconButtonClasses}`}

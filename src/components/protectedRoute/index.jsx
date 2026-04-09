@@ -2,15 +2,22 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import LoadingSpinner from "../LoadingSpinner";
 
-export const ProtectedRoute = ({ children, requireProfileComplete = true }) => {
-  const { isAuthenticated, loading, isProfileComplete } = useAuth();
+export const ProtectedRoute = ({ children, requireProfileComplete = true, allowedRoles = [] }) => {
+  const { isAuthenticated, loading, isProfileComplete, user } = useAuth();
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth/signin" />; // Redirect to login if not authenticated
+    // If we're on a client route, redirect to portal-login, otherwise signin
+    const isPortalRoute = window.location.pathname.includes('client') || 
+                          window.location.pathname.includes('portal');
+    return <Navigate to={isPortalRoute ? "/portal/login" : "/auth/signin"} />;
+  }
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/unauthorized" />;
   }
 
   if (requireProfileComplete && !isProfileComplete) {
@@ -18,7 +25,9 @@ export const ProtectedRoute = ({ children, requireProfileComplete = true }) => {
   }
 
   if (!requireProfileComplete && isProfileComplete) {
-    return <Navigate to="/" />; // Redirect to home if profile is already complete
+    // If client, redirect to dashboard, otherwise home
+    const redirectTo = user?.role === "client" ? "/client-dashboard" : "/";
+    return <Navigate to={redirectTo} />;
   }
 
   return children; // Render the children if all conditions are met

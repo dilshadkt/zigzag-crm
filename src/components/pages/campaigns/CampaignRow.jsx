@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FiRefreshCw } from "react-icons/fi";
 
-const CampaignRow = ({ campaign }) => {
+const CampaignRow = ({ campaign, isClient }) => {
   const navigate = useNavigate();
 
   const getStatusStyles = (status) => {
@@ -38,12 +38,14 @@ const CampaignRow = ({ campaign }) => {
       className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
       onClick={() => navigate(`${campaign._id}`)}
     >
-      <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
-        <input
-          type="checkbox"
-          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        />
-      </td>
+      {!isClient && (
+        <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+        </td>
+      )}
       <td className="py-4 px-5">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">

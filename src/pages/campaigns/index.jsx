@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useGetCampaigns, useSyncFacebookAds } from "../../api/campaigns";
+import { useAuth } from "../../hooks/useAuth";
 import CampaignsHeader from "../../components/pages/campaigns/CampaignsHeader";
 import CampaignsTable from "../../components/pages/campaigns/CampaignsTable";
 import CampaignsSummary from "../../components/pages/campaigns/CampaignsSummary";
 import CreateCampaignDrawer from "../../components/pages/campaigns/CreateCampaignDrawer";
 
-const Campaigns = () => {
+const Campaigns = ({ isClient: propIsClient, projectId }) => {
+  const { user } = useAuth();
+  const isClient = propIsClient || user?.role === "client";
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -17,8 +20,8 @@ const Campaigns = () => {
     limit: 100, // Fetch more for the list view or implement pagination
     search: search,
     status: statusFilter,
+    projectId: projectId, // Pass projectId filter
   });
-
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
   const campaigns = campaignsData?.data || [];
@@ -29,7 +32,7 @@ const Campaigns = () => {
         const responseData = data.data || {};
         const totalFacebook = responseData.totalFacebookCampaigns || 0;
         const updated = responseData.updated || 0;
-        
+
         if (totalFacebook === 0) {
           toast.error(
             "No Facebook campaigns found. Make sure you have active campaigns in your Facebook Ads Manager.",
@@ -49,9 +52,9 @@ const Campaigns = () => {
             data.message || `Successfully synced ${updated} campaign(s)`
           );
         }
-        
+
         setLastSyncedAt(new Date());
-        
+
         if (responseData.notMatched > 0) {
           toast.info(
             `${responseData.notMatched} Facebook campaign(s) could not be matched with existing campaigns`,
@@ -89,10 +92,11 @@ const Campaigns = () => {
         onSyncFacebook={handleSyncFacebook}
         isSyncing={isSyncing}
         lastSyncedAt={lastSyncedAt}
+        isClient={isClient}
       />
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        <CampaignsTable campaigns={campaigns} isLoading={isLoading} />
+        <CampaignsTable campaigns={campaigns} isLoading={isLoading} isClient={isClient} />
         {!isLoading && campaigns.length > 0 && (
           <CampaignsSummary campaigns={campaigns} />
         )}

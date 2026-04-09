@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Task from "../../shared/task";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,9 +6,13 @@ import FilterMenu from "../FilterMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import list from "../../../assets/icons/list.svg";
 import board from "../../../assets/icons/board.svg";
-import { updateTaskById } from "../../../api/service";
-import { useUpdateTaskOrder } from "../../../api/hooks";
+import { updateTaskById, updateProjectPortalConfig, getProjectById, updateProjectLeadFormConfig } from "../../../api/service";
+import { useUpdateTaskOrder, useProjectDetails } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import { useGetCampaignsByCompany } from "../../../api/campaigns";
+import { useGetAllLeadFormConfigs } from "../../../features/leads/api";
+import LeadsFeature from "../../../features/leads";
+import { toast } from "react-hot-toast";
 
 // Status configuration
 const statusConfig = {
@@ -246,7 +250,7 @@ const Droppable = ({
 
   return (
     <div
-      className={`flex-shrink-0 w-80 rounded-lg p-4  transition-all
+      className={`flex-shrink-0 w-80 rounded-lg px-2 pb-2  transition-all
          duration-200 ease-out
                   ${isOver && canDrop
           ? "bg-blue-50 border-2 border-blue-300"
@@ -318,10 +322,60 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
-  const [isBoardView, setIsBoardView] = useState(true);
+  const [activeTab, setActiveTab] = useState("kanban");
+  const isBoardView = activeTab === "kanban";
   const [showSubtasks, setShowSubtasks] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
   const { isCompany, user } = useAuth();
+  const [clientCreds, setClientCreds] = useState({
+    username: "",
+    password: "",
+  });
+
+  const { data: campaignData, isLoading: isCampaignsLoading } = useGetCampaignsByCompany(
+    currentProject?.company,
+    { limit: 100, projectId: projectId }
+  );
+  const projectCampaigns = campaignData?.data || [];
+
+  const { data: leadFormConfigsData } = useGetAllLeadFormConfigs();
+  const leadFormConfigs = leadFormConfigsData?.data || [];
+  const [selectedLeadForm, setSelectedLeadForm] = useState(
+    typeof currentProject?.activeLeadFormConfig === 'object'
+      ? currentProject.activeLeadFormConfig?._id
+      : (currentProject?.activeLeadFormConfig || "")
+  );
+
+  useEffect(() => {
+    if (currentProject?.activeLeadFormConfig) {
+      const configId = typeof currentProject.activeLeadFormConfig === 'object'
+        ? currentProject.activeLeadFormConfig._id
+        : currentProject.activeLeadFormConfig;
+      setSelectedLeadForm(configId);
+    } else {
+      setSelectedLeadForm("");
+    }
+  }, [currentProject?.activeLeadFormConfig]);
+
+  useEffect(() => {
+    if (activeTab === "settings" && projectId) {
+      const fetchPortalConfig = async () => {
+        try {
+          // Changed: fetch from project instead of company for isolated access
+          const response = await getProjectById(projectId);
+          if (response?.project?.portalConfig) {
+            setClientCreds({
+              username: response.project.portalConfig.username || "",
+              password: response.project.portalConfig.password || "",
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch portal config:", error);
+        }
+      };
+      fetchPortalConfig();
+    }
+  }, [activeTab, projectId]);
 
   // If loading, show shimmer
   if (isLoading) {
@@ -499,6 +553,54 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
     }
   };
 
+  const handleUpdateLeadForm = async () => {
+    try {
+      await updateProjectLeadFormConfig(projectId, selectedLeadForm);
+      toast.success("Lead form template updated for this client");
+      queryClient.invalidateQueries(["projectDetails", projectId]);
+    } catch (error) {
+      toast.error("Failed to update lead form template");
+    }
+  };
+
+  const handleUpdateClientCreds = async () => {
+    if (!projectId) {
+      toast.error("No project associated with this view.");
+      return;
+    }
+    try {
+      await updateProjectPortalConfig(projectId, {
+        ...clientCreds,
+        isActive: true,
+      });
+      toast.success("Client authentication activated and updated successfully!");
+    } catch (error) {
+      console.error("Failed to update credentials:", error);
+      toast.error("Failed to update credentials. Please try again.");
+    }
+  };
+
+  const handleShareCreds = async () => {
+    const shareText = `Client Portal Credentials:\nUsername: ${clientCreds.username}\nPassword: ${clientCreds.password}\nPortal URL: ${window.location.origin}/portal/login`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Client Credentials",
+          text: shareText,
+        });
+      } catch (err) {
+        console.error("Share failed:", err);
+        // Fallback to copy on cancel/fail
+        navigator.clipboard.writeText(shareText);
+        toast.success("Credentials copied to clipboard!");
+      }
+    } else {
+      navigator.clipboard.writeText(shareText);
+      toast.success("Credentials copied to clipboard!");
+    }
+  };
+
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
     try {
       const updateData = { status: newStatus };
@@ -610,8 +712,27 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
 
   return (
     <div className="col-span-4 md:overflow-hidden flex flex-col">
-      <div className="flexBetween">
-        <h3 className="text-lg font-medium text-gray-800">Tasks</h3>
+      <div className="flexBetween mb-3 border-b border-gray-100">
+        <div className="flex gap-2">
+          {[
+            { id: "kanban", label: "Task Kanban" },
+            { id: "list", label: "Task List" },
+            { id: "lead", label: "Lead" },
+            { id: "campaign", label: "Campaign" },
+            { id: "settings", label: "Settings" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg  transition-all ${activeTab === tab.id
+                ? "bg-white/30 shadow-sm  text-blue-600"
+                : "bg-white  text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <div className="flex gap-2">
           <PrimaryButton
             icon={"/icons/refresh.svg"}
@@ -651,11 +772,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
               )}
             </svg>
           </button>
-          <PrimaryButton
-            icon={!isBoardView ? list : board}
-            className={"bg-white hover:bg-gray-50 transition-colors"}
-            onclick={() => setIsBoardView(!isBoardView)}
-          />
           <PrimaryButton
             icon={"/icons/filter.svg"}
             className={"bg-white hover:bg-gray-50 transition-colors"}
@@ -720,9 +836,9 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         </div>
       )}
 
-      {isBoardView ? (
+      {activeTab === "kanban" && (
         <div
-          className="flex gap-4     h-full mt-4 overflow-x-auto pb-2
+          className="flex gap-4 h-full overflow-x-auto pb-2 
          scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 project-details-scroll"
         >
           {Object.entries(statusConfig).map(([status, config]) => {
@@ -760,8 +876,10 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             );
           })}
         </div>
-      ) : (
-        <div className="flex flex-col h-full pb-5 gap-y-4 mt-4 rounded-xl overflow-hidden overflow-y-auto">
+      )}
+
+      {activeTab === "list" && (
+        <div className="flex flex-col h-full pb-5 gap-y-4 rounded-xl overflow-hidden overflow-y-auto">
           {renderListSection("Active Tasks", activeTasks)}
           {renderListSection("Progress", progressTasks)}
           {renderListSection("On Review", tasksByStatus["on-review"])}
@@ -773,6 +891,227 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             tasksByStatus["client-approved"]
           )}
           {renderListSection("Completed", completedTasks)}
+        </div>
+      )}
+
+      {activeTab === "lead" && (
+        <div className="flex flex-col h-full">
+          <LeadsFeature
+            projectId={projectId}
+            onSelectLead={(lead) => navigate(`/leads/${lead._id || lead.id}`)}
+            onOpenSettings={() => setActiveTab("settings")}
+          />
+        </div>
+      )}
+
+      {activeTab === "campaign" && (
+        <div className="flex flex-col h-full bg-white rounded-xl border border-gray-100 p-6  overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Project Campaigns</h3>
+              <p className="text-xs text-gray-500 mt-1">Marketing and engagement campaigns linked to this client.</p>
+            </div>
+          </div>
+
+          {isCampaignsLoading ? (
+            <div className="flexCenter py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : projectCampaigns.length === 0 ? (
+            <div className="flexCenter flex-col py-20 text-gray-400">
+              <div className="p-4 bg-gray-50 rounded-full mb-4">
+                <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium">No campaigns found for this client</p>
+              <p className="text-xs">Active campaigns will appear here after sync.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-100 uppercase text-[10px] font-bold text-gray-400 tracking-wider">
+                    <th className="pb-3 pr-4">Campaign Name</th>
+                    <th className="pb-3 px-4">Platform</th>
+                    <th className="pb-3 px-4 text-center">Status</th>
+                    <th className="pb-3 px-4 text-right">Budget</th>
+                    <th className="pb-3 px-4 text-right">Spent</th>
+                    <th className="pb-3 px-4 text-right">Results</th>
+                    <th className="pb-3 px-4 text-right">CPR</th>
+                    <th className="pb-3 pl-4 text-right">Reach</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {projectCampaigns.map((campaign) => (
+                    <tr key={campaign._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-4 pr-4">
+                        <div className="font-semibold text-gray-900 text-xs truncate max-w-[200px]" title={campaign.name}>
+                          {campaign.name}
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 max-w-[200px]" title={campaign.description}>
+                          {campaign.description}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${campaign.platform === 'Facebook' ? 'bg-blue-50 border-blue-100 text-blue-700' :
+                            campaign.platform === 'Instagram' ? 'bg-pink-50 border-pink-100 text-pink-700' :
+                              'bg-gray-50 border-gray-100 text-gray-700'
+                          }`}>
+                          {campaign.platform}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${campaign.status === 'active' ? 'bg-green-100 text-green-700' :
+                            campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-600'
+                          }`}>
+                          <span className={`w-1 h-1 rounded-full mr-1 ${campaign.status === 'active' ? 'bg-green-500' :
+                              campaign.status === 'paused' ? 'bg-yellow-500' :
+                                'bg-gray-400'
+                            }`}></span>
+                          {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right tabular-nums text-xs font-medium text-gray-700">
+                        ₹{(campaign.budget || 0).toLocaleString()}
+                      </td>
+                      <td className="py-4 px-4 text-right tabular-nums text-xs font-medium text-gray-700">
+                        ₹{(campaign.amountSpent || 0).toLocaleString()}
+                      </td>
+                      <td className="py-4 px-4 text-right tabular-nums text-xs font-bold text-blue-600">
+                        {campaign.totalResults || 0}
+                      </td>
+                      <td className="py-4 px-4 text-right tabular-nums text-xs font-medium text-gray-700">
+                        ₹{(campaign.cpr || 0).toFixed(2)}
+                      </td>
+                      <td className="py-4 pl-4 text-right tabular-nums text-xs font-medium text-gray-700">
+                        {(campaign.reach || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "settings" && (
+        <div className="flex flex-col h-full bg-white rounded-xl border border-gray-100 p-6 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Client Settings</h3>
+              <p className="text-xs text-gray-500 mt-1">Configure external access and platform credentials for this client.</p>
+            </div>
+          </div>
+
+          <div className="max-w-xl space-y-5">
+            <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900">Client Authentication</h4>
+                  <p className="text-[11px] text-gray-600 italic">Set credentials so the client can log in to view their leads</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Client Username / Email
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter client username"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs outline-none"
+                    value={clientCreds.username}
+                    onChange={(e) => setClientCreds({ ...clientCreds, username: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Client Password
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Create a secure password"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs outline-none font-mono"
+                    value={clientCreds.password}
+                    onChange={(e) => setClientCreds({ ...clientCreds, password: e.target.value })}
+                  />
+                </div>
+
+                <div className="pt-1 flex gap-2">
+                  <button
+                    onClick={handleUpdateClientCreds}
+                    disabled={!clientCreds.username || !clientCreds.password}
+                    className="flex-1 px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-xs font-semibold rounded-lg transition-all shadow-sm shadow-blue-200/50"
+                  >
+                    Save Credentials
+                  </button>
+                  <button
+                    onClick={handleShareCreds}
+                    disabled={!clientCreds.username || !clientCreds.password}
+                    className="px-5 py-2 bg-white border border-gray-200 hover:bg-gray-50 disabled:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg transition-all"
+                    title="Share credentials"
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      Share
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/30">
+              <h4 className="text-sm font-semibold text-gray-900 mb-0.5">Lead Capture & Forms</h4>
+              <p className="text-[11px] text-gray-500 mb-3">Choose which lead form template this client should use.</p>
+              <div className="space-y-3">
+                <select
+                  value={selectedLeadForm}
+                  onChange={(e) => setSelectedLeadForm(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs outline-none"
+                >
+                  <option value="">System Default</option>
+                  {leadFormConfigs.map((config) => (
+                    <option key={config._id} value={config._id}>
+                      {config.name} {config.isActive ? "(Default)" : ""}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleUpdateLeadForm}
+                  className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-all"
+                >
+                  Apply Template
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/30">
+              <h4 className="text-sm font-semibold text-gray-900 mb-0.5">Access Permissions</h4>
+              <p className="text-[11px] text-gray-500 mb-3">Control what the client can see after logging in.</p>
+              <div className="space-y-2.5">
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                  <input type="checkbox" defaultChecked className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                  <span className="text-xs text-gray-700 group-hover:text-gray-900 transition-colors">View Assigned Leads</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer group opacity-50">
+                  <input type="checkbox" disabled className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                  <span className="text-xs text-gray-700">Download Lead Reports (Admin Only)</span>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -3,7 +3,7 @@ import { FiFilter } from "react-icons/fi";
 import CampaignRow from "./CampaignRow";
 import CampaignsTableSkeleton from "./CampaignsTableSkeleton";
 
-const CampaignsTable = ({ campaigns, isLoading }) => {
+const CampaignsTable = ({ campaigns, isLoading, isClient }) => {
   if (isLoading) {
     return <CampaignsTableSkeleton />;
   }
@@ -14,12 +14,14 @@ const CampaignsTable = ({ campaigns, isLoading }) => {
         <table className="w-full text-left border-collapse min-w-[1200px]">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50/80 backdrop-blur-md border-b border-gray-100">
-              <th className="py-4 px-5 text-[10px] font-black text-gray-400 uppercase tracking-wider w-16 text-center">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-              </th>
+              {!isClient && (
+                <th className="py-4 px-5 text-[10px] font-black text-gray-400 uppercase tracking-wider w-16 text-center">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+              )}
               <th className="py-4 px-5 text-[10px] font-black text-gray-400 uppercase tracking-wider min-w-[250px]">
                 Campaign
               </th>
@@ -52,11 +54,11 @@ const CampaignsTable = ({ campaigns, isLoading }) => {
           <tbody className="divide-y divide-gray-50">
             {campaigns.length > 0 ? (
               campaigns.map((campaign) => (
-                <CampaignRow key={campaign._id} campaign={campaign} />
+                <CampaignRow key={campaign._id} campaign={campaign} isClient={isClient} />
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="py-32">
+                <td colSpan={isClient ? "9" : "10"} className="py-32">
                   <div className="flex flex-col items-center justify-center text-gray-400">
                     <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 transition-all hover:scale-105 border border-gray-100 shadow-sm">
                       <FiFilter className="text-3xl text-gray-300" />

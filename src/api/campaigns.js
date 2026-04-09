@@ -27,6 +27,17 @@ export const useGetCampaigns = (params) => {
     });
 };
 
+export const useGetCampaignsByCompany = (companyId, params) => {
+    return useQuery({
+        queryKey: ["campaigns", "company", companyId, params],
+        queryFn: async () => {
+            const { data } = await apiClient.get(`/campaigns/company/${companyId}`, { params });
+            return data;
+        },
+        enabled: !!companyId,
+    });
+};
+
 export const useSyncFacebookAds = () => {
     const queryClient = useQueryClient();
 

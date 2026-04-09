@@ -61,12 +61,13 @@ const clearColumnVisibility = () => {
   }
 };
 
-const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
+const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
-  const canManageAllLeads = isAdmin || user?.permissions?.leads?.viewAll;
+  const isClient = user?.role === "client";
+  const canManageAllLeads = (isAdmin || user?.permissions?.leads?.viewAll) && !isClient;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -94,7 +95,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
   const navigate = useNavigate();
 
   // Stats
-  const { data: statsData, isLoading: statsLoading } = useGetLeadStats();
+  const { data: statsData, isLoading: statsLoading } = useGetLeadStats(projectId);
   const leadStats = statsData?.data;
 
 
@@ -163,6 +164,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
     // Otherwise allow filtering by owner from appliedFilters (dashboard click)
     owner: (isEmployee && !canManageAllLeads) ? user._id : (appliedFilters.owner?.value || null),
     appliedFilters,
+    projectId,
   });
   const handleStatusFilter = (statusId) => {
     setActiveStatusId((prev) => (prev === statusId ? null : statusId));
@@ -714,6 +716,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
               onMoreActions={openLeadMenu}
               showDashboard={showDashboard}
               onToggleDashboard={() => setShowDashboard(!showDashboard)}
+              isClient={isClient}
             />
           </div>
           {isLoading ? (
@@ -816,6 +819,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings }) => {
         isOpen={isAddLeadModalOpen}
         onClose={() => setAddLeadModalOpen(false)}
         onSuccess={handleLeadCreated}
+        projectId={projectId}
       />
 
       <AssignLeadModal

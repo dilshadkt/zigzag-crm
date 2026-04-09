@@ -12,6 +12,7 @@ export const useLeadsData = (filters = {}) => {
     sortBy = "createdAt",
     sortOrder = "desc",
     appliedFilters,
+    projectId,
   } = filters;
 
   // Fetch leads data
@@ -31,11 +32,12 @@ export const useLeadsData = (filters = {}) => {
     sortBy,
     sortOrder,
     filters: appliedFilters,
+    project: projectId,
   });
 
   // Fetch form configuration
   const { data: formConfigData, isLoading: formConfigLoading } =
-    useGetLeadFormConfig();
+    useGetLeadFormConfig(projectId);
 
   // Fetch statuses
   const { data: statusesData, isLoading: statusesLoading } =

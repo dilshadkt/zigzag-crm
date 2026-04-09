@@ -1052,3 +1052,47 @@ export const submitSubTaskPendingReason = async (subTaskId, reason) => {
   }
 };
 
+
+
+export const updateCompanyPortalConfig = async (companyId, portalData) => {
+  const response = await apiClient.patch(`/companies/${companyId}/portal-config`, portalData);
+  return response.data;
+};
+
+export const getCompanyById = async (companyId) => {
+  const { data } = await apiClient.get(`/companies/${companyId}`);
+  return data;
+};
+
+export const getProjectById = async (projectId) => {
+  const { data } = await apiClient.get(`/projects/${projectId}`);
+  return data;
+};
+
+
+export const updateProjectPortalConfig = async (projectId, data) => {
+  const response = await apiClient.patch(`/projects/${projectId}/portal-config`, data);
+  return response.data;
+};
+
+export const updateProjectLeadFormConfig = async (projectId, leadFormConfigId) => {
+  const response = await apiClient.patch(`/projects/${projectId}/lead-form-config`, { leadFormConfigId });
+  return response.data;
+};
+
+export const portalLogin = async (data) => {
+  try {
+    const response = await apiClient.post("/auth/portal-login", data);
+    if (response?.data?.token) {
+      localStorage.setItem("token", response.data.token);
+      return { success: true, user: response.data.user };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message || error?.message || "Portal login failed",
+      user: null,
+    };
+  }
+};

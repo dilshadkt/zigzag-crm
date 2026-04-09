@@ -39,6 +39,8 @@ const SignIn = lazy(() => import("../pages/auth/signin"));
 const Register = lazy(() => import("../pages/auth/register"));
 const SingUpSuccess = lazy(() => import("../pages/auth/success"));
 const ForgetPassword = lazy(() => import("../pages/auth/forgetPassword"));
+const PortalSignIn = lazy(() => import("../pages/auth/portalSignin"));
+const ClientDashboard = lazy(() => import("../pages/dashboard/ClientDashboard"));
 const WelcomeHome = lazy(() => import("../pages/welcome/home"));
 const GetStart = lazy(() => import("../pages/welcome/getStart"));
 const ProfileImageUpload = lazy(() => import("../pages/welcome/profile"));
@@ -439,6 +441,14 @@ const AppRoutes = () => {
           <Route path="sign-up-Success" element={<SingUpSuccess />} />
           <Route path="forget-password" element={<ForgetPassword />} />
         </Route>
+
+        <Route path="/portal">
+          <Route element={<AuthLayout />}>
+            <Route path="login" element={<PortalSignIn />} />
+          </Route>
+          <Route path="dashboard" element={<ClientDashboard />} />
+        </Route>
+
         <Route path="unauthorized" element={<Unauthorized />} />
 
         <Route

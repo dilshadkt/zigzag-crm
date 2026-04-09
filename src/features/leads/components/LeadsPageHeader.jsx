@@ -13,6 +13,7 @@ const LeadsPageHeader = ({
   onMoreActions,
   showDashboard,
   onToggleDashboard,
+  isClient,
 }) => {
   return (
     <div className="flex flex-col gap-2 md:gap-2 px-3 md:px-6 pb-2 md:pb-3 pt-1 border-b border-slate-100">
@@ -30,6 +31,7 @@ const LeadsPageHeader = ({
           onMoreActions={onMoreActions}
           showDashboard={showDashboard}
           onToggleDashboard={onToggleDashboard}
+          isClient={isClient}
         />
       </div>
     </div>

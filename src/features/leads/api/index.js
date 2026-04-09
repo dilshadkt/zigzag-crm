@@ -33,8 +33,9 @@ export const deleteLead = async (leadId) => {
   return response.data;
 };
 
-export const getLeadStats = async () => {
-  const response = await apiClient.get("/leads/stats");
+export const getLeadStats = async (projectId = null) => {
+  const params = projectId ? { project: projectId } : {};
+  const response = await apiClient.get("/leads/stats", { params });
   return response.data;
 };
 
@@ -79,13 +80,19 @@ export const logLeadActivity = async ({ leadId, ...activityData }) => {
   return response.data;
 };
 
-export const getLeadFormConfig = async () => {
-  const response = await apiClient.get("/leads/settings/form-config");
+export const getLeadFormConfig = async (projectId = null) => {
+  const params = projectId ? { project: projectId } : {};
+  const response = await apiClient.get("/leads/settings/form-config", { params });
   return response.data;
 };
 
 export const updateLeadFormConfig = async (config) => {
   const response = await apiClient.put("/leads/settings/form-config", { fields: config });
+  return response.data;
+};
+
+export const getAllFormConfigs = async () => {
+  const response = await apiClient.get("/leads/settings/form-configs");
   return response.data;
 };
 
@@ -199,10 +206,10 @@ export const useDeleteLead = () => {
   });
 };
 
-export const useGetLeadStats = () => {
+export const useGetLeadStats = (projectId = null) => {
   return useQuery({
-    queryKey: ["leadStats"],
-    queryFn: getLeadStats,
+    queryKey: ["leadStats", projectId],
+    queryFn: () => getLeadStats(projectId),
   });
 };
 
@@ -273,10 +280,17 @@ export const useLogLeadActivity = () => {
   });
 };
 
-export const useGetLeadFormConfig = () => {
+export const useGetLeadFormConfig = (projectId = null) => {
   return useQuery({
-    queryKey: ["leadFormConfig"],
-    queryFn: getLeadFormConfig,
+    queryKey: ["leadFormConfig", projectId],
+    queryFn: () => getLeadFormConfig(projectId),
+  });
+};
+
+export const useGetAllLeadFormConfigs = () => {
+  return useQuery({
+    queryKey: ["allLeadFormConfigs"],
+    queryFn: getAllFormConfigs,
   });
 };
 

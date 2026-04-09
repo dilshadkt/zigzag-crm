@@ -20,6 +20,16 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const isAuthPage = window.location.pathname.includes('/auth/') || 
+                        window.location.pathname.includes('/portal/login');
+      const token = localStorage.getItem("token");
+      
+      if (isAuthPage || !token) {
+        dispatch(setLoading(false));
+        setIsAuthChecked(true);
+        return;
+      }
+
       dispatch(setLoading(true)); // Set loading to true
       try {
         const { user } = await validateSession();
