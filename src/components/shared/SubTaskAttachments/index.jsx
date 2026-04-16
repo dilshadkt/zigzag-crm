@@ -5,7 +5,8 @@ import Modal from "../modal";
 import PrimaryButton from "../buttons/primaryButton";
 import Description from "../Field/description";
 import { useUpdateSubTaskById, useGetProjectSocialMedia } from "../../../api/hooks";
-import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare, FiChevronDown, FiChevronUp, FiMic } from "react-icons/fi";
+import VoiceRecorder from "../VoiceRecorder";
 
 const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = false, isCompany = false, isAdmin = false }) => {
   const fileInputRef = useRef(null);
@@ -16,6 +17,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
   const [showContentModal, setShowContentModal] = useState(false);
   const [showURLModal, setShowURLModal] = useState(false);
   const [showCustomFieldsModal, setShowCustomFieldsModal] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [contentValues, setContentValues] = useState({
     copyOfDescription: subTask?.copyOfDescription || "",
     description: subTask?.description || "",
@@ -109,6 +111,13 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     if (!result.success) {
       // You can add toast notification here if needed
       console.error("Failed to upload attachments:", result.error);
+    }
+  };
+
+  const handleVoiceUpload = async (file) => {
+    const result = await handleFileUpload([file]);
+    if (!result.success) {
+      console.error("Failed to upload voice recording:", result.error);
     }
   };
 
@@ -273,6 +282,18 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                     >
                       <FiEdit3 className="text-orange-500" />
                       <span>Add Contents</span>
+                    </button>
+                  )}
+                  {isContentSubTask && (
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowVoiceRecorder(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <FiMic className="text-red-500" />
+                      <span>Record Voice</span>
                     </button>
                   )}
                   {isPublishSubTask && (isCompany || isAdmin || subTask?.status === "on-review") && (
@@ -809,6 +830,14 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
           </div>
         </div>
       </Modal>
+
+      {/* Voice Recorder Modal */}
+      <VoiceRecorder
+        isOpen={showVoiceRecorder}
+        onClose={() => setShowVoiceRecorder(false)}
+        onUpload={handleVoiceUpload}
+        isUploading={isUploading || isAddingAttachment}
+      />
     </>
   );
 };

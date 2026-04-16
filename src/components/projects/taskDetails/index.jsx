@@ -34,14 +34,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const updateTaskMutation = useUpdateTaskById(taskDetails?._id);
 
   const isWorkLinkRequired = (task) => {
-    return task?.requiresWorkLink || 
-           task?.taskFlow?.flows?.some(flow => flow.requiresWorkLink);
+    return task?.requiresWorkLink ||
+      task?.taskFlow?.flows?.some(flow => flow.requiresWorkLink);
   };
 
   const getCurrentLink = (task) => {
     if (!task || !isWorkLinkRequired(task)) return "";
-    const field = (task.customFields || []).find(f => 
-      f.label?.toLowerCase().includes("work link") || 
+    const field = (task.customFields || []).find(f =>
+      f.label?.toLowerCase().includes("work link") ||
       f.label?.toLowerCase().includes("google drive") ||
       f.label?.toLowerCase().includes("link")
     );
@@ -51,8 +51,8 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const handleWorkLinkSubmit = async (workLink) => {
     try {
       let updatedFields = [...(taskDetails.customFields || [])];
-      const linkFieldIndex = updatedFields.findIndex(f => 
-        f.label?.toLowerCase().includes("work link") || 
+      const linkFieldIndex = updatedFields.findIndex(f =>
+        f.label?.toLowerCase().includes("work link") ||
         f.label?.toLowerCase().includes("google drive") ||
         f.label?.toLowerCase().includes("link")
       );
@@ -66,7 +66,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
       await updateTaskMutation.mutateAsync({
         customFields: updatedFields,
       });
-      
+
       setIsWorkLinkModalOpen(false);
       toast.success("Work link updated successfully!");
     } catch (error) {
@@ -298,31 +298,30 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                   taskDetails?.taskFlow?.flows?.some(
                     (flow) => flow.requiresClientApproval
                   )) && (
-                  <span
-                    className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
-                    title="This task requires final client approval"
-                  >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
+                    <span
+                      className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
+                      title="This task requires final client approval"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z"
-                      />
-                    </svg>
-                    Client Approval Required
-                  </span>
-                )}
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z"
+                        />
+                      </svg>
+                      Client Approval Required
+                    </span>
+                  )}
                 {isWorkLinkRequired(taskDetails) && (
                   <button
                     onClick={() => setIsWorkLinkModalOpen(true)}
-                    className={`px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 transition-all duration-200 ${
-                      getCurrentLink(taskDetails)
+                    className={`px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 transition-all duration-200 ${getCurrentLink(taskDetails)
                         ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
                         : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
-                    }`}
+                      }`}
                     title={
                       getCurrentLink(taskDetails)
                         ? "Work link provided. Click to edit/remove."
