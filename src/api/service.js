@@ -1096,3 +1096,55 @@ export const portalLogin = async (data) => {
     };
   }
 };
+
+////////////  HOLIDAY SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+
+export const getHolidays = async (companyId, year) => {
+  const params = year ? `?year=${year}` : "";
+  const response = await apiClient.get(`/companies/${companyId}/holidays${params}`);
+  return response.data;
+};
+
+export const createHoliday = async (companyId, holidayData) => {
+  const response = await apiClient.post(`/companies/${companyId}/holidays`, holidayData);
+  return response.data;
+};
+
+export const bulkCreateHolidays = async (companyId, holidays) => {
+  const response = await apiClient.post(`/companies/${companyId}/holidays/bulk`, { holidays });
+  return response.data;
+};
+
+export const updateHoliday = async (companyId, holidayId, holidayData) => {
+  const response = await apiClient.put(`/companies/${companyId}/holidays/${holidayId}`, holidayData);
+  return response.data;
+};
+
+export const deleteHoliday = async (companyId, holidayId) => {
+  const response = await apiClient.delete(`/companies/${companyId}/holidays/${holidayId}`);
+  return response.data;
+};
+
+export const bulkDeleteHolidays = async (companyId, holidayIds) => {
+  const response = await apiClient.delete(`/companies/${companyId}/holidays/bulk`, {
+    data: { holidayIds },
+  });
+  return response.data;
+};
+
+////////////  WORK SCHEDULE SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+
+export const getWorkSchedule = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/work-schedule`);
+  return response.data;
+};
+
+export const saveWorkSchedule = async (companyId, scheduleData) => {
+  const response = await apiClient.put(
+    `/companies/${companyId}/work-schedule`,
+    scheduleData
+  );
+  return response.data;
+};
+
+

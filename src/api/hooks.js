@@ -75,6 +75,16 @@ import {
   deleteProjectField,
   reorderProjectFields,
   submitSubTaskPendingReason,
+  // Holiday imports
+  getHolidays,
+  createHoliday,
+  bulkCreateHolidays,
+  updateHoliday,
+  deleteHoliday,
+  bulkDeleteHolidays,
+  // Work Schedule imports
+  getWorkSchedule,
+  saveWorkSchedule,
 } from "./service";
 import { getUnreadCount } from "./chatService";
 import { format } from "date-fns";
@@ -2709,6 +2719,96 @@ export const useDeleteLeadStatus = () => {
         .then((res) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadStatuses"]);
+    },
+  });
+};
+
+////////////  HOLIDAY HOOKS ⚠️⚠️⚠️⚠️⚠️ ////////////////////
+
+export const useGetHolidays = (companyId, year) => {
+  return useQuery({
+    queryKey: ["holidays", companyId, year],
+    queryFn: () => getHolidays(companyId, year),
+    enabled: !!companyId,
+    select: (data) => data?.holidays || [],
+  });
+};
+
+export const useCreateHoliday = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (holidayData) => createHoliday(companyId, holidayData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["holidays", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useBulkCreateHolidays = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (holidays) => bulkCreateHolidays(companyId, holidays),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["holidays", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useUpdateHoliday = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ holidayId, holidayData }) =>
+      updateHoliday(companyId, holidayId, holidayData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["holidays", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useDeleteHoliday = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (holidayId) => deleteHoliday(companyId, holidayId),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["holidays", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useBulkDeleteHolidays = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (holidayIds) => bulkDeleteHolidays(companyId, holidayIds),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["holidays", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+////////////  WORK SCHEDULE HOOKS ⚠️⚠️⚠️⚠️⚠️ ////////////////////
+
+export const useGetWorkSchedule = (companyId) => {
+  return useQuery({
+    queryKey: ["workSchedule", companyId],
+    queryFn: () => getWorkSchedule(companyId),
+    enabled: !!companyId,
+    select: (data) => data?.schedule || null,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useSaveWorkSchedule = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (scheduleData) => saveWorkSchedule(companyId, scheduleData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["workSchedule", companyId]);
+      if (onSuccess) onSuccess(...args);
     },
   });
 };
