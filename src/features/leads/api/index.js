@@ -33,8 +33,7 @@ export const deleteLead = async (leadId) => {
   return response.data;
 };
 
-export const getLeadStats = async (projectId = null) => {
-  const params = projectId ? { project: projectId } : {};
+export const getLeadStats = async (params = {}) => {
   const response = await apiClient.get("/leads/stats", { params });
   return response.data;
 };
@@ -206,10 +205,10 @@ export const useDeleteLead = () => {
   });
 };
 
-export const useGetLeadStats = (projectId = null) => {
+export const useGetLeadStats = (params = {}) => {
   return useQuery({
-    queryKey: ["leadStats", projectId],
-    queryFn: () => getLeadStats(projectId),
+    queryKey: ["leadStats", params],
+    queryFn: () => getLeadStats(params),
   });
 };
 

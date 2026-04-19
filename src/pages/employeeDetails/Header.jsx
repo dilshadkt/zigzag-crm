@@ -20,6 +20,7 @@ export const EmployeeHeader = ({
       <div className="flex bg-[#E6EDF5] rounded-full p-1">
         {[
           ...(isAdmin ? ["Overview"] : []),
+          "Performance",
           "Projects",
           "Teams",
           "Today's Tasks",

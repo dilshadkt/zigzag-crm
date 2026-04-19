@@ -74,6 +74,8 @@ const Billing = lazy(() => import("../pages/settings/billing"));
 const LeadDashboard = lazy(() => import("../pages/dashboard/LeadDashboard"));
 const EmployeeDashboard = lazy(() => import("../pages/dashboard/EmployeeDashboard"));
 const CostDashboard = lazy(() => import("../pages/dashboard/CostDashboard"));
+const Leaderboard = lazy(() => import("../pages/Leaderboard"));
+
 
 const AppRoutes = () => {
   return (
@@ -175,7 +177,16 @@ const AppRoutes = () => {
               </RouteAccess>
             }
           />
+          <Route
+            path="leaderboard"
+            element={
+              <RouteAccess>
+                <Leaderboard />
+              </RouteAccess>
+            }
+          />
           <Route path="projects-analytics" element={<ProjectsAnalytics />} />
+
           <Route
             path="projects-analytics/:projectId"
             element={<ProjectAnalyticsDetails />}

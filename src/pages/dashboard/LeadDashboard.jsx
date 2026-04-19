@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     useGetLeadStats,
     useGetLeadStatuses,
@@ -29,7 +29,8 @@ const LeadDashboardPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'company-admin';
-    const { data: statsData, isLoading: statsLoading } = useGetLeadStats();
+    const [selectedDays, setSelectedDays] = useState(7);
+    const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ days: selectedDays });
     const { data: statusData } = useGetLeadStatuses();
 
     const stats = statsData?.data;
@@ -84,8 +85,8 @@ const LeadDashboardPage = () => {
                     value={stats?.totalLeads}
                     icon={Users}
                     color="blue"
-                    trend="+12%"
-                    trendUp={true}
+                    trend={`${stats?.trends?.totalLeadsTrend >= 0 ? '+' : ''}${stats?.trends?.totalLeadsTrend || 0}%`}
+                    trendUp={stats?.trends?.totalLeadsTrend >= 0}
                     onClick={() => navigate('/leads')}
                 />
                 <StatCard
@@ -93,8 +94,8 @@ const LeadDashboardPage = () => {
                     value={stats?.newLeadsToday}
                     icon={Target}
                     color="amber"
-                    trend="+5%"
-                    trendUp={true}
+                    trend={`${stats?.trends?.newTodayTrend >= 0 ? '+' : ''}${stats?.trends?.newTodayTrend || 0}%`}
+                    trendUp={stats?.trends?.newTodayTrend >= 0}
                     onClick={() => navigate('/leads')}
                 />
                 <StatCard
@@ -123,9 +124,14 @@ const LeadDashboardPage = () => {
                                 <Trophy className="w-4 h-4 text-[#3f8cff]" />
                                 Sales Performance
                             </h3>
-                            <select className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-2 py-1 focus:ring-0">
-                                <option>Last 7 Days</option>
-                                <option>Last 30 Days</option>
+                            <select 
+                                value={selectedDays}
+                                onChange={(e) => setSelectedDays(Number(e.target.value))}
+                                className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer"
+                            >
+                                <option value={7}>Last 7 Days</option>
+                                <option value={30}>Last 30 Days</option>
+                                <option value={90}>Last 90 Days</option>
                             </select>
                         </div>
                         <div className="h-[320px] w-full">

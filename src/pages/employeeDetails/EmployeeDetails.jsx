@@ -17,6 +17,7 @@ import Overview from "../../components/employee/Overview";
 import Projects from "../../components/employee/Projects";
 import Teams from "../../components/employee/Teams";
 import Vacations from "../../components/employee/Vacations";
+import Performance from "../../components/employee/Performance";
 import { Loading } from "./Loading";
 import { EmployeeHeader } from "./Header";
 
@@ -28,9 +29,13 @@ const EmployeeDetails = () => {
   const canDelete = hasPermission("employees", "delete");
   const isOwnProfile = user?._id === employeeId;
 
-  const [activePage, setActivePage] = useState(
-    isAdmin() || canEdit ? "Overview" : "Projects"
-  );
+  const [activePage, setActivePage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const validTabs = ["Overview", "Performance", "Projects", "Teams", "Today's Tasks", "Vacations"];
+    if (tab && validTabs.includes(tab)) return tab;
+    return isAdmin() || canEdit ? "Overview" : "Projects";
+  });
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
@@ -163,6 +168,12 @@ const EmployeeDetails = () => {
                 selectedMonth={selectedMonth}
                 isLoading={isLoadingSubTasks || isLoadingStatistics}
                 statistics={statisticsData?.statistics}
+              />
+            )}
+            {activePage === "Performance" && (
+              <Performance 
+                employeeId={employeeId} 
+                selectedMonth={selectedMonth} 
               />
             )}
             {activePage === "Projects" && (

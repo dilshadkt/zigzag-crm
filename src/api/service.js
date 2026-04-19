@@ -1150,3 +1150,58 @@ export const saveWorkSchedule = async (companyId, scheduleData) => {
 };
 
 
+// Performance API functions
+export const getLeaderboard = async (type = "weekly", periodKey = null) => {
+  try {
+    const params = new URLSearchParams();
+    params.append("type", type);
+    if (periodKey) params.append("periodKey", periodKey);
+
+    const response = await apiClient.get(`/performance/leaderboard?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    throw error;
+  }
+};
+
+export const getPerformanceTrend = async (type = "weekly") => {
+  try {
+    const response = await apiClient.get(`/performance/trend?type=${type}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching performance trend:", error);
+    throw error;
+  }
+};
+
+export const getEmployeePerformance = async (employeeId, type = "monthly", periodKey) => {
+  try {
+    const query = `type=${type}${periodKey ? `&periodKey=${periodKey}` : ""}`;
+    const response = await apiClient.get(`/performance/employee/${employeeId}?${query}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching employee performance:", error);
+    throw error;
+  }
+};
+
+export const getMyPerformance = async (type = "monthly") => {
+  try {
+    const response = await apiClient.get(`/performance/me?type=${type}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching my performance:", error);
+    throw error;
+  }
+};
+
+export const addBonusPoints = async (bonusData) => {
+  try {
+    const response = await apiClient.post("/performance/bonus", bonusData);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding bonus points:", error);
+    throw error;
+  }
+};
