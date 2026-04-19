@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Description from "../../shared/Field/description";
 import Select from "../../shared/Field/select";
@@ -11,11 +11,17 @@ import {
   useGetTaskFlows,
   useProjectDetails,
   useGetAllEmployees,
+  useGetWorkSchedule,
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
-import { FiActivity, FiClock, FiPlus, FiTarget, FiTrash2 } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiCalendar, FiClock, FiPlus, FiTarget, FiTrash2 } from "react-icons/fi";
 import Modal from "../../shared/modal";
+import {
+  computeFlowDatesWithSchedule,
+  isWeeklyOff,
+  formatShortDate,
+} from "../../../utils/workingDayUtils";
 
 const AddTask = ({
   isOpen,
@@ -36,6 +42,10 @@ const AddTask = ({
   // Fetch task flows for the company
   const { data: taskFlowsData } = useGetTaskFlows(companyId);
   const taskFlows = taskFlowsData || [];
+
+  // Fetch company work schedule (weekly-off rules)
+  const { data: workSchedule } = useGetWorkSchedule(companyId);
+  const weeklyOffs = workSchedule?.weeklyOffs || [];
 
   const handleClose = () => {
     resetForm();
@@ -74,6 +84,7 @@ const AddTask = ({
       requiresClientApproval: initialValues.requiresClientApproval || false,
       requiresWorkLink: initialValues.requiresWorkLink || false,
       customFields: initialValues.customFields || [],
+      subtasks: initialValues.subtasks || [],
     };
   };
 
@@ -90,6 +101,13 @@ const AddTask = ({
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialValues?.project?._id || initialValues?.project || ""
   );
+
+  // Refs to track previous "master" values for resetting manual subtask edits
+  const prevMasterValues = useRef({
+    taskFlow: "",
+    startDate: "",
+    dueDate: ""
+  });
 
   // State for due date change reason modal
   const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
@@ -248,6 +266,70 @@ const AddTask = ({
       }
     }
   }, [values.taskFlow, taskFlows, setFieldValue, selectedProjectData]);
+
+  // ── Sync subtasks in Formik whenever flow or main dates change ──────────
+  useEffect(() => {
+    const isMasterChanged =
+      values.taskFlow !== prevMasterValues.current.taskFlow ||
+      values.startDate !== prevMasterValues.current.startDate ||
+      values.dueDate !== prevMasterValues.current.dueDate;
+
+    if (isMasterChanged) {
+      if (values.taskFlow && values.startDate && values.dueDate && taskFlows.length > 0) {
+        const selectedFlow = taskFlows.find(flow => flow._id === values.taskFlow);
+        if (selectedFlow?.flows?.length) {
+          const calculatedSteps = computeFlowDatesWithSchedule(
+            values.startDate,
+            values.dueDate,
+            selectedFlow.flows,
+            weeklyOffs
+          );
+
+          // Format for Formik: simplified for the backend but keeps metadata for UI
+          const subtasksData = calculatedSteps.map((s, idx) => ({
+            taskName: s.taskName,
+            assignee: s.assignee,
+            startDate: s.startDate.toISOString().split('T')[0],
+            dueDate: s.dueDate.toISOString().split('T')[0],
+            wasAdjusted: s.wasAdjusted,
+            skippedDay: s.skippedDay,
+            weightage: s.weightage,
+            requiresClientApproval: selectedFlow.flows[idx].requiresClientApproval,
+            requiresWorkLink: selectedFlow.flows[idx].requiresWorkLink
+          }));
+          setFieldValue("subtasks", subtasksData);
+        }
+      } else if (!values.taskFlow) {
+        setFieldValue("subtasks", []);
+      }
+
+      // Update refs to latest master values
+      prevMasterValues.current = {
+        taskFlow: values.taskFlow,
+        startDate: values.startDate,
+        dueDate: values.dueDate
+      };
+    }
+  }, [values.taskFlow, values.startDate, values.dueDate, taskFlows, weeklyOffs, setFieldValue]);
+
+  // Handle manual date overrides for subtasks
+  const handleSubtaskDateChange = (index, field, newValue) => {
+    const updated = [...(values.subtasks || [])];
+    if (!updated[index]) return;
+
+    updated[index][field] = newValue;
+
+    // Sequential cascade: if a dueDate changes, move the START of the next task
+    if (field === 'dueDate' && index < updated.length - 1) {
+      updated[index + 1].startDate = newValue;
+      // If the next start date is now after its due date, bump the due date too
+      if (new Date(updated[index + 1].startDate) > new Date(updated[index + 1].dueDate)) {
+        updated[index + 1].dueDate = newValue;
+      }
+    }
+
+    setFieldValue("subtasks", updated);
+  };
 
   // Initialize form when modal opens for editing
   useEffect(() => {
@@ -742,6 +824,51 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       disabled={isEdit || isLoadingProjectDetails}
                     />
 
+                    {/* ── Dates (before Task Flow so preview shows immediately) */}
+                    <div className="grid gap-x-4 grid-cols-2">
+                      {/* Start Date */}
+                      <div>
+                        <DatePicker
+                          errors={errors}
+                          value={values.startDate}
+                          onChange={handleChange}
+                          name={"startDate"}
+                          title="Estimate"
+                          touched={touched}
+                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                        />
+                        {values.startDate && isWeeklyOff(new Date(values.startDate), weeklyOffs) && (
+                          <div className="flex items-center gap-1.5 mt-1 px-1">
+                            <FiAlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                            <span className="text-[11px] text-amber-600 font-medium">
+                              This is a weekly-off day — task can still start here
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Due Date */}
+                      <div>
+                        <DatePicker
+                          title="Dead Line"
+                          errors={errors}
+                          value={values.dueDate}
+                          onChange={handleDueDateChange}
+                          touched={touched}
+                          name={"dueDate"}
+                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                        />
+                        {values.dueDate && isWeeklyOff(new Date(values.dueDate), weeklyOffs) && (
+                          <div className="flex items-center gap-1.5 mt-1 px-1">
+                            <FiAlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                            <span className="text-[11px] text-amber-600 font-medium">
+                              This is a weekly-off day — subtasks will be adjusted
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Task Flow Selection */}
                     <Select
                       errors={errors}
@@ -756,61 +883,126 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       disabled={!isFormEnabled}
                     />
 
-                    {/* Task Flow Preview */}
+                    {/* ── Task Flow Preview (schedule-aware & editable) ─────────────── */}
                     {values.taskFlow &&
-                      taskFlows.length > 0 &&
+                      values.subtasks &&
+                      values.subtasks.length > 0 &&
                       (() => {
                         const selectedFlow = taskFlows.find(
                           (flow) => flow._id === values.taskFlow
                         );
-                        return selectedFlow &&
-                          selectedFlow.flows &&
-                          selectedFlow.flows.length > 0 ? (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <svg
-                                className="w-4 h-4 text-blue-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                />
-                              </svg>
-                              <span className="text-sm font-medium text-blue-800">
-                                Task Flow: {selectedFlow.name}
-                              </span>
-                            </div>
-                            <div className="space-y-1">
-                              {selectedFlow.flows.map((step, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2 text-xs text-blue-700"
-                                >
-                                  <span className="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-medium">
-                                    {index + 1}
+                        if (!selectedFlow) return null;
+
+                        const hasAnyAdjustment = values.subtasks.some((s) => s.wasAdjusted);
+
+                        return (
+                          <div className="border border-blue-200 rounded-xl overflow-hidden mt-1 shadow-sm">
+                            {/* Header */}
+                            <div className="bg-blue-600 px-3 py-1.5 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <FiCalendar className="w-3.5 h-3.5 text-white" />
+                                <span className="text-xs font-semibold text-white">
+                                  {selectedFlow.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {hasAnyAdjustment && weeklyOffs.length > 0 && (
+                                  <span className="text-[9px] bg-amber-400 text-amber-900 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                                    Adjusted
                                   </span>
-                                  <span>{step.taskName}</span>
-                                  <span className="text-blue-600">→</span>
-                                  <span className="font-medium">
-                                    {step.assignee?.name ||
-                                      `${step.assignee?.firstName || ""} ${step.assignee?.lastName || ""
-                                        }`.trim()}
-                                  </span>
-                                </div>
-                              ))}
+                                )}
+                                <span className="text-[10px] text-blue-100 font-medium italic">
+                                  Editable schedule
+                                </span>
+                              </div>
                             </div>
-                            <div className="mt-2 text-xs text-blue-600">
-                              Assignees will be automatically set based on this
-                              flow and will override any manual selections.
+
+                            {/* Step rows */}
+                            <div className="divide-y divide-blue-50">
+                              {values.subtasks.map((step, index) => {
+                                const assigneeName =
+                                  step.assignee?.name ||
+                                  `${step.assignee?.firstName || ""} ${step.assignee?.lastName || ""}`.trim() ||
+                                  "—";
+
+                                return (
+                                  <div
+                                    key={index}
+                                    className="bg-white px-3 py-2 flex items-start gap-2.5 hover:bg-blue-50/30 transition-colors"
+                                  >
+                                    {/* Step badge */}
+                                    <span className="mt-0.5 w-5 h-5 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-700">
+                                      {index + 1}
+                                    </span>
+
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-xs font-semibold text-gray-800 truncate">
+                                          {step.taskName}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-medium">@</span>
+                                        <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded">
+                                          {assigneeName}
+                                        </span>
+                                        {step.wasAdjusted && (
+                                          <span
+                                            title={`Original ${step.skippedDay} was a weekly-off — shifted to next working day`}
+                                            className="flex items-center gap-0.5 text-[9px] font-bold text-amber-600 cursor-help"
+                                          >
+                                            <FiAlertTriangle className="w-2.5 h-2.5" />
+                                            (off-day skipped)
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Editable Date Inputs */}
+                                      <div className="mt-1.5 flex items-center gap-1.5">
+                                        <div className="flex items-center border border-gray-100 rounded bg-gray-50/50 focus-within:border-blue-300 focus-within:bg-white transition-all overflow-hidden">
+                                          <input
+                                            type="date"
+                                            value={step.startDate}
+                                            onChange={(e) => handleSubtaskDateChange(index, "startDate", e.target.value)}
+                                            className="text-[10px] text-gray-600 px-1.5 py-0.5 outline-none bg-transparent"
+                                            title="Subtask Start Date"
+                                          />
+                                          <span className="text-[9px] text-gray-300 px-0.5">–</span>
+                                          <input
+                                            type="date"
+                                            value={step.dueDate}
+                                            onChange={(e) => handleSubtaskDateChange(index, "dueDate", e.target.value)}
+                                            className="text-[10px] text-gray-600 px-1.5 py-0.5 outline-none bg-transparent"
+                                            title="Subtask Due Date"
+                                          />
+                                        </div>
+                                        
+                                        {/* Status indicator if manual/auto */}
+                                        <span className="text-[9px] text-gray-300 italic">
+                                          w:{step.weightage || 0}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Footer note */}
+                            <div className="bg-blue-50/80 px-3 py-1.5 text-[9px] text-blue-600 flex justify-between items-center">
+                              <span>Assignees set from flow.</span>
+                              <span className="font-semibold uppercase tracking-tighter opacity-70">Dates can be tweaked manually</span>
                             </div>
                           </div>
-                        ) : null;
+                        );
                       })()}
+
+                    {/* No date range set warning for preview */}
+                    {values.taskFlow && (!values.startDate || !values.dueDate) && (
+                       <div className="bg-blue-50 px-3 py-2.5 text-xs text-blue-500 italic flex items-center gap-1.5 border border-blue-200 rounded-xl">
+                         <FiClock className="w-3 h-3" />
+                         Set parent Start &amp; Due dates to preview the flow schedule.
+                       </div>
+                    )}
 
                     {/* Extra Task Work Type Selection */}
                     {isExtraTaskSelected && (
@@ -856,26 +1048,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 placeholder="Add task description"
                 disabled={!isFormEnabled && !isOtherProjectSelected}
               />
-              <div className="grid gap-x-4 grid-cols-2">
-                <DatePicker
-                  errors={errors}
-                  value={values.startDate}
-                  onChange={handleChange}
-                  name={"startDate"}
-                  title="Estimate"
-                  touched={touched}
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-                <DatePicker
-                  title="Dead Line"
-                  errors={errors}
-                  value={values.dueDate}
-                  onChange={handleDueDateChange}
-                  touched={touched}
-                  name={"dueDate"}
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-              </div>
+
               <Select
                 errors={errors}
                 name={"priority"}

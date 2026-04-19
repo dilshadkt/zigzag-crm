@@ -31,6 +31,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
     customFields: defaultValue?.customFields || [],
+    subtasks: defaultValue?.subtasks || [],
   };
 
   const validationSchema = Yup.object().shape({

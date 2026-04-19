@@ -222,6 +222,7 @@ export const createTask = async (taskData, projectId) => {
     maxRecurrences: taskData?.maxRecurrences,
     requiresClientApproval: taskData?.requiresClientApproval,
     customFields: taskData?.customFields,
+    subtasks: taskData?.subtasks,
   };
   if (taskData?.taskFlow) {
     data.taskFlow = taskData.taskFlow; // Only add if present
@@ -255,6 +256,7 @@ export const createTaskFromBoard = async (taskData) => {
     maxRecurrences: taskData?.maxRecurrences,
     requiresClientApproval: taskData?.requiresClientApproval,
     customFields: taskData?.customFields,
+    subtasks: taskData?.subtasks,
   };
 
   // Handle project field based on selection
