@@ -118,7 +118,7 @@ const LeadDashboardPage = () => {
                 {/* Left Column - Performance & Trends */}
                 <div className="lg:col-span-2 space-y-2">
                     {/* Performance Chart */}
-                    <div className="bg-white p-5 rounded-[14px] border border-slate-100">
+                    <div className="bg-white p-5 rounded-[2rem] border border-slate-100">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                                 <Trophy className="w-4 h-4 text-[#3f8cff]" />
@@ -170,7 +170,7 @@ const LeadDashboardPage = () => {
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          {/* Status Distribution */}
-                         <div className="bg-white p-5 rounded-[14px] border border-slate-100 flex flex-col h-[320px]">
+                         <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
                              <h3 className="text-sm font-bold text-slate-800 mb-4">Status Distribution</h3>
                              <div className="flex-1 min-h-0">
                                  <ResponsiveContainer width="100%" height="100%">
@@ -204,7 +204,7 @@ const LeadDashboardPage = () => {
                          </div>
  
                          {/* Overall Progress */}
-                         <div className="bg-white p-5 rounded-[14px] border border-slate-100 flex flex-col h-[320px]">
+                         <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
                              <h3 className="text-sm font-bold text-slate-800 mb-4">Overall Growth</h3>
                              <div className="flex-1 min-h-0">
                                  <ResponsiveContainer width="100%" height="100%">
@@ -233,7 +233,7 @@ const LeadDashboardPage = () => {
                      {stats?.customWidgets && stats.customWidgets.length > 0 && (
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              {stats.customWidgets.map((widget) => (
-                                 <div key={widget.widgetId} className="bg-white p-5 rounded-[14px] border border-slate-100 flex flex-col h-[320px]">
+                                 <div key={widget.widgetId} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
                                      <h3 className="text-sm font-bold text-slate-800 mb-4">{widget.title}</h3>
                                      <div className="flex-1 min-h-0">
                                          <ResponsiveContainer width="100%" height="100%">
@@ -308,7 +308,7 @@ const LeadDashboardPage = () => {
 
                      {/* Employee Leaderboard - Admins Only */}
                     {isAdmin && (
-                        <div className="bg-white p-5 rounded-[14px] border border-slate-100 flex flex-col h-[380px]">
+                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[380px]">
                             <div className="flex items-center justify-between mb-4 flex-shrink-0">
                                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                                     <Users className="w-4 h-4 text-[#3f8cff]" />
@@ -356,7 +356,7 @@ const LeadDashboardPage = () => {
                 {/* Right Column - Actionable Lists */}
                 <div className="space-y-2">
                     {/* Hot Leads */}
-                    <div className="bg-white rounded-[14px] border border-slate-100 overflow-hidden">
+                    <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
                         <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-orange-50/20">
                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                                 <Flame className="w-3.5 h-3.5 text-orange-500" />
@@ -392,7 +392,7 @@ const LeadDashboardPage = () => {
                     </div>
 
                     {/* Today's Follow-ups */}
-                    <div className="bg-white rounded-[14px] border border-slate-100 overflow-hidden">
+                    <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
                         <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-emerald-50/20">
                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                                 <CalendarCheck className="w-3.5 h-3.5 text-emerald-500" />
@@ -418,7 +418,7 @@ const LeadDashboardPage = () => {
                     </div>
 
                     {/* Weak Leads / Re-engage */}
-                    <div className="bg-white rounded-[14px] border border-slate-100 overflow-hidden">
+                    <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
                         <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                                 <TrendingDown className="w-3.5 h-3.5 text-slate-400" />
@@ -466,7 +466,7 @@ const StatCard = ({ title, value, icon: Icon, color, trend, trendUp, onClick }) 
     return (
         <div
             onClick={onClick}
-            className="bg-white p-4 rounded-[14px] border border-slate-100 group hover:border-[#3f8cff]/20 transition-all cursor-pointer"
+            className="bg-white p-4 rounded-[2rem] border border-slate-100 group transition-all cursor-pointer"
         >
             <div className="flex items-center justify-between mb-2">
                 <div className={`p-2 rounded-lg ${colors[color] || 'bg-slate-50 text-slate-600'}`}>

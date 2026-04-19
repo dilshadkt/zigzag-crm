@@ -25,6 +25,7 @@ import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/Dail
 import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
 import EmployeesTodayStatus from "../../components/dashboard/EmployeesTodayStatus";
 import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
+import DashboardRanking from "../../components/dashboard/DashboardRanking";
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
@@ -210,12 +211,23 @@ const Dashboard = () => {
         selectedDate={selectedDate}
       />
 
-      {/* Team Daily Status - Admin Only */}
-      {(!isEmployee || isEmployeeHasTaskAdmin) && (
-        <div className="w-full mt-5">
-          <EmployeesTodayStatus />
-        </div>
-      )}
+      {/* Team Insights Section */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-6 mt-5">
+        {!isEmployee || isEmployeeHasTaskAdmin ? (
+          <>
+            <div className="lg:col-span-8">
+              <EmployeesTodayStatus />
+            </div>
+            <div className="lg:col-span-4">
+              <DashboardRanking />
+            </div>
+          </>
+        ) : (
+          <div className="lg:col-span-12">
+            <DashboardRanking />
+          </div>
+        )}
+      </div>
 
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
         <div className="md:col-span-5">
