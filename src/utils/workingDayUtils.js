@@ -75,19 +75,46 @@ export const isWeeklyOff = (date, weeklyOffs = []) => {
 };
 
 /**
+ * Check whether a given date is a company holiday.
+ * @param {Date} date
+ * @param {Array<{date: string|Date, active: boolean}>} holidays
+ * @returns {boolean}
+ */
+export const isHoliday = (date, holidays = []) => {
+  if (!holidays || holidays.length === 0) return false;
+
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const dTime = d.getTime();
+
+  return holidays.some((h) => {
+    if (h.active === false) return false;
+    const hDate = new Date(h.date);
+    hDate.setHours(0, 0, 0, 0);
+    return hDate.getTime() === dTime;
+  });
+};
+
+/**
+ * Combined check for weekly-off and holidays.
+ */
+export const isOffDay = (date, weeklyOffs = [], holidays = []) => {
+  return isWeeklyOff(date, weeklyOffs) || isHoliday(date, holidays);
+};
+
+/**
  * Return the next working day on or after `date`.
  * Shifts forward (skipping off days) until a working day is found.
  * Safety cap: max 14 days forward to avoid infinite loops.
  * @param {Date} date
  * @param {Array} weeklyOffs
+ * @param {Array} holidays
  * @returns {Date}  A new Date object (original is not mutated)
  */
-export const nextWorkingDay = (date, weeklyOffs = []) => {
-  if (!weeklyOffs || weeklyOffs.length === 0) return new Date(date);
-
+export const nextWorkingDay = (date, weeklyOffs = [], holidays = []) => {
   let d = new Date(date);
   let safety = 0;
-  while (isWeeklyOff(d, weeklyOffs) && safety < 14) {
+  while (isOffDay(d, weeklyOffs, holidays) && safety < 14) {
     d = new Date(d);
     d.setDate(d.getDate() + 1);
     safety++;
@@ -110,7 +137,7 @@ export const formatShortDate = (date) => {
 };
 
 /**
- * Core pipeline: take a task's start/due dates + flow steps + weeklyOffs,
+ * Core pipeline: take a task's start/due dates + flow steps + weeklyOffs + holidays,
  * and return adjusted per-step date ranges.
  *
  * Algorithm:
@@ -127,6 +154,7 @@ export const formatShortDate = (date) => {
  * @param {string|Date} taskDue     Task due date
  * @param {Array<{taskName, assignee, weightage}>} flows  Flow steps
  * @param {Array} weeklyOffs        Company weekly-off rules
+ * @param {Array} holidays          Company holidays
  * @returns {Array<{
  *   index: number,
  *   taskName: string,
@@ -141,7 +169,8 @@ export const computeFlowDatesWithSchedule = (
   taskStart,
   taskDue,
   flows,
-  weeklyOffs = []
+  weeklyOffs = [],
+  holidays = []
 ) => {
   if (!taskStart || !taskDue || !flows || flows.length === 0) return [];
 
@@ -151,7 +180,7 @@ export const computeFlowDatesWithSchedule = (
   if (isNaN(rawTaskStart.getTime()) || isNaN(rawTaskDue.getTime())) return [];
 
   // Adjust task startDate if it falls on an off-day (cascade from first step)
-  const adjustedTaskStart = nextWorkingDay(rawTaskStart, weeklyOffs);
+  const adjustedTaskStart = nextWorkingDay(rawTaskStart, weeklyOffs, holidays);
 
   const weights = flows.map((s) => (s.weightage !== undefined ? s.weightage : 1));
   const totalWeightage = weights.reduce((sum, w) => sum + w, 0);
@@ -194,13 +223,34 @@ export const computeFlowDatesWithSchedule = (
     const clampedRawDue = rawDue > rawTaskDue ? new Date(rawTaskDue) : rawDue;
 
     // Adjust to next working day
-    const adjustedDue = nextWorkingDay(clampedRawDue, weeklyOffs);
+    const adjustedDue = nextWorkingDay(clampedRawDue, weeklyOffs, holidays);
 
     // Don't exceed task due date after adjustment either (keep clamped)
     const finalDue = adjustedDue > rawTaskDue ? new Date(rawTaskDue) : adjustedDue;
 
     const wasAdjusted =
       clampedRawDue.toDateString() !== finalDue.toDateString();
+
+    // Determine if it was a weekly off or a holiday that caused the adjustment
+    let skippedDayType = null;
+    let skippedDayName = null;
+
+    if (wasAdjusted) {
+      if (isHoliday(clampedRawDue, holidays)) {
+        const holiday = holidays.find(h => {
+          const d1 = new Date(h.date);
+          const d2 = new Date(clampedRawDue);
+          d1.setHours(0,0,0,0);
+          d2.setHours(0,0,0,0);
+          return d1.getTime() === d2.getTime();
+        });
+        skippedDayType = 'Holiday';
+        skippedDayName = holiday ? holiday.name : 'Holiday';
+      } else {
+        skippedDayType = 'Weekly Off';
+        skippedDayName = clampedRawDue.toLocaleDateString("en-US", { weekday: "long" });
+      }
+    }
 
     result.push({
       index: i,
@@ -210,10 +260,8 @@ export const computeFlowDatesWithSchedule = (
       startDate: new Date(stepStartDate),
       dueDate: new Date(finalDue),
       wasAdjusted,
-      // The original day name that was skipped, for UI tooltip
-      skippedDay: wasAdjusted
-        ? clampedRawDue.toLocaleDateString("en-US", { weekday: "long" })
-        : null,
+      skippedDay: skippedDayName,
+      skippedDayType: skippedDayType
     });
 
     // Cascade: next step starts where this one ends

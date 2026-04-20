@@ -12,6 +12,7 @@ import {
   useProjectDetails,
   useGetAllEmployees,
   useGetWorkSchedule,
+  useGetHolidays,
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
@@ -20,6 +21,7 @@ import Modal from "../../shared/modal";
 import {
   computeFlowDatesWithSchedule,
   isWeeklyOff,
+  isHoliday,
   formatShortDate,
 } from "../../../utils/workingDayUtils";
 
@@ -46,6 +48,9 @@ const AddTask = ({
   // Fetch company work schedule (weekly-off rules)
   const { data: workSchedule } = useGetWorkSchedule(companyId);
   const weeklyOffs = workSchedule?.weeklyOffs || [];
+
+  // Fetch company holidays
+  const { data: holidays = [] } = useGetHolidays(companyId);
 
   const handleClose = () => {
     resetForm();
@@ -282,7 +287,8 @@ const AddTask = ({
             values.startDate,
             values.dueDate,
             selectedFlow.flows,
-            weeklyOffs
+            weeklyOffs,
+            holidays
           );
 
           // Format for Formik: simplified for the backend but keeps metadata for UI
@@ -293,6 +299,7 @@ const AddTask = ({
             dueDate: s.dueDate.toISOString().split('T')[0],
             wasAdjusted: s.wasAdjusted,
             skippedDay: s.skippedDay,
+            skippedDayType: s.skippedDayType,
             weightage: s.weightage,
             requiresClientApproval: selectedFlow.flows[idx].requiresClientApproval,
             requiresWorkLink: selectedFlow.flows[idx].requiresWorkLink
@@ -310,7 +317,7 @@ const AddTask = ({
         dueDate: values.dueDate
       };
     }
-  }, [values.taskFlow, values.startDate, values.dueDate, taskFlows, weeklyOffs, setFieldValue]);
+  }, [values.taskFlow, values.startDate, values.dueDate, taskFlows, weeklyOffs, holidays, setFieldValue]);
 
   // Handle manual date overrides for subtasks
   const handleSubtaskDateChange = (index, field, newValue) => {
@@ -837,11 +844,13 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                           touched={touched}
                           disabled={!isFormEnabled && !isOtherProjectSelected}
                         />
-                        {values.startDate && isWeeklyOff(new Date(values.startDate), weeklyOffs) && (
+                        {values.startDate && (isWeeklyOff(new Date(values.startDate), weeklyOffs) || isHoliday(new Date(values.startDate), holidays)) && (
                           <div className="flex items-center gap-1.5 mt-1 px-1">
                             <FiAlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                            <span className="text-[11px] text-amber-600 font-medium">
-                              This is a weekly-off day — task can still start here
+                            <span className="text-[11px] text-amber-600 font-medium whitespace-nowrap">
+                              {isHoliday(new Date(values.startDate), holidays)
+                                ? `Holiday: ${holidays.find(h => new Date(h.date).toDateString() === new Date(values.startDate).toDateString())?.name}`
+                                : "Weekly-off day"} — task can still start here
                             </span>
                           </div>
                         )}
@@ -858,11 +867,13 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                           name={"dueDate"}
                           disabled={!isFormEnabled && !isOtherProjectSelected}
                         />
-                        {values.dueDate && isWeeklyOff(new Date(values.dueDate), weeklyOffs) && (
+                        {values.dueDate && (isWeeklyOff(new Date(values.dueDate), weeklyOffs) || isHoliday(new Date(values.dueDate), holidays)) && (
                           <div className="flex items-center gap-1.5 mt-1 px-1">
                             <FiAlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                            <span className="text-[11px] text-amber-600 font-medium">
-                              This is a weekly-off day — subtasks will be adjusted
+                            <span className="text-[11px] text-amber-600 font-medium whitespace-nowrap">
+                              {isHoliday(new Date(values.dueDate), holidays)
+                                ? `Holiday: ${holidays.find(h => new Date(h.date).toDateString() === new Date(values.dueDate).toDateString())?.name}`
+                                : "Weekly-off day"} — subtasks will be adjusted
                             </span>
                           </div>
                         )}
@@ -947,11 +958,11 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                                         </span>
                                         {step.wasAdjusted && (
                                           <span
-                                            title={`Original ${step.skippedDay} was a weekly-off — shifted to next working day`}
+                                            title={`Original ${step.skippedDay} was a ${step.skippedDayType?.toLowerCase() || 'off-day'} — shifted to next working day`}
                                             className="flex items-center gap-0.5 text-[9px] font-bold text-amber-600 cursor-help"
                                           >
                                             <FiAlertTriangle className="w-2.5 h-2.5" />
-                                            (off-day skipped)
+                                            ({step.skippedDayType?.toLowerCase() || 'off-day'} skipped)
                                           </span>
                                         )}
                                       </div>
@@ -975,7 +986,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                                             title="Subtask Due Date"
                                           />
                                         </div>
-                                        
+
                                         {/* Status indicator if manual/auto */}
                                         <span className="text-[9px] text-gray-300 italic">
                                           w:{step.weightage || 0}
@@ -998,10 +1009,10 @@ rounded-3xl max-w-[584px] w-full h-full relative"
 
                     {/* No date range set warning for preview */}
                     {values.taskFlow && (!values.startDate || !values.dueDate) && (
-                       <div className="bg-blue-50 px-3 py-2.5 text-xs text-blue-500 italic flex items-center gap-1.5 border border-blue-200 rounded-xl">
-                         <FiClock className="w-3 h-3" />
-                         Set parent Start &amp; Due dates to preview the flow schedule.
-                       </div>
+                      <div className="bg-blue-50 px-3 py-2.5 text-xs text-blue-500 italic flex items-center gap-1.5 border border-blue-200 rounded-xl">
+                        <FiClock className="w-3 h-3" />
+                        Set parent Start &amp; Due dates to preview the flow schedule.
+                      </div>
                     )}
 
                     {/* Extra Task Work Type Selection */}
