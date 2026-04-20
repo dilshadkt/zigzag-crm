@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Trophy, Medal, Star, TrendingUp, Calendar, 
-  Filter, Users, Award, ArrowRight, Activity, 
-  Zap, AlertCircle, Clock, CheckCircle2 
+import {
+  Trophy, Medal, Star, TrendingUp, Calendar,
+  Filter, Users, Award, ArrowRight, Activity,
+  Zap, AlertCircle, Clock, CheckCircle2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, Area, AreaChart 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Area, AreaChart
 } from "recharts";
 import { getLeaderboard, getPerformanceTrend } from "../../api/service";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -31,7 +31,7 @@ const Leaderboard = () => {
         getLeaderboard(type),
         getPerformanceTrend(type)
       ]);
-      
+
       if (leaderboardRes.success) setData(leaderboardRes.leaderboard);
       if (trendRes.success) setTrendData(trendRes.trend);
     } catch (err) {
@@ -55,25 +55,21 @@ const Leaderboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F9FD] p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F4F9FD] ">
+      <div className="max-w-7xl mx-auto space-y-3">
         {/* Header & Toggle */}
         <header className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-white rounded-xl shadow-sm border border-gray-100">
-              <Trophy className="w-6 h-6 text-[#3F8CFF]" />
-            </div>
             <h1 className="text-xl font-bold text-[#0A1629]">Team Leaderboard</h1>
           </div>
 
-          <div className="flex bg-white/50 backdrop-blur-sm p-1 rounded-xl border border-gray-200/50 shadow-sm">
+          <div className="flex bg-white/50 backdrop-blur-sm p-1.5 rounded-xl border border-gray-200/50">
             {["weekly", "monthly"].map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
-                className={`px-6 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${
-                  type === t ? "bg-[#3F8CFF] text-white shadow-md" : "text-[#7D8592] hover:bg-gray-100"
-                }`}
+                className={`px-6 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${type === t ? "bg-[#3F8CFF] text-white shadow-md" : "text-[#7D8592] hover:bg-gray-100"
+                  }`}
               >
                 {t}
               </button>
@@ -86,14 +82,14 @@ const Leaderboard = () => {
             <LoadingSpinner />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
             {/* Left Column: Line Chart & Top 3 Summary */}
-            <div className="lg:col-span-4 space-y-6">
+            <div className="lg:col-span-4 space-y-3">
               {/* Performance Trend Graph */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm"
+                className="bg-white rounded-xl p-5 border border-gray-100 "
               >
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -104,33 +100,33 @@ const Leaderboard = () => {
                     <TrendingUp className="w-4 h-4 text-[#3F8CFF]" />
                   </div>
                 </div>
-                
+
                 <div className="h-44 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3F8CFF" stopOpacity={0.1}/>
-                          <stop offset="95%" stopColor="#3F8CFF" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#3F8CFF" stopOpacity={0.1} />
+                          <stop offset="95%" stopColor="#3F8CFF" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                      <XAxis 
-                        dataKey="period" 
-                        hide 
+                      <XAxis
+                        dataKey="period"
+                        hide
                       />
                       <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                         labelStyle={{ fontSize: '10px', color: '#7D8592' }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="average" 
-                        stroke="#3F8CFF" 
-                        strokeWidth={3} 
-                        fillOpacity={1} 
-                        fill="url(#colorAvg)" 
+                      <Area
+                        type="monotone"
+                        dataKey="average"
+                        stroke="#3F8CFF"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorAvg)"
                         animationDuration={1500}
                       />
                     </AreaChart>
@@ -147,7 +143,7 @@ const Leaderboard = () => {
                       key={item._id}
                       whileHover={{ scale: 1.02 }}
                       onClick={() => handleRowClick(item.user?._id)}
-                      className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm cursor-pointer flex items-center gap-4 group"
+                      className="bg-white rounded-xl p-4 border border-gray-100 cursor-pointer flex items-center gap-4 group"
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${badge.bg} ${badge.text}`}>
                         {index + 1}
@@ -175,10 +171,10 @@ const Leaderboard = () => {
 
             {/* Right Column: Detailed Table */}
             <div className="lg:col-span-8">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden"
+                className="bg-white rounded-xl border border-gray-100  overflow-hidden"
               >
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
@@ -195,7 +191,7 @@ const Leaderboard = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {(data.length > 0 ? data : []).map((item, index) => (
-                        <tr 
+                        <tr
                           key={item._id}
                           onClick={() => handleRowClick(item.user?._id)}
                           className="hover:bg-[#F4F9FD] group transition-colors cursor-pointer"
