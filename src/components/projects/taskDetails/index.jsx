@@ -219,133 +219,134 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
         <div className="flex flex-col h-full bg-white  overflow-hidden  rounded-3xl  p-6 pb-4">
           <div className="overflow-y-auto flex flex-col  h-full   gap-y-1 custom-scrollbar">
 
-            <div className="flex items-center justify-between mb-2">
-
-              <span className="text-sm text-[#91929E] uppercase">
-                {taskDetails?._id?.slice(0, 8)}
-              </span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 cursor-pointer transition-all duration-200 ${taskDetails?.reworkCount > 0
-                    ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
-                    : "bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100"
-                    }`}
-                  onClick={() => setIsReworkHistoryOpen(true)}
-                  title={taskDetails?.reworkCount > 0 ? "Click to view rework history" : "No rework history"}
-                >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  Rework: {taskDetails?.reworkCount || 0}
+            <div className="flex flex-col gap-2.5 mb-5">
+              {/* Row 1: ID & All Flag Indicators (Full Width) */}
+              <div className="flex flex-wrap items-center gap-2.5 w-full">
+                <span className="text-[11px] text-[#91929E] font-bold uppercase tracking-wider bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                  #{taskDetails?._id?.slice(0, 8)}
                 </span>
-                <span
-                  className="px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 cursor-pointer transition-all duration-200 bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100"
-                  onClick={() => setIsTimelineOpen(true)}
-                  title="View task activity timeline"
-                >
-                  <FiActivity className="w-3 h-3" />
-                  Timeline
-                </span>
-                {taskDetails?.totalActualTime > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 font-medium">
                   <span
-                    className="px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
-                    title={`Total actual time spent: ${formatTime(taskDetails.totalActualTime)}`}
-                  >
-                    <FiClock className="w-3 h-3" />
-                    {formatTime(taskDetails.totalActualTime)}
-                  </span>
-                )}
-                {taskDetails?.performance > 0 && (
-                  <span
-                    className={`px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 ${taskDetails.performance >= 100
-                      ? "bg-green-50 text-green-600 border-green-100"
-                      : taskDetails.performance >= 70
-                        ? "bg-yellow-50 text-yellow-600 border-yellow-100"
-                        : "bg-red-50 text-red-600 border-red-100"
+                    className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 cursor-pointer transition-all duration-200 ${taskDetails?.reworkCount > 0
+                      ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100"
+                      : "bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100"
                       }`}
-                    title={`Performance: ${taskDetails.performance}% (Estimate vs Actual)`}
+                    onClick={() => setIsReworkHistoryOpen(true)}
+                    title={taskDetails?.reworkCount > 0 ? "Click to view rework history" : "No rework history"}
                   >
-                    <FiTarget className="w-3 h-3" />
-                    Perf: {taskDetails.performance}%
-                  </span>
-                )}
-
-                {taskDetails?.priority && (
-                  <span
-                    className={`px-3 py-1 text-xs font-semibold rounded-full border flex items-center gap-1 ${taskDetails.priority.toLowerCase() === "high" || taskDetails.priority.toLowerCase() === "urgent"
-                      ? "bg-rose-50 text-rose-600 border-rose-100"
-                      : taskDetails.priority.toLowerCase() === "medium"
-                        ? "bg-amber-50 text-amber-600 border-amber-100"
-                        : "bg-emerald-50 text-emerald-600 border-emerald-100"
-                      }`}
-                    title={`Priority: ${taskDetails.priority}`}
-                  >
-                    <FiFlag className="w-3 h-3" />
-                    {taskDetails.priority}
-                  </span>
-                )}
-                {(taskDetails?.requiresClientApproval ||
-                  taskDetails?.taskFlow?.flows?.some(
-                    (flow) => flow.requiresClientApproval
-                  )) && (
-                    <span
-                      className="px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
-                      title="This task requires final client approval"
+                    <svg
+                      className="w-2.5 h-2.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z"
-                        />
-                      </svg>
-                      Client Approval Required
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    Rework: {taskDetails?.reworkCount || 0}
+                  </span>
+                  <span
+                    className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 cursor-pointer transition-all duration-200 bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100"
+                    onClick={() => setIsTimelineOpen(true)}
+                    title="View task activity timeline"
+                  >
+                    <FiActivity className="w-2.5 h-2.5" />
+                    Timeline
+                  </span>
+                  {taskDetails?.totalActualTime > 0 && (
+                    <span
+                      className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
+                      title={`Total actual time spent: ${formatTime(taskDetails.totalActualTime)}`}
+                    >
+                      <FiClock className="w-2.5 h-2.5" />
+                      {formatTime(taskDetails.totalActualTime)}
                     </span>
                   )}
-                {isWorkLinkRequired(taskDetails) && (
-                  <button
-                    onClick={() => setIsWorkLinkModalOpen(true)}
-                    className={`px-3 py-1 text-xs font-bold rounded-full border flex items-center gap-1 transition-all duration-200 ${getCurrentLink(taskDetails)
-                        ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
-                        : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
-                      }`}
-                    title={
-                      getCurrentLink(taskDetails)
-                        ? "Work link provided. Click to edit/remove."
-                        : "Work link is required for this task. Click to add."
-                    }
-                  >
-                    <FiLink className="w-3.5 h-3.5" />
-                    {getCurrentLink(taskDetails)
-                      ? "Work Link Attached"
-                      : "Link Required"}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flexBetween">
-              <div className="flex items-center gap-3">
-                <h4 className="text-lg font-medium">{taskDetails?.title}</h4>
+                  {taskDetails?.performance > 0 && (
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 ${taskDetails.performance >= 100
+                        ? "bg-green-50 text-green-600 border-green-100"
+                        : taskDetails.performance >= 70
+                          ? "bg-yellow-50 text-yellow-600 border-yellow-100"
+                          : "bg-red-50 text-red-600 border-red-100"
+                        }`}
+                      title={`Performance: ${taskDetails.performance}% (Estimate vs Actual)`}
+                    >
+                      <FiTarget className="w-2.5 h-2.5" />
+                      Perf: {taskDetails.performance}%
+                    </span>
+                  )}
 
+                  {taskDetails?.priority && (
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 ${taskDetails.priority.toLowerCase() === "high" || taskDetails.priority.toLowerCase() === "urgent"
+                        ? "bg-rose-50 text-rose-600 border-rose-100"
+                        : taskDetails.priority.toLowerCase() === "medium"
+                          ? "bg-amber-50 text-amber-600 border-amber-100"
+                          : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                        }`}
+                      title={`Priority: ${taskDetails.priority}`}
+                    >
+                      <FiFlag className="w-2.5 h-2.5" />
+                      {taskDetails.priority}
+                    </span>
+                  )}
+                  {(taskDetails?.requiresClientApproval ||
+                    taskDetails?.taskFlow?.flows?.some(
+                      (flow) => flow.requiresClientApproval
+                    )) && (
+                      <span
+                        className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 bg-purple-50 text-purple-600 border-purple-100 "
+                        title="This task requires final client approval"
+                      >
+                        <svg
+                          className="w-3 h-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M2.166 4.9L9.03 9.08a2.42 2.42 0 002.344 0l6.863-4.18A2.5 2.5 0 0015.632 1H4.768a2.502 2.502 0 00-2.602 3.9zM18 7.042l-6.203 3.782a4.59 4.59 0 01-4.744 0L1 7.042V14.5a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5V7.042z"
+                          />
+                        </svg>
+                        Approval Required
+                      </span>
+                    )}
+                  {isWorkLinkRequired(taskDetails) && (
+                    <button
+                      onClick={() => setIsWorkLinkModalOpen(true)}
+                      className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 transition-all duration-200 ${getCurrentLink(taskDetails)
+                          ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                          : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                        }`}
+                      title={
+                        getCurrentLink(taskDetails)
+                          ? "Work link provided. Click to edit/remove."
+                          : "Work link is required for this task. Click to add."
+                      }
+                    >
+                      <FiLink className="w-3 h-3" />
+                      {getCurrentLink(taskDetails)
+                        ? "Work Link Attached"
+                        : "Link Required"}
+                    </button>
+                  )}
+                </div>
               </div>
-              <StatusButton
-                taskDetails={taskDetails}
-                disabled={!canChangeStatus}
-                showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask}
-              />
+
+              {/* Row 2: Title & Status Action */}
+              <div className="flexBetween items-center gap-4">
+                <h4 className="text-xl font-bold text-gray-800">{taskDetails?.title}</h4>
+                <StatusButton
+                  taskDetails={taskDetails}
+                  disabled={!canChangeStatus}
+                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask}
+                />
+              </div>
             </div>
 
             <RecurringTaskInfo taskDetails={taskDetails} />

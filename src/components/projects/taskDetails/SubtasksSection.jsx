@@ -180,49 +180,39 @@ const SubtasksSection = ({
                   subtask
                 )}`}
               >
-                <div className="flexBetween mb-2">
-                  <div className="flex items-center gap-2">
-                    <h6 className={`font-medium flex items-center gap-1.5 ${isLocked ? 'text-gray-400' : 'text-gray-800'}`}>
-                      {isLocked && (
-                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      {subtask.title}
-                    </h6>
-
+                <div className="flex flex-col gap-2 mb-4">
+                  {/* Row 1: Flags & Indicators (Full Width to prevent wrapping) */}
+                  <div className="flex flex-wrap items-center gap-1.5 w-full">
                     {/* Content Indicators */}
-                    <div className="flex items-center gap-1.5 ml-1">
-                      {subtask.copyOfDescription && (
-                        <div
-                          className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
-                          title="Has Content Description"
-                        >
-                          <FiEdit3 className="w-2.5 h-2.5" />
-                          Content
-                        </div>
-                      )}
-                      {subtask.ideas && (
-                        <div
-                          className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-md text-[9px] font-bold uppercase"
-                          title="Has Ideas"
-                        >
-                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3a1 1 0 012 0v2a1 1 0 11-2 0V5zM9 9a1 1 0 000 2v3a1 1 0 102 0v-3a1 1 0 00-2 0z" />
-                          </svg>
-                          Ideas
-                        </div>
-                      )}
-                      {subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0 && (
-                        <div
-                          className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[9px] font-bold uppercase"
-                          title={`${Object.keys(subtask.publishUrls).length} Publish URLs`}
-                        >
-                          <FiLink className="w-2.5 h-2.5" />
-                          URLs ({Object.keys(subtask.publishUrls).length})
-                        </div>
-                      )}
-                    </div>
+                    {subtask.copyOfDescription && (
+                      <div
+                        className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
+                        title="Has Content Description"
+                      >
+                        <FiEdit3 className="w-2.5 h-2.5" />
+                        Content
+                      </div>
+                    )}
+                    {subtask.ideas && (
+                      <div
+                        className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-md text-[9px] font-bold uppercase"
+                        title="Has Ideas"
+                      >
+                        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3a1 1 0 012 0v2a1 1 0 11-2 0V5zM9 9a1 1 0 000 2v3a1 1 0 102 0v-3a1 1 0 00-2 0z" />
+                        </svg>
+                        Ideas
+                      </div>
+                    )}
+                    {subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0 && (
+                      <div
+                        className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[9px] font-bold uppercase"
+                        title={`${Object.keys(subtask.publishUrls).length} Publish URLs`}
+                      >
+                        <FiLink className="w-2.5 h-2.5" />
+                        URLs ({Object.keys(subtask.publishUrls).length})
+                      </div>
+                    )}
 
                     {isAssignedToSubTask && (
                       <span
@@ -286,30 +276,30 @@ const SubtasksSection = ({
                           setIsWorkLinkModalOpen(true);
                         }}
                         className={`px-2 py-0.5 text-[10px] font-bold 
-                      rounded-full flex items-center gap-1 border transition-colors ${getCurrentLink(subtask) 
-                          ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100" 
-                          : "bg-orange-100 text-orange-600 border-orange-200 hover:bg-orange-200"}`}
+                      rounded-full flex items-center gap-1 border transition-colors ${getCurrentLink(subtask)
+                            ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                            : "bg-orange-100 text-orange-600 border-orange-200 hover:bg-orange-200"}`}
                         title={getCurrentLink(subtask) ? "Work link provided. Click to edit." : "Work link is mandatory for this subtask. Click to add."}
                       >
                         <FiLink className="w-2.5 h-2.5" />
                         {getCurrentLink(subtask) ? "Work Link Attached" : "Link Required"}
                       </button>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
+
+                    {/* Priority & Rework (Moved to Row 1) */}
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${subtask.priority === "High"
-                        ? "bg-red-100 text-red-800"
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-colors ${subtask.priority === "High"
+                        ? "bg-red-100 text-red-800 border border-red-200"
                         : subtask.priority === "Medium"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
+                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                          : "bg-green-100 text-green-800 border border-green-200"
                         }`}
                     >
                       {subtask.priority}
                     </span>
 
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold border flex items-center gap-1 cursor-help transition-all duration-200 ${subtask.reworkCount > 0
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 cursor-help transition-all duration-200 ${subtask.reworkCount > 0
                         ? "bg-red-50 text-red-600 border-red-100"
                         : "bg-gray-50 text-gray-400 border-gray-100"
                         }`}
@@ -321,78 +311,92 @@ const SubtasksSection = ({
                         }
                       }}
                     >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
                       {subtask.reworkCount || 0}
                     </span>
+                  </div>
 
-                    <button
-                      onClick={() => {
-                        setTimelineSubTask(subtask);
-                        setTimelineModalOpen(true);
-                      }}
-                      className="p-1 px-2 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
-                      title="View subtask activity timeline"
-                    >
-                      <FiActivity className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-semibold uppercase">Log</span>
-                    </button>
+                  {/* Row 2: Title & Actions */}
+                  <div className="flexBetween items-center gap-4">
+                    <h6 className={`font-semibold text-sm flex items-center gap-2 ${isLocked ? 'text-gray-400' : 'text-gray-800'}`}>
+                      {isLocked && (
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                      {subtask.title}
+                    </h6>
 
-                    <SubTaskStatusButton
-                      subTask={subtask}
-                      parentTaskId={taskDetails?._id}
-                      parentTaskFlow={taskDetails?.taskFlow}
-                      showAllOptions={
-                        isCompany ||
-                        isAdmin ||
-                        hasPermission("tasks", "changeStatus") ||
-                        hasPermission("tasks", "edit")
-                      }
-                      canEdit={
-                        isCompany ||
-                        hasPermission("tasks", "changeStatus") ||
-                        isAssignedToSubTask
-                      }
-                      canEditTask={canEditTask}
-                      isAdmin={isAdmin}
-                    />
-                    {/* Edit button for users with permission and assigned users */}
-                    {(canEditTask || isAdmin) && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button
-                        onClick={() => onEditSubTask(subtask)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
-                        title="Edit subtask"
+                        onClick={() => {
+                          setTimelineSubTask(subtask);
+                          setTimelineModalOpen(true);
+                        }}
+                        className="p-1 px-2 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
+                        title="View subtask activity timeline"
                       >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
+                        <FiActivity className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-semibold uppercase">Log</span>
                       </button>
-                    )}
-                    {/* Users with delete permission can delete subtasks */}
-                    {canDeleteSubtasks && (
-                      <button
-                        onClick={() => onDeleteSubTask(subtask._id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-700 p-1"
-                        title="Delete subtask"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
+
+                      <SubTaskStatusButton
+                        subTask={subtask}
+                        parentTaskId={taskDetails?._id}
+                        parentTaskFlow={taskDetails?.taskFlow}
+                        showAllOptions={
+                          isCompany ||
+                          isAdmin ||
+                          hasPermission("tasks", "changeStatus") ||
+                          hasPermission("tasks", "edit")
+                        }
+                        canEdit={
+                          isCompany ||
+                          hasPermission("tasks", "changeStatus") ||
+                          isAssignedToSubTask
+                        }
+                        canEditTask={canEditTask}
+                        isAdmin={isAdmin}
+                      />
+                      {/* Edit button for users with permission and assigned users */}
+                      {(canEditTask || isAdmin) && (
+                        <button
+                          onClick={() => onEditSubTask(subtask)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
+                          title="Edit subtask"
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    )}
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                      )}
+                      {/* Users with delete permission can delete subtasks */}
+                      {canDeleteSubtasks && (
+                        <button
+                          onClick={() => onDeleteSubTask(subtask._id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-700 p-1"
+                          title="Delete subtask"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 {/* Basic description (always shown) */}
