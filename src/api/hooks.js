@@ -262,7 +262,7 @@ export const useEmpoyees = (page = null, filters = null, search = "") => {
 
       if (page) {
         params.append("page", page.toString());
-        params.append("limit", "10");
+        params.append("limit", "100");
       }
 
       if (filters) {
@@ -2268,7 +2268,7 @@ export const useAttendanceManager = () => {
   const { data: todaySubTasks, isLoading: tasksLoading } = useGetEmployeeSubTasksToday(
     user?._id || null
   );
-  
+
   const clockInMutation = useClockIn();
   const clockOutMutation = useClockOut();
   const startBreakMutation = useStartBreak();
@@ -2288,8 +2288,8 @@ export const useAttendanceManager = () => {
 
   // Calculate if end shift is blocked by pending tasks without reasons
   const pendingTasksWithoutReason = (todaySubTasks?.subTasks || []).filter(
-    (task) => 
-      !task.hasPendingReasonToday && 
+    (task) =>
+      !task.hasPendingReasonToday &&
       !["on-review", "approved", "completed", "client-approved"].includes(task.status)
   );
 

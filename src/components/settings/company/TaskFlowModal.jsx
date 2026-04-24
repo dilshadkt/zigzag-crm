@@ -1,8 +1,108 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useEmpoyees } from "../../../api/hooks";
 import { useCreateTaskFlow, useUpdateTaskFlow } from "../../../api/hooks";
 import ModalLayout from "../../shared/modal";
-import { FiPlus, FiTrash2, FiLayers, FiUser, FiHash, FiCheckCircle, FiInfo, FiChevronRight } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiLayers, FiUser, FiHash, FiCheckCircle, FiInfo, FiChevronRight, FiChevronDown, FiSearch, FiCheck } from "react-icons/fi";
+import clsx from "clsx";
+
+const SearchableSelect = ({ options, value, onChange, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
+
+  const selectedOption = options.find((opt) => opt._id === value);
+
+  const filteredOptions = options.filter((opt) =>
+    opt.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative flex-1" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-bold text-gray-700 outline-none focus:border-blue-400 transition-all text-left flex items-center justify-between hover:border-blue-300"
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          {selectedOption ? (
+            <div className="w-5 h-5 rounded bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] shrink-0">
+              {selectedOption.name.charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <div className="w-5 h-5 rounded bg-gray-50 text-gray-300 flex items-center justify-center shrink-0">
+              <FiUser className="w-3 h-3" />
+            </div>
+          )}
+          <span className={clsx("truncate pr-1", !selectedOption && "text-gray-400 font-medium")}>
+            {selectedOption ? selectedOption.name : placeholder}
+          </span>
+        </div>
+        <FiChevronDown className={clsx("w-3.5 h-3.5 text-gray-300 transition-transform shrink-0", isOpen && "rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-[100] mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-2xl shadow-gray-200 overflow-hidden min-w-[200px]">
+          <div className="p-2 border-b border-gray-50 bg-gray-50/50">
+            <div className="relative">
+              <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
+              <input
+                autoFocus
+                className="w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-8 pr-2 text-[11px] font-medium outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                placeholder="Search team member..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => (
+                <button
+                  key={opt._id}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt._id);
+                    setIsOpen(false);
+                    setSearchTerm("");
+                  }}
+                  className={clsx(
+                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all text-left mb-0.5 last:mb-0",
+                    value === opt._id
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-600 hover:bg-gray-50"
+                  )}
+                >
+                  <div className={clsx(
+                    "w-5 h-5 rounded-md flex items-center justify-center text-[9px] shrink-0",
+                    value === opt._id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-400"
+                  )}>
+                    {opt.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="flex-1 truncate">{opt.name}</span>
+                  {value === opt._id && <FiCheck className="w-3 h-3 shrink-0" />}
+                </button>
+              ))
+            ) : (
+              <div className="py-4 px-2 text-center text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                No members found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   const [name, setName] = useState(taskFlow?.name || "");
@@ -18,7 +118,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
       }))
       : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]
   );
-  
+
   const { data: employeesData } = useEmpoyees(1);
   const employees = employeesData?.employees || [];
 
@@ -50,7 +150,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
 
   const addFlow = () =>
     setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]);
-    
+
   const removeFlow = (idx) =>
     setFlows((prev) => prev.filter((_, i) => i !== idx));
 
@@ -126,8 +226,8 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
 
             <div className="flex flex-col gap-2">
               {flows.map((flow, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="group flex flex-col gap-2 p-3 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-white hover:border-blue-100 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300 relative"
                 >
                   <div className="flex items-center gap-3">
@@ -154,19 +254,12 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                     <FiChevronRight className="text-gray-300 shrink-0" />
 
                     {/* Assignee Selection */}
-                    <div className="flex-1 relative">
-                      <select
-                        className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-bold text-gray-700 outline-none focus:border-blue-400 transition-colors cursor-pointer appearance-none"
-                        value={flow.assignee}
-                        onChange={(e) => handleFlowChange(idx, "assignee", e.target.value)}
-                        required
-                      >
-                        <option value="">Stage Lead (Assignee)</option>
-                        {employees.map((emp) => (
-                          <option key={emp._id} value={emp._id}>{emp.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <SearchableSelect
+                      options={employees}
+                      value={flow.assignee}
+                      onChange={(val) => handleFlowChange(idx, "assignee", val)}
+                      placeholder="Stage Lead (Assignee)"
+                    />
 
                     {/* Weightage Small */}
                     <div className="w-16 flex flex-col gap-1 shrink-0">
@@ -255,8 +348,8 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
             className="px-6 py-2 text-[12px] font-bold text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all active:scale-[0.98] disabled:opacity-50"
             disabled={createTaskFlow.isLoading || updateTaskFlow.isLoading}
           >
-            {createTaskFlow.isLoading || updateTaskFlow.isLoading 
-              ? "Saving Configuration..." 
+            {createTaskFlow.isLoading || updateTaskFlow.isLoading
+              ? "Saving Configuration..."
               : taskFlow ? "Update Pipeline" : "Deploy Pipeline"}
           </button>
         </div>
