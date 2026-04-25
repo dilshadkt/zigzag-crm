@@ -53,6 +53,16 @@ export const addLeadNote = async ({ leadId, noteData }) => {
   return response.data;
 };
 
+export const updateLeadNote = async ({ leadId, noteId, noteData }) => {
+  const response = await apiClient.put(`/leads/${leadId}/notes/${noteId}`, noteData);
+  return response.data;
+};
+
+export const deleteLeadNote = async ({ leadId, noteId }) => {
+  const response = await apiClient.delete(`/leads/${leadId}/notes/${noteId}`);
+  return response.data;
+};
+
 export const getLeadAttachments = async (leadId) => {
   const response = await apiClient.get(`/leads/${leadId}/attachments`);
   return response.data;
@@ -232,6 +242,30 @@ export const useAddLeadNote = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ leadId, noteData }) => addLeadNote({ leadId, noteData }),
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["leadNotes", leadId]);
+      queryClient.invalidateQueries(["lead", leadId]);
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+    },
+  });
+};
+
+export const useUpdateLeadNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, noteId, noteData }) => updateLeadNote({ leadId, noteId, noteData }),
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["leadNotes", leadId]);
+      queryClient.invalidateQueries(["lead", leadId]);
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+    },
+  });
+};
+
+export const useDeleteLeadNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, noteId }) => deleteLeadNote({ leadId, noteId }),
     onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries(["leadNotes", leadId]);
       queryClient.invalidateQueries(["lead", leadId]);

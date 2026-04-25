@@ -8,6 +8,7 @@ import { FiActivity, FiClock, FiTarget, FiEdit3, FiLink } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 import { toast } from "react-hot-toast";
+import LinkPreview from "../../shared/LinkPreview";
 
 const SubtasksSection = ({
   subTasks,
@@ -102,6 +103,8 @@ const SubtasksSection = ({
       return "N/A";
     }
   };
+
+
 
   // Check if subtask has additional content to show
   const hasAdditionalContent = (subtask) => {
@@ -427,16 +430,19 @@ const SubtasksSection = ({
                     }).map((field, idx) => (
                       <div key={idx} className="bg-white/60 border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm">
                         <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">{field.label}</span>
-                        {field.label.toLowerCase().includes("url") || field.value?.toString().startsWith("http") ? (
-                          <a
-                            href={field.value.startsWith("http") ? field.value : `https://${field.value}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-1 truncate max-w-[200px]"
-                          >
-                            {field.value}
-                            <FiLink className="w-2.5 h-2.5" />
-                          </a>
+                        {field.label.toLowerCase().includes("url") || field.value?.toString().trim().startsWith("http") ? (
+                          <div className="flex flex-col gap-1">
+                            <a
+                              href={field.value.trim().startsWith("http") ? field.value.trim() : `https://${field.value.trim()}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                            >
+                              {field.value}
+                              <FiLink className="w-2.5 h-2.5" />
+                            </a>
+                            <LinkPreview url={field.value.trim()} />
+                          </div>
                         ) : (
                           <span className="text-xs text-gray-700 font-medium">{field.value}</span>
                         )}

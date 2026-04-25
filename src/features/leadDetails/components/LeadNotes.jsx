@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { FiSend } from "react-icons/fi";
+import { FiSend, FiEdit2, FiTrash2, FiX, FiCheck } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useAddLeadNote } from "../../../features/leads/api";
 
-const LeadNotes = ({ notes = [], onAddNote, leadId }) => {
+const LeadNotes = ({ notes = [], onAddNote, onEditNote, onDeleteNote, leadId }) => {
   const { user } = useAuth();
   const [noteText, setNoteText] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState(null);
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editText, setEditText] = useState("");
 
   const { mutate: addNote, isLoading: isAddingNote } = useAddLeadNote();
 
@@ -70,6 +72,32 @@ const LeadNotes = ({ notes = [], onAddNote, leadId }) => {
 
   const formatDate = (dateString) => {
     return dateString;
+  };
+
+  const startEditing = (note) => {
+    setEditingNoteId(note._id || note.id);
+    setEditText(note.text);
+  };
+
+  const cancelEditing = () => {
+    setEditingNoteId(null);
+    setEditText("");
+  };
+
+  const handleEditSubmit = (noteId) => {
+    if (!editText.trim()) return;
+    if (onEditNote) {
+      onEditNote(noteId, editText.trim());
+    }
+    cancelEditing();
+  };
+
+  const handleDelete = (noteId) => {
+    if (window.confirm("Are you sure you want to delete this note?")) {
+      if (onDeleteNote) {
+        onDeleteNote(noteId);
+      }
+    }
   };
 
   return (
@@ -135,20 +163,75 @@ const LeadNotes = ({ notes = [], onAddNote, leadId }) => {
             No notes yet. Add a note to get started.
           </div>
         )}
-        {notes.map((note, index) => (
-          <div
-            key={`${note.date}-${index}`}
-            className="bg-slate-50 rounded-2xl p-4 border border-slate-100"
-          >
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">
-              {note.text}
-            </p>
-            <p className="text-xs text-slate-500 mt-2">
-              Added by <span className="font-semibold">{note.author}</span> on{" "}
-              {formatDate(note.date)}
-            </p>
-          </div>
-        ))}
+        {notes.map((note, index) => {
+          const noteId = note._id || note.id;
+          const isEditing = editingNoteId === noteId;
+
+          return (
+            <div
+              key={noteId || `${note.date}-${index}`}
+              className="bg-slate-50 rounded-2xl p-4 border border-slate-100 group relative"
+            >
+              {isEditing ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="w-full p-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#3f8cff] resize-none"
+                    rows={3}
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={cancelEditing}
+                      className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
+                      title="Cancel"
+                    >
+                      <FiX size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleEditSubmit(noteId)}
+                      disabled={!editText.trim()}
+                      className="p-1.5 rounded-full text-[#3f8cff] hover:bg-blue-50 transition-colors disabled:opacity-50"
+                      title="Save Changes"
+                    >
+                      <FiCheck size={16} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap flex-1">
+                      {note.text}
+                    </p>
+                    <div className="hidden group-hover:flex items-center gap-1 ml-2">
+                      <button
+                        onClick={() => startEditing(note)}
+                        className="p-1.5 rounded-full text-slate-400 hover:text-[#3f8cff] hover:bg-blue-50 transition-colors"
+                        title="Edit note"
+                      >
+                        <FiEdit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(noteId)}
+                        className="p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Delete note"
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Added by <span className="font-semibold">{note.author}</span> on{" "}
+                    {formatDate(note.date)}
+                    {note.isEdited && <span className="ml-2 italic text-slate-400">(edited)</span>}
+                  </p>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

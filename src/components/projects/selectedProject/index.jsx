@@ -50,7 +50,8 @@ const getSocialUrl = (platform, handle) => {
   }
 };
 
-const SelectedProject = ({ currentProject, isLoading }) => {
+const SelectedProject = ({ currentProject, isLoading, selectedMonth }) => {
+  console.log("currentProject", currentProject);
   const navigate = useNavigate();
   const { isCompany, companyId, user } = useAuth();
   const { hasPermission } = usePermissions();
@@ -396,48 +397,86 @@ rounded-3xl  flex flex-col  p-4"
             {currentProject?.workDetails?.length > 0 && (
               <div className="flex flex-col gap-y-3 mt-4 border-t pt-5 border-gray-100">
                 <div className="flex flex-col gap-y-1">
-                  {[...currentProject.workDetails].reverse().slice(0, 3).map((detail) => (
-                    <div
-                      key={detail._id}
-                      className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <FaCalendarAlt className="text-orange-400 text-xs" />
-                          <span className="text-[10px] font-bold text-gray-700 uppercase">
-                            {new Date(detail.month + "-01").toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                          </span>
+                  {currentProject.workDetails
+                    .filter((detail) => detail.month === (selectedMonth || new Date().toISOString().slice(0, 7)))
+                    .map((detail) => (
+                      <div
+                        key={detail._id}
+                        className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <FaCalendarAlt className="text-orange-400 text-xs" />
+                            <span className="text-[10px] font-bold text-gray-700 uppercase">
+                              {new Date(detail.month + "-01").toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {Object.entries(detail).map(([key, value]) => {
-                          if (["month", "year", "monthNumber", "_id", "other", "__v"].includes(key)) return null;
-                          if (value && typeof value === 'object' && (value.total > 0 || value.count > 0)) {
-                            return (
-                              <div
-                                key={key}
-                                className="flex justify-between items-center p-2 bg-white rounded-xl border border-gray-100/50 "
-                              >
-                                <span className="capitalize text-[10px] font-medium text-gray-500">
-                                  {key.replace(/([A-Z])/g, ' $1')}
-                                </span>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xs font-bold text-[#0A1629]">
-                                    {value.completed || 0}/{value.total || 0}
+                        {/* Regular Work Grid */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(detail).map(([key, value]) => {
+                            if (["month", "year", "monthNumber", "_id", "other", "__v"].includes(key)) return null;
+                            if (value && typeof value === 'object' && (value.total > 0 || value.count > 0)) {
+                              return (
+                                <div
+                                  key={key}
+                                  className="flex justify-between items-center p-2 bg-white rounded-xl border border-gray-100/50 "
+                                >
+                                  <span className="capitalize text-[10px] font-medium text-gray-500">
+                                    {key.replace(/([A-Z])/g, ' $1')}
                                   </span>
-                                  {value.completed >= value.total && value.total > 0 && (
-                                    <FaCheckCircle className="text-green-500 text-[10px]" />
-                                  )}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-[#0A1629]">
+                                      {(value.total || 0) - (value.count || 0)}/{value.total || 0}
+                                    </span>
+                                    {value.count >= value.total && value.total > 0 && (
+                                      <FaCheckCircle className="text-green-500 text-[10px]" />
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })}
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        {/* Extra Work Section */}
+                        {Object.entries(detail).some(([key, value]) =>
+                          !["month", "year", "monthNumber", "_id", "other", "__v"].includes(key) &&
+                          value && typeof value === 'object' && value.extra > 0
+                        ) && (
+                          <div className="mt-4 flex flex-col gap-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-[1px] flex-1 bg-gray-100"></div>
+                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-1">Extra Work</span>
+                              <div className="h-[1px] flex-1 bg-gray-100"></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {Object.entries(detail).map(([key, value]) => {
+                                if (["month", "year", "monthNumber", "_id", "other", "__v"].includes(key)) return null;
+                                if (value && typeof value === 'object' && value.extra > 0) {
+                                  return (
+                                    <div
+                                      key={key + "-extra"}
+                                      className="flex justify-between items-center p-2 bg-white rounded-xl border border-gray-100/50"
+                                    >
+                                      <span className="capitalize text-[10px] font-medium text-gray-500">
+                                        {key.replace(/([A-Z])/g, ' $1')}
+                                      </span>
+                                      <span className="text-xs font-bold text-orange-500">
+                                        {value.extra}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                  {currentProject.workDetails.length > 3 && (
+                    ))}
+                  {currentProject.workDetails.length > 0 && (
                     <button className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-tighter text-left ml-1">
                       + View all history
                     </button>

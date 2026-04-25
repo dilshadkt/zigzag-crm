@@ -7,6 +7,7 @@ import Description from "../Field/description";
 import { useUpdateSubTaskById, useGetProjectSocialMedia } from "../../../api/hooks";
 import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare, FiChevronDown, FiChevronUp, FiMic } from "react-icons/fi";
 import VoiceRecorder from "../VoiceRecorder";
+import LinkPreview from "../LinkPreview";
 
 const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = false, isCompany = false, isAdmin = false }) => {
   const fileInputRef = useRef(null);
@@ -207,7 +208,6 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
         return "🔗";
       default:
         return "📎";
-    }
   };
 
   const attachments = subTask.attachments || [];
@@ -561,19 +561,23 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                   {Object.entries(subTask.publishUrls)
                     .filter(([_, url]) => url && url.trim() !== "")
                     .map(([platform, url]) => (
-                    <div key={platform} className="flex items-center gap-3 bg-white/80 p-2.5 rounded-xl border border-gray-100/80">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase w-20 truncate">
-                        {platform}:
-                      </span>
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline truncate flex-1 font-medium"
-                      >
-                        {url}
-                      </a>
-                    </div>
+                      <div key={platform} className="flex flex-col gap-2 bg-white/80 p-2.5 rounded-xl border border-gray-100/80">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase w-20 truncate">
+                            {platform}:
+                          </span>
+                          <a
+                            href={url.trim()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline truncate flex-1 font-medium flex items-center gap-1"
+                          >
+                            {url}
+                            <FiLink className="w-2.5 h-2.5 flex-shrink-0" />
+                          </a>
+                        </div>
+                        <LinkPreview url={url.trim()} />
+                      </div>
                   ))}
                 </div>
               </div>

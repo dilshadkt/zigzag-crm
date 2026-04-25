@@ -108,7 +108,15 @@ const SubTaskStatusButton = ({
 
   // Get status options based on user role or explicit override
   const statusOptions = (isCompany || showAllOptions)
-    ? adminStatusOptions.filter(opt => opt.value !== "client-approved" || isClientApprovalRequired)
+    ? adminStatusOptions.filter(opt => {
+        if (isClientApprovalRequired) {
+          // If client approval is required, hide "Completed" and show "Client Approved"
+          if (opt.value === "completed") return false;
+          return true;
+        }
+        // If client approval is NOT required, hide "Client Approved"
+        return opt.value !== "client-approved";
+      })
     : employeeStatusOptions;
 
   const currentStatus = adminStatusOptions.find(
@@ -129,7 +137,8 @@ const SubTaskStatusButton = ({
       return;
     }
 
-    if (newStatus === "on-review" && isWorkLinkRequired) {
+    // Check if work link is required for the selected status
+    if ((newStatus === "on-review" || newStatus === "completed" || newStatus === "client-approved") && isWorkLinkRequired) {
       // Check if link already exists in custom fields or publish URLs
       const hasLink = (subTask.customFields || []).some(f => 
         (f.label?.toLowerCase().includes("work link") || f.label?.toLowerCase().includes("google drive") || f.label?.toLowerCase().includes("url")) && 
@@ -137,6 +146,12 @@ const SubTaskStatusButton = ({
       ) || (subTask.publishUrls && Object.values(subTask.publishUrls).some(v => v && typeof v === 'string' && v.trim() !== ""));
 
       if (!hasLink) {
+        if (newStatus === "completed" || newStatus === "client-approved") {
+          toast.error("Work link is mandatory for this subtask. Please add it first.", {
+            duration: 4000,
+            position: "top-center"
+          });
+        }
         setPendingStatus(newStatus);
         setIsWorkLinkModalOpen(true);
         setIsOpen(false);
@@ -144,28 +159,12 @@ const SubTaskStatusButton = ({
       }
     }
 
-    // Additional check for completed status if work link is required
-    if (newStatus === "completed" && isWorkLinkRequired) {
-      const hasLink = (subTask.customFields || []).some(f => 
-        (f.label?.toLowerCase().includes("work link") || f.label?.toLowerCase().includes("google drive") || f.label?.toLowerCase().includes("url")) && 
-        f.value && f.value.toString().trim() !== ""
-      ) || (subTask.publishUrls && Object.values(subTask.publishUrls).some(v => v && typeof v === 'string' && v.trim() !== ""));
-      
-      if (!hasLink) {
-        toast.error("Work link is mandatory for this subtask. Please add it first.", {
-          duration: 4000,
-          position: "top-center"
-        });
-        setPendingStatus("on-review"); // Move to review first if missing link? Or just block.
-        setIsWorkLinkModalOpen(true);
-        setIsOpen(false);
-        return;
-      }
-    }
-
     try {
+      // Map client-approved to completed behind the scenes
+      const finalStatus = newStatus === "client-approved" ? "completed" : newStatus;
+      
       await updateSubTaskMutation.mutateAsync({
-        status: newStatus,
+        status: finalStatus,
       });
       setIsOpen(false);
     } catch (error) {
@@ -202,8 +201,11 @@ const SubTaskStatusButton = ({
         updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
       }
 
+      // Map client-approved to completed behind the scenes
+      const finalStatus = pendingStatus === "client-approved" ? "completed" : pendingStatus;
+
       await updateSubTaskMutation.mutateAsync({
-        status: pendingStatus,
+        status: finalStatus,
         customFields: updatedFields,
       });
       
@@ -249,18 +251,21 @@ const SubTaskStatusButton = ({
             onClick={() => setIsOpen(false)}
           />
           <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border z-20 min-w-[120px]">
-            {statusOptions.map((status) => (
-              <button
-                key={status.value}
-                onClick={() => handleStatusChange(status.value)}
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${status.value === subTask.status
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-700"
-                  }`}
-              >
-                {status.label}
-              </button>
-            ))}
+            {statusOptions.map((status) => {
+              const isSelected = status.value === subTask.status || (status.value === "client-approved" && subTask.status === "completed");
+              return (
+                <button
+                  key={status.value}
+                  onClick={() => handleStatusChange(status.value)}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${isSelected
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700"
+                    }`}
+                >
+                  {status.label}
+                </button>
+              );
+            })}
           </div>
         </>
       )}

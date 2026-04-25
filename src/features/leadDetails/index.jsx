@@ -9,7 +9,7 @@ import LeadAttachments from "./components/LeadAttachments";
 import LeadEmails from "./components/LeadEmails";
 import LeadActivityPanel from "./components/LeadActivityPanel";
 import LeadQuickActions from "./components/LeadQuickActions";
-import { useUploadLeadAttachment, useLogLeadActivity, useAddLeadNote, useUpdateLead, useGetLeadStatuses } from "../leads/api";
+import { useUploadLeadAttachment, useLogLeadActivity, useAddLeadNote, useUpdateLead, useGetLeadStatuses, useUpdateLeadNote, useDeleteLeadNote, useGetLeadNotes } from "../leads/api";
 import LeadInteractionModal from "./components/LeadInteractionModal";
 import { toast } from "react-hot-toast";
 
@@ -20,7 +20,30 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   const leadId = lead.id || lead._id;
 
   // Use notes from lead.details (will be updated when API refetches)
-  const notes = lead.details?.notes || [];
+  // Fetch notes via hook to ensure we have IDs for edit/delete
+  const { data: notesData } = useGetLeadNotes(leadId);
+
+  const notes = useMemo(() => {
+    // If we have data from the hook, use it. Otherwise fallback to prop (for initial load)
+    const rawNotes = notesData?.data || lead.details?.notes || [];
+    
+    return rawNotes.map(note => ({
+      _id: note._id || note.id,
+      id: note._id || note.id,
+      text: note.text,
+      author: typeof note.author === 'object' 
+        ? `${note.author.firstName} ${note.author.lastName}`.trim() || note.author.email
+        : note.author,
+      date: note.createdAt 
+        ? new Date(note.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          })
+        : note.date,
+      isEdited: note.isEdited
+    }));
+  }, [notesData, lead.details?.notes]);
   const attachments = lead.details?.attachments || [];
   const phoneNumber = lead.contact?.phone || lead.details?.contact?.phone;
 
@@ -30,6 +53,8 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
   const { mutate: logActivity } = useLogLeadActivity();
   const { mutate: addNote } = useAddLeadNote();
   const { mutate: updateLead } = useUpdateLead();
+  const { mutate: updateNote } = useUpdateLeadNote();
+  const { mutate: deleteNote } = useDeleteLeadNote();
 
   // Get statuses for the modal
   const { data: statusesData } = useGetLeadStatuses();
@@ -230,6 +255,18 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
           <LeadNotes
             notes={notes}
             onAddNote={handleAddNote}
+            onEditNote={(noteId, text) => {
+              updateNote({ leadId, noteId, noteData: { text } }, {
+                onSuccess: () => toast.success("Note updated"),
+                onError: () => toast.error("Failed to update note")
+              });
+            }}
+            onDeleteNote={(noteId) => {
+              deleteNote({ leadId, noteId }, {
+                onSuccess: () => toast.success("Note deleted"),
+                onError: () => toast.error("Failed to delete note")
+              });
+            }}
             leadId={lead.id || lead._id}
           />
         );
