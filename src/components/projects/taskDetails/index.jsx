@@ -257,13 +257,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                     <FiActivity className="w-2.5 h-2.5" />
                     Timeline
                   </span>
-                  {taskDetails?.totalActualTime > 0 && (
+                  {taskDetails?.totalActualTime !== undefined && (
                     <span
                       className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
                       title={`Total actual time spent: ${formatTime(taskDetails.totalActualTime)}`}
                     >
                       <FiClock className="w-2.5 h-2.5" />
-                      {formatTime(taskDetails.totalActualTime)}
+                      Time Taken: {formatTime(taskDetails.totalActualTime)}
                     </span>
                   )}
                   {taskDetails?.performance > 0 && (

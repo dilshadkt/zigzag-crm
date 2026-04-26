@@ -37,16 +37,16 @@ const SubtasksSection = ({
   const updateSubTaskMutation = useUpdateSubTaskById(workLinkSubTask?._id, taskDetails?._id);
 
   const isWorkLinkRequired = (subtask) => {
-    return subtask?.requiresWorkLink || 
-           taskDetails?.taskFlow?.flows?.some(flow => 
-             flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink
-           );
+    return subtask?.requiresWorkLink ||
+      taskDetails?.taskFlow?.flows?.some(flow =>
+        flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink
+      );
   };
 
   const getCurrentLink = (subtask) => {
     if (!subtask || !isWorkLinkRequired(subtask)) return "";
-    const field = (subtask.customFields || []).find(f => 
-      f.label?.toLowerCase().includes("work link") || 
+    const field = (subtask.customFields || []).find(f =>
+      f.label?.toLowerCase().includes("work link") ||
       f.label?.toLowerCase().includes("google drive") ||
       f.label?.toLowerCase().includes("link")
     );
@@ -56,8 +56,8 @@ const SubtasksSection = ({
   const handleWorkLinkSubmit = async (workLink) => {
     try {
       let updatedFields = [...(workLinkSubTask.customFields || [])];
-      const linkFieldIndex = updatedFields.findIndex(f => 
-        f.label?.toLowerCase().includes("work link") || 
+      const linkFieldIndex = updatedFields.findIndex(f =>
+        f.label?.toLowerCase().includes("work link") ||
         f.label?.toLowerCase().includes("google drive") ||
         f.label?.toLowerCase().includes("link")
       );
@@ -71,7 +71,7 @@ const SubtasksSection = ({
       await updateSubTaskMutation.mutateAsync({
         customFields: updatedFields,
       });
-      
+
       setIsWorkLinkModalOpen(false);
       setWorkLinkSubTask(null);
       toast.success("Work link updated successfully!");
@@ -238,13 +238,13 @@ const SubtasksSection = ({
                       </span>
                     )}
 
-                    {subtask?.totalActualTime > 0 && (
+                    {subtask?.totalActualTime !== undefined && (
                       <span
                         className="px-2 py-0.5 text-[10px] font-semibold rounded-full border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
                         title={`Total actual time spent: ${formatTime(subtask.totalActualTime)}`}
                       >
                         <FiClock className="w-2.5 h-2.5" />
-                        {formatTime(subtask.totalActualTime)}
+                        Time Taken: {formatTime(subtask.totalActualTime)}
                       </span>
                     )}
                     {subtask?.performance > 0 && (
@@ -423,43 +423,43 @@ const SubtasksSection = ({
                 {subtask.customFields && subtask.customFields.filter(f => {
                   if (!f.value || f.value.trim() === "") return false;
                   // If it's a work link related field, only show it if requiresWorkLink is true
-                  const isWorkLinkField = f.label?.toLowerCase().includes("work link") || 
-                                         f.label?.toLowerCase().includes("google drive") ||
-                                         f.label?.toLowerCase().includes("link");
+                  const isWorkLinkField = f.label?.toLowerCase().includes("work link") ||
+                    f.label?.toLowerCase().includes("google drive") ||
+                    f.label?.toLowerCase().includes("link");
                   if (isWorkLinkField) return isWorkLinkRequired(subtask);
                   return true;
                 }).length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {subtask.customFields.filter(f => {
-                      if (!f.value || f.value.trim() === "") return false;
-                      const isWorkLinkField = f.label?.toLowerCase().includes("work link") || 
-                                             f.label?.toLowerCase().includes("google drive") ||
-                                             f.label?.toLowerCase().includes("link");
-                      if (isWorkLinkField) return isWorkLinkRequired(subtask);
-                      return true;
-                    }).map((field, idx) => (
-                      <div key={idx} className="bg-white/60 border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm">
-                        <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">{field.label}</span>
-                        {field.label.toLowerCase().includes("url") || field.value?.toString().trim().startsWith("http") ? (
-                          <div className="flex flex-col gap-1">
-                            <a
-                              href={field.value.trim().startsWith("http") ? field.value.trim() : `https://${field.value.trim()}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-1 truncate max-w-[200px]"
-                            >
-                              {field.value}
-                              <FiLink className="w-2.5 h-2.5" />
-                            </a>
-                            <LinkPreview url={field.value.trim()} />
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-700 font-medium">{field.value}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {subtask.customFields.filter(f => {
+                        if (!f.value || f.value.trim() === "") return false;
+                        const isWorkLinkField = f.label?.toLowerCase().includes("work link") ||
+                          f.label?.toLowerCase().includes("google drive") ||
+                          f.label?.toLowerCase().includes("link");
+                        if (isWorkLinkField) return isWorkLinkRequired(subtask);
+                        return true;
+                      }).map((field, idx) => (
+                        <div key={idx} className="bg-white/60 border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">{field.label}</span>
+                          {field.label.toLowerCase().includes("url") || field.value?.toString().trim().startsWith("http") ? (
+                            <div className="flex flex-col gap-1">
+                              <a
+                                href={field.value.trim().startsWith("http") ? field.value.trim() : `https://${field.value.trim()}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                              >
+                                {field.value}
+                                <FiLink className="w-2.5 h-2.5" />
+                              </a>
+                              <LinkPreview url={field.value.trim()} />
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-700 font-medium">{field.value}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
 
                 <div className="flex justify-between text-xs text-gray-500">
