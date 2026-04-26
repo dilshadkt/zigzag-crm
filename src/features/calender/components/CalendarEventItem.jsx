@@ -9,6 +9,7 @@ import {
   getExtraTaskStyle,
 } from "../../../utils/calendarStyles";
 import { truncateText } from "../../../utils/textUtils";
+import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const CalendarEventItem = ({ type, data, showExtraDetails = false }) => {
   const navigate = useNavigate();
@@ -184,7 +185,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
               } bg-orange-500 text-white rounded-full font-semibold flex items-center gap-1 shadow-sm`}
             >
               <span>📌</span>
-              <span>Carried from {formatDate(task.originalDueDate)}</span>
+              <span className={getDueDateColor(task.originalDueDate, task.status)}>Carried from {formatDate(task.originalDueDate)}</span>
             </span>
           </div>
         )}
@@ -362,7 +363,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
               } bg-orange-500 text-white rounded-full font-semibold flex items-center gap-1 shadow-sm`}
             >
               <span>📌</span>
-              <span>Carried from {formatDate(subtask.originalDueDate)}</span>
+              <span className={getDueDateColor(subtask.originalDueDate, subtask.status)}>Carried from {formatDate(subtask.originalDueDate)}</span>
             </span>
           </div>
         )}

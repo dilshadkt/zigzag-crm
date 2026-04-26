@@ -9,6 +9,7 @@ import {
   useGetLeadStatuses,
   useUpdateLead,
 } from "../../leads/api";
+import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const SectionCard = ({ children }) => (
   <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 lg:p-6">
@@ -16,7 +17,7 @@ const SectionCard = ({ children }) => (
   </div>
 );
 
-const LabelValue = ({ label, value, isEditing = false, onEdit }) => (
+const LabelValue = ({ label, value, isEditing = false, onEdit, valueClassName = "" }) => (
   <div>
     <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
     {isEditing && onEdit ? (
@@ -28,7 +29,7 @@ const LabelValue = ({ label, value, isEditing = false, onEdit }) => (
         <FiEdit2 size={12} />
       </button>
     ) : (
-      <p className="text-sm font-semibold text-slate-900">{value || "—"}</p>
+      <p className={`text-sm font-semibold ${valueClassName || "text-slate-900"}`}>{value || "—"}</p>
     )}
   </div>
 );
@@ -686,11 +687,13 @@ const LeadOverviewSection = ({ lead }) => {
                 );
               }
 
+              const leadStatus = lead.status?.name || lead.status || "";
               return (
                 <LabelValue
                   key={field.id}
                   label={field.label}
                   value={displayValue || "—"}
+                  valueClassName={(field.type === "date" || field.label?.toLowerCase().includes("date") || field.label?.toLowerCase().includes("deadline")) ? getDueDateColor(value, leadStatus) : ""}
                 />
               );
             })}

@@ -2,6 +2,7 @@ import React from "react";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const TaskList = ({ tasks }) => {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ const TaskList = ({ tasks }) => {
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-1 text-gray-500">
                   <FiClock className="w-4 h-4" />
-                  <span>
+                  <span className={getDueDateColor(task.dueDate, task.status)}>
                     Due: {format(new Date(task.dueDate), "MMM dd, yyyy")}
                   </span>
                 </div>

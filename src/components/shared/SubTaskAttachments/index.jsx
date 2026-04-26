@@ -208,6 +208,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
         return "🔗";
       default:
         return "📎";
+    }
   };
 
   const attachments = subTask.attachments || [];

@@ -137,6 +137,36 @@ export const formatShortDate = (date) => {
 };
 
 /**
+ * Determine the color for a due date based on its proximity to the current date.
+ * - Green: More than 3 days in the future
+ * - Orange: Within 3 days of due date
+ * - Red: Overdue
+ * @param {string|Date} dueDate
+ * @param {string} status - Optional task status
+ * @returns {string} Tailwind color class
+ */
+export const getDueDateColor = (dueDate, status) => {
+  if (!dueDate) return "";
+
+  // If task is completed or approved, show default color
+  if (status === "completed" || status === "approved" || status === "client-approved") {
+    return "";
+  }
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  const diffTime = due.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return "text-red-600 font-semibold"; // Overdue
+  if (diffDays <= 3) return "text-orange-600 font-semibold"; // Deadline close
+  return "text-green-600 font-semibold"; // Far
+};
+
+/**
  * Core pipeline: take a task's start/due dates + flow steps + weeklyOffs + holidays,
  * and return adjusted per-step date ranges.
  *

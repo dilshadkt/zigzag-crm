@@ -145,8 +145,11 @@ const SubTaskStatusButton = ({
         f.value && f.value.toString().trim() !== ""
       ) || (subTask.publishUrls && Object.values(subTask.publishUrls).some(v => v && typeof v === 'string' && v.trim() !== ""));
 
-      if (!hasLink) {
-        if (newStatus === "completed" || newStatus === "client-approved") {
+      // Always prompt for a link if moving from re-work to on-review
+      const isMovingFromReworkToReview = subTask.status === "re-work" && (newStatus === "on-review" || newStatus === "completed" || newStatus === "client-approved");
+
+      if (!hasLink || isMovingFromReworkToReview) {
+        if (!hasLink && (newStatus === "completed" || newStatus === "client-approved")) {
           toast.error("Work link is mandatory for this subtask. Please add it first.", {
             duration: 4000,
             position: "top-center"
@@ -283,6 +286,7 @@ const SubTaskStatusButton = ({
         onSubmit={handleWorkLinkSubmit}
         isLoading={updateSubTaskMutation.isLoading}
         initialValue={getCurrentLink(subTask)}
+        history={subTask.workLinkHistory}
       />
     </div>
   );

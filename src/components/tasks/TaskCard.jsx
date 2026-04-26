@@ -11,6 +11,7 @@ import {
   FiCheckCircle,
   FiTarget,
 } from "react-icons/fi";
+import { getDueDateColor } from "../../utils/workingDayUtils";
 
 const UserAvatar = ({ user, size = "w-5 h-5" }) => {
   const [error, setError] = useState(false);
@@ -273,7 +274,7 @@ const TaskCard = memo(({ task, filter }) => {
 
             <div className="flex items-center gap-2">
               <FiCalendar className="w-4 h-4" />
-              <span>Due: {formatDate(task.dueDate)}</span>
+              <span className={getDueDateColor(task.dueDate, task.status)}>Due: {formatDate(task.dueDate)}</span>
             </div>
 
             {task.project && (

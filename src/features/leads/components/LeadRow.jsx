@@ -5,6 +5,7 @@ import LeadStatusBadge from "./LeadStatusBadge";
 import LeadRowContextMenu from "./LeadRowContextMenu";
 import StatusDropdown from "./StatusDropdown";
 import SelectFieldDropdown from "./SelectFieldDropdown";
+import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
@@ -249,8 +250,9 @@ const LeadRow = memo(({
     }
 
     if (column.type === "date" || column.fieldType === "date") {
+      const leadStatus = lead.status?.name || lead.status || "";
       return (
-        <div className="text-[13px]  whitespace-nowrap text-slate-900">{formatDate(value)}</div>
+        <div className={`text-[13px] whitespace-nowrap ${(column.key === 'scheduled' || column.key?.toLowerCase().includes('date')) ? getDueDateColor(value, leadStatus) : 'text-slate-900'}`}>{formatDate(value)}</div>
       );
     }
 

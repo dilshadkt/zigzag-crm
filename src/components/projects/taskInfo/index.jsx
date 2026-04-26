@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { assetPath } from "../../../utils/assetPath";
+import { getDueDateColor } from "../../../utils/workingDayUtils";
 import "./taskInfo.css";
 
 const TaskUserAvatar = ({ user, size = "w-8 h-8", fontSize = "text-[10px]" }) => {
@@ -231,7 +232,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
               {/* Current Due Date with click to view history */}
               <div className="relative inline-block">
                 <span
-                  className={`text-sm text-[#0A1629] ${taskDetails?.dueDateHistory &&
+                  className={`text-sm ${getDueDateColor(taskDetails?.dueDate, taskDetails?.status)} ${taskDetails?.dueDateHistory &&
                     taskDetails.dueDateHistory.length > 0
                     ? "cursor-pointer hover:text-blue-600 transition-colors underline decoration-dotted"
                     : ""

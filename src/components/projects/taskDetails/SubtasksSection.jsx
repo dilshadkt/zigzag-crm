@@ -9,6 +9,7 @@ import { usePermissions } from "../../../hooks/usePermissions";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 import { toast } from "react-hot-toast";
 import LinkPreview from "../../shared/LinkPreview";
+import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const SubtasksSection = ({
   subTasks,
@@ -285,7 +286,16 @@ const SubtasksSection = ({
                         title={getCurrentLink(subtask) ? "Work link provided. Click to edit." : "Work link is mandatory for this subtask. Click to add."}
                       >
                         <FiLink className="w-2.5 h-2.5" />
-                        {getCurrentLink(subtask) ? "Work Link Attached" : "Link Required"}
+                        {getCurrentLink(subtask) ? (
+                          <span className="flex items-center gap-1">
+                            Work Link Attached
+                            {subtask.workLinkHistory?.length > 1 && (
+                              <span className="bg-green-200 text-green-800 px-1 rounded text-[8px]">
+                                {subtask.workLinkHistory.length}
+                              </span>
+                            )}
+                          </span>
+                        ) : "Link Required"}
                       </button>
                     )}
 
@@ -486,7 +496,7 @@ const SubtasksSection = ({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>
+                    <span className={getDueDateColor(subtask.dueDate, subtask.status)}>
                       Due:{" "}
                       {subtask.dueDate
                         ? new Date(subtask.dueDate).toLocaleDateString()
@@ -737,6 +747,7 @@ const SubtasksSection = ({
         onSubmit={handleWorkLinkSubmit}
         isLoading={updateSubTaskMutation.isLoading}
         initialValue={getCurrentLink(workLinkSubTask)}
+        history={workLinkSubTask?.workLinkHistory}
       />
     </div>
   );
