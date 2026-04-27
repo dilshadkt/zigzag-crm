@@ -148,12 +148,19 @@ rounded-3xl  flex flex-col  p-4"
             />
           )}
         </div>
-        <span className="-translate-y-1.5 mt-2 uppercase">
-          {currentProject?._id?.slice(0, 7)}
-        </span>
+        <div
+          onClick={() => navigate(`/projects/${currentProject?._id}`)}
+          className="-translate-y-1.5 mt-2 uppercase text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer flex items-center gap-1 group transition-colors"
+          title="View Project Overview"
+        >
+          <span>#{currentProject?._id?.slice(-7)}</span>
+          <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </div>
         <div className="flex flex-col gap-y-2 my-4">
           <h4 className="font-medium">Description</h4>
-          <p className="text-[#0A1629]/80 text-sm">
+          <p className="text-[#0A1629]/80 text-sm line-clamp-3" title={currentProject?.description}>
             {currentProject?.description}
           </p>
         </div>
@@ -259,250 +266,7 @@ rounded-3xl  flex flex-col  p-4"
               )}
             />
 
-            {/* Custom Project Fields - Enhanced Display */}
-            {hasCustomFields && projectFields && (
-              <div className="flex flex-col gap-y-4 mt-4 border-t pt-5 border-gray-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div className="flex items-center gap-x-2">
-                  <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-[#91929E]">
-                    Additional Information
-                  </h4>
-                </div>
-
-                <div className="grid grid-cols-1 gap-y-4">
-                  {projectFields.map((field) => {
-                    const value = currentProject.customFields[field.key];
-                    // Skip if value is truly empty
-                    if (value === undefined || value === null || value === "")
-                      return null;
-
-                    return (
-                      <div
-                        key={field._id}
-                        className="flex flex-col gap-y-1.5 p-3 rounded-2xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <span className="text-[11px] font-semibold text-[#91929E] uppercase tracking-tight">
-                          {field.label}
-                        </span>
-                        <div className="text-sm font-medium text-[#0A1629]">
-                          {field.type === "checkbox" ? (
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold ${value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {value ? "Yes" : "No"}
-                            </span>
-                          ) : field.type === "dynamic_list" && Array.isArray(value) ? (
-                            <div className="flex flex-col gap-2 mt-1">
-                              {value.map((item, i) => {
-                                if (!item) return null;
-                                if (typeof item === 'object') {
-                                  return (
-                                    <div key={i} className="p-2.5 bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col gap-1">
-                                      {Object.entries(item).map(([k, v]) => v && (
-                                        <div key={k} className="flex items-center gap-2">
-                                          <span className="text-[9px] font-bold text-gray-400 uppercase w-16">{k.replace(/_/g, ' ')}:</span>
-                                          <span className="text-[12px] font-medium text-gray-700 truncate">
-                                            {v.toString().startsWith('http') ? (
-                                              <a href={v} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{v}</a>
-                                            ) : v}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-semibold border border-blue-100 shadow-sm w-fit">
-                                    {item}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          ) : field.type === "url" ? (
-                            <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                              {value}
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                            </a>
-                          ) : field.type === "image" ? (
-                            <div className="mt-1">
-                              <a href={value} target="_blank" rel="noreferrer" className="block w-full">
-                                <img
-                                  src={value}
-                                  alt={field.label}
-                                  className="w-full max-h-48 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity"
-                                />
-                              </a>
-                            </div>
-                          ) : field.type === "file" ? (
-                            <a
-                              href={value}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mt-1 truncate group"
-                            >
-                              <div className="p-1.5 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                <img src="/icons/file.svg" alt="" className="w-4 h-4" />
-                              </div>
-                              <span className="truncate underline underline-offset-4">{value.split('/').pop()}</span>
-                            </a>
-                          ) : (
-                            <span className="break-words line-clamp-3" title={value}>
-                              {value}
-                            </span>
-                          )}
-
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Social Media Section */}
-            {hasSocialMedia && (
-              <div className="flex flex-col gap-y-3 mt-6 border-t pt-5 border-gray-100">
-                <div className="flex flex-wrap gap-4">
-                  {managedSocials.map(([platform, data]) => {
-                    const url = getSocialUrl(platform, data.handle);
-                    return url ? (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={data.handle || platform}
-                        className="transition-transform hover:scale-110 cursor-alias"
-                      >
-                        <SocialIcon platform={platform} />
-                      </a>
-                    ) : (
-                      <div
-                        key={platform}
-                        title={data.handle || platform}
-                        className="opacity-60 grayscale-[50%]"
-                      >
-                        <SocialIcon platform={platform} />
-                      </div>
-                    );
-                  })}
-
-                  {managedOthers.map((item) => {
-                    const url = item.handle?.startsWith("http") ? item.handle : null;
-                    return url ? (
-                      <a
-                        key={item._id}
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={item.handle || item.platform}
-                        className="transition-transform hover:scale-110 cursor-alias"
-                      >
-                        <SocialIcon platform={item.platform} />
-                      </a>
-                    ) : (
-                      <div
-                        key={item._id}
-                        title={item.handle || item.platform}
-                        className="opacity-60"
-                      >
-                        <SocialIcon platform={item.platform} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Work Progress Section */}
-            {currentProject?.workDetails?.length > 0 && (
-              <div className="flex flex-col gap-y-3 mt-4 border-t pt-5 border-gray-100">
-                <div className="flex flex-col gap-y-1">
-                  {currentProject.workDetails
-                    .filter((detail) => detail.month === (selectedMonth || new Date().toISOString().slice(0, 7)))
-                    .map((detail) => (
-                      <div
-                        key={detail._id}
-                        className="p-2.5 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <FaCalendarAlt className="text-orange-400 text-xs" />
-                            <span className="text-[10px] font-bold text-gray-700 uppercase">
-                              {new Date(detail.month + "-01").toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Regular Work Grid */}
-                        <div className="grid grid-cols-2 gap-2">
-                          {Object.entries(detail).map(([key, value]) => {
-                            if (["month", "year", "monthNumber", "_id", "other", "__v"].includes(key)) return null;
-                            if (value && typeof value === 'object' && (value.total > 0 || value.count > 0)) {
-                              return (
-                                <div
-                                  key={key}
-                                  className="flex justify-between items-center p-2 bg-white rounded-xl border border-gray-100/50 "
-                                >
-                                  <span className="capitalize text-[10px] font-medium text-gray-500">
-                                    {key.replace(/([A-Z])/g, ' $1')}
-                                  </span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-bold text-[#0A1629]">
-                                      {(value.total || 0) - (value.count || 0)}/{value.total || 0}
-                                    </span>
-                                    {value.count >= value.total && value.total > 0 && (
-                                      <FaCheckCircle className="text-green-500 text-[10px]" />
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })}
-                        </div>
-
-                        {/* Extra Work Section */}
-                        {Object.entries(detail).some(([key, value]) =>
-                          !["month", "year", "monthNumber", "_id", "other", "__v"].includes(key) &&
-                          value && typeof value === 'object' && value.extra > 0
-                        ) && (
-                          <div className="mt-4 flex flex-col gap-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-[1px] flex-1 bg-gray-100"></div>
-                              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-1">Extra Work</span>
-                              <div className="h-[1px] flex-1 bg-gray-100"></div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              {Object.entries(detail).map(([key, value]) => {
-                                if (["month", "year", "monthNumber", "_id", "other", "__v"].includes(key)) return null;
-                                if (value && typeof value === 'object' && value.extra > 0) {
-                                  return (
-                                    <div
-                                      key={key + "-extra"}
-                                      className="flex justify-between items-center p-2 bg-white rounded-xl border border-gray-100/50"
-                                    >
-                                      <span className="capitalize text-[10px] font-medium text-gray-500">
-                                        {key.replace(/([A-Z])/g, ' $1')}
-                                      </span>
-                                      <span className="text-xs font-bold text-orange-500">
-                                        {value.extra}
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  {currentProject.workDetails.length > 0 && (
-                    <button className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-tighter text-left ml-1">
-                      + View all history
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Streamlined Sidebar: Removed Custom Fields, Social Media, and Work Progress as they are now in the Overview tab */}
 
             {canPauseProject && (
               <PrimaryButton

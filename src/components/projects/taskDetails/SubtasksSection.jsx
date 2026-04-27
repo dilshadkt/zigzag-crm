@@ -247,7 +247,7 @@ const SubtasksSection = ({
                         Time Taken: {formatTime(subtask.totalActualTime)}
                       </span>
                     )}
-                    {subtask?.performance > 0 && (
+                    {/* {subtask?.performance > 0 && (
                       <span
                         className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border flex items-center gap-1 ${subtask.performance >= 100
                           ? "bg-green-50 text-green-600 border-green-100"
@@ -260,7 +260,7 @@ const SubtasksSection = ({
                         <FiTarget className="w-2.5 h-2.5" />
                         {subtask.performance}%
                       </span>
-                    )}
+                    )} */}
                     {(subtask?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresClientApproval)) && (
                       <span
                         className="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-bold 

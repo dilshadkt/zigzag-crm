@@ -267,7 +267,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
           </div>
 
           <div className="flex flex-col  items-end">
-            <span className="text-[10px] italic opacity-75 ml-auto">
+            <span className={`text-[10px] italic ml-auto ${getDueDateColor(task.dueDate, task.status) || "opacity-75"}`}>
               {statusText}
             </span>
             {showExtraDetails && (
@@ -458,7 +458,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
           </div>
 
           <div className="flex flex-col items-end">
-            <span className="text-[10px] italic opacity-75 ml-auto">
+            <span className={`text-[10px] italic ml-auto ${getDueDateColor(subtask.dueDate, subtask.status) || "opacity-75"}`}>
               {statusText}
             </span>
             {showExtraDetails && (

@@ -99,6 +99,22 @@ const extraTaskColors = {
   dot: "bg-indigo-500",
 };
 
+// Risk color mapping for at-risk tasks/subtasks
+const riskColors = {
+  overdue: {
+    bg: "bg-red-50",
+    text: "text-red-900",
+    border: "border-red-400",
+    dot: "bg-red-600",
+  },
+  near: {
+    bg: "bg-orange-50",
+    text: "text-orange-900",
+    border: "border-orange-400",
+    dot: "bg-orange-600",
+  },
+};
+
 // Default color for projects with undefined priority
 const defaultColor = {
   bg: "bg-blue-50",
@@ -108,22 +124,51 @@ const defaultColor = {
   progress: "bg-blue-400",
 };
 
+/**
+ * Check for due date risk and return style if applicable
+ */
+const getRiskStyle = (dueDate, status) => {
+  if (!dueDate) return null;
+
+  // Skip risk styling for completed/approved items
+  if (["completed", "approved", "client-approved"].includes(status)) {
+    return null;
+  }
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  const diffTime = due.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return riskColors.overdue;
+  if (diffDays <= 3) return riskColors.near;
+  
+  return null;
+};
+
 // Get appropriate styling based on priority
 export const getProjectStyle = (priority) => {
   return priorityColors[priority?.toLowerCase()] || defaultColor;
 };
 
-// Get styling for tasks based on status
+// Get styling for tasks based on status and risk
 export const getTaskStyle = (task) => {
-  // Check if this is an extra task (no project)
+  // 1. Check for due date risk (Highest priority styling)
+  const riskStyle = getRiskStyle(task.dueDate, task.status);
+  if (riskStyle) return riskStyle;
+
+  // 2. Check if this is an extra task (no project)
   if (!task.project) {
     return extraTaskColors;
   }
 
-  // First try to get style by status
+  // 3. Status-based styling
   const statusStyle = statusColors[task.status] || statusColors.todo;
 
-  // If high priority, override with priority color
+  // 4. Priority override (if no risk)
   if (task.priority?.toLowerCase() === "high") {
     return priorityColors.high;
   }
@@ -136,12 +181,18 @@ export const getBirthdayStyle = () => {
   return birthdayColors;
 };
 
-// Get subtask styling
+// Get subtask styling based on risk and project
 export const getSubtaskStyle = (subtask) => {
-  // Check if this is an extra subtask (no project)
+  // 1. Check for due date risk
+  const riskStyle = getRiskStyle(subtask.dueDate, subtask.status);
+  if (riskStyle) return riskStyle;
+
+  // 2. Extra subtask check
   if (subtask && !subtask.project) {
     return extraTaskColors;
   }
+
+  // Default subtask style
   return subtaskColors;
 };
 

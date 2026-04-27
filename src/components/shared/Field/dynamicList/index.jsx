@@ -27,8 +27,10 @@ const DynamicList = ({
     return "";
   };
 
-  // Ensure value is always an array
-  const list = Array.isArray(value) ? value : [createEmptyItem()];
+  // Ensure value is always an array. If it's a string, wrap it.
+  const list = Array.isArray(value) 
+    ? value 
+    : (value && typeof value === 'string' && value.trim() !== "" ? [value] : [createEmptyItem()]);
   
   // If list is empty, default to one empty item
   const safeList = list.length === 0 ? [createEmptyItem()] : list;
@@ -56,7 +58,12 @@ const DynamicList = ({
 
   const handleFieldChange = (index, fieldKey, fieldValue) => {
     const newList = [...safeList];
-    const updatedItem = { ...newList[index], [fieldKey]: fieldValue };
+    // Ensure we are updating an object, not spreading a string
+    const currentItem = (typeof newList[index] === 'object' && newList[index] !== null && !Array.isArray(newList[index]))
+      ? { ...newList[index] }
+      : {};
+    
+    const updatedItem = { ...currentItem, [fieldKey]: fieldValue };
     newList[index] = updatedItem;
     onChange(newList);
   };

@@ -109,9 +109,11 @@ const SubTaskStatusButton = ({
   // Get status options based on user role or explicit override
   const statusOptions = (isCompany || showAllOptions)
     ? adminStatusOptions.filter(opt => {
+        // Always hide "Completed" as a manual option; it's handled via Approved/Client Approved
+        if (opt.value === "completed") return false;
+
         if (isClientApprovalRequired) {
-          // If client approval is required, hide "Completed" and show "Client Approved"
-          if (opt.value === "completed") return false;
+          // If client approval is required, show everything except manual "Completed"
           return true;
         }
         // If client approval is NOT required, hide "Client Approved"
@@ -163,8 +165,13 @@ const SubTaskStatusButton = ({
     }
 
     try {
-      // Map client-approved to completed behind the scenes
-      const finalStatus = newStatus === "client-approved" ? "completed" : newStatus;
+      // Map final approval statuses to completed behind the scenes
+      let finalStatus = newStatus;
+      if (newStatus === "client-approved") {
+        finalStatus = "completed";
+      } else if (newStatus === "approved" && !isClientApprovalRequired) {
+        finalStatus = "completed";
+      }
       
       await updateSubTaskMutation.mutateAsync({
         status: finalStatus,
@@ -204,8 +211,13 @@ const SubTaskStatusButton = ({
         updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
       }
 
-      // Map client-approved to completed behind the scenes
-      const finalStatus = pendingStatus === "client-approved" ? "completed" : pendingStatus;
+      // Map final approval statuses to completed behind the scenes
+      let finalStatus = pendingStatus;
+      if (pendingStatus === "client-approved") {
+        finalStatus = "completed";
+      } else if (pendingStatus === "approved" && !isClientApprovalRequired) {
+        finalStatus = "completed";
+      }
 
       await updateSubTaskMutation.mutateAsync({
         status: finalStatus,

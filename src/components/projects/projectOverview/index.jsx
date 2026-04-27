@@ -3,6 +3,7 @@ import PrimaryButton from "../../shared/buttons/primaryButton";
 import Task from "../../shared/task";
 import { useNavigate, useParams } from "react-router-dom";
 import FilterMenu from "../FilterMenu";
+import { FaInstagram, FaFacebook, FaYoutube, FaLinkedin, FaTwitter, FaGlobe } from "react-icons/fa";
 import { useQueryClient } from "@tanstack/react-query";
 import list from "../../../assets/icons/list.svg";
 import board from "../../../assets/icons/board.svg";
@@ -322,7 +323,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
-  const [activeTab, setActiveTab] = useState("kanban");
+  const [activeTab, setActiveTab] = useState("overview");
   const isBoardView = activeTab === "kanban";
   const [showSubtasks, setShowSubtasks] = useState(true);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
@@ -690,6 +691,37 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
     }
   };
 
+  const SocialIcon = ({ platform }) => {
+    const iconClass = "text-xl";
+    switch (platform.toLowerCase()) {
+      case "instagram": return <FaInstagram className={`text-pink-600 ${iconClass}`} />;
+      case "facebook": return <FaFacebook className={`text-blue-700 ${iconClass}`} />;
+      case "youtube": return <FaYoutube className={`text-red-600 ${iconClass}`} />;
+      case "linkedin": return <FaLinkedin className={`text-blue-800 ${iconClass}`} />;
+      case "twitter": return <FaTwitter className={`text-sky-500 ${iconClass}`} />;
+      default: return <FaGlobe className={`text-gray-500 ${iconClass}`} />;
+    }
+  };
+
+  const getSocialUrl = (platform, handle) => {
+    if (!handle) return null;
+    if (handle.startsWith("http")) return handle;
+    const h = handle.startsWith("@") ? handle.slice(1) : handle;
+    switch (platform.toLowerCase()) {
+      case "instagram": return `https://www.instagram.com/${h}`;
+      case "facebook": return `https://www.facebook.com/${h}`;
+      case "youtube": return `https://www.youtube.com/${handle.startsWith('@') ? handle : '@' + handle}`;
+      case "twitter": return `https://www.twitter.com/${h}`;
+      case "linkedin": return `https://www.linkedin.com/company/${h}`;
+      default: return null;
+    }
+  };
+
+  const managedSocials = Object.entries(currentProject?.socialMedia || {})
+    .filter(([k, v]) => k !== 'other' && k !== '_id' && k !== '__v' && v?.manage);
+  const managedOthers = currentProject?.socialMedia?.other?.filter(v => v.manage) || [];
+  const hasSocialMedia = managedSocials.length > 0 || managedOthers.length > 0;
+
   const renderListSection = (title, tasks) => (
     <>
       <div
@@ -711,10 +743,11 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   );
 
   return (
-    <div className="col-span-4 md:overflow-hidden flex flex-col">
-      <div className="flexBetween mb-3 border-b border-gray-100">
+    <div className="col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="flexBetween mb-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex gap-2">
           {[
+            { id: "overview", label: "Overview" },
             { id: "kanban", label: "Task Kanban" },
             { id: "list", label: "Task List" },
             { id: "lead", label: "Lead" },
@@ -767,7 +800,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 01-1.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
                 />
               )}
             </svg>
@@ -781,56 +814,318 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
       </div>
 
       {/* Show message if current month has no work details */}
-      {!hasWorkDetailsForCurrentMonth() && currentProject?.workDetails && (
-        <div className="mt-4 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+      {activeTab === "overview" && (
+        <div className="flex-1 overflow-y-auto flex flex-col gap-6 pr-4 pb-24 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          {/* Section 1: Stats Summary (Top) - COMPACT */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-4 rounded-xl text-white shadow-sm">
+              <span className="text-[9px] uppercase font-bold opacity-80 tracking-widest">Overall Progress</span>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xl font-bold">{currentProject?.progress || 0}%</span>
+                <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${currentProject?.progress || 0}%` }}></div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#F8FAFC] p-4 rounded-xl border border-gray-100 flex items-center justify-between">
+              <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider">Active Tasks</span>
+              <div className="text-xl font-bold text-gray-800">{currentProject?.tasks?.filter(t => t.status !== 'completed' && t.status !== 'approved').length || 0}</div>
+            </div>
+            <div className="bg-[#F8FAFC] p-4 rounded-xl border border-gray-100 flex items-center justify-between">
+              <span className="text-[9px] uppercase font-bold text-gray-400 tracking-wider">Team Capacity</span>
+              <div className="text-xl font-bold text-gray-800">{currentProject?.teams?.length || 0} Members</div>
+            </div>
+          </div>
+
+          {/* Section 2: Project Information */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+              Core Project Details
+            </h3>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Description</span>
+                <p className="text-xs text-gray-600 leading-relaxed bg-[#F8FAFC] p-3 rounded-xl border border-gray-100">
+                  {currentProject?.description || "No description provided."}
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Priority</span>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block ${currentProject?.priority === 'high' ? 'bg-red-50 text-red-600 border border-red-100' :
+                      currentProject?.priority === 'medium' ? 'bg-yellow-50 text-yellow-600 border border-yellow-100' :
+                        'bg-blue-50 text-blue-600 border border-blue-100'
+                      }`}>
+                      {currentProject?.priority || 'low'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Deadline</span>
+                    <span className="text-xs font-bold text-gray-700 block mt-1">
+                      {currentProject?.endDate ? new Date(currentProject.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {currentProject?.teams?.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Assigned Team</span>
+                    <div className="flex flex-wrap gap-2">
+                      {currentProject.teams.map((member) => (
+                        <div key={member._id} className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-gray-100">
+                          <div className="w-5 h-5 rounded-full bg-blue-100 flexCenter text-[9px] font-bold text-blue-600 overflow-hidden border border-white">
+                            {member.profileImage ? <img src={member.profileImage} alt="" className="w-full h-full object-cover" /> : member.firstName?.charAt(0)}
+                          </div>
+                          <span className="text-[10px] font-semibold text-gray-700">{member.firstName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Additional Details & Custom Fields */}
+          {currentProject?.customFields && Object.keys(currentProject.customFields).length > 0 && (
+            <div className="bg-white p-5 rounded-2xl border border-gray-100">
+              <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+                Custom Properties & Social Links
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(currentProject.customFields).map(([key, value]) => {
+                  if (value === undefined || value === null || value === "") return null;
+                  return (
+                    <div key={key} className="flex flex-col gap-1.5 p-3 bg-[#F8FAFC] rounded-xl border border-gray-100 transition-colors">
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{key.replace(/_/g, ' ')}</span>
+                      <div className="text-xs font-semibold text-gray-700">
+                        {typeof value === 'boolean' ? (
+                          <span className={`px-2 py-0.5 rounded text-[10px] ${value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {value ? 'Yes' : 'No'}
+                          </span>
+                        ) : Array.isArray(value) ? (
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {value.map((item, i) => {
+                              if (!item) return null;
+
+                              // Handle non-objects or arrays of simple values
+                              if (typeof item !== "object" || Array.isArray(item)) {
+                                const displayValue = Array.isArray(item) ? item.join(" ") : item.toString();
+                                return (
+                                  <span key={i} className="bg-white text-indigo-600 px-2 py-0.5 rounded-lg text-[10px] font-bold border border-indigo-100 transition-all hover:bg-indigo-50">
+                                    {displayValue}
+                                  </span>
+                                );
+                              }
+
+                              // Handle real objects (like Competitors with sub-fields)
+                              const entries = Object.entries(item).filter(([_, v]) => v);
+                              if (entries.length === 0) return null;
+
+                              // Check if this is an "indexed string" object (like {0: 'M', 1: 'O', ...})
+                              const isIndexedString = entries.every(([k]) => !isNaN(k)) &&
+                                entries.every(([_, v]) => typeof v === 'string' && v.length === 1);
+
+                              if (isIndexedString) {
+                                return (
+                                  <span key={i} className="bg-white text-indigo-600 px-2 py-0.5 rounded-lg text-[10px] font-bold border border-indigo-100">
+                                    {entries.map(([_, v]) => v).join("")}
+                                  </span>
+                                );
+                              }
+
+                              // Ultra-Compact Object Display
+                              return (
+                                <div key={i} className="px-2 py-1 bg-white border border-gray-100 rounded-lg flex flex-wrap gap-x-3 gap-y-1 items-center hover:border-indigo-200 transition-colors">
+                                  {entries.map(([k, v]) => (
+                                    <div key={k} className="flex items-center gap-1.5 border-r border-gray-50 last:border-0 pr-3 last:pr-0">
+                                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                                        {k.replace(/_/g, " ")}:
+                                      </span>
+                                      <span className="text-[10px] font-bold text-gray-700">
+                                        {v.toString().match(/^https?:\/\//) || v.toString().startsWith('www.') ? (
+                                          <a
+                                            href={v.toString().startsWith('www.') ? `https://${v}` : v}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-blue-500 hover:underline flex items-center gap-0.5"
+                                          >
+                                            Link
+                                            <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                          </a>
+                                        ) : (
+                                          v.toString()
+                                        )}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : value.toString().match(/^https?:\/\//) || value.toString().startsWith('www.') ? (
+                          <a href={value.toString().startsWith('www.') ? `https://${value}` : value} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center gap-1 truncate max-w-full">
+                            <span className="truncate">{value}</span>
+                            <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                          </a>
+                        ) : (
+                          <span className="break-words line-clamp-2" title={value.toString()}>{value.toString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section: Social Media Links */}
+          {hasSocialMedia && (
+            <div className="bg-white p-5 rounded-2xl border border-gray-100">
+              <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div className="w-1 h-4 bg-pink-500 rounded-full"></div>
+                Social Media & Digital Presence
+              </h3>
+              <div className="flex flex-wrap gap-4">
+                {managedSocials.map(([platform, data]) => {
+                  const url = getSocialUrl(platform, data.handle);
+                  return url ? (
+                    <a
+                      key={platform}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl border border-gray-100 hover:border-pink-200 transition-all hover:scale-[1.02] group"
+                    >
+                      <SocialIcon platform={platform} />
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{platform}</span>
+                        <span className="text-xs font-bold text-gray-700 group-hover:text-pink-600">{data.handle}</span>
+                      </div>
+                    </a>
+                  ) : null;
+                })}
+                {managedOthers.map((item, i) => {
+                  if (!item?.link) return null;
+                  return (
+                    <a
+                      key={i}
+                      href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl border border-gray-100 hover:border-pink-200 transition-all hover:scale-[1.02] group"
+                    >
+                      <FaGlobe className="text-xl text-gray-500" />
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{item.name || 'Website'}</span>
+                        <span className="text-xs font-bold text-gray-700 group-hover:text-pink-600 truncate max-w-[150px]">{item.link}</span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section 4: Work History Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 ">
+            <div className="p-5 border-b border-gray-100 bg-[#F8FAFC]">
+              <h3 className="text-sm font-bold text-gray-800">Monthly Performance & Target Metrics</h3>
+              <p className="text-[11px] text-gray-400 mt-1 uppercase tracking-tighter font-semibold">Complete project timeline and work history</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                    <th className="px-6 py-4">Month</th>
+                    <th className="px-4 py-4 text-center">Reels</th>
+                    <th className="px-4 py-4 text-center">Posters</th>
+                    <th className="px-4 py-4 text-center">Motion</th>
+                    <th className="px-4 py-4 text-center">Shoot</th>
+                    <th className="px-4 py-4 text-center">Graphics</th>
+                    <th className="px-6 py-4 text-right">Other Tasks</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {currentProject?.workDetails?.map((wd) => (
+                    <tr key={wd._id} className={`hover:bg-gray-50/50 transition-colors ${wd.month === selectedMonth ? 'bg-blue-50/30' : ''}`}>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-gray-900 whitespace-nowrap uppercase tracking-wider">
+                            {new Date(wd.month + "-01").toLocaleDateString("en-US", { month: "long" })}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-400 tabular-nums">{wd.year}</span>
+                        </div>
+                      </td>
+                      {[wd.reels, wd.poster, wd.motionPoster, wd.shooting, wd.motionGraphics].map((metric, idx) => {
+                        const completed = (metric?.total || 0) - (metric?.count || 0);
+                        const total = metric?.total || 0;
+                        return (
+                          <td key={idx} className="px-4 py-4">
+                            <div className="flex flex-col items-center">
+                              <span className="text-[11px] font-bold text-gray-800 tabular-nums">{completed}/{total}</span>
+                              <div className="w-10 h-1.5 bg-gray-100 rounded-full mt-1.5 overflow-hidden border border-gray-50">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-700 ${completed >= total && total > 0 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                  style={{ width: `${Math.min(100, (completed / (total || 1)) * 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </td>
+                        );
+                      })}
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {wd.other && wd.other.length > 0 ? (
+                            wd.other.map((o, i) => {
+                              const oCompleted = (o?.total || 0) - (o?.count || 0);
+                              return (
+                                <span key={i} className="text-[9px] font-bold text-gray-600 bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg leading-none whitespace-nowrap">
+                                  {o.name}: {oCompleted}/{o.total}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-[10px] text-gray-300">-</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Show message if current month has no work details - ONLY on Task tabs */}
+      {(activeTab === "kanban" || activeTab === "list") && !hasWorkDetailsForCurrentMonth() && currentProject?.workDetails && (
+        <div className="mt-4 p-6 bg-blue-50 border border-blue-200 rounded-lg animate-in fade-in zoom-in duration-300">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <svg
-                className="w-6 h-6 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="flex-1">
               <h4 className="text-lg font-medium text-blue-800 mb-2">
-                No Work Details for{" "}
-                {selectedMonth
-                  ? new Date(selectedMonth + "-01").toLocaleDateString(
-                    "en-US",
-                    { month: "long", year: "numeric" }
-                  )
-                  : "Current Month"}
+                No Work Details for {selectedMonth ? new Date(selectedMonth + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Current Month"}
               </h4>
               <p className="text-blue-700 mb-3">
-                This project doesn't have work details scheduled for the
-                selected month. The project is scheduled for the following
-                months:
+                This project doesn't have work details scheduled for the selected month. The project is scheduled for:
               </p>
               <div className="flex flex-wrap gap-2">
                 {getAvailableMonths().map((month) => (
-                  <span
-                    key={month}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                  >
-                    {new Date(month + "-01").toLocaleDateString("en-US", {
-                      month: "short",
-                      year: "numeric",
-                    })}
+                  <span key={month} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    {new Date(month + "-01").toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                   </span>
                 ))}
               </div>
-              <p className="text-blue-600 text-sm mt-3">
-                Please select a month with work details from the month selector
-                above to view tasks.
-              </p>
             </div>
           </div>
         </div>
@@ -956,20 +1251,20 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
                       </td>
                       <td className="py-4 px-4">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${campaign.platform === 'Facebook' ? 'bg-blue-50 border-blue-100 text-blue-700' :
-                            campaign.platform === 'Instagram' ? 'bg-pink-50 border-pink-100 text-pink-700' :
-                              'bg-gray-50 border-gray-100 text-gray-700'
+                          campaign.platform === 'Instagram' ? 'bg-pink-50 border-pink-100 text-pink-700' :
+                            'bg-gray-50 border-gray-100 text-gray-700'
                           }`}>
                           {campaign.platform}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${campaign.status === 'active' ? 'bg-green-100 text-green-700' :
-                            campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-gray-100 text-gray-600'
+                          campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-600'
                           }`}>
                           <span className={`w-1 h-1 rounded-full mr-1 ${campaign.status === 'active' ? 'bg-green-500' :
-                              campaign.status === 'paused' ? 'bg-yellow-500' :
-                                'bg-gray-400'
+                            campaign.status === 'paused' ? 'bg-yellow-500' :
+                              'bg-gray-400'
                             }`}></span>
                           {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                         </span>
