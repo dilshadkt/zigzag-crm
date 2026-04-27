@@ -1149,6 +1149,20 @@ export const saveWorkSchedule = async (companyId, scheduleData) => {
   return response.data;
 };
 
+////////////  LEAVE POLICY SERVICES ⚒️⚒️⚒️⚒️⚒️ ////////////////
+
+export const getLeavePolicy = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/leave-policy`);
+  return response.data;
+};
+
+export const saveLeavePolicy = async (companyId, policyData) => {
+  const response = await apiClient.put(`/companies/${companyId}/leave-policy`, {
+    policyData,
+  });
+  return response.data;
+};
+
 
 // Performance API functions
 export const getLeaderboard = async (type = "weekly", periodKey = null) => {

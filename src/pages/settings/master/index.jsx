@@ -15,6 +15,9 @@ import HolidayPresetsModal from "../../../components/settings/company/HolidayPre
 // Work Schedule imports
 import WorkScheduleSection from "../../../components/settings/company/WorkScheduleSection";
 
+// Leave Policy imports
+import LeavePolicySection from "../../../components/settings/company/LeavePolicySection";
+
 import { useAuth } from "../../../hooks/useAuth";
 import {
   useGetProjectFields,
@@ -31,6 +34,8 @@ import {
   // Work Schedule hooks
   useGetWorkSchedule,
   useSaveWorkSchedule,
+  useGetLeavePolicy,
+  useSaveLeavePolicy,
 } from "../../../api/hooks";
 
 // ─── Section Header ───────────────────────────────────────────────────────────
@@ -140,6 +145,14 @@ const Master = () => {
     toast.success("Work schedule saved successfully");
   });
 
+  // ── Leave Policy ────────────────────────────────────────────────────────────
+  const { data: leavePolicy, isLoading: leaveLoading, error: leaveError } =
+    useGetLeavePolicy(companyId);
+
+  const saveLeavePolicy = useSaveLeavePolicy(companyId, () => {
+    toast.success("Leave policy saved successfully");
+  });
+
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="h-full overflow-y-auto flex flex-col pr-1 gap-8">
@@ -156,6 +169,24 @@ const Master = () => {
           error={scheduleError}
           onSave={(data) => saveWorkSchedule.mutate(data)}
           isSaving={saveWorkSchedule.isPending}
+        />
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="border-t border-gray-100" />
+
+      {/* ── Leave Policy ── */}
+      <div className="flex flex-col">
+        <SectionHeader
+          title="Leave Management"
+          description="Configure annual leave quotas and accrual rules for employees"
+        />
+        <LeavePolicySection
+          policy={leavePolicy}
+          isLoading={leaveLoading}
+          error={leaveError}
+          onSave={(data) => saveLeavePolicy.mutate(data)}
+          isSaving={saveLeavePolicy.isPending}
         />
       </div>
 

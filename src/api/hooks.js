@@ -85,6 +85,8 @@ import {
   // Work Schedule imports
   getWorkSchedule,
   saveWorkSchedule,
+  getLeavePolicy,
+  saveLeavePolicy,
 } from "./service";
 import { getUnreadCount } from "./chatService";
 import { format } from "date-fns";
@@ -2812,5 +2814,25 @@ export const useSaveWorkSchedule = (companyId, onSuccess) => {
     },
   });
 };
+////////////  LEAVE POLICY HOOKS ⚠️⚠️⚠️⚠️⚠️ ////////////////////
 
+export const useGetLeavePolicy = (companyId) => {
+  return useQuery({
+    queryKey: ["leavePolicy", companyId],
+    queryFn: () => getLeavePolicy(companyId),
+    enabled: !!companyId,
+    select: (data) => data?.policy || [],
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
 
+export const useSaveLeavePolicy = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (policyData) => saveLeavePolicy(companyId, policyData),
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries(["leavePolicy", companyId]);
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};

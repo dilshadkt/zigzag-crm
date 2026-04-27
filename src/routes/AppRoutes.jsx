@@ -19,7 +19,7 @@ import RouteAccess from "../components/withRoleAccess/RouteAccess";
 const Dashboard = lazy(() => import("../pages/dashboard"));
 const Campaigns = lazy(() => import("../pages/campaigns"));
 const CampaignDetails = lazy(() => import("../pages/campaigns/CampaignDetails"));
-const Vacations = lazy(() => import("../pages/vacations"));
+const Vacations = lazy(() => import("../features/vacations"));
 const Employees = lazy(() => import("../pages/employees"));
 const Messenger = lazy(() => import("../pages/messenger"));
 const InfoPortal = lazy(() => import("../pages/infoPortal"));
