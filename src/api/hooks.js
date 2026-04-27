@@ -308,11 +308,11 @@ export const useCreateTask = (handleClose, projectId) => {
   return useMutation({
     mutationKey: ["createTask"],
     mutationFn: (taskData) => createTask(taskData, projectId),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["projectTasks", projectId],
       });
-      handleClose();
+      handleClose(data);
       // toast.success('Target set successfully!');
     },
   });
@@ -325,14 +325,14 @@ export const useCreateTaskFromBoard = (handleClose) => {
   return useMutation({
     mutationKey: ["createTaskFromBoard"],
     mutationFn: (taskData) => createTaskFromBoard(taskData),
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate relevant queries based on user role
       if (user?.role === "company-admin") {
         queryClient.invalidateQueries(["companyTasks", user?.company]);
       } else {
         queryClient.invalidateQueries(["employeeTasks", user?._id]);
       }
-      handleClose();
+      handleClose(data);
       // toast.success('Task created successfully!');
     },
   });

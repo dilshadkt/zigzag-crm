@@ -304,7 +304,8 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                         <DynamicList
                           title={fieldTitle}
                           placeholder={field.placeholder}
-                          value={fieldValue || [""]}
+                          value={fieldValue || []}
+                          fields={field.options}
                           name={field.key}
                           onChange={(newList) => setFieldValue(fieldKey, newList)}
                           errors={errors.customFields}

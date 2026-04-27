@@ -11,7 +11,7 @@ import {
   useProjectDetails,
   useProjectTasks,
 } from "../../api/hooks";
-import { Outlet, useParams, useOutletContext } from "react-router-dom";
+import { Outlet, useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
 import { useAuth } from "../../hooks/useAuth";
@@ -35,10 +35,14 @@ const ProjectDetailLayout = () => {
       enabled: !!projectData?._id,
     }
   );
-  const { mutate } = useCreateTask(() => {
+  const navigate = useNavigate();
+  const { mutate, isPending: isCreatingTask } = useCreateTask((data) => {
     setShowModalTask(false);
     refetchTasks();
-  }, projectData?._id);
+    if (data?.data?.task?._id) {
+      navigate(`/projects/${projectId}/${data.data.task._id}`);
+    }
+  }, projectId);
 
   const { isCompany } = useAuth();
   const { hasPermission } = usePermissions();
@@ -136,6 +140,7 @@ const ProjectDetailLayout = () => {
           projectData={projectData}
           selectedMonth={selectedMonth}
           showProjectSelection={false}
+          isLoading={isCreatingTask}
         />
       </div>
     </section>

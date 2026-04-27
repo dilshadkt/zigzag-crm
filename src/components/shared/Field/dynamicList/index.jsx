@@ -5,28 +5,42 @@ import clsx from "clsx";
 const DynamicList = ({
   title = "Title",
   placeholder = "Add item...",
-  value = [""], // Expects an array of strings
+  value = [""], // Expects an array of strings OR an array of objects
+  fields = [], // Optional: array of strings defining sub-fields for each item
   onChange, // Callback for when the array changes
   name,
   errors,
   touched,
   disabled,
 }) => {
+  const hasFields = Array.isArray(fields) && fields.length > 0;
+
+  // Initialize a new empty item based on whether we have fields or not
+  const createEmptyItem = () => {
+    if (hasFields) {
+      const emptyObj = {};
+      fields.forEach(f => {
+        emptyObj[f.toLowerCase().trim().replace(/\s+/g, '_')] = "";
+      });
+      return emptyObj;
+    }
+    return "";
+  };
+
   // Ensure value is always an array
-  const list = Array.isArray(value) ? value : [""];
+  const list = Array.isArray(value) ? value : [createEmptyItem()];
   
-  // If list is empty, default to one empty string
-  const safeList = list.length === 0 ? [""] : list;
+  // If list is empty, default to one empty item
+  const safeList = list.length === 0 ? [createEmptyItem()] : list;
 
   const handleAddItem = () => {
-    const newList = [...safeList, ""];
+    const newList = [...safeList, createEmptyItem()];
     onChange(newList);
   };
 
   const handleRemoveItem = (index) => {
     if (safeList.length <= 1) {
-        // Reset the only remaining field instead of removing it if it's the last one
-        const newList = [""];
+        const newList = [createEmptyItem()];
         onChange(newList);
         return;
     }
@@ -40,6 +54,13 @@ const DynamicList = ({
     onChange(newList);
   };
 
+  const handleFieldChange = (index, fieldKey, fieldValue) => {
+    const newList = [...safeList];
+    const updatedItem = { ...newList[index], [fieldKey]: fieldValue };
+    newList[index] = updatedItem;
+    onChange(newList);
+  };
+
   return (
     <div className="flex flex-col gap-y-[7px]">
       <label className="text-sm pl-[6px] font-bold text-[#7D8592]">
@@ -47,30 +68,59 @@ const DynamicList = ({
       </label>
       <div className="flex flex-col gap-y-3">
         {safeList.map((item, index) => (
-          <div key={index} className="flex items-center gap-x-2 w-full">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={item}
-                onChange={(e) => handleChangeItem(index, e.target.value)}
-                placeholder={placeholder}
-                disabled={disabled}
-                className={clsx(
-                  "rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full",
-                  disabled && "cursor-not-allowed opacity-60",
-                  errors?.[name] && touched?.[name] && "border-red-400/50"
+          <div key={index} className="flex flex-col gap-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100/50">
+            <div className="flex items-start gap-x-2 w-full">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {hasFields ? (
+                  fields.map((field) => {
+                    const fieldKey = field.toLowerCase().trim().replace(/\s+/g, '_');
+                    return (
+                      <div key={fieldKey} className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                          {field}
+                        </label>
+                        <input
+                          type="text"
+                          value={item?.[fieldKey] || ""}
+                          onChange={(e) => handleFieldChange(index, fieldKey, e.target.value)}
+                          placeholder={`Enter ${field}...`}
+                          disabled={disabled}
+                          className={clsx(
+                            "rounded-[12px] text-[13px] border-2 text-[#4A5568] border-white bg-white shadow-sm py-[8px] px-3 outline-none focus:border-blue-400/50 transition-all w-full",
+                            disabled && "cursor-not-allowed opacity-60",
+                            errors?.[name] && touched?.[name] && "border-red-400/50"
+                          )}
+                        />
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => handleChangeItem(index, e.target.value)}
+                      placeholder={placeholder}
+                      disabled={disabled}
+                      className={clsx(
+                        "rounded-[14px] text-sm border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none w-full",
+                        disabled && "cursor-not-allowed opacity-60",
+                        errors?.[name] && touched?.[name] && "border-red-400/50"
+                      )}
+                    />
+                  </div>
                 )}
-              />
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => handleRemoveItem(index)}
+                className="mt-6 p-2 rounded-xl hover:bg-red-50 text-red-400 transition-colors border border-transparent hover:border-red-100 shadow-sm bg-white"
+                title="Remove item"
+              >
+                <HiX size={18} />
+              </button>
             </div>
-            
-            <button
-              type="button"
-              onClick={() => handleRemoveItem(index)}
-              className="p-2 rounded-full hover:bg-red-50 text-red-400 transition-colors border-2 border-transparent hover:border-red-200"
-              title="Remove item"
-            >
-              <HiX size={18} />
-            </button>
           </div>
         ))}
         

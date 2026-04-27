@@ -291,8 +291,10 @@ const AddTask = ({
             holidays
           );
 
-          // Format for Formik: simplified for the backend but keeps metadata for UI
-          const subtasksData = calculatedSteps.map((s, idx) => ({
+          // Keep manual subtasks and replace/add flow-based ones
+          const manualSubtasks = (values.subtasks || []).filter(s => !s.isFromFlow);
+          
+          const flowSubtasks = calculatedSteps.map((s, idx) => ({
             taskName: s.taskName,
             assignee: s.assignee,
             startDate: s.startDate.toISOString().split('T')[0],
@@ -302,12 +304,16 @@ const AddTask = ({
             skippedDayType: s.skippedDayType,
             weightage: s.weightage,
             requiresClientApproval: selectedFlow.flows[idx].requiresClientApproval,
-            requiresWorkLink: selectedFlow.flows[idx].requiresWorkLink
+            requiresWorkLink: selectedFlow.flows[idx].requiresWorkLink,
+            isFromFlow: true
           }));
-          setFieldValue("subtasks", subtasksData);
+
+          setFieldValue("subtasks", [...flowSubtasks, ...manualSubtasks]);
         }
-      } else if (!values.taskFlow) {
-        setFieldValue("subtasks", []);
+      } else if (!values.taskFlow && prevMasterValues.current.taskFlow) {
+        // If we transitioned from a flow to no flow, remove only the flow subtasks
+        const manualSubtasks = (values.subtasks || []).filter(s => !s.isFromFlow);
+        setFieldValue("subtasks", manualSubtasks);
       }
 
       // Update refs to latest master values
@@ -327,7 +333,7 @@ const AddTask = ({
     updated[index][field] = newValue;
 
     // Sequential cascade: if a dueDate changes, move the START of the next task
-    if (field === 'dueDate' && index < updated.length - 1) {
+    if (field === 'dueDate' && index < updated.length - 1 && updated[index + 1].isFromFlow) {
       updated[index + 1].startDate = newValue;
       // If the next start date is now after its due date, bump the due date too
       if (new Date(updated[index + 1].startDate) > new Date(updated[index + 1].dueDate)) {
@@ -335,6 +341,30 @@ const AddTask = ({
       }
     }
 
+    setFieldValue("subtasks", updated);
+  };
+
+  const addManualSubtask = () => {
+    const newSubtask = {
+      taskName: values.title || "",
+      assignee: values.assignedTo?.[0] || "",
+      startDate: values.startDate || new Date().toISOString().split('T')[0],
+      dueDate: values.dueDate || new Date().toISOString().split('T')[0],
+      isManual: true,
+      requiresClientApproval: false,
+      requiresWorkLink: false
+    };
+    setFieldValue("subtasks", [...(values.subtasks || []), newSubtask]);
+  };
+
+  const removeSubtask = (index) => {
+    const updated = values.subtasks.filter((_, i) => i !== index);
+    setFieldValue("subtasks", updated);
+  };
+
+  const handleSubtaskChange = (index, field, value) => {
+    const updated = [...(values.subtasks || [])];
+    updated[index][field] = value;
     setFieldValue("subtasks", updated);
   };
 
@@ -894,118 +924,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       disabled={!isFormEnabled}
                     />
 
-                    {/* ── Task Flow Preview (schedule-aware & editable) ─────────────── */}
-                    {values.taskFlow &&
-                      values.subtasks &&
-                      values.subtasks.length > 0 &&
-                      (() => {
-                        const selectedFlow = taskFlows.find(
-                          (flow) => flow._id === values.taskFlow
-                        );
-                        if (!selectedFlow) return null;
 
-                        const hasAnyAdjustment = values.subtasks.some((s) => s.wasAdjusted);
-
-                        return (
-                          <div className="border border-blue-200 rounded-xl overflow-hidden mt-1 shadow-sm">
-                            {/* Header */}
-                            <div className="bg-blue-600 px-3 py-1.5 flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <FiCalendar className="w-3.5 h-3.5 text-white" />
-                                <span className="text-xs font-semibold text-white">
-                                  {selectedFlow.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {hasAnyAdjustment && weeklyOffs.length > 0 && (
-                                  <span className="text-[9px] bg-amber-400 text-amber-900 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                                    Adjusted
-                                  </span>
-                                )}
-                                <span className="text-[10px] text-blue-100 font-medium italic">
-                                  Editable schedule
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Step rows */}
-                            <div className="divide-y divide-blue-50">
-                              {values.subtasks.map((step, index) => {
-                                const assigneeName =
-                                  step.assignee?.name ||
-                                  `${step.assignee?.firstName || ""} ${step.assignee?.lastName || ""}`.trim() ||
-                                  "—";
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="bg-white px-3 py-2 flex items-start gap-2.5 hover:bg-blue-50/30 transition-colors"
-                                  >
-                                    {/* Step badge */}
-                                    <span className="mt-0.5 w-5 h-5 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-700">
-                                      {index + 1}
-                                    </span>
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="text-xs font-semibold text-gray-800 truncate">
-                                          {step.taskName}
-                                        </span>
-                                        <span className="text-[10px] text-gray-400 font-medium">@</span>
-                                        <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded">
-                                          {assigneeName}
-                                        </span>
-                                        {step.wasAdjusted && (
-                                          <span
-                                            title={`Original ${step.skippedDay} was a ${step.skippedDayType?.toLowerCase() || 'off-day'} — shifted to next working day`}
-                                            className="flex items-center gap-0.5 text-[9px] font-bold text-amber-600 cursor-help"
-                                          >
-                                            <FiAlertTriangle className="w-2.5 h-2.5" />
-                                            ({step.skippedDayType?.toLowerCase() || 'off-day'} skipped)
-                                          </span>
-                                        )}
-                                      </div>
-
-                                      {/* Editable Date Inputs */}
-                                      <div className="mt-1.5 flex items-center gap-1.5">
-                                        <div className="flex items-center border border-gray-100 rounded bg-gray-50/50 focus-within:border-blue-300 focus-within:bg-white transition-all overflow-hidden">
-                                          <input
-                                            type="date"
-                                            value={step.startDate}
-                                            onChange={(e) => handleSubtaskDateChange(index, "startDate", e.target.value)}
-                                            className="text-[10px] text-gray-600 px-1.5 py-0.5 outline-none bg-transparent"
-                                            title="Subtask Start Date"
-                                          />
-                                          <span className="text-[9px] text-gray-300 px-0.5">–</span>
-                                          <input
-                                            type="date"
-                                            value={step.dueDate}
-                                            onChange={(e) => handleSubtaskDateChange(index, "dueDate", e.target.value)}
-                                            className="text-[10px] text-gray-600 px-1.5 py-0.5 outline-none bg-transparent"
-                                            title="Subtask Due Date"
-                                          />
-                                        </div>
-
-                                        {/* Status indicator if manual/auto */}
-                                        <span className="text-[9px] text-gray-300 italic">
-                                          w:{step.weightage || 0}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            {/* Footer note */}
-                            <div className="bg-blue-50/80 px-3 py-1.5 text-[9px] text-blue-600 flex justify-between items-center">
-                              <span>Assignees set from flow.</span>
-                              <span className="font-semibold uppercase tracking-tighter opacity-70">Dates can be tweaked manually</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
 
                     {/* No date range set warning for preview */}
                     {values.taskFlow && (!values.startDate || !values.dueDate) && (
@@ -1326,13 +1245,165 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                   disabled={!isFormEnabled && !isOtherProjectSelected}
                 />
 
-                <div className="flexEnd">
-                  <PrimaryButton
-                    type="submit"
-                    title="Save Task"
-                    loading={isLoading}
-                    disable={(!isFormEnabled && !isOtherProjectSelected) || isLoading}
-                  />
+                <div className="flex flex-col gap-3 mt-4">
+                  {/* ── Subtasks Preview/Editor ─────────────── */}
+                  {(values.subtasks && values.subtasks.length > 0 || values.taskFlow) && (
+                    <div className="border border-blue-100 rounded-2xl overflow-hidden mt-1 shadow-sm bg-white">
+                      {/* Header */}
+                      <div className="bg-blue-600 px-4 py-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FiActivity className="w-4 h-4 text-white" />
+                          <span className="text-xs font-bold text-white uppercase tracking-wider">
+                            {values.taskFlow 
+                              ? taskFlows.find(f => f._id === values.taskFlow)?.name 
+                              : "Custom Subtasks"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={addManualSubtask}
+                          className="text-[10px] bg-white/20 hover:bg-white/30 text-white font-bold py-1 px-2 rounded-lg transition-all flex items-center gap-1"
+                        >
+                          <FiPlus className="w-3 h-3" /> Add Step
+                        </button>
+                      </div>
+
+                      {/* Step rows */}
+                      <div className="divide-y divide-gray-50 max-h-[300px] overflow-y-auto">
+                        {values.subtasks?.map((step, index) => {
+                          const assigneeOptions = getAssigneeOptions();
+                          const currentAssigneeId = typeof step.assignee === 'object' ? step.assignee?._id : step.assignee;
+
+                          return (
+                            <div
+                              key={index}
+                              className="bg-white p-3 flex flex-col gap-2 hover:bg-blue-50/20 transition-colors relative group"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 flex-shrink-0 bg-blue-50 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600 border border-blue-100">
+                                  {index + 1}
+                                </span>
+                                <input
+                                  type="text"
+                                  value={step.taskName}
+                                  onChange={(e) => handleSubtaskChange(index, "taskName", e.target.value)}
+                                  placeholder="Subtask name..."
+                                  className="flex-1 text-xs font-bold text-gray-800 bg-transparent border-b border-transparent focus:border-blue-300 outline-none py-0.5"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeSubtask(index)}
+                                  className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 transition-all"
+                                >
+                                  <FiTrash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-3 pl-7">
+                                {/* Assignee Select */}
+                                <div className="flex items-center gap-1.5 min-w-[120px]">
+                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Assigned To:</span>
+                                  <select
+                                    value={currentAssigneeId || ""}
+                                    onChange={(e) => handleSubtaskChange(index, "assignee", e.target.value)}
+                                    className="text-[10px] font-bold text-blue-600 bg-blue-50/50 border border-blue-100 rounded px-1.5 py-0.5 outline-none"
+                                  >
+                                    <option value="">Select...</option>
+                                    {assigneeOptions.map(opt => (
+                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {/* Dates */}
+                                <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5">
+                                    <input
+                                      type="date"
+                                      value={step.startDate}
+                                      onChange={(e) => handleSubtaskDateChange(index, "startDate", e.target.value)}
+                                      className="text-[10px] text-gray-600 bg-transparent outline-none"
+                                    />
+                                    <span className="text-[9px] text-gray-300 px-1">—</span>
+                                    <input
+                                      type="date"
+                                      value={step.dueDate}
+                                      onChange={(e) => handleSubtaskDateChange(index, "dueDate", e.target.value)}
+                                      className="text-[10px] text-gray-600 bg-transparent outline-none"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Requirements */}
+                                <div className="flex items-center gap-3">
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={step.requiresClientApproval}
+                                      onChange={(e) => handleSubtaskChange(index, "requiresClientApproval", e.target.checked)}
+                                      className="w-3 h-3 rounded text-blue-600"
+                                    />
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Approval</span>
+                                  </label>
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={step.requiresWorkLink}
+                                      onChange={(e) => handleSubtaskChange(index, "requiresWorkLink", e.target.checked)}
+                                      className="w-3 h-3 rounded text-purple-600"
+                                    />
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Link</span>
+                                  </label>
+                                </div>
+                              </div>
+                              
+                              {step.wasAdjusted && (
+                                <div className="flex items-center gap-1 pl-7">
+                                  <FiAlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+                                  <span className="text-[9px] font-medium text-amber-600 italic">
+                                    Shifted from {step.skippedDayType?.toLowerCase()} ({step.skippedDay})
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="bg-gray-50 px-4 py-2 border-t border-gray-100 flex justify-between items-center">
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {values.subtasks.length} total subtasks
+                        </span>
+                        <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest animate-pulse">
+                          Subtasks will be created with the task
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Create Subtask Toggle/Button at the bottom */}
+                  {!values.taskFlow && (
+                    <button
+                      type="button"
+                      onClick={addManualSubtask}
+                      className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-blue-200 rounded-2xl text-blue-500 hover:bg-blue-50 transition-all duration-200"
+                    >
+                      <div className="p-1 bg-blue-100 rounded-full">
+                        <FiPlus className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold">Add Subtask with Task Details</span>
+                    </button>
+                  )}
+
+                  <div className="flexEnd">
+                    <PrimaryButton
+                      type="submit"
+                      title="Save Task"
+                      loading={isLoading}
+                      disable={(!isFormEnabled && !isOtherProjectSelected) || isLoading}
+                    />
+                  </div>
                 </div>
               </div>
             </form>

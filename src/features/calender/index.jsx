@@ -105,12 +105,21 @@ const Calendar = () => {
   const { data: projectsData } = useCompanyProjects(user?.company);
   const { data: employeesData } = useGetAllEmployees();
 
+  const navigate = useNavigate();
   // Task creation hook
-  const { mutate: createTask, isLoading: isCreatingTask } =
-    useCreateTaskFromBoard(() => {
+  const { mutate: createTask, isPending: isCreatingTask } =
+    useCreateTaskFromBoard((data) => {
       setShowModalTask(false);
       // Refresh calendar data after task creation
       queryClient.invalidateQueries(["calendarData"]);
+      if (data?.data?.task?._id) {
+        const t = data.data.task;
+        if (t.project) {
+          navigate(`/projects/${t.project}/${t._id}`);
+        } else {
+          navigate(`/tasks/${t._id}`);
+        }
+      }
     });
 
   // Custom hook to manage calendar data (optimized with single API call)

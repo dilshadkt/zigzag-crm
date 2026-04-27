@@ -290,12 +290,31 @@ rounded-3xl  flex flex-col  p-4"
                               {value ? "Yes" : "No"}
                             </span>
                           ) : field.type === "dynamic_list" && Array.isArray(value) ? (
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              {value.map((item, i) => item && (
-                                <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-semibold border border-blue-100 shadow-sm">
-                                  {item}
-                                </span>
-                              ))}
+                            <div className="flex flex-col gap-2 mt-1">
+                              {value.map((item, i) => {
+                                if (!item) return null;
+                                if (typeof item === 'object') {
+                                  return (
+                                    <div key={i} className="p-2.5 bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col gap-1">
+                                      {Object.entries(item).map(([k, v]) => v && (
+                                        <div key={k} className="flex items-center gap-2">
+                                          <span className="text-[9px] font-bold text-gray-400 uppercase w-16">{k.replace(/_/g, ' ')}:</span>
+                                          <span className="text-[12px] font-medium text-gray-700 truncate">
+                                            {v.toString().startsWith('http') ? (
+                                              <a href={v} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{v}</a>
+                                            ) : v}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <span key={i} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-semibold border border-blue-100 shadow-sm w-fit">
+                                    {item}
+                                  </span>
+                                );
+                              })}
                             </div>
                           ) : field.type === "url" ? (
                             <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">

@@ -38,9 +38,9 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
       required: values.isRequired,
       placeholder: values.placeholder,
       key: fieldKey,
-      options: values.type === "select"
-        ? values.options.split(",").map(opt => opt.trim()).filter(opt => opt !== "")
-        : []
+      options: values.type === "select" || values.type === "dynamic_list" 
+      ? values.options.split(",").map(opt => opt.trim()).filter(opt => opt !== "")
+      : []
     };
 
     onSave && onSave(fieldData);
@@ -151,11 +151,11 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
                   </div>
                 </div>
 
-                {/* Options for Select */}
-                {values.type === "select" && (
+                {/* Options for Select or Dynamic List */}
+                {(values.type === "select" || values.type === "dynamic_list") && (
                   <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight ml-1">
-                      Dropdown Options (Comma Separated)
+                      {values.type === "select" ? "Dropdown Options" : "List Item Fields"} (Comma Separated)
                     </label>
                     <textarea
                       name="options"
@@ -164,14 +164,16 @@ const ProjectFieldModal = ({ isOpen, onClose, field, onSave }) => {
                         ${errors.options && touched.options 
                           ? 'border-red-200 focus:border-red-400' 
                           : 'border-gray-100 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/5'}`}
-                      placeholder="e.g. Highly Important, Medium, Low Priority"
+                      placeholder={values.type === "select" 
+                        ? "e.g. Highly Important, Medium, Low Priority" 
+                        : "e.g. Name, Link, Instagram, Facebook"}
                       value={values.options}
                       onChange={handleChange}
                       onBlur={handleBlur}
                     />
                     <div className="flex items-center gap-1.5 ml-1 opacity-60">
                       <FiInfo className="w-3 h-3 text-blue-500" />
-                      <span className="text-[10px] font-medium text-gray-500 italic">Separate each option with a comma</span>
+                      <span className="text-[10px] font-medium text-gray-500 italic">Separate each {values.type === "select" ? "option" : "field"} with a comma</span>
                     </div>
                     {errors.options && touched.options && (
                       <span className="text-[10px] font-bold text-red-500 ml-1 uppercase">{errors.options}</span>
