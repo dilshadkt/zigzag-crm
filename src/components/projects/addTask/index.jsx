@@ -24,6 +24,7 @@ import {
   isHoliday,
   formatShortDate,
 } from "../../../utils/workingDayUtils";
+import { useCheckAvailability } from "../../../features/vacations/hooks/useVacations";
 
 const AddTask = ({
   isOpen,
@@ -121,6 +122,71 @@ const AddTask = ({
   const [dateChangeReason, setDateChangeReason] = useState("");
   const [showFlowAssigneeModal, setShowFlowAssigneeModal] = useState(false);
   const [missingFlowAssignees, setMissingFlowAssignees] = useState([]);
+
+  // Vacation availability state
+  const availabilityMutation = useCheckAvailability();
+  const [availabilityConflicts, setAvailabilityConflicts] = useState([]);
+
+  // Trigger availability check when assignees or dates change
+  useEffect(() => {
+    // Only check if we have dates and assignees
+    const hasMainAssignees = values.assignedTo?.length > 0;
+    const hasSubtasks = values.subtasks?.length > 0;
+
+    if (!values.startDate || !values.dueDate || (!hasMainAssignees && !hasSubtasks)) {
+      setAvailabilityConflicts([]);
+      return;
+    }
+
+    const checks = [];
+
+    // 1. Add main task assignees to check list
+    if (hasMainAssignees) {
+      values.assignedTo.forEach((empId) => {
+        checks.push({
+          employeeId: empId,
+          startDate: values.startDate,
+          endDate: values.dueDate,
+          label: "main",
+        });
+      });
+    }
+
+    // 2. Add subtask assignees to check list
+    if (hasSubtasks) {
+      values.subtasks.forEach((sub, idx) => {
+        const subAssigneeId = typeof sub.assignee === "object" ? sub.assignee?._id : sub.assignee;
+        if (subAssigneeId && sub.startDate && sub.dueDate) {
+          checks.push({
+            employeeId: subAssigneeId,
+            startDate: sub.startDate,
+            endDate: sub.dueDate,
+            label: `subtask-${idx}`,
+          });
+        }
+      });
+    }
+
+    if (checks.length > 0) {
+      // Use a timeout to debounce the API call slightly
+      const timeoutId = setTimeout(() => {
+        availabilityMutation.mutate(checks, {
+          onSuccess: (data) => {
+            setAvailabilityConflicts(data.conflicts || []);
+          },
+        });
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setAvailabilityConflicts([]);
+    }
+  }, [
+    values.assignedTo,
+    values.subtasks,
+    values.startDate,
+    values.dueDate,
+    values.taskFlow, // Also check when flow changes as it updates subtasks
+  ]);
 
 
   // Fetch project details when a project is selected
@@ -1012,6 +1078,27 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                 }
               />
 
+              {/* Main Task Availability Conflicts */}
+              {availabilityConflicts.filter(c => c.label === 'main').length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {availabilityConflicts.filter(c => c.label === 'main').map((conflict, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg">
+                      <FiAlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
+                      <div>
+                        <p className="text-[11px] font-bold text-amber-800">
+                          {conflict.employeeName} is on leave
+                        </p>
+                        {conflict.conflictingDates.map((d, dIdx) => (
+                          <p key={dIdx} className="text-[10px] text-amber-700 italic">
+                            • {d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-2 mb-2 mt-4 px-1">
                 <input
                   type="checkbox"
@@ -1365,6 +1452,23 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                                   </span>
                                 </div>
                               )}
+
+                              {/* Subtask Availability Conflicts */}
+                              {availabilityConflicts.filter(c => c.label === `subtask-${index}`).map((conflict, idx) => (
+                                <div key={idx} className="flex items-start gap-1.5 pl-7 mt-1">
+                                  <FiAlertTriangle className="w-3 h-3 text-red-500 mt-0.5" />
+                                  <div>
+                                    <p className="text-[10px] font-bold text-red-600">
+                                      {conflict.employeeName} unavailable
+                                    </p>
+                                    {conflict.conflictingDates.map((d, dIdx) => (
+                                      <p key={dIdx} className="text-[9px] text-red-500 italic">
+                                        • {d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           );
                         })}

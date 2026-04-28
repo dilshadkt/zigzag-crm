@@ -29,7 +29,7 @@ import VacationCard from "./components/VacationCard";
 import VacationRequestModal from "./components/VacationRequestModal";
 
 const Vacations = () => {
-  const { isCompany } = useAuth();
+  const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
   const [stat, setStat] = useState("Vacations");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -146,6 +146,18 @@ const Vacations = () => {
     return ["#F4F9FD", true, false];
   };
 
+  const displayedEmployees = !isCompany && user?._id
+    ? companyVacationsData?.employees?.filter(
+        (item) => (item.employee?._id || item.employee?.id) === user._id
+      )
+    : companyVacationsData?.employees;
+
+  const displayedCalendar = !isCompany && user?._id
+    ? calendarData?.calendar?.filter(
+        (item) => (item.employee?._id || item.employee?.id) === user._id
+      )
+    : calendarData?.calendar;
+
   const renderStat = () => {
     if (isLoadingEmployees || isLoadingCalendar) {
       return (
@@ -204,7 +216,7 @@ const Vacations = () => {
     if (stat === "Vacations") {
       return (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mt-3 pb-6">
-          {companyVacationsData?.employees.map((item, index) => (
+          {displayedEmployees?.map((item, index) => (
             <VacationCard
               key={index}
               item={item}
@@ -215,7 +227,7 @@ const Vacations = () => {
             />
           ))}
 
-          {companyVacationsData?.employees.length === 0 && (
+          {displayedEmployees?.length === 0 && (
             <div className="col-span-full bg-white h-64 flexCenter rounded-3xl p-6 text-center text-gray-400 border border-dashed border-gray-200">
               <div className="flex flex-col items-center gap-2">
                 <RiCalendarCheckLine size={48} className="text-gray-200" />
@@ -264,7 +276,7 @@ const Vacations = () => {
           </div>
           <div className="w-full border-b overflow-y-auto flexStart border-[#E6EBF5] h-full">
             <div className="w-full h-full overflow-y-auto">
-              {calendarData?.calendar.map((employee, index) => (
+              {displayedCalendar?.map((employee, index) => (
                 <div className="flex w-full" key={index}>
                   <div
                     className="min-h-[52px] min-w-[240px] border-r border-b border-[#E6EBF5] flexStart gap-x-[10px]
@@ -315,7 +327,7 @@ const Vacations = () => {
                 </div>
               ))}
 
-              {calendarData?.calendar.length === 0 && (
+              {displayedCalendar?.length === 0 && (
                 <div className="w-full p-4 text-center text-gray-500">
                   No employee data available
                 </div>

@@ -6,6 +6,7 @@ import {
   updateVacationStatusApi,
   updateVacationRequestApi,
   createVacationRequestApi,
+  checkAvailabilityApi,
 } from "../api/vacationApi";
 
 export const useGetEmployeeVacations = (employeeId, month, year) => {
@@ -70,5 +71,11 @@ export const useCreateVacationRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["companyVacations"] });
       queryClient.invalidateQueries({ queryKey: ["employeeVacations"] });
     },
+  });
+};
+
+export const useCheckAvailability = () => {
+  return useMutation({
+    mutationFn: (checks) => checkAvailabilityApi(checks),
   });
 };

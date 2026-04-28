@@ -188,7 +188,7 @@ const SubtasksSection = ({
                   {/* Row 1: Flags & Indicators (Full Width to prevent wrapping) */}
                   <div className="flex flex-wrap items-center gap-1.5 w-full">
                     {/* Content Indicators */}
-                    {subtask.copyOfDescription && (
+                    {(subtask.copyOfDescription || subtask.title?.toLowerCase().includes("content")) && (
                       <div
                         className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
                         title="Has Content Description"

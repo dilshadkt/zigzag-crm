@@ -8,6 +8,7 @@ import { useUpdateSubTaskById, useGetProjectSocialMedia } from "../../../api/hoo
 import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare, FiChevronDown, FiChevronUp, FiMic } from "react-icons/fi";
 import VoiceRecorder from "../VoiceRecorder";
 import LinkPreview from "../LinkPreview";
+import { toast } from "react-hot-toast";
 
 const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = false, isCompany = false, isAdmin = false }) => {
   const fileInputRef = useRef(null);
@@ -27,7 +28,40 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
 
   const [urlValues, setUrlValues] = useState(subTask?.publishUrls || {});
   const [customFieldsValues, setCustomFieldsValues] = useState(subTask?.customFields || []);
+  const [playingAttachmentId, setPlayingAttachmentId] = useState(null);
+  const audioPlayerRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Audio player setup
+  useEffect(() => {
+    audioPlayerRef.current = new Audio();
+    const handleEnded = () => setPlayingAttachmentId(null);
+    audioPlayerRef.current.addEventListener("ended", handleEnded);
+    
+    return () => {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.removeEventListener("ended", handleEnded);
+      }
+    };
+  }, []);
+
+  const toggleAudio = (e, attachment) => {
+    e.stopPropagation();
+    
+    if (playingAttachmentId === attachment._id) {
+      audioPlayerRef.current.pause();
+      setPlayingAttachmentId(null);
+    } else {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.src = attachment.preview;
+      audioPlayerRef.current.play().catch(err => {
+        console.error("Audio playback error:", err);
+        setPlayingAttachmentId(null);
+      });
+      setPlayingAttachmentId(attachment._id);
+    }
+  };
 
   const hasPublishUrls = subTask.publishUrls && 
     Object.values(subTask.publishUrls).some(url => url && typeof url === 'string' && url.trim() !== "");
@@ -60,8 +94,12 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const isContentSubTask = subTask.title?.toLowerCase() === "content";
-  const isPublishSubTask = subTask.title?.toLowerCase() === "publish";
+  const isContentSubTask = 
+    subTask.title?.toLowerCase().includes("content") || 
+    !!subTask.copyOfDescription || 
+    !!subTask.ideas;
+    
+  const isPublishSubTask = subTask.title?.toLowerCase().includes("publish");
 
   const prevStatusRef = useRef(subTask?.status);
 
@@ -109,16 +147,22 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
       fileInputRef.current.value = "";
     }
 
-    if (!result.success) {
+    if (result.success) {
+      toast.success("Attachments uploaded successfully!");
+    } else {
       // You can add toast notification here if needed
       console.error("Failed to upload attachments:", result.error);
+      toast.error("Failed to upload attachments");
     }
   };
 
   const handleVoiceUpload = async (file) => {
     const result = await handleFileUpload([file]);
-    if (!result.success) {
+    if (result.success) {
+      toast.success("Voice recording uploaded successfully!");
+    } else {
       console.error("Failed to upload voice recording:", result.error);
+      toast.error("Failed to upload voice recording");
     }
   };
 
@@ -341,8 +385,30 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                 onClick={() => handleViewAttachment(attachment)}
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-sm">
-                    {getFileIcon(attachment.type)}
+                  <span className="text-sm flex-shrink-0">
+                    {attachment.type === "audio" ? (
+                      <button
+                        onClick={(e) => toggleAudio(e, attachment)}
+                        className={`p-1.5 rounded-full transition-all duration-200 shadow-sm ${
+                          playingAttachmentId === attachment._id
+                            ? "bg-orange-500 text-white animate-pulse"
+                            : "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+                        }`}
+                        title={playingAttachmentId === attachment._id ? "Pause" : "Play Voice Note"}
+                      >
+                        {playingAttachmentId === attachment._id ? (
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ) : (
+                      getFileIcon(attachment.type)
+                    )}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-700 truncate">

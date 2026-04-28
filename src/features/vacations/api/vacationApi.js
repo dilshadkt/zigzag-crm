@@ -39,3 +39,7 @@ export const updateVacationRequestApi = ({ vacationId, data }) => {
 export const createVacationRequestApi = (data) => {
   return apiClient.post("/vacations", data).then((res) => res.data);
 };
+
+export const checkAvailabilityApi = (checks) => {
+  return apiClient.post("/vacations/check-availability", { checks }).then((res) => res.data);
+};

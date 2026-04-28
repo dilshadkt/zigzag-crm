@@ -12,6 +12,7 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
   const [selectedDeviceId, setSelectedDeviceId] = useState("default");
   const [showSettings, setShowSettings] = useState(false);
   const [isSilenced, setIsSilenced] = useState(true); // To check if any audio signal is detected
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -19,6 +20,7 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
   const animationRef = useRef(null);
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
+  const previewAudioRef = useRef(null);
 
   // Enum devices
   useEffect(() => {
@@ -59,6 +61,12 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContext();
+      
+      // Ensure context is resumed if suspended
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
       const analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
@@ -116,6 +124,10 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Your browser does not support audio recording.");
+      }
+
       console.log("Starting recording with device:", selectedDeviceId);
       
       const audioConstraints = {
@@ -129,6 +141,11 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+      
+      if (!stream || stream.getAudioTracks().length === 0) {
+        throw new Error("No audio track found. Please check your microphone.");
+      }
+
       streamRef.current = stream;
       audioChunksRef.current = [];
 
@@ -154,7 +171,7 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
@@ -172,7 +189,8 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
         }
       };
 
-      mediaRecorder.start();
+      // Start recording with a timeslice to ensure data is captured periodically
+      mediaRecorder.start(200); 
       setIsRecording(true);
       setRecordingTime(0);
       setAudioUrl(null);
@@ -221,6 +239,21 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
     onClose();
   };
 
+  const togglePlay = () => {
+    if (previewAudioRef.current) {
+      if (isPlaying) {
+        previewAudioRef.current.pause();
+      } else {
+        previewAudioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+  };
+
   // Safe time formatting
   const formatTime = (timeInSeconds) => {
     const minutes = Math.floor(timeInSeconds / 60);
@@ -232,6 +265,7 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
   useEffect(() => {
     if (!isOpen) {
       handleCleanup();
+      setIsPlaying(false);
     }
   }, [isOpen]);
 
@@ -258,7 +292,7 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
               
               {isRecording && isSilenced && (
                 <div className="flex items-center gap-1.5 text-orange-500 text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                  <FiVolume2 /> No Sound Detected
+                   <FiVolume2 /> No Sound Detected
                 </div>
               )}
             </div>
@@ -319,14 +353,39 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
         ) : (
           <>
             {/* Preview Section */}
-            <div className="w-full px-4 space-y-4">
+            <div className="w-full px-4 space-y-6">
               <div className="text-center">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Preview Message</p>
                 <p className="text-lg font-bold text-gray-800">Voice Note • {formatTime(recordingTime)}</p>
               </div>
               
-              <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50">
-                <audio src={audioUrl} controls className="w-full" />
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={togglePlay}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
+                    isPlaying 
+                      ? "bg-orange-500 text-white shadow-orange-100" 
+                      : "bg-blue-600 text-white shadow-blue-100"
+                  }`}
+                >
+                  {isPlaying ? (
+                    <FiSquare className="w-6 h-6 fill-current" />
+                  ) : (
+                    <FiPlay className="w-6 h-6 fill-current ml-1" />
+                  )}
+                </button>
+
+                <div className="w-full bg-blue-50/50 p-3 rounded-2xl border border-blue-100/50">
+                  <audio 
+                    ref={previewAudioRef}
+                    src={audioUrl} 
+                    className="w-full" 
+                    onEnded={handleAudioEnded}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    controls
+                  />
+                </div>
               </div>
             </div>
 
