@@ -51,6 +51,12 @@ export const SIDE_MENU = [
         path: "/leaderboard",
         routeKey: "leaderboard",
       },
+      {
+        id: 106,
+        title: "HR Dashboard",
+        path: "/hr-dashboard",
+        routeKey: "hr-dashboard",
+      },
       // {
       //   id: 103,
       //   title: "Employee Dashboard",

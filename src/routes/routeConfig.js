@@ -2,6 +2,7 @@ import { lazy } from "react";
 
 // Lazy load components
 const Dashboard = lazy(() => import("../pages/dashboard"));
+const HRDashboard = lazy(() => import("../pages/dashboard/HRDashboard"));
 const Projects = lazy(() => import("../pages/projects"));
 const ProjectDetails = lazy(() => import("../pages/projectDetail"));
 const TaskDetails = lazy(() => import("../pages/taskDetails"));
@@ -74,6 +75,12 @@ export const routeConfig = [
       {
         index: true,
         component: Dashboard,
+        requiresAuth: true,
+        allowedRoles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+      },
+      {
+        path: "hr-dashboard",
+        component: HRDashboard,
         requiresAuth: true,
         allowedRoles: [ROLES.ADMIN, ROLES.EMPLOYEE],
       },
