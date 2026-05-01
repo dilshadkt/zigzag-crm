@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FiSearch, FiPlus, FiRefreshCw } from "react-icons/fi";
 import Navigator from "../../shared/navigator";
 import { useAuth } from "../../../hooks/useAuth";
@@ -20,6 +20,22 @@ const CampaignsHeader = ({
   const { user } = useAuth();
   const isClient = user?.role === "client";
   const statusOptions = ["", "planned", "active", "completed", "paused"];
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [projectSearch, setProjectSearch] = useState("");
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="bg-white rounded-t-2xl border-gray-200 px-6 py-4 select-none">
@@ -51,11 +67,10 @@ const CampaignsHeader = ({
             <button
               onClick={onSyncFacebook}
               disabled={isSyncing}
-              className={`px-4 py-2.5 border border-gray-200 font-semibold rounded-xl transition-colors flex items-center gap-2 text-sm ${
-                isSyncing
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-              }`}
+              className={`px-4 py-2.5 border border-gray-200 font-semibold rounded-xl transition-colors flex items-center gap-2 text-sm ${isSyncing
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
+                }`}
               title={
                 lastSyncedAt
                   ? `Last synced: ${new Date(lastSyncedAt).toLocaleString()}`
@@ -88,10 +103,9 @@ const CampaignsHeader = ({
               key={status}
               onClick={() => setStatusFilter(status)}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap uppercase tracking-widest
-                ${
-                  statusFilter === status
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-transparent text-gray-500 hover:bg-gray-100"
+                ${statusFilter === status
+                  ? "bg-blue-600 text-white"
+                  : "bg-transparent text-gray-500 hover:bg-gray-100"
                 }`}
             >
               {status === "" ? "All" : status}
@@ -101,20 +115,77 @@ const CampaignsHeader = ({
 
         <div className="flex items-center gap-4">
           {projects?.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Project:</span>
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 font-bold outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 transition-all select-none min-w-[150px] shadow-sm hover:border-gray-300"
+            <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Clients:</span>
+              <div
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 font-bold cursor-pointer select-none min-w-[170px] hover:border-gray-300 flex items-center justify-between gap-2"
               >
-                <option value="" className="text-gray-900 bg-white">All Projects</option>
-                {projects.map((proj) => (
-                  <option key={proj._id} value={proj._id} className="text-gray-900 bg-white">
-                    {proj.name || proj.projectName || "Unnamed Project"}
-                  </option>
-                ))}
-              </select>
+                <span className="truncate max-w-[130px]">
+                  {projects.find((p) => p._id === selectedProjectId)?.name ||
+                    projects.find((p) => p._id === selectedProjectId)?.projectName ||
+                    "All Clients"}
+                </span>
+                <span className="text-[10px] text-gray-400">▼</span>
+              </div>
+
+              {isDropdownOpen && (
+                <div className="absolute top-full right-0 mt-1.5 w-64 bg-white border border-gray-100 rounded-xl p-2 z-50 flex flex-col gap-1.5 select-none animate-fadeIn">
+                  <div className="flex bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 items-center gap-2 shrink-0">
+                    <FiSearch className="text-gray-400 w-3.5 h-3.5" />
+                    <input
+                      type="text"
+                      placeholder="Search projects..."
+                      className="bg-transparent border-none outline-none text-xs w-full text-gray-700 placeholder-gray-400 font-medium"
+                      value={projectSearch}
+                      onChange={(e) => setProjectSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto pr-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProjectId("");
+                        setIsDropdownOpen(false);
+                        setProjectSearch("");
+                      }}
+                      className={`flex items-center px-3 py-2 text-left text-xs font-bold rounded-lg transition-all ${selectedProjectId === ""
+                        ? "bg-blue-50 text-blue-600 font-bold"
+                        : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                      All Clients
+                    </button>
+                    {projects
+                      .filter((proj) => {
+                        const projName = (proj.name || proj.projectName || "").toLowerCase();
+                        return projName.includes(projectSearch.toLowerCase());
+                      })
+                      .map((proj) => (
+                        <button
+                          key={proj._id}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProjectId(proj._id);
+                            setIsDropdownOpen(false);
+                            setProjectSearch("");
+                          }}
+                          className={`flex items-center px-3 py-2 text-left text-xs font-bold rounded-lg transition-all ${selectedProjectId === proj._id
+                            ? "bg-blue-50 text-blue-600 font-bold"
+                            : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                        >
+                          <span className="truncate">
+                            {proj.name || proj.projectName || "Unnamed Project"}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">

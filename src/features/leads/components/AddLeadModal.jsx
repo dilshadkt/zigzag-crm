@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { FiX } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import DynamicLeadForm from "./DynamicLeadForm";
+import apiClient from "../../../api/client";
 import {
   useGetLeadFormConfig,
   useGetLeadStatuses,
@@ -11,6 +13,9 @@ import { useCompanyActiveProjects } from "../../../api/hooks";
 const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
+  const [duplicateLead, setDuplicateLead] = useState(null);
+  const navigate = useNavigate();
+
   const { data: projects = [] } = useCompanyActiveProjects();
 
   // Stable handler for form value changes
@@ -30,6 +35,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
         project: projectId || "",
       });
       setErrors({});
+      setDuplicateLead(null);
     }
   }, [isOpen, projectId]);
 
@@ -83,6 +89,39 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
       };
     });
   }, [formConfigData?.data?.fields]);
+
+  // Check for duplicate phone number
+  useEffect(() => {
+    const phoneField = formFields.find(f => 
+      String(f.key).toLowerCase().includes("phone") || 
+      String(f.label).toLowerCase().includes("phone") ||
+      f.type === "tel"
+    );
+    const phone = phoneField ? formValues[phoneField.id] : formValues.system_phone;
+
+    if (phone && String(phone).trim().length >= 4) {
+      const timer = setTimeout(async () => {
+        try {
+          const res = await apiClient.get("/leads", { params: { search: phone, limit: 100 } });
+          const matches = res.data?.data || [];
+          const exactMatch = matches.find(lead => 
+            lead.contact?.phone === phone || lead.phone === phone ||
+            String(lead.contact?.phone || "").includes(phone) || String(lead.phone || "").includes(phone)
+          );
+          if (exactMatch) {
+            setDuplicateLead(exactMatch);
+          } else {
+            setDuplicateLead(null);
+          }
+        } catch (err) {
+          console.error("Error checking for duplicate lead:", err);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setDuplicateLead(null);
+    }
+  }, [formValues, formFields]);
 
   const statuses = statusesData?.data || [];
   const isLoading = formConfigLoading;
@@ -292,6 +331,30 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
               statuses={statuses}
             />
 
+            {duplicateLead && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col gap-1 text-xs select-none">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-amber-800">Existing lead found with this phone number</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/leads/${duplicateLead._id || duplicateLead.id}`);
+                    }}
+                    className="text-blue-600 hover:underline font-bold text-xs"
+                  >
+                    View Lead Details →
+                  </button>
+                </div>
+                <div className="text-slate-600 mt-1 flex flex-col gap-0.5">
+                  <p><strong>Name:</strong> {duplicateLead.contact?.name || duplicateLead.name}</p>
+                  <p><strong>Email:</strong> {duplicateLead.contact?.email || duplicateLead.email}</p>
+                  <p><strong>Status:</strong> {duplicateLead.status?.name || duplicateLead.statusName || "New"}</p>
+                  <p><strong>Company:</strong> {duplicateLead.contact?.company || duplicateLead.companyName || "N/A"}</p>
+                </div>
+              </div>
+            )}
+
             {errors.submit && (
               <div className="p-3 rounded-2xl bg-red-50 border border-red-200">
                 <p className="text-sm text-red-600">{errors.submit}</p>
@@ -349,4 +412,3 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
 };
 
 export default AddLeadModal;
-
