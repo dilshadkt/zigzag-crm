@@ -28,6 +28,7 @@ const getStatusFromFilter = (filter) => {
     "re-work": "re-work",
     overdue: "overdue",
     upcoming: "upcoming",
+    "monthly-rework": "monthly-rework",
   };
   return statusMap[filter] || null;
 };

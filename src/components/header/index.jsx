@@ -220,15 +220,12 @@ const DashboardHeader = () => {
   return (
     <div className="bg-white lg:bg-transparent rounded-xl py-1 md:py-0 flexBetween">
       {/* Mobile Logo */}
-      {showHeaderActions && (
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
-          <img src={logo} alt="" className="w-10 h-10 ml-3" />
-        </button>
-      )}
+      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
+        <img src={logo} alt="" className="w-10 h-10 ml-3" />
+      </button>
 
       {/* Search Bar */}
-      {showHeaderActions && <SearchBar accessiblePages={filteredSidebar} />}
-      {!showHeaderActions && <div className="flex-1 md:hidden" />} {/* Spacer for mobile */}
+      <SearchBar accessiblePages={filteredSidebar} />
 
       {/* Right Side Actions */}
       <div className="flexEnd gap-x-2">

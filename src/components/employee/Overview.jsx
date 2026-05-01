@@ -26,6 +26,7 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
   const todaySubTasks = statistics?.today || 0;
   const onReviewSubTasks = statistics?.onReview || 0;
   const reworkSubTasks = statistics?.rework || 0;
+  const totalReworked = statistics?.totalReworked || 0;
   const upcoming3DaysSubTasks = statistics?.upcoming3Days || 0;
   const completionRate = statistics?.completionRate || 0;
   const approvedSubTasks = statistics?.approved || 0;
@@ -79,6 +80,11 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
       case "rework":
         navigate(
           `/employees/${employeeId}/subtasks?filter=re-work${monthQuery}`
+        );
+        break;
+      case "monthly-rework":
+        navigate(
+          `/employees/${employeeId}/subtasks?filter=monthly-rework${monthQuery}`
         );
         break;
       case "upcoming":
@@ -202,6 +208,12 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
               : 0
           }
           onClick={() => handleStatsClick("rework")}
+        />
+        <StatCard
+          title="Total Reworked"
+          value={totalReworked}
+          color="pink"
+          onClick={() => handleStatsClick("monthly-rework")}
         />
         <StatCard
           title="Overdue"

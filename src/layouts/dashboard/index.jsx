@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/sidebar";
 import { Outlet } from "react-router-dom";
 import DashboardHeader from "../../components/header";
@@ -13,6 +13,7 @@ const DashboardLayout = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const attendance = useAttendanceManager();
+  const [isAttendanceDismissed, setIsAttendanceDismissed] = useState(false);
   
   const isCompanyAdmin = user?.role === "company-admin";
   const isClient = user?.role === "client";
@@ -79,17 +80,17 @@ const DashboardLayout = () => {
       </section>
 
       {/* Global Mandatory Attendance Overlay */}
-      {!showContent && !attendance.statusLoading && (
+      {!showContent && !attendance.statusLoading && !isAttendanceDismissed && (
         <div className="fixed inset-0 z-[9999] flexCenter px-4 bg-black/40 backdrop-blur-[3px]">
           <AttendanceModal
             isOpen={true}
-            isClosable={false}
+            isClosable={true}
             user={user}
             isClockingIn={attendance.isClockingIn}
             isProcessingAttendance={attendance.isClockingIn}
             clockInError={attendance.clockInError}
             onClockIn={attendance.handleClockIn}
-            onClose={() => {}}
+            onClose={() => setIsAttendanceDismissed(true)}
           />
           <div className="fixed bottom-10 left-0 right-0 flexCenter flex-col gap-2 z-[10001] pointer-events-none">
             <p className="text-[11px] text-white/70 uppercase font-bold tracking-[0.3em] bg-black/20 px-6 py-2.5 rounded-full border border-white/10 backdrop-blur-md">
