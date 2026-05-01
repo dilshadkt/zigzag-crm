@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useGetCampaigns, useSyncFacebookAds } from "../../api/campaigns";
 import { useAuth } from "../../hooks/useAuth";
+import { useCompanyActiveProjects } from "../../api/hooks";
 import CampaignsHeader from "../../components/pages/campaigns/CampaignsHeader";
 import CampaignsTable from "../../components/pages/campaigns/CampaignsTable";
 import CampaignsSummary from "../../components/pages/campaigns/CampaignsSummary";
@@ -12,15 +13,18 @@ const Campaigns = ({ isClient: propIsClient, projectId }) => {
   const isClient = propIsClient || user?.role === "client";
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState(projectId || "");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
+
+  const { data: activeProjects } = useCompanyActiveProjects();
 
   const { data: campaignsData, isLoading } = useGetCampaigns({
     page: 1,
     limit: 100, // Fetch more for the list view or implement pagination
     search: search,
     status: statusFilter,
-    projectId: projectId, // Pass projectId filter
+    projectId: selectedProjectId || projectId, // Pass projectId filter
   });
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
@@ -81,7 +85,7 @@ const Campaigns = ({ isClient: propIsClient, projectId }) => {
   };
 
   return (
-    <section className="flex flex-col rounded-2xl overflow-hidden h-full bg-white">
+    <section className="flex flex-col rounded-2xl overflow-hidden h-full bg-white select-none">
       <CampaignsHeader
         search={search}
         setSearch={setSearch}
@@ -93,6 +97,9 @@ const Campaigns = ({ isClient: propIsClient, projectId }) => {
         isSyncing={isSyncing}
         lastSyncedAt={lastSyncedAt}
         isClient={isClient}
+        projects={activeProjects || []}
+        selectedProjectId={selectedProjectId}
+        setSelectedProjectId={setSelectedProjectId}
       />
 
       <div className="flex-1 overflow-hidden flex flex-col">

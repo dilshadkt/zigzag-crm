@@ -13,13 +13,16 @@ const CampaignsHeader = ({
   onSyncFacebook,
   isSyncing = false,
   lastSyncedAt = null,
+  projects = [],
+  selectedProjectId = "",
+  setSelectedProjectId,
 }) => {
   const { user } = useAuth();
   const isClient = user?.role === "client";
   const statusOptions = ["", "planned", "active", "completed", "paused"];
 
   return (
-    <div className="bg-white rounded-t-2xl border-gray-200 px-6 py-4">
+    <div className="bg-white rounded-t-2xl border-gray-200 px-6 py-4 select-none">
       <div className="flexBetween mb-4">
         <div className="flex items-center gap-4">
           <Navigator />
@@ -77,9 +80,9 @@ const CampaignsHeader = ({
         </div>
       </div>
 
-      <div className="flexBetween">
+      <div className="flexBetween flex-wrap gap-3">
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto">
           {statusOptions.map((status) => (
             <button
               key={status}
@@ -96,7 +99,24 @@ const CampaignsHeader = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {projects?.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Project:</span>
+              <select
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 font-bold outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 transition-all select-none min-w-[150px] shadow-sm hover:border-gray-300"
+              >
+                <option value="" className="text-gray-900 bg-white">All Projects</option>
+                {projects.map((proj) => (
+                  <option key={proj._id} value={proj._id} className="text-gray-900 bg-white">
+                    {proj.name || proj.projectName || "Unnamed Project"}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             Total: {totalCampaigns || 0}
           </span>
