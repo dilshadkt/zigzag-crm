@@ -32,7 +32,9 @@ const getStorageKey = () => {
 };
 
 const persistState = (state) => {
-  localStorage.setItem(getStorageKey(), JSON.stringify(state));
+  const stateToPersist = { ...state };
+  delete stateToPersist.currentDate;
+  localStorage.setItem(getStorageKey(), JSON.stringify(stateToPersist));
 };
 
 // Load state from localStorage
@@ -42,6 +44,7 @@ const loadState = () => {
     const serializedState = localStorage.getItem(getStorageKey());
     if (serializedState === null) return defaultState;
     const parsedState = JSON.parse(serializedState);
+    delete parsedState.currentDate;
     return {
       ...defaultState,
       ...parsedState,

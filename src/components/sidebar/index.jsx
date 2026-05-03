@@ -52,35 +52,51 @@ const Sidebar = () => {
   const { data: unreadMessageCount = 0 } = useGetUnreadMessageCount();
 
   // Check if user has admin dashboard access permission
-  // IMPORTANT: Company admins should NOT see this option - only non-admin users with permission
   const isCompanyAdmin = user?.role === "company-admin";
   const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
 
   const sidebarMenuItems = SIDE_MENU.map((item) => {
-    // If the item is "Dashboard", check if sub-items should be shown
+    // If the item is "Dashboard", construct its children
     if (item.routeKey === "dashboard") {
-      // ONLY Company Admin sees all sub-items under the main "Dashboard"
-      if (isCompanyAdmin) {
-        return item;
-      }
-      
-      // For others, check if they have specific dashboard permissions (like lead-dashboard)
       const allowedRoutes = userPosition?.allowedRoutes || [];
-      const hasDashboardChildren = item.children?.some(child => 
-        child.routeKey !== "dashboard" && allowedRoutes.includes(child.routeKey)
-      );
 
-      if (hasDashboardChildren) {
-        // Return dashboard with only allowed children
-        const allowedChildren = item.children.filter(child => 
-          child.routeKey === "dashboard" || allowedRoutes.includes(child.routeKey)
-        );
-        return { ...item, children: allowedChildren };
+      // 1. Start with "Main Dashboard"
+      let children = [
+        {
+          id: 101,
+          title: "Main Dashboard",
+          path: "/",
+          routeKey: "dashboard",
+        }
+      ];
+
+      // 2. Insert "Company Dashboard" if user has access
+      if (isCompanyAdmin || canAccessAdminDashboard) {
+        children.push({
+          id: 1301,
+          title: "Company Dashboard",
+          path: "/company-dashboard",
+          routeKey: "company-dashboard",
+        });
       }
 
-      // If no specific dashboard permissions, return a flat "Dashboard" link
-      const { children, ...rest } = item;
-      return rest;
+      // 3. Add other dashboard sub-items template
+      const dashboardTemplate = SIDE_MENU.find(i => i.routeKey === "dashboard");
+      const otherDashboards = dashboardTemplate?.children?.filter(
+        child => child.routeKey !== "dashboard"
+      ) || [];
+
+      otherDashboards.forEach(child => {
+        if (isCompanyAdmin || allowedRoutes.includes(child.routeKey)) {
+          children.push(child);
+        }
+      });
+
+      return {
+        ...item,
+        children,
+        path: undefined // So it becomes a collapsible/dropdown menu instead of a direct link
+      };
     }
 
     // Transform Settings for Employees (non-admin users)
@@ -139,55 +155,16 @@ const Sidebar = () => {
     return item;
   });
 
-  // IMPORTANT: Only add Company Dashboard menu item if user has the permission AND is NOT a company admin
-  if (canAccessAdminDashboard) {
-    const dashboardIndex = sidebarMenuItems.findIndex(
-      (item) => item.routeKey === "dashboard"
-    );
-    
-    // Get the sub-items template from SIDE_MENU
-    const dashboardItem = SIDE_MENU.find(i => i.routeKey === "dashboard");
-    const subItems = dashboardItem?.children || [];
-
-    if (dashboardIndex !== -1) {
-      sidebarMenuItems.splice(dashboardIndex + 1, 0, {
-        id: 13,
-        title: "Company Dashboard",
-        icon: MdDashboard,
-        routeKey: "company-dashboard",
-        children: [
-          {
-            id: 1301,
-            title: "Company Overview",
-            path: "/company-dashboard",
-            routeKey: "company-dashboard",
-          },
-          // Add Lead, Employee, and Cost dashboards if the user has specific access to them
-          ...subItems.filter(child => child.routeKey !== 'dashboard' && (userPosition?.allowedRoutes || []).includes(child.routeKey))
-        ],
-      });
-    }
-  }
-
   // Filter sidebar items based on user's position allowed routes
   const filteredSidebar = sidebarMenuItems.filter((item) => {
-    // Company admins have full access to all menu items EXCEPT Company Dashboard
+    // Company admins have full access to all menu items
     if (isCompanyAdmin) {
-      // Hide Company Dashboard for admins
-      if (item.routeKey === "company-dashboard") {
-        return false;
-      }
       return true;
     }
 
     // Certain routes are always accessible to everyone
     if (ALWAYS_ACCESSIBLE_ROUTES.includes(item.routeKey)) {
       return true;
-    }
-
-    // Company Dashboard is ONLY accessible if user has the permission (and is NOT an admin)
-    if (item.routeKey === "company-dashboard") {
-      return canAccessAdminDashboard;
     }
 
     // For other menu items, check if the routeKey is in their allowed routes
