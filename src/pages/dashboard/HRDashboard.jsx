@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { attendanceApi } from "../../features/attendance/api/attendanceApi";
 import { useEmpoyees } from "../../api/hooks";
-import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload } from "react-icons/fi";
+import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
 
 const HRDashboardPage = () => {
     // State for filtering
@@ -13,6 +13,23 @@ const HRDashboardPage = () => {
         return new Date().getFullYear().toString();
     });
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+
+    const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
+    const [staffSearch, setStaffSearch] = useState("");
+    const staffDropdownRef = useRef(null);
+
+    // Close on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (staffDropdownRef.current && !staffDropdownRef.current.contains(event.target)) {
+                setIsStaffDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // Fetch employees for staff dropdown
     const { data: employeesData } = useEmpoyees(1, null);
@@ -158,20 +175,79 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Staff Autocomplete Filter */}
-                    <div className="flex flex-col gap-1 min-w-[180px] flex-1">
+                    <div className="flex flex-col gap-1 min-w-[180px] flex-1 relative" ref={staffDropdownRef}>
                         <label className="text-xs font-semibold text-slate-500 tracking-wider">Select Staff Member</label>
-                        <select
-                            value={selectedEmployeeId}
-                            onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
+                        <div
+                            onClick={() => setIsStaffDropdownOpen(!isStaffDropdownOpen)}
+                            className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none text-xs font-medium transition-all select-none flex items-center justify-between cursor-pointer min-h-[34px] hover:border-slate-300"
                         >
-                            <option value="" className="text-slate-900 bg-white">All Staff Members</option>
-                            {employeesList.map(emp => (
-                                <option key={emp._id} value={emp._id} className="text-slate-900 bg-white">
-                                    {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
-                                </option>
-                            ))}
-                        </select>
+                            <span className="truncate">
+                                {employeesList.find(emp => emp._id === selectedEmployeeId)?.name ||
+                                    (employeesList.find(emp => emp._id === selectedEmployeeId) ?
+                                        `${employeesList.find(emp => emp._id === selectedEmployeeId)?.firstName || ""} ${employeesList.find(emp => emp._id === selectedEmployeeId)?.lastName || ""}`.trim() :
+                                        "All Staff Members")
+                                }
+                            </span>
+                            <span className="text-[10px] text-gray-400">▼</span>
+                        </div>
+
+                        {isStaffDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200/60 rounded-xl p-2 z-50 flex flex-col gap-1.5 select-none animate-fadeIn max-h-64">
+                                <div className="flex bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 items-center gap-2 shrink-0">
+                                    <FiSearch className="text-slate-400 w-3.5 h-3.5" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search staff members..."
+                                        className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder-slate-400 font-medium"
+                                        value={staffSearch}
+                                        onChange={(e) => setStaffSearch(e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto pr-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedEmployeeId("");
+                                            setIsStaffDropdownOpen(false);
+                                            setStaffSearch("");
+                                        }}
+                                        className={`flex items-center px-3 py-2 text-left text-xs font-bold rounded-lg transition-all ${selectedEmployeeId === ""
+                                            ? "bg-blue-50 text-blue-600 font-bold"
+                                            : "text-slate-700 hover:bg-slate-50"
+                                            }`}
+                                    >
+                                        All Staff Members
+                                    </button>
+                                    {employeesList
+                                        .filter(emp => {
+                                            const empName = (emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()).toLowerCase();
+                                            return empName.includes(staffSearch.toLowerCase());
+                                        })
+                                        .map(emp => (
+                                            <button
+                                                key={emp._id}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedEmployeeId(emp._id);
+                                                    setIsStaffDropdownOpen(false);
+                                                    setStaffSearch("");
+                                                }}
+                                                className={`flex items-center px-3 py-2 text-left text-xs font-bold rounded-lg transition-all ${selectedEmployeeId === emp._id
+                                                    ? "bg-blue-50 text-blue-600 font-bold"
+                                                    : "text-slate-700 hover:bg-slate-50"
+                                                    }`}
+                                            >
+                                                <span className="truncate">
+                                                    {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
+                                                </span>
+                                            </button>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -246,7 +322,7 @@ const HRDashboardPage = () => {
             {!isLoading && !error && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     {/* Col 1: Today's Leaves */}
-                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-44 select-none">
+                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
                             <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
                             <h5 className="font-bold text-slate-700 text-xs">Today's Leaves ({todayHighlights?.leaves?.length || 0})</h5>
@@ -266,7 +342,7 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Col 2: Today's Late Check-ins */}
-                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-44 select-none">
+                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
                             <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                             <h5 className="font-bold text-slate-700 text-xs">Today's Late Check-ins ({todayHighlights?.lateCheckins?.length || 0})</h5>
@@ -286,7 +362,7 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Col 3: Today's Early Checkouts */}
-                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-44 select-none">
+                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
                             <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
                             <h5 className="font-bold text-slate-700 text-xs">Today's Early Checkouts ({todayHighlights?.earlyCheckouts?.length || 0})</h5>
@@ -306,7 +382,7 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Col 4: Month's Overtime Breakdown */}
-                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-44 select-none">
+                    <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
                             <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
                             <h5 className="font-bold text-slate-700 text-xs">This Month's Overtime ({overtimeList.length} Staff)</h5>

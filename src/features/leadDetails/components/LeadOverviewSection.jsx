@@ -8,6 +8,8 @@ import {
   useGetLeadFormConfig,
   useGetLeadStatuses,
   useUpdateLead,
+  useAddLeadNote,
+  useUploadLeadAttachment,
 } from "../../leads/api";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 
@@ -45,10 +47,46 @@ const BulletList = ({ items }) => (
   </ul>
 );
 
-const LeadOverviewSection = ({ lead }) => {
+const LeadOverviewSection = ({ lead, isClient = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
+  const [quickNoteText, setQuickNoteText] = useState("");
+
+  const { mutate: addNote, isLoading: isAddingNote } = useAddLeadNote();
+  const { mutateAsync: uploadAttachment, isLoading: isUploadingFile } = useUploadLeadAttachment();
+
+  const handleSaveQuickNote = () => {
+    if (!quickNoteText.trim()) return;
+    addNote(
+      {
+        leadId: lead.id || lead._id,
+        noteData: { text: quickNoteText.trim() },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Note added successfully");
+          setQuickNoteText("");
+        },
+        onError: (err) => {
+          toast.error(err?.response?.data?.message || "Failed to add note");
+        },
+      }
+    );
+  };
+
+  const handleQuickFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      await uploadAttachment({ leadId: lead.id || lead._id, file });
+      toast.success("File uploaded successfully");
+      e.target.value = "";
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to upload file");
+    }
+  };
   // Get contact from both possible locations
   const contact = lead.contact || lead.details?.contact || {};
 
@@ -708,6 +746,57 @@ const LeadOverviewSection = ({ lead }) => {
           </div>
         )}
       </SectionCard>
+
+      {/* Quick Add Actions - Explicitly for Notes & Attachments */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <SectionCard>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              📝 Add Quick Note
+            </h3>
+          </div>
+          <textarea
+            value={quickNoteText}
+            onChange={(e) => setQuickNoteText(e.target.value)}
+            placeholder="Type your note here..."
+            rows={3}
+            className="w-full p-3 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3f8cff] focus:border-transparent resize-none bg-slate-50/50"
+          />
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={handleSaveQuickNote}
+              disabled={!quickNoteText.trim() || isAddingNote}
+              className="px-4 py-2 rounded-xl bg-[#3f8cff] text-white text-xs font-semibold hover:bg-[#2f6bff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm"
+            >
+              {isAddingNote ? "Adding..." : "Add Note"}
+            </button>
+          </div>
+        </SectionCard>
+
+        <SectionCard>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              📎 Upload Attachment
+            </h3>
+          </div>
+          <div className="flex flex-col h-full justify-between">
+            <label className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center cursor-pointer hover:border-[#3f8cff] hover:bg-slate-50/50 transition-all flex flex-col items-center justify-center gap-2">
+              <input
+                type="file"
+                className="hidden"
+                onChange={handleQuickFileUpload}
+                disabled={isUploadingFile}
+              />
+              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4-4v12" />
+              </svg>
+              <span className="text-xs font-semibold text-slate-600">
+                {isUploadingFile ? "Uploading..." : "Select or Drop a file"}
+              </span>
+            </label>
+          </div>
+        </SectionCard>
+      </div>
     </div>
   );
 };

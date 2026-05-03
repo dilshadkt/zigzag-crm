@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../../hooks/useAuth";
+import { FiPlus } from "react-icons/fi";
 import LeadsPageHeader from "./components/LeadsPageHeader";
 import LeadsTable from "./components/LeadsTable";
 import LeadsTableShimmer from "./components/LeadsTableShimmer";
@@ -61,7 +62,7 @@ const clearColumnVisibility = () => {
   }
 };
 
-const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId }) => {
+const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAdmin = user?.role === "company-admin";
@@ -165,6 +166,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId }) => {
     owner: (isEmployee && !canManageAllLeads) ? user._id : (appliedFilters.owner?.value || null),
     appliedFilters,
     projectId,
+    isFollowUp: isFollowUpOnly,
   });
   const handleStatusFilter = (statusId) => {
     setActiveStatusId((prev) => (prev === statusId ? null : statusId));
@@ -840,6 +842,15 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId }) => {
         statuses={statuses}
         currentFilters={appliedFilters}
       />
+
+      {/* Floating Add Lead Button for Mobile */}
+      <button
+        onClick={() => setAddLeadModalOpen(true)}
+        className="md:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center bg-[#3f8cff] text-white w-14 h-14 rounded-full shadow-lg hover:bg-[#2f6bff] active:scale-95 transition-all duration-300"
+        aria-label="Add lead"
+      >
+        <FiPlus size={24} />
+      </button>
     </section>
   );
 };

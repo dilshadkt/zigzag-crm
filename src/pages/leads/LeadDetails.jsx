@@ -9,7 +9,7 @@ import {
 import LeadDetailsFeature from "../../features/leadDetails";
 import LeadDetailsShimmer from "../../features/leadDetails/components/LeadDetailsShimmer";
 
-const LeadDetailsPage = () => {
+const LeadDetailsPage = ({ isClient = false }) => {
   const { leadId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -188,7 +188,7 @@ const LeadDetailsPage = () => {
           Lead not found or has been removed.
         </p>
         <button
-          onClick={() => navigate("/leads")}
+          onClick={() => navigate(isClient ? "/portal/dashboard" : "/leads")}
           className="px-4 py-2 rounded-full bg-[#3f8cff] text-white font-medium"
         >
           Back to Leads
@@ -207,7 +207,7 @@ const LeadDetailsPage = () => {
           Lead not found or has been removed.
         </p>
         <button
-          onClick={() => navigate("/leads")}
+          onClick={() => navigate(isClient ? "/portal/dashboard" : "/leads")}
           className="px-4 py-2 rounded-full bg-[#3f8cff] text-white font-medium"
         >
           Back to Leads
@@ -224,7 +224,8 @@ const LeadDetailsPage = () => {
   return (
     <LeadDetailsFeature
       lead={transformedLead}
-      onBack={() => navigate("/leads")}
+      onBack={() => navigate(isClient ? "/portal/dashboard" : "/leads")}
+      isClient={isClient}
     />
   );
 };

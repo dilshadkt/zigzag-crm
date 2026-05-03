@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiSearch, FiPlus, FiRefreshCw } from "react-icons/fi";
+import { FiSearch, FiPlus, FiRefreshCw, FiMoreVertical } from "react-icons/fi";
 import Navigator from "../../shared/navigator";
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -23,6 +23,7 @@ const CampaignsHeader = ({
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -38,22 +39,11 @@ const CampaignsHeader = ({
   }, []);
 
   return (
-    <div className="bg-white rounded-t-2xl border-gray-200 px-6 py-4 select-none">
-      <div className="flexBetween mb-4">
-        <div className="flex items-center gap-4">
+    <div className="bg-white rounded-t-2xl border-gray-200 px-4 md:px-6 py-3 select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Navigator />
-          <div>
-            <h3 className="font-bold text-xl text-gray-900 tracking-tight">
-              Campaign Management
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Track and optimize your marketing performance
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 w-72 items-center gap-3 focus-within:ring-4 focus-within:ring-blue-500/5 focus-within:border-blue-500 transition-all">
+          <div className="flex bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 flex-1 sm:w-72 items-center gap-3 focus-within:ring-4 focus-within:ring-blue-500/5 focus-within:border-blue-500 transition-all">
             <FiSearch className="text-gray-400" />
             <input
               type="text"
@@ -63,11 +53,47 @@ const CampaignsHeader = ({
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+              className="px-3.5 py-2.5 border border-gray-200 bg-white hover:bg-gray-50 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm shadow-sm select-none"
+              title="Filter by status"
+            >
+              <FiMoreVertical className="w-4 h-4 text-gray-600" />
+            </button>
+            {isFilterDropdownOpen && (
+              <div className="absolute top-full right-0 mt-1.5 w-44 bg-white border border-gray-100 rounded-xl p-2 z-50 flex flex-col gap-1 select-none animate-fadeIn shadow-lg">
+                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 px-3 py-1 mb-1 select-none">
+                  Status
+                </span>
+                {statusOptions.map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status);
+                      setIsFilterDropdownOpen(false);
+                    }}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold text-left transition-all uppercase tracking-wide whitespace-nowrap
+                      ${statusFilter === status
+                        ? "bg-blue-50 text-blue-600 font-bold"
+                        : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    {status === "" ? "All Statuses" : status}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
           {!isClient && (
             <button
               onClick={onSyncFacebook}
               disabled={isSyncing}
-              className={`px-4 py-2.5 border border-gray-200 font-semibold rounded-xl transition-colors flex items-center gap-2 text-sm ${isSyncing
+              className={`px-4 py-2.5 border border-gray-200 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm ${isSyncing
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300"
                 }`}
@@ -86,7 +112,7 @@ const CampaignsHeader = ({
           {!isClient && (
             <button
               onClick={onAddCampaign}
-              className="px-5 py-2.5 bg-[#3F8CFF] text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm"
+              className="px-5 py-2.5 bg-[#3F8CFF] text-white font-semibold rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm whitespace-nowrap"
             >
               <FiPlus className="w-4 h-4" />
               Add Campaign
@@ -95,24 +121,8 @@ const CampaignsHeader = ({
         </div>
       </div>
 
-      <div className="flexBetween flex-wrap gap-3">
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {statusOptions.map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap uppercase tracking-widest
-                ${statusFilter === status
-                  ? "bg-blue-600 text-white"
-                  : "bg-transparent text-gray-500 hover:bg-gray-100"
-                }`}
-            >
-              {status === "" ? "All" : status}
-            </button>
-          ))}
-        </div>
-
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-wrap gap-3 mt-3">
+        {/* Total and client filter stays cleanly in lower row */}
         <div className="flex items-center gap-4">
           {projects?.length > 0 && (
             <div className="flex items-center gap-2 relative" ref={dropdownRef}>

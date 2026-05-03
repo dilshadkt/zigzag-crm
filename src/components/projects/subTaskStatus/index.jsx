@@ -150,7 +150,23 @@ const SubTaskStatusButton = ({
       // Always prompt for a link if moving from re-work to on-review
       const isMovingFromReworkToReview = subTask.status === "re-work" && (newStatus === "on-review" || newStatus === "completed" || newStatus === "client-approved");
 
-      if (!hasLink || isMovingFromReworkToReview) {
+      let needsNewLinkAfterRework = false;
+      if (subTask.reworkHistory && subTask.reworkHistory.length > 0) {
+        const lastRework = subTask.reworkHistory[subTask.reworkHistory.length - 1];
+        const lastReworkDate = lastRework?.changedAt ? new Date(lastRework.changedAt) : new Date(0);
+        
+        if (subTask.workLinkHistory && subTask.workLinkHistory.length > 0) {
+          const lastLink = subTask.workLinkHistory[subTask.workLinkHistory.length - 1];
+          const lastLinkUpdateDate = lastLink?.submittedAt ? new Date(lastLink.submittedAt) : new Date(0);
+          needsNewLinkAfterRework = lastReworkDate > lastLinkUpdateDate;
+        } else {
+          needsNewLinkAfterRework = true;
+        }
+      } else if (subTask.reworkCount > 0 && (!subTask.workLinkHistory || subTask.workLinkHistory.length === 0)) {
+        needsNewLinkAfterRework = true;
+      }
+
+      if (!hasLink || isMovingFromReworkToReview || needsNewLinkAfterRework) {
         if (!hasLink && (newStatus === "completed" || newStatus === "client-approved")) {
           toast.error("Work link is mandatory for this subtask. Please add it first.", {
             duration: 4000,

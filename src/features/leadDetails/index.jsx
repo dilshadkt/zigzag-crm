@@ -15,7 +15,7 @@ import { toast } from "react-hot-toast";
 
 const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Emails"];
 
-const LeadDetailsFeature = ({ lead, onBack }) => {
+const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const leadId = lead.id || lead._id;
 
@@ -31,9 +31,9 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
       _id: note._id || note.id,
       id: note._id || note.id,
       text: note.text,
-      author: typeof note.author === 'object' 
-        ? `${note.author.firstName} ${note.author.lastName}`.trim() || note.author.email
-        : note.author,
+      author: (note.author && typeof note.author === 'object') 
+        ? `${note.author.firstName || ''} ${note.author.lastName || ''}`.trim() || note.author.email || "Unknown Author"
+        : note.author || "Unknown Author",
       date: note.createdAt 
         ? new Date(note.createdAt).toLocaleDateString('en-US', {
             month: 'short',
@@ -281,7 +281,7 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
         return <LeadEmails emails={lead.details.emails} />;
       case "Overview":
       default:
-        return <LeadOverviewSection lead={lead} />;
+        return <LeadOverviewSection lead={lead} isClient={isClient} />;
     }
   }, [activeTab, lead, notes, attachments]);
 
@@ -305,7 +305,7 @@ const LeadDetailsFeature = ({ lead, onBack }) => {
         </h1>
       </div>
 
-      <div className="h-full lg:overflow-hidden flex flex-col lg:flex-row gap-4 lg:gap-6 p-0 lg:p-6 overflow-y-auto lg:overflow-y-hidden">
+      <div className="h-full lg:overflow-hidden flex flex-col lg:flex-row gap-4 lg:gap-6 p-2 md:p-4 lg:p-6 overflow-y-auto lg:overflow-y-hidden">
         <div
           className="lg:col-span-3 space-y-1 lg:space-y-3 w-full
          h-full lg:overflow-y-auto flex flex-col"

@@ -467,6 +467,7 @@ const AppRoutes = () => {
             <Route path="login" element={<PortalSignIn />} />
           </Route>
           <Route path="dashboard" element={<ClientDashboard />} />
+          <Route path="leads/:leadId" element={<LeadDetailsPage isClient={true} />} />
         </Route>
 
         <Route path="unauthorized" element={<Unauthorized />} />

@@ -162,8 +162,8 @@ const Sidebar = () => {
             path: "/company-dashboard",
             routeKey: "company-dashboard",
           },
-          // Add Lead, Employee, and Cost dashboards (skipping the main dashboard which is redundant here)
-          ...subItems.filter(child => child.routeKey !== 'dashboard')
+          // Add Lead, Employee, and Cost dashboards if the user has specific access to them
+          ...subItems.filter(child => child.routeKey !== 'dashboard' && (userPosition?.allowedRoutes || []).includes(child.routeKey))
         ],
       });
     }

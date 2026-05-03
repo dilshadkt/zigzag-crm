@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateDailyChecklistStatus } from "../../../api/service";
 import { format, addDays, subDays, isToday } from "date-fns";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { useAuth } from "../../../hooks/useAuth";
+import { usePermissions } from "../../../hooks/usePermissions";
 
 const CircularProgress = ({ value, onClick }) => {
     const radius = 24;
@@ -105,9 +107,20 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completed
                 </svg>
             </div>
             <div className="flex-1 flex items-center justify-between">
-                <p className={`text-xs uppercase font-medium ${isCompleted ? "text-gray-400 line-through" : "text-gray-700"}`}>
-                    {task.title}
-                </p>
+                <div>
+                    <p className={`text-xs uppercase font-medium ${isCompleted ? "text-gray-400 line-through" : "text-gray-700"}`}>
+                        {task.title}
+                    </p>
+                    {task.assignedTo && (
+                        <span className="text-[10px] text-gray-400 block mt-0.5 select-none">
+                            Assigned: {
+                                typeof task.assignedTo === "object"
+                                    ? `${task.assignedTo.firstName || ""} ${task.assignedTo.lastName || ""}`.trim()
+                                    : "Team Member"
+                            }
+                        </span>
+                    )}
+                </div>
 
                 {/* Show avatar and time when completed */}
                 {isCompleted && (completedBy || completedAt) && (
@@ -148,6 +161,8 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completed
 };
 
 const DailyChecklistDrawer = ({ projects = [] }) => {
+    const { user } = useAuth();
+    const { hasPermission } = usePermissions();
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [optimisticUpdates, setOptimisticUpdates] = useState({});
@@ -160,9 +175,17 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
         let allTasks = [];
         let completedCount = 0;
 
+        const currentUserId = user?._id || user?.id;
+
         projects.forEach((project) => {
-            // Only consider active tasks from definitions
-            const definitions = project.dailyChecklist?.filter(t => t.active) || [];
+            // Only consider active tasks from definitions that are assigned to the current user
+            const definitions = project.dailyChecklist?.filter(t => {
+                if (!t.active) return false;
+                if (user?.role === "company-admin") return true;
+                if (hasPermission("dashboard", "viewAllChecklistData")) return true;
+                const assignedId = t.assignedTo?._id || t.assignedTo;
+                return assignedId && assignedId.toString() === currentUserId?.toString();
+            }) || [];
 
             if (definitions.length > 0) {
                 const historyForToday = project.dailyChecklistHistory?.find(h => h.date === currentDate);
@@ -202,7 +225,7 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
         });
 
         return { allTasks, completedCount, total: allTasks.length };
-    }, [projects, currentDate, optimisticUpdates]);
+    }, [projects, currentDate, optimisticUpdates, user]);
 
     const progress = todayTasks.total > 0
         ? (todayTasks.completedCount / todayTasks.total) * 100

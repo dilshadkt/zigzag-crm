@@ -6,9 +6,10 @@ import { loginSuccess } from "../store/slice/authSlice";
 
 export const usePortalSignIn = () => {
   const dispatch = useDispatch();
+  const searchParams = new URLSearchParams(window.location.search);
   const initialValues = {
-    username: "",
-    password: "",
+    username: searchParams.get("username") || "",
+    password: searchParams.get("password") || "",
   };
   const validationSchema = Yup.object().shape({
     username: Yup.string().required("Username is required"),
@@ -17,6 +18,7 @@ export const usePortalSignIn = () => {
   const formik = useFormik({
     initialValues,
     validationSchema,
+    enableReinitialize: true,
     onSubmit: async (values, { setErrors }) => {
       const { success, message, user } = await portalLogin(values);
       if (success) {

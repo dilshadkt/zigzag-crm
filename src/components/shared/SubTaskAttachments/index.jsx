@@ -711,6 +711,84 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
             />
           </div>
 
+          {/* Voice Notes section for Ideas */}
+          <div className="flex flex-col gap-2 mt-3 bg-gray-50/60 p-3.5 rounded-xl border border-gray-100">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs font-bold text-[#7D8592]">
+                <FiMic className="w-3.5 h-3.5 text-red-500" />
+                Voice Notes
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowVoiceRecorder(true)}
+                className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50/50 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 transition-colors"
+              >
+                <FiMic className="w-3 h-3" />
+                Record Voice
+              </button>
+            </div>
+
+            {/* List voice notes if any */}
+            {subTask.attachments && subTask.attachments.filter(a => a.type === "audio").length > 0 ? (
+              <div className="space-y-1.5 mt-1 max-h-[120px] overflow-y-auto pr-1">
+                {subTask.attachments.filter(a => a.type === "audio").map((attachment, idx) => (
+                  <div key={attachment._id || idx} className="flex items-center justify-between bg-white border border-gray-100/80 p-2 rounded-xl shadow-sm">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <button
+                        type="button"
+                        onClick={(e) => toggleAudio(e, attachment)}
+                        className={`p-1.5 rounded-full transition-all duration-200 shadow-sm flex-shrink-0 ${
+                          playingAttachmentId === attachment._id
+                            ? "bg-orange-500 text-white animate-pulse"
+                            : "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+                        }`}
+                        title={playingAttachmentId === attachment._id ? "Pause" : "Play Voice Note"}
+                      >
+                        {playingAttachmentId === attachment._id ? (
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-700 truncate">
+                          {attachment.title || "Voice Note"}
+                        </p>
+                        {attachment.uploadedBy && (
+                          <p className="text-[10px] text-gray-400">
+                            by {attachment.uploadedBy.firstName}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveAttachmentClick(attachment._id);
+                        }}
+                        disabled={isRemovingAttachment}
+                        className="text-red-500 hover:text-red-700 p-1 rounded transition-colors"
+                        title="Remove attachment"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic mt-0.5">No voice notes attached to this subtask yet</p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={() => setShowContentModal(false)}

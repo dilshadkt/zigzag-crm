@@ -23,7 +23,7 @@ const CompanyDashboard = () => {
   const navigate = useNavigate();
 
   // Check if user has permission to view daily checklist
-  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist");
+  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist") || hasPermission("dashboard", "viewAllChecklistData");
 
   // Debug: Log companyId to ensure it's available
   useEffect(() => {

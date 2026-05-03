@@ -1,11 +1,17 @@
 import React, { useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { MdEdit, MdCheck, MdClose, MdDelete } from "react-icons/md";
+import { useGetAllEmployees } from "../../../api/hooks";
 
 const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
+    const { data: employeesData } = useGetAllEmployees();
     const [newTaskTitle, setNewTaskTitle] = useState("");
+    const [newTaskAssignedTo, setNewTaskAssignedTo] = useState("");
     const [editingIndex, setEditingIndex] = useState(null);
     const [editingTitle, setEditingTitle] = useState("");
+    const [editingAssignedTo, setEditingAssignedTo] = useState("");
+
+    const employees = employeesData?.employees || [];
 
     const handleAddStart = () => {
         if (!newTaskTitle.trim()) return;
@@ -16,11 +22,13 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
             {
                 title: newTaskTitle,
                 active: true,
+                assignedTo: newTaskAssignedTo || undefined,
             },
         ];
 
         setFieldValue("dailyChecklist", newList);
         setNewTaskTitle("");
+        setNewTaskAssignedTo("");
     };
 
     const handleRemoveTask = (index) => {
@@ -35,23 +43,27 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
         setFieldValue("dailyChecklist", currentList);
     };
 
-    const handleEditStart = (index, title) => {
+    const handleEditStart = (index, title, assignedToId) => {
         setEditingIndex(index);
         setEditingTitle(title);
+        setEditingAssignedTo(assignedToId || "");
     };
 
     const handleEditSave = () => {
         if (!editingTitle.trim()) return;
         const currentList = [...(values.dailyChecklist || [])];
         currentList[editingIndex].title = editingTitle;
+        currentList[editingIndex].assignedTo = editingAssignedTo || undefined;
         setFieldValue("dailyChecklist", currentList);
         setEditingIndex(null);
         setEditingTitle("");
+        setEditingAssignedTo("");
     };
 
     const handleEditCancel = () => {
         setEditingIndex(null);
         setEditingTitle("");
+        setEditingAssignedTo("");
     };
 
     const commonTasks = [
@@ -64,17 +76,7 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
 
     return (
         <div className="flex flex-col gap-6 h-full">
-            {/* <div className="bg-blue-50 p-4 rounded-xl">
-                <h5 className="font-semibold text-blue-900 mb-2">
-                    Daily Recurring Tasks
-                </h5>
-                <p className="text-sm text-blue-700">
-                    Define the checklist of tasks that need to be completed <b>every day</b> for this project.
-                    A new checklist will be automatically generated each day based on these items.
-                </p>
-            </div> */}
-
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
                 <input
                     type="text"
                     value={newTaskTitle}
@@ -83,6 +85,18 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                     placeholder="Add a daily recurring task..."
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <select
+                    value={newTaskAssignedTo}
+                    onChange={(e) => setNewTaskAssignedTo(e.target.value)}
+                    className="sm:w-48 bg-white px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                >
+                    <option value="">Unassigned</option>
+                    {employees.map((emp) => (
+                        <option key={emp._id} value={emp._id}>
+                            {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
+                        </option>
+                    ))}
+                </select>
                 <PrimaryButton
                     title="Add Task"
                     onclick={handleAddStart}
@@ -118,31 +132,60 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                                 className={`flex items-center justify-between p-3 rounded-xl border transition-all ${task.active ? "bg-white border-gray-200" : "bg-gray-50 border-gray-200 opacity-70"
                                     } ${editingIndex === index ? "ring-2 ring-blue-100 border-blue-300" : ""}`}
                             >
-                                <div className="flex items-center gap-3 flex-1">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <div
                                         className={`w-2 h-2 rounded-full flex-shrink-0 ${task.active ? "bg-green-500" : "bg-gray-300"}`}
                                         title={task.active ? "Active" : "Inactive"}
                                     />
                                     {editingIndex === index ? (
-                                        <input
-                                            type="text"
-                                            value={editingTitle}
-                                            onChange={(e) => setEditingTitle(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault();
-                                                    handleEditSave();
-                                                } else if (e.key === "Escape") {
-                                                    handleEditCancel();
-                                                }
-                                            }}
-                                            autoFocus
-                                            className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                        />
+                                        <div className="flex flex-1 flex-col sm:flex-row gap-2">
+                                            <input
+                                                type="text"
+                                                value={editingTitle}
+                                                onChange={(e) => setEditingTitle(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        handleEditSave();
+                                                    } else if (e.key === "Escape") {
+                                                        handleEditCancel();
+                                                    }
+                                                }}
+                                                autoFocus
+                                                className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                            />
+                                            <select
+                                                value={editingAssignedTo}
+                                                onChange={(e) => setEditingAssignedTo(e.target.value)}
+                                                className="sm:w-40 bg-white px-2 py-1 border border-gray-300 text-gray-700 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                                            >
+                                                <option value="">Unassigned</option>
+                                                {employees.map((emp) => (
+                                                    <option key={emp._id} value={emp._id}>
+                                                        {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     ) : (
-                                        <span className={`font-medium text-sm ${!task.active && "text-gray-500 line-through"}`}>
-                                            {task.title}
-                                        </span>
+                                        <div className="flex flex-1 items-center justify-between min-w-0">
+                                            <span className={`font-medium text-sm ${!task.active && "text-gray-500 line-through"}`}>
+                                                {task.title}
+                                            </span>
+                                            {task.assignedTo && (
+                                                <span className="text-[11px] text-gray-500 bg-gray-100/80 px-2.5 py-1 rounded-full border border-gray-200/80 flex items-center gap-1 font-medium select-none">
+                                                    Assigned: {
+                                                        (() => {
+                                                            const assignedToId = task.assignedTo?._id || task.assignedTo;
+                                                            const matchedEmp = employees.find(e => e._id === assignedToId);
+                                                            return matchedEmp 
+                                                                ? matchedEmp.name || `${matchedEmp.firstName || ""} ${matchedEmp.lastName || ""}`.trim() 
+                                                                : "Team Member";
+                                                        })()
+                                                    }
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1 ml-4">
@@ -169,7 +212,7 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                                         <>
                                             <button
                                                 type="button"
-                                                onClick={() => handleEditStart(index, task.title)}
+                                                onClick={() => handleEditStart(index, task.title, task.assignedTo?._id || task.assignedTo)}
                                                 className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="Edit Task"
                                             >

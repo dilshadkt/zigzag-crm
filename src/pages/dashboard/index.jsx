@@ -44,7 +44,7 @@ const Dashboard = () => {
   const isCompanyAdmin = user?.role === "company-admin";
 
   // Check if user has permission to view daily checklist
-  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist");
+  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist") || hasPermission("dashboard", "viewAllChecklistData");
 
   // Check if user has permission to view campaign details
   const canViewCampaignDetails = hasPermission("dashboard", "viewCampaignDetails");

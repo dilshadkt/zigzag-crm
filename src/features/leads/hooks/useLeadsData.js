@@ -13,6 +13,7 @@ export const useLeadsData = (filters = {}) => {
     sortOrder = "desc",
     appliedFilters,
     projectId,
+    isFollowUp,
   } = filters;
 
   // Fetch leads data
@@ -33,6 +34,7 @@ export const useLeadsData = (filters = {}) => {
     sortOrder,
     filters: appliedFilters,
     project: projectId,
+    isFollowUp,
   });
 
   // Fetch form configuration

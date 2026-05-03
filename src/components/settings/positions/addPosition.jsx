@@ -24,6 +24,8 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
     { value: "messenger", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub" },
     { value: "leads", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking" },
     { value: "lead-dashboard", label: "Lead Dashboard", icon: <FiBarChart2 />, desc: "Sales & performance analytics hub" },
+    { value: "leaderboard", label: "Leaderboard", icon: <FiBarChart2 />, desc: "Performance ranking & stats" },
+    { value: "hr-dashboard", label: "HR Dashboard", icon: <FiUsers />, desc: "Workforce & attendance analytics" },
     { value: "campaigns", label: "Marketing", icon: <FiZap />, desc: "Outreach & campaign data" },
     { value: "task-on-review", label: "Quality Control", icon: <FiEye />, desc: "Peer review dashboard" },
     { value: "task-on-publish", label: "Production", icon: <FiCloud />, desc: "Ready for deployment" },
@@ -34,6 +36,13 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
     { value: "sticky-notes", label: "Quick Notes", icon: <FiFileText />, desc: "Personal scratchpad" },
     { value: "timer", label: "Active Timer", icon: <FiClock />, desc: "Task time logging" },
   ];
+
+  const coreRouteOptions = routeOptions.filter(
+    (r) => !["lead-dashboard", "leaderboard", "hr-dashboard"].includes(r.value)
+  );
+  const dashboardRouteOptions = routeOptions.filter(
+    (r) => ["lead-dashboard", "leaderboard", "hr-dashboard"].includes(r.value)
+  );
 
   const handleSubmit = (values, { resetForm }) => {
     const positionData = { ...values, companyId };
@@ -110,7 +119,60 @@ const AddPosition = ({ isOpen, setShowModal, initialValues, companyId }) => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  {routeOptions.map((route) => {
+                  {coreRouteOptions.map((route) => {
+                    const isActive = values.allowedRoutes.includes(route.value);
+                    return (
+                      <label
+                        key={route.value}
+                        className={`flex flex-col p-3 rounded-2xl border transition-all duration-300 cursor-pointer ${
+                          isActive 
+                            ? "bg-white border-blue-200 shadow-md shadow-blue-500/5 ring-1 ring-blue-500/10" 
+                            : "bg-gray-50/50 border-gray-100 hover:border-gray-200 hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[13px] transition-colors ${
+                            isActive ? "bg-blue-500 text-white" : "bg-white border border-gray-100 text-gray-400"
+                          }`}>
+                            {route.icon}
+                          </div>
+                          <span className={`text-[12px] font-bold truncate ${isActive ? "text-gray-800" : "text-gray-500"}`}>
+                            {route.label}
+                          </span>
+                          <Field
+                            type="checkbox"
+                            name="allowedRoutes"
+                            value={route.value}
+                            className="hidden"
+                            checked={isActive}
+                            onChange={(e) => {
+                              const next = e.target.checked 
+                                ? [...values.allowedRoutes, route.value]
+                                : values.allowedRoutes.filter(r => r !== route.value);
+                              setFieldValue("allowedRoutes", next);
+                            }}
+                          />
+                          {isActive && <FiCheck className="ml-auto w-3.5 h-3.5 text-blue-500" />}
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-medium leading-[1.3] pl-9">
+                          {route.desc}
+                        </p>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Dashboard Scope/Permissions */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between ml-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+                    Dashboard Scope/Permissions
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {dashboardRouteOptions.map((route) => {
                     const isActive = values.allowedRoutes.includes(route.value);
                     return (
                       <label

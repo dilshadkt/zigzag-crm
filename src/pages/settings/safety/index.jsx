@@ -112,6 +112,7 @@ const PERMISSION_CATEGORIES = {
     icon: <FiActivity />,
     permissions: [
       { key: "viewDailyChecklist", label: "View Daily Checklist", description: "Can view the daily checklist drawer on dashboard" },
+      { key: "viewAllChecklistData", label: "View All Checklist Data", description: "Can view all checklist data in the daily checklist drawer" },
       { key: "viewCampaignDetails", label: "View Campaign Details", description: "Can view campaign details and analytics on dashboard" },
     ],
   },

@@ -1652,7 +1652,67 @@ export const useUpdateSubTaskById = (subTaskId, parentTaskId) => {
   return useMutation({
     mutationKey: ["updateSubTaskById", subTaskId],
     mutationFn: (updateData) => updateSubTaskById(subTaskId, updateData),
-    onSuccess: () => {
+    onMutate: async (updateData) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries(["getSubTaskById", subTaskId]);
+      await queryClient.cancelQueries(["subTasksByParentTask", parentTaskId]);
+      await queryClient.cancelQueries(["getTaskById", parentTaskId]);
+
+      // Snapshot the previous values
+      const previousSubTask = queryClient.getQueryData(["getSubTaskById", subTaskId]);
+      const previousSubTasks = queryClient.getQueryData(["subTasksByParentTask", parentTaskId]);
+      const previousTask = queryClient.getQueryData(["getTaskById", parentTaskId]);
+
+      // Optimistically update getTaskById
+      if (previousTask) {
+        queryClient.setQueryData(["getTaskById", parentTaskId], (old) => {
+          if (!old) return old;
+          const oldTask = old.task || old;
+          if (oldTask.subTasks) {
+            const newSubTasks = oldTask.subTasks.map(st => 
+              st._id === subTaskId ? { ...st, ...updateData } : st
+            );
+            return old.task ? { ...old, task: { ...old.task, subTasks: newSubTasks } } : { ...old, subTasks: newSubTasks };
+          }
+          return old;
+        });
+      }
+
+      // Optimistically update subTasksByParentTask
+      if (previousSubTasks) {
+        queryClient.setQueryData(["subTasksByParentTask", parentTaskId], (old) => {
+          if (!old) return old;
+          const oldArray = Array.isArray(old) ? old : old.subTasks;
+          if (!oldArray) return old;
+          const newArray = oldArray.map(st => 
+            st._id === subTaskId ? { ...st, ...updateData } : st
+          );
+          return Array.isArray(old) ? newArray : { ...old, subTasks: newArray };
+        });
+      }
+
+      // Optimistically update getSubTaskById
+      if (previousSubTask) {
+        queryClient.setQueryData(["getSubTaskById", subTaskId], (old) => {
+          if (!old) return old;
+          return { ...old, ...updateData };
+        });
+      }
+
+      return { previousSubTask, previousSubTasks, previousTask };
+    },
+    onError: (err, updateData, context) => {
+      if (context?.previousSubTask) {
+        queryClient.setQueryData(["getSubTaskById", subTaskId], context.previousSubTask);
+      }
+      if (context?.previousSubTasks) {
+        queryClient.setQueryData(["subTasksByParentTask", parentTaskId], context.previousSubTasks);
+      }
+      if (context?.previousTask) {
+        queryClient.setQueryData(["getTaskById", parentTaskId], context.previousTask);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries(["getSubTaskById", subTaskId]);
       queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
       queryClient.invalidateQueries(["getTaskById", parentTaskId]);
