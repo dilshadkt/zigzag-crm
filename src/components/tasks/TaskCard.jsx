@@ -245,6 +245,30 @@ const TaskCard = memo(({ task, filter }) => {
             </p>
           )}
 
+          {/* Checkout Pending Reasons for overdue tasks */}
+          {task.pendingReasons && task.pendingReasons.length > 0 && (filter === "overdue" || getDaysOverdue(task.dueDate) > 0) && (
+            <div className="mt-2 mb-3 bg-amber-50/70 border border-amber-200/60 rounded-xl p-3">
+              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider block mb-2 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Incomplete Task Reason ({task.pendingReasons.length})
+              </span>
+              <div className="space-y-2">
+                {[...task.pendingReasons].reverse().map((r, idx) => (
+                  <div key={r._id || idx} className="text-xs text-amber-900 bg-white/50 p-2 rounded-lg border border-amber-100/60 flex flex-col gap-1">
+                    <span className="font-medium text-amber-800 leading-relaxed">
+                      {r.reason}
+                    </span>
+                    <span className="text-[9px] text-amber-600 font-semibold flex items-center gap-2">
+                      <span>Submitted on: {new Date(r.date || r.createdAt).toLocaleDateString()}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <FiUser className="w-4 h-4" />
