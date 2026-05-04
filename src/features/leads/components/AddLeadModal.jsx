@@ -8,15 +8,25 @@ import {
   useGetLeadStatuses,
   useCreateLead,
 } from "../api";
-import { useCompanyActiveProjects } from "../../../api/hooks";
+import { useCompanyActiveProjects, useProjectDetails } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 
 const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], defaultBranch = "" }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
   const [duplicateLead, setDuplicateLead] = useState(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: projects = [] } = useCompanyActiveProjects();
+
+  const activeProjectId = formValues.project || projectId;
+  const { data: projectDetails } = useProjectDetails(activeProjectId);
+
+  const activeBranches = useMemo(() => {
+    if (branches && branches.length > 0) return branches;
+    return projectDetails?.customFields?.branches || projectDetails?.branches || [];
+  }, [branches, projectDetails]);
 
   // Stable handler for form value changes
   const handleFormValueChange = useCallback((updater) => {
@@ -33,12 +43,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], de
     if (isOpen) {
       setFormValues({
         project: projectId || "",
-        branch: defaultBranch || "",
+        branch: user?.branchName || defaultBranch || "",
       });
       setErrors({});
       setDuplicateLead(null);
     }
-  }, [isOpen, projectId, defaultBranch]);
+  }, [isOpen, projectId, defaultBranch, user?.branchName]);
 
   // Get form fields from config - memoized to prevent recreation
   const formFields = useMemo(() => {
@@ -327,7 +337,19 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], de
               </div>
             )}
 
-            {branches && branches.length > 0 && (
+            {(user?.branchName || defaultBranch) ? (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Branch
+                </label>
+                <input
+                  type="text"
+                  value={formValues.branch || user?.branchName || defaultBranch}
+                  readOnly
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm cursor-not-allowed focus:outline-none"
+                />
+              </div>
+            ) : activeBranches && activeBranches.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Branch
@@ -339,7 +361,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], de
                   style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                 >
                   <option value="">Select a branch (All Branches)</option>
-                  {branches.map((b) => (
+                  {activeBranches.map((b) => (
                     <option key={b.id || b.name} value={b.name}>
                       {b.name}
                     </option>

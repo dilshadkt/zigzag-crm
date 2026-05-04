@@ -15,6 +15,9 @@ const Vacations = ({ employeeId }) => {
     currentYear
   );
 
+  const { user } = useAuth();
+  const { data: leavePolicy } = useGetLeavePolicy(user?.company);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -30,9 +33,6 @@ const Vacations = ({ employeeId }) => {
       </div>
     );
   }
-
-  const { user } = useAuth();
-  const { data: leavePolicy } = useGetLeavePolicy(user?.company);
 
   const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
   const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
