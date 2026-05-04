@@ -62,7 +62,7 @@ const clearColumnVisibility = () => {
   }
 };
 
-const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false }) => {
+const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false, branchFilter = "", branches = [] }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAdmin = user?.role === "company-admin";
@@ -269,7 +269,13 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const { mutate: createLead, isLoading: isCreatingLead } = useCreateLead();
   const { mutate: bulkCreateLeads, isLoading: isBulkCreating } = useBulkCreateLeads();
 
-  const visibleLeads = leads;
+  const visibleLeads = useMemo(() => {
+    if (!branchFilter) return leads;
+    return leads.filter((lead) => {
+      const leadBranch = lead?.branch || lead?.customFields?.branch;
+      return leadBranch === branchFilter;
+    });
+  }, [leads, branchFilter]);
 
 
   const handleToggleSelect = (leadId) => {
@@ -822,6 +828,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
         onClose={() => setAddLeadModalOpen(false)}
         onSuccess={handleLeadCreated}
         projectId={projectId}
+        branches={branches}
+        defaultBranch={branchFilter}
       />
 
       <AssignLeadModal

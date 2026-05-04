@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { useGetCampaigns, useSyncFacebookAds } from "../../api/campaigns";
 import { useAuth } from "../../hooks/useAuth";
@@ -8,7 +8,7 @@ import CampaignsTable from "../../components/pages/campaigns/CampaignsTable";
 import CampaignsSummary from "../../components/pages/campaigns/CampaignsSummary";
 import CreateCampaignDrawer from "../../components/pages/campaigns/CreateCampaignDrawer";
 
-const Campaigns = ({ isClient: propIsClient, projectId }) => {
+const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => {
   const { user } = useAuth();
   const isClient = propIsClient || user?.role === "client";
   const [search, setSearch] = useState("");
@@ -28,7 +28,11 @@ const Campaigns = ({ isClient: propIsClient, projectId }) => {
   });
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
-  const campaigns = campaignsData?.data || [];
+  const campaigns = useMemo(() => {
+    const rawCampaigns = campaignsData?.data || [];
+    if (!branchFilter) return rawCampaigns;
+    return rawCampaigns.filter(c => c.branch === branchFilter || c.customFields?.branch === branchFilter);
+  }, [campaignsData, branchFilter]);
 
   const handleSyncFacebook = () => {
     syncFacebookAds(undefined, {

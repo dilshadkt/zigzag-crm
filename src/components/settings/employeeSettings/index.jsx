@@ -5,6 +5,7 @@ import {
   useGetEmployeeTeams,
   useGetEmployeeVacations,
   useGetEmployeeTasks,
+  useGetLeavePolicy,
 } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import Dropdown from "../../shared/dropdown";
@@ -13,15 +14,18 @@ import Progress from "../../shared/progress";
 import LeaveCard from "../../shared/LeaveCard";
 import { useNavigate } from "react-router-dom";
 import EmployeeProgressStats from "../../dashboard/employeeProgressStats";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const EmployeeSettings = () => {
   const { user } = useAuth();
   const [activePage, setActivePage] = useState("Overview");
   const [selectedProject, setSelectedProject] = useState("");
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const navigate = useNavigate();
 
   // Current month key in format YYYY-MM, similar to other task views
-  const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(
     now.getMonth() + 1
   ).padStart(2, "0")}`;
@@ -55,6 +59,29 @@ const EmployeeSettings = () => {
     label: project.name,
   }));
 
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const handlePrevMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear((prev) => prev - 1);
+    } else {
+      setSelectedMonth((prev) => prev - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear((prev) => prev + 1);
+    } else {
+      setSelectedMonth((prev) => prev + 1);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flexBetween mb-5">
@@ -74,6 +101,26 @@ const EmployeeSettings = () => {
             </button>
           ))}
         </div>
+
+        {activePage === "Vacations" && (
+          <div className="flex items-center gap-3 bg-[#E6EDF5] px-4 py-1.5 rounded-full font-medium text-sm text-[#0A1629]">
+            <button
+              onClick={handlePrevMonth}
+              className="p-1 hover:bg-white/40 rounded-full transition-all text-[#3F8CFF]"
+            >
+              <FiChevronLeft size={18} />
+            </button>
+            <span className="min-w-[120px] text-center select-none">
+              {monthNames[selectedMonth - 1]} {selectedYear}
+            </span>
+            <button
+              onClick={handleNextMonth}
+              className="p-1 hover:bg-white/40 rounded-full transition-all text-[#3F8CFF]"
+            >
+              <FiChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
 
       {activePage === "Teams" && (
@@ -99,7 +146,7 @@ const EmployeeSettings = () => {
           <Projects projects={projects} isLoading={isLoadingProjects} />
         )}
         {activePage === "Teams" && <Teams teams={teamsData?.teams || []} />}
-        {activePage === "Vacations" && <Vacations employeeId={user?._id} />}
+        {activePage === "Vacations" && <Vacations employeeId={user?._id} selectedMonth={selectedMonth} selectedYear={selectedYear} />}
       </div>
     </div>
   );
@@ -261,16 +308,19 @@ const Teams = ({ teams }) => {
   );
 };
 
-const Vacations = ({ employeeId }) => {
-  const [currentDate] = useState(new Date());
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-
+const Vacations = ({ employeeId, selectedMonth, selectedYear }) => {
   const { data, isLoading } = useGetEmployeeVacations(
     employeeId,
-    currentMonth,
-    currentYear
+    selectedMonth,
+    selectedYear
   );
+
+  const { user } = useAuth();
+  const { data: leavePolicy } = useGetLeavePolicy(user?.company);
+
+  const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
+  const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
+  const unpaidLeavePolicy = leavePolicy?.find((p) => p.id === "unpaid" || p.name?.toLowerCase().includes("unpaid"));
 
   if (isLoading) {
     return (
@@ -280,20 +330,12 @@ const Vacations = ({ employeeId }) => {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="text-center w-full h-full flex items-center justify-center text-gray-500">
-        No vacation data found
-      </div>
-    );
-  }
+  const { summary, vacations } = data || { summary: {}, vacations: [] };
 
-  const { summary, vacations } = data;
-
-  // Calculate vacation limits
-  const vacationLimit = 16;
-  const sickLeaveLimit = 12;
-  const remoteWorkLimit = 50;
+  // Calculate vacation limits from leave policy or fallbacks
+  const vacationLimit = casualLeavePolicy ? casualLeavePolicy.yearlyQuota : 16;
+  const sickLeaveLimit = sickLeavePolicy ? sickLeavePolicy.yearlyQuota : 12;
+  const remoteWorkLimit = unpaidLeavePolicy ? unpaidLeavePolicy.yearlyQuota : 50;
 
   return (
     <div className="flex flex-col w-full h-full overflow-y-auto space-y-6">

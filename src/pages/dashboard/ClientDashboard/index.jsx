@@ -116,11 +116,11 @@ const ClientDashboard = () => {
       <main className="flex-1 overflow-hidden p-3 sm:p-6 bg-[#f8fafc]">
         <div className="h-full bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
           {activeTab === "leads" ? (
-            <LeadsFeature isClient projectId={user?.projectId || user?.project} onSelectLead={handleSelectLead} />
+            <LeadsFeature isClient projectId={user?.projectId || user?.project} branchFilter={user?.branchName} onSelectLead={handleSelectLead} />
           ) : activeTab === "followups" ? (
-            <LeadsFeature isClient isFollowUpOnly projectId={user?.projectId || user?.project} onSelectLead={handleSelectLead} />
+            <LeadsFeature isClient isFollowUpOnly projectId={user?.projectId || user?.project} branchFilter={user?.branchName} onSelectLead={handleSelectLead} />
           ) : (
-            <Campaigns isClient projectId={user?.projectId || user?.project} />
+            <Campaigns isClient projectId={user?.projectId || user?.project} branchFilter={user?.branchName} />
           )}
         </div>
       </main>

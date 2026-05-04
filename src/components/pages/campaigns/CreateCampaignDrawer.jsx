@@ -18,6 +18,7 @@ const CreateCampaignDrawer = ({ isOpen, onClose }) => {
     task: "",
     platform: "",
     status: "planned",
+    branch: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -63,6 +64,15 @@ const CreateCampaignDrawer = ({ isOpen, onClose }) => {
     ];
     return options;
   }, [projects]);
+
+  const selectedProjectObj = useMemo(() => {
+    if (!formData.project || formData.project === "external") return null;
+    return (projects || []).find(p => p._id === formData.project);
+  }, [formData.project, projects]);
+
+  const branches = useMemo(() => {
+    return selectedProjectObj?.customFields?.branches || [];
+  }, [selectedProjectObj]);
 
   // Prepare task options for SearchableSelect
   const taskOptions = useMemo(() => {
@@ -161,6 +171,7 @@ const CreateCampaignDrawer = ({ isOpen, onClose }) => {
         task: "",
         platform: "",
         status: "planned",
+        branch: "",
       });
       setErrors({});
     }
@@ -172,6 +183,7 @@ const CreateCampaignDrawer = ({ isOpen, onClose }) => {
       setFormData((prev) => ({
         ...prev,
         task: "", // Clear task when project changes
+        branch: "", // Reset branch
       }));
     }
   }, [formData.project]);
@@ -264,6 +276,8 @@ const CreateCampaignDrawer = ({ isOpen, onClose }) => {
           task: taskId, // Can be null if External/Task is selected
           platform: formData.platform || undefined,
           status: formData.status,
+          branch: formData.branch || "",
+          customFields: { branch: formData.branch || "" },
         },
         {
           onSuccess: () => {
@@ -405,6 +419,28 @@ const CreateCampaignDrawer = ({ isOpen, onClose }) => {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Branch Selection */}
+              {branches && branches.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Branch
+                  </label>
+                  <select
+                    name="branch"
+                    value={formData.branch}
+                    onChange={handleChange}
+                    className="block w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
+                  >
+                    <option value="">Select a branch (All Branches)</option>
+                    {branches.map((branch) => (
+                      <option key={branch.id || branch.name} value={branch.name}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 

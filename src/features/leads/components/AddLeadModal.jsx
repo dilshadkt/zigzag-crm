@@ -10,7 +10,7 @@ import {
 } from "../api";
 import { useCompanyActiveProjects } from "../../../api/hooks";
 
-const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
+const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], defaultBranch = "" }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
   const [duplicateLead, setDuplicateLead] = useState(null);
@@ -33,11 +33,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
     if (isOpen) {
       setFormValues({
         project: projectId || "",
+        branch: defaultBranch || "",
       });
       setErrors({});
       setDuplicateLead(null);
     }
-  }, [isOpen, projectId]);
+  }, [isOpen, projectId, defaultBranch]);
 
   // Get form fields from config - memoized to prevent recreation
   const formFields = useMemo(() => {
@@ -226,11 +227,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
       contact,
       status: statusId,
       source: formValues.source || "Manual Entry",
-      customFields, // Now keyed by stable 'key'
+      customFields: { ...customFields, branch: formValues.branch || "" },
       services: formValues.services || "",
       budget: formValues.budget ? Number(formValues.budget) : undefined,
       notes: formValues.notes || "",
       project: formValues.project || null,
+      branch: formValues.branch || "",
     };
 
     createLead(leadData, {
@@ -319,6 +321,27 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId }) => {
                   {projects?.map((project) => (
                     <option key={project._id} value={project._id}>
                       {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {branches && branches.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Branch
+                </label>
+                <select
+                  value={formValues.branch || ""}
+                  onChange={(e) => handleFormValueChange(prev => ({ ...prev, branch: e.target.value }))}
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#3f8cff]/10 focus:border-[#3f8cff] transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1rem] bg-white"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
+                >
+                  <option value="">Select a branch (All Branches)</option>
+                  {branches.map((b) => (
+                    <option key={b.id || b.name} value={b.name}>
+                      {b.name}
                     </option>
                   ))}
                 </select>

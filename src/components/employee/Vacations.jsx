@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useGetEmployeeVacations } from "../../api/hooks";
+import { useGetEmployeeVacations, useGetLeavePolicy } from "../../api/hooks";
+import { useAuth } from "../../hooks/useAuth";
 import Progress from "../shared/progress";
 import LeaveCard from "../shared/LeaveCard";
 
@@ -30,12 +31,19 @@ const Vacations = ({ employeeId }) => {
     );
   }
 
+  const { user } = useAuth();
+  const { data: leavePolicy } = useGetLeavePolicy(user?.company);
+
+  const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
+  const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
+  const unpaidLeavePolicy = leavePolicy?.find((p) => p.id === "unpaid" || p.name?.toLowerCase().includes("unpaid"));
+
   const { summary, vacations } = data;
 
-  // Calculate vacation limits - these would ideally come from a company policy setting
-  const vacationLimit = 16;
-  const sickLeaveLimit = 12;
-  const remoteWorkLimit = 50;
+  // Calculate vacation limits from leave policy or fallbacks
+  const vacationLimit = casualLeavePolicy ? casualLeavePolicy.yearlyQuota : 16;
+  const sickLeaveLimit = sickLeavePolicy ? sickLeavePolicy.yearlyQuota : 12;
+  const remoteWorkLimit = unpaidLeavePolicy ? unpaidLeavePolicy.yearlyQuota : 50;
 
   return (
     <div className="flex flex-col w-full h-full overflow-y-auto">

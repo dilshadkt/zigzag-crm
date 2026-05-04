@@ -10,6 +10,8 @@ import {
 } from "date-fns";
 import { RxCross2 } from "react-icons/rx";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { useAuth } from "../../../hooks/useAuth";
+import { useGetMyVacations, useGetLeavePolicy } from "../../../api/hooks";
 
 const VacationRequestModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -25,6 +27,26 @@ const VacationRequestModal = ({ onClose }) => {
   const [submitError, setSubmitError] = useState("");
 
   const createVacationMutation = useCreateVacationRequest();
+
+  const { user } = useAuth();
+  const { data: leavePolicy } = useGetLeavePolicy(user?.company);
+  const { data: myVacationsData } = useGetMyVacations();
+
+  const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
+  const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
+  const unpaidLeavePolicy = leavePolicy?.find((p) => p.id === "unpaid" || p.name?.toLowerCase().includes("unpaid"));
+
+  const vacationLimit = casualLeavePolicy ? casualLeavePolicy.yearlyQuota : 16;
+  const sickLeaveLimit = sickLeavePolicy ? sickLeavePolicy.yearlyQuota : 12;
+  const remoteWorkLimit = unpaidLeavePolicy ? unpaidLeavePolicy.yearlyQuota : 50;
+
+  const usedVacation = myVacationsData?.summary?.vacation || 0;
+  const usedSick = myVacationsData?.summary?.sick_leave || 0;
+  const usedRemote = myVacationsData?.summary?.remote_work || 0;
+
+  const vacationBalance = vacationLimit - usedVacation;
+  const sickBalance = sickLeaveLimit - usedSick;
+  const remoteBalance = remoteWorkLimit - usedRemote;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -244,18 +266,25 @@ const VacationRequestModal = ({ onClose }) => {
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Type</label>
                 <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
-                  {['vacation', 'sick_leave', 'remote_work'].map((type) => (
+                  {[
+                    { key: "vacation", label: "vacation", balance: vacationBalance },
+                    { key: "sick_leave", label: "sick leave", balance: sickBalance },
+                    { key: "remote_work", label: "remote work", balance: remoteBalance },
+                  ].map(({ key, label, balance }) => (
                     <button
-                      key={type}
+                      key={key}
                       type="button"
-                      onClick={() => handleTypeChange(type)}
-                      className={`flex-1 py-1.5 px-1 rounded-lg text-[9px] font-bold transition-all capitalize
-                        ${formData.type === type 
+                      onClick={() => handleTypeChange(key)}
+                      className={`flex-1 py-2 px-1 rounded-lg text-[9px] font-bold transition-all capitalize flex flex-col items-center justify-center
+                        ${formData.type === key 
                           ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200/50" 
                           : "text-slate-400 hover:text-slate-600"
                         }`}
                     >
-                      {type.replace("_", " ")}
+                      <span>{label.replace("_", " ")}</span>
+                      <span className="text-[8px] font-medium text-slate-400 mt-0.5">
+                        ({balance} days)
+                      </span>
                     </button>
                   ))}
                 </div>
