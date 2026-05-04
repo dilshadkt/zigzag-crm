@@ -107,8 +107,9 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
       });
     }
   }, [lead, contact]);
+  const projectId = typeof lead.project === "object" ? lead.project?._id : lead.project;
   const { data: formConfigData, isLoading: isLoadingFormConfig } =
-    useGetLeadFormConfig();
+    useGetLeadFormConfig(projectId);
   const { data: statusesData, isLoading: isLoadingStatuses } =
     useGetLeadStatuses();
 

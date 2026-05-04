@@ -72,7 +72,19 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (projectId) {
+      const saved = localStorage.getItem(`activeTab_${projectId}`);
+      if (saved) return saved;
+    }
+    return "overview";
+  });
+
+  useEffect(() => {
+    if (activeTab && projectId) {
+      localStorage.setItem(`activeTab_${projectId}`, activeTab);
+    }
+  }, [activeTab, projectId]);
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const isBoardView = activeTab === "kanban";
   const [showSubtasks, setShowSubtasks] = useState(true);
@@ -558,7 +570,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         <div className="flex flex-col h-full">
           <LeadsFeature
             projectId={projectId}
-            onSelectLead={(lead) => navigate(`/leads/${lead._id || lead.id}`)}
+            onSelectLead={(lead) => navigate(`/leads/${lead._id || lead.id}`, { state: { from: window.location.pathname } })}
             onOpenSettings={() => setActiveTab("settings")}
             branchFilter={selectedBranchId}
             branches={currentProject?.customFields?.branches}

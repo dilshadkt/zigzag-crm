@@ -224,7 +224,13 @@ const LeadDetailsPage = ({ isClient = false }) => {
   return (
     <LeadDetailsFeature
       lead={transformedLead}
-      onBack={() => navigate(isClient ? "/portal/dashboard" : "/leads")}
+      onBack={() => {
+        if (location.state?.from) {
+          navigate(location.state.from);
+        } else {
+          navigate(isClient ? "/portal/dashboard" : "/leads");
+        }
+      }}
       isClient={isClient}
     />
   );

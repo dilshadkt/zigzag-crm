@@ -96,7 +96,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const navigate = useNavigate();
 
   // Stats
-  const { data: statsData, isLoading: statsLoading } = useGetLeadStats(projectId);
+  const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ project: projectId });
   const leadStats = statsData?.data;
 
 
