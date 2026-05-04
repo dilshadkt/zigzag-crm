@@ -7,14 +7,20 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../store/slice/authSlice";
 import { useGetLeads } from "../../../features/leads/api";
+import { useProjectDetails } from "../../../api/hooks";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("leads");
   const { user } = useAuth();
   const dispatch = useDispatch();
+  const [selectedBranchId, setSelectedBranchId] = useState("");
 
   const projectId = user?.projectId || user?.project;
+  const { data: currentProject } = useProjectDetails(projectId);
+  const branches = currentProject?.customFields?.branches || [];
+  const activeBranchFilter = user?.branchName || selectedBranchId;
+
   const { data: followUpsData } = useGetLeads({
     project: projectId,
     isFollowUp: true,
@@ -100,6 +106,24 @@ const ClientDashboard = () => {
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
+          {branches.length > 0 && !user?.branchName && (
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-100 rounded-xl shrink-0">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Branch:</span>
+              <select
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(e.target.value)}
+                className="px-3 py-1 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none min-w-[160px] cursor-pointer bg-white"
+              >
+                <option value="">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id || b.name} value={b.name}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button 
             onClick={handleLogout}
             className="group flex items-center gap-2 px-5 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 border border-transparent hover:border-red-100"
@@ -113,14 +137,14 @@ const ClientDashboard = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden p-3 sm:p-6 bg-[#f8fafc]">
-        <div className="h-full bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
+      <main className="flex-1 overflow-hidden p-3 sm:p-6 bg-[#f8fafc] flex flex-col gap-3">
+        <div className="flex-1 bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
           {activeTab === "leads" ? (
-            <LeadsFeature isClient projectId={user?.projectId || user?.project} branchFilter={user?.branchName} onSelectLead={handleSelectLead} />
+            <LeadsFeature isClient projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
           ) : activeTab === "followups" ? (
-            <LeadsFeature isClient isFollowUpOnly projectId={user?.projectId || user?.project} branchFilter={user?.branchName} onSelectLead={handleSelectLead} />
+            <LeadsFeature isClient isFollowUpOnly projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
           ) : (
-            <Campaigns isClient projectId={user?.projectId || user?.project} branchFilter={user?.branchName} />
+            <Campaigns isClient projectId={projectId} branchFilter={activeBranchFilter} />
           )}
         </div>
       </main>

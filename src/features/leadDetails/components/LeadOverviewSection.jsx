@@ -738,6 +738,9 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
             })}
 
             {/* Show additional fields that might not be in form config */}
+            {(lead.branch || lead.customFields?.branch) && (
+              <LabelValue label="Branch" value={lead.branch || lead.customFields?.branch} />
+            )}
             {leadDetails?.created && (
               <LabelValue label="Created" value={leadDetails.created} />
             )}

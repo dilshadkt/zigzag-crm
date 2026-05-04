@@ -85,13 +85,27 @@ const columnRenderers = {
     </div>
   ),
   name: (lead) => (
-    <div className="text-[13px] whitespace-nowrap font-medium text-slate-900">
-      {lead.name || lead.contact?.name || "—"}
+    <div className="flex flex-col">
+      <div className="text-[13px] whitespace-nowrap font-medium text-slate-900">
+        {lead.name || lead.contact?.name || "—"}
+      </div>
+      {(lead.branch || lead.customFields?.branch) && (
+        <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
+          {lead.branch || lead.customFields?.branch}
+        </span>
+      )}
     </div>
   ),
   "contact.name": (lead) => (
-    <div className="text-[13px] font-medium text-slate-900">
-      {lead.name || lead.contact?.name || "—"}
+    <div className="flex flex-col">
+      <div className="text-[13px] font-medium text-slate-900">
+        {lead.name || lead.contact?.name || "—"}
+      </div>
+      {(lead.branch || lead.customFields?.branch) && (
+        <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
+          {lead.branch || lead.customFields?.branch}
+        </span>
+      )}
     </div>
   ),
   status: (lead, statuses, onStatusChange) => {
@@ -146,6 +160,11 @@ const columnRenderers = {
       </div>
     );
   },
+  branch: (lead) => (
+    <div className="text-[13px] font-medium text-slate-700">
+      {lead.branch || lead.customFields?.branch || "—"}
+    </div>
+  ),
 };
 
 const LeadRow = memo(({

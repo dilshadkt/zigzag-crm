@@ -95,6 +95,8 @@ export const useLeadsData = (filters = {}) => {
       validKeys.add("score");
       // Always allow owner (system meta)
       validKeys.add("owner");
+      // Always allow branch (system meta)
+      validKeys.add("branch");
 
       // Create a map of field key to field data for enrichment
       const fieldDataMap = new Map();
@@ -123,7 +125,7 @@ export const useLeadsData = (filters = {}) => {
             options: fieldData?.options || col.options || [],
             // Default visibility logic
             visible: col.isSystem
-              ? ["createdAt", "name", "status", "score", "phone", "owner"].includes(col.key)
+              ? ["createdAt", "name", "status", "score", "phone", "owner", "branch"].includes(col.key)
               : false, // Custom fields hidden by default
           };
         });
@@ -138,6 +140,7 @@ export const useLeadsData = (filters = {}) => {
       { key: "phone", label: "Phone", visible: true, isSystem: true },
       { key: "email", label: "Email", visible: false, isSystem: true },
       { key: "owner", label: "Owner", visible: true, isSystem: true },
+      { key: "branch", label: "Branch", visible: true, isSystem: true },
     ];
 
     // Generate columns from form fields
