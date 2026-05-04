@@ -124,7 +124,7 @@ const HRDashboardPage = () => {
     }, [reportData]);
 
     return (
-        <div className="flex flex-col gap-4 h-full  overflow-y-auto p-2 md:p-4">
+        <div className="flex flex-col gap-4 h-full   overflow-y-auto p-2 md:p-4">
             {/* Header section with minimal design */}
             <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
                 <div>
@@ -405,16 +405,17 @@ const HRDashboardPage = () => {
 
             {/* Table with clean design */}
             {!isLoading && !error && reportData && (
-                <div className="bg-white min-h-[360px] rounded-xl border border-slate-200/60 overflow-hidden">
+                <div className="bg-white min-h-[400px] flex flex-col
+                  overflow-y-auto h-full rounded-xl border border-slate-200/60 overflow-hidden">
                     <div className="p-3 border-b border-slate-200/60 flex items-center justify-between bg-slate-50/50">
                         <h4 className="font-bold text-slate-700 text-sm">Monthly Report Details</h4>
                         <span className="text-xs text-slate-400">Total {Array.isArray(reportData) ? reportData.length : 1} Staff</span>
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left  border-collapse">
                             <thead>
-                                <tr className="bg-slate-50/75">
+                                <tr className="bg-slate-50 sticky top-0 z-50">
                                     <th className="py-2.5 px-3.5 text-xs font-bold text-slate-500 tracking-wider">Staff Member</th>
                                     <th className="py-2.5 px-3.5 text-xs font-bold text-slate-500 tracking-wider">Present Days</th>
                                     <th className="py-2.5 px-3.5 text-xs font-bold text-slate-500 tracking-wider">Leave Days</th>
