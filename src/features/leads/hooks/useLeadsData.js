@@ -14,6 +14,7 @@ export const useLeadsData = (filters = {}) => {
     appliedFilters,
     projectId,
     isFollowUp,
+    branchFilter,
   } = filters;
 
   // Fetch leads data
@@ -35,6 +36,7 @@ export const useLeadsData = (filters = {}) => {
     filters: appliedFilters,
     project: projectId,
     isFollowUp,
+    branch: branchFilter,
   });
 
   // Fetch form configuration
