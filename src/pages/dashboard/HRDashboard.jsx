@@ -37,6 +37,7 @@ const HRDashboardPage = () => {
 
     // State for report data
     const [reportData, setReportData] = useState(null);
+    const [singleEmployeeReport, setSingleEmployeeReport] = useState(null);
     const [todayHighlights, setTodayHighlights] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -46,12 +47,25 @@ const HRDashboardPage = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const res = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, selectedEmployeeId);
+            // ALWAYS fetch all-staff report for the table
+            const res = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, "");
             if (res.success) {
                 setReportData(res.report);
                 setTodayHighlights(res.todayHighlights);
             } else {
                 setError(res.message || "Failed to fetch staff report");
+            }
+
+            // If an individual employee is selected, ALSO fetch their individual data (for dailyLogs)
+            if (selectedEmployeeId) {
+                const empRes = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, selectedEmployeeId);
+                if (empRes.success) {
+                    setSingleEmployeeReport(empRes.report);
+                } else {
+                    setSingleEmployeeReport(null);
+                }
+            } else {
+                setSingleEmployeeReport(null);
             }
         } catch (err) {
             console.error("Failed to fetch staff monthly report:", err);
@@ -76,8 +90,6 @@ const HRDashboardPage = () => {
             reportData.forEach(row => {
                 csvContent += `"${row.employee?.name}","${row.employee?.email}","${row.employee?.position || "N/A"}",${row.presentDays},${row.leaveDays},${row.totalWorkingHours},${row.totalBreakDuration},${row.totalOvertimeHours},${row.lateDaysCount}\r\n`;
             });
-        } else if (reportData.employee) {
-            csvContent += `"${reportData.employee.name}","${reportData.employee.email}","${reportData.employee.position || "N/A"}",${reportData.presentDays},${reportData.leaveDays},${reportData.totalWorkingHours},${reportData.totalBreakDuration},${reportData.totalOvertimeHours},${reportData.lateDaysCount}\r\n`;
         }
 
         const encodedUri = encodeURI(csvContent);
@@ -91,16 +103,22 @@ const HRDashboardPage = () => {
 
     // Calculate aggregated totals if multiple staff are viewed
     const totals = useMemo(() => {
-        if (!reportData) return { presentDays: 0, leaveDays: 0, workingHours: 0, breakTime: 0, overtime: 0, lateCount: 0 };
-        if (!Array.isArray(reportData)) {
-            return {
-                presentDays: reportData.presentDays || 0,
-                leaveDays: reportData.leaveDays || 0,
-                workingHours: reportData.totalWorkingHours || 0,
-                breakTime: reportData.totalBreakDuration || 0,
-                overtime: reportData.totalOvertimeHours || 0,
-                lateCount: reportData.lateDaysCount || 0
-            };
+        if (!reportData || !Array.isArray(reportData)) {
+            return { presentDays: 0, leaveDays: 0, workingHours: 0, breakTime: 0, overtime: 0, lateCount: 0 };
+        }
+
+        if (selectedEmployeeId) {
+            const empReport = reportData.find(r => r.employee?._id === selectedEmployeeId || r.employeeId === selectedEmployeeId);
+            if (empReport) {
+                return {
+                    presentDays: empReport.presentDays || 0,
+                    leaveDays: empReport.leaveDays || 0,
+                    workingHours: empReport.totalWorkingHours || 0,
+                    breakTime: empReport.totalBreakDuration || 0,
+                    overtime: empReport.totalOvertimeHours || 0,
+                    lateCount: empReport.lateDaysCount || 0
+                };
+            }
         }
 
         return reportData.reduce((acc, curr) => {
@@ -112,16 +130,20 @@ const HRDashboardPage = () => {
             acc.lateCount += curr.lateDaysCount || 0;
             return acc;
         }, { presentDays: 0, leaveDays: 0, workingHours: 0, breakTime: 0, overtime: 0, lateCount: 0 });
-    }, [reportData]);
+    }, [reportData, selectedEmployeeId]);
 
     // Group the overtime data for display
     const overtimeList = useMemo(() => {
-        if (!reportData) return [];
-        if (!Array.isArray(reportData)) {
-            return reportData.totalOvertimeHours > 0 ? [reportData] : [];
+        if (!reportData || !Array.isArray(reportData)) return [];
+        if (selectedEmployeeId) {
+            const empReport = reportData.find(r => r.employee?._id === selectedEmployeeId || r.employeeId === selectedEmployeeId);
+            if (empReport && empReport.totalOvertimeHours > 0) {
+                return [empReport];
+            }
+            return [];
         }
         return reportData.filter(row => row.totalOvertimeHours > 0);
-    }, [reportData]);
+    }, [reportData, selectedEmployeeId]);
 
     return (
         <div className="flex flex-col gap-4 h-full   overflow-y-auto p-2 md:p-4">
@@ -426,9 +448,9 @@ const HRDashboardPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
-                                {Array.isArray(reportData) ? (
+                                {Array.isArray(reportData) && reportData.length > 0 ? (
                                     reportData.map((row, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                        <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${selectedEmployeeId === (row.employee?._id || row.employeeId) ? "bg-blue-50/40 border-l-4 border-blue-500" : ""}`}>
                                             <td className="py-3 px-3.5">
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-slate-800">{row.employee?.name}</span>
@@ -449,28 +471,6 @@ const HRDashboardPage = () => {
                                             </td>
                                         </tr>
                                     ))
-                                ) : reportData.employee ? (
-                                    /* Single employee detail row */
-                                    <tr className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="py-3 px-3.5">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-800">{reportData.employee?.name}</span>
-                                                <span className="text-slate-400 text-xs">{reportData.employee?.email}</span>
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-3.5 font-bold text-slate-800">{reportData.presentDays} days</td>
-                                        <td className="py-3 px-3.5 font-bold text-slate-800">{reportData.leaveDays} days</td>
-                                        <td className="py-3 px-3.5 font-bold text-slate-800">{reportData.totalWorkingHours} hrs</td>
-                                        <td className="py-3 px-3.5 text-slate-600">{reportData.totalBreakDuration} mins</td>
-                                        <td className="py-3 px-3.5 text-slate-600">{reportData.totalOvertimeHours} hrs</td>
-                                        <td className="py-3 px-3.5">
-                                            {reportData.lateDaysCount > 0 ? (
-                                                <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100 inline-block">{reportData.lateDaysCount} Late</span>
-                                            ) : (
-                                                <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 inline-block">On time</span>
-                                            )}
-                                        </td>
-                                    </tr>
                                 ) : (
                                     <tr>
                                         <td colSpan="7" className="py-6 text-center text-slate-400">No entries available for selected month.</td>
@@ -481,9 +481,11 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Add dailyLogs breakdown for focused individual view */}
-                    {!Array.isArray(reportData) && reportData.dailyLogs?.length > 0 && (
+                    {singleEmployeeReport && singleEmployeeReport.dailyLogs?.length > 0 && (
                         <div className="p-3 bg-slate-50/50 border-t border-slate-200/60">
-                            <h5 className="font-bold text-slate-700 text-xs mb-2">Staff Shift Logs Breakdown</h5>
+                            <h5 className="font-bold text-slate-700 text-xs mb-2">
+                                Staff Shift Logs Breakdown for {singleEmployeeReport.employee?.name || "Selected Employee"}
+                            </h5>
                             <div className="overflow-x-auto rounded-lg border border-slate-200/60 bg-white">
                                 <table className="w-full text-left border-collapse text-xs">
                                     <thead>
@@ -497,7 +499,7 @@ const HRDashboardPage = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {reportData.dailyLogs.map((log, lidx) => (
+                                        {singleEmployeeReport.dailyLogs.map((log, lidx) => (
                                             <tr key={lidx} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="py-2 px-3 font-medium text-slate-800">
                                                     {new Date(log.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

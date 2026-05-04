@@ -98,6 +98,8 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       "employee-dashboard": "/employee-dashboard",
       "cost-dashboard": "/cost-dashboard",
       "company-dashboard": "/company-dashboard",
+      "hr-dashboard": "/hr-dashboard",
+      leaderboard: "/leaderboard",
       "sticky-notes": "/sticky-notes",
       timer: "/timer",
       notifications: "/notifications",
