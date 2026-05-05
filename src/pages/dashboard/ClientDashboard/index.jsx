@@ -16,11 +16,10 @@ const ClientDashboard = () => {
   const dispatch = useDispatch();
   const [selectedBranchId, setSelectedBranchId] = useState("");
 
-  const projectId = user?.projectId || user?.project;
-  const { data: currentProject } = useProjectDetails(projectId);
-  const branches = currentProject?.customFields?.branches || [];
-  const activeBranchFilter = user?.branchName || selectedBranchId;
-
+  const projectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
+  const { data: currentProject, isLoading: projectLoading } = useProjectDetails(projectId);
+  const branches = currentProject?.customFields?.branches || currentProject?.branches || (typeof user?.project === "object" ? (user.project.customFields?.branches || user.project.branches) : null) || [];
+  const activeBranchFilter = selectedBranchId || user?.branchName || "";
   const { data: followUpsData } = useGetLeads({
     project: projectId,
     isFollowUp: true,
@@ -61,7 +60,7 @@ const ClientDashboard = () => {
           </div>
 
           {/* Logout on small screens */}
-          <button 
+          <button
             onClick={handleLogout}
             className="sm:hidden flex items-center gap-1.5 p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300 border border-transparent hover:border-red-100"
           >
@@ -75,56 +74,35 @@ const ClientDashboard = () => {
         <nav className="flex items-center bg-slate-100/80 p-1 rounded-xl sm:rounded-2xl gap-1 border border-slate-200/50 w-full sm:w-auto justify-center">
           <button
             onClick={() => setActiveTab("leads")}
-            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${
-              activeTab === "leads" 
-                ? "bg-white text-blue-600 shadow-md transform scale-105" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-            }`}
+            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${activeTab === "leads"
+              ? "bg-white text-blue-600 shadow-md transform scale-105"
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+              }`}
           >
             Leads
           </button>
           <button
             onClick={() => setActiveTab("followups")}
-            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${
-              activeTab === "followups" 
-                ? "bg-white text-blue-600 shadow-md transform scale-105" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-            }`}
+            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${activeTab === "followups"
+              ? "bg-white text-blue-600 shadow-md transform scale-105"
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+              }`}
           >
             Follow-ups ({followUpsCount})
           </button>
           <button
             onClick={() => setActiveTab("campaigns")}
-            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${
-              activeTab === "campaigns" 
-                ? "bg-white text-blue-600 shadow-md transform scale-105" 
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-            }`}
+            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${activeTab === "campaigns"
+              ? "bg-white text-blue-600 shadow-md transform scale-105"
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+              }`}
           >
             Campaigns
           </button>
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
-          {branches.length > 0 && !user?.branchName && (
-            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 border border-slate-100 rounded-xl shrink-0">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Branch:</span>
-              <select
-                value={selectedBranchId}
-                onChange={(e) => setSelectedBranchId(e.target.value)}
-                className="px-3 py-1 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none min-w-[160px] cursor-pointer bg-white"
-              >
-                <option value="">All Branches</option>
-                {branches.map((b) => (
-                  <option key={b.id || b.name} value={b.name}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <button 
+          <button
             onClick={handleLogout}
             className="group flex items-center gap-2 px-5 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 border border-transparent hover:border-red-100"
           >
@@ -138,6 +116,31 @@ const ClientDashboard = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden p-3 sm:p-6 bg-[#f8fafc] flex flex-col gap-3">
+        {!projectLoading && (activeTab === "leads" || activeTab === "followups" || activeTab === "campaigns") && branches.length > 0 && !user?.branchName && (
+          <div className="flex justify-end items-center gap-3 bg-white p-3 px-5 border border-slate-200/60 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Branch View:
+              </span>
+              <select
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(e.target.value)}
+                className="px-4 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[200px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+              >
+                <option value="">Global Overview (All Branches)</option>
+                {branches.map((b) => (
+                  <option key={b.id || b.name} value={b.name}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
         <div className="flex-1 bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
           {activeTab === "leads" ? (
             <LeadsFeature isClient projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />

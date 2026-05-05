@@ -227,7 +227,7 @@ export const useProjectDetails = (projectId, monthKey = null) => {
       const url = monthKey
         ? `/projects/${projectId}?monthKey=${monthKey}`
         : `/projects/${projectId}`;
-      return apiClient.get(url).then((res) => res.data?.project);
+      return apiClient.get(url).then((res) => res.data?.project || null);
     },
     enabled: !!projectId,
     staleTime: 2 * 60 * 1000, // 2 minutes

@@ -24,7 +24,7 @@ const PortalSignIn = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
             name="username"
-            value={values.username}
+            value={values}
             touched={touched}
             onchange={handleChange}
             errors={errors}
@@ -36,7 +36,7 @@ const PortalSignIn = () => {
           <div className="space-y-1">
             <Input
               name="password"
-              value={values.password}
+              value={values}
               touched={touched}
               onchange={handleChange}
               errors={errors}

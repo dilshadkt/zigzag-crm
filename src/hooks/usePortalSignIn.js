@@ -1,12 +1,13 @@
 import * as Yup from "yup";
 import { useFormik } from "formik";
+import { useSearchParams } from "react-router-dom";
 import { portalLogin } from "../api/service";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/slice/authSlice";
 
 export const usePortalSignIn = () => {
   const dispatch = useDispatch();
-  const searchParams = new URLSearchParams(window.location.search);
+  const [searchParams] = useSearchParams();
   const initialValues = {
     username: searchParams.get("username") || "",
     password: searchParams.get("password") || "",

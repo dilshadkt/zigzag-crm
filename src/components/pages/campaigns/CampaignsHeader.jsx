@@ -124,7 +124,7 @@ const CampaignsHeader = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-wrap gap-3 mt-3">
         {/* Total and client filter stays cleanly in lower row */}
         <div className="flex items-center gap-4">
-          {projects?.length > 0 && (
+          {!isClient && projects?.length > 0 && (
             <div className="flex items-center gap-2 relative" ref={dropdownRef}>
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Clients:</span>
               <div
