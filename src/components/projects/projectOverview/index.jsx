@@ -116,8 +116,8 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
 
   const { data: campaignData, isLoading: isCampaignsLoading } = useGetCampaignsByCompany(
     currentProject?.company,
-    { 
-      limit: 100, 
+    {
+      limit: 100,
       projectId: projectId,
       facebookAdAccountId: currentProject?.facebookAdAccountId
     }
@@ -571,7 +571,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
       )}
 
       {activeTab === "lead" && (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col overflow-hidden h-full">
           <LeadsFeature
             projectId={projectId}
             onSelectLead={(lead) => navigate(`/leads/${lead._id || lead.id}`, { state: { from: window.location.pathname } })}
