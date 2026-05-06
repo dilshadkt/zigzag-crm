@@ -1,6 +1,32 @@
 
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import apiClient from "./client";
+
+export const useGetCampaignLeads = (campaignId, search = "") => {
+    return useInfiniteQuery({
+        queryKey: ["campaign-leads", campaignId, search],
+        queryFn: async ({ pageParam = 1 }) => {
+            const { data } = await apiClient.get(`/leads`, {
+                params: {
+                    campaignId,
+                    search,
+                    page: pageParam,
+                    limit: 15,
+                    sortBy: "createdAt",
+                    sortOrder: "desc"
+                }
+            });
+            return data;
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.pagination.page < lastPage.pagination.pages) {
+                return lastPage.pagination.page + 1;
+            }
+            return undefined;
+        },
+        enabled: !!campaignId,
+    });
+};
 
 export const useGetCampaignById = (id) => {
     return useQuery({
@@ -69,14 +95,32 @@ export const useRemoveLeadFromCampaign = () => {
 export const useFetchLiveFacebookData = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (campaignId) => {
-            const response = await apiClient.get(`/campaigns/${campaignId}/facebook-live`);
+        mutationFn: async ({ id, startDate, endDate }) => {
+            const response = await apiClient.get(`/campaigns/${id}/facebook-live`, {
+                params: { startDate, endDate }
+            });
             return response.data;
         },
-        onSuccess: (data, campaignId) => {
+        onSuccess: (data, { id }) => {
             // Update the cached campaign data with the fresh data
-            queryClient.invalidateQueries(["campaign", campaignId]);
+            queryClient.invalidateQueries(["campaign", id]);
             queryClient.invalidateQueries(["campaigns"]);
+        },
+    });
+};
+
+export const useSyncCampaignLeads = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, dateRange }) => {
+            const response = await apiClient.post(`/campaigns/${id}/sync-leads`, { dateRange });
+            return response.data;
+        },
+        onSuccess: (data, { id }) => {
+            queryClient.invalidateQueries(["campaign", id]);
+            queryClient.invalidateQueries(["campaigns"]);
+            // Also invalidate general leads query if it exists
+            queryClient.invalidateQueries(["leads"]);
         },
     });
 };

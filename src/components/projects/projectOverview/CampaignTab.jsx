@@ -1,10 +1,11 @@
 import React from "react";
-
+import { useNavigate } from "react-router-dom";
 import { useSyncFacebookAds } from "../../../api/campaigns";
 import { FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
 export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter = "", currentProject, onRefresh }) => {
+  const navigate = useNavigate();
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
   const handleSync = () => {
@@ -82,7 +83,11 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter
             </thead>
             <tbody className="divide-y divide-gray-50">
               {visibleCampaigns.map((campaign) => (
-                <tr key={campaign._id} className="hover:bg-gray-50/50 transition-colors">
+                <tr 
+                  key={campaign._id} 
+                  onClick={() => navigate(`/campaigns/${campaign._id}`)}
+                  className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                >
                   <td className="py-4 pr-4">
                     <div className="font-semibold text-gray-900 text-xs truncate max-w-[200px]" title={campaign.name}>
                       {campaign.name}

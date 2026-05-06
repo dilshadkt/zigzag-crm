@@ -751,6 +751,80 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
         )}
       </SectionCard>
 
+      {/* Facebook Form Data Section - Show only for Facebook Leads */}
+      {(lead.facebookLeadId || lead.source?.toLowerCase().includes("facebook")) && (
+        <SectionCard>
+          <div className="flex items-center gap-2 mb-6">
+            <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#1877F2]">
+              <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+            </span>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Facebook Lead Data</h3>
+              <p className="text-xs text-slate-500">All fields captured from the Facebook form</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
+            {(() => {
+              // Get all keys from customFields
+              let customKeys = [];
+              if (lead.customFields) {
+                if (lead.customFields instanceof Map) {
+                  customKeys = Array.from(lead.customFields.keys());
+                } else {
+                  customKeys = Object.keys(lead.customFields);
+                }
+              }
+
+              // Also check top-level keys that might be from FB
+              const fbKeys = ["fb_ad_id", "fb_ad_name", "fb_form_id", "fb_created_time"];
+              const allPossibleKeys = [...new Set([...customKeys, ...fbKeys])];
+
+              // Filter out keys already shown in the main form or empty metadata
+              const unmappedKeys = allPossibleKeys.filter(key => {
+                // Skip if already in form fields
+                if (formFields.some(f => String(f.id) === key || f.key === key)) return false;
+                
+                // Get value to check if it's worth showing
+                let val = "";
+                if (fbKeys.includes(key)) {
+                  val = lead[key] || (lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key]);
+                } else {
+                  val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
+                }
+                
+                return val !== undefined && val !== null && String(val).trim() !== "";
+              });
+
+              if (unmappedKeys.length === 0) {
+                return <p className="col-span-full text-sm text-slate-400 italic">All data mapped to main overview.</p>;
+              }
+
+              return unmappedKeys.map(key => {
+                let val = "";
+                if (fbKeys.includes(key)) {
+                  val = lead[key] || (lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key]);
+                } else {
+                  val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
+                }
+
+                // Format labels (e.g., "fb_ad_name" -> "Ad Name")
+                let label = key.replace(/^fb_/, "").replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                
+                return (
+                  <div key={key} className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{label}</p>
+                    <p className="text-sm font-semibold text-slate-700 break-words">{String(val)}</p>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </SectionCard>
+      )}
+
       {/* Quick Add Actions - Explicitly for Notes & Attachments */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <SectionCard>
