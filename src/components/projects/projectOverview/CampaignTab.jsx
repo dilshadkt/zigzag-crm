@@ -39,11 +39,10 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter
           <button
             onClick={handleSync}
             disabled={isSyncing || isCampaignsLoading}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-              isSyncing 
-                ? 'bg-gray-50 text-gray-400 border-gray-200' 
-                : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all ${isSyncing
+              ? 'bg-gray-50 text-gray-400 border-gray-200'
+              : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200'
+              }`}
           >
             <FiRefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Syncing...' : 'Sync Now'}
@@ -70,7 +69,7 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 uppercase text-[10px] font-bold text-gray-400 tracking-wider">
+              <tr className="border-b sticky top-0 bg-white z-50 border-gray-100 uppercase text-[10px] font-bold text-gray-400 tracking-wider">
                 <th className="pb-3 pr-4">Campaign Name</th>
                 <th className="pb-3 px-4">Platform</th>
                 <th className="pb-3 px-4 text-center">Status</th>
@@ -83,8 +82,8 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter
             </thead>
             <tbody className="divide-y divide-gray-50">
               {visibleCampaigns.map((campaign) => (
-                <tr 
-                  key={campaign._id} 
+                <tr
+                  key={campaign._id}
                   onClick={() => navigate(`/campaigns/${campaign._id}`)}
                   className="hover:bg-gray-50/50 transition-colors cursor-pointer"
                 >
