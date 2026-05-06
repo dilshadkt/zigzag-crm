@@ -65,3 +65,19 @@ export const useRemoveLeadFromCampaign = () => {
         },
     });
 };
+
+export const useFetchLiveFacebookData = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (campaignId) => {
+            const response = await apiClient.get(`/campaigns/${campaignId}/facebook-live`);
+            return response.data;
+        },
+        onSuccess: (data, campaignId) => {
+            // Update the cached campaign data with the fresh data
+            queryClient.invalidateQueries(["campaign", campaignId]);
+            queryClient.invalidateQueries(["campaigns"]);
+        },
+    });
+};
+

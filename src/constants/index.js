@@ -460,6 +460,12 @@ export const SETTINGS = [
     path: "billing",
   },
   {
+    id: 7,
+    title: "Integration",
+    icon: FiActivity,
+    path: "integration",
+  },
+  {
     id: 6,
     title: "Master",
     icon: FaDatabase,

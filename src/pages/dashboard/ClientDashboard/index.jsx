@@ -116,7 +116,7 @@ const ClientDashboard = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden p-3 sm:p-6 bg-[#f8fafc] flex flex-col gap-3">
-        {!projectLoading && (activeTab === "leads" || activeTab === "followups" || activeTab === "campaigns") && branches.length > 0 && !user?.branchName && (
+        {!projectLoading && (activeTab === "leads" || activeTab === "followups") && branches.length > 0 && !user?.branchName && (
           <div className="flex justify-end items-center gap-3 bg-white p-3 px-5 border border-slate-200/60 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -147,7 +147,7 @@ const ClientDashboard = () => {
           ) : activeTab === "followups" ? (
             <LeadsFeature isClient isFollowUpOnly projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
           ) : (
-            <Campaigns isClient projectId={projectId} branchFilter={activeBranchFilter} />
+            <Campaigns isClient projectId={projectId} branchFilter={activeTab === "campaigns" ? "" : activeBranchFilter} />
           )}
         </div>
       </main>

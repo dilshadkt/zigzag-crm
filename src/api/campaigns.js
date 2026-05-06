@@ -42,11 +42,48 @@ export const useSyncFacebookAds = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async () => {
-            const response = await apiClient.post("/campaigns/sync-facebook");
+        mutationFn: async (projectId) => {
+            const response = await apiClient.post("/campaigns/sync-facebook", { projectId });
             return response.data;
         },
         onSuccess: () => {
+            queryClient.invalidateQueries(["campaigns"]);
+        },
+    });
+};
+
+export const useCheckFacebookStatus = () => {
+    return useQuery({
+        queryKey: ["facebook-status"],
+        queryFn: async () => {
+            const { data } = await apiClient.get("/campaigns/facebook-status");
+            return data.data;
+        },
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+        retry: false,
+    });
+};
+
+export const useGetFacebookAccounts = () => {
+    return useQuery({
+        queryKey: ["facebook-accounts"],
+        queryFn: async () => {
+            const { data } = await apiClient.get("/campaigns/facebook-accounts");
+            return data.data;
+        },
+        staleTime: 10 * 60 * 1000,
+    });
+};
+
+export const useSelectFacebookAccount = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (adAccountId) => {
+            const response = await apiClient.post("/campaigns/facebook-select-account", { adAccountId });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["facebook-status"]);
             queryClient.invalidateQueries(["campaigns"]);
         },
     });

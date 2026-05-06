@@ -1,6 +1,24 @@
 import React from "react";
 
-export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter = "" }) => {
+import { useSyncFacebookAds } from "../../../api/campaigns";
+import { FiRefreshCw } from "react-icons/fi";
+import { toast } from "react-hot-toast";
+
+export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter = "", currentProject, onRefresh }) => {
+  const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
+
+  const handleSync = () => {
+    syncFacebookAds(currentProject?._id, {
+      onSuccess: () => {
+        toast.success("Facebook campaigns synced successfully!");
+        if (onRefresh) onRefresh();
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || "Sync failed");
+      }
+    });
+  };
+
   const visibleCampaigns = React.useMemo(() => {
     if (!branchFilter) return projectCampaigns;
     return projectCampaigns.filter((campaign) => {
@@ -16,6 +34,20 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter
           <h3 className="text-base font-bold text-gray-900">Project Campaigns</h3>
           <p className="text-xs text-gray-500 mt-1">Marketing and engagement campaigns linked to this client.</p>
         </div>
+        {currentProject?.facebookAdAccountId && (
+          <button
+            onClick={handleSync}
+            disabled={isSyncing || isCampaignsLoading}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+              isSyncing 
+                ? 'bg-gray-50 text-gray-400 border-gray-200' 
+                : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200'
+            }`}
+          >
+            <FiRefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Now'}
+          </button>
+        )}
       </div>
 
       {isCampaignsLoading ? (

@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { FiCalendar, FiCheckCircle, FiDollarSign, FiEdit2, FiSave, FiTrash2, FiX, FiChevronDown } from "react-icons/fi";
+import { FiCalendar, FiCheckCircle, FiDollarSign, FiEdit2, FiSave, FiTrash2, FiX, FiChevronDown, FiRefreshCw, FiClock } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign } from "../../api/campaignDetails";
+import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign, useFetchLiveFacebookData } from "../../api/campaignDetails";
 import AddLeadsModal from "../../components/campaigns/AddLeadsModal";
 import Navigator from "../../components/shared/navigator";
 
@@ -14,6 +14,7 @@ const CampaignDetails = () => {
     const { mutate: deleteCampaign, isLoading: isDeleting } = useDeleteCampaign();
     const { mutate: addLeads } = useAddLeadsToCampaign();
     const { mutate: removeLead } = useRemoveLeadFromCampaign();
+    const { mutate: fetchLiveData, isLoading: isFetchingLive } = useFetchLiveFacebookData();
 
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
@@ -154,6 +155,30 @@ const CampaignDetails = () => {
                         </>
                     ) : (
                         <>
+                            {campaign.facebookAdId && (
+                                <button
+                                    onClick={() => {
+                                        fetchLiveData(id, {
+                                            onSuccess: (data) => {
+                                                toast.success(data.message || "Live data fetched!");
+                                            },
+                                            onError: (err) => {
+                                                toast.error(err.response?.data?.message || "Failed to fetch live data");
+                                            },
+                                        });
+                                    }}
+                                    disabled={isFetchingLive}
+                                    className={`px-4 py-2 border font-semibold rounded-xl transition-all flex items-center gap-2 text-sm ${
+                                        isFetchingLive
+                                            ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                            : "bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
+                                    }`}
+                                    title="Fetch real-time data from Facebook"
+                                >
+                                    <FiRefreshCw className={`w-4 h-4 ${isFetchingLive ? "animate-spin" : ""}`} />
+                                    {isFetchingLive ? "Fetching..." : "Live Facebook Data"}
+                                </button>
+                            )}
                             <button
                                 onClick={handleDelete}
                                 className="p-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
@@ -399,7 +424,15 @@ const CampaignDetails = () => {
 
                                     {/* Performance Stats Grid */}
                                     <div className="pt-6 border-t border-gray-100">
-                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Real-time Performance</h4>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Real-time Performance</h4>
+                                            {campaign.lastSyncedAt && (
+                                                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400">
+                                                    <FiClock className="w-3 h-3" />
+                                                    Synced {new Date(campaign.lastSyncedAt).toLocaleString()}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                                             <StatBlock
                                                 label="Amount Spent"
@@ -426,6 +459,38 @@ const CampaignDetails = () => {
                                             <StatBlock
                                                 label="Impressions"
                                                 value={(campaign.impressions || 0).toLocaleString()}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-3">
+                                            <StatBlock
+                                                label="Clicks"
+                                                value={(campaign.clicks || 0).toLocaleString()}
+                                                color="text-indigo-600"
+                                            />
+                                            <StatBlock
+                                                label="CTR"
+                                                value={`${(campaign.ctr || 0).toFixed(2)}%`}
+                                                color="text-violet-600"
+                                            />
+                                            <StatBlock
+                                                label="CPC"
+                                                value={`₹${(campaign.cpc || 0).toFixed(2)}`}
+                                                color="text-orange-600"
+                                            />
+                                            <StatBlock
+                                                label="Frequency"
+                                                value={(campaign.frequency || 0).toFixed(2)}
+                                                color="text-pink-600"
+                                            />
+                                            <StatBlock
+                                                label="Conversions"
+                                                value={(campaign.conversions || 0).toLocaleString()}
+                                                color="text-emerald-600"
+                                            />
+                                            <StatBlock
+                                                label="Video Views"
+                                                value={(campaign.videoViews || 0).toLocaleString()}
+                                                color="text-cyan-600"
                                             />
                                         </div>
                                     </div>

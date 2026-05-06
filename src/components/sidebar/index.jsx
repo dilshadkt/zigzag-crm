@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TbLogout } from "react-icons/tb";
-import { SIDE_MENU } from "../../constants";
+import { SIDE_MENU, SETTINGS } from "../../constants";
 import { useLocation, useNavigate } from "react-router-dom";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import { useAuth } from "../../hooks/useAuth";
@@ -99,49 +99,68 @@ const Sidebar = () => {
       };
     }
 
-    // Transform Settings for Employees (non-admin users)
-    if (item.routeKey === "settings" && !isCompanyAdmin) {
-      const settingsChildren = [
-        {
-          id: 1201,
-          title: "Profile",
-          path: "/settings/account",
-          routeKey: "settings",
-        },
-      ];
+    // Transform Settings for all users into a dropdown
+    if (item.routeKey === "settings") {
+      let settingsChildren = [];
 
-      // My Company related management
-      if (
-        hasPermission("settings", "manageCompany") || 
-        hasPermission("settings", "managePositions") || 
-        hasPermission("settings", "manageTaskFlows")
-      ) {
-        settingsChildren.push({
-          id: 1204,
-          title: "My Company",
-          path: "/settings/company",
-          routeKey: "settings",
-        });
-      }
+      if (isCompanyAdmin) {
+        // For admins, show all settings from the constant
+        settingsChildren = SETTINGS.map(s => ({
+          id: 1200 + s.id,
+          title: s.title,
+          path: `/settings/${s.path}`,
+          routeKey: "settings"
+        }));
+      } else {
+        // For employees, show based on permissions
+        settingsChildren = [
+          {
+            id: 1201,
+            title: "Profile",
+            path: "/settings/account",
+            routeKey: "settings",
+          },
+          {
+            id: 1207,
+            title: "Integration",
+            path: "/settings/integration",
+            routeKey: "settings",
+          },
+        ];
 
-      // Security (Security Hub)
-      if (hasPermission("settings", "manageSecurity") || hasPermission("settings", "manageRoles")) {
-        settingsChildren.push({
-          id: 1205,
-          title: "Security",
-          path: "/settings/safety",
-          routeKey: "settings",
-        });
-      }
+        // My Company related management
+        if (
+          hasPermission("settings", "manageCompany") || 
+          hasPermission("settings", "managePositions") || 
+          hasPermission("settings", "manageTaskFlows")
+        ) {
+          settingsChildren.push({
+            id: 1204,
+            title: "My Company",
+            path: "/settings/company",
+            routeKey: "settings",
+          });
+        }
 
-      // Master configuration
-      if (hasPermission("settings", "manageMaster")) {
-        settingsChildren.push({
-          id: 1206,
-          title: "Master",
-          path: "/settings/master",
-          routeKey: "settings",
-        });
+        // Security (Security Hub)
+        if (hasPermission("settings", "manageSecurity") || hasPermission("settings", "manageRoles")) {
+          settingsChildren.push({
+            id: 1205,
+            title: "Security",
+            path: "/settings/safety",
+            routeKey: "settings",
+          });
+        }
+
+        // Master configuration
+        if (hasPermission("settings", "manageMaster")) {
+          settingsChildren.push({
+            id: 1206,
+            title: "Master",
+            path: "/settings/master",
+            routeKey: "settings",
+          });
+        }
       }
 
       // Return a collapsible settings menu

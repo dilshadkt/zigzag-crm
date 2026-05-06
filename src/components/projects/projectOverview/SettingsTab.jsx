@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { updateProject } from "../../../api/service";
 import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useGetFacebookAccounts } from "../../../api/campaigns";
+import { FiActivity, FiLayers, FiSearch } from "react-icons/fi";
 
 export const SettingsTab = ({
   clientCreds,
@@ -22,6 +24,44 @@ export const SettingsTab = ({
   const [branchPassword, setBranchPassword] = useState("");
 
   const branches = currentProject?.customFields?.branches || [];
+
+  // Facebook Ad Account Selector State
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [accountSearch, setAccountSearch] = useState("");
+  const { data: adAccounts, isLoading: isAccountsLoading } = useGetFacebookAccounts();
+  const accountSelectorRef = React.useRef(null);
+
+  const filteredAdAccounts = React.useMemo(() => {
+    if (!adAccounts) return [];
+    if (!accountSearch) return adAccounts;
+    const searchLower = accountSearch.toLowerCase();
+    return adAccounts.filter(acc => 
+      acc.name?.toLowerCase().includes(searchLower) || 
+      acc.id?.toString().includes(searchLower)
+    );
+  }, [adAccounts, accountSearch]);
+
+  const handleUpdateAdAccount = async (accountId) => {
+    try {
+      await updateProject({ facebookAdAccountId: accountId }, currentProject._id);
+      toast.success("Facebook Ad Account linked to project!");
+      setShowAccountSelector(false);
+      queryClient.invalidateQueries(["project", currentProject._id]);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      toast.error("Failed to link Ad Account");
+    }
+  };
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (accountSelectorRef.current && !accountSelectorRef.current.contains(event.target)) {
+        setShowAccountSelector(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleAddBranch = async () => {
     if (!branchName || !branchUsername || !branchPassword) {
@@ -306,6 +346,78 @@ export const SettingsTab = ({
             >
               Apply Template
             </button>
+          </div>
+        </div>
+
+        {/* Facebook Ad Account Integration */}
+        <div className="p-4 border border-blue-100 rounded-xl bg-blue-50/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+              <FiLayers className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900">Facebook Ads Integration</h4>
+              <p className="text-[11px] text-gray-600 italic">Link this project to a specific Facebook Ad Account</p>
+            </div>
+          </div>
+
+          <div className="relative" ref={accountSelectorRef}>
+            <button
+              onClick={() => setShowAccountSelector(!showAccountSelector)}
+              className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold hover:border-blue-300 transition-all text-left"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <FiActivity className={`w-3.5 h-3.5 ${currentProject?.facebookAdAccountId ? 'text-green-500' : 'text-gray-400'}`} />
+                <span className="truncate">
+                  {currentProject?.facebookAdAccountId 
+                    ? `Linked: ${currentProject.facebookAdAccountId}` 
+                    : "Choose Facebook Ad Account"}
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-400">▼</span>
+            </button>
+
+            {showAccountSelector && (
+              <div className="absolute bottom-full left-0 mb-2 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
+                <div className="p-3 border-b border-gray-50 bg-gray-50/30">
+                  <div className="relative">
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
+                    <input
+                      type="text"
+                      placeholder="Search accounts..."
+                      value={accountSearch}
+                      onChange={(e) => setAccountSearch(e.target.value)}
+                      className="w-full pl-8 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-[11px] focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <div className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1">
+                  {isAccountsLoading ? (
+                    <div className="py-4 text-center text-gray-400 text-[10px]">Loading accounts...</div>
+                  ) : filteredAdAccounts.length > 0 ? (
+                    filteredAdAccounts.map(account => (
+                      <button
+                        key={account.id}
+                        onClick={() => handleUpdateAdAccount(account.id)}
+                        className={`w-full px-3 py-2 rounded-lg text-left text-[11px] font-bold transition-all flex items-center justify-between ${
+                          currentProject?.facebookAdAccountId === account.id
+                            ? 'bg-blue-600 text-white'
+                            : 'hover:bg-blue-50 text-gray-700'
+                        }`}
+                      >
+                        <span className="truncate">{account.name}</span>
+                        <span className={`text-[9px] ${currentProject?.facebookAdAccountId === account.id ? 'text-blue-100' : 'text-gray-400'}`}>
+                          {account.id}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="py-4 text-center text-gray-400 text-[10px]">No accounts found</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

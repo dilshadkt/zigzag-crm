@@ -116,7 +116,11 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
 
   const { data: campaignData, isLoading: isCampaignsLoading } = useGetCampaignsByCompany(
     currentProject?.company,
-    { limit: 100, projectId: projectId }
+    { 
+      limit: 100, 
+      projectId: projectId,
+      facebookAdAccountId: currentProject?.facebookAdAccountId
+    }
   );
   const projectCampaigns = campaignData?.data || [];
 
@@ -583,6 +587,8 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           isCampaignsLoading={isCampaignsLoading}
           projectCampaigns={projectCampaigns}
           branchFilter={selectedBranchId}
+          currentProject={currentProject}
+          onRefresh={handleRefresh}
         />
       )}
 

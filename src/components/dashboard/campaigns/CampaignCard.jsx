@@ -121,11 +121,19 @@ const CampaignCard = ({ campaign, cardStyle = "bg-white" }) => {
                     </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-gray-400">
-                    <FiCalendar size={12} />
-                    <span className="text-[10px] font-bold uppercase tracking-tighter">
-                        Ends {formatDate(campaign.endDate)}
-                    </span>
+                <div className="flex items-center gap-3">
+                    {campaign.lastSyncedAt && (
+                        <span className="text-[9px] font-semibold text-green-500 flex items-center gap-1" title={`Synced: ${new Date(campaign.lastSyncedAt).toLocaleString()}`}>
+                            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                            Live
+                        </span>
+                    )}
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                        <FiCalendar size={12} />
+                        <span className="text-[10px] font-bold uppercase tracking-tighter">
+                            Ends {formatDate(campaign.endDate)}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

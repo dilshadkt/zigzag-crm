@@ -1,12 +1,19 @@
 import React, { useState, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { useGetCampaigns, useSyncFacebookAds } from "../../api/campaigns";
+import { 
+  useGetCampaigns, 
+  useSyncFacebookAds, 
+  useCheckFacebookStatus, 
+  useGetFacebookAccounts, 
+  useSelectFacebookAccount 
+} from "../../api/campaigns";
 import { useAuth } from "../../hooks/useAuth";
 import { useCompanyActiveProjects } from "../../api/hooks";
 import CampaignsHeader from "../../components/pages/campaigns/CampaignsHeader";
 import CampaignsTable from "../../components/pages/campaigns/CampaignsTable";
 import CampaignsSummary from "../../components/pages/campaigns/CampaignsSummary";
 import CreateCampaignDrawer from "../../components/pages/campaigns/CreateCampaignDrawer";
+import { FiLayers, FiActivity, FiRefreshCw } from "react-icons/fi";
 
 const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => {
   const { user } = useAuth();
@@ -16,74 +23,103 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
   const [selectedProjectId, setSelectedProjectId] = useState(projectId || "");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [accountSearch, setAccountSearch] = useState("");
+  const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
+  const accountSelectorRef = React.useRef(null);
+
+  // Close account selector on click outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (accountSelectorRef.current && !accountSelectorRef.current.contains(event.target)) {
+        setShowAccountSelector(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const { data: fbStatus } = useCheckFacebookStatus();
+  const { data: adAccounts } = useGetFacebookAccounts();
+  const { mutate: selectAccount, isLoading: isSelecting } = useSelectFacebookAccount();
+
+  const filteredAdAccounts = useMemo(() => {
+    if (!adAccounts) return [];
+    if (!accountSearch) return adAccounts;
+    const searchLower = accountSearch.toLowerCase();
+    return adAccounts.filter(acc => 
+      acc.name?.toLowerCase().includes(searchLower) || 
+      acc.id?.toString().includes(searchLower)
+    );
+  }, [adAccounts, accountSearch]);
 
   const { data: activeProjects } = useCompanyActiveProjects();
 
   const { data: campaignsData, isLoading } = useGetCampaigns({
-    page: 1,
-    limit: 100, // Fetch more for the list view or implement pagination
     search: search,
     status: statusFilter,
     projectId: selectedProjectId || projectId, // Pass projectId filter
+    facebookAdAccountId: fbStatus?.accountId, // Explicitly pass for query key/filtering
   });
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
   const campaigns = useMemo(() => {
-    const rawCampaigns = campaignsData?.data || [];
-    if (!branchFilter) return rawCampaigns;
-    return rawCampaigns.filter(c => c.branch === branchFilter || c.customFields?.branch === branchFilter);
-  }, [campaignsData, branchFilter]);
+    let filtered = campaignsData?.data || [];
+    
+    // Frontend search filter for instant responsiveness
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(c => 
+        c.name?.toLowerCase().includes(searchLower) || 
+        c.facebookAdId?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (!branchFilter) return filtered;
+    return filtered.filter(c => c.branch === branchFilter || c.customFields?.branch === branchFilter);
+  }, [campaignsData, branchFilter, search]);
 
-  const handleSyncFacebook = () => {
-    syncFacebookAds(undefined, {
+  const handleSelectAccount = (accountId) => {
+    setIsSwitchingAccount(true); // Start persistent shimmer
+    selectAccount(accountId, {
+      onSuccess: () => {
+        toast.success("Ad Account updated. Fetching fresh data...");
+        setShowAccountSelector(false);
+        // Automatically trigger sync
+        handleSyncFacebook(undefined);
+      },
+      onError: (error) => {
+        setIsSwitchingAccount(false);
+        toast.error(error.response?.data?.message || "Failed to update Ad Account");
+      }
+    });
+  };
+
+  const handleSyncFacebook = (projectId) => {
+    syncFacebookAds(projectId, {
       onSuccess: (data) => {
+        setIsSwitchingAccount(false); // Stop persistent shimmer
         const responseData = data.data || {};
-        const totalFacebook = responseData.totalFacebookCampaigns || 0;
+        const created = responseData.created || 0;
         const updated = responseData.updated || 0;
+        const total = created + updated;
 
-        if (totalFacebook === 0) {
-          toast.error(
-            "No Facebook campaigns found. Make sure you have active campaigns in your Facebook Ads Manager.",
-            { duration: 5000 }
-          );
-        } else if (updated === 0) {
-          toast.warning(
-            `Found ${totalFacebook} Facebook campaign(s) but none matched your existing campaigns. Check the console for details.`,
-            { duration: 6000 }
-          );
-          // Log unmatched campaigns for debugging
-          if (responseData.details?.facebookCampaigns) {
-            console.log("Facebook campaigns found:", responseData.details.facebookCampaigns);
-          }
+        if (total === 0 && responseData.totalFacebookCampaigns === 0) {
+          toast.error("No campaigns found for this account.");
         } else {
-          toast.success(
-            data.message || `Successfully synced ${updated} campaign(s)`
-          );
+          toast.success(`Synced ${total} campaigns for the selected account.`);
         }
 
         setLastSyncedAt(new Date());
-
-        if (responseData.notMatched > 0) {
-          toast.info(
-            `${responseData.notMatched} Facebook campaign(s) could not be matched with existing campaigns`,
-            { duration: 5000 }
-          );
-        }
-        if (responseData.errors > 0) {
-          toast.error(
-            `${responseData.errors} error(s) occurred during sync. Check console for details.`,
-            { duration: 5000 }
-          );
-        }
       },
       onError: (error) => {
+        setIsSwitchingAccount(false); // Stop persistent shimmer
         const errorMessage =
           error.response?.data?.error ||
           error.response?.data?.message ||
           error.message ||
           "Failed to sync Facebook ads";
         toast.error(errorMessage, { duration: 5000 });
-        console.error("Facebook sync error:", error);
       },
     });
   };
@@ -95,20 +131,26 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
         setSearch={setSearch}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        totalCampaigns={campaignsData?.totalCampaigns || 0}
-        onAddCampaign={() => setIsDrawerOpen(true)}
-        onSyncFacebook={handleSyncFacebook}
+        totalCampaigns={campaigns.length}
+        // onAddCampaign={() => setIsDrawerOpen(true)}
+        onSyncFacebook={() => handleSyncFacebook(undefined)}
         isSyncing={isSyncing}
         lastSyncedAt={lastSyncedAt}
         isClient={isClient}
         projects={activeProjects || []}
         selectedProjectId={selectedProjectId}
         setSelectedProjectId={setSelectedProjectId}
+        // Facebook props
+        fbStatus={fbStatus}
+        adAccounts={adAccounts}
+        isSelecting={isSelecting || isSwitchingAccount}
+        isSyncing={isSyncing || isSwitchingAccount}
+        onSelectAccount={handleSelectAccount}
       />
 
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <CampaignsTable campaigns={campaigns} isLoading={isLoading} isClient={isClient} />
-        {!isLoading && campaigns.length > 0 && (
+      <div className="flex-1 overflow-hidden flex flex-col relative">
+        <CampaignsTable campaigns={campaigns} isLoading={isLoading || isSelecting || isSyncing || isSwitchingAccount} isClient={isClient} />
+        {!isLoading && !isSwitchingAccount && campaigns.length > 0 && (
           <CampaignsSummary campaigns={campaigns} />
         )}
       </div>
