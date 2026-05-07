@@ -38,9 +38,9 @@ const Prjects = () => {
 
   // Use different hooks based on user role
   const { data: companyProjects, isSuccess: isCompanySuccess, isLoading: isCompanyLoading } =
-    useCompanyProjects(user?.role === "company-admin" ? companyId : null);
+    useCompanyProjects(user?.role === "company-admin" ? companyId : null, 0, selectedMonth);
   const { data: employeeProjects, isSuccess: isEmployeeSuccess, isLoading: isEmployeeLoading } =
-    useGetEmployeeProjects(user?.role !== "company-admin" ? user?._id : null);
+    useGetEmployeeProjects(user?.role !== "company-admin" ? user?._id : null, selectedMonth);
 
   // Combine the results based on user role
   const projects =
@@ -52,7 +52,7 @@ const Prjects = () => {
 
   // Use separate hooks for project details and tasks
   const { data: activeProject, isLoading: projectLoading } =
-    useProjectDetails(selectProject);
+    useProjectDetails(selectProject, selectedMonth);
   const { data: projectTasks, isLoading: tasksLoading } = useProjectTasks(
     selectProject,
     selectedMonth

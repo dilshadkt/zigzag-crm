@@ -87,7 +87,22 @@ import {
   saveWorkSchedule,
   getLeavePolicy,
   saveLeavePolicy,
+  getCompanyById,
+  updateCompany,
 } from "./service";
+import { 
+  getScheduledPosts, 
+  deleteScheduledPost,
+  getPostInsights,
+  getPostComments,
+  replyToComment,
+  likeComment,
+  getAudienceDemographics,
+  getProfileInteractions,
+  getActiveStories,
+  getMentionsAndTags,
+  searchHashtag
+} from "./social";
 import { getUnreadCount } from "./chatService";
 import { format } from "date-fns";
 import { useAuth } from "../hooks/useAuth";
@@ -2894,5 +2909,113 @@ export const useSaveLeavePolicy = (companyId, onSuccess) => {
       queryClient.invalidateQueries(["leavePolicy", companyId]);
       if (onSuccess) onSuccess(...args);
     },
+  });
+};
+export const useGetCompany = (companyId) => {
+  return useQuery({
+    queryKey: ["company", companyId],
+    queryFn: () => getCompanyById(companyId),
+    enabled: !!companyId,
+  });
+};
+
+export const useUpdateCompany = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ companyId, data }) => updateCompany(companyId, data),
+    onSuccess: (_, { companyId }) => {
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+};
+
+export const useGetScheduledPosts = (params) => {
+  return useQuery({
+    queryKey: ["scheduledPosts", params],
+    queryFn: () => getScheduledPosts(params),
+  });
+};
+
+export const useDeleteScheduledPost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteScheduledPost(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
+    },
+  });
+};
+
+export const useGetPostInsights = (id) => {
+  return useQuery({
+    queryKey: ["postInsights", id],
+    queryFn: () => getPostInsights(id),
+    enabled: !!id,
+  });
+};
+
+export const useGetPostComments = (id) => {
+  return useQuery({
+    queryKey: ["postComments", id],
+    queryFn: () => getPostComments(id),
+    enabled: !!id,
+  });
+};
+
+export const useReplyToComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ commentId, message, isTopLevel }) => replyToComment(commentId, message, isTopLevel),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["postComments"] });
+    },
+  });
+};
+
+export const useLikeComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId) => likeComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["postComments"] });
+    },
+  });
+};
+
+export const useGetAudienceDemographics = (instagramId) => {
+  return useQuery({
+    queryKey: ["audienceDemographics", instagramId],
+    queryFn: () => getAudienceDemographics(instagramId),
+    enabled: !!instagramId,
+  });
+};
+
+export const useGetProfileInteractions = (instagramId) => {
+  return useQuery({
+    queryKey: ["profileInteractions", instagramId],
+    queryFn: () => getProfileInteractions(instagramId),
+    enabled: !!instagramId,
+  });
+};
+
+export const useGetActiveStories = (instagramId) => {
+  return useQuery({
+    queryKey: ["activeStories", instagramId],
+    queryFn: () => getActiveStories(instagramId),
+    enabled: !!instagramId,
+  });
+};
+
+export const useGetMentionsAndTags = (instagramId) => {
+  return useQuery({
+    queryKey: ["mentionsAndTags", instagramId],
+    queryFn: () => getMentionsAndTags(instagramId),
+    enabled: !!instagramId,
+  });
+};
+
+export const useSearchHashtag = () => {
+  return useMutation({
+    mutationFn: searchHashtag
   });
 };

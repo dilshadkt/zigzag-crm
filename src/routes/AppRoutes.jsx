@@ -77,6 +77,7 @@ const CostDashboard = lazy(() => import("../pages/dashboard/CostDashboard"));
 const HRDashboard = lazy(() => import("../pages/dashboard/HRDashboard"));
 const Leaderboard = lazy(() => import("../pages/Leaderboard"));
 const Integration = lazy(() => import("../pages/settings/Integration"));
+const SocialSettings = lazy(() => import("../pages/settings/SocialSettings"));
 
 
 const AppRoutes = () => {
@@ -292,6 +293,7 @@ const AppRoutes = () => {
               </RouteAccess>
             }
           />
+
           <Route
             path="client-review"
             element={
@@ -459,6 +461,14 @@ const AppRoutes = () => {
               element={
                 <RouteAccess>
                   <Integration />
+                </RouteAccess>
+              }
+            />
+            <Route
+              path="social"
+              element={
+                <RouteAccess>
+                  <SocialSettings />
                 </RouteAccess>
               }
             />

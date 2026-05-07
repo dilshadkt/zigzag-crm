@@ -6,14 +6,14 @@ import CampaignCard from "./CampaignCard";
 import { FiTarget } from "react-icons/fi";
 
 const DashboardCampaigns = () => {
-    // Fetch last 3 active or planned campaigns
+    // Fetch last 2 active or planned campaigns
     const { data: campaignsData, isLoading } = useGetCampaigns({
         limit: 2,
         sort: 'createdAt',
         // You might want to filter by active status if needed, but for now showing recent
     });
 
-    const campaigns = campaignsData?.data || [];
+    const campaigns = (campaignsData?.data || []).slice(0, 2);
 
     if (isLoading) return null;
 

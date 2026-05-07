@@ -22,6 +22,7 @@ import {
   FiActivity,
   FiCheckCircle,
   FiTarget,
+  FiInstagram,
 } from "react-icons/fi";
 import { MdOutlineLeaderboard, MdPayments } from "react-icons/md";
 
@@ -141,6 +142,7 @@ export const SIDE_MENU = [
     path: "/task-on-publish",
     routeKey: "task-on-publish",
   },
+
   {
     id: 10,
     title: "Client Review",

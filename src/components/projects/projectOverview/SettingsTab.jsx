@@ -3,7 +3,8 @@ import { updateProject } from "../../../api/service";
 import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetFacebookAccounts } from "../../../api/campaigns";
-import { FiActivity, FiLayers, FiSearch } from "react-icons/fi";
+import { FiActivity, FiLayers, FiSearch, FiInstagram, FiFacebook, FiShield } from "react-icons/fi";
+import { updateProjectSocialConfig } from "../../../api/service";
 
 export const SettingsTab = ({
   clientCreds,
@@ -22,6 +23,23 @@ export const SettingsTab = ({
   const [branchName, setBranchName] = useState("");
   const [branchUsername, setBranchUsername] = useState("");
   const [branchPassword, setBranchPassword] = useState("");
+  
+  // Social Integration State
+  const [socialConfig, setSocialConfig] = useState({
+    facebookPageId: currentProject?.facebookPageId || "",
+    instagramBusinessId: currentProject?.instagramBusinessId || "",
+  });
+
+  const handleUpdateSocialConfig = async () => {
+    try {
+      await updateProjectSocialConfig(currentProject._id, socialConfig);
+      toast.success("Social integration settings updated!");
+      queryClient.invalidateQueries(["project", currentProject._id]);
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      toast.error("Failed to update social settings");
+    }
+  };
 
   const branches = currentProject?.customFields?.branches || [];
 
@@ -345,6 +363,64 @@ export const SettingsTab = ({
               className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-all"
             >
               Apply Template
+            </button>
+          </div>
+        </div>
+
+        {/* Social Media Integration */}
+        <div className="p-5 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
+              <FiInstagram className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-800">Social Media Integration</h4>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Secure Connection</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                <FiFacebook className="w-3 h-3" /> Facebook Page ID
+              </label>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Enter Page ID"
+                  value={socialConfig.facebookPageId}
+                  onChange={(e) => setSocialConfig({...socialConfig, facebookPageId: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none" 
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                   <FiShield className="text-indigo-500 w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                <FiInstagram className="w-3 h-3" /> Instagram Business ID
+              </label>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Enter Business ID"
+                  value={socialConfig.instagramBusinessId}
+                  onChange={(e) => setSocialConfig({...socialConfig, instagramBusinessId: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none" 
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                   <FiShield className="text-indigo-500 w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleUpdateSocialConfig}
+              className="w-full py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all mt-2 active:scale-[0.98]"
+            >
+              Update Integration
             </button>
           </div>
         </div>

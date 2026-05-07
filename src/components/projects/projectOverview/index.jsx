@@ -20,6 +20,8 @@ import { KanbanTab } from "./KanbanTab";
 import { ListTab } from "./ListTab";
 import { CampaignTab } from "./CampaignTab";
 import { SettingsTab } from "./SettingsTab";
+import InsightsTab from "./InsightsTab";
+import ScheduleTab from "./ScheduleTab";
 import { ProjectOverViewShimmer } from "../ProjectDetailShimmer";
 
 // Status configuration
@@ -93,15 +95,19 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const { hasPermission } = usePermissions();
 
   const availableTabs = useMemo(() => {
+    const hasSocialConfig = !!currentProject?.instagramBusinessId || !!currentProject?.facebookPageId;
+    
     return [
       { id: "overview", label: "Overview", visible: hasPermission("tasks", "viewOverview") },
       { id: "kanban", label: "Task Kanban", visible: true },
       { id: "list", label: "Task List", visible: true },
       { id: "lead", label: "Lead", visible: hasPermission("tasks", "viewLead") },
       { id: "campaign", label: "Campaign", visible: hasPermission("tasks", "viewCampaign") },
+      { id: "insights", label: "Insights", visible: hasSocialConfig },
+      { id: "schedule", label: "Schedule", visible: hasSocialConfig },
       { id: "settings", label: "Settings", visible: hasPermission("tasks", "viewSettings") },
     ].filter(tab => tab.visible);
-  }, [hasPermission]);
+  }, [hasPermission, currentProject?.instagramBusinessId, currentProject?.facebookPageId]);
 
   useEffect(() => {
     if (availableTabs.length > 0 && !availableTabs.some(tab => tab.id === activeTab)) {
@@ -606,6 +612,14 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           currentProject={currentProject}
           onRefresh={onRefresh}
         />
+      )}
+
+      {activeTab === "insights" && (
+        <InsightsTab currentProject={currentProject} />
+      )}
+
+      {activeTab === "schedule" && (
+        <ScheduleTab currentProject={currentProject} />
       )}
 
       <FilterMenu

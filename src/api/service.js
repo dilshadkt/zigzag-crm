@@ -1219,3 +1219,12 @@ export const addBonusPoints = async (bonusData) => {
     throw error;
   }
 };
+export const updateCompany = async (companyId, updatedData) => {
+  const { data } = await apiClient.patch(`/companies/${companyId}`, updatedData);
+  return data;
+};
+
+export const updateProjectSocialConfig = async (projectId, config) => {
+  const response = await apiClient.patch(`/projects/${projectId}/social-config`, config);
+  return response.data;
+};
