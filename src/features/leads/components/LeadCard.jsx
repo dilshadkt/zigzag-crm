@@ -2,6 +2,8 @@ import React, { memo } from "react";
 import { FiMoreVertical, FiMail, FiPhone, FiCalendar, FiUser } from "react-icons/fi";
 import LeadStatusBadge from "./LeadStatusBadge";
 import StatusDropdown from "./StatusDropdown";
+import LeadRowContextMenu from "./LeadRowContextMenu";
+import { useState, useRef } from "react";
 
 const LeadCard = memo(({
     lead,
@@ -18,8 +20,37 @@ const LeadCard = memo(({
     onCopyURL,
     statuses,
     onStatusChange,
+    onMoveToBranch,
+    branches = [],
     isEmployee = false,
 }) => {
+    const actionButtonRef = useRef(null);
+    const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
+    const handleActionButtonClick = (e) => {
+        e.stopPropagation();
+        if (actionButtonRef.current) {
+            const rect = actionButtonRef.current.getBoundingClientRect();
+            setContextMenuPosition({
+                x: rect.right - 180,
+                y: rect.bottom + 5,
+            });
+            window.dispatchEvent(new CustomEvent("close-all-lead-dropdowns"));
+        }
+        setIsContextMenuOpen(true);
+    };
+
+    const handleContextMenuClose = () => {
+        setIsContextMenuOpen(false);
+    };
+
+    const handleAction = (action) => {
+        if (action) {
+            action(lead);
+        }
+        handleContextMenuClose();
+    };
     const leadName = lead.name || lead.contact?.name || "Unknown";
     const leadEmail = lead.email || lead.contact?.email;
     const leadPhone = lead.phone || lead.contact?.phone;
@@ -99,11 +130,10 @@ const LeadCard = memo(({
                         }`}>{leadScore}</span>
                     </div>
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(lead);
-                        }}
+                        ref={actionButtonRef}
+                        onClick={handleActionButtonClick}
                         className="p-1.5 text-slate-400 hover:text-slate-600"
+                        aria-label="Lead actions"
                     >
                         <FiMoreVertical size={18} />
                     </button>
@@ -149,6 +179,22 @@ const LeadCard = memo(({
                     Create Task
                 </button>
             </div>
+
+            <LeadRowContextMenu
+                visible={isContextMenuOpen}
+                position={contextMenuPosition}
+                onClose={handleContextMenuClose}
+                onEdit={() => handleAction(onEdit)}
+                onSendEmail={() => handleAction(onSendEmail)}
+                onCreateTask={() => handleAction(onCreateTask)}
+                onAssign={() => handleAction(onAssign)}
+                onDelete={() => handleAction(onDelete)}
+                onConvert={() => handleAction(onConvert)}
+                onCopyURL={() => handleAction(onCopyURL)}
+                lead={lead}
+                branches={branches}
+                onMoveToBranch={onMoveToBranch}
+            />
         </div>
     );
 });

@@ -26,6 +26,8 @@ const LeadsTable = ({
   statuses,
   onStatusChange,
   onCustomFieldChange,
+  onMoveToBranch,
+  branches = [],
   canManage = false,
   scrollContainerId,
 }) => {
@@ -99,6 +101,8 @@ const LeadsTable = ({
                   statuses={statuses}
                   onStatusChange={onStatusChange}
                   onCustomFieldChange={onCustomFieldChange}
+                  onMoveToBranch={onMoveToBranch}
+                  branches={branches}
                   canManage={canManage}
                 />
               );
@@ -185,6 +189,8 @@ const LeadsTable = ({
                     statuses={statuses}
                     onStatusChange={onStatusChange}
                     onCustomFieldChange={onCustomFieldChange}
+                    onMoveToBranch={onMoveToBranch}
+                    branches={branches}
                     canManage={canManage}
                     index={virtualRow.index}
                   />

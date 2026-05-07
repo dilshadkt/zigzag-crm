@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiEdit, FiMail, FiCheckSquare, FiUser, FiTrash2, FiRefreshCw, FiLink } from "react-icons/fi";
+import { FiEdit, FiMail, FiCheckSquare, FiUser, FiTrash2, FiRefreshCw, FiLink, FiChevronRight, FiFolder } from "react-icons/fi";
 
 const LeadRowContextMenu = ({
   visible,
@@ -13,9 +13,12 @@ const LeadRowContextMenu = ({
   onConvert,
   onCopyURL,
   lead,
+  branches = [],
+  onMoveToBranch,
 }) => {
   const menuRef = useRef(null);
   const [adjustedPosition, setAdjustedPosition] = useState(position);
+  const [showBranches, setShowBranches] = useState(false);
 
   // Adjust position to keep menu within viewport
   useEffect(() => {
@@ -38,19 +41,23 @@ const LeadRowContextMenu = ({
         newX = 10;
       }
 
-      // Check if menu goes off-screen on the bottom
+      // Check if menu goes off-screen on the bottom - FLIP UP if needed
       if (position.y + menuRect.height > viewportHeight) {
-        newY = viewportHeight - menuRect.height - 10;
+        // Calculate flipped position: position.y is rect.bottom + 5
+        // We want newY to be rect.top - menuRect.height - 5
+        // Approximating button height as 30px: rect.top = position.y - 35
+        newY = position.y - menuRect.height - 40; 
       }
 
-      // Check if menu goes off-screen on the top
+      // Final safety check for top
       if (newY < 10) {
         newY = 10;
+        // If it's still too tall, it will be scrollable due to max-h and overflow-y
       }
 
       setAdjustedPosition({ x: newX, y: newY });
     }
-  }, [visible, position]);
+  }, [visible, position, showBranches]); // Re-adjust when branches show/hide
 
   useEffect(() => {
     const handleCloseOthers = () => {
@@ -130,6 +137,16 @@ const LeadRowContextMenu = ({
       onClick: onCopyURL,
       show: !!onCopyURL,
     },
+    {
+      label: "Move to Branch",
+      icon: FiFolder,
+      onClick: (e) => {
+        e.stopPropagation();
+        setShowBranches(!showBranches);
+      },
+      show: branches.length > 0 && !!onMoveToBranch,
+      hasSubmenu: true,
+    },
   ].filter((item) => item.show);
 
   const handleItemClick = (onClick) => {
@@ -151,7 +168,7 @@ const LeadRowContextMenu = ({
       {/* Menu */}
       <div
         ref={menuRef}
-        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[180px]"
+        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px] max-h-[90vh] overflow-y-auto scrollbar-hide"
         style={{
           top: `${adjustedPosition.y}px`,
           left: `${adjustedPosition.x}px`,
@@ -164,17 +181,47 @@ const LeadRowContextMenu = ({
 
           return (
             <React.Fragment key={item.label}>
-              <button
-                onClick={() => handleItemClick(item.onClick)}
-                className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-3 cursor-pointer ${
-                  isDestructive
-                    ? "text-red-600 hover:bg-red-50 active:bg-red-100"
-                    : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isDestructive ? "text-red-600" : "text-gray-600"}`} />
-                <span>{item.label}</span>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    if (item.hasSubmenu) {
+                      item.onClick(e);
+                    } else {
+                      handleItemClick(item.onClick);
+                    }
+                  }}
+                  className={`w-full px-3 py-1.5 text-left text-[13px] transition-colors flex items-center justify-between cursor-pointer ${
+                    isDestructive
+                      ? "text-red-600 hover:bg-red-50 active:bg-red-100"
+                      : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+                  } ${item.hasSubmenu && showBranches ? "bg-gray-100" : ""}`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className={`w-3.5 h-3.5 ${isDestructive ? "text-red-600" : "text-gray-600"}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.hasSubmenu && (
+                    <FiChevronRight className={`w-3 h-3 text-gray-400 transition-transform ${showBranches ? "rotate-90" : ""}`} />
+                  )}
+                </button>
+
+                {item.hasSubmenu && showBranches && (
+                  <div className="bg-gray-50 border-y border-gray-100 py-1">
+                    {branches.map((branch) => (
+                      <button
+                        key={branch.id || branch.name}
+                        onClick={() => {
+                          onMoveToBranch(lead, branch.name);
+                          onClose();
+                        }}
+                        className="w-full px-10 py-1.5 text-left text-[12px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        {branch.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {!isLast && !isDestructive && index < menuItems.length - 1 && !menuItems[index + 1]?.isDestructive && (
                 <div className="border-t border-gray-200 my-1"></div>
               )}

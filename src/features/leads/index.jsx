@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../../hooks/useAuth";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiDownload, FiTrash2, FiFolder } from "react-icons/fi";
 import LeadsPageHeader from "./components/LeadsPageHeader";
 import LeadsTable from "./components/LeadsTable";
 import LeadsTableShimmer from "./components/LeadsTableShimmer";
@@ -17,7 +17,7 @@ import AssignLeadModal from "./components/AssignLeadModal";
 import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
 import LeadsDashboard from "./components/LeadsDashboard";
 import { useLeadsData } from "./hooks/useLeadsData";
-import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads } from "./api";
+import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads } from "./api";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -93,6 +93,10 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const [activeStatusId, setActiveStatusId] = useState(null);
   const [activeAction, setActiveAction] = useState(null);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [isBulkBranchMenuOpen, setBulkBranchMenuOpen] = useState(false);
+  const [bulkBarPos, setBulkBarPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
   const navigate = useNavigate();
 
   // Stats
@@ -168,6 +172,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   // Mutations
   const updateLeadMutation = useUpdateLead();
   const deleteLeadMutation = useDeleteLead();
+  const bulkUpdateMutation = useBulkUpdateLeads();
 
   const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
 
@@ -715,6 +720,92 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
       toast.error(error?.response?.data?.message || "Failed to update field");
     }
   };
+  
+  const handleMoveToBranch = async (lead, branchName) => {
+    try {
+      const leadId = lead._id || lead.id;
+      const updatedCustomFields = {
+        ...(lead.customFields || {}),
+        branch: branchName,
+      };
+
+      await updateLeadMutation.mutateAsync({
+        leadId,
+        leadData: { 
+          branch: branchName,
+          customFields: updatedCustomFields 
+        },
+      });
+
+      toast.success(`Lead moved to branch: ${branchName}`);
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to move lead to branch");
+    }
+  };
+
+  const handleBulkMoveToBranch = async (branchName) => {
+    if (selectedLeadIds.length === 0) return;
+    
+    try {
+      await bulkUpdateMutation.mutateAsync({
+        leadIds: selectedLeadIds,
+        updateData: { 
+          branch: branchName,
+          "customFields.branch": branchName 
+        },
+      });
+
+      toast.success(`Moved ${selectedLeadIds.length} leads to branch: ${branchName}`);
+      setSelectedLeadIds([]);
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to move leads to branch");
+    }
+  };
+
+  const handleDragStart = (e) => {
+    // Only drag if left clicking on the bar (not buttons)
+    if (e.button !== 0) return;
+    
+    setIsDragging(true);
+    dragStartPos.current = {
+      x: e.clientX - bulkBarPos.x,
+      y: e.clientY - bulkBarPos.y,
+    };
+    
+    // Prevent text selection during drag
+    e.preventDefault();
+  };
+
+  const handleDragMove = useCallback((e) => {
+    if (!isDragging) return;
+    
+    setBulkBarPos({
+      x: e.clientX - dragStartPos.current.x,
+      y: e.clientY - dragStartPos.current.y,
+    });
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+    } else {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
 
   const handleApplyFilters = (filters) => {
     setAppliedFilters(filters);
@@ -815,6 +906,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
                   statuses={statuses}
                   onStatusChange={handleStatusChange}
                   onCustomFieldChange={handleCustomFieldChange}
+                  onMoveToBranch={handleMoveToBranch}
+                  branches={branches}
                   canManage={canManageAllLeads}
                 />
               </div>
@@ -834,6 +927,88 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
             </>
           )}
         </div>
+
+        {/* Floating Bulk Actions Bar */}
+        {selectedLeadIds.length > 0 && (
+          <div 
+            className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-300 ${isDragging ? 'cursor-grabbing scale-105 opacity-90 transition-none' : 'cursor-grab'}`}
+            style={{ 
+              transform: `translate(calc(-50% + ${bulkBarPos.x}px), ${bulkBarPos.y}px)`,
+              transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onMouseDown={handleDragStart}
+          >
+            <div className="flex items-center gap-3 border-r border-slate-700 pr-6 pointer-events-none select-none">
+              <span className="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+                {selectedLeadIds.length}
+              </span>
+              <span className="text-sm font-medium">Leads Selected</span>
+            </div>
+            
+            <div className="flex items-center gap-4" onMouseDown={(e) => e.stopPropagation()}>
+              <div className="relative">
+                <button 
+                  onClick={() => setBulkBranchMenuOpen(!isBulkBranchMenuOpen)}
+                  className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${isBulkBranchMenuOpen ? 'text-blue-400' : 'hover:text-blue-400'}`}
+                >
+                  <FiFolder className="w-3.5 h-3.5" />
+                  Move to Branch
+                </button>
+                
+                {/* Branch Selection Tooltip/Menu */}
+                {isBulkBranchMenuOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-[-1]" 
+                      onClick={() => setBulkBranchMenuOpen(false)}
+                    />
+                    <div className="absolute bottom-full left-0 mb-1.5 w-40 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Select Branch
+                      </div>
+                      {branches && branches.length > 0 ? (
+                        branches.map((branch) => (
+                          <button
+                            key={branch.id || branch.name}
+                            onClick={() => {
+                              handleBulkMoveToBranch(branch.name);
+                              setBulkBranchMenuOpen(false);
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                          >
+                            {branch.name}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-1.5 text-xs text-slate-400">No branches found</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <button 
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete ${selectedLeadIds.length} leads?`)) {
+                    // Implement bulk delete if needed, for now just a placeholder
+                    toast.error("Bulk delete not implemented yet");
+                  }
+                }}
+                className="flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+              >
+                <FiTrash2 className="w-4 h-4" />
+                Delete
+              </button>
+              
+              <button 
+                onClick={() => setSelectedLeadIds([])}
+                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isColumnEditorOpen && (

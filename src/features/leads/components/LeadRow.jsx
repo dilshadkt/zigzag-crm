@@ -183,6 +183,8 @@ const LeadRow = memo(({
   statuses,
   onStatusChange,
   onCustomFieldChange,
+  onMoveToBranch,
+  branches = [],
   canManage = false,
   index,
 }) => {
@@ -337,6 +339,8 @@ const LeadRow = memo(({
         onConvert={() => handleAction(onConvert)}
         onCopyURL={() => handleAction(onCopyURL)}
         lead={lead}
+        branches={branches}
+        onMoveToBranch={onMoveToBranch}
       />
     </>
   );
