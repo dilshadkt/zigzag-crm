@@ -164,6 +164,16 @@ export const reorderLeadAssignmentRules = async (companyId, ruleIds) => {
   return response.data;
 };
 
+export const mapFacebookField = async ({ leadId, facebookField, crmFieldKey, scope }) => {
+  const response = await apiClient.post(`leads/${leadId}/map-facebook-field`, {
+    leadId,
+    facebookField,
+    crmFieldKey,
+    scope
+  });
+  return response.data;
+};
+
 // --- HOOKS ---
 
 // Lead Hooks
@@ -444,6 +454,19 @@ export const useReorderLeadAssignmentRules = (companyId) => {
     mutationFn: (ruleIds) => reorderLeadAssignmentRules(companyId, ruleIds),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
+    },
+  });
+};
+
+export const useMapFacebookField = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: mapFacebookField,
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["lead", leadId]);
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+      queryClient.invalidateQueries(["leadStats"]);
     },
   });
 };

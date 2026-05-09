@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { FiEdit2, FiSave, FiX } from "react-icons/fi";
+import { FiEdit2, FiSave, FiX, FiLink } from "react-icons/fi";
+import LeadFieldMapModal from "./LeadFieldMapModal";
 import LeadStatusBadge from "../../leads/components/LeadStatusBadge";
 import StatusDropdown from "../../leads/components/StatusDropdown";
 import DynamicLeadForm from "../../leads/components/DynamicLeadForm";
@@ -52,6 +53,11 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
   const [quickNoteText, setQuickNoteText] = useState("");
+  const [mappingModal, setMappingModal] = useState({ 
+    isOpen: false, 
+    facebookField: "", 
+    facebookValue: "" 
+  });
 
   const { mutate: addNote, isLoading: isAddingNote } = useAddLeadNote();
   const { mutateAsync: uploadAttachment, isLoading: isUploadingFile } = useUploadLeadAttachment();
@@ -810,13 +816,27 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
                   val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
                 }
 
-                // Format labels (e.g., "fb_ad_name" -> "Ad Name")
-                let label = key.replace(/^fb_/, "").replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-                
                 return (
-                  <div key={key} className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{label}</p>
-                    <p className="text-sm font-semibold text-slate-700 break-words">{String(val)}</p>
+                  <div key={key} className="relative group">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-[#3f8cff]/30 transition-all">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                          {key.replace("fb_", "").replace(/_/g, " ")}
+                        </p>
+                        <button
+                          onClick={() => setMappingModal({
+                            isOpen: true,
+                            facebookField: key,
+                            facebookValue: val
+                          })}
+                          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] font-bold text-[#3f8cff] hover:underline transition-all"
+                        >
+                          <FiLink size={10} />
+                          MAP FIELD
+                        </button>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-700 break-words">{String(val)}</p>
+                    </div>
                   </div>
                 );
               });
@@ -824,6 +844,20 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
           </div>
         </SectionCard>
       )}
+
+      {/* Mapping Modal */}
+      <LeadFieldMapModal
+        isOpen={mappingModal.isOpen}
+        onClose={() => setMappingModal({ ...mappingModal, isOpen: false })}
+        leadId={lead.id || lead._id}
+        facebookField={mappingModal.facebookField}
+        facebookValue={mappingModal.facebookValue}
+        crmFields={formFields}
+        onSuccess={() => {
+          // You might want to refresh lead data here
+          // For now toast is enough
+        }}
+      />
 
       {/* Quick Add Actions - Explicitly for Notes & Attachments */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
