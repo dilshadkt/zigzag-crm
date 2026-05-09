@@ -36,13 +36,13 @@ export const useCalendarDataOptimized = (
       );
 
       // Apply assigner filter if selected
-      if (assignerFilter) {
+      if (assignerFilter && assignerFilter.length > 0) {
         allTasks = allTasks.filter((task) => {
           if (!task.assignedTo || !Array.isArray(task.assignedTo)) {
             return false;
           }
-          return task.assignedTo.some(
-            (assignee) => assignee._id === assignerFilter
+          return task.assignedTo.some((assignee) =>
+            assignerFilter.includes(assignee._id)
           );
         });
       }

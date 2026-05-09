@@ -168,7 +168,7 @@ const EventFilters = ({
 
   const handleAssignerSelect = (assignerId) => {
     onAssignerFilterChange(assignerId);
-    setIsAssignerDropdownOpen(false);
+    // Don't close dropdown for multiple selection
   };
 
   const handleProjectSelect = (projectId) => {
@@ -177,9 +177,12 @@ const EventFilters = ({
   };
 
   const getSelectedAssignerName = () => {
-    if (!assignerFilter) return "All Assigners";
-    const selectedAssigner = assigners.find((a) => a.id === assignerFilter);
-    return selectedAssigner ? selectedAssigner.name : "All Assigners";
+    if (!assignerFilter || assignerFilter.length === 0) return "All Assigners";
+    if (assignerFilter.length === 1) {
+      const selectedAssigner = assigners.find((a) => a.id === assignerFilter[0]);
+      return selectedAssigner ? selectedAssigner.name : "All Assigners";
+    }
+    return `${assignerFilter.length} Assigners`;
   };
 
   const getSelectedProjectName = () => {
@@ -215,12 +218,18 @@ const EventFilters = ({
                 {/* All Assigners Option */}
                 <button
                   onClick={() => handleAssignerSelect(null)}
-                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 ${!assignerFilter
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${!assignerFilter || assignerFilter.length === 0
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-700"
                     }`}
                 >
-                  All Assigners
+                  <input
+                    type="checkbox"
+                    checked={!assignerFilter || assignerFilter.length === 0}
+                    readOnly
+                    className="w-3 h-3 rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>All Assigners</span>
                 </button>
 
                 {/* Divider */}
@@ -231,20 +240,26 @@ const EventFilters = ({
                   <button
                     key={assigner.id}
                     onClick={() => handleAssignerSelect(assigner.id)}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${assignerFilter === assigner.id
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${assignerFilter && assignerFilter.includes(assigner.id)
                       ? "bg-blue-50 text-blue-700"
                       : "text-gray-700"
                       }`}
                   >
+                    <input
+                      type="checkbox"
+                      checked={assignerFilter && assignerFilter.includes(assigner.id)}
+                      readOnly
+                      className="w-3 h-3 rounded text-blue-600 focus:ring-blue-500"
+                    />
                     {assigner?.avatar === "/api/placeholder/32/32" ? (
-                      <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center text-[10px]">
                         {assigner?.name?.charAt(0)}
                       </div>
                     ) : (
                       <img
                         src={assigner?.avatar}
                         alt={assigner.name}
-                        className="w-5 h-5 rounded-full"
+                        className="w-5 h-5 rounded-full object-cover"
                       />
                     )}
 
