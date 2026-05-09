@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LeadsFeature from "../../../features/leads";
 import Campaigns from "../../campaigns";
+import { OverviewTab } from "../../../components/projects/projectOverview/OverviewTab";
+import InsightsTab from "../../../components/projects/projectOverview/InsightsTab";
+import ScheduleTab from "../../../components/projects/projectOverview/ScheduleTab";
 import logo from "../../../assets/icons/logo.svg";
 import { useAuth } from "../../../hooks/useAuth";
 import { useDispatch } from "react-redux";
@@ -11,8 +14,14 @@ import { useProjectDetails } from "../../../api/hooks";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("leads");
   const { user } = useAuth();
+  const permissions = user?.permissions || [];
+  const [activeTab, setActiveTab] = useState(() => {
+    if (permissions.includes("view_overview")) return "overview";
+    if (permissions.includes("view_leads")) return "leads";
+    if (permissions.includes("view_campaigns")) return "campaigns";
+    return "leads";
+  });
   const dispatch = useDispatch();
   const [selectedBranchId, setSelectedBranchId] = useState("");
 
@@ -71,34 +80,73 @@ const ClientDashboard = () => {
           </button>
         </div>
 
-        <nav className="flex items-center bg-slate-100/80 p-1 rounded-xl sm:rounded-2xl gap-1 border border-slate-200/50 w-full sm:w-auto justify-center">
-          <button
-            onClick={() => setActiveTab("leads")}
-            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${activeTab === "leads"
-              ? "bg-white text-blue-600 shadow-md transform scale-105"
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-              }`}
-          >
-            Leads
-          </button>
-          <button
-            onClick={() => setActiveTab("followups")}
-            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${activeTab === "followups"
-              ? "bg-white text-blue-600 shadow-md transform scale-105"
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-              }`}
-          >
-            Follow-ups ({followUpsCount})
-          </button>
-          <button
-            onClick={() => setActiveTab("campaigns")}
-            className={`flex-1 sm:flex-none px-4 sm:px-8 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 ${activeTab === "campaigns"
-              ? "bg-white text-blue-600 shadow-md transform scale-105"
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-              }`}
-          >
-            Campaigns
-          </button>
+        <nav className="flex items-center bg-slate-100/80 p-1 rounded-xl sm:rounded-2xl gap-1 border border-slate-200/50 w-full sm:w-auto justify-center overflow-x-auto">
+          {permissions.includes("view_overview") && (
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap ${activeTab === "overview"
+                ? "bg-white text-blue-600 shadow-md transform scale-105"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+            >
+              Overview
+            </button>
+          )}
+          {permissions.includes("view_leads") && (
+            <button
+              onClick={() => setActiveTab("leads")}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap ${activeTab === "leads"
+                ? "bg-white text-blue-600 shadow-md transform scale-105"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+            >
+              Leads
+            </button>
+          )}
+          {permissions.includes("view_leads") && (
+            <button
+              onClick={() => setActiveTab("followups")}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap ${activeTab === "followups"
+                ? "bg-white text-blue-600 shadow-md transform scale-105"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+            >
+              Follow-ups ({followUpsCount})
+            </button>
+          )}
+          {permissions.includes("view_campaigns") && (
+            <button
+              onClick={() => setActiveTab("campaigns")}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap ${activeTab === "campaigns"
+                ? "bg-white text-blue-600 shadow-md transform scale-105"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+            >
+              Campaigns
+            </button>
+          )}
+          {permissions.includes("view_insights") && (
+            <button
+              onClick={() => setActiveTab("insights")}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap ${activeTab === "insights"
+                ? "bg-white text-blue-600 shadow-md transform scale-105"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+            >
+              Insights
+            </button>
+          )}
+          {permissions.includes("view_schedule") && (
+            <button
+              onClick={() => setActiveTab("schedule")}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap ${activeTab === "schedule"
+                ? "bg-white text-blue-600 shadow-md transform scale-105"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+            >
+              Schedule
+            </button>
+          )}
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
@@ -142,13 +190,25 @@ const ClientDashboard = () => {
           </div>
         )}
         <div className="flex-1 bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
-          {activeTab === "leads" ? (
+          {activeTab === "overview" ? (
+            <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              <OverviewTab currentProject={currentProject} isClient />
+            </div>
+          ) : activeTab === "leads" ? (
             <LeadsFeature isClient projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
           ) : activeTab === "followups" ? (
             <LeadsFeature isClient isFollowUpOnly projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
-          ) : (
-            <Campaigns isClient projectId={projectId} branchFilter={activeTab === "campaigns" ? "" : activeBranchFilter} />
-          )}
+          ) : activeTab === "campaigns" ? (
+            <Campaigns isClient projectId={projectId} branchFilter={""} />
+          ) : activeTab === "insights" ? (
+            <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              <InsightsTab currentProject={currentProject} isClient />
+            </div>
+          ) : activeTab === "schedule" ? (
+            <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              <ScheduleTab currentProject={currentProject} isClient />
+            </div>
+          ) : null}
         </div>
       </main>
     </div>

@@ -295,9 +295,12 @@ const CampaignsHeader = ({
               )}
             </div>
           )} */}
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            Total: {totalCampaigns || 0}
-          </span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg">
+            <FiLayers className="w-3 h-3 text-gray-400" />
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              Campaigns: {totalCampaigns || 0}
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -21,12 +21,19 @@ export const useCalendarDataOptimized = (
     const { projects, tasks, birthdays } = calendarData.data;
 
     // Filter projects for this date
-    const projectsForDate =
+    let projectsForDate =
       eventFilters.projects && projects
         ? projects.filter((project) =>
-            isSameDay(new Date(project.endDate), dateObj)
-          )
+          isSameDay(new Date(project.endDate), dateObj)
+        )
         : [];
+
+    // Apply project filter to projects themselves if selected
+    if (projectFilter && projectFilter.length > 0) {
+      projectsForDate = projectsForDate.filter((project) =>
+        projectFilter.includes(project._id || project.id)
+      );
+    }
 
     // Filter tasks for this date
     let allTasks = [];
@@ -48,12 +55,13 @@ export const useCalendarDataOptimized = (
       }
 
       // Apply project filter if selected
-      if (projectFilter) {
+      if (projectFilter && projectFilter.length > 0) {
         allTasks = allTasks.filter((task) => {
-          if (!task.project || !task.project._id) {
+          if (!task.project || (!task.project._id && !task.project.id)) {
             return false;
           }
-          return task.project._id === projectFilter;
+          const taskId = task.project._id || task.project.id;
+          return projectFilter.includes(taskId);
         });
       }
     }

@@ -1,10 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSyncFacebookAds } from "../../../api/campaigns";
-import { FiRefreshCw } from "react-icons/fi";
+import { FiRefreshCw, FiLayers } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
-export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter = "", currentProject, onRefresh }) => {
+export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProject, onRefresh }) => {
   const navigate = useNavigate();
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
@@ -20,19 +20,21 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, branchFilter
     });
   };
 
-  const visibleCampaigns = React.useMemo(() => {
-    if (!branchFilter) return projectCampaigns;
-    return projectCampaigns.filter((campaign) => {
-      const campBranch = campaign?.branch || campaign?.customFields?.branch;
-      return campBranch === branchFilter;
-    });
-  }, [projectCampaigns, branchFilter]);
+  const visibleCampaigns = projectCampaigns;
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl border border-gray-100 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-base font-bold text-gray-900">Project Campaigns</h3>
+          <div className="flex items-center gap-2 px-3 py-1 mb-2 bg-gray-50 border border-gray-100 rounded-lg w-max">
+            <FiLayers className="w-3 h-3 text-gray-400" />
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              Campaigns: {visibleCampaigns.length}
+            </span>
+          </div>
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            Project Campaigns
+          </h3>
           <p className="text-xs text-gray-500 mt-1">Marketing and engagement campaigns linked to this client.</p>
         </div>
         {currentProject?.facebookAdAccountId && (

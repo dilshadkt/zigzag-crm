@@ -199,6 +199,40 @@ export const SettingsTab = ({
                 onChange={(e) => setClientCreds({ ...clientCreds, password: e.target.value })}
               />
             </div>
+            
+            {/* Access Permissions */}
+            <div className="pt-2 border-t border-blue-100">
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Access Permissions
+              </label>
+              <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                {[
+                  { id: "view_overview", label: "View Overview" },
+                  { id: "view_leads", label: "View Leads" },
+                  { id: "add_lead", label: "Can Add Leads" },
+                  { id: "view_campaigns", label: "View Campaigns" },
+                  { id: "view_insights", label: "View Social Insights" },
+                  { id: "view_schedule", label: "View Content Schedule" },
+                ].map((perm) => (
+                  <label key={perm.id} className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={clientCreds.permissions?.includes(perm.id)} 
+                      onChange={(e) => {
+                        const newPerms = e.target.checked 
+                          ? [...(clientCreds.permissions || []), perm.id]
+                          : (clientCreds.permissions || []).filter(p => p !== perm.id);
+                        setClientCreds({ ...clientCreds, permissions: newPerms });
+                      }}
+                      className="w-3 h-3 rounded text-blue-600 focus:ring-blue-500 border-gray-300 transition-all cursor-pointer" 
+                    />
+                    <span className="text-[10px] font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
+                      {perm.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
 
             <div className="pt-1 flex gap-2">
               <button
@@ -497,21 +531,6 @@ export const SettingsTab = ({
           </div>
         </div>
 
-        {/* Access Permissions */}
-        <div className="p-4 border border-gray-100 rounded-xl bg-gray-50/30">
-          <h4 className="text-sm font-semibold text-gray-900 mb-0.5">Access Permissions</h4>
-          <p className="text-[11px] text-gray-500 mb-3">Control what the client can see after logging in.</p>
-          <div className="space-y-2.5">
-            <label className="flex items-center gap-2.5 cursor-pointer group">
-              <input type="checkbox" defaultChecked className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
-              <span className="text-xs text-gray-700 group-hover:text-gray-900 transition-colors">View Assigned Leads</span>
-            </label>
-            <label className="flex items-center gap-2.5 cursor-pointer group opacity-50">
-              <input type="checkbox" disabled className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
-              <span className="text-xs text-gray-700">Download Lead Reports (Admin Only)</span>
-            </label>
-          </div>
-        </div>
       </div>
     </div>
   );

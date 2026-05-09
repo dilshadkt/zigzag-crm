@@ -118,6 +118,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const [clientCreds, setClientCreds] = useState({
     username: "",
     password: "",
+    permissions: ["view_leads"],
   });
 
   const { data: campaignData, isLoading: isCampaignsLoading } = useGetCampaignsByCompany(
@@ -158,6 +159,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             setClientCreds({
               username: response.project.portalConfig.username || "",
               password: response.project.portalConfig.password || "",
+              permissions: response.project.portalConfig.permissions || ["view_leads"],
             });
           }
         } catch (error) {
@@ -558,7 +560,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         />
       )}
 
-      {(activeTab === "lead" || activeTab === "campaign") && currentProject?.customFields?.branches?.length > 0 && (
+      {activeTab === "lead" && currentProject?.customFields?.branches?.length > 0 && (
         <div className="flex justify-end items-center gap-2 mb-3 bg-white p-3 border border-gray-100 rounded-xl animate-in fade-in duration-300">
           <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Branch/Brand:</span>
           <select
@@ -592,7 +594,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         <CampaignTab
           isCampaignsLoading={isCampaignsLoading}
           projectCampaigns={projectCampaigns}
-          branchFilter={selectedBranchId}
           currentProject={currentProject}
           onRefresh={handleRefresh}
         />

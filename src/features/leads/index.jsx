@@ -69,6 +69,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const isEmployee = user?.role === "employee";
   const isClient = user?.role === "client";
   const canManageAllLeads = (isAdmin || user?.permissions?.leads?.viewAll) && !isClient;
+  const canAddLead = isAdmin || (isEmployee && user?.permissions?.leads?.create) || (isClient && user?.permissions?.includes("add_lead"));
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -105,68 +106,11 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
     ...(branchFilter ? { branch: branchFilter } : {})
   });
 
-  const { data: allBranchLeadsData } = useGetLeads({
-    project: projectId,
-    limit: 1000,
-    ...(branchFilter ? { branch: branchFilter } : {}),
-  });
+
 
   const leadStats = useMemo(() => {
-    if (!branchFilter) return statsData?.data;
-
-    const rawLeads = allBranchLeadsData?.data || [];
-    const allLeads = rawLeads.filter(lead => {
-      const leadBranch = lead?.branch || lead?.customFields?.branch;
-      return leadBranch === branchFilter;
-    });
-    
-    // Compute total leads
-    const totalLeads = allLeads.length;
-
-    // Compute status stats
-    const statusMap = {};
-    allLeads.forEach(lead => {
-      const statusId = lead.status?._id || lead.status;
-      const statusName = typeof lead.status === 'object' ? lead.status?.name : lead.status;
-      const statusColor = typeof lead.status === 'object' ? lead.status?.color : '#6366f1';
-
-      if (statusId) {
-        if (!statusMap[statusId]) {
-          statusMap[statusId] = { _id: statusId, name: statusName || "New", count: 0, color: statusColor };
-        }
-        statusMap[statusId].count += 1;
-      }
-    });
-    const statusStats = Object.values(statusMap);
-
-    // Compute hot leads
-    const hotLeadCount = allLeads.filter(lead => (lead.score || 0) >= 70).length;
-
-    // Compute follow-ups
-    const today = new Date().toISOString().split('T')[0];
-    const followUpCount = allLeads.filter(lead => lead.scheduled && lead.scheduled.startsWith(today)).length;
-
-    // Compute weak leads
-    const weakLeadCount = allLeads.filter(lead => (lead.score || 0) > 0 && (lead.score || 0) < 30).length;
-
-    // Compute new today
-    const newLeadsToday = allLeads.filter(lead => lead.createdAt && lead.createdAt.startsWith(today)).length;
-
-    // Compute new this week (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const newLeadsThisWeek = allLeads.filter(lead => lead.createdAt && new Date(lead.createdAt) >= sevenDaysAgo).length;
-
-    return {
-      totalLeads,
-      statusStats,
-      hotLeads: { count: hotLeadCount },
-      todayFollowUps: { count: followUpCount },
-      weakLeads: { count: weakLeadCount },
-      newLeadsToday,
-      newLeadsThisWeek,
-    };
-  }, [statsData, allBranchLeadsData, branchFilter]);
+    return statsData?.data;
+  }, [statsData]);
 
 
   // Mutations
@@ -215,6 +159,11 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  // Reset page when branch filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [branchFilter]);
 
   // Use the custom hook to get leads data
   const {
@@ -341,12 +290,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const { mutate: bulkCreateLeads, isLoading: isBulkCreating } = useBulkCreateLeads();
 
   const visibleLeads = useMemo(() => {
-    if (!branchFilter) return leads;
-    return leads.filter((lead) => {
-      const leadBranch = lead?.branch || lead?.customFields?.branch;
-      return leadBranch === branchFilter;
-    });
-  }, [leads, branchFilter]);
+    return leads;
+  }, [leads]);
 
 
   const handleToggleSelect = (leadId) => {
@@ -882,6 +827,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
               showDashboard={showDashboard}
               onToggleDashboard={() => setShowDashboard(!showDashboard)}
               isClient={isClient}
+              canAddLead={canAddLead}
             />
           </div>
           {isLoading ? (

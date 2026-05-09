@@ -11,7 +11,7 @@ const createDefaultState = () => ({
     birthdays: true,
   },
   assignerFilter: [],
-  projectFilter: null,
+  projectFilter: [],
   currentDate: new Date().toISOString(), // Store as ISO string for serialization
 });
 
@@ -53,6 +53,11 @@ const loadState = () => {
         : parsedState?.assignerFilter
           ? [parsedState.assignerFilter]
           : [],
+      projectFilter: Array.isArray(parsedState?.projectFilter)
+        ? parsedState.projectFilter
+        : parsedState?.projectFilter
+          ? [parsedState.projectFilter]
+          : [],
       eventFilters: {
         ...defaultState.eventFilters,
         ...parsedState?.eventFilters,
@@ -91,7 +96,17 @@ const calendarSlice = createSlice({
       persistState(state);
     },
     setProjectFilter(state, action) {
-      state.projectFilter = action.payload;
+      const projectId = action.payload;
+      if (projectId === null) {
+        state.projectFilter = [];
+      } else {
+        const index = state.projectFilter.indexOf(projectId);
+        if (index === -1) {
+          state.projectFilter.push(projectId);
+        } else {
+          state.projectFilter.splice(index, 1);
+        }
+      }
       persistState(state);
     },
     setCurrentDate(state, action) {
