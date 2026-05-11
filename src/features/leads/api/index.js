@@ -164,12 +164,14 @@ export const reorderLeadAssignmentRules = async (companyId, ruleIds) => {
   return response.data;
 };
 
-export const mapFacebookField = async ({ leadId, facebookField, crmFieldKey, scope }) => {
+export const mapFacebookField = async ({ leadId, facebookField, crmFieldKey, scope, targetBranch, facebookValue }) => {
   const response = await apiClient.post(`leads/${leadId}/map-facebook-field`, {
     leadId,
     facebookField,
     crmFieldKey,
-    scope
+    scope,
+    targetBranch,
+    facebookValue
   });
   return response.data;
 };

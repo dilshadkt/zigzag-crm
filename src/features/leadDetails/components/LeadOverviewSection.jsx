@@ -12,6 +12,7 @@ import {
   useAddLeadNote,
   useUploadLeadAttachment,
 } from "../../leads/api";
+import { useProjectDetails } from "../../../api/hooks";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const SectionCard = ({ children }) => (
@@ -114,6 +115,9 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
     }
   }, [lead, contact]);
   const projectId = typeof lead.project === "object" ? lead.project?._id : lead.project;
+  const { data: projectDetails } = useProjectDetails(projectId);
+  const branches = projectDetails?.customFields?.branches || [];
+
   const { data: formConfigData, isLoading: isLoadingFormConfig } =
     useGetLeadFormConfig(projectId);
   const { data: statusesData, isLoading: isLoadingStatuses } =
@@ -853,6 +857,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
         facebookField={mappingModal.facebookField}
         facebookValue={mappingModal.facebookValue}
         crmFields={formFields}
+        branches={branches}
         onSuccess={() => {
           // You might want to refresh lead data here
           // For now toast is enough

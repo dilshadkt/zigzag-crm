@@ -5,6 +5,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign, useFetchLiveFacebookData, useSyncCampaignLeads, useGetCampaignLeads } from "../../api/campaignDetails";
 import AddLeadsModal from "../../components/campaigns/AddLeadsModal";
 import Navigator from "../../components/shared/navigator";
+import socketService from "../../services/socketService";
+import { useQueryClient } from "@tanstack/react-query";
 
 const CampaignDetails = () => {
     const { id } = useParams();
@@ -217,6 +219,36 @@ const CampaignDetails = () => {
     const handleSyncAllLeads = () => {
         handleSyncLeads({ startDate: null, endDate: null });
     };
+
+    // Real-time socket updates for new leads
+    const queryClient = useQueryClient();
+    useEffect(() => {
+        if (!id) return;
+
+        // Join campaign-specific room
+        const socket = socketService.getSocket();
+        if (socket) {
+            socket.emit("join_room", `campaign_${id}`);
+            console.log(`[Socket] Joined campaign room: campaign_${id}`);
+        }
+
+        const handleNewLead = (data) => {
+            if (data.campaignId === id) {
+                // Invalidate queries to trigger refetch
+                queryClient.invalidateQueries(['campaign', id]);
+                queryClient.invalidateQueries(['campaignLeads', id]);
+            }
+        };
+
+        socketService.onNewLead(handleNewLead);
+
+        return () => {
+            if (socket) {
+                socket.emit("leave_room", `campaign_${id}`);
+            }
+            socketService.offNewLead(handleNewLead);
+        };
+    }, [id, queryClient]);
 
     // Fetch initial live data for this month on mount
     useEffect(() => {
@@ -438,10 +470,11 @@ const CampaignDetails = () => {
                                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Real-time Performance</h4>
                                         {campaign.lastSyncedAt && <div className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400"><FiClock className="w-3 h-3" />Synced {new Date(campaign.lastSyncedAt).toLocaleString()}</div>}
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
                                         <StatBlock label="Amount Spent" value={`₹${(campaign.amountSpent || 0).toLocaleString()}`} color="text-blue-600" />
                                         <StatBlock label="Balance" value={`₹${(campaign.balanceAmount || 0).toLocaleString()}`} color="text-emerald-600" />
                                         <StatBlock label="Results" value={(campaign.totalResults || 0).toLocaleString()} />
+                                        <StatBlock label="Today's Leads" value={(campaign.todayLeadsCount || 0).toLocaleString()} color="text-indigo-600" />
                                         <StatBlock label="Cost/Result" value={`₹${(campaign.cpr || 0).toFixed(2)}`} />
                                         <StatBlock label="Reach" value={(campaign.reach || 0).toLocaleString()} />
                                         <StatBlock label="Impressions" value={(campaign.impressions || 0).toLocaleString()} />

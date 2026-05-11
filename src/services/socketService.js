@@ -72,7 +72,25 @@ class SocketService {
       console.log("🔔 New notification received via socket:", data);
     });
 
+    this.socket.on("new_lead", (data) => {
+      console.log("🎯 New lead received via socket:", data);
+    });
+
     return this.socket;
+  }
+
+  // Listen for new leads
+  onNewLead(callback) {
+    if (this.socket) {
+      this.socket.on("new_lead", callback);
+    }
+  }
+
+  // Remove lead listener
+  offNewLead(callback) {
+    if (this.socket) {
+      this.socket.off("new_lead", callback);
+    }
   }
 
   // Disconnect socket

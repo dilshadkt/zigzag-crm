@@ -40,6 +40,7 @@ const PERMISSION_CATEGORIES = {
       { key: "changeStatus", label: "Change Status", description: "Can change task status" },
       { key: "viewOverview", label: "View Overview", description: "Can view task overview details" },
       { key: "viewLead", label: "View Lead", description: "Can view task lead details" },
+      { key: "editLead", label: "Edit Lead", description: "Can edit task lead details" },
       { key: "viewCampaign", label: "View Campaign", description: "Can view task campaign details" },
       { key: "viewSettings", label: "View Settings", description: "Can view task settings" },
     ],

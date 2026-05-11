@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import { FiPlus, FiDownload, FiTrash2, FiFolder } from "react-icons/fi";
 import LeadsPageHeader from "./components/LeadsPageHeader";
 import LeadsTable from "./components/LeadsTable";
@@ -65,11 +66,13 @@ const clearColumnVisibility = () => {
 const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false, branchFilter = "", branches = [] }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
   const isClient = user?.role === "client";
-  const canManageAllLeads = (isAdmin || user?.permissions?.leads?.viewAll) && !isClient;
-  const canAddLead = isAdmin || (isEmployee && user?.permissions?.leads?.create) || (isClient && user?.permissions?.includes("add_lead"));
+  const canManageAllLeads = (hasPermission("leads", "viewAll")) && !isClient;
+  const canAddLead = hasPermission("leads", "create") || (isClient && user?.permissions?.includes("add_lead"));
+  const canEditLead = hasPermission("leads", "edit") || hasPermission("tasks", "editLead");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -854,7 +857,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
                   onCustomFieldChange={handleCustomFieldChange}
                   onMoveToBranch={handleMoveToBranch}
                   branches={branches}
-                  canManage={canManageAllLeads}
+                  canManage={canEditLead}
                 />
               </div>
               <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">
@@ -893,13 +896,15 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
             
             <div className="flex items-center gap-4" onMouseDown={(e) => e.stopPropagation()}>
               <div className="relative">
-                <button 
-                  onClick={() => setBulkBranchMenuOpen(!isBulkBranchMenuOpen)}
-                  className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${isBulkBranchMenuOpen ? 'text-blue-400' : 'hover:text-blue-400'}`}
-                >
-                  <FiFolder className="w-3.5 h-3.5" />
-                  Move to Branch
-                </button>
+                {canEditLead && (
+                  <button 
+                    onClick={() => setBulkBranchMenuOpen(!isBulkBranchMenuOpen)}
+                    className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${isBulkBranchMenuOpen ? 'text-blue-400' : 'hover:text-blue-400'}`}
+                  >
+                    <FiFolder className="w-3.5 h-3.5" />
+                    Move to Branch
+                  </button>
+                )}
                 
                 {/* Branch Selection Tooltip/Menu */}
                 {isBulkBranchMenuOpen && (

@@ -62,7 +62,27 @@ function App() {
         // Initialize socket connection after successful authentication
         const token = localStorage.getItem("token");
         if (token) {
-          socketService.connect(token);
+          const socket = socketService.connect(token);
+          
+          if (user?.company) {
+            socket.emit("join_room", `company_${user.company}`);
+            
+            // Global lead notification with sound
+            socket.on("new_lead_received", (data) => {
+                // Play notification sound
+                try {
+                    const audio = new Audio('/src/assets/audio/new-notification-017-352293.mp3');
+                    audio.play();
+                } catch (e) {
+                    console.error("Failed to play notification sound:", e);
+                }
+
+                toast.success(`🎯 New Lead: ${data.leadName || 'Someone'} interested in ${data.campaignName}`, {
+                    duration: 6000,
+                    icon: '🚀'
+                });
+            });
+          }
         }
       } catch (error) {
         dispatch(logout());
