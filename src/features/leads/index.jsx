@@ -63,15 +63,16 @@ const clearColumnVisibility = () => {
   }
 };
 
-const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false, branchFilter = "", branches = [] }) => {
+const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false, branchFilter = "", branches = [], isClient = false }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
-  const isClient = user?.role === "client";
-  const canManageAllLeads = (hasPermission("leads", "viewAll")) && !isClient;
-  const canAddLead = hasPermission("leads", "create") || (isClient && user?.permissions?.includes("add_lead"));
+  // Check if current user is client (either from prop or from user role)
+  const isUserClient = isClient || user?.role === "client";
+  const canManageAllLeads = (hasPermission("leads", "viewAll")) && !isUserClient;
+  const canAddLead = hasPermission("leads", "create") || (isUserClient && user?.permissions?.includes("add_lead"));
   const canEditLead = hasPermission("leads", "edit") || hasPermission("tasks", "editLead");
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -1043,14 +1044,16 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
         currentFilters={appliedFilters}
       />
 
-      {/* Floating Add Lead Button for Mobile */}
-      <button
-        onClick={() => setAddLeadModalOpen(true)}
-        className="md:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center bg-[#3f8cff] text-white w-14 h-14 rounded-full shadow-lg hover:bg-[#2f6bff] active:scale-95 transition-all duration-300"
-        aria-label="Add lead"
-      >
-        <FiPlus size={24} />
-      </button>
+      {/* Floating Add Lead Button for Mobile / Client Dashboard */}
+      {canAddLead && (
+        <button
+          onClick={() => setAddLeadModalOpen(true)}
+          className={`fixed bottom-[70px] left-6 z-50 flex items-center justify-center bg-[#3f8cff] text-white w-14 h-14 rounded-full shadow-2xl hover:bg-[#2f6bff] active:scale-95 transition-all duration-300 ${!isUserClient ? 'md:hidden' : ''}`}
+          aria-label="Add lead"
+        >
+          <FiPlus size={24} />
+        </button>
+      )}
     </section>
   );
 };
