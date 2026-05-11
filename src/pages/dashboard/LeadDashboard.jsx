@@ -24,13 +24,30 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
+import { useCompanyActiveProjects } from "../../api/hooks";
+import { useGetCampaignsByCompany } from "../../api/campaigns";
+import { Filter, X, Briefcase, Megaphone, List as ListIcon } from "lucide-react";
 
 const LeadDashboardPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'company-admin';
     const [selectedDays, setSelectedDays] = useState(7);
-    const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ days: selectedDays });
+    const [selectedProject, setSelectedProject] = useState("all");
+    const [selectedCampaign, setSelectedCampaign] = useState("all");
+
+    // Fetch filters data
+    const { data: projects = [] } = useCompanyActiveProjects();
+    const { data: campaignsData } = useGetCampaignsByCompany(user?.company, { 
+        projectId: selectedProject !== "all" ? selectedProject : undefined 
+    });
+    const campaigns = campaignsData?.data || [];
+
+    const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ 
+        days: selectedDays,
+        project: selectedProject !== "all" ? selectedProject : undefined,
+        campaign: selectedCampaign !== "all" ? selectedCampaign : undefined
+    });
     const { data: statusData } = useGetLeadStatuses();
 
     const stats = statsData?.data;
@@ -64,18 +81,85 @@ const LeadDashboardPage = () => {
     return (
         <div className="space-y-2 p-1 bg-slate-50/50">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-[2rem] border border-slate-100 mb-2">
                 <div>
                     <h1 className="text-xl font-bold text-[#0A1629]">Lead Dashboard</h1>
-                    <p className="text-xs text-slate-500">Welcome back! Here's what's happening with your leads today.</p>
+                    <p className="text-xs text-slate-500">Track and manage your leads across projects and campaigns.</p>
                 </div>
-                <button
-                    onClick={() => navigate('/leads')}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[#3f8cff] text-white rounded-[10px] hover:bg-[#337ae6] transition-colors text-xs font-semibold"
-                >
-                    <Search className="w-3.5 h-3.5" />
-                    Browse All Leads
-                </button>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Project Filter */}
+                    <div className="relative group">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
+                            <Briefcase className="w-3.5 h-3.5" />
+                        </div>
+                        <select
+                            value={selectedProject}
+                            onChange={(e) => {
+                                setSelectedProject(e.target.value);
+                                setSelectedCampaign("all");
+                            }}
+                            className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px]"
+                        >
+                            <option value="all">All Projects</option>
+                            {projects.map(project => (
+                                <option key={project._id} value={project._id}>{project.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Campaign Filter */}
+                    <div className="relative group">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
+                            <Megaphone className="w-3.5 h-3.5" />
+                        </div>
+                        <select
+                            value={selectedCampaign}
+                            onChange={(e) => setSelectedCampaign(e.target.value)}
+                            disabled={selectedProject === "all"}
+                            className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <option value="all">All Campaigns</option>
+                            {campaigns.map(campaign => (
+                                <option key={campaign._id} value={campaign._id}>{campaign.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Days Filter */}
+                    <div className="relative group">
+                        <select
+                            value={selectedDays}
+                            onChange={(e) => setSelectedDays(Number(e.target.value))}
+                            className="pl-4 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
+                        >
+                            <option value={7}>Last 7 Days</option>
+                            <option value={30}>Last 30 Days</option>
+                            <option value={90}>Last 90 Days</option>
+                        </select>
+                    </div>
+
+                    {(selectedProject !== "all" || selectedCampaign !== "all") && (
+                        <button
+                            onClick={() => {
+                                setSelectedProject("all");
+                                setSelectedCampaign("all");
+                            }}
+                            className="p-2 text-slate-400 hover:text-rose-500 bg-slate-50 rounded-xl transition-colors"
+                            title="Clear Filters"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+
+                    <button
+                        onClick={() => navigate('/leads')}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#3f8cff] text-white rounded-xl hover:bg-[#337ae6] shadow-sm shadow-blue-100 transition-all text-[11px] font-bold"
+                    >
+                        <Search className="w-3.5 h-3.5" />
+                        Browse All
+                    </button>
+                </div>
             </div>
 
             {/* Quick Stats Grid */}
@@ -449,6 +533,47 @@ const LeadDashboardPage = () => {
                             )}
                         </div>
                     </div>
+
+                    {/* Filtered Lead Results - New List Section */}
+                    {(selectedProject !== "all" || selectedCampaign !== "all") && (
+                        <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
+                            <div className="p-4 border-b border-slate-50 bg-blue-50/10 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <ListIcon className="w-4 h-4 text-[#3f8cff]" />
+                                    Filtered Results
+                                </h3>
+                                <span className="text-[10px] font-black text-[#3f8cff] bg-white px-2 py-1 rounded-lg border border-blue-50">
+                                    {stats?.totalLeads || 0} Leads Found
+                                </span>
+                            </div>
+                            <div className="max-h-[600px] overflow-y-auto scrollbar-hide">
+                                {stats?.filteredLeads?.map(lead => (
+                                    <LeadListItem
+                                        key={lead._id}
+                                        lead={lead}
+                                        onClick={() => onLeadClick(lead._id)}
+                                        onCall={(e) => handleCall(e, lead.contact?.phone)}
+                                        onMail={(e) => handleEmail(e, lead.contact?.email)}
+                                    />
+                                ))}
+                                {(!stats?.filteredLeads || stats.filteredLeads.length === 0) && (
+                                    <div className="p-12 text-center">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <Search className="w-6 h-6 text-slate-300" />
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-medium">No specific leads match these filters.</p>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => navigate(`/leads?project=${selectedProject}&campaign=${selectedCampaign}`)}
+                                className="w-full py-3 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50 flex items-center justify-center gap-2"
+                            >
+                                View Detailed Lead List
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

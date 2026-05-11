@@ -5,6 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useGetFacebookAccounts } from "../../../api/campaigns";
 import { FiActivity, FiLayers, FiSearch, FiInstagram, FiFacebook, FiShield } from "react-icons/fi";
 import { updateProjectSocialConfig } from "../../../api/service";
+import { useGetLeadFormConfig } from "../../../features/leads/api";
+import LeadDashboardConfig from "../../../features/leadSettings/components/LeadDashboardConfig";
 
 export const SettingsTab = ({
   clientCreds,
@@ -23,6 +25,10 @@ export const SettingsTab = ({
   const [branchName, setBranchName] = useState("");
   const [branchUsername, setBranchUsername] = useState("");
   const [branchPassword, setBranchPassword] = useState("");
+
+  // Lead Form Config for fields
+  const { data: formConfig } = useGetLeadFormConfig(currentProject?._id);
+  const fields = formConfig?.data?.fields || formConfig?.fields || [];
   
   // Social Integration State
   const [socialConfig, setSocialConfig] = useState({
@@ -531,6 +537,16 @@ export const SettingsTab = ({
           </div>
         </div>
 
+      </div>
+
+      {/* Lead Dashboard Configuration - Full Width */}
+      <div className="mt-8 pt-8 border-t border-gray-100">
+        <div className="bg-slate-50/30 rounded-[2rem] p-4 md:p-8 border border-slate-100/50">
+          <LeadDashboardConfig 
+            fields={fields} 
+            projectId={currentProject?._id} 
+          />
+        </div>
       </div>
     </div>
   );

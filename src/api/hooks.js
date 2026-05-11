@@ -2732,10 +2732,13 @@ export const useDeleteFormConfig = () => {
 };
 
 // Dashboard Config Hooks
-export const useGetDashboardConfig = () => {
+export const useGetDashboardConfig = (projectId = null) => {
   return useQuery({
-    queryKey: ["dashboardConfig"],
-    queryFn: () => apiClient.get("/leads/settings/dashboard-config").then((res) => res.data),
+    queryKey: ["dashboardConfig", projectId],
+    queryFn: () => {
+      const params = projectId ? { projectId } : {};
+      return apiClient.get("/leads/settings/dashboard-config", { params }).then((res) => res.data);
+    },
   });
 };
 
@@ -2746,7 +2749,7 @@ export const useUpdateDashboardConfig = () => {
       apiClient
         .put("/leads/settings/dashboard-config", configData)
         .then((res) => res.data),
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ["dashboardConfig"] });
       await queryClient.invalidateQueries({ queryKey: ["leadStats"] });
     },
