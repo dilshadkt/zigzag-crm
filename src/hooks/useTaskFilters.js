@@ -1,19 +1,36 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-export const useTaskFilters = () => {
-  const [superFilters, setSuperFilters] = useState({
-    search: "",
-    status: [],
-    priority: [],
-    assignedTo: [],
-    project: [],
-    dateRange: {
-      start: "",
-      end: "",
-    },
-    sortBy: "dueDate", // Options: 'dueDate', 'priority', 'status', 'title', 'createdAt'
-    sortOrder: "asc", // 'asc' or 'desc'
+const DEFAULT_FILTERS = {
+  search: "",
+  status: [],
+  priority: [],
+  assignedTo: [],
+  project: [],
+  dateRange: {
+    start: "",
+    end: "",
+  },
+  sortBy: "dueDate", // Options: 'dueDate', 'priority', 'status', 'title', 'createdAt'
+  sortOrder: "asc", // 'asc' or 'desc'
+};
+
+export const useTaskFilters = (persistenceKey = "task_filters") => {
+  const [superFilters, setSuperFilters] = useState(() => {
+    const savedFilters = localStorage.getItem(persistenceKey);
+    if (savedFilters) {
+      try {
+        return { ...DEFAULT_FILTERS, ...JSON.parse(savedFilters) };
+      } catch (error) {
+        console.error("Error parsing saved filters:", error);
+        return DEFAULT_FILTERS;
+      }
+    }
+    return DEFAULT_FILTERS;
   });
+
+  useEffect(() => {
+    localStorage.setItem(persistenceKey, JSON.stringify(superFilters));
+  }, [superFilters, persistenceKey]);
 
   const handleFilterChange = useCallback((key, value) => {
     setSuperFilters((prev) => ({
@@ -32,16 +49,7 @@ export const useTaskFilters = () => {
   }, []);
 
   const clearAllFilters = useCallback(() => {
-    setSuperFilters({
-      search: "",
-      status: [],
-      priority: [],
-      assignedTo: [],
-      project: [],
-      dateRange: { start: "", end: "" },
-      sortBy: "dueDate",
-      sortOrder: "asc",
-    });
+    setSuperFilters(DEFAULT_FILTERS);
   }, []);
 
   const hasActiveFilters = useCallback(() => {

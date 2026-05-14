@@ -27,9 +27,24 @@ const CompanyTasks = ({ filter: propFilter }) => {
   const filter = propFilter || urlFilter;
   const taskMonth = searchParams.get("taskMonth");
 
-  // State for task visibility toggles
-  const [showTasks, setShowTasks] = useState(true);
-  const [showSubtasks, setShowSubtasks] = useState(true);
+  // State for task visibility toggles with persistence
+  const [showTasks, setShowTasks] = useState(() => {
+    const saved = localStorage.getItem(`company_tasks_${filter}_showTasks`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showSubtasks, setShowSubtasks] = useState(() => {
+    const saved = localStorage.getItem(`company_tasks_${filter}_showSubtasks`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Persist visibility toggles
+  React.useEffect(() => {
+    localStorage.setItem(`company_tasks_${filter}_showTasks`, JSON.stringify(showTasks));
+  }, [showTasks, filter]);
+
+  React.useEffect(() => {
+    localStorage.setItem(`company_tasks_${filter}_showSubtasks`, JSON.stringify(showSubtasks));
+  }, [showSubtasks, filter]);
 
   // Use custom hooks for filters
   const {
@@ -38,7 +53,7 @@ const CompanyTasks = ({ filter: propFilter }) => {
     handleMultiSelectFilter,
     clearAllFilters,
     hasActiveFilters,
-  } = useTaskFilters();
+  } = useTaskFilters(`company_tasks_${filter}`);
 
   // Determine which data to use based on filter
   const isTodayFilter = filter === "today";
