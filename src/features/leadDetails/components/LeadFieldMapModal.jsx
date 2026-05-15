@@ -166,8 +166,7 @@ const LeadFieldMapModal = ({
                 <div className="space-y-2">
                   {[
                     { id: "this_lead", title: "Only this lead", icon: "👤" },
-                    { id: "entire_project", title: "Project leads", icon: "📁" },
-                    { id: "entire_company", title: "Company leads", icon: "🏢" }
+                    { id: "entire_project", title: "Project leads", icon: "📁" }
                   ].map((item) => (
                     <label key={item.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group ${
                       scope === item.id ? 'bg-blue-50/50 border-blue-200 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200'
