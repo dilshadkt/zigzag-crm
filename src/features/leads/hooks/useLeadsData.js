@@ -15,6 +15,9 @@ export const useLeadsData = (filters = {}) => {
     projectId,
     isFollowUp,
     branchFilter,
+    startDate,
+    endDate,
+    timezoneOffset,
   } = filters;
 
   // Fetch leads data
@@ -37,6 +40,9 @@ export const useLeadsData = (filters = {}) => {
     project: projectId,
     isFollowUp,
     branch: branchFilter,
+    startDate,
+    endDate,
+    timezoneOffset,
   });
 
   // Fetch form configuration

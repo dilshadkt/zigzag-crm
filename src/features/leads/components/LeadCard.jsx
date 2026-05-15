@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { FiMoreVertical, FiMail, FiPhone, FiCalendar, FiUser } from "react-icons/fi";
+import { FaFacebook, FaWhatsapp } from "react-icons/fa";
 import LeadStatusBadge from "./LeadStatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import LeadRowContextMenu from "./LeadRowContextMenu";
@@ -57,6 +58,8 @@ const LeadCard = memo(({
     const leadStatus = lead.status || "Unknown";
     const owner = lead.owner;
     const leadScore = lead.score ?? 0;
+    const isFacebook = !!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook";
+    const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
 
     const formatDate = (date) => {
         if (!date) return "—";
@@ -89,10 +92,16 @@ const LeadCard = memo(({
                       />
                     </div>
                     <div>
-                        <h3 className="text-[13px] font-bold text-slate-900 leading-tight">
+                        <h3 className="text-[13px] font-bold text-slate-900 leading-tight flex items-center gap-1.5 flex-wrap">
                             {leadName}
+                            {isFacebook && (
+                                <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
+                            )}
+                            {isWhatsApp && (
+                                <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
+                            )}
                             {(lead.branch || lead.customFields?.branch) && (
-                                <span className="text-[10px] text-slate-400 font-semibold ml-1.5 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                <span className="text-[10px] text-slate-400 font-semibold ml-0.5 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                                     {lead.branch || lead.customFields?.branch}
                                 </span>
                             )}

@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetFacebookAccounts } from "../../../api/campaigns";
 import { FiActivity, FiLayers, FiSearch, FiInstagram, FiFacebook, FiShield } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import { updateProjectSocialConfig } from "../../../api/service";
 import { useGetLeadFormConfig } from "../../../features/leads/api";
 import LeadDashboardConfig from "../../../features/leadSettings/components/LeadDashboardConfig";
@@ -34,6 +35,7 @@ export const SettingsTab = ({
   const [socialConfig, setSocialConfig] = useState({
     facebookPageId: currentProject?.facebookPageId || "",
     instagramBusinessId: currentProject?.instagramBusinessId || "",
+    whatsappPhoneNumberId: currentProject?.whatsappPhoneNumberId || "",
   });
 
   const handleUpdateSocialConfig = async () => {
@@ -448,6 +450,24 @@ export const SettingsTab = ({
                   placeholder="Enter Business ID"
                   value={socialConfig.instagramBusinessId}
                   onChange={(e) => setSocialConfig({...socialConfig, instagramBusinessId: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none" 
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                   <FiShield className="text-indigo-500 w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                <FaWhatsapp className="w-3 h-3 text-[#25D366]" /> WhatsApp Phone Number ID
+              </label>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Enter WhatsApp Phone Number ID"
+                  value={socialConfig.whatsappPhoneNumberId}
+                  onChange={(e) => setSocialConfig({...socialConfig, whatsappPhoneNumberId: e.target.value})}
                   className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none" 
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">

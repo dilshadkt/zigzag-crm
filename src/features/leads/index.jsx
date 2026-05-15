@@ -63,7 +63,16 @@ const clearColumnVisibility = () => {
   }
 };
 
-const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly = false, branchFilter = "", branches = [], isClient = false }) => {
+const LeadsFeature = ({
+  onSelectLead,
+  onOpenSettings,
+  projectId,
+  isFollowUpOnly = false,
+  branchFilter = "",
+  branches = [],
+  isClient = false,
+  onBranchFilterChange
+}) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
@@ -94,9 +103,6 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const [isAssignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({});
-  const [activeStatusId, setActiveStatusId] = useState(null);
-  const [activeAction, setActiveAction] = useState(null);
   const [showDashboard, setShowDashboard] = useState(true);
   const [isBulkBranchMenuOpen, setBulkBranchMenuOpen] = useState(false);
   const [bulkBarPos, setBulkBarPos] = useState({ x: 0, y: 0 });
@@ -104,9 +110,44 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const dragStartPos = useRef({ x: 0, y: 0 });
   const navigate = useNavigate();
 
+  // Persist states to session storage
+  const [activeStatusId, setActiveStatusId] = useState(() => sessionStorage.getItem('leads_activeStatusId') || null);
+  const [activeAction, setActiveAction] = useState(() => sessionStorage.getItem('leads_activeAction') || null);
+  const [appliedFilters, setAppliedFilters] = useState(() => {
+    const saved = sessionStorage.getItem(`leads_appliedFilters_${projectId}`);
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [statsDateRange, setStatsDateRange] = useState(() => {
+    const saved = sessionStorage.getItem('leads_statsDateRange');
+    return saved ? JSON.parse(saved) : { startDate: '', endDate: '', preset: '' };
+  });
+
+  useEffect(() => {
+    if (activeStatusId) sessionStorage.setItem('leads_activeStatusId', activeStatusId);
+    else sessionStorage.removeItem('leads_activeStatusId');
+  }, [activeStatusId]);
+
+  useEffect(() => {
+    if (activeAction) sessionStorage.setItem('leads_activeAction', activeAction);
+    else sessionStorage.removeItem('leads_activeAction');
+  }, [activeAction]);
+
+  useEffect(() => {
+    sessionStorage.setItem(`leads_appliedFilters_${projectId}`, JSON.stringify(appliedFilters));
+  }, [appliedFilters, projectId]);
+
+  useEffect(() => {
+    sessionStorage.setItem('leads_statsDateRange', JSON.stringify(statsDateRange));
+  }, [statsDateRange]);
+
   // Stats
   const { data: statsData, isLoading: statsLoading } = useGetLeadStats({
     project: projectId,
+    timezoneOffset: new Date().getTimezoneOffset(),
+    ...(statsDateRange.startDate && statsDateRange.endDate ? {
+      startDate: statsDateRange.startDate,
+      endDate: statsDateRange.endDate
+    } : {}),
     ...(branchFilter ? { branch: branchFilter } : {})
   });
 
@@ -191,6 +232,9 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
     projectId,
     isFollowUp: isFollowUpOnly,
     branchFilter,
+    startDate: statsDateRange.startDate,
+    endDate: statsDateRange.endDate,
+    timezoneOffset: new Date().getTimezoneOffset(),
   });
   const handleStatusFilter = (statusId) => {
     setActiveStatusId((prev) => (prev === statusId ? null : statusId));
@@ -223,6 +267,62 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
       default:
         setAppliedFilters({});
     }
+  };
+
+  const handleDatePresetChange = (e) => {
+    const preset = e.target.value;
+    if (!preset) {
+      setStatsDateRange({ preset: '', startDate: '', endDate: '' });
+      return;
+    }
+
+    let start = new Date();
+    let end = new Date();
+
+    switch (preset) {
+      case 'today':
+        break;
+      case 'yesterday':
+        start.setDate(start.getDate() - 1);
+        end.setDate(end.getDate() - 1);
+        break;
+      case 'this_week':
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+        start.setDate(diff);
+        break;
+      case 'last_week':
+        const lastWeekEnd = new Date(start);
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - lastWeekEnd.getDay());
+        const lastWeekStart = new Date(lastWeekEnd);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 6);
+        start = lastWeekStart;
+        end = lastWeekEnd;
+        break;
+      case 'this_month':
+        start.setDate(1);
+        break;
+      case 'last_month':
+        start.setMonth(start.getMonth() - 1);
+        start.setDate(1);
+        end.setDate(0);
+        break;
+      default:
+        break;
+    }
+
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${d}`;
+    };
+
+    setStatsDateRange({
+      preset,
+      startDate: formatDate(start),
+      endDate: formatDate(end)
+    });
   };
 
   // Initialize columns from generated columns
@@ -669,7 +769,7 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
       toast.error(error?.response?.data?.message || "Failed to update field");
     }
   };
-  
+
   const handleMoveToBranch = async (lead, branchName) => {
     try {
       const leadId = lead._id || lead.id;
@@ -680,9 +780,9 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
 
       await updateLeadMutation.mutateAsync({
         leadId,
-        leadData: { 
+        leadData: {
           branch: branchName,
-          customFields: updatedCustomFields 
+          customFields: updatedCustomFields
         },
       });
 
@@ -696,13 +796,13 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
 
   const handleBulkMoveToBranch = async (branchName) => {
     if (selectedLeadIds.length === 0) return;
-    
+
     try {
       await bulkUpdateMutation.mutateAsync({
         leadIds: selectedLeadIds,
-        updateData: { 
+        updateData: {
           branch: branchName,
-          "customFields.branch": branchName 
+          "customFields.branch": branchName
         },
       });
 
@@ -718,20 +818,20 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
   const handleDragStart = (e) => {
     // Only drag if left clicking on the bar (not buttons)
     if (e.button !== 0) return;
-    
+
     setIsDragging(true);
     dragStartPos.current = {
       x: e.clientX - bulkBarPos.x,
       y: e.clientY - bulkBarPos.y,
     };
-    
+
     // Prevent text selection during drag
     e.preventDefault();
   };
 
   const handleDragMove = useCallback((e) => {
     if (!isDragging) return;
-    
+
     setBulkBarPos({
       x: e.clientX - dragStartPos.current.x,
       y: e.clientY - dragStartPos.current.y,
@@ -800,7 +900,57 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
 
   return (
     <section className="h-full overflow-hidden">
-      <div className="h-full overflow-y-auto scrollbar-hide flex flex-col gap-y-3" id="leads-scroll-container">
+      <div className="h-full overflow-y-auto scrollbar-hide flex flex-col gap-y-1" id="leads-scroll-container">
+
+        {/* Global Filters Row */}
+        {((branches && branches.length > 0 && !isClient) || true) && (
+          <div className="flex justify-end items-center gap-3 bg-white p-2 md:p-3 px-4 border border-slate-100 rounded-xl  shrink-0 animate-in fade-in duration-300">
+            {/* Date Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <svg className="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                Date Range:
+              </span>
+              <select
+                value={statsDateRange?.preset || ''}
+                onChange={handleDatePresetChange}
+                className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none min-w-[150px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+              >
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="this_week">This Week</option>
+                <option value="last_week">Last Week</option>
+                <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+              </select>
+            </div>
+
+            {/* Branch Filter (Provided by Parent) */}
+            {branches && branches.length > 0 && typeof onBranchFilterChange === 'function' && (
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Branch View:
+                </span>
+                <select
+                  value={branchFilter || ""}
+                  onChange={(e) => onBranchFilterChange(e.target.value)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[160px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                >
+                  <option value="">Global Overview (All Branches)</option>
+                  {branches.map(b => (
+                    <option key={b.id || b.name} value={b.name}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* dashboard section  */}
         {showDashboard && (
           <div className="shrink-0 bg-white rounded-2xl p-2 md:p-3 md:px-4 border border-slate-100 overflow-x-auto
@@ -812,6 +962,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
               onStatusClick={handleStatusFilter}
               activeAction={activeAction}
               onActionClick={handleActionFilter}
+              statsDateRange={statsDateRange}
+              setStatsDateRange={setStatsDateRange}
             />
           </div>
         )}
@@ -880,9 +1032,9 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
 
         {/* Floating Bulk Actions Bar */}
         {selectedLeadIds.length > 0 && (
-          <div 
+          <div
             className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-300 ${isDragging ? 'cursor-grabbing scale-105 opacity-90 transition-none' : 'cursor-grab'}`}
-            style={{ 
+            style={{
               transform: `translate(calc(-50% + ${bulkBarPos.x}px), ${bulkBarPos.y}px)`,
               transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
@@ -894,11 +1046,11 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
               </span>
               <span className="text-sm font-medium">Leads Selected</span>
             </div>
-            
+
             <div className="flex items-center gap-4" onMouseDown={(e) => e.stopPropagation()}>
               <div className="relative">
                 {canEditLead && (
-                  <button 
+                  <button
                     onClick={() => setBulkBranchMenuOpen(!isBulkBranchMenuOpen)}
                     className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${isBulkBranchMenuOpen ? 'text-blue-400' : 'hover:text-blue-400'}`}
                   >
@@ -906,12 +1058,12 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
                     Move to Branch
                   </button>
                 )}
-                
+
                 {/* Branch Selection Tooltip/Menu */}
                 {isBulkBranchMenuOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-[-1]" 
+                    <div
+                      className="fixed inset-0 z-[-1]"
                       onClick={() => setBulkBranchMenuOpen(false)}
                     />
                     <div className="absolute bottom-full left-0 mb-1.5 w-40 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -938,8 +1090,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
                   </>
                 )}
               </div>
-              
-              <button 
+
+              <button
                 onClick={() => {
                   if (window.confirm(`Are you sure you want to delete ${selectedLeadIds.length} leads?`)) {
                     // Implement bulk delete if needed, for now just a placeholder
@@ -951,8 +1103,8 @@ const LeadsFeature = ({ onSelectLead, onOpenSettings, projectId, isFollowUpOnly 
                 <FiTrash2 className="w-4 h-4" />
                 Delete
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => setSelectedLeadIds([])}
                 className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
               >

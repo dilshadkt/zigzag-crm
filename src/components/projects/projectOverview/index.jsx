@@ -560,24 +560,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         />
       )}
 
-      {activeTab === "lead" && currentProject?.customFields?.branches?.length > 0 && (
-        <div className="flex justify-end items-center gap-2 mb-3 bg-white p-3 border border-gray-100 rounded-xl animate-in fade-in duration-300">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Branch/Brand:</span>
-          <select
-            value={selectedBranchId}
-            onChange={(e) => setSelectedBranchId(e.target.value)}
-            className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none min-w-[160px] cursor-pointer bg-white"
-          >
-            <option value="">All Branches</option>
-            {currentProject.customFields.branches.map((b) => (
-              <option key={b.id || b.name} value={b.name}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {activeTab === "lead" && (
         <div className="flex flex-col overflow-hidden h-full">
           <LeadsFeature
@@ -586,6 +568,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             onOpenSettings={() => setActiveTab("settings")}
             branchFilter={selectedBranchId}
             branches={currentProject?.customFields?.branches}
+            onBranchFilterChange={setSelectedBranchId}
           />
         </div>
       )}

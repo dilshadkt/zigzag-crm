@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, memo } from "react";
 import { FiMoreVertical } from "react-icons/fi";
+import { FaFacebook, FaWhatsapp } from "react-icons/fa";
 // ... (rest of imports)
 import LeadStatusBadge from "./LeadStatusBadge";
 import LeadRowContextMenu from "./LeadRowContextMenu";
@@ -84,30 +85,56 @@ const columnRenderers = {
       {formatDate(lead.createdAt || lead.createdOn)}
     </div>
   ),
-  name: (lead) => (
-    <div className="flex flex-col">
-      <div className="text-[13px] whitespace-nowrap font-medium text-slate-900">
-        {lead.name || lead.contact?.name || "—"}
+  name: (lead) => {
+    const isFacebook = !!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook";
+    const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
+    
+    return (
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1.5">
+          <div className="text-[13px] whitespace-nowrap font-medium text-slate-900">
+            {lead.name || lead.contact?.name || "—"}
+          </div>
+          {isFacebook && (
+            <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
+          )}
+          {isWhatsApp && (
+            <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
+          )}
+        </div>
+        {(lead.branch || lead.customFields?.branch) && (
+          <span className="text-[11px] text-slate-400 font-semibold tracking-wide mt-0.5">
+            {lead.branch || lead.customFields?.branch}
+          </span>
+        )}
       </div>
-      {(lead.branch || lead.customFields?.branch) && (
-        <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
-          {lead.branch || lead.customFields?.branch}
-        </span>
-      )}
-    </div>
-  ),
-  "contact.name": (lead) => (
-    <div className="flex flex-col">
-      <div className="text-[13px] font-medium text-slate-900">
-        {lead.name || lead.contact?.name || "—"}
+    );
+  },
+  "contact.name": (lead) => {
+    const isFacebook = !!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook";
+    const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
+    
+    return (
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1.5">
+          <div className="text-[13px] font-medium text-slate-900">
+            {lead.name || lead.contact?.name || "—"}
+          </div>
+          {isFacebook && (
+            <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
+          )}
+          {isWhatsApp && (
+            <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
+          )}
+        </div>
+        {(lead.branch || lead.customFields?.branch) && (
+          <span className="text-[11px] text-slate-400 font-semibold tracking-wide mt-0.5">
+            {lead.branch || lead.customFields?.branch}
+          </span>
+        )}
       </div>
-      {(lead.branch || lead.customFields?.branch) && (
-        <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
-          {lead.branch || lead.customFields?.branch}
-        </span>
-      )}
-    </div>
-  ),
+    );
+  },
   status: (lead, statuses, onStatusChange) => {
     if (statuses && onStatusChange) {
       return (

@@ -164,40 +164,15 @@ const ClientDashboard = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden p-3 sm:p-6 bg-[#f8fafc] flex flex-col gap-3">
-        {!projectLoading && (activeTab === "leads" || activeTab === "followups") && branches.length > 0 && !user?.branchName && (
-          <div className="flex justify-end items-center gap-3 bg-white p-3 px-5 border border-slate-200/60 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Branch View:
-              </span>
-              <select
-                value={selectedBranchId}
-                onChange={(e) => setSelectedBranchId(e.target.value)}
-                className="px-4 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[200px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-              >
-                <option value="">Global Overview (All Branches)</option>
-                {branches.map((b) => (
-                  <option key={b.id || b.name} value={b.name}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
         <div className="flex-1 bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
           {activeTab === "overview" ? (
             <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
               <OverviewTab currentProject={currentProject} isClient />
             </div>
           ) : activeTab === "leads" ? (
-            <LeadsFeature isClient projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
+            <LeadsFeature isClient projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} onBranchFilterChange={!user?.branchName ? setSelectedBranchId : undefined} />
           ) : activeTab === "followups" ? (
-            <LeadsFeature isClient isFollowUpOnly projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} />
+            <LeadsFeature isClient isFollowUpOnly projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} onBranchFilterChange={!user?.branchName ? setSelectedBranchId : undefined} />
           ) : activeTab === "campaigns" ? (
             <Campaigns isClient projectId={projectId} branchFilter={""} />
           ) : activeTab === "insights" ? (

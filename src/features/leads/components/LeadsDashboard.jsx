@@ -74,7 +74,7 @@ const StatusCard = ({ name, count, color, isLoading, isActive, onClick }) => {
     );
 };
 
-const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick, onActionClick, activeAction }) => {
+const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick, onActionClick, activeAction, statsDateRange, setStatsDateRange }) => {
     return (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
             {/* Primary Stats - Click to clear filters */}
@@ -181,6 +181,7 @@ const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick, onAct
                     onActionClick('week');
                 }}
             />
+
         </div>
     );
 };
