@@ -250,16 +250,8 @@ const CampaignDetails = () => {
         };
     }, [id, queryClient]);
 
-    // Fetch initial live data for this month on mount
-    useEffect(() => {
-        if (campaign?.facebookAdId && !isFetchingLive) {
-            fetchLiveData({ 
-                id, 
-                startDate: syncDateRange.startDate, 
-                endDate: syncDateRange.endDate 
-            });
-        }
-    }, [campaign?.facebookAdId]);
+    // Campaign metrics are loaded from the DB (synced daily by the scheduler).
+    // Users can click "Live Facebook Data" button to manually fetch real-time data when needed.
 
     // Close dropdown when clicking outside
     useEffect(() => {

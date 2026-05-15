@@ -75,8 +75,16 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
       );
     }
     
-    if (!branchFilter) return filtered;
-    return filtered.filter(c => c.branch === branchFilter || c.customFields?.branch === branchFilter);
+    if (branchFilter) {
+      filtered = filtered.filter(c => c.branch === branchFilter || c.customFields?.branch === branchFilter);
+    }
+
+    // Sort by status - active first
+    return [...filtered].sort((a, b) => {
+      if (a.status === "active" && b.status !== "active") return -1;
+      if (a.status !== "active" && b.status === "active") return 1;
+      return 0;
+    });
   }, [campaignsData, branchFilter, search]);
 
   const handleSelectAccount = (accountId) => {

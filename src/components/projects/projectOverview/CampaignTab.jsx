@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSyncFacebookAds } from "../../../api/campaigns";
 import { FiRefreshCw, FiLayers } from "react-icons/fi";
@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProject, onRefresh }) => {
   const navigate = useNavigate();
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
+  const [statusFilter, setStatusFilter] = React.useState("all");
 
   const handleSync = () => {
     syncFacebookAds(currentProject?._id, {
@@ -20,17 +21,45 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProje
     });
   };
 
-  const visibleCampaigns = projectCampaigns;
+  const visibleCampaigns = useMemo(() => {
+    if (!projectCampaigns) return [];
+    
+    let filtered = [...projectCampaigns];
+    
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(c => c.status === statusFilter);
+    }
+
+    return filtered.sort((a, b) => {
+      if (a.status === "active" && b.status !== "active") return -1;
+      if (a.status !== "active" && b.status === "active") return 1;
+      return 0;
+    });
+  }, [projectCampaigns, statusFilter]);
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl border border-gray-100 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <div className="flex items-center gap-2 px-3 py-1 mb-2 bg-gray-50 border border-gray-100 rounded-lg w-max">
-            <FiLayers className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-              Campaigns: {visibleCampaigns.length}
-            </span>
+          <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg w-max">
+              <FiLayers className="w-3 h-3 text-gray-400" />
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                Campaigns: {visibleCampaigns.length}
+              </span>
+            </div>
+            
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-200 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-wider outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white cursor-pointer"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="deleted">Deleted</option>
+              <option value="archived">Archived</option>
+            </select>
           </div>
           <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
             Project Campaigns

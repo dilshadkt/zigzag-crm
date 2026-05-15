@@ -59,7 +59,7 @@ export const useCheckFacebookStatus = () => {
             const { data } = await apiClient.get("/campaigns/facebook-status");
             return data.data;
         },
-        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+        staleTime: 30 * 60 * 1000, // Cache for 30 minutes to reduce API calls
         retry: false,
     });
 };
@@ -71,7 +71,7 @@ export const useGetFacebookAccounts = () => {
             const { data } = await apiClient.get("/campaigns/facebook-accounts");
             return data.data;
         },
-        staleTime: 10 * 60 * 1000,
+        staleTime: 60 * 60 * 1000, // Cache for 1 hour to reduce API calls
     });
 };
 
