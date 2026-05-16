@@ -1,13 +1,22 @@
 import React from "react";
 import Input from "../../../components/shared/Field/input";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import PrimaryButton from "../../../components/shared/buttons/primaryButton";
 import { useSignIn } from "../../../hooks/useSignIn";
 import AuthBanner from "../../../components/authBanner";
 import logo from "../../../assets/icons/logo.svg";
 const SignIn = () => {
-  const { values, errors, touched, handleChange, handleSubmit, isSubmitting } =
+  const { values, errors, touched, handleChange, handleSubmit, isSubmitting, setValues } =
     useSignIn();
+  const [searchParams] = useSearchParams();
+
+  React.useEffect(() => {
+    const email = searchParams.get("email");
+    const password = searchParams.get("password");
+    if (email && password) {
+      setValues({ email, password });
+    }
+  }, [searchParams, setValues]);
   return (
     <section
       className="w-full h-full bg-[#f4f9fd] md:bg-white grid grid-cols-1 md:grid-cols-2 
