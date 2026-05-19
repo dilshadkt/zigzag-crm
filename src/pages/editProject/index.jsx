@@ -17,6 +17,7 @@ const EditProject = () => {
       const updatedValues = {
         ...values,
         teams: values?.teams?.map((team) => team?._id) || [],
+        reporters: values?.reporters?.map((reporter) => reporter?._id) || [],
       };
       await mutateAsync(updatedValues);
     } catch (error) {
@@ -51,6 +52,12 @@ const EditProject = () => {
               position: team.position,
               email: team.email,
             })),
+            reporters: currentProject?.reporters?.map((reporter) => ({
+              _id: reporter._id,
+              name: reporter.firstName,
+              position: reporter.position,
+              email: reporter.email,
+            })) || [],
             workDetails: currentProject?.workDetails || {
               reels: { count: 0, completed: 0 },
               poster: { count: 0, completed: 0 },

@@ -51,7 +51,6 @@ const getSocialUrl = (platform, handle) => {
 };
 
 const SelectedProject = ({ currentProject, isLoading, selectedMonth }) => {
-  console.log("currentProject", currentProject);
   const navigate = useNavigate();
   const { isCompany, companyId, user } = useAuth();
   const { hasPermission } = usePermissions();
@@ -166,7 +165,43 @@ rounded-3xl  flex flex-col  p-4"
         </div>
         <div className="flex flex-col gap-y-5 mt-1">
           <div className="flex flex-col gap-y-2">
-            {currentProject?.creator && (
+            {currentProject?.reporters && currentProject.reporters.length > 0 ? (
+              <div className="flex flex-col overflow-hidden py-2 gap-y-2">
+                <span className="text-sm text-[#91929E]">Reporter </span>
+                <div className="flexStart flex-wrap gap-y-2">
+                  {currentProject.reporters.map((reporter, index) => (
+                    <div
+                      onClick={() => handleProfileTeamClick(reporter._id || reporter.id)}
+                      key={reporter?._id || reporter?.id}
+                      className="w-6 h-6 group cursor-pointer relative rounded-full hover:scale-150
+                      transition-all duration-300 bg-black text-white flexCenter border border-white"
+                      style={{
+                        marginLeft: index > 0 ? "-8px" : "0",
+                      }}
+                    >
+                      <div
+                        className="absolute -top-7 left-1/2 transform -translate-x-1/2
+                        bg-gray-800 text-white text-[8px] py-1 px-2 rounded opacity-0 
+                        group-hover:opacity-100 whitespace-nowrap pointer-events-none
+                        transition-opacity duration-200 z-[1000]"
+                      >
+                        {reporter?.firstName || reporter?.name}
+                      </div>
+                      {reporter?.profileImage && !failedImages[reporter?._id || reporter?.id] ? (
+                        <img
+                          src={reporter?.profileImage}
+                          alt={reporter?.firstName}
+                          className="w-full h-full rounded-full object-cover"
+                          onError={() => handleImageError(reporter?._id || reporter?.id)}
+                        />
+                      ) : (
+                        (reporter?.firstName || reporter?.name || "").slice(0, 1)
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : currentProject?.creator ? (
               <div className="flex flex-col gap-y-2">
                 <span className="text-sm text-[#91929E]">Reporter </span>
                 <div className="flexStart gap-x-3 ">
@@ -188,7 +223,7 @@ rounded-3xl  flex flex-col  p-4"
                   <span>{currentProject?.creator?.firstName}</span>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {currentProject?.teams?.length > 0 && (

@@ -50,12 +50,13 @@ const AddProject = ({
     ...(projectFields && projectFields.length > 0 ? [{ id: "customFields", label: "Additional Info" }] : []),
     { id: "workDetails", label: "Work Details" },
     { id: "socialMedia", label: "Social Media" },
+    { id: "reporter", label: "Reporter" },
     { id: "checklist", label: "Daily Checklist" },
   ];
 
   const onFormSubmit = (e) => {
     e.preventDefault();
-    if (activeTab === "checklist") {
+    if (activeTab === tabs[tabs.length - 1].id) {
       handleSubmit(e);
     }
   };
@@ -79,6 +80,8 @@ const AddProject = ({
         return Object.keys(errors?.workDetails || {}).length > 0 ? 1 : 0;
       case "socialMedia":
         return Object.keys(errors?.socialMedia || {}).length > 0 ? 1 : 0;
+      case "reporter":
+        return errors?.reporters ? 1 : 0;
       default:
         return 0;
     }
@@ -361,6 +364,17 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
 
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Reporter Tab */}
+          {activeTab === "reporter" && (
+            <div className="col-span-5 overflow-y-auto pr-4">
+              <AddEmployee
+                label="Reporter"
+                defaultSelectedEmployee={values.reporters}
+                onChange={(reporters) => setFieldValue("reporters", reporters)}
+              />
             </div>
           )}
 

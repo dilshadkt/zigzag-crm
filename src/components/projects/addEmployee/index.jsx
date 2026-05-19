@@ -3,7 +3,7 @@ import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useEmpoyees } from "../../../api/hooks";
 import debounce from "lodash/debounce";
 
-const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
+const AddEmployee = ({ onChange, defaultSelectedEmployee, label = "Team" }) => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -62,7 +62,7 @@ const AddEmployee = ({ onChange, defaultSelectedEmployee }) => {
 
   return (
     <div className="flex relative flex-col gap-y-2 min-h-60">
-      <label className="text-sm pl-2 font-bold text-gray-500">Team</label>
+      <label className="text-sm pl-2 font-bold text-gray-500">{label}</label>
       <div className="w-full gap-x-2 relative flex items-start">
         <div className="w-full">
           <input

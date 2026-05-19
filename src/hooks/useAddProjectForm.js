@@ -11,6 +11,7 @@ export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) =>
     attachments: defaultValue?.attachments || [],
     description: defaultValue?.description || "",
     teams: defaultValue?.teams || [],
+    reporters: defaultValue?.reporters || [],
     workDetails: defaultValue?.workDetails || {},
     socialMedia: defaultValue?.socialMedia || {},
     dailyChecklist: defaultValue?.dailyChecklist || [],

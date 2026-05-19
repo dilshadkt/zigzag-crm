@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
-import Task from "../../shared/task";
 import { useNavigate, useParams } from "react-router-dom";
 import FilterMenu from "../FilterMenu";
 import { useQueryClient } from "@tanstack/react-query";
-import list from "../../../assets/icons/list.svg";
-import board from "../../../assets/icons/board.svg";
 import { updateTaskById, updateProjectPortalConfig, getProjectById, updateProjectLeadFormConfig } from "../../../api/service";
 import { useUpdateTaskOrder, useProjectDetails } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
@@ -14,6 +11,7 @@ import { useGetCampaignsByCompany } from "../../../api/campaigns";
 import { useGetAllLeadFormConfigs } from "../../../features/leads/api";
 import LeadsFeature from "../../../features/leads";
 import { toast } from "react-hot-toast";
+
 
 import { OverviewTab } from "./OverviewTab";
 import { KanbanTab } from "./KanbanTab";
@@ -96,7 +94,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
 
   const availableTabs = useMemo(() => {
     const hasSocialConfig = !!currentProject?.instagramBusinessId || !!currentProject?.facebookPageId;
-    
+
     return [
       { id: "overview", label: "Overview", visible: hasPermission("tasks", "viewOverview") },
       { id: "kanban", label: "Task Kanban", visible: true },
