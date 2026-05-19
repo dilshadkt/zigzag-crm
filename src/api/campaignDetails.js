@@ -125,3 +125,17 @@ export const useSyncCampaignLeads = () => {
     });
 };
 
+export const useSyncAllCampaignLeads = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (dateRange) => {
+            const response = await apiClient.post(`/campaigns/sync-all-leads`, { dateRange });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["campaigns"]);
+            queryClient.invalidateQueries(["leads"]);
+        },
+    });
+};
+

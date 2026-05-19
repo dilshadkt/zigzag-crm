@@ -105,6 +105,11 @@ const LeadCard = memo(({
                                     {lead.branch || lead.customFields?.branch}
                                 </span>
                             )}
+                            {lead.project && (
+                                <span className="text-[10px] text-[#3f8cff] font-semibold ml-1 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                    {typeof lead.project === 'object' ? lead.project.name : 'Project'}
+                                </span>
+                            )}
                         </h3>
                         <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
                             <FiCalendar size={9} />

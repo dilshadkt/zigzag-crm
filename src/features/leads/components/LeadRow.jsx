@@ -102,11 +102,21 @@ const columnRenderers = {
             <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
           )}
         </div>
-        {(lead.branch || lead.customFields?.branch) && (
-          <span className="text-[11px] text-slate-400 font-semibold tracking-wide mt-0.5">
-            {lead.branch || lead.customFields?.branch}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {(lead.branch || lead.customFields?.branch) && (
+            <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
+              {lead.branch || lead.customFields?.branch}
+            </span>
+          )}
+          {(lead.branch || lead.customFields?.branch) && lead.project && (
+            <span className="text-[11px] text-slate-300">•</span>
+          )}
+          {lead.project && (
+            <span className="text-[11px] text-[#3f8cff] font-semibold tracking-wide">
+              {typeof lead.project === 'object' ? lead.project.name : 'Project'}
+            </span>
+          )}
+        </div>
       </div>
     );
   },
@@ -127,11 +137,21 @@ const columnRenderers = {
             <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
           )}
         </div>
-        {(lead.branch || lead.customFields?.branch) && (
-          <span className="text-[11px] text-slate-400 font-semibold tracking-wide mt-0.5">
-            {lead.branch || lead.customFields?.branch}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {(lead.branch || lead.customFields?.branch) && (
+            <span className="text-[11px] text-slate-400 font-semibold tracking-wide">
+              {lead.branch || lead.customFields?.branch}
+            </span>
+          )}
+          {(lead.branch || lead.customFields?.branch) && lead.project && (
+            <span className="text-[11px] text-slate-300">•</span>
+          )}
+          {lead.project && (
+            <span className="text-[11px] text-[#3f8cff] font-semibold tracking-wide">
+              {typeof lead.project === 'object' ? lead.project.name : 'Project'}
+            </span>
+          )}
+        </div>
       </div>
     );
   },
@@ -190,6 +210,11 @@ const columnRenderers = {
   branch: (lead) => (
     <div className="text-[13px] font-medium text-slate-700">
       {lead.branch || lead.customFields?.branch || "—"}
+    </div>
+  ),
+  project: (lead) => (
+    <div className="text-[13px] font-medium text-[#3f8cff]">
+      {lead.project && typeof lead.project === 'object' ? lead.project.name : (lead.project || "—")}
     </div>
   ),
 };

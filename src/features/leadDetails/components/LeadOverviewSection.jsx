@@ -16,7 +16,7 @@ import { useProjectDetails } from "../../../api/hooks";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 
 const SectionCard = ({ children }) => (
-  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 lg:p-6">
+  <div className="bg-white rounded-xl border border-slate-200  p-4 lg:p-6">
     {children}
   </div>
 );
@@ -54,10 +54,10 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
   const [quickNoteText, setQuickNoteText] = useState("");
-  const [mappingModal, setMappingModal] = useState({ 
-    isOpen: false, 
-    facebookField: "", 
-    facebookValue: "" 
+  const [mappingModal, setMappingModal] = useState({
+    isOpen: false,
+    facebookField: "",
+    facebookValue: ""
   });
 
   const { mutate: addNote, isLoading: isAddingNote } = useAddLeadNote();
@@ -516,7 +516,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   return (
     <div className="space-y-4">
       {/* AI Suggestions Section - Show First */}
-      <div className=" hidden lg:grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* <div className=" hidden lg:grid grid-cols-1 md:grid-cols-2 gap-4">
         <SectionCard>
           <div className="flex items-center gap-2 mb-4">
             <span className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
@@ -569,7 +569,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
             </button>
           </div>
         </SectionCard>
-      </div>
+      </div> */}
 
       {/* Lead Overview Section - Show Second */}
       <SectionCard>
@@ -594,23 +594,21 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
               ) : (
                 <LeadStatusBadge status={lead.status || leadDetails?.status} />
               )}
-              
+
               {/* Lead Score Badge */}
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ring-1 ${
-                (lead.score ?? 0) >= 76 ? 'bg-emerald-50 ring-emerald-200 text-emerald-700' :
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ring-1 ${(lead.score ?? 0) >= 76 ? 'bg-emerald-50 ring-emerald-200 text-emerald-700' :
                 (lead.score ?? 0) >= 51 ? 'bg-blue-50 ring-blue-200 text-blue-700' :
-                (lead.score ?? 0) >= 26 ? 'bg-amber-50 ring-amber-200 text-amber-700' :
-                'bg-red-50 ring-red-200 text-red-600'
-              }`}>
-                <div className={`w-2 h-2 rounded-full ${
-                  (lead.score ?? 0) >= 76 ? 'bg-emerald-500' :
+                  (lead.score ?? 0) >= 26 ? 'bg-amber-50 ring-amber-200 text-amber-700' :
+                    'bg-red-50 ring-red-200 text-red-600'
+                }`}>
+                <div className={`w-2 h-2 rounded-full ${(lead.score ?? 0) >= 76 ? 'bg-emerald-500' :
                   (lead.score ?? 0) >= 51 ? 'bg-blue-500' :
-                  (lead.score ?? 0) >= 26 ? 'bg-amber-500' :
-                  'bg-red-500'
-                }`} />
+                    (lead.score ?? 0) >= 26 ? 'bg-amber-500' :
+                      'bg-red-500'
+                  }`} />
                 <span className="text-xs font-bold">Score: {lead.score ?? 0}</span>
               </div>
-              
+
               {!isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
@@ -757,6 +755,15 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
             {leadDetails?.salesPerson && (
               <LabelValue label="Sales Person" value={leadDetails.salesPerson} />
             )}
+            {leadDetails?.campaignName && (
+              <LabelValue label="Campaign" value={leadDetails.campaignName} />
+            )}
+            {leadDetails?.campaignSource && (
+              <LabelValue label="Campaign Source" value={leadDetails.campaignSource} />
+            )}
+            {leadDetails?.campaignProject && (
+              <LabelValue label="Campaign Project" value={leadDetails.campaignProject} />
+            )}
           </div>
         )}
       </SectionCard>
@@ -767,7 +774,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
           <div className="flex items-center gap-2 mb-6">
             <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#1877F2]">
               <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
             </span>
             <div>
@@ -796,7 +803,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
               const unmappedKeys = allPossibleKeys.filter(key => {
                 // Skip if already in form fields
                 if (formFields.some(f => String(f.id) === key || f.key === key)) return false;
-                
+
                 // Get value to check if it's worth showing
                 let val = "";
                 if (fbKeys.includes(key)) {
@@ -804,7 +811,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
                 } else {
                   val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
                 }
-                
+
                 return val !== undefined && val !== null && String(val).trim() !== "";
               });
 

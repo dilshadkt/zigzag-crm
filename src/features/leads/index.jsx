@@ -19,6 +19,7 @@ import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
 import LeadsDashboard from "./components/LeadsDashboard";
 import { useLeadsData } from "./hooks/useLeadsData";
 import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads } from "./api";
+import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -162,6 +163,7 @@ const LeadsFeature = ({
   const updateLeadMutation = useUpdateLead();
   const deleteLeadMutation = useDeleteLead();
   const bulkUpdateMutation = useBulkUpdateLeads();
+  const syncAllCampaignLeadsMutation = useSyncAllCampaignLeads();
 
   const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
 
@@ -425,6 +427,16 @@ const LeadsFeature = ({
       setFilterDrawerOpen(true);
     } else if (action === "refresh") {
       refetchLeads();
+      syncAllCampaignLeadsMutation.mutate(null, {
+        onSuccess: (data) => {
+          toast.success(data?.message || "Campaign sync started in background");
+          refetchLeads();
+        },
+        onError: (err) => {
+          console.error("[Sync All] Error:", err);
+          toast.error(err?.response?.data?.message || "Failed to sync campaign leads");
+        }
+      });
     } else {
       console.info(`Leads action triggered: ${action}`);
     }
@@ -976,7 +988,7 @@ const LeadsFeature = ({
               onAddLead={handleAction("add-lead")}
               onAddFilter={handleAction("add-filter")}
               onRefresh={handleAction("refresh")}
-              isRefreshing={isRefetching}
+              isRefreshing={isRefetching || syncAllCampaignLeadsMutation.isPending}
               onToggleLayout={openColumnEditor}
               onDownload={handleAction("download")}
               onMoreActions={openLeadMenu}

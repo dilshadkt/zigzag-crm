@@ -155,6 +155,15 @@ const LeadDetailsPage = ({ isClient = false }) => {
           salesPerson: lead.owner 
             ? `${lead.owner.firstName || ''} ${lead.owner.lastName || ''}`.trim() || lead.owner.name 
             : "Unassigned",
+          campaignName: lead.campaign && typeof lead.campaign === 'object'
+            ? lead.campaign.name
+            : (typeof lead.campaign === 'string' ? lead.campaign : ""),
+          campaignSource: lead.campaign && typeof lead.campaign === 'object'
+            ? lead.campaign.platform
+            : "",
+          campaignProject: lead.campaign && typeof lead.campaign === 'object' && lead.campaign.project
+            ? (typeof lead.campaign.project === 'object' ? lead.campaign.project.name : lead.campaign.project)
+            : "",
         },
         notes: transformedNotes,
         attachments: transformedAttachments,
