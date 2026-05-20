@@ -75,7 +75,7 @@ const SocialSettings = () => {
                             />
                         </div>
                         <p className="text-[10px] text-slate-400 font-medium px-1 leading-relaxed">
-                            Used to identify the linked Instagram Business account. Found in Page Settings > Page Info.
+                            Used to identify the linked Instagram Business account. Found in Page Settings &gt; Page Info.
                         </p>
                     </div>
 

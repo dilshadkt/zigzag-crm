@@ -142,7 +142,6 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
         totalCampaigns={campaigns.length}
         // onAddCampaign={() => setIsDrawerOpen(true)}
         onSyncFacebook={() => handleSyncFacebook(undefined)}
-        isSyncing={isSyncing}
         lastSyncedAt={lastSyncedAt}
         isClient={isClient}
         projects={activeProjects || []}

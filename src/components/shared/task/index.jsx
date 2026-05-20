@@ -71,6 +71,12 @@ const Task = memo(({
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
   const progressValue = task?.computedProgress !== undefined ? task.computedProgress : getProgressValue(task?.status);
   const isExtraTask = task?.taskGroup === "extraTask";
+  const hasReporters = !!(
+    task?.project?.reporters &&
+    task.project.reporters.length > 0 &&
+    typeof task.project.reporters[0] === "object" &&
+    task.project.reporters[0].firstName
+  );
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
@@ -163,6 +169,7 @@ const Task = memo(({
               ) : task?.project ? (
                 <span className="text-xs text-gray-500">
                   📋 {task.project.name || task.project.displayName}
+                  {hasReporters && ` • Reporter: ${task.project.reporters.map(r => r.firstName).join(", ")}`}
                 </span>
               ) : task?.isBoardTask ? (
                 <span className="text-xs text-blue-500">🎯 Board Task</span>
@@ -299,7 +306,12 @@ const Task = memo(({
           {/* Project info for tasks/subtasks */}
           {task?.project?.name && (
             <div className="text-xs bg-gray-50 px-3 py-1 rounded-full text-gray-500 mt-1">
-              {task.project.name}
+              <span>{task.project.name}</span>
+              {hasReporters && (
+                <span className="text-gray-400">
+                  {" • Reporter: " + task.project.reporters.map(r => r.firstName).join(", ")}
+                </span>
+              )}
             </div>
           )}
         </div>
