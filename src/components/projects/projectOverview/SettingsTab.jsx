@@ -460,12 +460,12 @@ export const SettingsTab = ({
 
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                <FaWhatsapp className="w-3 h-3 text-[#25D366]" /> WhatsApp Phone Number ID
+                <FaWhatsapp className="w-3 h-3 text-[#25D366]" /> WhatsApp Phone ID / Wati Phone Number
               </label>
               <div className="relative group">
                 <input 
                   type="text" 
-                  placeholder="Enter WhatsApp Phone Number ID"
+                  placeholder="Enter Meta Phone Number ID or Wati Phone Number"
                   value={socialConfig.whatsappPhoneNumberId}
                   onChange={(e) => setSocialConfig({...socialConfig, whatsappPhoneNumberId: e.target.value})}
                   className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none" 
@@ -474,6 +474,9 @@ export const SettingsTab = ({
                    <FiShield className="text-indigo-500 w-3.5 h-3.5" />
                 </div>
               </div>
+              <p className="text-[10px] text-slate-400 mt-1 ml-1 leading-normal">
+                Supports Meta WhatsApp Phone Number ID (e.g., <code>1134470496415370</code>) or Wati channel phone number (e.g., <code>918330079551</code> without '+' or spaces).
+              </p>
             </div>
 
             <button 

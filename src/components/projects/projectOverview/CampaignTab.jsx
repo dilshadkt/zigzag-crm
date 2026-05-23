@@ -127,12 +127,13 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProje
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${campaign.platform === 'Facebook' ? 'bg-blue-50 border-blue-100 text-blue-700' :
-                      campaign.platform === 'Instagram' ? 'bg-pink-50 border-pink-100 text-pink-700' :
-                        'bg-gray-50 border-gray-100 text-gray-700'
-                      }`}>
-                      {campaign.platform}
-                    </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${campaign.platform === 'Facebook' ? 'bg-blue-50 border-blue-100 text-blue-700' :
+                        campaign.platform === 'Instagram' ? 'bg-pink-50 border-pink-100 text-pink-700' :
+                        campaign.platform === 'WhatsApp' ? 'bg-green-50 border-green-100 text-green-700' :
+                          'bg-gray-50 border-gray-100 text-gray-700'
+                        }`}>
+                        {campaign.platform || '—'}
+                      </span>
                   </td>
                   <td className="py-4 px-4 text-center">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${campaign.status === 'active' ? 'bg-green-100 text-green-700' :

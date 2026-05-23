@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { FiEdit2, FiSave, FiX, FiLink } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import LeadFieldMapModal from "./LeadFieldMapModal";
 import LeadStatusBadge from "../../leads/components/LeadStatusBadge";
 import StatusDropdown from "../../leads/components/StatusDropdown";
@@ -771,17 +772,32 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
       {/* Facebook Form Data Section - Show only for Facebook Leads */}
       {(lead.facebookLeadId || lead.source?.toLowerCase().includes("facebook")) && (
         <SectionCard>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#1877F2]">
-              <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-            </span>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Facebook Lead Data</h3>
-              <p className="text-xs text-slate-500">All fields captured from the Facebook form</p>
-            </div>
-          </div>
+          {(() => {
+            const isWhatsApp = lead.platform?.toLowerCase() === "whatsapp" || lead.source?.toLowerCase() === "whatsapp";
+            return (
+              <div className="flex items-center gap-2 mb-6">
+                {isWhatsApp ? (
+                  <span className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-[#25D366]">
+                    <FaWhatsapp className="w-5 h-5" />
+                  </span>
+                ) : (
+                  <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#1877F2]">
+                    <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                  </span>
+                )}
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {isWhatsApp ? "WhatsApp Lead Form Data" : "Facebook Lead Data"}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {isWhatsApp ? "All fields captured from the WhatsApp lead ad form" : "All fields captured from the Facebook form"}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
             {(() => {

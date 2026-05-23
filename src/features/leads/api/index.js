@@ -192,9 +192,9 @@ export const useCreateLead = () => {
   return useMutation({
     mutationFn: createLead,
     onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
-      queryClient.invalidateQueries(["leadAssignmentRules"]);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+      queryClient.invalidateQueries({ queryKey: ["leadAssignmentRules"] });
     },
   });
 };
@@ -204,8 +204,8 @@ export const useBulkCreateLeads = () => {
   return useMutation({
     mutationFn: bulkCreateLeads,
     onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
     },
   });
 };
@@ -215,8 +215,8 @@ export const useUpdateLead = () => {
   return useMutation({
     mutationFn: ({ leadId, leadData }) => updateLead(leadId, leadData),
     onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
     },
   });
 };
@@ -226,8 +226,8 @@ export const useBulkUpdateLeads = () => {
   return useMutation({
     mutationFn: ({ leadIds, updateData }) => bulkUpdateLeads(leadIds, updateData),
     onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
     },
   });
 };
@@ -237,8 +237,8 @@ export const useDeleteLead = () => {
   return useMutation({
     mutationFn: deleteLead,
     onSuccess: () => {
-      queryClient.invalidateQueries(["leads"]);
-      queryClient.invalidateQueries(["leadStats"]);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
     },
   });
 };

@@ -58,8 +58,8 @@ const LeadCard = memo(({
     const leadStatus = lead.status || "Unknown";
     const owner = lead.owner;
     const leadScore = lead.score ?? 0;
-    const isFacebook = !!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook";
     const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
+    const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
 
     const formatDate = (date) => {
         if (!date) return "—";

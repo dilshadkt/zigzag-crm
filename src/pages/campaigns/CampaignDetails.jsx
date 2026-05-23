@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { FiCalendar, FiCheckCircle, FiDollarSign, FiEdit2, FiSave, FiTrash2, FiX, FiChevronDown, FiRefreshCw, FiClock, FiSearch, FiDownload, FiUser, FiPhone, FiMail, FiExternalLink, FiLoader } from "react-icons/fi";
+import { FaWhatsapp, FaFacebook } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign, useFetchLiveFacebookData, useSyncCampaignLeads, useGetCampaignLeads } from "../../api/campaignDetails";
 import AddLeadsModal from "../../components/campaigns/AddLeadsModal";
@@ -133,7 +134,8 @@ const CampaignDetails = () => {
             impressions: campaign.impressions || 0,
             startDate: campaign.startDate ? new Date(campaign.startDate).toISOString().split('T')[0] : "",
             endDate: campaign.endDate ? new Date(campaign.endDate).toISOString().split('T')[0] : "",
-            status: campaign.status
+            status: campaign.status,
+            platform: campaign.platform || ""
         });
         setIsEditing(true);
     };
@@ -374,6 +376,17 @@ const CampaignDetails = () => {
                                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Description</label>
                                         <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows="3" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm" placeholder="What is this campaign about?" />
                                     </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Ad Platform</label>
+                                        <select value={editForm.platform} onChange={(e) => setEditForm({ ...editForm, platform: e.target.value })} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-sm">
+                                            <option value="">— Select Platform —</option>
+                                            <option value="Facebook">Facebook</option>
+                                            <option value="WhatsApp">WhatsApp Lead Ads</option>
+                                            <option value="Instagram">Instagram</option>
+                                            <option value="Google">Google</option>
+                                        </select>
+                                        <p className="text-[10px] text-gray-400 mt-1">Set to "WhatsApp Lead Ads" to show a WhatsApp icon next to each lead from this campaign.</p>
+                                    </div>
                                 </div>
                                 <div className="pt-4 border-t border-gray-100">
                                     <h4 className="text-sm font-bold text-gray-800 mb-4">Timeline & Status</h4>
@@ -597,7 +610,15 @@ const CampaignDetails = () => {
                                                         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                                                             {lead.contact?.name?.[0]?.toUpperCase() || <FiUser className="w-3 h-3" />}
                                                         </div>
-                                                        <span className="font-semibold text-gray-800 text-xs">{lead.contact?.name || "Unknown"}</span>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="font-semibold text-gray-800 text-xs">{lead.contact?.name || "Unknown"}</span>
+                                                            {(!!lead.whatsappContactId || lead.platform?.toLowerCase() === "whatsapp" || lead.source?.toLowerCase() === "whatsapp") && (
+                                                                <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
+                                                            )}
+                                                            {(!lead.whatsappContactId && (lead.facebookLeadId || lead.platform?.toLowerCase() === "facebook" || lead.source?.toLowerCase().includes("facebook"))) && (
+                                                                <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-gray-500">

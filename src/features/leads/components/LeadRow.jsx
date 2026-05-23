@@ -86,8 +86,8 @@ const columnRenderers = {
     </div>
   ),
   name: (lead) => {
-    const isFacebook = !!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook";
     const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
+    const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
     
     return (
       <div className="flex flex-col">
@@ -121,8 +121,8 @@ const columnRenderers = {
     );
   },
   "contact.name": (lead) => {
-    const isFacebook = !!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook";
     const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
+    const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
     
     return (
       <div className="flex flex-col">

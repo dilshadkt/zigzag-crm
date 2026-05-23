@@ -1,7 +1,8 @@
 import { BrowserRouter, HashRouter } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { validateSession } from "./api/service";
 import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 import socketService from "./services/socketService";
@@ -14,6 +15,7 @@ const Router = isDesktop ? HashRouter : BrowserRouter;
 
 function App() {
   const dispatch = useDispatch();
+  const queryClient = useQueryClient();
   const { loading, user } = useSelector((state) => state.auth); // Get loading and isAuthenticated state from Redux
   const [isAuthChecked, setIsAuthChecked] = useState(false); // Track if auth check is complete
   const [showFixProfileModal, setShowFixProfileModal] = useState(false);
@@ -77,10 +79,25 @@ function App() {
                     console.error("Failed to play notification sound:", e);
                 }
 
-                toast.success(`🎯 New Lead: ${data.leadName || 'Someone'} interested in ${data.campaignName}`, {
-                    duration: 6000,
-                    icon: '🚀'
-                });
+                try {
+                    toast.success(`🎯 New Lead: ${data.leadName || 'Someone'} interested in ${data.campaignName}`, {
+                        duration: 6000,
+                        icon: '🚀'
+                    });
+                } catch (e) {
+                    console.error("Failed to show toast notification:", e);
+                }
+
+                // Auto invalidate query cache and force refetch to refresh leads in real-time
+                try {
+                    console.log("[Socket] Invalidating and refetching query keys: leads, leadStats, campaigns");
+                    queryClient.invalidateQueries({ queryKey: ["leads"] });
+                    queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+                    queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+                    console.log("[Socket] Invalidation triggered successfully!");
+                } catch (err) {
+                    console.error("[Socket] Refetch failed:", err);
+                }
             });
           }
         }
