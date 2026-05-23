@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { updateProject } from "../../../api/service";
 import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetFacebookAccounts } from "../../../api/campaigns";
-import { FiActivity, FiLayers, FiSearch, FiInstagram, FiFacebook, FiShield } from "react-icons/fi";
+import { useGetFacebookAccounts, useRefreshFacebookAccounts } from "../../../api/campaigns";
+import { FiActivity, FiLayers, FiSearch, FiInstagram, FiFacebook, FiShield, FiRefreshCw } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import { updateProjectSocialConfig } from "../../../api/service";
 import { useGetLeadFormConfig } from "../../../features/leads/api";
@@ -55,7 +55,19 @@ export const SettingsTab = ({
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [accountSearch, setAccountSearch] = useState("");
   const { data: adAccounts, isLoading: isAccountsLoading } = useGetFacebookAccounts();
+  const { mutate: refreshAccounts, isPending: isRefreshingAccounts } = useRefreshFacebookAccounts();
   const accountSelectorRef = React.useRef(null);
+
+  const handleRefreshAccounts = () => {
+    refreshAccounts(undefined, {
+      onSuccess: () => {
+        toast.success("Facebook Ad Accounts list refreshed!");
+      },
+      onError: () => {
+        toast.error("Failed to refresh Facebook Ad Accounts");
+      }
+    });
+  };
 
   const filteredAdAccounts = React.useMemo(() => {
     if (!adAccounts) return [];
@@ -518,8 +530,8 @@ export const SettingsTab = ({
 
             {showAccountSelector && (
               <div className="absolute bottom-full left-0 mb-2 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
-                <div className="p-3 border-b border-gray-50 bg-gray-50/30">
-                  <div className="relative">
+                <div className="p-3 border-b border-gray-50 bg-gray-50/30 flex gap-2 items-center">
+                  <div className="relative flex-1">
                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
                     <input
                       type="text"
@@ -530,6 +542,14 @@ export const SettingsTab = ({
                       autoFocus
                     />
                   </div>
+                  <button
+                    onClick={handleRefreshAccounts}
+                    disabled={isRefreshingAccounts}
+                    className="p-2 bg-white border border-gray-200 hover:bg-gray-50 disabled:bg-gray-50 rounded-xl text-gray-600 transition-all text-xs"
+                    title="Fetch latest accounts from Facebook"
+                  >
+                    <FiRefreshCw className={`w-3.5 h-3.5 ${isRefreshingAccounts ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
                 <div className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1">
                   {isAccountsLoading ? (

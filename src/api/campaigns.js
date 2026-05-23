@@ -75,6 +75,21 @@ export const useGetFacebookAccounts = () => {
     });
 };
 
+export const useRefreshFacebookAccounts = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async () => {
+            const { data } = await apiClient.get("/campaigns/facebook-accounts", {
+                params: { refresh: true }
+            });
+            return data.data;
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(["facebook-accounts"], data);
+        }
+    });
+};
+
 export const useSelectFacebookAccount = () => {
     const queryClient = useQueryClient();
     return useMutation({

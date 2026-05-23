@@ -5,6 +5,7 @@ import {
   useSyncFacebookAds, 
   useCheckFacebookStatus, 
   useGetFacebookAccounts, 
+  useRefreshFacebookAccounts,
   useSelectFacebookAccount 
 } from "../../api/campaigns";
 import { useAuth } from "../../hooks/useAuth";
@@ -41,7 +42,19 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
 
   const { data: fbStatus } = useCheckFacebookStatus();
   const { data: adAccounts } = useGetFacebookAccounts();
+  const { mutate: refreshAccounts, isPending: isRefreshingAccounts } = useRefreshFacebookAccounts();
   const { mutate: selectAccount, isLoading: isSelecting } = useSelectFacebookAccount();
+
+  const handleRefreshAccounts = () => {
+    refreshAccounts(undefined, {
+      onSuccess: () => {
+        toast.success("Facebook Ad Accounts list refreshed!");
+      },
+      onError: () => {
+        toast.error("Failed to refresh Facebook Ad Accounts");
+      }
+    });
+  };
 
   const filteredAdAccounts = useMemo(() => {
     if (!adAccounts) return [];
@@ -151,8 +164,10 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
         fbStatus={fbStatus}
         adAccounts={adAccounts}
         isSelecting={isSelecting || isSwitchingAccount}
-        isSyncing={isSyncing || isSwitchingAccount}
+        isSyncing={isSyncing || isSwitchingAccount || isRefreshingAccounts}
         onSelectAccount={handleSelectAccount}
+        onRefreshAccounts={handleRefreshAccounts}
+        isRefreshingAccounts={isRefreshingAccounts}
       />
 
       <div className="flex-1 overflow-hidden flex flex-col relative">

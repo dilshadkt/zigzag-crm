@@ -21,6 +21,8 @@ const CampaignsHeader = ({
   adAccounts = [],
   isSelecting = false,
   onSelectAccount,
+  onRefreshAccounts,
+  isRefreshingAccounts = false,
 }) => {
   const { user } = useAuth();
   const isClient = user?.role === "client";
@@ -36,7 +38,7 @@ const CampaignsHeader = ({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
       if (accountSelectorRef.current && !accountSelectorRef.current.contains(event.target)) {
@@ -131,8 +133,8 @@ const CampaignsHeader = ({
               {/* Floating Dropdown */}
               {showAccountSelector && adAccounts && (
                 <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right overflow-hidden">
-                  <div className="p-3 border-b border-gray-50 bg-gray-50/30">
-                    <div className="relative">
+                  <div className="p-3 border-b border-gray-50 bg-gray-50/30 flex gap-2 items-center">
+                    <div className="relative flex-1">
                       <input
                         type="text"
                         placeholder="Search ad accounts..."
@@ -143,6 +145,17 @@ const CampaignsHeader = ({
                       />
                       <FiActivity className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3" />
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRefreshAccounts();
+                      }}
+                      disabled={isRefreshingAccounts}
+                      className="p-2 bg-white border border-gray-200 hover:bg-gray-50 disabled:bg-gray-50 rounded-xl text-gray-600 transition-all text-xs shrink-0 animate-none"
+                      title="Fetch latest accounts from Facebook"
+                    >
+                      <FiRefreshCw className={`w-3.5 h-3.5 ${isRefreshingAccounts ? 'animate-spin' : ''}`} />
+                    </button>
                   </div>
                   
                   <div className="max-h-64 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">

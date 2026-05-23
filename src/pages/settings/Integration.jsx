@@ -4,6 +4,7 @@ import {
   useCheckFacebookStatus, 
   useSyncFacebookAds, 
   useGetFacebookAccounts, 
+  useRefreshFacebookAccounts,
   useSelectFacebookAccount 
 } from "../../api/campaigns";
 import { 
@@ -19,8 +20,20 @@ const Integration = () => {
   
   const { data: fbStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = useCheckFacebookStatus();
   const { data: adAccounts, isLoading: isLoadingAccounts } = useGetFacebookAccounts();
+  const { mutate: refreshAccounts, isPending: isRefreshingAccounts } = useRefreshFacebookAccounts();
   const { mutate: syncFacebook, isLoading: isSyncing } = useSyncFacebookAds();
   const { mutate: selectAccount, isLoading: isSelecting } = useSelectFacebookAccount();
+
+  const handleRefreshAccounts = () => {
+    refreshAccounts(undefined, {
+      onSuccess: () => {
+        toast.success("Facebook Ad Accounts list refreshed!");
+      },
+      onError: () => {
+        toast.error("Failed to refresh Facebook Ad Accounts");
+      }
+    });
+  };
 
   const handleSync = () => {
     syncFacebook(undefined, {
@@ -192,9 +205,23 @@ const Integration = () => {
           {/* Ad Account Selector Dropdown/List */}
           {showAccountSelector && fbStatus?.connected && (
             <div className="mt-4 bg-gray-50/50 rounded-2xl border border-gray-200 overflow-hidden animate-in slide-in-from-top duration-300">
-              <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
-                <h3 className="text-[12px] font-bold text-gray-700">Available Ad Accounts</h3>
-                <span className="text-[10px] text-gray-400 font-medium">Choose an account to sync</span>
+              <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
+                <div className="flex flex-col">
+                  <h3 className="text-[12px] font-bold text-gray-700">Available Ad Accounts</h3>
+                  <span className="text-[10px] text-gray-400 font-medium">Choose an account to sync</span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRefreshAccounts();
+                  }}
+                  disabled={isRefreshingAccounts}
+                  className="p-1.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 disabled:bg-gray-50 rounded-lg text-gray-600 transition-all text-xs flex items-center gap-1 font-bold shrink-0"
+                  title="Fetch latest accounts from Facebook"
+                >
+                  <FiRefreshCw className={`w-3.5 h-3.5 ${isRefreshingAccounts ? 'animate-spin' : ''}`} />
+                  Refresh List
+                </button>
               </div>
               <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                 {isLoadingAccounts ? (
