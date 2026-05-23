@@ -18,7 +18,7 @@ import AssignLeadModal from "./components/AssignLeadModal";
 import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
 import LeadsDashboard from "./components/LeadsDashboard";
 import { useLeadsData } from "./hooks/useLeadsData";
-import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads } from "./api";
+import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads, useBulkDeleteLeads } from "./api";
 import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
 
 const STORAGE_KEY = "leads-column-visibility";
@@ -163,6 +163,7 @@ const LeadsFeature = ({
   const updateLeadMutation = useUpdateLead();
   const deleteLeadMutation = useDeleteLead();
   const bulkUpdateMutation = useBulkUpdateLeads();
+  const bulkDeleteMutation = useBulkDeleteLeads();
   const syncAllCampaignLeadsMutation = useSyncAllCampaignLeads();
 
   const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
@@ -1104,16 +1105,24 @@ const LeadsFeature = ({
               </div>
 
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (window.confirm(`Are you sure you want to delete ${selectedLeadIds.length} leads?`)) {
-                    // Implement bulk delete if needed, for now just a placeholder
-                    toast.error("Bulk delete not implemented yet");
+                    try {
+                      await bulkDeleteMutation.mutateAsync(selectedLeadIds);
+                      toast.success(`Successfully deleted ${selectedLeadIds.length} leads`);
+                      setSelectedLeadIds([]);
+                      refetchLeads();
+                      queryClient.invalidateQueries(["leads"]);
+                    } catch (error) {
+                      toast.error(error?.response?.data?.message || "Failed to delete leads");
+                    }
                   }
                 }}
                 className="flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+                disabled={bulkDeleteMutation.isPending}
               >
                 <FiTrash2 className="w-4 h-4" />
-                Delete
+                {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
               </button>
 
               <button

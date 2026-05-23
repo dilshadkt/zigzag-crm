@@ -33,6 +33,11 @@ export const bulkUpdateLeads = async (leadIds, updateData) => {
   return response.data;
 };
 
+export const bulkDeleteLeads = async (leadIds) => {
+  const response = await apiClient.delete("/leads/bulk", { data: { leadIds } });
+  return response.data;
+};
+
 export const deleteLead = async (leadId) => {
   const response = await apiClient.delete(`/leads/${leadId}`);
   return response.data;
@@ -225,6 +230,17 @@ export const useBulkUpdateLeads = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ leadIds, updateData }) => bulkUpdateLeads(leadIds, updateData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+    },
+  });
+};
+
+export const useBulkDeleteLeads = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkDeleteLeads,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["leadStats"] });
