@@ -30,6 +30,8 @@ const LeadsTable = ({
   branches = [],
   canManage = false,
   scrollContainerId,
+  projects = [],
+  onMoveToProject,
 }) => {
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
   const isAllSelected =
@@ -104,6 +106,8 @@ const LeadsTable = ({
                   onMoveToBranch={onMoveToBranch}
                   branches={branches}
                   canManage={canManage}
+                  projects={projects}
+                  onMoveToProject={onMoveToProject}
                 />
               );
             })}
@@ -193,6 +197,8 @@ const LeadsTable = ({
                     branches={branches}
                     canManage={canManage}
                     index={virtualRow.index}
+                    projects={projects}
+                    onMoveToProject={onMoveToProject}
                   />
                 );
               })}

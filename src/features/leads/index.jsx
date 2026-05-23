@@ -20,6 +20,7 @@ import LeadsDashboard from "./components/LeadsDashboard";
 import { useLeadsData } from "./hooks/useLeadsData";
 import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads, useBulkDeleteLeads } from "./api";
 import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
+import { useCompanyActiveProjects } from "../../api/hooks";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -76,6 +77,7 @@ const LeadsFeature = ({
 }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: projects = [] } = useCompanyActiveProjects();
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
@@ -807,6 +809,27 @@ const LeadsFeature = ({
     }
   };
 
+  const handleMoveToProject = async (lead, targetProjectId, targetProjectName) => {
+    try {
+      const leadId = lead._id || lead.id;
+
+      await updateLeadMutation.mutateAsync({
+        leadId,
+        leadData: {
+          project: targetProjectId,
+        },
+      });
+
+      toast.success(`Lead moved to project: ${targetProjectName}`);
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["projectDetails", projectId]);
+      queryClient.invalidateQueries(["projectDetails", targetProjectId]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to move lead to project");
+    }
+  };
+
   const handleBulkMoveToBranch = async (branchName) => {
     if (selectedLeadIds.length === 0) return;
 
@@ -1024,6 +1047,8 @@ const LeadsFeature = ({
                   onMoveToBranch={handleMoveToBranch}
                   branches={branches}
                   canManage={canEditLead}
+                  projects={projects}
+                  onMoveToProject={handleMoveToProject}
                 />
               </div>
               <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">

@@ -24,6 +24,8 @@ const LeadCard = memo(({
     onMoveToBranch,
     branches = [],
     isEmployee = false,
+    projects = [],
+    onMoveToProject,
 }) => {
     const actionButtonRef = useRef(null);
     const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
@@ -208,6 +210,8 @@ const LeadCard = memo(({
                 lead={lead}
                 branches={branches}
                 onMoveToBranch={onMoveToBranch}
+                projects={projects}
+                onMoveToProject={onMoveToProject}
             />
         </div>
     );

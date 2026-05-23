@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiEdit, FiMail, FiCheckSquare, FiUser, FiTrash2, FiRefreshCw, FiLink, FiChevronRight, FiFolder } from "react-icons/fi";
+import { FiEdit, FiMail, FiCheckSquare, FiUser, FiTrash2, FiRefreshCw, FiLink, FiChevronRight, FiFolder, FiBriefcase } from "react-icons/fi";
 
 const LeadRowContextMenu = ({
   visible,
@@ -15,10 +15,20 @@ const LeadRowContextMenu = ({
   lead,
   branches = [],
   onMoveToBranch,
+  projects = [],
+  onMoveToProject,
 }) => {
   const menuRef = useRef(null);
   const [adjustedPosition, setAdjustedPosition] = useState(position);
   const [showBranches, setShowBranches] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setShowBranches(false);
+      setShowProjects(false);
+    }
+  }, [visible]);
 
   // Adjust position to keep menu within viewport
   useEffect(() => {
@@ -93,6 +103,10 @@ const LeadRowContextMenu = ({
 
   if (!visible) return null;
 
+  const otherProjects = projects.filter(
+    (proj) => proj._id !== (lead?.project?._id || lead?.project)
+  );
+
   const menuItems = [
     {
       label: "Edit",
@@ -143,8 +157,20 @@ const LeadRowContextMenu = ({
       onClick: (e) => {
         e.stopPropagation();
         setShowBranches(!showBranches);
+        setShowProjects(false);
       },
       show: branches.length > 0 && !!onMoveToBranch,
+      hasSubmenu: true,
+    },
+    {
+      label: "Move to Project",
+      icon: FiBriefcase,
+      onClick: (e) => {
+        e.stopPropagation();
+        setShowProjects(!showProjects);
+        setShowBranches(false);
+      },
+      show: otherProjects.length > 0 && !!onMoveToProject,
       hasSubmenu: true,
     },
   ].filter((item) => item.show);
@@ -168,7 +194,7 @@ const LeadRowContextMenu = ({
       {/* Menu */}
       <div
         ref={menuRef}
-        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px] max-h-[90vh] overflow-y-auto scrollbar-hide"
+        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px]"
         style={{
           top: `${adjustedPosition.y}px`,
           left: `${adjustedPosition.x}px`,
@@ -194,18 +220,18 @@ const LeadRowContextMenu = ({
                     isDestructive
                       ? "text-red-600 hover:bg-red-50 active:bg-red-100"
                       : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
-                  } ${item.hasSubmenu && showBranches ? "bg-gray-100" : ""}`}
+                  } ${item.hasSubmenu && (showBranches || showProjects) ? "bg-gray-100" : ""}`}
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon className={`w-3.5 h-3.5 ${isDestructive ? "text-red-600" : "text-gray-600"}`} />
                     <span>{item.label}</span>
                   </div>
                   {item.hasSubmenu && (
-                    <FiChevronRight className={`w-3 h-3 text-gray-400 transition-transform ${showBranches ? "rotate-90" : ""}`} />
+                    <FiChevronRight className={`w-3 h-3 text-gray-400 transition-transform ${(item.label === "Move to Branch" ? showBranches : showProjects) ? "rotate-90" : ""}`} />
                   )}
                 </button>
-
-                {item.hasSubmenu && showBranches && (
+ 
+                {item.hasSubmenu && showBranches && item.label === "Move to Branch" && (
                   <div className="bg-gray-50 border-y border-gray-100 py-1">
                     {branches.map((branch) => (
                       <button
@@ -217,6 +243,24 @@ const LeadRowContextMenu = ({
                         className="w-full px-10 py-1.5 text-left text-[12px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                       >
                         {branch.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {item.hasSubmenu && showProjects && item.label === "Move to Project" && (
+                  <div className="absolute right-full bottom-0 mr-1 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[180px] max-h-[220px] overflow-y-auto scrollbar-hide z-50 animate-in fade-in slide-in-from-right-2 duration-150">
+                    {otherProjects.map((proj) => (
+                      <button
+                        key={proj._id}
+                        onClick={() => {
+                          onMoveToProject(lead, proj._id, proj.name);
+                          onClose();
+                        }}
+                        className="w-full px-3 py-2 text-left text-[12px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors whitespace-nowrap overflow-hidden text-ellipsis"
+                        title={proj.name}
+                      >
+                        {proj.name}
                       </button>
                     ))}
                   </div>

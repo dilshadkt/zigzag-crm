@@ -239,6 +239,8 @@ const LeadRow = memo(({
   branches = [],
   canManage = false,
   index,
+  projects = [],
+  onMoveToProject,
 }) => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
@@ -393,6 +395,8 @@ const LeadRow = memo(({
         lead={lead}
         branches={branches}
         onMoveToBranch={onMoveToBranch}
+        projects={projects}
+        onMoveToProject={onMoveToProject}
       />
     </>
   );
