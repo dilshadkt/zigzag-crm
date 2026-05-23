@@ -11,6 +11,22 @@ import { toast } from "react-hot-toast";
 import LinkPreview from "../../shared/LinkPreview";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 
+const renderContent = (content) => {
+  if (!content) return "";
+  const decoded = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
+  if (isHtml) {
+    return <div className="rich-text-content" dangerouslySetInnerHTML={{ __html: decoded }} />;
+  }
+  return <div className="whitespace-pre-wrap">{content}</div>;
+};
+
 const SubtasksSection = ({
   subTasks,
   subTasksLoading,
@@ -426,9 +442,9 @@ const SubtasksSection = ({
                 </div>
                 {/* Basic description (always shown) */}
                 {subtask.description && (
-                  <p className="text-sm text-gray-600 mb-2">
-                    {subtask.description}
-                  </p>
+                  <div className="text-sm text-gray-600 mb-2">
+                    {renderContent(subtask.description)}
+                  </div>
                 )}
 
                 {/* Checkout Pending Reasons */}

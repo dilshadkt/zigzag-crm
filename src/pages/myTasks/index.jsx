@@ -26,6 +26,22 @@ import {
 } from "react-icons/fi";
 import { groupTasksByCompletionDate, formatGroupLabel } from "./taskGroupingUtils";
 
+const renderContent = (content) => {
+  if (!content) return "";
+  const decoded = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
+  if (isHtml) {
+    return <span className="rich-text-content inline-block" dangerouslySetInnerHTML={{ __html: decoded }} />;
+  }
+  return <span className="whitespace-pre-wrap">{content}</span>;
+};
+
 const MyTasks = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -762,11 +778,11 @@ const MyTasks = () => {
                               </div>
                             </div>
 
-                            {task.description && (
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                {task.description}
-                              </p>
-                            )}
+                             {task.description && (
+                               <div className="text-gray-600 text-sm mb-3 line-clamp-2">
+                                 {renderContent(task.description)}
+                               </div>
+                             )}
 
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               {task.project && (
@@ -840,11 +856,11 @@ const MyTasks = () => {
                         </div>
                       </div>
 
-                      {task.description && (
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {task.description}
-                        </p>
-                      )}
+                       {task.description && (
+                         <div className="text-gray-600 text-sm mb-3 line-clamp-2">
+                           {renderContent(task.description)}
+                         </div>
+                       )}
 
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         {task.project && (

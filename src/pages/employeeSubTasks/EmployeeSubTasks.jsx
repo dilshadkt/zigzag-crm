@@ -5,6 +5,22 @@ import { format } from "date-fns";
 import { IoIosArrowBack } from "react-icons/io";
 import EmployeeSubTasksSkeleton from "./EmployeeSubTasksSkeleton";
 
+const renderContent = (content) => {
+  if (!content) return "";
+  const decoded = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
+  if (isHtml) {
+    return <span className="rich-text-content inline-block" dangerouslySetInnerHTML={{ __html: decoded }} />;
+  }
+  return <span className="whitespace-pre-wrap">{content}</span>;
+};
+
 const statusColorMap = {
   completed: "bg-green-100 text-green-800",
   "in-progress": "bg-blue-100 text-blue-800",
@@ -150,7 +166,7 @@ const EmployeeSubTasks = () => {
               </div>
               {task.description && (
                 <div className="text-gray-500 text-sm mt-1 line-clamp-2">
-                  {task.description}
+                  {renderContent(task.description)}
                 </div>
               )}
             </li>

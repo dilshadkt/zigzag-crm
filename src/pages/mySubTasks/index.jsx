@@ -22,6 +22,22 @@ import {
   FiFolder,
 } from "react-icons/fi";
 
+const renderContent = (content) => {
+  if (!content) return "";
+  const decoded = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
+  if (isHtml) {
+    return <span className="rich-text-content inline-block" dangerouslySetInnerHTML={{ __html: decoded }} />;
+  }
+  return <span className="whitespace-pre-wrap">{content}</span>;
+};
+
 const MySubTasks = ({ filter: propFilter }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -572,9 +588,9 @@ const MySubTasks = ({ filter: propFilter }) => {
                       {subTask.title}
                     </h3>
                     {subTask.description && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {subTask.description}
-                      </p>
+                      <div className="text-sm text-gray-500 mt-1 line-clamp-2">
+                        {renderContent(subTask.description)}
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2 ml-4">

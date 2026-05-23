@@ -1,4 +1,18 @@
-import React from "react";
+const renderContent = (content) => {
+  if (!content) return "";
+  const decoded = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
+  if (isHtml) {
+    return <div className="rich-text-content" dangerouslySetInnerHTML={{ __html: decoded }} />;
+  }
+  return <div className="whitespace-pre-wrap">{content}</div>;
+};
 
 const TaskDescription = ({ taskDetails, subTasks = [] }) => {
   if (!taskDetails) return null;
@@ -61,10 +75,8 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
               <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                 Content For Description
               </h5>
-              <div className="flex flex-col gap-y-0.5">
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {contentSubTask.copyOfDescription}
-                </p>
+              <div className="text-gray-700 text-sm leading-relaxed">
+                {renderContent(contentSubTask.copyOfDescription)}
               </div>
             </div>
           )}
@@ -74,10 +86,8 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
               <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                 Description for publishing
               </h5>
-              <div className="flex flex-col gap-y-0.5">
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {contentSubTask.description}
-                </p>
+              <div className="text-gray-700 text-sm leading-relaxed">
+                {renderContent(contentSubTask.description)}
               </div>
             </div>
           )}
@@ -90,10 +100,8 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
                 </svg>
                 Ideas List
               </h5>
-              <div className="flex flex-col gap-y-0.5">
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {contentSubTask.ideas}
-                </p>
+              <div className="text-gray-700 text-sm leading-relaxed">
+                {renderContent(contentSubTask.ideas)}
               </div>
             </div>
           )}
@@ -106,7 +114,9 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
               <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                 Task Description
               </h5>
-              <p className="text-gray-600">{taskDetails.task_description}</p>
+              <div className="text-gray-600 text-sm leading-relaxed">
+                {renderContent(taskDetails.task_description)}
+              </div>
             </div>
           )}
 
@@ -116,7 +126,9 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
               <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                 Content For Description
               </h5>
-              <p className="text-gray-600">{taskDetails.copyOfDescription}</p>
+              <div className="text-gray-600 text-sm leading-relaxed">
+                {renderContent(taskDetails.copyOfDescription)}
+              </div>
             </div>
           )}
 
@@ -126,7 +138,9 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
               <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
                 Copy of Description
               </h5>
-              <p className="text-gray-600">{taskDetails.description}</p>
+              <div className="text-gray-600 text-sm leading-relaxed">
+                {renderContent(taskDetails.description)}
+              </div>
             </div>
           )}
         </>

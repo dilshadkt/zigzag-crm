@@ -10,6 +10,22 @@ import VoiceRecorder from "../VoiceRecorder";
 import LinkPreview from "../LinkPreview";
 import { toast } from "react-hot-toast";
 
+const renderContent = (content) => {
+  if (!content) return "";
+  const decoded = content
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
+  if (isHtml) {
+    return <div className="rich-text-content" dangerouslySetInnerHTML={{ __html: decoded }} />;
+  }
+  return <div className="whitespace-pre-wrap">{content}</div>;
+};
+
 const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = false, isCompany = false, isAdmin = false }) => {
   const fileInputRef = useRef(null);
   const menuRef = useRef(null);
@@ -574,9 +590,9 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed bg-white/80 p-3 rounded-xl border border-gray-100/80">
-                  {subTask.copyOfDescription}
-                </p>
+                <div className="text-xs text-gray-600 leading-relaxed bg-white/80 p-3 rounded-xl border border-gray-100/80">
+                  {renderContent(subTask.copyOfDescription)}
+                </div>
               </div>
             )}
 
@@ -600,9 +616,9 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed bg-white/80 p-3 rounded-xl border border-gray-100/80 whitespace-pre-wrap">
-                  {subTask.ideas}
-                </p>
+                <div className="text-xs text-gray-600 leading-relaxed bg-white/80 p-3 rounded-xl border border-gray-100/80">
+                  {renderContent(subTask.ideas)}
+                </div>
               </div>
             )}
 
@@ -684,32 +700,14 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
             onChange={handleContentChange}
             disabled={updateSubTask.isLoading}
           />
-          <div className="flex flex-col gap-1.5 mt-2">
-            <label className="flex items-center gap-2 text-sm font-bold text-[#7D8592] pl-1.5">
-              <svg
-                className="w-4 h-4 text-yellow-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-                />
-              </svg>
-              Ideas
-            </label>
-            <textarea
-              className="rounded-[14px] text-sm min-h-[100px] w-full border-2 text-[#7D8592] border-[#D8E0F0]/80 py-[10px] px-4 outline-none focus:outline-none resize-none transition-all focus:border-blue-300"
-              name="ideas"
-              value={contentValues.ideas}
-              onChange={handleContentChange}
-              placeholder="Record your ideas here..."
-              disabled={updateSubTask.isLoading}
-            />
-          </div>
+          <Description
+            title="Ideas"
+            placeholder="Record your ideas here..."
+            name="ideas"
+            value={contentValues}
+            onChange={handleContentChange}
+            disabled={updateSubTask.isLoading}
+          />
 
           {/* Voice Notes section for Ideas */}
           <div className="flex flex-col gap-2 mt-3 bg-gray-50/60 p-3.5 rounded-xl border border-gray-100">

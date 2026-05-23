@@ -230,33 +230,16 @@ const AddSubTask = ({
                       placeholder="Add publish description"
                       disabled={isLoading}
                     />
-                    {/* Ideas field with build icon */}
-                    <div className="flex flex-col gap-1 mt-2">
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <svg
-                          className="w-4 h-4 text-yellow-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-                          />
-                        </svg>
-                        Ideas
-                      </label>
-                      <textarea
-                        className="border rounded px-2 py-1 text-sm min-h-[60px]"
-                        name="ideas"
-                        value={values.ideas || ""}
-                        onChange={handleChange}
-                        placeholder="Record your ideas here..."
-                        disabled={isLoading}
-                      />
-                    </div>
+                    <Description
+                      errors={errors}
+                      onChange={handleChange}
+                      touched={touched}
+                      name="ideas"
+                      value={values}
+                      title="Ideas"
+                      placeholder="Record your ideas here..."
+                      disabled={isLoading}
+                    />
                   </>
                 )}
 

@@ -236,3 +236,20 @@ body {
 .animate-leave {
   animation: leave 0.3s ease-in forwards;
 }
+
+/* Rich Text / Prose Editor Content Styles */
+.rich-text-content ul, .prose-editor ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.rich-text-content ol, .prose-editor ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.rich-text-content, .prose-editor {
+  word-break: break-word;
+}
