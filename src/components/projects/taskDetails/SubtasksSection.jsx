@@ -328,9 +328,9 @@ const SubtasksSection = ({
                     </span>
 
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 cursor-help transition-all duration-200 ${subtask.reworkCount > 0
-                        ? "bg-red-50 text-red-600 border-red-100"
-                        : "bg-gray-50 text-gray-400 border-gray-100"
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all duration-200 ${subtask.reworkCount > 0
+                        ? "bg-red-50 text-red-600 border-red-100 cursor-pointer hover:bg-red-100 hover:shadow-sm"
+                        : "bg-gray-50 text-gray-400 border-gray-100 cursor-help"
                         }`}
                       title={subtask.reworkCount > 0 ? `This subtask has been sent to rework ${subtask.reworkCount} times` : "No rework history"}
                       onClick={() => {
@@ -470,6 +470,28 @@ const SubtasksSection = ({
                     </div>
                   </div>
                 )}
+
+                {/* Inline Rework History */}
+                {subtask.reworkHistory && subtask.reworkHistory.length > 0 && (
+                  <div className="mt-2 mb-3 bg-red-50/20 border-l-2 border-red-400 p-2.5 rounded-r-xl">
+                    <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider block mb-1.5">
+                      Rework History ({subtask.reworkHistory.length})
+                    </span>
+                    <div className="space-y-2">
+                      {[...subtask.reworkHistory].reverse().map((entry, idx) => (
+                        <div key={entry._id || idx} className="text-xs">
+                          <p className="text-gray-700 font-medium leading-relaxed">
+                            {entry?.reason || "No reason provided"}
+                          </p>
+                          <p className="text-[9px] text-gray-400 mt-0.5">
+                            Sent back by {entry.changedBy?.firstName || ""} {entry.changedBy?.lastName || ""} on {new Date(entry.changedAt).toLocaleDateString()}{entry.previousStatus ? ` (from ${entry.previousStatus})` : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
 
                 {/* Subtask Custom Fields */}
                 {subtask.customFields && subtask.customFields.filter(f => {

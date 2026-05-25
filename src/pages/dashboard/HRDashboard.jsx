@@ -3,6 +3,10 @@ import { attendanceApi } from "../../features/attendance/api/attendanceApi";
 import { useEmpoyees } from "../../api/hooks";
 import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
 
+const SkeletonItem = ({ className }) => (
+    <div className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`} />
+);
+
 const HRDashboardPage = () => {
     // State for filtering
     const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -40,32 +44,20 @@ const HRDashboardPage = () => {
     const [singleEmployeeReport, setSingleEmployeeReport] = useState(null);
     const [todayHighlights, setTodayHighlights] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingSingle, setIsLoadingSingle] = useState(false);
     const [error, setError] = useState(null);
 
-    // Get report data on mount or change of month, year, or employeeId
-    const fetchReportData = async () => {
+    // Fetch all-staff report when month/year changes
+    const fetchAllStaffReport = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            // ALWAYS fetch all-staff report for the table
             const res = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, "");
             if (res.success) {
                 setReportData(res.report);
                 setTodayHighlights(res.todayHighlights);
             } else {
                 setError(res.message || "Failed to fetch staff report");
-            }
-
-            // If an individual employee is selected, ALSO fetch their individual data (for dailyLogs)
-            if (selectedEmployeeId) {
-                const empRes = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, selectedEmployeeId);
-                if (empRes.success) {
-                    setSingleEmployeeReport(empRes.report);
-                } else {
-                    setSingleEmployeeReport(null);
-                }
-            } else {
-                setSingleEmployeeReport(null);
             }
         } catch (err) {
             console.error("Failed to fetch staff monthly report:", err);
@@ -75,9 +67,34 @@ const HRDashboardPage = () => {
         }
     };
 
+    // Fetch single employee report when selectedEmployeeId or month/year changes
+    const fetchSingleReport = async () => {
+        if (!selectedEmployeeId) {
+            setSingleEmployeeReport(null);
+            return;
+        }
+        setIsLoadingSingle(true);
+        try {
+            const empRes = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, selectedEmployeeId);
+            if (empRes.success) {
+                setSingleEmployeeReport(empRes.report);
+            } else {
+                setSingleEmployeeReport(null);
+            }
+        } catch (err) {
+            console.error("Failed to fetch single staff report:", err);
+        } finally {
+            setIsLoadingSingle(false);
+        }
+    };
+
     useEffect(() => {
-        fetchReportData();
-    }, [selectedMonth, selectedYear, selectedEmployeeId]);
+        fetchAllStaffReport();
+    }, [selectedMonth, selectedYear]);
+
+    useEffect(() => {
+        fetchSingleReport();
+    }, [selectedEmployeeId, selectedMonth, selectedYear]);
 
     // Handle export to CSV
     const handleExport = () => {
@@ -108,7 +125,7 @@ const HRDashboardPage = () => {
         }
 
         if (selectedEmployeeId) {
-            const empReport = reportData.find(r => r.employee?._id === selectedEmployeeId || r.employeeId === selectedEmployeeId);
+            const empReport = reportData.find(r => r.employee?.id === selectedEmployeeId || r.employee?._id === selectedEmployeeId || r.employeeId === selectedEmployeeId);
             if (empReport) {
                 return {
                     presentDays: empReport.presentDays || 0,
@@ -136,7 +153,7 @@ const HRDashboardPage = () => {
     const overtimeList = useMemo(() => {
         if (!reportData || !Array.isArray(reportData)) return [];
         if (selectedEmployeeId) {
-            const empReport = reportData.find(r => r.employee?._id === selectedEmployeeId || r.employeeId === selectedEmployeeId);
+            const empReport = reportData.find(r => r.employee?.id === selectedEmployeeId || r.employee?._id === selectedEmployeeId || r.employeeId === selectedEmployeeId);
             if (empReport && empReport.totalOvertimeHours > 0) {
                 return [empReport];
             }
@@ -274,15 +291,6 @@ const HRDashboardPage = () => {
                 </div>
             </div>
 
-            {/* Shimmer loader */}
-            {isLoading && (
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="h-24 bg-white rounded-xl animate-pulse border border-slate-200/60" />
-                    ))}
-                </div>
-            )}
-
             {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 font-medium flex items-center gap-2 text-xs">
                     <FiAlertCircle />
@@ -291,8 +299,18 @@ const HRDashboardPage = () => {
             )}
 
             {/* Stat Cards Row - Compact design, no heavy shadows */}
-            {!isLoading && !error && (
+            {isLoading && !reportData ? (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="bg-white rounded-xl p-4 border border-slate-200/60 flex flex-col gap-2 h-24">
+                            <SkeletonItem className="h-9 w-9 rounded-lg" />
+                            <SkeletonItem className="h-3 w-16 mt-1" />
+                            <SkeletonItem className="h-6 w-10 mt-1" />
+                        </div>
+                    ))}
+                </div>
+            ) : !error && (
+                <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 ${isLoading ? "opacity-50 transition-opacity" : ""}`}>
                     {/* Card 1 */}
                     <div className="bg-white rounded-xl p-4 border border-slate-200/60 flex flex-col gap-1 transition-all">
                         <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-base">
@@ -341,8 +359,19 @@ const HRDashboardPage = () => {
             )}
 
             {/* COMBINED HIGHLIGHTS SECTION: 4-Column Grid with fixed height and scrollable panels */}
-            {!isLoading && !error && (
+            {isLoading && !reportData ? (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-white rounded-xl p-3 border border-slate-200/60 h-72 flex flex-col gap-2">
+                            <SkeletonItem className="h-4 w-32 border-b border-slate-100 pb-2 mb-2" />
+                            {[1, 2, 3].map(j => (
+                                <SkeletonItem key={j} className="h-10 w-full rounded-lg" />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            ) : !error && (
+                <div className={`grid grid-cols-1 md:grid-cols-4 gap-3 ${isLoading ? "opacity-50 transition-opacity" : ""}`}>
                     {/* Col 1: Today's Leaves */}
                     <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
@@ -426,9 +455,29 @@ const HRDashboardPage = () => {
             )}
 
             {/* Table with clean design */}
-            {!isLoading && !error && reportData && (
-                <div className="bg-white min-h-[400px] flex flex-col
-                  overflow-y-auto h-full rounded-xl border border-slate-200/60 overflow-hidden">
+            {isLoading && !reportData ? (
+                <div className="bg-white min-h-[400px] rounded-xl border border-slate-200/60 p-4 space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <SkeletonItem className="h-5 w-40" />
+                        <SkeletonItem className="h-4 w-20 rounded animate-pulse" />
+                    </div>
+                    <div className="space-y-3">
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} className="flex gap-4 items-center py-3 border-b border-slate-50 last:border-0">
+                                <SkeletonItem className="h-10 w-10 rounded-full" />
+                                <div className="flex-1 grid grid-cols-6 gap-4">
+                                    <SkeletonItem className="h-4 w-24 col-span-2" />
+                                    <SkeletonItem className="h-4 w-12" />
+                                    <SkeletonItem className="h-4 w-12" />
+                                    <SkeletonItem className="h-4 w-12" />
+                                    <SkeletonItem className="h-4 w-12" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : !error && reportData && (
+                <div className={`bg-white min-h-[400px] flex flex-col overflow-y-auto h-full rounded-xl border border-slate-200/60 overflow-hidden ${isLoading ? "opacity-50 transition-opacity" : ""}`}>
                     <div className="p-3 border-b border-slate-200/60 flex items-center justify-between bg-slate-50/50">
                         <h4 className="font-bold text-slate-700 text-sm">Monthly Report Details</h4>
                         <span className="text-xs text-slate-400">Total {Array.isArray(reportData) ? reportData.length : 1} Staff</span>
@@ -450,7 +499,7 @@ const HRDashboardPage = () => {
                             <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
                                 {Array.isArray(reportData) && reportData.length > 0 ? (
                                     reportData.map((row, idx) => (
-                                        <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${selectedEmployeeId === (row.employee?._id || row.employeeId) ? "bg-blue-50/40 border-l-4 border-blue-500" : ""}`}>
+                                        <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${selectedEmployeeId === (row.employee?.id || row.employee?._id || row.employeeId) ? "bg-blue-50/40 border-l-4 border-blue-500" : ""}`}>
                                             <td className="py-3 px-3.5">
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-slate-800">{row.employee?.name}</span>
@@ -481,49 +530,69 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Add dailyLogs breakdown for focused individual view */}
-                    {singleEmployeeReport && singleEmployeeReport.dailyLogs?.length > 0 && (
+                    {selectedEmployeeId && (
                         <div className="p-3 bg-slate-50/50 border-t border-slate-200/60">
                             <h5 className="font-bold text-slate-700 text-xs mb-2">
-                                Staff Shift Logs Breakdown for {singleEmployeeReport.employee?.name || "Selected Employee"}
+                                Staff Shift Logs Breakdown for {singleEmployeeReport?.employee?.name || employeesList.find(emp => emp._id === selectedEmployeeId)?.name || "Selected Employee"}
                             </h5>
-                            <div className="overflow-x-auto rounded-lg border border-slate-200/60 bg-white">
-                                <table className="w-full text-left border-collapse text-xs">
-                                    <thead>
-                                        <tr className="bg-slate-50">
-                                            <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                                            <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Clock In</th>
-                                            <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Clock Out</th>
-                                            <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Total Working Hrs</th>
-                                            <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Break Time</th>
-                                            <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Late Info</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {singleEmployeeReport.dailyLogs.map((log, lidx) => (
-                                            <tr key={lidx} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="py-2 px-3 font-medium text-slate-800">
-                                                    {new Date(log.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                                </td>
-                                                <td className="py-2 px-3 text-slate-600">
-                                                    {log.clockInTime ? new Date(log.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
-                                                </td>
-                                                <td className="py-2 px-3 text-slate-600">
-                                                    {log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "Active / Working"}
-                                                </td>
-                                                <td className="py-2 px-3 font-bold text-slate-700">{log.totalHours || 0} hrs</td>
-                                                <td className="py-2 px-3 text-slate-500">{log.breakTime || 0} mins</td>
-                                                <td className="py-2 px-3">
-                                                    {log.isLate ? (
-                                                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100">Late by {log.lateBy}m</span>
-                                                    ) : (
-                                                        <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">On time</span>
-                                                    )}
-                                                </td>
+                            
+                            {isLoadingSingle ? (
+                                <div className="space-y-2 bg-white p-3 rounded-lg border border-slate-200/60">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="flex justify-between gap-4 py-2 border-b border-slate-50 last:border-0">
+                                            <SkeletonItem className="h-4 w-24" />
+                                            <SkeletonItem className="h-4 w-16" />
+                                            <SkeletonItem className="h-4 w-16" />
+                                            <SkeletonItem className="h-4 w-12" />
+                                            <SkeletonItem className="h-4 w-12" />
+                                            <SkeletonItem className="h-4 w-20" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : singleEmployeeReport && singleEmployeeReport.dailyLogs?.length > 0 ? (
+                                <div className="overflow-x-auto rounded-lg border border-slate-200/60 bg-white">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr className="bg-slate-50">
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Clock In</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Clock Out</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Total Working Hrs</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Break Time</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Late Info</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {singleEmployeeReport.dailyLogs.map((log, lidx) => (
+                                                <tr key={lidx} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="py-2 px-3 font-medium text-slate-800">
+                                                        {new Date(log.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-slate-600">
+                                                        {log.clockInTime ? new Date(log.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-slate-600">
+                                                        {log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "Active / Working"}
+                                                    </td>
+                                                    <td className="py-2 px-3 font-bold text-slate-700">{log.totalHours || 0} hrs</td>
+                                                    <td className="py-2 px-3 text-slate-500">{log.breakTime || 0} mins</td>
+                                                    <td className="py-2 px-3">
+                                                        {log.isLate ? (
+                                                            <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100">Late by {log.lateBy}m</span>
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">On time</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="bg-white p-4 text-center text-slate-400 text-xs rounded-lg border border-slate-200/60">
+                                    No shift logs found for this period.
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
