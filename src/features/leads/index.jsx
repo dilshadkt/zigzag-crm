@@ -993,27 +993,29 @@ const LeadsFeature = ({
               </div>
             )}
             {/* Project Filter */}
-            <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3" />
-                </svg>
-                Project View:
-              </span>
-              <select
-                value={projectFilterState || ""}
-                onChange={(e) => {
-                  setProjectFilter(e.target.value);
-                  if (onProjectFilterChange) onProjectFilterChange(e.target.value);
-                }}
-                className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none min-w-[160px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-              >
-                <option value="">All Projects</option>
-                {projects.map(p => (
-                  <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
+            {!isClient && (
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3" />
+                  </svg>
+                  Project View:
+                </span>
+                <select
+                  value={projectFilterState || ""}
+                  onChange={(e) => {
+                    setProjectFilter(e.target.value);
+                    if (onProjectFilterChange) onProjectFilterChange(e.target.value);
+                  }}
+                  className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none min-w-[160px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                >
+                  <option value="">All Projects</option>
+                  {projects.map(p => (
+                    <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 
