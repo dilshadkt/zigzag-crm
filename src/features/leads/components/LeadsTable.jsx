@@ -32,6 +32,8 @@ const LeadsTable = ({
   scrollContainerId,
   projects = [],
   onMoveToProject,
+  bottomContent,
+  onLoadMore,
 }) => {
   const visibleLeadIds = leads.map((lead) => String(lead._id || lead.id));
   const isAllSelected =
@@ -70,10 +72,20 @@ const LeadsTable = ({
       : 0;
 
   if (isMobile) {
+    const handleScroll = (e) => {
+      if (onLoadMore) {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollHeight - scrollTop <= clientHeight + 100) {
+          onLoadMore();
+        }
+      }
+    };
+
     return (
       <div
-        className={`flex flex-col gap-1.5 px-3 py-2 ${!scrollContainerId ? 'h-full overflow-y-auto' : ''}`}
+        className={`flex flex-col px-3 py-2 ${!scrollContainerId ? 'h-full overflow-y-auto' : ''}`}
         ref={!scrollContainerId ? parentRef : null}
+        onScroll={handleScroll}
       >
         {showEmptyState ? (
           <div className="px-6 py-12 text-center text-sm text-slate-500 bg-white rounded-xl border border-slate-100">
@@ -84,34 +96,37 @@ const LeadsTable = ({
             <div style={{ height: `${paddingTop}px` }} />
             {virtualRows.map((virtualRow) => {
               const lead = leads[virtualRow.index];
+              if (!lead) return null;
               const leadId = String(lead._id || lead.id);
               return (
-                <LeadCard
-                  key={leadId}
-                  lead={lead}
-                  columns={columns}
-                  isSelected={selectedLeadIds.includes(leadId)}
-                  onToggle={onToggleSelect}
-                  onRowClick={onRowClick}
-                  onEdit={onEdit}
-                  onSendEmail={onSendEmail}
-                  onCreateTask={onCreateTask}
-                  onAssign={onAssign}
-                  onDelete={onDelete}
-                  onConvert={onConvert}
-                  onCopyURL={onCopyURL}
-                  statuses={statuses}
-                  onStatusChange={onStatusChange}
-                  onCustomFieldChange={onCustomFieldChange}
-                  onMoveToBranch={onMoveToBranch}
-                  branches={branches}
-                  canManage={canManage}
-                  projects={projects}
-                  onMoveToProject={onMoveToProject}
-                />
+                <div key={leadId} ref={rowVirtualizer.measureElement} data-index={virtualRow.index} className="pb-1.5">
+                  <LeadCard
+                    lead={lead}
+                    columns={columns}
+                    isSelected={selectedLeadIds.includes(leadId)}
+                    onToggle={onToggleSelect}
+                    onRowClick={onRowClick}
+                    onEdit={onEdit}
+                    onSendEmail={onSendEmail}
+                    onCreateTask={onCreateTask}
+                    onAssign={onAssign}
+                    onDelete={onDelete}
+                    onConvert={onConvert}
+                    onCopyURL={onCopyURL}
+                    statuses={statuses}
+                    onStatusChange={onStatusChange}
+                    onCustomFieldChange={onCustomFieldChange}
+                    onMoveToBranch={onMoveToBranch}
+                    branches={branches}
+                    canManage={canManage}
+                    projects={projects}
+                    onMoveToProject={onMoveToProject}
+                  />
+                </div>
               );
             })}
             <div style={{ height: `${paddingBottom}px` }} />
+            {bottomContent}
           </>
         )}
       </div>

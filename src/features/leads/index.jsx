@@ -116,6 +116,14 @@ const LeadsFeature = ({
   const [projectFilterState, setProjectFilter] = useState("");
   const navigate = useNavigate();
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+
   // Persist states to session storage
   const [activeStatusId, setActiveStatusId] = useState(() => sessionStorage.getItem('leads_activeStatusId') || null);
   const [activeAction, setActiveAction] = useState(() => sessionStorage.getItem('leads_activeAction') || null);
@@ -232,7 +240,8 @@ const LeadsFeature = ({
     columns: generatedColumns,
     isLoading,
     refetchLeads,
-    isRefetching
+    isRefetching,
+    isFetching
   } = useLeadsData({
     page,
     limit: pageSize,
@@ -248,7 +257,28 @@ const LeadsFeature = ({
     startDate: statsDateRange.startDate,
     endDate: statsDateRange.endDate,
     timezoneOffset: new Date().getTimezoneOffset(),
+    isInfiniteScroll: isClient && isMobile,
   });
+
+  const loadMoreRef = useRef(null);
+  const fetchingPageRef = useRef(null);
+
+  useEffect(() => {
+    if (!isFetching) {
+      fetchingPageRef.current = null;
+    }
+  }, [isFetching]);
+
+  const handleScroll = useCallback((e) => {
+    if (!isClient || !isMobile) return;
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollHeight - scrollTop <= clientHeight + 100) {
+      if (page < pagination?.pages && !isFetching && fetchingPageRef.current !== page) {
+        fetchingPageRef.current = page;
+        setPage(p => p + 1);
+      }
+    }
+  }, [isClient, isMobile, page, pagination?.pages, isFetching]);
   const handleStatusFilter = (statusId) => {
     setActiveStatusId((prev) => (prev === statusId ? null : statusId));
     setAppliedFilters({});
@@ -944,21 +974,25 @@ const LeadsFeature = ({
 
   return (
     <section className="h-full overflow-hidden">
-      <div className="h-full overflow-y-auto scrollbar-hide flex flex-col gap-y-1" id="leads-scroll-container">
+      <div 
+        className="h-full overflow-y-auto scrollbar-hide flex flex-col gap-y-1" 
+        id="leads-scroll-container"
+        onScroll={handleScroll}
+      >
 
         {/* Global Filters Row */}
         {((branches && branches.length > 0 && !isClient) || true) && (
-          <div className="flex justify-end items-center gap-3 bg-white p-2 md:p-3 px-4 border border-slate-100 rounded-xl  shrink-0 animate-in fade-in duration-300">
+          <div className="flex flex-row flex-wrap justify-start sm:justify-end items-center gap-2 sm:gap-3 bg-white p-2 md:p-3 px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 overflow-x-auto no-scrollbar">
             {/* Date Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
                 <svg className="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 Date Range:
               </span>
               <select
                 value={statsDateRange?.preset || ''}
                 onChange={handleDatePresetChange}
-                className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none min-w-[150px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
               >
                 <option value="">All Time</option>
                 <option value="today">Today</option>
@@ -972,8 +1006,8 @@ const LeadsFeature = ({
 
             {/* Branch Filter (Provided by Parent) */}
             {branches && branches.length > 0 && typeof onBranchFilterChange === 'function' && (
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
+                <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
                   <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -983,9 +1017,9 @@ const LeadsFeature = ({
                 <select
                   value={branchFilter || ""}
                   onChange={(e) => onBranchFilterChange(e.target.value)}
-                  className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[160px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                  className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
                 >
-                  <option value="">Global Overview (All Branches)</option>
+                  <option value="">Global Overview</option>
                   {branches.map(b => (
                     <option key={b.id || b.name} value={b.name}>{b.name}</option>
                   ))}
@@ -994,8 +1028,8 @@ const LeadsFeature = ({
             )}
             {/* Project Filter */}
             {!isClient && (
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
+                <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
                   <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3" />
                   </svg>
@@ -1007,7 +1041,7 @@ const LeadsFeature = ({
                     setProjectFilter(e.target.value);
                     if (onProjectFilterChange) onProjectFilterChange(e.target.value);
                   }}
-                  className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none min-w-[160px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                  className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
                 >
                   <option value="">All Projects</option>
                   {projects.map(p => (
@@ -1035,8 +1069,7 @@ const LeadsFeature = ({
             />
           </div>
         )}
-        <div className="relative bg-white min-h-full 
-        rounded-2xl border border-slate-100 flex flex-col">
+        <div className="relative bg-white grow shrink-0 rounded-2xl border border-slate-100 pb-2">
           <div className="sticky top-0 z-40 bg-white rounded-t-2xl">
             <LeadsPageHeader
               searchTerm={searchTerm}
@@ -1058,7 +1091,7 @@ const LeadsFeature = ({
             <LeadsTableShimmer columns={columns.filter((col) => col.visible)} />
           ) : (
             <>
-              <div className="flex-1 min-h-0">
+              <div>
                 <LeadsTable
                   leads={visibleLeads}
                   columns={columns.filter((col) => col.visible)}
@@ -1081,21 +1114,33 @@ const LeadsFeature = ({
                   canManage={canEditLead}
                   projects={projects}
                   onMoveToProject={handleMoveToProject}
+                  scrollContainerId="leads-scroll-container"
+                  bottomContent={
+                    isClient && isMobile ? (
+                      <div ref={loadMoreRef} className="py-6 flex justify-center">
+                        {isFetching && (
+                          <div className="w-5 h-5 border-2 border-[#3f8cff] border-t-transparent rounded-full animate-spin"></div>
+                        )}
+                      </div>
+                    ) : null
+                  }
                 />
               </div>
-              <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">
-                <LeadsPagination
-                  pageSize={pageSize}
-                  onPageSizeChange={(newSize) => {
-                    setPageSize(newSize);
-                    setPage(1); // Reset to first page when changing page size
-                  }}
-                  currentPage={page}
-                  onPageChange={setPage}
-                  visibleCount={visibleLeads.length}
-                  totalCount={pagination.total}
-                />
-              </div>
+              {!(isClient && isMobile) && (
+                <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2 md:p-3 rounded-b-2xl z-30">
+                  <LeadsPagination
+                    pageSize={pageSize}
+                    onPageSizeChange={(newSize) => {
+                      setPageSize(newSize);
+                      setPage(1); // Reset to first page when changing page size
+                    }}
+                    currentPage={page}
+                    onPageChange={setPage}
+                    visibleCount={visibleLeads.length}
+                    totalCount={pagination?.total}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1278,10 +1323,10 @@ const LeadsFeature = ({
       {canAddLead && (
         <button
           onClick={() => setAddLeadModalOpen(true)}
-          className={`fixed bottom-[70px] left-6 z-50 flex items-center justify-center bg-[#3f8cff] text-white w-14 h-14 rounded-full shadow-2xl hover:bg-[#2f6bff] active:scale-95 transition-all duration-300 ${!isUserClient ? 'md:hidden' : ''}`}
+          className="fixed bottom-[90px] left-6 z-50 md:hidden flex items-center justify-center bg-[#3f8cff] text-white w-12 h-12 rounded-full shadow-xl hover:bg-[#2f6bff] active:scale-95 transition-all duration-300"
           aria-label="Add lead"
         >
-          <FiPlus size={24} />
+          <FiPlus size={22} />
         </button>
       )}
     </section>

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useGetLeads, useGetLeadFormConfig, useGetLeadStatuses } from "../api";
 
 export const useLeadsData = (filters = {}) => {
@@ -27,6 +27,7 @@ export const useLeadsData = (filters = {}) => {
     error: leadsError,
     refetch: refetchLeads,
     isRefetching,
+    isFetching,
   } = useGetLeads({
     page,
     limit,
@@ -45,8 +46,6 @@ export const useLeadsData = (filters = {}) => {
     timezoneOffset,
   });
 
-
-
   // Fetch form configuration
   const { data: formConfigData, isLoading: formConfigLoading } =
     useGetLeadFormConfig(projectId);
@@ -56,11 +55,31 @@ export const useLeadsData = (filters = {}) => {
     useGetLeadStatuses();
 
   const isLoading = leadsLoading || formConfigLoading || statusesLoading;
+  
+  const [accumulatedLeads, setAccumulatedLeads] = React.useState([]);
 
   // Extract leads and pagination info
+  React.useEffect(() => {
+    if (leadsData?.data) {
+      if (filters.isInfiniteScroll) {
+        if (page === 1) {
+          setAccumulatedLeads(leadsData.data);
+        } else {
+          setAccumulatedLeads((prev) => {
+            const prevIds = new Set(prev.map(p => p._id || p.id));
+            const newLeads = leadsData.data.filter(l => !prevIds.has(l._id || l.id));
+            return [...prev, ...newLeads];
+          });
+        }
+      } else {
+        setAccumulatedLeads(leadsData.data);
+      }
+    }
+  }, [leadsData?.data, filters.isInfiniteScroll, page]);
+
   const leads = useMemo(() => {
-    return leadsData?.data || [];
-  }, [leadsData]);
+    return accumulatedLeads;
+  }, [accumulatedLeads]);
 
   const pagination = useMemo(() => {
     return (
@@ -182,6 +201,7 @@ export const useLeadsData = (filters = {}) => {
     isLoading,
     error: leadsError,
     refetchLeads,
-    isRefetching
+    isRefetching,
+    isFetching
   };
 };

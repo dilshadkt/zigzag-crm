@@ -188,12 +188,12 @@ const LeadCard = memo(({
                     </span>
                 </div>
 
-                <button
+                {/* <button
                     onClick={(e) => { e.stopPropagation(); onCreateTask(lead); }}
                     className="text-[10px] font-bold text-[#3f8cff] hover:underline"
                 >
                     Create Task
-                </button>
+                </button> */}
             </div>
 
             <LeadRowContextMenu

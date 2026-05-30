@@ -4,7 +4,7 @@ import { useGetDashboardConfig, useUpdateDashboardConfig } from "../../../api/ho
 import AddWidgetModal from "./AddWidgetModal";
 import { toast } from "react-hot-toast";
 
-const LeadDashboardConfig = ({ fields, projectId }) => {
+const LeadDashboardConfig = ({ fields, projectId, branches = [] }) => {
   const { data: configData, isLoading } = useGetDashboardConfig(projectId);
   const updateConfig = useUpdateDashboardConfig();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -206,6 +206,7 @@ const LeadDashboardConfig = ({ fields, projectId }) => {
         onSave={handleSaveWidget}
         fields={fields}
         editingWidget={editingWidget}
+        branches={branches}
       />
     </div>
   );

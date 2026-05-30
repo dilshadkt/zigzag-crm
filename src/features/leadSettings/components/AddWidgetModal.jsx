@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiX, FiCheck } from "react-icons/fi";
 
-const AddWidgetModal = ({ isOpen, onClose, onSave, fields, editingWidget = null }) => {
+const AddWidgetModal = ({ isOpen, onClose, onSave, fields, editingWidget = null, branches = [] }) => {
   const [title, setTitle] = useState("");
   const [type, setType] = useState("bar");
   const [field, setField] = useState("");
@@ -44,6 +44,7 @@ const AddWidgetModal = ({ isOpen, onClose, onSave, fields, editingWidget = null 
     { key: "status", label: "Lead Status (System)" },
     { key: "source", label: "Source (System)" },
     { key: "owner", label: "Owner (System)" },
+    ...(branches && branches.length > 0 ? [{ key: "branch", label: "Branch (System)" }] : []),
     ...fields.filter(f => ["select", "checkbox", "text"].includes(f.type))
   ];
 

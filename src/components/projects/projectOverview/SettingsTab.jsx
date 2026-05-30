@@ -233,6 +233,7 @@ export const SettingsTab = ({
                   { id: "view_campaigns", label: "View Campaigns" },
                   { id: "view_insights", label: "View Social Insights" },
                   { id: "view_schedule", label: "View Content Schedule" },
+                  { id: "view_dashboard", label: "View Lead Dashboard" },
                 ].map((perm) => (
                   <label key={perm.id} className="flex items-center gap-2 cursor-pointer group">
                     <input 
@@ -588,6 +589,7 @@ export const SettingsTab = ({
           <LeadDashboardConfig 
             fields={fields} 
             projectId={currentProject?._id} 
+            branches={branches}
           />
         </div>
       </div>

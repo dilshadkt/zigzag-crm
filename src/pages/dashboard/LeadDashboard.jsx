@@ -28,13 +28,23 @@ import { useCompanyActiveProjects } from "../../api/hooks";
 import { useGetCampaignsByCompany } from "../../api/campaigns";
 import { Filter, X, Briefcase, Megaphone, List as ListIcon } from "lucide-react";
 
-const LeadDashboardPage = () => {
+const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'company-admin';
+    const isClient = user?.role === 'client';
+    const clientProjectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
     const [selectedDays, setSelectedDays] = useState(7);
-    const [selectedProject, setSelectedProject] = useState("all");
+    const [selectedProject, setSelectedProject] = useState(isClient ? clientProjectId : "all");
     const [selectedCampaign, setSelectedCampaign] = useState("all");
+
+    const handleNavigate = (path) => {
+        if (onNavigateToLeads && path.startsWith('/leads')) {
+            onNavigateToLeads(path);
+        } else {
+            navigate(path);
+        }
+    };
 
     // Fetch filters data
     const { data: projects = [] } = useCompanyActiveProjects();
@@ -53,7 +63,7 @@ const LeadDashboardPage = () => {
     const stats = statsData?.data;
 
     const onLeadClick = (leadId) => {
-        navigate(`/leads/${leadId}`);
+        handleNavigate(`/leads/${leadId}`);
     };
 
     const handleCall = (e, phone) => {
@@ -89,24 +99,26 @@ const LeadDashboardPage = () => {
                 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Project Filter */}
-                    <div className="relative group">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
-                            <Briefcase className="w-3.5 h-3.5" />
+                    {!isClient && (
+                        <div className="relative group">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
+                                <Briefcase className="w-3.5 h-3.5" />
+                            </div>
+                            <select
+                                value={selectedProject}
+                                onChange={(e) => {
+                                    setSelectedProject(e.target.value);
+                                    setSelectedCampaign("all");
+                                }}
+                                className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px]"
+                            >
+                                <option value="all">All Projects</option>
+                                {projects.map(project => (
+                                    <option key={project._id} value={project._id}>{project.name}</option>
+                                ))}
+                            </select>
                         </div>
-                        <select
-                            value={selectedProject}
-                            onChange={(e) => {
-                                setSelectedProject(e.target.value);
-                                setSelectedCampaign("all");
-                            }}
-                            className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px]"
-                        >
-                            <option value="all">All Projects</option>
-                            {projects.map(project => (
-                                <option key={project._id} value={project._id}>{project.name}</option>
-                            ))}
-                        </select>
-                    </div>
+                    )}
 
                     {/* Campaign Filter */}
                     <div className="relative group">
@@ -139,10 +151,10 @@ const LeadDashboardPage = () => {
                         </select>
                     </div>
 
-                    {(selectedProject !== "all" || selectedCampaign !== "all") && (
+                    {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
                         <button
                             onClick={() => {
-                                setSelectedProject("all");
+                                if (!isClient) setSelectedProject("all");
                                 setSelectedCampaign("all");
                             }}
                             className="p-2 text-slate-400 hover:text-rose-500 bg-slate-50 rounded-xl transition-colors"
@@ -153,7 +165,7 @@ const LeadDashboardPage = () => {
                     )}
 
                     <button
-                        onClick={() => navigate('/leads')}
+                        onClick={() => handleNavigate('/leads')}
                         className="flex items-center gap-2 px-4 py-2 bg-[#3f8cff] text-white rounded-xl hover:bg-[#337ae6] shadow-sm shadow-blue-100 transition-all text-[11px] font-bold"
                     >
                         <Search className="w-3.5 h-3.5" />
@@ -163,7 +175,8 @@ const LeadDashboardPage = () => {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {(viewMode === 'all' || viewMode === 'stats') && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 <StatCard
                     title="Total Leads"
                     value={stats?.totalLeads}
@@ -171,7 +184,7 @@ const LeadDashboardPage = () => {
                     color="blue"
                     trend={`${stats?.trends?.totalLeadsTrend >= 0 ? '+' : ''}${stats?.trends?.totalLeadsTrend || 0}%`}
                     trendUp={stats?.trends?.totalLeadsTrend >= 0}
-                    onClick={() => navigate('/leads')}
+                    onClick={() => handleNavigate('/leads')}
                 />
                 <StatCard
                     title="New Today"
@@ -180,27 +193,29 @@ const LeadDashboardPage = () => {
                     color="amber"
                     trend={`${stats?.trends?.newTodayTrend >= 0 ? '+' : ''}${stats?.trends?.newTodayTrend || 0}%`}
                     trendUp={stats?.trends?.newTodayTrend >= 0}
-                    onClick={() => navigate('/leads')}
+                    onClick={() => handleNavigate('/leads')}
                 />
                 <StatCard
                     title="Hot Leads"
                     value={stats?.hotLeads?.count}
                     icon={Flame}
                     color="orange"
-                    onClick={() => navigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
+                    onClick={() => handleNavigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
                 />
                 <StatCard
                     title="Today's Follow-ups"
                     value={stats?.todayFollowUps?.count}
                     icon={CalendarCheck}
                     color="emerald"
-                    onClick={() => navigate('/leads?scheduled=today')}
+                    onClick={() => handleNavigate('/leads?scheduled=today')}
                 />
-            </div>
+                </div>
+            )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-                {/* Left Column - Performance & Trends */}
-                <div className="lg:col-span-2 space-y-2">
+            {(viewMode === 'all' || viewMode === 'insights') && (
+                <div className={`grid grid-cols-1 gap-2 ${viewMode === 'all' ? 'lg:grid-cols-3' : ''}`}>
+                    {/* Left Column - Performance & Trends */}
+                    <div className={`${viewMode === 'all' ? 'lg:col-span-2' : ''} space-y-2`}>
                     {/* Performance Chart */}
                     <div className="bg-white p-5 rounded-[2rem] border border-slate-100">
                         <div className="flex items-center justify-between mb-4">
@@ -435,10 +450,11 @@ const LeadDashboardPage = () => {
                             </div>
                         </div>
                     )}
-                </div>
+                    </div>
 
-                {/* Right Column - Actionable Lists */}
-                <div className="space-y-2">
+                    {/* Right Column - Actionable Lists */}
+                    {viewMode === 'all' && (
+                        <div className="space-y-2">
                     {/* Hot Leads */}
                     <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
                         <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-orange-50/20">
@@ -535,7 +551,7 @@ const LeadDashboardPage = () => {
                     </div>
 
                     {/* Filtered Lead Results - New List Section */}
-                    {(selectedProject !== "all" || selectedCampaign !== "all") && (
+                    {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
                         <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
                             <div className="p-4 border-b border-slate-50 bg-blue-50/10 flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -574,8 +590,10 @@ const LeadDashboardPage = () => {
                             </button>
                         </div>
                     )}
+                    </div>
+                )}
                 </div>
-            </div>
+            )}
         </div>
     );
 };
