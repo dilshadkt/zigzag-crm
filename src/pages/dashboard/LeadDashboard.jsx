@@ -479,22 +479,22 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads }) => {
                                     >
                                         <div className="flex items-center gap-2.5 overflow-hidden">
                                             <div className="relative">
-                                                {emp.personInfo?.avatar ? (
-                                                    <img src={emp.personInfo.avatar} alt={emp.personInfo.name} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                {emp.avatar ? (
+                                                    <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
                                                 ) : (
                                                     <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center text-xs font-bold uppercase">
-                                                        {emp.personInfo?.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || 'S'}
+                                                        {emp.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || 'S'}
                                                     </div>
                                                 )}
                                                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></div>
                                             </div>
                                             <div className="overflow-hidden">
-                                                <p className="text-[11px] font-bold text-slate-800 truncate">{emp.personInfo?.name || 'Unknown'}</p>
-                                                <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.personInfo?.role || 'Agent'}</p>
+                                                <p className="text-[11px] font-bold text-slate-800 truncate">{emp.name || 'Unknown'}</p>
+                                                <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.role || 'Agent'}</p>
                                             </div>
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-[13px] font-black text-indigo-600 leading-none">{emp.count}</p>
+                                            <p className="text-[13px] font-black text-indigo-600 leading-none">{emp.stats?.total || 0}</p>
                                             <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">Leads</p>
                                         </div>
                                     </div>
