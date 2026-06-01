@@ -85,6 +85,13 @@ export const FIELD_TYPES = [
   { value: "checkbox", label: "Checkbox" },
 ];
 
+export const RULE_OPERATORS = [
+  { value: "equals", label: "equals" },
+  { value: "not_equals", label: "does not equal" },
+  { value: "is_filled", label: "is filled" },
+  { value: "is_empty", label: "is empty" },
+];
+
 // Mandatory fields that must always exist and be required
 export const MANDATORY_FIELDS = [
   {

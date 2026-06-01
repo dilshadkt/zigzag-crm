@@ -1,6 +1,6 @@
 import CustomSelect from "./CustomSelect";
-import { FIELD_TYPES, isMandatoryField } from "../constants";
-import { FiPlus, FiTrash2, FiLock, FiMenu } from "react-icons/fi";
+import { FIELD_TYPES, RULE_OPERATORS, isMandatoryField } from "../constants";
+import { FiPlus, FiTrash2, FiLock, FiMenu, FiGitBranch, FiX, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useState } from "react";
 import {
   DndContext,
@@ -19,9 +19,186 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+// ─────────────────────────────────────────────
+// Rule Builder — shown inside each field card
+// ─────────────────────────────────────────────
+const FieldRuleBuilder = ({ field, allFields, onUpdateField }) => {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState({ fieldId: "", operator: "equals", value: "" });
+
+  const rules = field.rules || [];
+  const ruleCount = rules.length;
+
+  // Fields that appear *before* this field — these can be watched
+  const fieldIndex = allFields.findIndex((f) => f.id === field.id);
+  const eligibleFields = allFields.slice(0, fieldIndex).filter((f) => !isMandatoryField(f));
+
+  const watchedField = eligibleFields.find((f) => f.id === draft.fieldId);
+  const needsValue = draft.operator === "equals" || draft.operator === "not_equals";
+
+  const handleAddRule = () => {
+    if (!draft.fieldId || !draft.operator) return;
+    const newRule = {
+      fieldId: draft.fieldId,
+      operator: draft.operator,
+      value: needsValue ? draft.value : "",
+    };
+    onUpdateField(field.id, { rules: [...rules, newRule] });
+    setDraft({ fieldId: "", operator: "equals", value: "" });
+  };
+
+  const handleRemoveRule = (index) => {
+    onUpdateField(field.id, { rules: rules.filter((_, i) => i !== index) });
+  };
+
+  const getFieldLabel = (fieldId) => {
+    const f = allFields.find((x) => x.id === fieldId);
+    return f?.label || fieldId;
+  };
+
+  const getOperatorLabel = (op) => {
+    return RULE_OPERATORS.find((r) => r.value === op)?.label || op;
+  };
+
+  return (
+    <div className="mt-2">
+      {/* Toggle button */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all
+          ${ruleCount > 0
+            ? "text-indigo-600 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100"
+            : "text-slate-400 bg-slate-50 border border-slate-100 hover:bg-slate-100 hover:text-slate-600"
+          }`}
+      >
+        <FiGitBranch size={11} />
+        {ruleCount > 0 ? `${ruleCount} Condition${ruleCount > 1 ? "s" : ""}` : "Add Conditions"}
+        {open ? <FiChevronUp size={11} /> : <FiChevronDown size={11} />}
+      </button>
+
+      {/* Expanded panel */}
+      {open && (
+        <div className="mt-2 rounded-xl border border-indigo-100 bg-gradient-to-b from-indigo-50/60 to-white p-3 space-y-3">
+          <p className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest">
+            Show this field only when…
+          </p>
+
+          {/* Existing rules */}
+          {rules.length === 0 && (
+            <p className="text-[11px] text-slate-400 italic">
+              No conditions yet — field always shows.
+            </p>
+          )}
+          <div className="space-y-1.5">
+            {rules.map((rule, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 flex-wrap bg-white border border-indigo-100 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm"
+              >
+                <span className="text-indigo-500 font-bold">{getFieldLabel(rule.fieldId)}</span>
+                <span className="text-slate-400">{getOperatorLabel(rule.operator)}</span>
+                {rule.value && (
+                  <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold">
+                    {rule.value}
+                  </span>
+                )}
+                {index < rules.length - 1 && (
+                  <span className="text-[9px] font-extrabold text-amber-500 uppercase bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded ml-1">
+                    AND
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRule(index)}
+                  className="ml-auto text-slate-300 hover:text-red-500 transition-colors"
+                >
+                  <FiX size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* No eligible watch fields */}
+          {eligibleFields.length === 0 ? (
+            <p className="text-[11px] text-slate-400 italic">
+              Add other fields above this one to use conditions.
+            </p>
+          ) : (
+            /* Add rule row */
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-2">
+                {/* Watch field */}
+                <CustomSelect
+                  value={draft.fieldId}
+                  onChange={(v) => setDraft((d) => ({ ...d, fieldId: v, value: "" }))}
+                  options={[
+                    { value: "", label: "Select a field to watch…" },
+                    ...eligibleFields.map((f) => ({ value: f.id, label: f.label })),
+                  ]}
+                />
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Operator */}
+                  <CustomSelect
+                    value={draft.operator}
+                    onChange={(v) => setDraft((d) => ({ ...d, operator: v, value: "" }))}
+                    options={RULE_OPERATORS.map((op) => ({ value: op.value, label: op.label }))}
+                  />
+
+                  {/* Value — hidden for is_filled / is_empty */}
+                  {needsValue ? (
+                    watchedField?.type === "select" ? (
+                      <CustomSelect
+                        value={draft.value}
+                        onChange={(v) => setDraft((d) => ({ ...d, value: v }))}
+                        options={[
+                          { value: "", label: "Select value…" },
+                          ...(watchedField.options || []).map((opt) => ({
+                            value: opt,
+                            label: opt,
+                          })),
+                        ]}
+                      />
+                    ) : (
+                      <input
+                        className="h-9 rounded-xl border border-slate-200 px-3 text-[12px] font-medium focus:outline-none focus:border-indigo-400 bg-white"
+                        placeholder="Value…"
+                        value={draft.value}
+                        onChange={(e) => setDraft((d) => ({ ...d, value: e.target.value }))}
+                      />
+                    )
+                  ) : (
+                    <div className="h-9 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-[11px] text-slate-300 italic">
+                      no value needed
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddRule}
+                disabled={!draft.fieldId}
+                className="w-full inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-indigo-600 text-white text-[11px] font-bold hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+              >
+                <FiPlus size={12} />
+                Add Condition
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
 // Sortable Field Item Component
+// ─────────────────────────────────────────────
 const SortableFieldItem = ({
   field,
+  allFields,
   onUpdateField,
   onRemoveField,
   onFieldOptionChange,
@@ -239,13 +416,24 @@ const SortableFieldItem = ({
               </div>
             </div>
           )}
+
+          {/* Conditional Rule Builder — only for custom fields */}
+          {!isMandatory && (
+            <FieldRuleBuilder
+              field={field}
+              allFields={allFields}
+              onUpdateField={onUpdateField}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 };
 
+// ─────────────────────────────────────────────
 // Main Component
+// ─────────────────────────────────────────────
 const SortableLeadFormFieldList = ({
   fields,
   onUpdateField,
@@ -297,6 +485,7 @@ const SortableLeadFormFieldList = ({
             <SortableFieldItem
               key={field.id}
               field={field}
+              allFields={fields}
               onUpdateField={onUpdateField}
               onRemoveField={onRemoveField}
               onFieldOptionChange={onFieldOptionChange}

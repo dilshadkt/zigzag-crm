@@ -1,4 +1,42 @@
+import { useRef, useEffect, useState } from "react";
 import CustomSelect from "./CustomSelect";
+import { isFieldVisible } from "../fieldRuleUtils";
+
+// Animated wrapper — slides the field in/out when its visibility changes
+const AnimatedField = ({ visible, children }) => {
+  const [rendered, setRendered] = useState(visible);
+  const [animating, setAnimating] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      setRendered(true);
+      // Brief delay so the element mounts before the transition fires
+      timerRef.current = setTimeout(() => setAnimating(true), 10);
+    } else {
+      setAnimating(false);
+      // Keep in DOM until the CSS transition finishes (~250ms)
+      timerRef.current = setTimeout(() => setRendered(false), 280);
+    }
+    return () => clearTimeout(timerRef.current);
+  }, [visible]);
+
+  if (!rendered) return null;
+
+  return (
+    <div
+      style={{
+        overflow: "hidden",
+        transition: "max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease",
+        maxHeight: animating ? "300px" : "0px",
+        opacity: animating ? 1 : 0,
+        transform: animating ? "translateY(0)" : "translateY(-6px)",
+      }}
+    >
+      {children}
+    </div>
+  );
+};
 
 const LeadFormPreviewPanel = ({
   fields,
@@ -12,7 +50,11 @@ const LeadFormPreviewPanel = ({
   const handleValidate = (event) => {
     event.preventDefault();
     const errors = {};
+
     fields.forEach((field) => {
+      // Skip hidden fields
+      if (!isFieldVisible(field, previewValues)) return;
+
       const value = previewValues[field.id];
       const requiredError =
         field.required &&
@@ -41,6 +83,7 @@ const LeadFormPreviewPanel = ({
         }
       }
     });
+
     setPreviewErrors(errors);
     setPreviewMessage(
       Object.keys(errors).length === 0 ? "Looks good! Ready to submit." : ""
@@ -57,21 +100,35 @@ const LeadFormPreviewPanel = ({
           </span>
         )}
       </div>
-      <form className="space-y-2.5 bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm" onSubmit={handleValidate}>
-        {fields.map((field) => (
-          <div key={field.id} className="flex flex-col gap-1">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-tight ml-0.5">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-0.5">*</span>}
-            </label>
-            {renderField(field, previewValues, setPreviewValues)}
-            {previewErrors[field.id] && (
-              <span className="text-[10px] font-bold text-red-500 px-1">
-                {previewErrors[field.id]}
-              </span>
-            )}
-          </div>
-        ))}
+      <form
+        className="space-y-2.5 bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm"
+        onSubmit={handleValidate}
+      >
+        {fields.map((field) => {
+          const visible = isFieldVisible(field, previewValues);
+          return (
+            <AnimatedField key={field.id} visible={visible}>
+              <div className="flex flex-col gap-1 pb-0.5">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-tight ml-0.5">
+                  {field.label}
+                  {field.required && <span className="text-red-500 ml-0.5">*</span>}
+                  {/* Small badge when field has conditions */}
+                  {(field.rules?.length > 0) && (
+                    <span className="ml-2 text-[9px] font-extrabold text-indigo-400 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase tracking-widest">
+                      conditional
+                    </span>
+                  )}
+                </label>
+                {renderField(field, previewValues, setPreviewValues)}
+                {previewErrors[field.id] && (
+                  <span className="text-[10px] font-bold text-red-500 px-1">
+                    {previewErrors[field.id]}
+                  </span>
+                )}
+              </div>
+            </AnimatedField>
+          );
+        })}
         <button
           type="submit"
           className="w-full h-10 rounded-xl bg-slate-900 text-white text-[12px] font-bold shadow-md shadow-slate-900/10 hover:bg-slate-800 transition-all active:scale-[0.98] mt-2"

@@ -1,5 +1,6 @@
 import { useCallback, memo } from "react";
 import CustomSelect from "../../leadSettings/components/CustomSelect";
+import { isFieldVisible } from "../../leadSettings/fieldRuleUtils";
 
 // Individual field component for better isolation
 const FormField = memo(({ field, value, error, onChange, statuses }) => {
@@ -159,6 +160,10 @@ const DynamicLeadForm = ({ fields, values, onChange, errors, statuses }) => {
           console.warn("Field missing id:", field);
           return null;
         }
+
+        // Respect conditional rules — skip hidden fields entirely
+        if (!isFieldVisible(field, values)) return null;
+
         const fieldId = String(field.id);
         const fieldValue = values?.[fieldId] ?? "";
         const fieldError = errors?.[fieldId];
@@ -179,4 +184,3 @@ const DynamicLeadForm = ({ fields, values, onChange, errors, statuses }) => {
 };
 
 export default DynamicLeadForm;
-
