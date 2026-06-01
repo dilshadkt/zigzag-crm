@@ -83,7 +83,7 @@ const LeadsFeature = ({
   const { data: projects = [] } = useCompanyActiveProjects();
   const { data: employeesData } = useGetAllEmployees(!isClient);
   const { data: salesTeamData } = useGetClientSalesTeam(projectId || null);
-  const ownersList = isClient ? (salesTeamData?.data || []) : (employeesData?.employees || []);
+  const ownersList = (isClient || projectId) ? (salesTeamData?.data || []) : (employeesData?.employees || []);
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
@@ -1059,7 +1059,7 @@ const LeadsFeature = ({
               </div>
             )}
             {/* Project Filter */}
-            {!isClient && (
+            {!isClient && !projectId && (
               <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
                 <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
                   <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1099,7 +1099,7 @@ const LeadsFeature = ({
                   <option value="">All Owners</option>
                   {ownersList.map(u => {
                     const id = u._id || u.id;
-                    const name = isClient ? u.name : (`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.name || "Unknown");
+                    const name = (isClient || projectId) ? u.name : (`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.name || "Unknown");
                     return <option key={id} value={id}>{name}</option>;
                   })}
                 </select>
