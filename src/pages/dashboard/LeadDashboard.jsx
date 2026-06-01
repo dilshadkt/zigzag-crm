@@ -4,6 +4,7 @@ import {
     useGetLeadStatuses,
     useUpdateLead
 } from "../../features/leads/api";
+import { useGetClientTeamStats } from "../../api/clientSalesTeam";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     AreaChart, Area, PieChart, Pie, Cell
@@ -60,7 +61,12 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads }) => {
     });
     const { data: statusData } = useGetLeadStatuses();
 
+    const { data: clientTeamStatsData, isLoading: clientTeamStatsLoading } = useGetClientTeamStats(
+        isClient ? selectedProject : null
+    );
+
     const stats = statsData?.data;
+    const clientTeamStats = clientTeamStatsData?.data || [];
 
     const onLeadClick = (leadId) => {
         handleNavigate(`/leads/${leadId}`);
@@ -446,6 +452,55 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads }) => {
                                 ))}
                                 {(!stats?.employeeLeads || stats?.employeeLeads.length === 0) && (
                                     <div className="col-span-full py-8 text-center text-slate-400 text-xs">No assignments found</div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Client Sales Team Leaderboard - Clients Only */}
+                    {isClient && (
+                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[380px]">
+                            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <Users className="w-4 h-4 text-indigo-500" />
+                                    Sales Team Performance
+                                </h3>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Your Team</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto scrollbar-hide pr-1">
+                                {clientTeamStatsLoading ? (
+                                    <div className="col-span-full flex items-center justify-center h-full">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                                    </div>
+                                ) : clientTeamStats.map((emp) => (
+                                    <div
+                                        key={emp._id}
+                                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-indigo-500/20 transition-all h-fit group/emp"
+                                    >
+                                        <div className="flex items-center gap-2.5 overflow-hidden">
+                                            <div className="relative">
+                                                {emp.personInfo?.avatar ? (
+                                                    <img src={emp.personInfo.avatar} alt={emp.personInfo.name} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center text-xs font-bold uppercase">
+                                                        {emp.personInfo?.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || 'S'}
+                                                    </div>
+                                                )}
+                                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></div>
+                                            </div>
+                                            <div className="overflow-hidden">
+                                                <p className="text-[11px] font-bold text-slate-800 truncate">{emp.personInfo?.name || 'Unknown'}</p>
+                                                <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.personInfo?.role || 'Agent'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-[13px] font-black text-indigo-600 leading-none">{emp.count}</p>
+                                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">Leads</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!clientTeamStats || clientTeamStats.length === 0) && !clientTeamStatsLoading && (
+                                    <div className="col-span-full py-8 text-center text-slate-400 text-xs">No team leads assigned yet</div>
                                 )}
                             </div>
                         </div>

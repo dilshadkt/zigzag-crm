@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiX, FiPlus, FiTrash2, FiCalendar, FiFilter } from "react-icons/fi";
+import { useGetAllEmployees } from "../../../api/hooks";
+import { useGetClientSalesTeam } from "../../../api/clientSalesTeam";
 
 const LeadsFilterDrawer = ({
     isOpen,
@@ -8,9 +10,19 @@ const LeadsFilterDrawer = ({
     formFields = [],
     statuses = [],
     currentFilters = {},
+    isClient = false,
+    projectId = null,
 }) => {
     const [filters, setFilters] = useState([]);
     const [filterCount, setFilterCount] = useState(0);
+
+    const { data: employeesData } = useGetAllEmployees(isOpen && !isClient);
+    const { data: salesTeamData } = useGetClientSalesTeam(
+        isOpen && projectId ? projectId : null
+    );
+
+    const employees = employeesData?.employees || [];
+    const salesTeam = salesTeamData?.data || [];
 
     // Initialize filters from currentFilters
     useEffect(() => {
@@ -38,7 +50,12 @@ const LeadsFilterDrawer = ({
     // Available filter fields
     const filterFields = [
         { key: "status", label: "Status", type: "status" },
-        { key: "owner", label: "Owner", type: "user" },
+        ...(isClient
+            ? [{ key: "clientOwner", label: "Sales Team", type: "clientOwner" }]
+            : [
+                { key: "owner", label: "Owner (CRM)", type: "owner" },
+                { key: "clientOwner", label: "Client Sales Team", type: "clientOwner" },
+              ]),
         { key: "source", label: "Source", type: "text" },
         { key: "createdAt", label: "Created Date", type: "date" },
         { key: "updatedAt", label: "Last Updated", type: "date" },
@@ -184,6 +201,31 @@ const LeadsFilterDrawer = ({
                             {option}
                         </option>
                     ))}
+                </select>
+            );
+        }
+
+        // Owner/User Selection fields
+        if (fieldData.type === "owner" || fieldData.type === "clientOwner") {
+            const users = fieldData.type === "clientOwner" ? salesTeam : employees;
+            return (
+                <select
+                    value={filter.value}
+                    onChange={(e) => updateFilter(filter.id, "value", e.target.value)}
+                    className={inputClasses}
+                >
+                    <option value="">Select owner</option>
+                    {users.map((user) => {
+                        const id = user._id || user.id;
+                        const name = fieldData.type === "clientOwner" 
+                            ? user.name 
+                            : (`${user.firstName || ""} ${user.lastName || ""}`.trim() || user.name || "Unknown");
+                        return (
+                            <option key={id} value={id}>
+                                {name}
+                            </option>
+                        );
+                    })}
                 </select>
             );
         }

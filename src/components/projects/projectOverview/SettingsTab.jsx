@@ -227,14 +227,15 @@ export const SettingsTab = ({
               </label>
               <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                 {[
-                  { id: "view_overview", label: "View Overview" },
-                  { id: "view_leads", label: "View Leads" },
-                  { id: "add_lead", label: "Can Add Leads" },
-                  { id: "view_campaigns", label: "View Campaigns" },
-                  { id: "view_insights", label: "View Social Insights" },
-                  { id: "view_schedule", label: "View Content Schedule" },
-                  { id: "view_dashboard", label: "View Lead Dashboard" },
-                ].map((perm) => (
+                   { id: "view_overview", label: "View Overview" },
+                   { id: "view_leads", label: "View Leads" },
+                   { id: "add_lead", label: "Can Add Leads" },
+                   { id: "view_campaigns", label: "View Campaigns" },
+                   { id: "view_insights", label: "View Social Insights" },
+                   { id: "view_schedule", label: "View Content Schedule" },
+                   { id: "view_dashboard", label: "View Lead Dashboard" },
+                   { id: "view_sales_team", label: "Manage Sales Team" },
+                 ].map((perm) => (
                   <label key={perm.id} className="flex items-center gap-2 cursor-pointer group">
                     <input 
                       type="checkbox" 

@@ -141,7 +141,6 @@ const LeadsTable = ({
       <table className="min-w-full border-separate border-spacing-0">
         <thead className="bg-slate-50 text-slate-500 sticky top-0 z-30">
           <tr>
-            {canManage && (
               <th
                 className={`${headerClasses} cursor-pointer hover:bg-slate-100 transition-colors`}
                 onClick={() => onToggleSelectAll(!isAllSelected, visibleLeadIds)}
@@ -156,24 +155,21 @@ const LeadsTable = ({
                   />
                 </div>
               </th>
-            )}
             {columns.map((column) => (
               <th key={column.key} className={headerClasses}>
                 {column.label}
               </th>
             ))}
-            {canManage && (
               <th className={headerClasses} style={{ width: "60px" }}>
                 {/* Actions column */}
               </th>
-            )}
           </tr>
         </thead>
         <tbody className="bg-white">
           {showEmptyState ? (
             <tr className="h-[400px]">
               <td
-                colSpan={columns.length + (canManage ? 1 : 0)}
+                colSpan={columns.length + 2}
                 className="px-6 py-12 text-center text-sm text-slate-500"
               >
                 No leads found. Try adjusting your filters or create a new lead.
@@ -183,7 +179,7 @@ const LeadsTable = ({
             <>
               {paddingTop > 0.5 && (
                 <tr>
-                  <td colSpan={columns.length + (canManage ? 1 : 0)} style={{ height: `${paddingTop}px`, padding: 0 }} />
+                  <td colSpan={columns.length + 2} style={{ height: `${paddingTop}px`, padding: 0 }} />
                 </tr>
               )}
               {virtualRows.map((virtualRow) => {
@@ -219,7 +215,7 @@ const LeadsTable = ({
               })}
               {paddingBottom > 0.5 && (
                 <tr>
-                  <td colSpan={columns.length + (canManage ? 1 : 0)} style={{ height: `${paddingBottom}px`, padding: 0 }} />
+                  <td colSpan={columns.length + 2} style={{ height: `${paddingBottom}px`, padding: 0 }} />
                 </tr>
               )}
             </>

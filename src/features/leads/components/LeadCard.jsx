@@ -58,7 +58,8 @@ const LeadCard = memo(({
     const leadEmail = lead.email || lead.contact?.email;
     const leadPhone = lead.phone || lead.contact?.phone;
     const leadStatus = lead.status || "Unknown";
-    const owner = lead.owner;
+    const owner = lead.clientOwner || lead.owner;
+    const isClientTeam = !!lead.clientOwner;
     const leadScore = lead.score ?? 0;
     const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
     const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
@@ -176,16 +177,23 @@ const LeadCard = memo(({
 
             <div className="flex items-center justify-between border-t border-slate-50 pt-2">
                 <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-[#ECF3FF] flex items-center justify-center text-[#3f8cff]">
-                        {owner?.profileImage ? (
-                            <img src={owner.profileImage} alt="" className="w-full h-full rounded-full object-cover" />
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isClientTeam ? 'bg-indigo-500 text-white' : 'bg-[#ECF3FF] text-[#3f8cff]'}`}>
+                        {owner?.profileImage || owner?.avatar ? (
+                            <img src={owner.profileImage || owner.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : isClientTeam ? (
+                            <span className="text-[9px] font-bold">{(owner?.name || "?").substring(0, 2).toUpperCase()}</span>
                         ) : (
                             <FiUser size={10} />
                         )}
                     </div>
-                    <span className="text-[11px] text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">
-                        {owner?.firstName ? `${owner.firstName} ${owner.lastName || ""}` : owner?.name || "Unassigned"}
-                    </span>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-[11px] text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">
+                            {owner?.firstName ? `${owner.firstName} ${owner.lastName || ""}` : owner?.name || "Unassigned"}
+                        </span>
+                        {isClientTeam && (
+                            <span className="text-[9px] text-indigo-400 font-medium leading-none">Client Team</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* <button

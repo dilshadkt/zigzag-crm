@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import { FiPlus, FiDownload, FiTrash2, FiFolder } from "react-icons/fi";
+import { FiPlus, FiDownload, FiTrash2, FiFolder, FiUser } from "react-icons/fi";
 import LeadsPageHeader from "./components/LeadsPageHeader";
 import LeadsTable from "./components/LeadsTable";
 import LeadsTableShimmer from "./components/LeadsTableShimmer";
@@ -20,7 +20,8 @@ import LeadsDashboard from "./components/LeadsDashboard";
 import { useLeadsData } from "./hooks/useLeadsData";
 import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads, useBulkDeleteLeads } from "./api";
 import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
-import { useCompanyActiveProjects } from "../../api/hooks";
+import { useCompanyActiveProjects, useGetAllEmployees } from "../../api/hooks";
+import { useGetClientSalesTeam } from "../../api/clientSalesTeam";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -80,6 +81,9 @@ const LeadsFeature = ({
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: projects = [] } = useCompanyActiveProjects();
+  const { data: employeesData } = useGetAllEmployees(!isClient);
+  const { data: salesTeamData } = useGetClientSalesTeam(projectId || null);
+  const ownersList = isClient ? (salesTeamData?.data || []) : (employeesData?.employees || []);
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
@@ -114,6 +118,12 @@ const LeadsFeature = ({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const [projectFilterState, setProjectFilter] = useState("");
+  const [ownerFilterState, setOwnerFilterState] = useState(() => sessionStorage.getItem('leads_ownerFilter') || "");
+
+  useEffect(() => {
+    if (ownerFilterState) sessionStorage.setItem('leads_ownerFilter', ownerFilterState);
+    else sessionStorage.removeItem('leads_ownerFilter');
+  }, [ownerFilterState]);
   const navigate = useNavigate();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
@@ -162,7 +172,8 @@ const LeadsFeature = ({
       startDate: statsDateRange.startDate,
       endDate: statsDateRange.endDate
     } : {}),
-    ...(branchFilter ? { branch: branchFilter } : {})
+    ...(branchFilter ? { branch: branchFilter } : {}),
+    ...(ownerFilterState ? { owner: ownerFilterState } : {})
   });
 
 
@@ -231,6 +242,11 @@ const LeadsFeature = ({
     setPage(1);
   }, [projectFilterState]);
 
+  // Reset page when owner filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [ownerFilterState]);
+
   // Use the custom hook to get leads data
   const {
     leads,
@@ -248,8 +264,8 @@ const LeadsFeature = ({
     search: debouncedSearch,
     status: activeStatusId,
     // Only force own owner if user is employee AND NOT allowed to see all leads
-    // Otherwise allow filtering by owner from appliedFilters (dashboard click)
-    owner: (isEmployee && !canManageAllLeads) ? user._id : (appliedFilters.owner?.value || null),
+    // Otherwise allow filtering by owner from ownerFilterState or appliedFilters (dashboard click)
+    owner: (isEmployee && !canManageAllLeads) ? user._id : (ownerFilterState || appliedFilters.owner?.value || null),
     appliedFilters,
     projectId: projectFilterState || projectFilter || projectId,
     isFollowUp: isFollowUpOnly,
@@ -734,26 +750,42 @@ const LeadsFeature = ({
     setAssignModalOpen(true);
   };
 
-  const handleAssignConfirm = async (employeeId) => {
+  const handleAssignConfirm = async (assigneeId, assignType) => {
     if (!selectedLeadForAssign) return;
 
     try {
-      const leadId = selectedLeadForAssign._id || selectedLeadForAssign.id;
-      await updateLeadMutation.mutateAsync({
-        leadId,
-        leadData: { owner: employeeId },
-      });
-      toast.success("Lead owner updated successfully");
+      const updatePayload = assignType === "salesPerson"
+        ? { clientOwner: assigneeId }
+        : { owner: assigneeId };
+
+      if (selectedLeadForAssign === 'bulk') {
+        if (selectedLeadIds.length === 0) return;
+        await bulkUpdateMutation.mutateAsync({
+          leadIds: selectedLeadIds,
+          updateData: updatePayload,
+        });
+        toast.success(assignType === "salesPerson" ? `Assigned ${selectedLeadIds.length} leads to sales team member` : `Assigned ${selectedLeadIds.length} leads to owner`);
+        setSelectedLeadIds([]);
+      } else {
+        const leadId = selectedLeadForAssign._id || selectedLeadForAssign.id;
+        await updateLeadMutation.mutateAsync({
+          leadId,
+          leadData: updatePayload,
+        });
+        toast.success(assignType === "salesPerson" ? "Lead assigned to sales team member" : "Lead owner updated successfully");
+      }
+      
       setAssignModalOpen(false);
       setSelectedLeadForAssign(null);
-      // Refetch leads to show updated owner with avatar
       refetchLeads();
-      // Also invalidate queries to ensure fresh data
       queryClient.invalidateQueries(["leads"]);
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to assign lead");
+      toast.error(error?.response?.data?.message || "Failed to assign lead(s)");
     }
   };
+
+  // Wrapper so handleAssignConfirm receives (id, type) from the modal
+  const handleAssignWithType = (assigneeId, assignType) => handleAssignConfirm(assigneeId, assignType);
 
   const handleDelete = async (lead) => {
     const leadName = lead.contact?.name || lead.name || "this lead";
@@ -1050,6 +1082,29 @@ const LeadsFeature = ({
                 </select>
               </div>
             )}
+            {/* Owner Filter */}
+            {ownersList && ownersList.length > 0 && (
+              <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
+                <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
+                  <svg className="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Owner:
+                </span>
+                <select
+                  value={ownerFilterState}
+                  onChange={(e) => setOwnerFilterState(e.target.value)}
+                  className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                >
+                  <option value="">All Owners</option>
+                  {ownersList.map(u => {
+                    const id = u._id || u.id;
+                    const name = isClient ? u.name : (`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.name || "Unknown");
+                    return <option key={id} value={id}>{name}</option>;
+                  })}
+                </select>
+              </div>
+            )}
           </div>
         )}
 
@@ -1148,29 +1203,46 @@ const LeadsFeature = ({
         {/* Floating Bulk Actions Bar */}
         {selectedLeadIds.length > 0 && (
           <div
-            className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-6 border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-300 ${isDragging ? 'cursor-grabbing scale-105 opacity-90 transition-none' : 'cursor-grab'}`}
+            className={`fixed z-50 bg-slate-900 text-white ${
+              isMobile ? 'bottom-[90px] right-6 px-4 py-2.5 gap-3' : 'bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 gap-6'
+            } rounded-full shadow-2xl flex items-center border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-300 ${isDragging ? 'cursor-grabbing scale-105 opacity-90 transition-none' : 'cursor-grab'}`}
             style={{
-              transform: `translate(calc(-50% + ${bulkBarPos.x}px), ${bulkBarPos.y}px)`,
+              transform: isMobile 
+                ? `translate(${bulkBarPos.x}px, ${bulkBarPos.y}px)`
+                : `translate(calc(-50% + ${bulkBarPos.x}px), ${bulkBarPos.y}px)`,
               transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
             onMouseDown={handleDragStart}
           >
-            <div className="flex items-center gap-3 border-r border-slate-700 pr-6 pointer-events-none select-none">
+            <div className={`flex items-center ${isMobile ? 'gap-2 pr-3' : 'gap-3 pr-6'} border-r border-slate-700 pointer-events-none select-none`}>
               <span className="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
                 {selectedLeadIds.length}
               </span>
-              <span className="text-sm font-medium">Leads Selected</span>
+              {!isMobile && <span className="text-sm font-medium">Leads Selected</span>}
             </div>
 
-            <div className="flex items-center gap-4" onMouseDown={(e) => e.stopPropagation()}>
+            <div className={`flex items-center ${isMobile ? 'gap-3' : 'gap-4'}`} onMouseDown={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => {
+                  setSelectedLeadForAssign('bulk');
+                  setAssignModalOpen(true);
+                }}
+                className={`flex items-center gap-2 text-[13px] font-medium transition-colors hover:text-blue-400`}
+                title="Change Owner"
+              >
+                <FiUser className={`${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
+                {!isMobile && "Change Owner"}
+              </button>
+
               <div className="relative">
                 {canEditLead && (
                   <button
                     onClick={() => setBulkBranchMenuOpen(!isBulkBranchMenuOpen)}
                     className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${isBulkBranchMenuOpen ? 'text-blue-400' : 'hover:text-blue-400'}`}
+                    title="Move to Branch"
                   >
-                    <FiFolder className="w-3.5 h-3.5" />
-                    Move to Branch
+                    <FiFolder className={`${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
+                    {!isMobile && "Move to Branch"}
                   </button>
                 )}
 
@@ -1181,7 +1253,7 @@ const LeadsFeature = ({
                       className="fixed inset-0 z-[-1]"
                       onClick={() => setBulkBranchMenuOpen(false)}
                     />
-                    <div className="absolute bottom-full left-0 mb-1.5 w-40 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className={`absolute bottom-full ${isMobile ? 'right-0' : 'left-0'} mb-1.5 w-40 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200`}>
                       <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         Select Branch
                       </div>
@@ -1222,16 +1294,18 @@ const LeadsFeature = ({
                 }}
                 className="flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
                 disabled={bulkDeleteMutation.isPending}
+                title="Delete Leads"
               >
                 <FiTrash2 className="w-4 h-4" />
-                {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+                {!isMobile && (bulkDeleteMutation.isPending ? "Deleting..." : "Delete")}
               </button>
 
               <button
                 onClick={() => setSelectedLeadIds([])}
-                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                className={`text-sm font-medium text-slate-400 hover:text-white transition-colors ${isMobile ? 'pl-2 border-l border-slate-700' : ''}`}
+                title="Cancel Selection"
               >
-                Cancel
+                {isMobile ? "✕" : "Cancel"}
               </button>
             </div>
           </div>
@@ -1306,8 +1380,11 @@ const LeadsFeature = ({
           setAssignModalOpen(false);
           setSelectedLeadForAssign(null);
         }}
-        onAssign={handleAssignConfirm}
+        onAssign={handleAssignWithType}
         currentOwner={selectedLeadForAssign?.owner}
+        currentClientOwner={selectedLeadForAssign?.clientOwner}
+        isClient={isClient}
+        projectId={selectedLeadForAssign?.project?._id || selectedLeadForAssign?.project || projectId}
       />
 
       <LeadsFilterDrawer
@@ -1317,6 +1394,8 @@ const LeadsFeature = ({
         formFields={formFields}
         statuses={statuses}
         currentFilters={appliedFilters}
+        isClient={isClient}
+        projectId={projectId}
       />
 
       {/* Floating Add Lead Button for Mobile / Client Dashboard */}

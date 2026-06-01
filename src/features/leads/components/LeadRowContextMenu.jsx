@@ -121,12 +121,6 @@ const LeadRowContextMenu = ({
       show: !!onSendEmail && lead?.contact?.email,
     },
     {
-      label: "Create Task",
-      icon: FiCheckSquare,
-      onClick: onCreateTask,
-      show: !!onCreateTask,
-    },
-    {
       label: "Change Owner",
       icon: FiUser,
       onClick: onAssign,
@@ -187,14 +181,17 @@ const LeadRowContextMenu = ({
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         style={{ background: "transparent" }}
       />
 
       {/* Menu */}
       <div
         ref={menuRef}
-        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px]"
+        className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px] max-h-[80vh] overflow-y-auto scrollbar-hide"
         style={{
           top: `${adjustedPosition.y}px`,
           left: `${adjustedPosition.x}px`,
@@ -210,6 +207,7 @@ const LeadRowContextMenu = ({
               <div className="relative">
                 <button
                   onClick={(e) => {
+                    e.stopPropagation();
                     if (item.hasSubmenu) {
                       item.onClick(e);
                     } else {
@@ -236,7 +234,8 @@ const LeadRowContextMenu = ({
                     {branches.map((branch) => (
                       <button
                         key={branch.id || branch.name}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onMoveToBranch(lead, branch.name);
                           onClose();
                         }}
@@ -249,11 +248,12 @@ const LeadRowContextMenu = ({
                 )}
 
                 {item.hasSubmenu && showProjects && item.label === "Move to Project" && (
-                  <div className="absolute right-full bottom-0 mr-1 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[180px] max-h-[220px] overflow-y-auto scrollbar-hide z-50 animate-in fade-in slide-in-from-right-2 duration-150">
+                  <div className="bg-gray-50 border-y border-gray-100 py-1 max-h-[200px] overflow-y-auto scrollbar-hide">
                     {otherProjects.map((proj) => (
                       <button
                         key={proj._id}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           onMoveToProject(lead, proj._id, proj.name);
                           onClose();
                         }}

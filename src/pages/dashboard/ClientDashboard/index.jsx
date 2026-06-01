@@ -5,6 +5,7 @@ import Campaigns from "../../campaigns";
 import { OverviewTab } from "../../../components/projects/projectOverview/OverviewTab";
 import InsightsTab from "../../../components/projects/projectOverview/InsightsTab";
 import ScheduleTab from "../../../components/projects/projectOverview/ScheduleTab";
+import SalesTeamTab from "./SalesTeamTab";
 import logo from "../../../assets/icons/logo.svg";
 import { useAuth } from "../../../hooks/useAuth";
 import { useDispatch } from "react-redux";
@@ -18,12 +19,22 @@ const ClientDashboard = () => {
   const { user } = useAuth();
   const permissions = user?.permissions || [];
   const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = sessionStorage.getItem("client_portal_tab");
+    if (savedTab) {
+      // Validate saved tab against permissions (followups uses leads permission)
+      const permCheck = savedTab === "followups" ? "leads" : savedTab;
+      if (permissions.includes(`view_${permCheck}`)) return savedTab;
+    }
     if (permissions.includes("view_overview")) return "overview";
     if (permissions.includes("view_dashboard")) return "dashboard";
     if (permissions.includes("view_leads")) return "leads";
     if (permissions.includes("view_campaigns")) return "campaigns";
     return "leads";
   });
+
+  React.useEffect(() => {
+    sessionStorage.setItem("client_portal_tab", activeTab);
+  }, [activeTab]);
   const dispatch = useDispatch();
   const [selectedBranchId, setSelectedBranchId] = useState("");
 
@@ -174,6 +185,19 @@ const ClientDashboard = () => {
                 Schedule
               </button>
             )}
+            {permissions.includes("view_sales_team") && (
+              <button
+                onClick={() => setActiveTab("sales_team")}
+                className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
+                  activeTab === "sales_team"
+                    ? "bg-indigo-50/60 text-indigo-600 shadow-sm border border-indigo-100/50"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                Sales Team
+              </button>
+            )}
           </nav>
         </div>
 
@@ -241,6 +265,10 @@ const ClientDashboard = () => {
               <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                 <LeadDashboardPage viewMode="stats" onNavigateToLeads={handleDashboardNavigation} />
               </div>
+            ) : activeTab === "sales_team" ? (
+              <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <SalesTeamTab projectId={projectId} />
+              </div>
             ) : null}
           </div>
         </main>
@@ -298,6 +326,19 @@ const ClientDashboard = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
               </div>
               <span className="text-[10px] font-bold">Insights</span>
+            </button>
+          )}
+          {permissions.includes("view_sales_team") && (
+            <button
+              onClick={() => setActiveTab("sales_team")}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                activeTab === "sales_team" ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <div className={`p-1.5 rounded-lg mb-0.5 ${activeTab === "sales_team" ? "bg-indigo-50" : ""}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+              </div>
+              <span className="text-[10px] font-bold">Team</span>
             </button>
           )}
         </nav>

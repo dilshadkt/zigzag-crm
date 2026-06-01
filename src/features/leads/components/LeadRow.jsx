@@ -38,8 +38,31 @@ const formatDate = (date) => {
   });
 };
 
-const OwnerCell = ({ owner }) => {
+const OwnerCell = ({ owner, clientOwner }) => {
   const [imgError, setImgError] = useState(false);
+
+  // Prefer clientOwner if set (client's sales team member)
+  if (clientOwner && (clientOwner._id || clientOwner.name)) {
+    const personName = clientOwner.name || "Unknown";
+    const initials = personName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    return (
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+          {clientOwner.avatar ? (
+            <img src={clientOwner.avatar} alt={personName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-indigo-500 text-white">
+              <span className="text-[10px] font-medium">{initials}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col min-w-0">
+          <div className="text-[13px] text-slate-600 truncate">{personName}</div>
+          <div className="text-[10px] text-indigo-400 font-medium">Client Team</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!owner) {
     return <div className="text-[13px] text-slate-500">—</div>;
@@ -187,7 +210,7 @@ const columnRenderers = {
       {lead.phone || lead.contact?.phone || "—"}
     </div>
   ),
-  owner: (lead) => <OwnerCell owner={lead.owner} />,
+  owner: (lead) => <OwnerCell owner={lead.owner} clientOwner={lead.clientOwner} />,
   score: (lead) => {
     const score = lead.score ?? 0;
     let bgColor, textColor, ringColor;
@@ -340,7 +363,6 @@ const LeadRow = memo(({
         className="border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50/70 transition-colors group"
         onClick={() => onRowClick && onRowClick(lead)}
       >
-        {canManage && (
           <td
             className="px-6 py-2 cursor-pointer text-center"
             onClick={(e) => {
@@ -357,7 +379,6 @@ const LeadRow = memo(({
               />
             </div>
           </td>
-        )}
         {columns
           .filter((col) => col.visible)
           .map((column) => (
@@ -365,7 +386,6 @@ const LeadRow = memo(({
               {renderCellValue(column, lead)}
             </td>
           ))}
-        {canManage && (
           <td className="px-4 py-1.5">
             <div className="flex items-center justify-end">
               <button
@@ -378,7 +398,6 @@ const LeadRow = memo(({
               </button>
             </div>
           </td>
-        )}
       </tr>
 
       <LeadRowContextMenu
