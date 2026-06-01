@@ -1159,7 +1159,7 @@ const LeadsFeature = ({
                   onCreateTask={handleCreateTask}
                   onAssign={handleAssign}
                   onDelete={handleDelete}
-                  onConvert={handleConvert}
+                  onConvert={!isClient ? handleConvert : null}
                   onCopyURL={handleCopyURL}
                   statuses={statuses}
                   onStatusChange={handleStatusChange}
@@ -1168,7 +1168,7 @@ const LeadsFeature = ({
                   branches={branches}
                   canManage={canEditLead}
                   projects={projects}
-                  onMoveToProject={handleMoveToProject}
+                  onMoveToProject={!isClient ? handleMoveToProject : null}
                   scrollContainerId="leads-scroll-container"
                   bottomContent={
                     isClient && isMobile ? (
