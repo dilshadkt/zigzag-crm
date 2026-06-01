@@ -287,7 +287,7 @@ const ClientDashboard = () => {
               <span className="text-[10px] font-bold">Follow-ups</span>
             </button>
           )}
-          {permissions.includes("view_dashboard") && (
+          {permissions.includes("view_insights") && (
             <button
               onClick={() => setActiveTab("insights")}
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
