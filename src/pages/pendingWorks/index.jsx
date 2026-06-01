@@ -134,7 +134,7 @@ const PendingWorks = () => {
                                     item.pending > 0 && (
                                         <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-lg bg-gray-50">
                                             <span className="text-gray-600">{item.name || `Other ${idx + 1}`}</span>
-                                            <span className="font-bold text-gray-700">{item.pending}/{item.total}</span>
+                                            <span className="font-bold text-gray-700">{item.completed}/{item.total}</span>
                                         </div>
                                     )
                                 ))}
@@ -154,7 +154,7 @@ const DetailRow = ({ label, item, color, bg }) => {
         <div className={`flex justify-between items-center text-sm p-2 rounded-lg ${bg}`}>
             <span className={`${color} font-medium`}>{label}</span>
             <span className="font-bold text-gray-700">
-                {item.pending} <span className="text-gray-400 font-normal text-xs">/ {item.total}</span>
+                {item.completed} <span className="text-gray-400 font-normal text-xs">/ {item.total}</span>
             </span>
         </div>
     );
