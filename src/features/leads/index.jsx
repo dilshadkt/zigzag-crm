@@ -173,7 +173,8 @@ const LeadsFeature = ({
       endDate: statsDateRange.endDate
     } : {}),
     ...(branchFilter ? { branch: branchFilter } : {}),
-    ...(ownerFilterState ? { owner: ownerFilterState } : {})
+    ...(ownerFilterState ? { owner: ownerFilterState } : {}),
+    ...(isFollowUpOnly ? { isFollowUp: true } : {})
   });
 
 
