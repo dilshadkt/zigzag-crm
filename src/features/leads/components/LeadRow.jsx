@@ -240,6 +240,26 @@ const columnRenderers = {
       {lead.project && typeof lead.project === 'object' ? lead.project.name : (lead.project || "—")}
     </div>
   ),
+  source: (lead, onSourceChange) => {
+    const sources = ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"];
+    
+    if (onSourceChange) {
+      return (
+        <select
+          value={lead.source || "Manual"}
+          onChange={(e) => onSourceChange(lead, e.target.value)}
+          className="text-[12px] font-medium px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer w-28"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {sources.map(src => (
+            <option key={src} value={src}>{src}</option>
+          ))}
+        </select>
+      );
+    }
+    
+    return <div className="text-[13px] font-medium text-slate-700">{lead.source || "—"}</div>;
+  },
 };
 
 const LeadRow = memo(({
@@ -258,6 +278,7 @@ const LeadRow = memo(({
   statuses,
   onStatusChange,
   onCustomFieldChange,
+  onSourceChange,
   onMoveToBranch,
   branches = [],
   canManage = false,
@@ -302,6 +323,9 @@ const LeadRow = memo(({
       const renderer = columnRenderers[column.key];
       if (column.key === "status") {
         return renderer(lead, statuses, onStatusChange);
+      }
+      if (column.key === "source") {
+        return renderer(lead, onSourceChange);
       }
       return renderer(lead);
     }

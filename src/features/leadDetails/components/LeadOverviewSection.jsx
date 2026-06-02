@@ -214,14 +214,36 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
           required: true,
           options: [],
         },
+        {
+          id: "source",
+          key: "source",
+          label: "Lead Source",
+          type: "select",
+          required: false,
+          options: ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"],
+        },
       ];
     }
     // Ensure all fields have unique IDs and keys
-    return fields.map((field, index) => ({
+    let processedFields = fields.map((field, index) => ({
       ...field,
       id: String(field.id || `field_${index}`),
       key: field.key || field.id || `field_${index}`,
     }));
+    
+    // Always ensure source field exists
+    if (!processedFields.some(f => f.key === "source")) {
+      processedFields.push({
+        id: "source",
+        key: "source",
+        label: "Lead Source",
+        type: "select",
+        required: false,
+        options: ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"],
+      });
+    }
+    
+    return processedFields;
   }, [formConfigData?.data?.fields]);
 
   const statuses = useMemo(() => statusesData?.data || [], [statusesData]);

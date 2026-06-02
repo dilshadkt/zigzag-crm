@@ -833,6 +833,21 @@ const LeadsFeature = ({
     }
   };
 
+  const handleSourceChange = async (lead, source) => {
+    try {
+      const leadId = lead._id || lead.id;
+      await updateLeadMutation.mutateAsync({
+        leadId,
+        leadData: { source: source },
+      });
+      toast.success("Lead source updated successfully");
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update source");
+    }
+  };
+
   const handleCustomFieldChange = async (lead, fieldKey, newValue) => {
     try {
       const leadId = lead._id || lead.id;
@@ -1165,6 +1180,7 @@ const LeadsFeature = ({
                   statuses={statuses}
                   onStatusChange={handleStatusChange}
                   onCustomFieldChange={handleCustomFieldChange}
+                  onSourceChange={handleSourceChange}
                   onMoveToBranch={handleMoveToBranch}
                   branches={branches}
                   canManage={canEditLead}

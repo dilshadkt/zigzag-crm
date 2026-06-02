@@ -26,6 +26,7 @@ const LeadsTable = ({
   statuses,
   onStatusChange,
   onCustomFieldChange,
+  onSourceChange,
   onMoveToBranch,
   branches = [],
   canManage = false,
@@ -116,6 +117,7 @@ const LeadsTable = ({
                     statuses={statuses}
                     onStatusChange={onStatusChange}
                     onCustomFieldChange={onCustomFieldChange}
+                    onSourceChange={onSourceChange}
                     onMoveToBranch={onMoveToBranch}
                     branches={branches}
                     canManage={canManage}
@@ -204,6 +206,7 @@ const LeadsTable = ({
                     statuses={statuses}
                     onStatusChange={onStatusChange}
                     onCustomFieldChange={onCustomFieldChange}
+                    onSourceChange={onSourceChange}
                     onMoveToBranch={onMoveToBranch}
                     branches={branches}
                     canManage={canManage}
