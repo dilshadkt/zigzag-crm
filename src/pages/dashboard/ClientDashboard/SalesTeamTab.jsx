@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 import {
   FiUser, FiPhone, FiMail, FiBriefcase,
   FiPlus, FiTrash2, FiEdit2, FiX, FiCheck,
-  FiChevronRight, FiTrendingUp, FiAward,
+  FiChevronRight, FiTrendingUp, FiAward, FiMapPin,
 } from "react-icons/fi";
 import {
   useGetClientSalesTeam,
@@ -13,6 +13,7 @@ import {
   useGetClientSalesPersonStats,
 } from "../../../api/clientSalesTeam";
 import { useGetLeads } from "../../../features/leads/api";
+import { useProjectDetails } from "../../../api/hooks";
 
 // ─── Avatar helper ────────────────────────────────────────────────────────────
 const Avatar = ({ name, avatar, size = "w-10 h-10", color = "bg-indigo-500" }) => {
@@ -140,12 +141,13 @@ const PersonStatsDrawer = ({ personId, projectId, onClose }) => {
 };
 
 // ─── Add / Edit Form ──────────────────────────────────────────────────────────
-const PersonForm = ({ onSubmit, onCancel, initial = null, isLoading }) => {
+const PersonForm = ({ onSubmit, onCancel, initial = null, isLoading, branches = [] }) => {
   const [form, setForm] = useState({
     name: initial?.name || "",
     phone: initial?.phone || "",
     email: initial?.email || "",
     role: initial?.role || "Sales Agent",
+    branch: initial?.branch || "",
   });
 
   const handleSubmit = (e) => {
@@ -198,6 +200,19 @@ const PersonForm = ({ onSubmit, onCancel, initial = null, isLoading }) => {
             className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-all"
           />
         </div>
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Branch</label>
+          <select
+            value={form.branch}
+            onChange={e => setForm(f => ({ ...f, branch: e.target.value }))}
+            className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-all appearance-none"
+          >
+            <option value="">All Branches</option>
+            {branches.map((b) => (
+              <option key={b.id || b.name} value={b.name}>{b.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="flex gap-2 pt-1">
         <button
@@ -230,6 +245,13 @@ const PersonCard = ({ person, stats, onView, onEdit, onDelete }) => {
             <div className="flex items-center gap-1 mt-0.5">
               <FiBriefcase size={10} className="text-slate-400 flex-shrink-0" />
               <p className="text-xs text-slate-400 truncate">{person.role || "Sales Agent"}</p>
+              {person.branch && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <FiMapPin size={10} className="text-indigo-400 flex-shrink-0" />
+                  <p className="text-xs text-indigo-500 font-medium truncate">{person.branch}</p>
+                </>
+              )}
             </div>
             {person.phone && (
               <div className="flex items-center gap-1 mt-0.5">
@@ -291,6 +313,9 @@ const SalesTeamTab = ({ projectId }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPerson, setEditingPerson] = useState(null);
   const [viewingPersonId, setViewingPersonId] = useState(null);
+
+  const { data: currentProject } = useProjectDetails(projectId);
+  const branches = currentProject?.customFields?.branches || currentProject?.branches || [];
 
   const { data: teamData, isLoading } = useGetClientSalesTeam(projectId);
   const team = teamData?.data || [];
@@ -372,6 +397,7 @@ const SalesTeamTab = ({ projectId }) => {
           onSubmit={handleAdd}
           onCancel={() => setShowAddForm(false)}
           isLoading={isCreating}
+          branches={branches}
         />
       )}
 
@@ -382,6 +408,7 @@ const SalesTeamTab = ({ projectId }) => {
           onSubmit={handleEdit}
           onCancel={() => setEditingPerson(null)}
           isLoading={isUpdating}
+          branches={branches}
         />
       )}
 

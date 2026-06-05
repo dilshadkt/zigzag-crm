@@ -83,7 +83,18 @@ const LeadsFeature = ({
   const { data: projects = [] } = useCompanyActiveProjects();
   const { data: employeesData } = useGetAllEmployees(!isClient);
   const { data: salesTeamData } = useGetClientSalesTeam(projectId || null);
-  const ownersList = (isClient || projectId) ? (salesTeamData?.data || []) : (employeesData?.employees || []);
+  const rawOwnersList = (isClient || projectId) ? (salesTeamData?.data || []) : (employeesData?.employees || []);
+  
+  // Filter owners list by branch if a branch filter is applied
+  const ownersList = useMemo(() => {
+    if (!branchFilter) return rawOwnersList;
+    return rawOwnersList.filter(owner => {
+      // Depending on the model, branch might be nested or direct
+      const ownerBranch = owner.branch || owner.customFields?.branch;
+      return ownerBranch === branchFilter;
+    });
+  }, [rawOwnersList, branchFilter]);
+
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
   const isEmployee = user?.role === "employee";
