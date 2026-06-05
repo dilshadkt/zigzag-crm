@@ -3,22 +3,32 @@ import CustomSelect from "./CustomSelect";
 import { isFieldVisible } from "../fieldRuleUtils";
 
 // Animated wrapper — slides the field in/out when its visibility changes
-const AnimatedField = ({ visible, children }) => {
+const AnimatedField = ({ visible, children, zIndex }) => {
   const [rendered, setRendered] = useState(visible);
   const [animating, setAnimating] = useState(false);
+  const [fullyOpen, setFullyOpen] = useState(visible);
   const timerRef = useRef(null);
+  const overflowTimerRef = useRef(null);
 
   useEffect(() => {
     if (visible) {
       setRendered(true);
       // Brief delay so the element mounts before the transition fires
-      timerRef.current = setTimeout(() => setAnimating(true), 10);
+      timerRef.current = setTimeout(() => {
+        setAnimating(true);
+        // Switch overflow to visible after the transition finishes so dropdowns aren't clipped
+        overflowTimerRef.current = setTimeout(() => setFullyOpen(true), 250);
+      }, 10);
     } else {
+      setFullyOpen(false);
       setAnimating(false);
       // Keep in DOM until the CSS transition finishes (~250ms)
       timerRef.current = setTimeout(() => setRendered(false), 280);
     }
-    return () => clearTimeout(timerRef.current);
+    return () => {
+      clearTimeout(timerRef.current);
+      clearTimeout(overflowTimerRef.current);
+    };
   }, [visible]);
 
   if (!rendered) return null;
@@ -26,9 +36,11 @@ const AnimatedField = ({ visible, children }) => {
   return (
     <div
       style={{
-        overflow: "hidden",
+        position: "relative",
+        zIndex: zIndex,
+        overflow: fullyOpen ? "visible" : "hidden",
         transition: "max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease",
-        maxHeight: animating ? "300px" : "0px",
+        maxHeight: animating ? "1000px" : "0px",
         opacity: animating ? 1 : 0,
         transform: animating ? "translateY(0)" : "translateY(-6px)",
       }}
@@ -104,10 +116,10 @@ const LeadFormPreviewPanel = ({
         className="space-y-2.5 bg-white p-3 rounded-xl border border-slate-200/50 shadow-sm"
         onSubmit={handleValidate}
       >
-        {fields.map((field) => {
+        {fields.map((field, index) => {
           const visible = isFieldVisible(field, previewValues);
           return (
-            <AnimatedField key={field.id} visible={visible}>
+            <AnimatedField key={field.id} visible={visible} zIndex={fields.length - index}>
               <div className="flex flex-col gap-1 pb-0.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-tight ml-0.5">
                   {field.label}

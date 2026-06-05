@@ -136,6 +136,53 @@ const FormField = memo(({ field, value, error, onChange, statuses }) => {
 
 FormField.displayName = "FormField";
 
+import { useRef, useState, useEffect } from "react";
+
+// Animated wrapper — slides the field in/out when its visibility changes
+const AnimatedField = ({ visible, children, zIndex }) => {
+  const [rendered, setRendered] = useState(visible);
+  const [animating, setAnimating] = useState(false);
+  const [fullyOpen, setFullyOpen] = useState(visible);
+  const timerRef = useRef(null);
+  const overflowTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      setRendered(true);
+      timerRef.current = setTimeout(() => {
+        setAnimating(true);
+        overflowTimerRef.current = setTimeout(() => setFullyOpen(true), 250);
+      }, 10);
+    } else {
+      setFullyOpen(false);
+      setAnimating(false);
+      timerRef.current = setTimeout(() => setRendered(false), 280);
+    }
+    return () => {
+      clearTimeout(timerRef.current);
+      clearTimeout(overflowTimerRef.current);
+    };
+  }, [visible]);
+
+  if (!rendered) return null;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        zIndex: zIndex,
+        overflow: fullyOpen ? "visible" : "hidden",
+        transition: "max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease",
+        maxHeight: animating ? "1000px" : "0px",
+        opacity: animating ? 1 : 0,
+        transform: animating ? "translateY(0)" : "translateY(-6px)",
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
 const DynamicLeadForm = ({ fields, values, onChange, errors, statuses }) => {
   const handleFieldChange = useCallback(
     (fieldId, newValue) => {
@@ -155,28 +202,27 @@ const DynamicLeadForm = ({ fields, values, onChange, errors, statuses }) => {
 
   return (
     <div className="space-y-4">
-      {fields.map((field) => {
+      {fields.map((field, index) => {
         if (!field.id) {
           console.warn("Field missing id:", field);
           return null;
         }
 
-        // Respect conditional rules — skip hidden fields entirely
-        if (!isFieldVisible(field, values)) return null;
-
         const fieldId = String(field.id);
         const fieldValue = values?.[fieldId] ?? "";
         const fieldError = errors?.[fieldId];
+        const visible = isFieldVisible(field, values);
         
         return (
-          <FormField
-            key={fieldId}
-            field={field}
-            value={fieldValue}
-            error={fieldError}
-            onChange={handleFieldChange}
-            statuses={statuses}
-          />
+          <AnimatedField key={fieldId} visible={visible} zIndex={fields.length - index}>
+            <FormField
+              field={field}
+              value={fieldValue}
+              error={fieldError}
+              onChange={handleFieldChange}
+              statuses={statuses}
+            />
+          </AnimatedField>
         );
       })}
     </div>

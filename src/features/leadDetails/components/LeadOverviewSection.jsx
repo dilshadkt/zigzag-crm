@@ -225,11 +225,14 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
       ];
     }
     // Ensure all fields have unique IDs and keys
-    let processedFields = fields.map((field, index) => ({
-      ...field,
-      id: String(field.id || `field_${index}`),
-      key: field.key || field.id || `field_${index}`,
-    }));
+    let processedFields = fields.map((field, index) => {
+      const id = field.id || field._id?.toString?.() || field._id || `field_${index}`;
+      return {
+        ...field,
+        id: String(id),
+        key: field.key || id,
+      };
+    });
     
     // Always ensure source field exists
     if (!processedFields.some(f => f.key === "source")) {
