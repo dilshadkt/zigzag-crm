@@ -255,7 +255,7 @@ const ClientDashboard = () => {
               <Campaigns isClient projectId={projectId} branchFilter={""} />
             ) : activeTab === "insights" ? (
               <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <LeadDashboardPage viewMode="insights" onNavigateToLeads={handleDashboardNavigation} />
+                <LeadDashboardPage viewMode="insights" branchFilter={activeBranchFilter} onNavigateToLeads={handleDashboardNavigation} />
               </div>
             ) : activeTab === "schedule" ? (
               <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
@@ -263,7 +263,7 @@ const ClientDashboard = () => {
               </div>
             ) : activeTab === "dashboard" ? (
               <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <LeadDashboardPage viewMode="stats" onNavigateToLeads={handleDashboardNavigation} />
+                <LeadDashboardPage viewMode="stats" branchFilter={activeBranchFilter} onNavigateToLeads={handleDashboardNavigation} />
               </div>
             ) : activeTab === "sales_team" ? (
               <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">

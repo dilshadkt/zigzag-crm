@@ -29,7 +29,7 @@ import { useCompanyActiveProjects } from "../../api/hooks";
 import { useGetCampaignsByCompany } from "../../api/campaigns";
 import { Filter, X, Briefcase, Megaphone, List as ListIcon } from "lucide-react";
 
-const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads }) => {
+const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'company-admin';
@@ -57,7 +57,8 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads }) => {
     const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ 
         days: selectedDays,
         project: selectedProject !== "all" ? selectedProject : undefined,
-        campaign: selectedCampaign !== "all" ? selectedCampaign : undefined
+        campaign: selectedCampaign !== "all" ? selectedCampaign : undefined,
+        branch: branchFilter || undefined
     });
     const { data: statusData } = useGetLeadStatuses();
 
