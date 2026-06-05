@@ -63,7 +63,8 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
     const { data: statusData } = useGetLeadStatuses();
 
     const { data: clientTeamStatsData, isLoading: clientTeamStatsLoading } = useGetClientTeamStats(
-        isClient ? selectedProject : null
+        isClient ? selectedProject : null,
+        branchFilter
     );
 
     const stats = statsData?.data;

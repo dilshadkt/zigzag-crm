@@ -30,9 +30,9 @@ export const getClientSalesPersonStats = async (id) => {
   return response.data;
 };
 
-export const getClientTeamStats = async (projectId) => {
+export const getClientTeamStats = async (projectId, branch) => {
   const response = await apiClient.get("/client-sales-persons/team-stats", {
-    params: { project: projectId },
+    params: { project: projectId, branch: branch || undefined },
   });
   return response.data;
 };
@@ -47,10 +47,10 @@ export const useGetClientSalesTeam = (projectId) => {
   });
 };
 
-export const useGetClientTeamStats = (projectId) => {
+export const useGetClientTeamStats = (projectId, branch) => {
   return useQuery({
-    queryKey: ["clientTeamStats", projectId],
-    queryFn: () => getClientTeamStats(projectId),
+    queryKey: ["clientTeamStats", projectId, branch],
+    queryFn: () => getClientTeamStats(projectId, branch),
     enabled: !!projectId,
   });
 };
