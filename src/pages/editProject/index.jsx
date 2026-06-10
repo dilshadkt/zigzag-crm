@@ -10,7 +10,7 @@ const EditProject = () => {
   const navigate = useNavigate();
   const { data: currentProject } = useProjectDetails(projectId || undefined);
   const { mutateAsync } = useUpdateProject(currentProject?._id, () => {
-    navigate(`/projects/${projectId}`);
+    navigate(`/projects/${projectId}`, { replace: true });
   });
   const handleEditProject = async (values) => {
     try {
@@ -34,7 +34,7 @@ const EditProject = () => {
         <Navigator path={`/projects/${projectId}`} title="Back to Project" />
         <AddProject
           isOpen={true}
-          setShowModalProject={() => navigate(`/projects/${projectId}`)}
+          setShowModalProject={() => navigate(`/projects/${projectId}`, { replace: true })}
           isEditMode={true}
           onSubmit={handleEditProject}
           initialValues={{
