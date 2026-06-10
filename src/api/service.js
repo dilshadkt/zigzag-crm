@@ -309,6 +309,8 @@ export const getTasksOnReview = async (filters = {}) => {
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
     if (filters.taskMonth) params.append("taskMonth", filters.taskMonth);
 
+    if (filters.reporterId) params.append("reporterId", filters.reporterId);
+
     const { data } = await apiClient.get(
       `/tasks/on-review?${params.toString()}`
     );
@@ -354,6 +356,8 @@ export const getClientReviewTasks = async (filters = {}) => {
     if (filters.sortBy) params.append("sortBy", filters.sortBy);
     if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
     if (filters.taskMonth) params.append("taskMonth", filters.taskMonth);
+
+    if (filters.reporterId) params.append("reporterId", filters.reporterId);
 
     const { data } = await apiClient.get(
       `/tasks/client-review?${params.toString()}`

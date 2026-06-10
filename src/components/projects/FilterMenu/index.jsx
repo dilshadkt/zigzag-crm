@@ -1,8 +1,15 @@
 import React, { useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import DatePicker from "../../shared/Field/date";
+import { useGetAllEmployees } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 
 const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "company-admin";
+  const { data: employeesData } = useGetAllEmployees(isOpen && isAdmin);
+  const employees = employeesData?.employees || employeesData?.data || [];
+
   const [filters, setFilters] = useState({
     dateRange: {
       startDate: null,
@@ -12,6 +19,7 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
     priority: [],
     assignee: [],
     showSubtasks: true, // New filter for subtask visibility
+    reporterId: "",
   });
 
   const handleFilterChange = (filterType, value) => {
@@ -136,6 +144,25 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
             </div>
           </div>
 
+          {/* Reporter Filter (Admin Only) */}
+          {isAdmin && (
+            <div className="px-7 py-5 border-b border-[#E4E6E8]/80 flex flex-col">
+              <h5 className="text-sm font-medium text-[#7D8592] mb-4">Reporter</h5>
+              <select
+                className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                value={filters.reporterId}
+                onChange={(e) => handleFilterChange("reporterId", e.target.value)}
+              >
+                <option value="">All Reporters</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.firstName} {emp.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="px-7 py-5 mt-auto">
             <div className="flex gap-3">
@@ -147,6 +174,7 @@ const FilterMenu = ({ isOpen, setShowModalFilter, onFilterChange }) => {
                     priority: [],
                     assignee: [],
                     showSubtasks: true, // Reset to show subtasks by default
+                    reporterId: "",
                   });
                   onFilterChange?.(null);
                 }}

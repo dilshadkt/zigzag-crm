@@ -34,6 +34,21 @@ const ClientReview = () => {
 
   const taskMonth = searchParams.get("taskMonth") || getCurrentMonth();
 
+  // Filter states
+  const [showFilter, setShowFilter] = useState(false);
+  const [activeFilters, setActiveFilters] = useState(null);
+  const [filters, setFilters] = useState({
+    search: "",
+    priority: [],
+    project: [],
+    dateRange: {
+      start: "",
+      end: "",
+    },
+    sortBy: "dueDate",
+    sortOrder: "asc",
+  });
+
   // Get all client review tasks across the company
   const {
     data: clientReviewData,
@@ -46,6 +61,7 @@ const ClientReview = () => {
     sortBy: "dueDate",
     sortOrder: "asc",
     taskMonth: taskMonth,
+    reporterId: activeFilters?.reporterId,
   });
   const [filteredTasks, setFilteredTasks] = useState([]);
 
@@ -123,20 +139,7 @@ const ClientReview = () => {
     };
   }, [refetch]);
 
-  // Filter states
-  const [showFilter, setShowFilter] = useState(false);
-  const [activeFilters, setActiveFilters] = useState(null);
-  const [filters, setFilters] = useState({
-    search: "",
-    priority: [],
-    project: [],
-    dateRange: {
-      start: "",
-      end: "",
-    },
-    sortBy: "dueDate",
-    sortOrder: "asc",
-  });
+
 
   // Filter task based on the process and active filters
   const filterTasks = (tasks) => {
