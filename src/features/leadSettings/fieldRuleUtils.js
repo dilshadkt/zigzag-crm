@@ -51,7 +51,7 @@ export function evaluateRule(rule, values) {
 /**
  * Determine whether a field should be visible given current form values.
  * A field with no rules is always visible.
- * When multiple rules exist, ALL must pass (AND logic).
+ * When multiple rules exist, ANY must pass (OR logic).
  *
  * @param {object} field    - field object (may have a `rules` array)
  * @param {object} values   - current form values keyed by fieldId
@@ -59,7 +59,7 @@ export function evaluateRule(rule, values) {
  */
 export function isFieldVisible(field, values) {
   if (!field?.rules || field.rules.length === 0) return true;
-  return field.rules.every((rule) => evaluateRule(rule, values));
+  return field.rules.some((rule) => evaluateRule(rule, values));
 }
 
 /**

@@ -105,7 +105,7 @@ const FieldRuleBuilder = ({ field, allFields, onUpdateField }) => {
                 )}
                 {index < rules.length - 1 && (
                   <span className="text-[9px] font-extrabold text-amber-500 uppercase bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded ml-1">
-                    AND
+                    OR
                   </span>
                 )}
                 <button
