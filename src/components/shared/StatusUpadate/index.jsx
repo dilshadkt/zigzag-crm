@@ -145,8 +145,8 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
         queryClient.setQueryData(["subTasksByParentTask", taskDetails._id], (oldData) => {
           if (!oldData || !oldData.subTasks) return oldData;
           const newSubTasks = oldData.subTasks.map(st => {
-            if (!["completed", "approved", "client-approved"].includes(st.status?.toLowerCase())) {
-              return { ...st, status: "on-hold" };
+            if (!["completed", "approved", "client-approved"].includes(st.status?.toLowerCase()) && st.status?.toLowerCase() !== "on-hold") {
+              return { ...st, status: "on-hold", previousStatusBeforeHold: st.status };
             }
             return st;
           });
@@ -163,19 +163,54 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
               (t) =>
                 !["completed", "approved", "client-approved"].includes(
                   t.status?.toLowerCase()
-                )
+                ) && t.status?.toLowerCase() !== "on-hold"
             );
 
             if (uncompletedSubTasks.length > 0) {
               await Promise.all(
                 uncompletedSubTasks.map((st) =>
-                  updateSubTaskById(st._id, { status: "on-hold" })
+                  updateSubTaskById(st._id, { status: "on-hold", previousStatusBeforeHold: st.status })
                 )
               );
               queryClient.invalidateQueries(["subTasksByParentTask", taskDetails._id]);
             }
           } catch (error) {
             console.error("Error updating subtasks status to on-hold:", error);
+          }
+        })();
+      } else if (taskDetails?.status === "on-hold" && status !== "on-hold") {
+        // Restore previous status for subtasks that were put on-hold
+        queryClient.setQueryData(["subTasksByParentTask", taskDetails._id], (oldData) => {
+          if (!oldData || !oldData.subTasks) return oldData;
+          const newSubTasks = oldData.subTasks.map(st => {
+            if (st.status === "on-hold" && st.previousStatusBeforeHold) {
+              return { ...st, status: st.previousStatusBeforeHold, previousStatusBeforeHold: null };
+            }
+            return st;
+          });
+          return { ...oldData, subTasks: newSubTasks };
+        });
+
+        // Run API calls in background
+        (async () => {
+          try {
+            const res = await getSubTasksByParentTask(taskDetails._id);
+            const currentSubTasks = res?.subTasks || [];
+            
+            const onHoldSubTasks = currentSubTasks.filter(
+              (t) => t.status?.toLowerCase() === "on-hold" && t.previousStatusBeforeHold
+            );
+
+            if (onHoldSubTasks.length > 0) {
+              await Promise.all(
+                onHoldSubTasks.map((st) =>
+                  updateSubTaskById(st._id, { status: st.previousStatusBeforeHold, previousStatusBeforeHold: null })
+                )
+              );
+              queryClient.invalidateQueries(["subTasksByParentTask", taskDetails._id]);
+            }
+          } catch (error) {
+            console.error("Error restoring subtasks status from on-hold:", error);
           }
         })();
       }
