@@ -189,7 +189,7 @@ const Dashboard = () => {
         </div>
       ) : null}
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-5">
+      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-4">
         {/* work load section or employee work details - now full width */}
         <div className="md:col-span-7">
           {isEmployee ? (
@@ -223,32 +223,32 @@ const Dashboard = () => {
             </div>
           </>
         ) : (
-          <div className="lg:col-span-12">
-            <DashboardRanking />
-          </div>
+          <>
+            <div className="lg:col-span-6 xl:col-span-4">
+              <DashboardRanking />
+            </div>
+            <div className="lg:col-span-6 xl:col-span-4">
+              <NearestEvents selectedDate={selectedDate} />
+            </div>
+          </>
         )}
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
-        <div className="md:col-span-5">
-          {!isEmployee || isEmployeeHasTaskAdmin ? (
+      {(!isEmployee || isEmployeeHasTaskAdmin) && (
+        <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
+          <div className="md:col-span-5">
             <EmployeeTodayTasks />
-          ) : (
-            <div className="hidden md:block"></div>
-          )}
-        </div>
-        <div className="md:col-span-2 flex flex-col gap-6">
-          {isEmployee ? (
-            <NearestEvents selectedDate={selectedDate} />
-          ) : (
-            <PendingWork taskMonth={taskMonth} />
-          )}
-
-          {(!isEmployee || isEmployeeHasTaskAdmin) && (
+          </div>
+          <div className="md:col-span-2 flex flex-col gap-6">
+            {isEmployee ? (
+              <NearestEvents selectedDate={selectedDate} />
+            ) : (
+              <PendingWork taskMonth={taskMonth} />
+            )}
             <TodayReworkTasks />
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
       {canViewDailyChecklist && (

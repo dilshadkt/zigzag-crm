@@ -59,7 +59,7 @@ const DashboardRanking = () => {
 
     if (loading && data.length === 0) {
         return (
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-full animate-pulse">
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm h-[470px] animate-pulse">
                 <div className="h-6 w-32 bg-gray-100 rounded-lg mb-6"></div>
                 <div className="space-y-4">
                     {[1, 2, 3, 4, 5].map(i => (
@@ -71,7 +71,7 @@ const DashboardRanking = () => {
     }
 
     return (
-        <div className="bg-white rounded-[2rem] p-5 border border-gray-100 h-full flex flex-col">
+        <div className="bg-white rounded-[2rem] p-5 border border-gray-100 h-[470px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-50 rounded-xl">

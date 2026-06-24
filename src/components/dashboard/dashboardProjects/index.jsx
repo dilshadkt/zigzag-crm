@@ -18,14 +18,12 @@ const DashboardProjects = ({
 
   return (
     <div
-      className={`w-full grid gap-y-5 md:gap-x-6 mt-5 ${
-        isEmployee ? "grid-cols-1" : " grid-cols-1  md:grid-cols-7"
-      }`}
+      className={`w-full grid gap-y-5 md:gap-x-6  ${isEmployee ? "grid-cols-1" : " grid-cols-1  md:grid-cols-7"
+        }`}
     >
       <div
-        className={` md:h-[470px] pb-3 pt-5 flex flex-col rounded-3xl ${
-          isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
-        }`}
+        className={` md:min-h-[470px] h-auto pb-3 pt-5 flex flex-col rounded-3xl ${isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
+          }`}
       >
         <div className="flexBetween w-full ">
           <h4 className="font-semibold text-lg text-gray-800">

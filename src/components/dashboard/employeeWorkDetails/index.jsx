@@ -17,26 +17,26 @@ const EmployeeWorkDetails = () => {
     low: 1,
   };
 
-  const sortedSubTasks = useMemo(() => 
+  const sortedSubTasks = useMemo(() =>
     todaySubTasks?.subTasks?.slice()?.sort((a, b) => {
       const aRank = priorityRank[a?.priority?.toLowerCase()] || 0;
       const bRank = priorityRank[b?.priority?.toLowerCase()] || 0;
       return bRank - aRank;
     }) || []
-  , [todaySubTasks]);
+    , [todaySubTasks]);
 
   const completedItems = [
     ...(todaySubTasks?.completedTasks || []),
     ...(todaySubTasks?.completedSubTasks || []),
   ].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
-  const pendingWithReasonSubTasks = useMemo(() => 
+  const pendingWithReasonSubTasks = useMemo(() =>
     sortedSubTasks.filter(task => task.hasPendingReasonToday)
-  , [sortedSubTasks]);
+    , [sortedSubTasks]);
 
-  const activeSubTasks = useMemo(() => 
+  const activeSubTasks = useMemo(() =>
     sortedSubTasks.filter(task => !task.hasPendingReasonToday)
-  , [sortedSubTasks]);
+    , [sortedSubTasks]);
 
   const formatTime = (dateString) => {
     if (!dateString) return "No due date";
@@ -147,9 +147,8 @@ const EmployeeWorkDetails = () => {
 
         <div className="flex flex-col items-end gap-2 shrink-0 ml-4">
           <span
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-              showPendingBadge ? "bg-orange-500 text-white shadow-sm" : getStatusColor(item.status)
-            }`}
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${showPendingBadge ? "bg-orange-500 text-white shadow-sm" : getStatusColor(item.status)
+              }`}
           >
             {showPendingBadge ? "Pending" : (item.status === "todo" ? "To Do" : item.status?.replace("-", " ") || "To Do")}
           </span>
@@ -159,12 +158,14 @@ const EmployeeWorkDetails = () => {
   };
 
   return (
-    <div className="px-5 bg-white h-full pb-5 pt-5 flex flex-col rounded-3xl shadow-sm border border-gray-100">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+    <div className="px-5 bg-white h-full pb-5 pt-5 flex
+     flex-col rounded-2xl  min-h-[340px]
+     border border-gray-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-full">
         {/* Today's Work Section */}
         <div className="flex flex-col h-full">
           <div className="flexBetween mb-4">
-            <h4 className="font-semibold text-lg text-gray-800">Assigned Tasks</h4>
+            <h4 className="font-semibold text-gray-800">Assigned Tasks</h4>
             {todaySubTasks?.subTasks?.length > 0 && (
               <Link
                 to={"/today-tasks"}
@@ -184,7 +185,7 @@ const EmployeeWorkDetails = () => {
             <div className="flex-1 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar max-h-[500px]">
               {/* Pending Reason Tasks - SHOW TOP IF ANY */}
               {pendingWithReasonSubTasks.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-3 h-full">
                   <div className="flex items-center gap-2 px-1">
                     <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                     <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -203,7 +204,7 @@ const EmployeeWorkDetails = () => {
               )}
 
               {/* Active Tasks */}
-              <div className="space-y-3">
+              <div className="space-y-3 h-full">
                 {pendingWithReasonSubTasks.length > 0 && activeSubTasks.length > 0 && (
                   <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">
                     Active Tasks
@@ -216,9 +217,9 @@ const EmployeeWorkDetails = () => {
                     ))}
                   </div>
                 ) : pendingWithReasonSubTasks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                  <div className="flex flex-col items-center justify-center py-12 bg-gray-50 h-full rounded-2xl border-2 border-dashed border-gray-100">
                     <div className="text-4xl mb-3">✨</div>
-                    <p className="text-sm font-medium text-gray-500">You're all caught up for today!</p>
+                    <p className="text-xs font-medium text-gray-500">You're all caught up for today!</p>
                   </div>
                 ) : null}
               </div>
@@ -229,7 +230,7 @@ const EmployeeWorkDetails = () => {
         {/* Today's Completed Section */}
         <div className="flex flex-col h-full border-l border-gray-100 pl-2 md:pl-4">
           <div className="flexBetween mb-4">
-            <h4 className="font-semibold text-lg text-gray-800">Completed Today</h4>
+            <h4 className="font-semibold text-gray-800">Completed Today</h4>
             <div className="flex items-center gap-2">
               <span className="bg-green-50 text-green-600 px-2.5 py-1 rounded-full text-xs font-bold">
                 {completedItems.length}
@@ -248,9 +249,10 @@ const EmployeeWorkDetails = () => {
               ))}
             </div>
           ) : (
-            <div className="w-full flex flex-col items-center justify-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-               <div className="text-4xl mb-3">🕒</div>
-              <h3 className="text-sm font-medium text-gray-500">No completed tasks yet</h3>
+            <div className="w-full flex flex-col items-center justify-center py-12
+             h-full bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+              <div className="text-4xl mb-3">🕒</div>
+              <h3 className="text-xs font-medium text-gray-500">No completed tasks yet</h3>
             </div>
           )}
         </div>
