@@ -453,7 +453,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   }
 
   return (
-    <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
+    <div className="px-4 col-span-7 bg-white h-full overflow-hidden pb-3 pt-5 flex flex-col rounded-3xl">
       <div className="flexBetween mb-4">
         <h4 className="font-semibold text-lg text-gray-800">
           My Task Progress
@@ -481,10 +481,10 @@ const EmployeeProgressStats = ({ taskMonth }) => {
           <span>Task Completion Progress</span>
           <span>{completionRate}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
           <div
             className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${completionRate}%` }}
+            style={{ width: `${Math.min(completionRate, 100)}%` }}
           ></div>
         </div>
       </div>
