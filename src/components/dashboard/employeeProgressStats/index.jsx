@@ -463,15 +463,14 @@ const EmployeeProgressStats = ({ taskMonth }) => {
             <div className="text-2xl font-bold text-blue-600">
               {completionRate}%
             </div>
-            <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">Total<br />Done</div>
           </div>
-          <div className="h-8 w-px bg-gray-100 mx-1"></div>
+          {/* <div className="h-8 w-px bg-gray-100 mx-1"></div>
           <div className="flex items-center gap-2">
             <div className="text-2xl font-bold text-teal-600">
               {statistics.onTimeCompletionRate || 0}%
             </div>
             <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">On-Time<br />Rate</div>
-          </div>
+          </div> */}
         </div>
       </div>
 
