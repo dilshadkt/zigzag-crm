@@ -3,6 +3,8 @@ import { IoIosArrowDown } from "react-icons/io";
 import { useUpdateTaskById } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../reworkReasonModal";
+import { updateSubTaskById, getSubTasksByParentTask } from "../../../api/service";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Status options for different user roles
 const employeeStatusOptions = [
@@ -88,6 +90,7 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
   const [pendingStatus, setPendingStatus] = useState(null);
   const buttonRef = useRef(null);
   const { isCompany } = useAuth();
+  const queryClient = useQueryClient();
   const { mutate, isLoading } = useUpdateTaskById(taskDetails._id, () =>
     setMenuOpen(false)
   );
@@ -124,6 +127,59 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
         setMenuOpen(false);
         return;
       }
+
+      // Optimistically update main task status
+      queryClient.setQueryData(["getTaskById", taskDetails._id], (oldData) => {
+        if (!oldData || !oldData.task) return oldData;
+        return {
+          ...oldData,
+          task: {
+            ...oldData.task,
+            status: status
+          }
+        };
+      });
+
+      if (status === "on-hold") {
+        // Optimistically update subtasks status
+        queryClient.setQueryData(["subTasksByParentTask", taskDetails._id], (oldData) => {
+          if (!oldData || !oldData.subTasks) return oldData;
+          const newSubTasks = oldData.subTasks.map(st => {
+            if (!["completed", "approved", "client-approved"].includes(st.status?.toLowerCase())) {
+              return { ...st, status: "on-hold" };
+            }
+            return st;
+          });
+          return { ...oldData, subTasks: newSubTasks };
+        });
+
+        // Run API calls in background
+        (async () => {
+          try {
+            const res = await getSubTasksByParentTask(taskDetails._id);
+            const currentSubTasks = res?.subTasks || [];
+            
+            const uncompletedSubTasks = currentSubTasks.filter(
+              (t) =>
+                !["completed", "approved", "client-approved"].includes(
+                  t.status?.toLowerCase()
+                )
+            );
+
+            if (uncompletedSubTasks.length > 0) {
+              await Promise.all(
+                uncompletedSubTasks.map((st) =>
+                  updateSubTaskById(st._id, { status: "on-hold" })
+                )
+              );
+              queryClient.invalidateQueries(["subTasksByParentTask", taskDetails._id]);
+            }
+          } catch (error) {
+            console.error("Error updating subtasks status to on-hold:", error);
+          }
+        })();
+      }
+
       mutate({ status });
     }
     setMenuOpen(false);

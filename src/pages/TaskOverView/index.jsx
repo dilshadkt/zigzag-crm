@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetTaskById,
   useUpdateTaskById,
   useGetSubTasksByParentTask,
 } from "../../api/hooks";
-import { uploadSingleFile } from "../../api/service";
+import { uploadSingleFile, updateSubTaskById } from "../../api/service";
 import AddTask from "../../components/projects/addTask";
 import TaskDetails from "../../components/projects/taskDetails";
 import TaskInfo from "../../components/projects/taskInfo";
@@ -16,6 +17,7 @@ import TaskOverViewShimmer from "./TaskOverViewShimmer";
 
 const TaskOverView = () => {
   const { taskId } = useParams();
+  const queryClient = useQueryClient();
   const [showModalTask, setShowModalTask] = useState(false);
   const { activeProject: selectProject } = useProject();
   const { data: taskDetails, isLoading } = useGetTaskById(taskId);
@@ -42,6 +44,24 @@ const TaskOverView = () => {
       );
       updatedValues.attachments = proccesedValue;
       mutate(updatedValues);
+
+      if (updatedValues.status === "on-hold") {
+        const uncompletedSubTasks = subTasks.filter(
+          (t) =>
+            !["completed", "approved", "client-approved"].includes(
+              t.status?.toLowerCase()
+            )
+        );
+
+        if (uncompletedSubTasks.length > 0) {
+          await Promise.all(
+            uncompletedSubTasks.map((st) =>
+              updateSubTaskById(st._id, { status: "on-hold" })
+            )
+          );
+          queryClient.invalidateQueries(["subTasksByParentTask", taskId]);
+        }
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {

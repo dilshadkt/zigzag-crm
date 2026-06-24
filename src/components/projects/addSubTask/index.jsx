@@ -5,6 +5,7 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Select from "../../shared/Field/select";
 import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
+import AssigneeDatePicker from "../../shared/Field/date/AssigneeDatePicker";
 import Input from "../../shared/Field/input";
 import { useAddSubTaskForm } from "../../../hooks/useAddSubTaskForm";
 import Modal from "../../shared/modal";
@@ -86,8 +87,8 @@ const AddSubTask = ({
   // Handle automatic work link field based on requiresWorkLink option
   useEffect(() => {
     if (values.requiresWorkLink) {
-      const hasWorkLinkField = values.customFields?.some(field => 
-        field.label?.toLowerCase().includes("work link") || 
+      const hasWorkLinkField = values.customFields?.some(field =>
+        field.label?.toLowerCase().includes("work link") ||
         field.label?.toLowerCase().includes("google drive") ||
         field.label?.toLowerCase().includes("link")
       );
@@ -175,7 +176,7 @@ const AddSubTask = ({
     <div className="fixed left-0 right-0 top-0 bottom-0 bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter">
       <div
         className={`p-10 bg-white pt-12 px-12 flex flex-col
-        rounded-3xl max-w-[584px] w-full ${isAssignee ? `` : `h-full`
+        rounded-3xl max-w-[720px] w-full ${isAssignee ? `` : `h-full`
           } relative`}
       >
         {isLoading && (
@@ -537,7 +538,7 @@ const AddSubTask = ({
                     touched={touched}
                     disabled={isLoading}
                   />
-                  <DatePicker
+                  <AssigneeDatePicker
                     title="Due Date"
                     errors={errors}
                     value={values.dueDate}
@@ -545,6 +546,7 @@ const AddSubTask = ({
                     touched={touched}
                     name="dueDate"
                     disabled={isLoading}
+                    assignedTo={values.assignedTo}
                   />
                 </div>
                 {!isAssignee && (
