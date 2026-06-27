@@ -21,6 +21,10 @@ const WorkLinkModal = ({ isOpen, onClose, onSubmit, isLoading, initialValue = ""
         onSubmit("");
     };
 
+    const isGoogleDrive = (url) => {
+        return url?.includes("drive.google.com");
+    };
+
     const formatDate = (date) => {
         if (!date) return "N/A";
         return new Date(date).toLocaleString("en-US", {
@@ -29,6 +33,28 @@ const WorkLinkModal = ({ isOpen, onClose, onSubmit, isLoading, initialValue = ""
             hour: "2-digit",
             minute: "2-digit",
         });
+    };
+
+    // Generate Google Drive embed URL for preview if possible
+    const getDriveEmbedUrl = (url) => {
+        try {
+            const parsed = new URL(url);
+            if (parsed.hostname.includes('drive.google.com')) {
+                // /file/d/FILE_ID/ pattern
+                const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+                if (fileMatch) {
+                    return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+                }
+                // /open?id=FILE_ID or /uc?id=FILE_ID
+                const idParam = parsed.searchParams.get('id');
+                if (idParam) {
+                    return `https://drive.google.com/file/d/${idParam}/preview`;
+                }
+            }
+        } catch (e) {
+            // ignore malformed URLs
+        }
+        return null;
     };
 
     return (
@@ -45,14 +71,34 @@ const WorkLinkModal = ({ isOpen, onClose, onSubmit, isLoading, initialValue = ""
                             {[...history].reverse().map((entry, idx) => (
                                 <div key={idx} className="bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
                                     <div className="flex justify-between items-start gap-2 mb-1">
-                                        <a
-                                            href={entry.link?.startsWith("http") ? entry.link : `https://${entry.link}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 text-xs font-medium hover:underline truncate flex-1"
-                                        >
-                                            {entry.link}
-                                        </a>
+                                        <div className="flex flex-col gap-1 overflow-hidden">
+                                            <a
+                                                href={entry.link?.startsWith("http") ? entry.link : `https://${entry.link}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 text-xs font-medium hover:underline truncate"
+                                            >
+                                                {entry.link}
+                                            </a>
+                                            {isGoogleDrive(entry.link) && (
+                                                <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded w-fit">
+                                                    GOOGLE DRIVE
+                                                </span>
+                                            )}
+                                            {/* Embed preview if Google Drive link */}
+                                            {(() => {
+                                                const embedUrl = getDriveEmbedUrl(entry.link);
+                                                return embedUrl ? (
+                                                    <iframe
+                                                        src={embedUrl}
+                                                        width="100%"
+                                                        height="200"
+                                                        allow="autoplay"
+                                                        className="border rounded mt-2"
+                                                    />
+                                                ) : null;
+                                            })()}
+                                        </div>
                                         <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase font-bold">
                                             {entry.statusAtSubmission}
                                         </span>
