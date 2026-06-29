@@ -739,7 +739,7 @@ bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter"
     >
       <div
         className="p-10 bg-white pt-12  px-12 flex flex-col
-rounded-3xl max-w-[584px] w-full h-full relative"
+rounded-3xl max-w-[800px] w-full h-full relative"
       >
         <>
           <div className="w-full h-full flex flex-col overflow-y-auto">
@@ -1361,7 +1361,7 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       </div>
 
                       {/* Step rows */}
-                      <div className="divide-y divide-gray-50 max-h-[300px] overflow-y-auto">
+                      <div className="divide-y divide-gray-50">
                         {values.subtasks?.map((step, index) => {
                           const assigneeOptions = getAssigneeOptions();
                           const currentAssigneeId = typeof step.assignee === 'object' ? step.assignee?._id : step.assignee;

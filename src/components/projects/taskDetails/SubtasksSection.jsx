@@ -534,15 +534,15 @@ const SubtasksSection = ({
                         if (isWorkLinkField) return isWorkLinkRequired(subtask);
                         return true;
                       }).map((field, idx) => (
-                        <div key={idx} className="bg-white/60 border border-gray-100 rounded-lg px-3 py-1.5 shadow-sm">
-                          <span className="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">{field.label}</span>
+                        <div key={idx} className={`bg-white/60 border border-gray-100 rounded-lg p-4 shadow-sm ${field.label.toLowerCase().includes("url") || field.value?.toString().trim().startsWith("http") ? "w-full" : ""}`}>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{field.label}</span>
                           {field.label.toLowerCase().includes("url") || field.value?.toString().trim().startsWith("http") ? (
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-2">
                               <a
                                 href={field.value.trim().startsWith("http") ? field.value.trim() : `https://${field.value.trim()}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 text-xs font-medium hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                                className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-2 truncate max-w-full"
                               >
                                 {field.value}
                                 <FiLink className="w-2.5 h-2.5" />
@@ -553,12 +553,14 @@ const SubtasksSection = ({
                                   <iframe
                                     src={embedUrl}
                                     width="100%"
-                                    height="200"
+                                    height="400"
                                     allow="autoplay"
-                                    className="border rounded mt-2 min-w-[250px]"
+                                    className="border border-gray-200 rounded-xl mt-3 min-w-full shadow-sm"
                                   />
                                 ) : (
-                                  <LinkPreview url={field.value.trim()} />
+                                  <div className="mt-3">
+                                    <LinkPreview url={field.value.trim()} />
+                                  </div>
                                 );
                               })()}
                             </div>
