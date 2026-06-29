@@ -60,6 +60,7 @@ const MyTasks = () => {
       "client-approved": "client-approved",
       "on-review": "on-review",
       "re-work": "re-work",
+      "monthly-rework": "monthly-rework",
       overdue: "overdue",
       upcoming: "upcoming", // Backend handles upcoming via getUpcomingThreeDayTasks
     };
@@ -119,6 +120,10 @@ const MyTasks = () => {
       // Only special filters (today, unscheduled) need client-side filtering
       const today = new Date();
       switch (filter) {
+        case "monthly-rework":
+          // The user requested to only show subtasks for this filter
+          filtered = [...(employeeTasksData?.subTasks || [])];
+          break;
         // "overdue" is now handled by backend, so no client-side filtering needed
         // case "overdue" removed - backend handles it via getOverdueTaskUpToMonth
         case "today":
@@ -398,6 +403,8 @@ const MyTasks = () => {
         return "Tasks On Review";
       case "re-work":
         return "Re-work Tasks";
+      case "monthly-rework":
+        return "Monthly Rework Tasks";
       case "today":
         return "Today's Tasks";
       case "unscheduled":
@@ -426,6 +433,7 @@ const MyTasks = () => {
       case "on-review":
         return FiClock;
       case "re-work":
+      case "monthly-rework":
         return FiAlertCircle;
       case "today":
         return FiCalendar;
@@ -455,6 +463,7 @@ const MyTasks = () => {
       case "on-review":
         return "text-orange-600 bg-orange-50";
       case "re-work":
+      case "monthly-rework":
         return "text-red-600 bg-red-50";
       case "today":
         return "text-purple-600 bg-purple-50";
@@ -505,6 +514,7 @@ const MyTasks = () => {
           message: "Tasks submitted for review will appear here.",
         };
       case "re-work":
+      case "monthly-rework":
         return {
           title: "No Re-work Tasks",
           message: "Tasks that need revision will appear here.",
