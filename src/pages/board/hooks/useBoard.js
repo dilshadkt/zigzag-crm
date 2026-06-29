@@ -197,6 +197,7 @@ export const useBoard = () => {
                 delete updatedValues.taskFlow;
             }
 
+            await createTask(updatedValues);
             resetForm();
         } catch (error) {
             console.error("Error processing task data:", error);

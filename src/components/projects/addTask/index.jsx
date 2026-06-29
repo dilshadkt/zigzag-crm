@@ -926,9 +926,11 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       defaultValue="Select task group"
                       disabled={isEdit || isLoadingProjectDetails}
                     />
+                  </>
+                )}
 
-                    {/* ── Dates (before Task Flow so preview shows immediately) */}
-                    <div className="grid gap-x-4 grid-cols-2">
+              {/* ── Dates (before Task Flow so preview shows immediately) */}
+              <div className="grid gap-x-4 grid-cols-2">
                       {/* Start Date */}
                       <div>
                         <DatePicker
@@ -976,6 +978,9 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                       </div>
                     </div>
 
+              {((!isOtherProjectSelected && !isNoProjectSelected) ||
+                !showProjectSelection) && (
+                  <>
                     {/* Task Flow Selection */}
                     <Select
                       errors={errors}
@@ -1500,6 +1505,11 @@ rounded-3xl max-w-[584px] w-full h-full relative"
                     </button>
                   )}
 
+                  {Object.keys(errors).length > 0 && Object.keys(touched).length > 0 && (
+                    <div className="text-red-500 text-xs text-right mb-2">
+                      Please fix the following errors: {Object.keys(errors).join(", ")}
+                    </div>
+                  )}
                   <div className="flexEnd">
                     <PrimaryButton
                       type="submit"

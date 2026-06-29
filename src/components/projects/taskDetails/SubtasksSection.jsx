@@ -11,6 +11,28 @@ import { toast } from "react-hot-toast";
 import LinkPreview from "../../shared/LinkPreview";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 
+// Generate Google Drive embed URL for preview if possible
+const getDriveEmbedUrl = (url) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('drive.google.com')) {
+      // /file/d/FILE_ID/ pattern
+      const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+      if (fileMatch) {
+        return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+      }
+      // /open?id=FILE_ID or /uc?id=FILE_ID
+      const idParam = parsed.searchParams.get('id');
+      if (idParam) {
+        return `https://drive.google.com/file/d/${idParam}/preview`;
+      }
+    }
+  } catch (e) {
+    // ignore malformed URLs
+  }
+  return null;
+};
+
 const renderContent = (content) => {
   if (!content) return "";
   const decoded = content
@@ -525,7 +547,20 @@ const SubtasksSection = ({
                                 {field.value}
                                 <FiLink className="w-2.5 h-2.5" />
                               </a>
-                              <LinkPreview url={field.value.trim()} />
+                              {(() => {
+                                const embedUrl = getDriveEmbedUrl(field.value.trim());
+                                return embedUrl ? (
+                                  <iframe
+                                    src={embedUrl}
+                                    width="100%"
+                                    height="200"
+                                    allow="autoplay"
+                                    className="border rounded mt-2 min-w-[250px]"
+                                  />
+                                ) : (
+                                  <LinkPreview url={field.value.trim()} />
+                                );
+                              })()}
                             </div>
                           ) : (
                             <span className="text-xs text-gray-700 font-medium">{field.value}</span>
