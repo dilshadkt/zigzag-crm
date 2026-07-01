@@ -10,6 +10,7 @@ import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Task from "../../components/shared/task";
 import FilterMenu from "../../components/projects/FilterMenu";
 import { assetPath } from "../../utils/assetPath";
+import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
 
 const TaskOnReview = () => {
   const { user } = useAuth();
@@ -42,6 +43,62 @@ const TaskOnReview = () => {
     sortBy: "dueDate",
     sortOrder: "asc",
   });
+
+  const [showTasks, setShowTasks] = useState(() => {
+    const saved = localStorage.getItem(`task_on_review_showTasks`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showSubtasks, setShowSubtasks] = useState(() => {
+    const saved = localStorage.getItem(`task_on_review_showSubtasks`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`task_on_review_showTasks`, JSON.stringify(showTasks));
+  }, [showTasks]);
+
+  useEffect(() => {
+    localStorage.setItem(`task_on_review_showSubtasks`, JSON.stringify(showSubtasks));
+  }, [showSubtasks]);
+
+  const [superFilters, setSuperFilters] = useState({ assignedTo: [], project: [] });
+
+  const handleSuperFilterChange = (type, value) => {
+    setSuperFilters((prev) => ({ ...prev, [type]: value }));
+  };
+
+  const handleMultiSelectFilter = (type, value) => {
+    setSuperFilters((prev) => {
+      const currentValues = prev[type] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+      return { ...prev, [type]: newValues };
+    });
+  };
+
+  const getFilterOptions = (tasks) => {
+    const usersMap = new Map();
+    const projectsMap = new Map();
+
+    tasks.forEach(task => {
+      if (task.project?._id) {
+        projectsMap.set(task.project._id, task.project);
+      }
+      if (task.assignedTo && Array.isArray(task.assignedTo)) {
+        task.assignedTo.forEach(user => {
+          if (user?._id) {
+            usersMap.set(user._id, user);
+          }
+        });
+      }
+    });
+
+    return {
+      users: Array.from(usersMap.values()),
+      projects: Array.from(projectsMap.values())
+    };
+  };
 
   // Get all tasks on review across the company
   const {
@@ -203,6 +260,24 @@ const TaskOnReview = () => {
         }
       }
 
+      // Filter by assignedTo (super filter)
+      if (superFilters.assignedTo?.length > 0) {
+        const taskAssigneeIds = task.assignedTo?.map(u => u._id) || [];
+        const hasAssignee = superFilters.assignedTo.some(id => taskAssigneeIds.includes(id));
+        if (!hasAssignee) return false;
+      }
+
+      // Filter by project (super filter)
+      if (superFilters.project?.length > 0) {
+        const projectId = task.project?._id;
+        if (!projectId || !superFilters.project.includes(projectId)) return false;
+      }
+
+      // Tasks / Subtasks visibility
+      const isSubTask = task.parentTask || task.isSubTask;
+      if (isSubTask && !showSubtasks) return false;
+      if (!isSubTask && !showTasks) return false;
+
       return true;
     });
   };
@@ -251,7 +326,7 @@ const TaskOnReview = () => {
 
       setFilteredTasks(filtered);
     }
-  }, [tasksOnReviewData, filter, activeFilters, filters]);
+  }, [tasksOnReviewData, filter, activeFilters, filters, superFilters, showTasks, showSubtasks]);
 
   const handleFilterChange = (filters) => {
     setActiveFilters(filters);
@@ -375,6 +450,21 @@ const TaskOnReview = () => {
                   onclick={() => setShowFilter(true)}
                 />
               </div>
+            </div>
+            
+            {/* Quick Filters */}
+            <div className="mb-6">
+              <TaskQuickFilters
+                superFilters={superFilters}
+                onFilterChange={handleSuperFilterChange}
+                onMultiSelectFilter={handleMultiSelectFilter}
+                users={getFilterOptions(tasksOnReviewData?.tasks || []).users}
+                projects={getFilterOptions(tasksOnReviewData?.tasks || []).projects}
+                showTasks={showTasks}
+                showSubtasks={showSubtasks}
+                onToggleTasks={() => setShowTasks((prev) => !prev)}
+                onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+              />
             </div>
 
             {/* Tasks List */}
