@@ -190,23 +190,7 @@ const ProjectDeadlineAlerts = () => {
     }
   });
 
-  if (deadlineAlerts.length === 0) {
-    return (
-      <div className="w-full mt-3 bg-white pb-3 pt-5 px-4 flex flex-col rounded-3xl">
-        <div className="flex items-center gap-x-2 mb-4">
-          <MdOutlineTimer className="w-5 h-5 text-gray-400" />
-          <h4 className="font-semibold text-lg text-gray-800">
-            Project Deadlines Approaching
-          </h4>
-        </div>
-        <p className="text-gray-500 text-sm">No projects are currently approaching their deadlines.</p>
-        <div className="text-xs text-gray-400 mt-2">
-          Debug info: {activeProjects.length} total active projects found.
-          {activeProjects.map(p => ` [${p.name}: ${p.endDate ? new Date(p.endDate).toLocaleDateString() : 'no-date'}, diff: ${p.endDate ? Math.ceil((new Date(p.endDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : 'N/A'}]`)}
-        </div>
-      </div>
-    );
-  }
+  if (deadlineAlerts.length === 0) return null;
 
   return (
     <div className="w-full mt-3 bg-white pb-3 pt-5 px-4 flex flex-col rounded-3xl">

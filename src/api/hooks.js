@@ -279,7 +279,7 @@ export const useEmpoyees = (page = null, filters = null, search = "") => {
 
       if (page) {
         params.append("page", page.toString());
-        params.append("limit", "100");
+        params.append("limit", "10");
       }
 
       if (filters) {
