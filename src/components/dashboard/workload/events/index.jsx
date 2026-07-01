@@ -24,12 +24,12 @@ const NearestEvents = ({ taskMonth }) => {
 
         // Calculate total pending items
         const pendingCount =
-          (details.reels?.pending || 0) +
-          (details.poster?.pending || 0) +
-          (details.motionPoster?.pending || 0) +
-          (details.shooting?.pending || 0) +
-          (details.motionGraphics?.pending || 0) +
-          (details.other || []).reduce((acc, item) => acc + (item.pending || 0), 0);
+          (details.reels?.count || 0) +
+          (details.poster?.count || 0) +
+          (details.motionPoster?.count || 0) +
+          (details.shooting?.count || 0) +
+          (details.motionGraphics?.count || 0) +
+          (details.other || []).reduce((acc, item) => acc + (item.count || 0), 0);
 
         return {
           ...project,
@@ -99,20 +99,20 @@ const NearestEvents = ({ taskMonth }) => {
 
               <div className="flex flex-wrap gap-2">
                 {/* Only show categories with pending items */}
-                {project.details.reels?.pending > 0 && (
-                  <WorkBadge type="Reels" count={project.details.reels.pending} color="bg-pink-100 text-pink-600" />
+                {project.details.reels?.count > 0 && (
+                  <WorkBadge type="Reels" count={project.details.reels.count} color="bg-pink-100 text-pink-600" />
                 )}
-                {project.details.poster?.pending > 0 && (
-                  <WorkBadge type="Posters" count={project.details.poster.pending} color="bg-purple-100 text-purple-600" />
+                {project.details.poster?.count > 0 && (
+                  <WorkBadge type="Posters" count={project.details.poster.count} color="bg-purple-100 text-purple-600" />
                 )}
-                {project.details.motionPoster?.pending > 0 && (
-                  <WorkBadge type="Motion" count={project.details.motionPoster.pending} color="bg-indigo-100 text-indigo-600" />
+                {project.details.motionPoster?.count > 0 && (
+                  <WorkBadge type="Motion" count={project.details.motionPoster.count} color="bg-indigo-100 text-indigo-600" />
                 )}
-                {project.details.shooting?.pending > 0 && (
-                  <WorkBadge type="Shoot" count={project.details.shooting.pending} color="bg-orange-100 text-orange-600" />
+                {project.details.shooting?.count > 0 && (
+                  <WorkBadge type="Shoot" count={project.details.shooting.count} color="bg-orange-100 text-orange-600" />
                 )}
-                {project.details.motionGraphics?.pending > 0 && (
-                  <WorkBadge type="Graphics" count={project.details.motionGraphics.pending} color="bg-teal-100 text-teal-600" />
+                {project.details.motionGraphics?.count > 0 && (
+                  <WorkBadge type="Graphics" count={project.details.motionGraphics.count} color="bg-teal-100 text-teal-600" />
                 )}
               </div>
             </Link>

@@ -39,12 +39,12 @@ const PendingWorks = () => {
                 const details = project.workDetails[0] || {};
 
                 const pendingCount =
-                    (details.reels?.pending || 0) +
-                    (details.poster?.pending || 0) +
-                    (details.motionPoster?.pending || 0) +
-                    (details.shooting?.pending || 0) +
-                    (details.motionGraphics?.pending || 0) +
-                    (details.other || []).reduce((acc, item) => acc + (item.pending || 0), 0);
+                    (details.reels?.count || 0) +
+                    (details.poster?.count || 0) +
+                    (details.motionPoster?.count || 0) +
+                    (details.shooting?.count || 0) +
+                    (details.motionGraphics?.count || 0) +
+                    (details.other || []).reduce((acc, item) => acc + (item.count || 0), 0);
 
                 return {
                     ...project,
@@ -123,21 +123,21 @@ const PendingWorks = () => {
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <DetailRow label="Reels" item={project.details.reels} color="text-pink-600" bg="bg-pink-50" />
-                                <DetailRow label="Posters" item={project.details.poster} color="text-purple-600" bg="bg-purple-50" />
-                                <DetailRow label="Motion Check" item={project.details.motionPoster} color="text-indigo-600" bg="bg-indigo-50" />
-                                <DetailRow label="Shooting" item={project.details.shooting} color="text-orange-600" bg="bg-orange-50" />
-                                <DetailRow label="Motion Graphics" item={project.details.motionGraphics} color="text-teal-600" bg="bg-teal-50" />
+                                <DetailRow label="Reels" item={project.details.reels} color="bg-pink-100 text-pink-600" />
+                                <DetailRow label="Posters" item={project.details.poster} color="bg-purple-100 text-purple-600" />
+                                <DetailRow label="Motion Check" item={project.details.motionPoster} color="bg-indigo-100 text-indigo-600" />
+                                <DetailRow label="Shooting" item={project.details.shooting} color="bg-orange-100 text-orange-600" />
+                                <DetailRow label="Motion Graphics" item={project.details.motionGraphics} color="bg-teal-100 text-teal-600" />
 
-                                {/* Handle 'Other' array if needed, generally these are dynamic */}
-                                {project.details.other && project.details.other.map((item, idx) => (
-                                    item.pending > 0 && (
+                                {project.details.other && project.details.other.map((item, idx) => {
+                                    const completed = Math.max(0, (item.total || 0) - (item.count || 0));
+                                    return item.count > 0 && (
                                         <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-lg bg-gray-50">
                                             <span className="text-gray-600">{item.name || `Other ${idx + 1}`}</span>
-                                            <span className="font-bold text-gray-700">{item.completed}/{item.total}</span>
+                                            <span className="font-bold text-gray-700">{completed}/{item.total}</span>
                                         </div>
-                                    )
-                                ))}
+                                    );
+                                })}
 
                             </div>
                         </div>
@@ -148,13 +148,16 @@ const PendingWorks = () => {
     );
 };
 
-const DetailRow = ({ label, item, color, bg }) => {
-    if (!item || !item.pending || item.pending <= 0) return null;
+const DetailRow = ({ label, item, color }) => {
+    if (!item || !item.count || item.count <= 0) return null;
+
+    const completed = Math.max(0, (item.total || 0) - item.count);
+
     return (
-        <div className={`flex justify-between items-center text-sm p-2 rounded-lg ${bg}`}>
-            <span className={`${color} font-medium`}>{label}</span>
-            <span className="font-bold text-gray-700">
-                {item.completed} <span className="text-gray-400 font-normal text-xs">/ {item.total}</span>
+        <div className={`text-xs px-2.5 py-1 rounded-md flex items-center justify-between gap-1.5 ${color}`}>
+            <span className="font-semibold">{label}</span>
+            <span className="font-bold">
+                {completed} / {item.total}
             </span>
         </div>
     );
