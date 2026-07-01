@@ -6,7 +6,7 @@ import apiClient from "../../../api/client";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
-const AlertCard = ({ alert }) => {
+const AlertCard = ({ alert, project }) => {
   const navigate = useNavigate();
   const { mutate: markAsRead } = useMarkNotificationAsRead();
   const queryClient = useQueryClient();
@@ -58,12 +58,15 @@ const AlertCard = ({ alert }) => {
       )}
       <div className="flex justify-between items-start">
         <span className="font-semibold text-gray-800 line-clamp-1">
-          {alert.data?.projectName}
+          {project?.name || alert.data?.projectName}
         </span>
         <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full whitespace-nowrap">
           {(() => {
-            const hours = alert.data?.hoursUntilDue || 0;
-            const days = Math.ceil(hours / 24);
+            if (!project?.endDate) return "Due today";
+            const end = new Date(project.endDate);
+            const now = new Date();
+            const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 3600 * 24));
+            
             if (days < 0) {
               return `${Math.abs(days)} days overdue`;
             } else if (days > 0) {
@@ -75,7 +78,19 @@ const AlertCard = ({ alert }) => {
         </span>
       </div>
       <p className="text-xs text-gray-600">
-        {alert.message}
+        {(() => {
+          if (!project?.endDate) return alert.message;
+          const end = new Date(project.endDate);
+          const now = new Date();
+          const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 3600 * 24));
+          
+          if (days < 0) {
+            return `Project '${project.name}' deadline ended ${Math.abs(days)} days ago. Please update the deadline if the project will continue.`;
+          } else if (days > 0) {
+            return `Project '${project.name}' deadline ends in ${days} days. Please update the deadline if the project will continue.`;
+          }
+          return `Project '${project.name}' deadline is today. Please update the deadline if the project will continue.`;
+        })()}
       </p>
       
       <div className="mt-2 flex flex-col gap-y-2">
@@ -137,11 +152,26 @@ const ProjectDeadlineAlerts = ({ activeProjects = [] }) => {
   const notifications = notificationsData?.notifications || [];
   
   // Filter for unread project deadline reminders and ensure project is still active/not paused
-  const deadlineAlerts = notifications.filter(
-    (n) => n.type === "project_deadline_reminder" && 
-           !n.read && 
-           activeProjects.some(p => p._id === n.data?.projectId)
-  );
+  // Also check the REAL endDate to ensure we don't show stale notifications that another user already extended
+  const deadlineAlerts = [];
+  
+  notifications.forEach((n) => {
+    if (n.type !== "project_deadline_reminder" || n.read) return;
+    
+    const project = activeProjects.find((p) => p._id === n.data?.projectId);
+    if (!project) return;
+    
+    if (project.endDate) {
+      const end = new Date(project.endDate);
+      const now = new Date();
+      const daysDiff = (end.getTime() - now.getTime()) / (1000 * 3600 * 24);
+      
+      // Only show if deadline is within 7 days or overdue
+      if (daysDiff <= 7) {
+        deadlineAlerts.push({ alert: n, project });
+      }
+    }
+  });
 
   if (deadlineAlerts.length === 0) return null;
 
@@ -155,8 +185,8 @@ const ProjectDeadlineAlerts = ({ activeProjects = [] }) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {deadlineAlerts.map((alert) => (
-          <AlertCard key={alert._id} alert={alert} />
+        {deadlineAlerts.map(({ alert, project }) => (
+          <AlertCard key={alert._id} alert={alert} project={project} />
         ))}
       </div>
     </div>

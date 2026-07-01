@@ -16,6 +16,7 @@ import ProjectCard from "../../components/shared/projectCard";
 import { useNavigate } from "react-router-dom";
 import DashboardCampaigns from "../../components/dashboard/campaigns";
 import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
+import ProjectDeadlineAlerts from "../../components/dashboard/projectDeadlineAlerts";
 
 const CompanyDashboard = () => {
   const { companyId, user } = useAuth();
@@ -184,6 +185,8 @@ const CompanyDashboard = () => {
       <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
         <CompanyProgressStats taskMonth={taskMonth} />
       </div>
+
+      <ProjectDeadlineAlerts activeProjects={projects} />
 
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 mt-5">
         {/* Workload section */}

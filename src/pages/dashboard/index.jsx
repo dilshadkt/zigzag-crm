@@ -15,7 +15,6 @@ import EmployeeProgressStats from "../../components/dashboard/employeeProgressSt
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
 import DashboardProjects from "../../components/dashboard/dashboardProjects";
 import CompletionTrendChart from "../../components/dashboard/performanceChart";
-import ProjectDeadlineAlerts from "../../components/dashboard/projectDeadlineAlerts";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(() =>
@@ -37,12 +36,8 @@ const Dashboard = () => {
   const canCreateTask = hasPermission("tasks", "create");
   // User is considered "privileged" if they can both create and edit tasks
   const isPrivilegedUser = canEditTasks && canCreateTask;
-  // If user is employee but has task admin privileges, treat them as non-employee (admin-view) for dashboard
-  const isEmployee = user?.role === "employee";
-  const isEmployeeHasTaskAdmin = isEmployee && isPrivilegedUser;
-
-
-  const isCompanyAdmin = user?.role === "company-admin";
+  const isEmployee = true; // Force employee (personal) view for Main Dashboard
+  const isCompanyAdmin = false;
 
   // Check if user has permission to view daily checklist
   const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist") || hasPermission("dashboard", "viewAllChecklistData");
@@ -65,31 +60,15 @@ const Dashboard = () => {
     .toString()
     .padStart(2, "0")}`;
 
-  // Fetch projects based on user role with month filter
-  const { data: companyProjects } = useCompanyProjects(
-    isEmployee ? null : companyId,
-    0,
-    taskMonth
-  );
   const { data: employeeProjectsData } = useGetEmployeeProjects(
-    isEmployee && user?._id ? user._id : null,
+    user?._id ? user._id : null,
     taskMonth
   );
 
-  // Determine which projects to show - For Checklist using ALL projects not just sliced ones
-  // We need a list of ALL active projects for the checklist, not just the top 3
-  // However, useGetEmployeeProjects by default might return all or paginated.
-  // The slice(0,3) is only for display on dashboard cards.
-  // We should pass the FULL list to the drawer.
-  const activeCompanyProjects = companyProjects?.filter(p => p.status !== "paused") || [];
   const activeEmployeeProjects = employeeProjectsData?.projects?.filter(p => p.status !== "paused") || [];
 
-  const projectsForChecklist = isEmployee
-    ? activeEmployeeProjects
-    : activeCompanyProjects; // Admin sees company projects
-  const projects = isEmployee
-    ? activeEmployeeProjects
-    : activeCompanyProjects;
+  const projectsForChecklist = activeEmployeeProjects;
+  const projects = activeEmployeeProjects;
 
   // Navigation functions for month selection
   const goToPreviousMonth = () => {
@@ -180,84 +159,50 @@ const Dashboard = () => {
 
       {/* Progress Stats Section - Show different components based on user role and permissions */}
       <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
-        {isEmployee && !canViewAllTasks ? (
-          <EmployeeProgressStats taskMonth={taskMonth} />
-        ) : isCompanyAdmin || (isEmployee && canViewAllTasks) ? (
-          <CompanyProgressStats taskMonth={taskMonth} />
-        ) : null}
+        <EmployeeProgressStats taskMonth={taskMonth} />
       </div>
 
-      {(!isEmployee || isCompanyAdmin || canViewAllTasks) && (
-        <ProjectDeadlineAlerts activeProjects={projectsForChecklist} />
-      )}
-
-      {/* Performance Section - On-time Completion & Rework Trend - Admin Only */}
-      {!isEmployee || isEmployeeHasTaskAdmin ? (
-        <div className="w-full mt-5">
-          <CompletionTrendChart userId={isEmployee ? user?._id : null} />
-        </div>
-      ) : null}
+      <div className="w-full mt-5">
+        <CompletionTrendChart userId={user?._id} />
+      </div>
 
       <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-4">
-        {/* work load section or employee work details - now full width */}
+        {/* employee work details - now full width */}
         <div className="md:col-span-7">
-          {isEmployee ? (
-            <Suspense fallback={<div>Loading Employee Work Details...</div>}>
-              <EmployeeWorkDetails />
-            </Suspense>
-          ) : (
-            <WorkLoad />
-          )}
+          <Suspense fallback={<div>Loading Employee Work Details...</div>}>
+            <EmployeeWorkDetails />
+          </Suspense>
         </div>
       </div>
 
       <DashboardProjects
-        isEmployee={isEmployee}
+        isEmployee={true}
         projects={projects}
         user={user}
-        isCompanyAdmin={isCompanyAdmin}
+        isCompanyAdmin={false}
         canViewCampaignDetails={canViewCampaignDetails}
         selectedDate={selectedDate}
       />
 
       {/* Team Insights Section */}
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-6 mt-5">
-        {!isEmployee || isEmployeeHasTaskAdmin ? (
-          <>
-            <div className="lg:col-span-8">
-              <EmployeesTodayStatus />
-            </div>
-            <div className="lg:col-span-4">
-              <DashboardRanking />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="lg:col-span-6 xl:col-span-4">
-              <DashboardRanking />
-            </div>
-            <div className="lg:col-span-6 xl:col-span-4">
-              <NearestEvents selectedDate={selectedDate} />
-            </div>
-          </>
-        )}
+        <div className="lg:col-span-6 xl:col-span-4">
+          <DashboardRanking />
+        </div>
+        <div className="lg:col-span-6 xl:col-span-4">
+          <NearestEvents selectedDate={selectedDate} />
+        </div>
       </div>
 
-      {(!isEmployee || isEmployeeHasTaskAdmin) && (
-        <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
-          <div className="md:col-span-5">
-            <EmployeeTodayTasks />
-          </div>
-          <div className="md:col-span-2 flex flex-col gap-6">
-            {isEmployee ? (
-              <NearestEvents selectedDate={selectedDate} />
-            ) : (
-              <PendingWork taskMonth={taskMonth} />
-            )}
-            <TodayReworkTasks />
-          </div>
+      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
+        <div className="md:col-span-5">
+          <EmployeeTodayTasks />
         </div>
-      )}
+        <div className="md:col-span-2 flex flex-col gap-6">
+          <NearestEvents selectedDate={selectedDate} />
+          <TodayReworkTasks />
+        </div>
+      </div>
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
       {canViewDailyChecklist && (
