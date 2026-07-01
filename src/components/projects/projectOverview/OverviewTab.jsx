@@ -283,9 +283,9 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                     </div>
                   </td>
                   {[wd.reels, wd.poster, wd.motionPoster, wd.shooting, wd.motionGraphics].map((metric, idx) => {
-                    // 'count' represents the completed items
-                    const completed = metric?.count || 0;
+                    // 'count' represents the remaining items in the backend, so used = total - count
                     const total = metric?.total || 0;
+                    const completed = Math.max(0, total - (metric?.count || 0));
                     return (
                       <td key={idx} className="px-4 py-4">
                         <div className="flex flex-col items-center">
@@ -304,10 +304,11 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                     <div className="flex flex-wrap justify-end gap-1.5">
                       {wd.other && wd.other.length > 0 ? (
                         wd.other.map((o, i) => {
-                          const oCompleted = o?.count || 0;
+                          const oTotal = o?.total || 0;
+                          const oCompleted = Math.max(0, oTotal - (o?.count || 0));
                           return (
                             <span key={i} className="text-[9px] font-bold text-gray-600 bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg leading-none whitespace-nowrap">
-                              {o.name}: {oCompleted}/{o.total}
+                              {o.name}: {oCompleted}/{oTotal}
                             </span>
                           );
                         })
