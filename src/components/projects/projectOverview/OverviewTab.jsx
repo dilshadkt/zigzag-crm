@@ -204,6 +204,33 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
         </div>
       )}
 
+      {/* Section: Branch Details */}
+      {currentProject?.customFields?.branches && currentProject.customFields.branches.length > 0 && (
+        <div className="bg-white p-5 rounded-2xl border border-gray-100">
+          <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-1 h-4 bg-teal-500 rounded-full"></div>
+            Configured Branches
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {currentProject.customFields.branches.map((branch, idx) => (
+              <div key={branch.id || idx} className="flex flex-col gap-2 p-3 bg-[#F8FAFC] rounded-xl border border-gray-100 transition-colors">
+                <span className="text-xs font-bold text-gray-800 line-clamp-1" title={branch.name}>{branch.name}</span>
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-gray-500 uppercase tracking-widest font-semibold">User:</span>
+                    <span className="font-bold text-gray-700 truncate max-w-[120px]" title={branch.username}>{branch.username}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-gray-500 uppercase tracking-widest font-semibold">Pwd:</span>
+                    <span className="font-bold text-gray-700 truncate max-w-[120px]" title={branch.password}>{branch.password}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Section: Social Media Links */}
       {hasSocialMedia && (
         <div className="bg-white p-5 rounded-2xl border border-gray-100">
