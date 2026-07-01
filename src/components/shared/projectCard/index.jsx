@@ -35,13 +35,44 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
     };
   }
 
-  // If still no details, check if workDetails array exists and use first entry
+  // If still no details, aggregate all months in workDetails array to show overall progress
   if (
     !monthlyDetails &&
     project?.workDetails &&
     project.workDetails.length > 0
   ) {
-    monthlyDetails = project.workDetails[0];
+    const aggregated = {
+      reels: { count: 0, total: 0 },
+      poster: { count: 0, total: 0 },
+      motionPoster: { count: 0, total: 0 },
+      shooting: { count: 0, total: 0 },
+      motionGraphics: { count: 0, total: 0 },
+      other: [],
+    };
+
+    project.workDetails.forEach((month) => {
+      ["reels", "poster", "motionPoster", "shooting", "motionGraphics"].forEach((type) => {
+        if (month[type]) {
+          aggregated[type].count += month[type].count || 0;
+          aggregated[type].total += month[type].total || 0;
+        }
+      });
+      if (month.other && Array.isArray(month.other)) {
+        month.other.forEach((item) => {
+          if (item && item.name) {
+            const existing = aggregated.other.find((o) => o.name === item.name);
+            if (existing) {
+              existing.count += item.count || 0;
+              existing.total += item.total || 0;
+            } else {
+              aggregated.other.push({ name: item.name, count: item.count || 0, total: item.total || 0 });
+            }
+          }
+        });
+      }
+    });
+
+    monthlyDetails = aggregated;
   }
 
   if (!monthlyDetails) {

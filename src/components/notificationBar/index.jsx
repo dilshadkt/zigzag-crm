@@ -42,6 +42,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
       case "task_updated":
         return "/icons/update.svg";
       case "deadline_reminder":
+      case "project_deadline_reminder":
         return "/icons/clock.svg";
       case "project_update":
         return "/icons/project.svg";
@@ -61,6 +62,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
       case "task_updated":
         return "bg-purple-100 text-purple-600";
       case "deadline_reminder":
+      case "project_deadline_reminder":
         return "bg-red-100 text-red-600";
       case "project_update":
         return "bg-yellow-100 text-yellow-600";
@@ -101,6 +103,11 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
       case "project_update":
         if (notification.data?.projectId) {
           navigate(`/projects/${notification.data.projectId}`);
+        }
+        break;
+      case "project_deadline_reminder":
+        if (notification.data?.projectId) {
+          navigate(`/projects/${notification.data.projectId}/edit`);
         }
         break;
       default:
@@ -224,7 +231,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
                       </div>
                     )}
 
-                  {notification.type === "deadline_reminder" && (
+                  {(notification.type === "deadline_reminder" || notification.type === "project_deadline_reminder") && (
                     <div className="flex items-center gap-x-2 mt-1">
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
                         ⏰ Urgent

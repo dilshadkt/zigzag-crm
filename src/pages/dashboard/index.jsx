@@ -15,6 +15,7 @@ import EmployeeProgressStats from "../../components/dashboard/employeeProgressSt
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
 import DashboardProjects from "../../components/dashboard/dashboardProjects";
 import CompletionTrendChart from "../../components/dashboard/performanceChart";
+import ProjectDeadlineAlerts from "../../components/dashboard/projectDeadlineAlerts";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(() =>
@@ -67,6 +68,7 @@ const Dashboard = () => {
   // Fetch projects based on user role with month filter
   const { data: companyProjects } = useCompanyProjects(
     isEmployee ? null : companyId,
+    0,
     taskMonth
   );
   const { data: employeeProjectsData } = useGetEmployeeProjects(
@@ -79,12 +81,15 @@ const Dashboard = () => {
   // However, useGetEmployeeProjects by default might return all or paginated.
   // The slice(0,3) is only for display on dashboard cards.
   // We should pass the FULL list to the drawer.
+  const activeCompanyProjects = companyProjects?.filter(p => p.status !== "paused") || [];
+  const activeEmployeeProjects = employeeProjectsData?.projects?.filter(p => p.status !== "paused") || [];
+
   const projectsForChecklist = isEmployee
-    ? employeeProjectsData?.projects || []
-    : companyProjects || []; // Admin sees company projects
+    ? activeEmployeeProjects
+    : activeCompanyProjects; // Admin sees company projects
   const projects = isEmployee
-    ? employeeProjectsData?.projects?.slice(0, 3) || []
-    : companyProjects || [];
+    ? activeEmployeeProjects
+    : activeCompanyProjects;
 
   // Navigation functions for month selection
   const goToPreviousMonth = () => {
@@ -181,6 +186,10 @@ const Dashboard = () => {
           <CompanyProgressStats taskMonth={taskMonth} />
         ) : null}
       </div>
+
+      {(!isEmployee || isCompanyAdmin || canViewAllTasks) && (
+        <ProjectDeadlineAlerts activeProjects={projectsForChecklist} />
+      )}
 
       {/* Performance Section - On-time Completion & Rework Trend - Admin Only */}
       {!isEmployee || isEmployeeHasTaskAdmin ? (
