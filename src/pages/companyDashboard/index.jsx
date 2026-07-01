@@ -17,6 +17,11 @@ import { useNavigate } from "react-router-dom";
 import DashboardCampaigns from "../../components/dashboard/campaigns";
 import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
 import ProjectDeadlineAlerts from "../../components/dashboard/projectDeadlineAlerts";
+import CompletionTrendChart from "../../components/dashboard/performanceChart";
+import EmployeesTodayStatus from "../../components/dashboard/EmployeesTodayStatus";
+import DashboardRanking from "../../components/dashboard/DashboardRanking";
+import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
+import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
 
 const CompanyDashboard = () => {
   const { companyId, user } = useAuth();
@@ -186,7 +191,11 @@ const CompanyDashboard = () => {
         <CompanyProgressStats taskMonth={taskMonth} />
       </div>
 
-      <ProjectDeadlineAlerts activeProjects={projects} />
+      <ProjectDeadlineAlerts />
+
+      <div className="w-full mt-5">
+        <CompletionTrendChart userId={null} />
+      </div>
 
       <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 mt-5">
         {/* Workload section */}
@@ -248,6 +257,26 @@ const CompanyDashboard = () => {
         <div className="flex flex-col gap-5 md:col-span-2">
           <ActivityStream />
           <NearestEvents selectedDate={selectedDate} />
+        </div>
+      </div>
+
+      {/* Team Insights Section */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-6 mt-5">
+        <div className="lg:col-span-8">
+          <EmployeesTodayStatus />
+        </div>
+        <div className="lg:col-span-4">
+          <DashboardRanking />
+        </div>
+      </div>
+
+      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
+        <div className="md:col-span-5">
+          <EmployeeTodayTasks />
+        </div>
+        <div className="md:col-span-2 flex flex-col gap-6">
+          <PendingWork taskMonth={taskMonth} />
+          <TodayReworkTasks />
         </div>
       </div>
 

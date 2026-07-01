@@ -26,9 +26,15 @@ import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
 import EmployeesTodayStatus from "../../components/dashboard/EmployeesTodayStatus";
 import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
 import DashboardRanking from "../../components/dashboard/DashboardRanking";
+import CompanyDashboard from "../companyDashboard";
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
+  
+  if (user?.role === "company-admin") {
+    return <CompanyDashboard />;
+  }
+  
   const { hasPermission } = usePermissions();
 
   // Permission checks

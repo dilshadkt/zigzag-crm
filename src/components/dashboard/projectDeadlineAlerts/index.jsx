@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useGetNotifications, useMarkNotificationAsRead } from "../../../api/hooks";
+import { useGetNotifications, useMarkNotificationAsRead, useCompanyProjects } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 import { MdOutlineTimer } from "react-icons/md";
 import apiClient from "../../../api/client";
 import toast from "react-hot-toast";
@@ -20,7 +21,9 @@ const AlertCard = ({ alert, project }) => {
       
       await apiClient.patch(`/projects/${alert.data.projectId}`, { endDate: newEndDate });
       
-      markAsRead(alert._id);
+      if (alert._id) {
+        markAsRead(alert._id);
+      }
       toast.success(`Deadline extended by ${months} ${months === 1 ? 'month' : 'months'}`);
       
       queryClient.invalidateQueries({ queryKey: ["companyProjects"] });
@@ -37,7 +40,9 @@ const AlertCard = ({ alert, project }) => {
     try {
       await apiClient.patch(`/projects/${alert.data.projectId}`, { status });
       
-      markAsRead(alert._id);
+      if (alert._id) {
+        markAsRead(alert._id);
+      }
       toast.success(`Project marked as ${status}`);
       
       queryClient.invalidateQueries({ queryKey: ["companyProjects"] });
@@ -146,20 +151,24 @@ const AlertCard = ({ alert, project }) => {
   );
 };
 
-const ProjectDeadlineAlerts = ({ activeProjects = [] }) => {
-  const { data: notificationsData } = useGetNotifications(50);
+const ProjectDeadlineAlerts = () => {
+  const { companyId } = useAuth();
   
+  // Fetch ALL projects specifically for deadline alerts (ignoring taskMonth filters)
+  const { data: allProjectsData } = useCompanyProjects(companyId, 0, null);
+  const activeProjects = Array.isArray(allProjectsData) ? allProjectsData : [];
+
+  const { data: notificationsData } = useGetNotifications(50);
   const notifications = notificationsData?.notifications || [];
   
-  // Filter for unread project deadline reminders and ensure project is still active/not paused
-  // Also check the REAL endDate to ensure we don't show stale notifications that another user already extended
   const deadlineAlerts = [];
   
-  notifications.forEach((n) => {
-    if (n.type !== "project_deadline_reminder" || n.read) return;
-    
-    const project = activeProjects.find((p) => p._id === n.data?.projectId);
-    if (!project) return;
+  console.log("ProjectDeadlineAlerts - activeProjects length:", activeProjects.length, activeProjects);
+
+  // First, map over all active projects to find those approaching deadlines
+  activeProjects.forEach((project) => {
+    // Skip if status is already completed or paused
+    if (project.status === 'completed' || project.status === 'paused') return;
     
     if (project.endDate) {
       const end = new Date(project.endDate);
@@ -168,12 +177,36 @@ const ProjectDeadlineAlerts = ({ activeProjects = [] }) => {
       
       // Only show if deadline is within 7 days or overdue
       if (daysDiff <= 7) {
-        deadlineAlerts.push({ alert: n, project });
+        // Try to find a matching notification if one exists
+        const matchingNotif = notifications.find(
+          n => n.type === "project_deadline_reminder" && !n.read && n.data?.projectId === project._id
+        );
+        
+        deadlineAlerts.push({ 
+          alert: matchingNotif || { data: { projectId: project._id, projectName: project.name } }, 
+          project 
+        });
       }
     }
   });
 
-  if (deadlineAlerts.length === 0) return null;
+  if (deadlineAlerts.length === 0) {
+    return (
+      <div className="w-full mt-3 bg-white pb-3 pt-5 px-4 flex flex-col rounded-3xl">
+        <div className="flex items-center gap-x-2 mb-4">
+          <MdOutlineTimer className="w-5 h-5 text-gray-400" />
+          <h4 className="font-semibold text-lg text-gray-800">
+            Project Deadlines Approaching
+          </h4>
+        </div>
+        <p className="text-gray-500 text-sm">No projects are currently approaching their deadlines.</p>
+        <div className="text-xs text-gray-400 mt-2">
+          Debug info: {activeProjects.length} total active projects found.
+          {activeProjects.map(p => ` [${p.name}: ${p.endDate ? new Date(p.endDate).toLocaleDateString() : 'no-date'}, diff: ${p.endDate ? Math.ceil((new Date(p.endDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : 'N/A'}]`)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full mt-3 bg-white pb-3 pt-5 px-4 flex flex-col rounded-3xl">

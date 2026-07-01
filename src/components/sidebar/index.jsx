@@ -60,18 +60,27 @@ const Sidebar = () => {
     if (item.routeKey === "dashboard") {
       const allowedRoutes = userPosition?.allowedRoutes || [];
 
-      // 1. Start with "Main Dashboard"
-      let children = [
-        {
+      let children = [];
+
+      // 1. Add "Main Dashboard" only if user is NOT an admin
+      if (!isCompanyAdmin) {
+        children.push({
           id: 101,
           title: "Main Dashboard",
           path: "/",
           routeKey: "dashboard",
-        }
-      ];
+        });
+      }
 
       // 2. Insert "Company Dashboard" if user has access
-      if (isCompanyAdmin || canAccessAdminDashboard) {
+      if (isCompanyAdmin) {
+        children.push({
+          id: 1301,
+          title: "Dashboard", // Admins see it simply as "Dashboard"
+          path: "/",
+          routeKey: "dashboard",
+        });
+      } else if (canAccessAdminDashboard) {
         children.push({
           id: 1301,
           title: "Company Dashboard",
