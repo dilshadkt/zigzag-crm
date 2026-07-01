@@ -32,6 +32,23 @@ const AlertCard = ({ alert }) => {
     }
   };
 
+  const handleUpdateStatus = async (status) => {
+    setIsUpdating(true);
+    try {
+      await apiClient.patch(`/projects/${alert.data.projectId}`, { status });
+      
+      markAsRead(alert._id);
+      toast.success(`Project marked as ${status}`);
+      
+      queryClient.invalidateQueries({ queryKey: ["companyProjects"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeProjects"] });
+      queryClient.invalidateQueries({ queryKey: ["projectDetails", alert.data.projectId] });
+    } catch (err) {
+      toast.error("Failed to update project status");
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="bg-[#F8F9FA] p-4 rounded-2xl border border-[#E4E6E8] flex flex-col gap-y-3 relative overflow-hidden">
       {isUpdating && (
@@ -65,6 +82,13 @@ const AlertCard = ({ alert }) => {
         <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Quick Extend</span>
         <div className="grid grid-cols-3 gap-2">
           <button 
+            onClick={() => handleExtend(1)}
+            disabled={isUpdating}
+            className="text-xs py-1.5 px-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors font-medium text-center"
+          >
+            1 Month
+          </button>
+          <button 
             onClick={() => handleExtend(3)}
             disabled={isUpdating}
             className="text-xs py-1.5 px-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors font-medium text-center"
@@ -78,13 +102,6 @@ const AlertCard = ({ alert }) => {
           >
             6 Months
           </button>
-          <button 
-            onClick={() => handleExtend(12)}
-            disabled={isUpdating}
-            className="text-xs py-1.5 px-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors font-medium text-center"
-          >
-            1 Year
-          </button>
         </div>
         <button 
           onClick={() => navigate(`/projects/${alert.data?.projectId}/edit`)}
@@ -92,6 +109,23 @@ const AlertCard = ({ alert }) => {
         >
           Custom (Edit Project)
         </button>
+
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          <button 
+            onClick={() => handleUpdateStatus('paused')}
+            disabled={isUpdating}
+            className="text-xs py-1.5 px-2 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 rounded-lg transition-colors font-medium text-center border border-yellow-200"
+          >
+            Pause Project
+          </button>
+          <button 
+            onClick={() => handleUpdateStatus('completed')}
+            disabled={isUpdating}
+            className="text-xs py-1.5 px-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors font-medium text-center border border-green-200"
+          >
+            Close Project
+          </button>
+        </div>
       </div>
     </div>
   );
