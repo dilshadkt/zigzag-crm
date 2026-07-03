@@ -195,6 +195,36 @@ export const getDueDateColor = (dueDate, status) => {
  *   adjustedDay: string|null,
  * }>}
  */
+const getWorkingDaysCount = (start, end, weeklyOffs, holidays) => {
+  let count = 0;
+  let curr = new Date(start);
+  curr.setHours(0, 0, 0, 0);
+  const endT = new Date(end);
+  endT.setHours(0, 0, 0, 0);
+  let safety = 0;
+  while (curr < endT && safety < 1000) {
+    if (!isOffDay(curr, weeklyOffs, holidays)) count++;
+    curr.setDate(curr.getDate() + 1);
+    safety++;
+  }
+  return count;
+};
+
+const addWorkingDays = (start, days, weeklyOffs, holidays) => {
+  let curr = new Date(start);
+  curr.setHours(0, 0, 0, 0);
+  let daysToAdd = days;
+  let safety = 0;
+  while (daysToAdd > 0 && safety < 1000) {
+    curr.setDate(curr.getDate() + 1);
+    if (!isOffDay(curr, weeklyOffs, holidays)) {
+      daysToAdd--;
+    }
+    safety++;
+  }
+  return curr;
+};
+
 export const computeFlowDatesWithSchedule = (
   taskStart,
   taskDue,
@@ -215,12 +245,12 @@ export const computeFlowDatesWithSchedule = (
   const weights = flows.map((s) => (s.weightage !== undefined ? s.weightage : 1));
   const totalWeightage = weights.reduce((sum, w) => sum + w, 0);
 
-  const totalDays = Math.max(
+  const totalWorkingDays = Math.max(
     1,
-    Math.ceil((rawTaskDue - adjustedTaskStart) / (1000 * 60 * 60 * 24))
+    getWorkingDaysCount(adjustedTaskStart, rawTaskDue, weeklyOffs, holidays)
   );
 
-  // Proportional step durations (same algorithm as backend)
+  // Proportional step durations (using working days)
   const stepDurations = new Array(flows.length).fill(0);
   if (totalWeightage > 0) {
     let currentWeightSum = 0;
@@ -228,7 +258,7 @@ export const computeFlowDatesWithSchedule = (
     for (let i = 0; i < flows.length; i++) {
       if (weights[i] > 0) {
         currentWeightSum += weights[i];
-        const idealEnd = (currentWeightSum / totalWeightage) * totalDays;
+        const idealEnd = (currentWeightSum / totalWeightage) * totalWorkingDays;
         const actualEnd = Math.round(idealEnd);
         stepDurations[i] = Math.max(0, actualEnd - prevActualEnd);
         prevActualEnd = actualEnd;
@@ -245,40 +275,33 @@ export const computeFlowDatesWithSchedule = (
 
     const stepStartDate = new Date(currentDate);
 
-    // Raw due date (no off-day consideration)
-    const rawDue = new Date(currentDate);
-    rawDue.setDate(rawDue.getDate() + stepDuration);
+    // Compute due date by adding working days
+    const rawDue = addWorkingDays(currentDate, stepDuration, weeklyOffs, holidays);
 
-    // Clamp to task due date before adjusting
-    const clampedRawDue = rawDue > rawTaskDue ? new Date(rawTaskDue) : rawDue;
+    // Clamp to task due date to ensure we never exceed the parent deadline
+    const finalDue = rawDue > rawTaskDue ? new Date(rawTaskDue) : rawDue;
 
-    // Adjust to next working day
-    const adjustedDue = nextWorkingDay(clampedRawDue, weeklyOffs, holidays);
-
-    // Don't exceed task due date after adjustment either (keep clamped)
-    const finalDue = adjustedDue > rawTaskDue ? new Date(rawTaskDue) : adjustedDue;
-
+    // Check if the exact day was shifted due to holiday or weekend
     const wasAdjusted =
-      clampedRawDue.toDateString() !== finalDue.toDateString();
+      isOffDay(rawDue, weeklyOffs, holidays) || finalDue.toDateString() !== rawDue.toDateString();
 
-    // Determine if it was a weekly off or a holiday that caused the adjustment
     let skippedDayType = null;
     let skippedDayName = null;
 
-    if (wasAdjusted) {
-      if (isHoliday(clampedRawDue, holidays)) {
+    if (wasAdjusted && rawDue <= rawTaskDue) {
+      if (isHoliday(rawDue, holidays)) {
         const holiday = holidays.find(h => {
           const d1 = new Date(h.date);
-          const d2 = new Date(clampedRawDue);
+          const d2 = new Date(rawDue);
           d1.setHours(0,0,0,0);
           d2.setHours(0,0,0,0);
           return d1.getTime() === d2.getTime();
         });
         skippedDayType = 'Holiday';
         skippedDayName = holiday ? holiday.name : 'Holiday';
-      } else {
+      } else if (isWeeklyOff(rawDue, weeklyOffs)) {
         skippedDayType = 'Weekly Off';
-        skippedDayName = clampedRawDue.toLocaleDateString("en-US", { weekday: "long" });
+        skippedDayName = rawDue.toLocaleDateString("en-US", { weekday: "long" });
       }
     }
 

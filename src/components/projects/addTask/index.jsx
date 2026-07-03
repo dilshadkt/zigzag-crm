@@ -110,9 +110,13 @@ const AddTask = ({
 
   // Refs to track previous "master" values for resetting manual subtask edits
   const prevMasterValues = useRef({
-    taskFlow: "",
-    startDate: "",
-    dueDate: ""
+    taskFlow: initialValues?.taskFlow || "",
+    startDate: isEdit && initialValues?.startDate
+      ? new Date(initialValues.startDate).toISOString().split('T')[0]
+      : "",
+    dueDate: isEdit && initialValues?.dueDate
+      ? new Date(initialValues.dueDate).toISOString().split('T')[0]
+      : ""
   });
 
   // State for due date change reason modal
@@ -330,7 +334,10 @@ const AddTask = ({
           );
           setShowFlowAssigneeModal(true);
         } else {
-          setFieldValue("assignedTo", uniqueAssignees);
+          const mergedAssignees = Array.from(new Set([...(values.assignedTo || []), ...uniqueAssignees]));
+          if (mergedAssignees.length !== (values.assignedTo?.length || 0)) {
+            setFieldValue("assignedTo", mergedAssignees);
+          }
           setFieldValue("requiresClientApproval", selectedFlow.flows.some(step => step.requiresClientApproval));
           setFieldValue("requiresWorkLink", selectedFlow.flows.some(step => step.requiresWorkLink));
         }
@@ -362,7 +369,7 @@ const AddTask = ({
           
           const flowSubtasks = calculatedSteps.map((s, idx) => ({
             taskName: s.taskName,
-            assignee: s.assignee,
+            assignee: typeof s.assignee === 'object' && s.assignee !== null ? s.assignee._id : s.assignee,
             startDate: s.startDate.toISOString().split('T')[0],
             dueDate: s.dueDate.toISOString().split('T')[0],
             wasAdjusted: s.wasAdjusted,
