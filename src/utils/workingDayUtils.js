@@ -279,7 +279,12 @@ export const computeFlowDatesWithSchedule = (
     const rawDue = addWorkingDays(currentDate, stepDuration, weeklyOffs, holidays);
 
     // Clamp to task due date to ensure we never exceed the parent deadline
-    const finalDue = rawDue > rawTaskDue ? new Date(rawTaskDue) : rawDue;
+    let finalDue = rawDue > rawTaskDue ? new Date(rawTaskDue) : rawDue;
+    
+    // Force the very last subtask to end exactly on the task's due date
+    if (i === flows.length - 1) {
+      finalDue = new Date(rawTaskDue);
+    }
 
     // Check if the exact day was shifted due to holiday or weekend
     const wasAdjusted =

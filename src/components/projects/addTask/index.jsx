@@ -1098,11 +1098,11 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                       <FiAlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
                       <div>
                         <p className="text-[11px] font-bold text-amber-800">
-                          {conflict.employeeName} is on leave
+                          {conflict.employeeName} {conflict.conflictingDates.some(d => d.type === 'task' || d.type === 'subtask') ? 'has schedule conflicts' : 'is on leave'}
                         </p>
                         {conflict.conflictingDates.map((d, dIdx) => (
                           <p key={dIdx} className="text-[10px] text-amber-700 italic">
-                            • {d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
+                            • {d.type === 'task' || d.type === 'subtask' ? d.taskName : d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
                           </p>
                         ))}
                       </div>
@@ -1471,11 +1471,11 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                                   <FiAlertTriangle className="w-3 h-3 text-red-500 mt-0.5" />
                                   <div>
                                     <p className="text-[10px] font-bold text-red-600">
-                                      {conflict.employeeName} unavailable
+                                      {conflict.employeeName} {conflict.conflictingDates.some(d => d.type === 'task' || d.type === 'subtask') ? 'has schedule conflicts' : 'unavailable'}
                                     </p>
                                     {conflict.conflictingDates.map((d, dIdx) => (
                                       <p key={dIdx} className="text-[9px] text-red-500 italic">
-                                        • {d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
+                                        • {d.type === 'task' || d.type === 'subtask' ? d.taskName : d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
                                       </p>
                                     ))}
                                   </div>
