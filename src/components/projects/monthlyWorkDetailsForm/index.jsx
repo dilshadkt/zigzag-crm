@@ -166,6 +166,79 @@ const MonthlyWorkDetailsForm = ({
       }));
 
       setFieldValue("workDetails", convertedWorkDetails);
+    } else if (Array.isArray(values.workDetails)) {
+      // Check if any months are missing and append them
+      const missingMonths = months.filter(
+        (m) => !values.workDetails.some((wd) => wd.month === m.key)
+      );
+
+      if (missingMonths.length > 0) {
+        // Find a template month to copy structure from, preferably the first one
+        const templateMonth = values.workDetails.length > 0 ? values.workDetails[0] : null;
+
+        const newMonthsData = missingMonths.map((month) => {
+          if (templateMonth) {
+            const newMonth = JSON.parse(JSON.stringify(templateMonth));
+            newMonth.month = month.key;
+            newMonth.year = month.year;
+            newMonth.monthNumber = month.month;
+            
+            // Reset all counters to 0
+            Object.keys(newMonth).forEach((key) => {
+              if (
+                typeof newMonth[key] === "object" &&
+                newMonth[key] !== null &&
+                "completed" in newMonth[key]
+              ) {
+                newMonth[key].completed = 0;
+                newMonth[key].extra = 0;
+                newMonth[key].count = newMonth[key].total || 0;
+              }
+            });
+            if (Array.isArray(newMonth.other)) {
+              newMonth.other.forEach((item) => {
+                item.completed = 0;
+                item.extra = 0;
+                item.count = item.total || 0;
+              });
+            }
+            return newMonth;
+          } else {
+            // Default empty structure if no template available
+            return {
+              month: month.key,
+              year: month.year,
+              monthNumber: month.month,
+              reels: { count: 0, total: 0, completed: 0, extra: 0, description: "" },
+              poster: { count: 0, total: 0, completed: 0, extra: 0, description: "" },
+              motionPoster: {
+                count: 0,
+                total: 0,
+                completed: 0,
+                extra: 0,
+                description: "",
+              },
+              shooting: {
+                count: 0,
+                total: 0,
+                completed: 0,
+                extra: 0,
+                description: "",
+              },
+              motionGraphics: {
+                count: 0,
+                total: 0,
+                completed: 0,
+                extra: 0,
+                description: "",
+              },
+              other: [],
+            };
+          }
+        });
+
+        setFieldValue("workDetails", [...values.workDetails, ...newMonthsData]);
+      }
     }
 
     // Set first month as selected by default

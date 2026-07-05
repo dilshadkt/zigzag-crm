@@ -16,10 +16,10 @@ const AlertCard = ({ alert, project }) => {
   const handleExtend = async (months) => {
     setIsUpdating(true);
     try {
-      const currentEndDate = new Date(alert.data.dueDate);
+      const currentEndDate = new Date(project.endDate);
       const newEndDate = new Date(currentEndDate.setMonth(currentEndDate.getMonth() + months));
       
-      await apiClient.patch(`/projects/${alert.data.projectId}`, { endDate: newEndDate });
+      await apiClient.patch(`/projects/${project._id}`, { endDate: newEndDate });
       
       if (alert._id) {
         markAsRead(alert._id);
@@ -28,7 +28,7 @@ const AlertCard = ({ alert, project }) => {
       
       queryClient.invalidateQueries({ queryKey: ["companyProjects"] });
       queryClient.invalidateQueries({ queryKey: ["employeeProjects"] });
-      queryClient.invalidateQueries({ queryKey: ["projectDetails", alert.data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectDetails", project._id] });
     } catch (err) {
       toast.error("Failed to extend deadline");
       setIsUpdating(false);
@@ -38,7 +38,7 @@ const AlertCard = ({ alert, project }) => {
   const handleUpdateStatus = async (status) => {
     setIsUpdating(true);
     try {
-      await apiClient.patch(`/projects/${alert.data.projectId}`, { status });
+      await apiClient.patch(`/projects/${project._id}`, { status });
       
       if (alert._id) {
         markAsRead(alert._id);
@@ -47,7 +47,7 @@ const AlertCard = ({ alert, project }) => {
       
       queryClient.invalidateQueries({ queryKey: ["companyProjects"] });
       queryClient.invalidateQueries({ queryKey: ["employeeProjects"] });
-      queryClient.invalidateQueries({ queryKey: ["projectDetails", alert.data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projectDetails", project._id] });
     } catch (err) {
       toast.error("Failed to update project status");
       setIsUpdating(false);
