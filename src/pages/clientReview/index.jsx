@@ -411,6 +411,52 @@ const ClientReview = () => {
     }
   };
 
+  const formatMonthKey = (monthKey) => {
+    if (monthKey === "Other") return "Other Tasks";
+    const [year, month] = monthKey.split("-");
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+  };
+
+  const groupedTasks = React.useMemo(() => {
+    const groups = {};
+    filteredTasks.forEach(task => {
+      let monthKey = "Other";
+      const isSubTask = task.parentTask || task.isSubTask || task.type === "subtask";
+      
+      if (isSubTask) {
+        const dateString = task.startDate || task.dueDate;
+        if (dateString) {
+          const date = new Date(dateString);
+          monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        }
+      } else {
+        if (task.taskMonth) {
+          monthKey = task.taskMonth;
+        } else if (task.dueDate) {
+          const date = new Date(task.dueDate);
+          monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        }
+      }
+
+      if (!groups[monthKey]) {
+        groups[monthKey] = [];
+      }
+      groups[monthKey].push(task);
+    });
+
+    // Sort groups: reverse chronological order (newest month first)
+    return Object.keys(groups).sort((a, b) => {
+      if (a === "Other") return 1;
+      if (b === "Other") return -1;
+      return b.localeCompare(a);
+    }).map(key => ({
+      key,
+      title: formatMonthKey(key),
+      tasks: groups[key]
+    }));
+  }, [filteredTasks]);
+
   if (isLoading) {
     return (
       <div className="h-screen w-full flexCenter">
@@ -486,14 +532,29 @@ const ClientReview = () => {
                   <p className="text-gray-500">{getEmptyStateMessage()}</p>
                 </div>
               ) : (
-                filteredTasks.map((task, index) => (
-                  <Task
-                    key={task._id}
-                    task={task}
-                    onClick={handleTaskClick}
-                    isBoardView={false}
-                    index={index}
-                  />
+                groupedTasks.map((group) => (
+                  <div key={group.key} className="mb-6 last:mb-0">
+                    <div className="sticky top-0 z-10 bg-gray-50 pb-3 pt-1">
+                      <h4 className="text-md font-semibold text-gray-700 flex items-center gap-2">
+                        <FiCalendar className="w-4 h-4 text-gray-500" />
+                        {group.title}
+                        <span className="text-sm font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full ml-2">
+                          {group.tasks.length}
+                        </span>
+                      </h4>
+                    </div>
+                    <div className="flex flex-col gap-y-4">
+                      {group.tasks.map((task, index) => (
+                        <Task
+                          key={task._id}
+                          task={task}
+                          onClick={handleTaskClick}
+                          isBoardView={false}
+                          index={index}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))
               )}
             </div>

@@ -30,11 +30,11 @@ import CompanyDashboard from "../companyDashboard";
 
 const Dashboard = () => {
   const { companyId, user } = useAuth();
-  
+
   if (user?.role === "company-admin") {
     return <CompanyDashboard />;
   }
-  
+
   const { hasPermission } = usePermissions();
 
   // Permission checks
@@ -118,6 +118,7 @@ const Dashboard = () => {
 
   return (
     <section className="flex flex-col">
+
       <div className="flexBetween ">
         <div>
           <span className="text-sm md:text-base text-[#7D8592]">
