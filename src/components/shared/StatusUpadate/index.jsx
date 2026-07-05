@@ -220,9 +220,9 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
     setMenuOpen(false);
   };
 
-  const handleReworkSubmit = (reworkReason) => {
+  const handleReworkSubmit = ({ reason, voiceNoteUrl }) => {
     mutate(
-      { status: pendingStatus, reworkReason },
+      { status: pendingStatus, reworkReason: reason, voiceNoteUrl },
       {
         onSuccess: () => {
           setIsReworkModalOpen(false);

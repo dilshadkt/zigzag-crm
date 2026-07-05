@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTodayTasks } from "../../api/hooks/dashboard";
 import { useGetAllEmployees } from "../../api/hooks";
-import { FaReply, FaExclamationTriangle, FaUserCircle } from "react-icons/fa";
+import { FaReply, FaExclamationTriangle, FaUserCircle, FaMicrophone } from "react-icons/fa";
 
 const TodayReworkTasks = () => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
@@ -87,8 +87,11 @@ const ReworkItem = ({ item }) => {
                         {item.title}
                     </h5>
                     {item.reworkHistory?.length > 0 && (
-                        <p className="text-[11px] text-red-500 mt-1 italic line-clamp-1">
-                            Reason: {item.reworkHistory[item.reworkHistory.length - 1].reason || "Generic rework"}
+                        <p className="text-[11px] text-red-500 mt-1 italic line-clamp-1 flex items-center gap-1">
+                            <span>Reason: {item.reworkHistory[item.reworkHistory.length - 1].reason || "Generic rework"}</span>
+                            {item.reworkHistory[item.reworkHistory.length - 1].voiceNoteUrl && (
+                                <FaMicrophone className="w-2.5 h-2.5 flex-shrink-0 text-red-400" title="Voice note attached" />
+                            )}
                         </p>
                     )}
                 </div>

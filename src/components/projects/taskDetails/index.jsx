@@ -406,8 +406,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
               <div key={index} className="pb-4 border-b border-gray-100 last:border-b-0 last:pb-0">
                 <div className="flex items-start gap-3 mb-2">
                   <div className="mt-1 flex-shrink-0 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
-                  <div className="text-gray-800 leading-relaxed font-medium">
+                  <div className="text-gray-800 leading-relaxed font-medium w-full">
                     {entry?.reason || "No reason provided"}
+                    {entry?.voiceNoteUrl && (
+                      <div className="mt-3 bg-gray-50 p-2 rounded-xl border border-gray-100 max-w-xs">
+                        <audio src={entry.voiceNoteUrl} controls className="h-8 w-full" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1.5 text-xs text-gray-500 ml-5">

@@ -502,9 +502,14 @@ const SubtasksSection = ({
                     <div className="space-y-2">
                       {[...subtask.reworkHistory].reverse().map((entry, idx) => (
                         <div key={entry._id || idx} className="text-xs">
-                          <p className="text-gray-700 font-medium leading-relaxed">
+                          <div className="text-gray-700 font-medium leading-relaxed w-full">
                             {entry?.reason || "No reason provided"}
-                          </p>
+                            {entry?.voiceNoteUrl && (
+                              <div className="mt-2 bg-white/50 p-1.5 rounded-lg border border-red-200/50 max-w-xs">
+                                <audio src={entry.voiceNoteUrl} controls className="h-6 w-full" />
+                              </div>
+                            )}
+                          </div>
                           <p className="text-[9px] text-gray-400 mt-0.5">
                             Sent back by {entry.changedBy?.firstName || ""} {entry.changedBy?.lastName || ""} on {new Date(entry.changedAt).toLocaleDateString()}{entry.previousStatus ? ` (from ${entry.previousStatus})` : ""}
                           </p>
@@ -795,8 +800,13 @@ const SubtasksSection = ({
                 >
                   <div className="flex items-start gap-2 mb-2">
                     <span className="mt-1 flex-shrink-0 w-2 h-2 rounded-full bg-red-500"></span>
-                    <div className="text-gray-800 leading-relaxed font-medium">
+                    <div className="text-gray-800 leading-relaxed font-medium w-full">
                       {entry?.reason || "No reason provided"}
+                      {entry?.voiceNoteUrl && (
+                        <div className="mt-3 bg-gray-50 p-2 rounded-xl border border-gray-100 max-w-xs">
+                          <audio src={entry.voiceNoteUrl} controls className="h-8 w-full" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-1.5 text-xs text-gray-600 ml-4">

@@ -198,11 +198,12 @@ const SubTaskStatusButton = ({
     }
   };
 
-  const handleReworkSubmit = async (reworkReason) => {
+  const handleReworkSubmit = async ({ reason, voiceNoteUrl }) => {
     try {
       await updateSubTaskMutation.mutateAsync({
         status: pendingStatus,
-        reworkReason,
+        reworkReason: reason,
+        voiceNoteUrl,
       });
       setIsReworkModalOpen(false);
       setPendingStatus(null);
