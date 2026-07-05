@@ -91,6 +91,7 @@ const AddTask = ({
       requiresWorkLink: initialValues.requiresWorkLink || false,
       customFields: initialValues.customFields || [],
       subtasks: initialValues.subtasks || [],
+      attachments: initialValues.attachments || [],
     };
   };
 
@@ -1331,17 +1332,17 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                 <FileAndLinkUpload
                   fileClassName={"grid grid-cols-3 gap-3"}
                   initialFiles={
-                    initialValues?.attachments?.filter(
+                    values?.attachments?.filter(
                       (file) => file.type !== "link"
                     ) || []
                   }
                   initialLinks={
-                    initialValues?.attachments?.filter(
+                    values?.attachments?.filter(
                       (file) => file.type === "link"
                     ) || []
                   }
                   onChange={(files) => setFieldValue("attachments", files)}
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                  disable={!isFormEnabled && !isOtherProjectSelected}
                 />
 
                 <div className="flex flex-col gap-3 mt-4">
