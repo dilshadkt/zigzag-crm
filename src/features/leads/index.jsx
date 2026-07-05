@@ -1079,9 +1079,11 @@ const LeadsFeature = ({
                   className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
                 >
                   <option value="">Global Overview</option>
-                  {branches.map(b => (
-                    <option key={b.id || b.name} value={b.name}>{b.name}</option>
-                  ))}
+                  {branches.map(b => {
+                    const branchId = typeof b === "string" ? b : (b.id || b.name);
+                    const branchName = typeof b === "string" ? b : b.name;
+                    return <option key={branchId} value={branchName}>{branchName}</option>;
+                  })}
                 </select>
               </div>
             )}
@@ -1286,18 +1288,22 @@ const LeadsFeature = ({
                         Select Branch
                       </div>
                       {branches && branches.length > 0 ? (
-                        branches.map((branch) => (
-                          <button
-                            key={branch.id || branch.name}
-                            onClick={() => {
-                              handleBulkMoveToBranch(branch.name);
-                              setBulkBranchMenuOpen(false);
-                            }}
-                            className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
-                          >
-                            {branch.name}
-                          </button>
-                        ))
+                        branches.map((branch) => {
+                          const branchId = typeof branch === "string" ? branch : (branch.id || branch.name);
+                          const branchName = typeof branch === "string" ? branch : branch.name;
+                          return (
+                            <button
+                              key={branchId}
+                              onClick={() => {
+                                handleBulkMoveToBranch(branchName);
+                                setBulkBranchMenuOpen(false);
+                              }}
+                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                            >
+                              {branchName}
+                            </button>
+                          );
+                        })
                       ) : (
                         <div className="px-3 py-1.5 text-xs text-slate-400">No branches found</div>
                       )}

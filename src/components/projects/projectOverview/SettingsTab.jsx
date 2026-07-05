@@ -26,6 +26,7 @@ export const SettingsTab = ({
   const [branchName, setBranchName] = useState("");
   const [branchUsername, setBranchUsername] = useState("");
   const [branchPassword, setBranchPassword] = useState("");
+  const [editingBranchId, setEditingBranchId] = useState(null);
 
   // Lead Form Config for fields
   const { data: formConfig } = useGetLeadFormConfig(currentProject?._id);
@@ -107,36 +108,49 @@ export const SettingsTab = ({
       return;
     }
 
-    const newBranch = {
-      id: Date.now().toString(),
-      name: branchName,
-      username: branchUsername,
-      password: branchPassword,
-    };
-
     try {
+      let updatedBranches = [...branches];
+      if (editingBranchId) {
+        updatedBranches = updatedBranches.map(b => {
+          const id = typeof b === "string" ? b : b.id;
+          if (id === editingBranchId) {
+            return { id, name: branchName, username: branchUsername, password: branchPassword };
+          }
+          return b;
+        });
+      } else {
+        const newBranch = {
+          id: Date.now().toString(),
+          name: branchName,
+          username: branchUsername,
+          password: branchPassword,
+        };
+        updatedBranches.push(newBranch);
+      }
+
       const updatedData = {
         customFields: {
           ...(currentProject?.customFields || {}),
-          branches: [...branches, newBranch],
+          branches: updatedBranches,
         },
       };
 
       await updateProject(updatedData, currentProject._id);
-      toast.success(`Branch "${branchName}" added successfully!`);
+      toast.success(editingBranchId ? `Branch "${branchName}" updated successfully!` : `Branch "${branchName}" added successfully!`);
 
       // Clear fields
       setBranchName("");
       setBranchUsername("");
       setBranchPassword("");
+      setEditingBranchId(null);
 
       queryClient.invalidateQueries(["projectDetails", currentProject._id]);
       queryClient.invalidateQueries(["project", currentProject._id]);
       queryClient.invalidateQueries(["company-active-projects"]);
       if (onRefresh) onRefresh();
     } catch (error) {
-      console.error("Failed to add branch:", error);
-      toast.error("Failed to add branch");
+      console.error(editingBranchId ? "Failed to update branch:" : "Failed to add branch:", error);
+      toast.error(editingBranchId ? "Failed to update branch" : "Failed to add branch");
     }
   };
 
@@ -147,7 +161,10 @@ export const SettingsTab = ({
       const updatedData = {
         customFields: {
           ...(currentProject?.customFields || {}),
-          branches: branches.filter((b) => b.id !== branchId),
+          branches: branches.filter((b) => {
+            const id = typeof b === "string" ? b : b.id;
+            return id !== branchId;
+          }),
         },
       };
 
@@ -168,6 +185,20 @@ export const SettingsTab = ({
     const portalLink = `${window.location.origin}/portal/login?username=${encodeURIComponent(branch.username)}&password=${encodeURIComponent(branch.password)}`;
     navigator.clipboard.writeText(portalLink);
     toast.success(`Portal link for branch "${branch.name}" copied to clipboard!`);
+  };
+
+  const handleCopyBranchCreds = (branch) => {
+    const portalLink = `${window.location.origin}/portal/login?username=${encodeURIComponent(branch.username)}&password=${encodeURIComponent(branch.password)}`;
+    const shareText = `Branch Portal Credentials:\nPortal URL: ${portalLink}\nUsername: ${branch.username}\nPassword: ${branch.password}`;
+    navigator.clipboard.writeText(shareText);
+    toast.success(`Credentials for branch "${branch.name}" copied!`);
+  };
+
+  const handleEditBranch = (branch) => {
+    setEditingBranchId(branch.id);
+    setBranchName(branch.name || "");
+    setBranchUsername(branch.username || "");
+    setBranchPassword(branch.password || "");
   };
 
   return (
@@ -350,49 +381,98 @@ export const SettingsTab = ({
               </div>
             </div>
 
-            <button
-              onClick={handleAddBranch}
-              className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all shadow-sm shadow-indigo-200/50"
-            >
-              Add Branch Login
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddBranch}
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all shadow-sm shadow-indigo-200/50"
+              >
+                {editingBranchId ? "Update Branch Login" : "Add Branch Login"}
+              </button>
+              {editingBranchId && (
+                <button
+                  onClick={() => {
+                    setEditingBranchId(null);
+                    setBranchName("");
+                    setBranchUsername("");
+                    setBranchPassword("");
+                  }}
+                  className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* List of Branches */}
           {branches.length > 0 && (
             <div className="mt-5 border-t border-indigo-100 pt-4 space-y-2.5">
               <h5 className="text-xs font-bold text-indigo-900 mb-2">Configured Branches</h5>
-              {branches.map((branch) => (
-                <div key={branch.id} className="flex items-center justify-between p-3 bg-white border border-indigo-50 rounded-xl hover:border-indigo-200 transition-all">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-gray-800">{branch.name}</span>
-                    <span className="text-[10px] text-gray-400 mt-0.5">
-                      User: <strong className="text-gray-600 font-medium">{branch.username}</strong> |
-                      Pwd: <strong className="text-gray-600 font-medium">{branch.password}</strong>
-                    </span>
+              {branches.map((branch, idx) => {
+                const isLegacyString = typeof branch === "string";
+                const branchId = isLegacyString ? branch : branch.id;
+                const branchName = isLegacyString ? branch : branch.name;
+                const branchUsername = isLegacyString ? "Not Configured" : branch.username;
+                const branchPassword = isLegacyString ? "Not Configured" : branch.password;
+                
+                return (
+                  <div key={branchId || idx} className="flex items-center justify-between p-3 bg-white border border-indigo-50 rounded-xl hover:border-indigo-200 transition-all">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-800">{branchName}</span>
+                      <span className="text-[10px] text-gray-400 mt-0.5">
+                        User: <strong className="text-gray-600 font-medium">{branchUsername}</strong> |
+                        Pwd: <strong className="text-gray-600 font-medium">{branchPassword}</strong>
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      {!isLegacyString && (
+                        <>
+                          <button
+                            onClick={() => handleCopyBranchCreds(branch)}
+                            className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-all"
+                            title="Copy Credentials"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleCopyBranchLink(branch)}
+                            className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-all"
+                            title="Copy Direct Portal Link"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleEditBranch({
+                          id: branchId,
+                          name: branchName,
+                          username: isLegacyString ? "" : branch.username,
+                          password: isLegacyString ? "" : branch.password
+                        })}
+                        className="p-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg transition-all"
+                        title="Edit Branch"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBranch(branchId, branchName)}
+                        className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                        title="Delete Branch"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => handleCopyBranchLink(branch)}
-                      className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-all"
-                      title="Copy Direct Portal Link"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBranch(branch.id, branch.name)}
-                      className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-                      title="Delete Branch"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
