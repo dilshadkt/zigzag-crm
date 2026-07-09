@@ -78,6 +78,17 @@ const Task = memo(({
     task.project.reporters[0].firstName
   );
 
+  const getOnReviewDate = () => {
+    if (task?.status === "on-review" && task?.activityLog) {
+      const reviewLogs = task.activityLog.filter(log => log.changeType === "status_change" && log.newValue === "on-review");
+      if (reviewLogs.length > 0) {
+        return formatDate(reviewLogs[reviewLogs.length - 1].createdAt);
+      }
+    }
+    return null;
+  };
+  const onReviewDate = getOnReviewDate();
+
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
     onDragStart && onDragStart(e, index);
@@ -336,15 +347,21 @@ const Task = memo(({
           </div>
         )}
       </div>
-      <div className=" col-span-1  md:col-span-5  grid grid-cols-4">
+      <div className={`col-span-1 md:col-span-5 grid ${task?.status === "on-review" ? 'grid-cols-5 gap-1' : 'grid-cols-4'}`}>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Estimate</span>
-          <h4>{task?.timeEstimate}h</h4>
+          <h4 className="truncate">{task?.timeEstimate}h</h4>
         </div>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Due Date</span>
-          <h4 className="text-sm font-medium">{formatDate(task?.dueDate)}</h4>
+          <h4 className="text-sm font-medium truncate">{formatDate(task?.dueDate)}</h4>
         </div>
+        {task?.status === "on-review" && (
+          <div className="flex flex-col gap-y-1">
+            <span className="text-sm text-[#91929E]">Review Date</span>
+            <h4 className="text-sm font-medium truncate">{onReviewDate || "-"}</h4>
+          </div>
+        )}
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Assignees</span>
           {task?.assignedTo?.length > 0 ? (
