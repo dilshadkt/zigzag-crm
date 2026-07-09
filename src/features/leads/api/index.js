@@ -115,6 +115,11 @@ export const getAllFormConfigs = async () => {
   return response.data;
 };
 
+export const createLeadFormConfig = async (configData) => {
+  const response = await apiClient.post("/leads/settings/form-configs", configData);
+  return response.data;
+};
+
 export const getLeadStatuses = async (projectId = null) => {
   const params = projectId ? { projectId } : {};
   const response = await apiClient.get("/leads/settings/statuses", { params });
@@ -372,6 +377,17 @@ export const useGetAllLeadFormConfigs = () => {
   return useQuery({
     queryKey: ["allLeadFormConfigs"],
     queryFn: getAllFormConfigs,
+  });
+};
+
+export const useCreateLeadFormConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createLeadFormConfig,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["allLeadFormConfigs"]);
+      queryClient.invalidateQueries(["leadFormConfig"]);
+    },
   });
 };
 

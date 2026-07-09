@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useGetLeadFormConfig } from "../../../features/leads/api";
+import { useGetLeadFormConfig, useCreateLeadFormConfig } from "../../../features/leads/api";
+import toast from "react-hot-toast";
 import LeadDashboardConfig from "../../../features/leadSettings/components/LeadDashboardConfig";
 import { BranchSettings } from "./settings/BranchSettings";
 import { IntegrationSettings } from "./settings/IntegrationSettings";
@@ -31,6 +32,25 @@ export const SettingsTab = ({
   // Lead Form Config for fields
   const { data: formConfig } = useGetLeadFormConfig(currentProject?._id);
   const fields = formConfig?.data?.fields || formConfig?.fields || [];
+  
+  const createFormMutation = useCreateLeadFormConfig();
+
+  const handleCreateNewForm = async () => {
+    const formName = window.prompt("Enter a name for the new form template:");
+    if (!formName || !formName.trim()) return;
+
+    try {
+      const newForm = await createFormMutation.mutateAsync({ name: formName.trim() });
+      toast.success("New form template created successfully");
+      const newFormId = newForm?.data?._id || newForm?.data?.id;
+      if (newFormId) {
+        setSelectedLeadForm(newFormId);
+        setEditingFormId(newFormId);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to create new form template");
+    }
+  };
 
   const branches = currentProject?.customFields?.branches || [];
 
@@ -133,6 +153,13 @@ export const SettingsTab = ({
                       ))}
                     </select>
                     <div className="flex gap-2">
+                      <button
+                        onClick={handleCreateNewForm}
+                        disabled={createFormMutation.isPending}
+                        className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
+                      >
+                        New Form
+                      </button>
                       <button
                         onClick={handleUpdateLeadForm}
                         disabled={selectedLeadForm === currentProject?.leadFormConfig}
