@@ -57,7 +57,8 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const { mutate: deleteNote } = useDeleteLeadNote();
 
   // Get statuses for the modal
-  const { data: statusesData } = useGetLeadStatuses();
+  const projectId = lead?.project?._id || lead?.project || null;
+  const { data: statusesData } = useGetLeadStatuses(projectId);
   const statuses = statusesData?.data || [];
 
   // Interaction tracking state

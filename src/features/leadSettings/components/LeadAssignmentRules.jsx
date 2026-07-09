@@ -22,9 +22,9 @@ const OPERATORS = [
   { value: "is_not_empty", label: "Is Not Empty" },
 ];
 
-const LeadAssignmentRules = ({ fields = [] }) => {
+const LeadAssignmentRules = ({ fields = [], projectId = null }) => {
   const { companyId } = useAuth();
-  const { data: response, isLoading } = useGetLeadAssignmentRules(companyId);
+  const { data: response, isLoading } = useGetLeadAssignmentRules(companyId, projectId);
   const rules = response?.data || [];
 
   const { data: empRes } = useGetAllEmployees();
@@ -34,10 +34,10 @@ const LeadAssignmentRules = ({ fields = [] }) => {
     label: emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email || "Unknown User"
   }));
 
-  const createRule = useCreateLeadAssignmentRule(companyId);
-  const updateRule = useUpdateLeadAssignmentRule(companyId);
-  const deleteRule = useDeleteLeadAssignmentRule(companyId);
-  const reorderRules = useReorderLeadAssignmentRules(companyId);
+  const createRule = useCreateLeadAssignmentRule(companyId, projectId);
+  const updateRule = useUpdateLeadAssignmentRule(companyId, projectId);
+  const deleteRule = useDeleteLeadAssignmentRule(companyId, projectId);
+  const reorderRules = useReorderLeadAssignmentRules(companyId, projectId);
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentRule, setCurrentRule] = useState(null);

@@ -9,12 +9,12 @@ import {
   useDeleteLeadStatus,
 } from "../../../api/hooks";
 
-const LeadStatusList = () => {
-  const { data: response, isLoading } = useGetLeadStatuses();
+const LeadStatusList = ({ projectId = null }) => {
+  const { data: response, isLoading } = useGetLeadStatuses(projectId);
   const statuses = response?.data || [];
-  const createStatus = useCreateLeadStatus();
-  const updateStatus = useUpdateLeadStatus();
-  const deleteStatus = useDeleteLeadStatus();
+  const createStatus = useCreateLeadStatus(projectId);
+  const updateStatus = useUpdateLeadStatus(projectId);
+  const deleteStatus = useDeleteLeadStatus(projectId);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStatus, setEditingStatus] = useState(null);

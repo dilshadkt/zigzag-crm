@@ -60,7 +60,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
         campaign: selectedCampaign !== "all" ? selectedCampaign : undefined,
         branch: branchFilter || undefined
     });
-    const { data: statusData } = useGetLeadStatuses();
+    const { data: statusData } = useGetLeadStatuses(selectedProject !== "all" ? selectedProject : null);
 
     const { data: clientTeamStatsData, isLoading: clientTeamStatsLoading } = useGetClientTeamStats(
         isClient ? selectedProject : null,

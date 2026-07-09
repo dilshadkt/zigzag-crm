@@ -22,14 +22,14 @@ const OPERATORS = [
 
 // Reusing form configuration fields or we can pass them as props
 // We will just use standard fields for now, or text input for field name.
-const LeadScoringRules = ({ fields = [] }) => {
+const LeadScoringRules = ({ fields = [], projectId = null }) => {
   const { companyId } = useAuth();
-  const { data: response, isLoading } = useGetLeadScoringRules(companyId);
+  const { data: response, isLoading } = useGetLeadScoringRules(companyId, projectId);
   const rules = response?.data || [];
 
-  const createRule = useCreateLeadScoringRule(companyId);
-  const updateRule = useUpdateLeadScoringRule(companyId);
-  const deleteRule = useDeleteLeadScoringRule(companyId);
+  const createRule = useCreateLeadScoringRule(companyId, projectId);
+  const updateRule = useUpdateLeadScoringRule(companyId, projectId);
+  const deleteRule = useDeleteLeadScoringRule(companyId, projectId);
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentRule, setCurrentRule] = useState(null);

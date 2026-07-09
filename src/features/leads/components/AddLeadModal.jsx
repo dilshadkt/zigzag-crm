@@ -35,8 +35,8 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], de
 
   // Use React Query hooks
   const { data: formConfigData, isLoading: formConfigLoading } =
-    useGetLeadFormConfig(formValues.project);
-  const { data: statusesData } = useGetLeadStatuses();
+    useGetLeadFormConfig(activeProjectId);
+  const { data: statusesData } = useGetLeadStatuses(activeProjectId);
   const { mutate: createLead, isLoading: isSubmitting } = useCreateLead();
 
   useEffect(() => {

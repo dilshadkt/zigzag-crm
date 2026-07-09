@@ -122,7 +122,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   const { data: formConfigData, isLoading: isLoadingFormConfig } =
     useGetLeadFormConfig(projectId);
   const { data: statusesData, isLoading: isLoadingStatuses } =
-    useGetLeadStatuses();
+    useGetLeadStatuses(projectId);
 
   const { mutate: updateLead, isLoading: isUpdating } = useUpdateLead();
 

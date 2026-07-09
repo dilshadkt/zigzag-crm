@@ -2758,32 +2758,38 @@ export const useUpdateDashboardConfig = () => {
 
 
 // Lead Status Hooks
-export const useGetLeadStatuses = () => {
+export const useGetLeadStatuses = (projectId = null) => {
   return useQuery({
-    queryKey: ["leadStatuses"],
-    queryFn: () =>
-      apiClient.get("/leads/settings/statuses").then((res) => res.data),
+    queryKey: ["leadStatuses", projectId],
+    queryFn: () => {
+      const params = projectId ? { projectId } : {};
+      return apiClient.get("/leads/settings/statuses", { params }).then((res) => res.data);
+    },
   });
 };
 
-export const useCreateLeadStatus = () => {
+export const useCreateLeadStatus = (projectId = null) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (statusData) =>
-      apiClient.post("/leads/settings/statuses", statusData).then((res) => res.data),
+    mutationFn: (statusData) => {
+      const data = projectId ? { ...statusData, projectId } : statusData;
+      return apiClient.post("/leads/settings/statuses", data).then((res) => res.data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["leadStatuses"]);
     },
   });
 };
 
-export const useUpdateLeadStatus = () => {
+export const useUpdateLeadStatus = (projectId = null) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ statusId, statusData }) =>
-      apiClient
-        .put(`/leads/settings/statuses/${statusId}`, statusData)
-        .then((res) => res.data),
+    mutationFn: ({ statusId, statusData }) => {
+      const data = projectId ? { ...statusData, projectId } : statusData;
+      return apiClient
+        .put(`/leads/settings/statuses/${statusId}`, data)
+        .then((res) => res.data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["leadStatuses"]);
     },

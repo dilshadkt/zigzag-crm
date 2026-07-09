@@ -115,15 +115,17 @@ export const getAllFormConfigs = async () => {
   return response.data;
 };
 
-export const getLeadStatuses = async () => {
-  const response = await apiClient.get("/leads/settings/statuses");
+export const getLeadStatuses = async (projectId = null) => {
+  const params = projectId ? { projectId } : {};
+  const response = await apiClient.get("/leads/settings/statuses", { params });
   return response.data;
 };
 
 // --- LEAD SCORING RULES API ---
 
-export const getLeadScoringRules = async (companyId) => {
-  const response = await apiClient.get(`/companies/${companyId}/lead-scoring-rules`);
+export const getLeadScoringRules = async (companyId, projectId = null) => {
+  const params = projectId ? { projectId } : {};
+  const response = await apiClient.get(`/companies/${companyId}/lead-scoring-rules`, { params });
   return response.data;
 };
 
@@ -144,8 +146,9 @@ export const deleteLeadScoringRule = async (companyId, ruleId) => {
 
 // --- LEAD ASSIGNMENT RULES API ---
 
-export const getLeadAssignmentRules = async (companyId) => {
-  const response = await apiClient.get(`/companies/${companyId}/lead-assignment-rules`);
+export const getLeadAssignmentRules = async (companyId, projectId = null) => {
+  const params = projectId ? { projectId } : {};
+  const response = await apiClient.get(`/companies/${companyId}/lead-assignment-rules`, { params });
   return response.data;
 };
 
@@ -164,8 +167,9 @@ export const deleteLeadAssignmentRule = async (companyId, ruleId) => {
   return response.data;
 };
 
-export const reorderLeadAssignmentRules = async (companyId, ruleIds) => {
-  const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/reorder`, { ruleIds });
+export const reorderLeadAssignmentRules = async (companyId, ruleIds, projectId = null) => {
+  const params = projectId ? { projectId } : {};
+  const response = await apiClient.put(`/companies/${companyId}/lead-assignment-rules/reorder`, { orderedIds: ruleIds }, { params });
   return response.data;
 };
 
@@ -381,26 +385,29 @@ export const useUpdateLeadFormConfig = () => {
   });
 };
 
-export const useGetLeadStatuses = () => {
+export const useGetLeadStatuses = (projectId = null) => {
   return useQuery({
-    queryKey: ["leadStatuses"],
-    queryFn: getLeadStatuses,
+    queryKey: ["leadStatuses", projectId],
+    queryFn: () => getLeadStatuses(projectId),
   });
 };
 
 // Scoring Hooks
-export const useGetLeadScoringRules = (companyId) => {
+export const useGetLeadScoringRules = (companyId, projectId = null) => {
   return useQuery({
-    queryKey: ["leadScoringRules", companyId],
-    queryFn: () => getLeadScoringRules(companyId),
+    queryKey: ["leadScoringRules", companyId, projectId],
+    queryFn: () => getLeadScoringRules(companyId, projectId),
     enabled: !!companyId,
   });
 };
 
-export const useCreateLeadScoringRule = (companyId) => {
+export const useCreateLeadScoringRule = (companyId, projectId = null) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (ruleData) => createLeadScoringRule(companyId, ruleData),
+    mutationFn: (ruleData) => {
+      const data = projectId ? { ...ruleData, projectId } : ruleData;
+      return createLeadScoringRule(companyId, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["leadScoringRules", companyId]);
     },
@@ -428,18 +435,21 @@ export const useDeleteLeadScoringRule = (companyId) => {
 };
 
 // Assignment Hooks
-export const useGetLeadAssignmentRules = (companyId) => {
+export const useGetLeadAssignmentRules = (companyId, projectId = null) => {
   return useQuery({
-    queryKey: ["leadAssignmentRules", companyId],
-    queryFn: () => getLeadAssignmentRules(companyId),
+    queryKey: ["leadAssignmentRules", companyId, projectId],
+    queryFn: () => getLeadAssignmentRules(companyId, projectId),
     enabled: !!companyId,
   });
 };
 
-export const useCreateLeadAssignmentRule = (companyId) => {
+export const useCreateLeadAssignmentRule = (companyId, projectId = null) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (ruleData) => createLeadAssignmentRule(companyId, ruleData),
+    mutationFn: (ruleData) => {
+      const data = projectId ? { ...ruleData, projectId } : ruleData;
+      return createLeadAssignmentRule(companyId, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
     },
@@ -466,10 +476,10 @@ export const useDeleteLeadAssignmentRule = (companyId) => {
   });
 };
 
-export const useReorderLeadAssignmentRules = (companyId) => {
+export const useReorderLeadAssignmentRules = (companyId, projectId = null) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (ruleIds) => reorderLeadAssignmentRules(companyId, ruleIds),
+    mutationFn: (ruleIds) => reorderLeadAssignmentRules(companyId, ruleIds, projectId),
     onSuccess: () => {
       queryClient.invalidateQueries(["leadAssignmentRules", companyId]);
     },

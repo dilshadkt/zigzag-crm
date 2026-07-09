@@ -52,7 +52,7 @@ export const useLeadsData = (filters = {}) => {
 
   // Fetch statuses
   const { data: statusesData, isLoading: statusesLoading } =
-    useGetLeadStatuses();
+    useGetLeadStatuses(projectId);
 
   const isLoading = leadsLoading || formConfigLoading || statusesLoading;
   
