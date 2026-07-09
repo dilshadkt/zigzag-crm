@@ -10,6 +10,7 @@ import {
   useDeleteLeadAssignmentRule,
   useReorderLeadAssignmentRules,
 } from "../../leads/api";
+import { useGetClientSalesTeam } from "../../../api/clientSalesTeam";
 import CustomSelect from "./CustomSelect";
 
 const OPERATORS = [
@@ -33,6 +34,15 @@ const LeadAssignmentRules = ({ fields = [], projectId = null }) => {
     value: emp._id || emp.id,
     label: emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email || "Unknown User"
   }));
+
+  const { data: salesTeamRes } = useGetClientSalesTeam(projectId);
+  const salesTeam = salesTeamRes?.data || [];
+  const salesTeamOptions = salesTeam.map(person => ({
+    value: person._id || person.id,
+    label: `${person.name} (Client Sales Team)`,
+  }));
+
+  const allAssigneeOptions = [...employeeOptions, ...salesTeamOptions];
 
   const createRule = useCreateLeadAssignmentRule(companyId, projectId);
   const updateRule = useUpdateLeadAssignmentRule(companyId, projectId);
@@ -293,18 +303,44 @@ const LeadAssignmentRules = ({ fields = [], projectId = null }) => {
               </div>
             </div>
             
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto w-full flex flex-wrap gap-2">
-              {employeeOptions.map(emp => (
-                <label key={emp.value} className="flex items-center gap-2 bg-white border border-slate-200 px-2 py-1.5 rounded-lg cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={currentRule.assignTo?.includes(emp.value)}
-                    onChange={() => toggleAssignee(emp.value)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]"
-                  />
-                  <span className="text-[11px] font-semibold text-slate-700">{emp.label}</span>
-                </label>
-              ))}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto w-full flex flex-col gap-4">
+              {employeeOptions.length > 0 && (
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Our Team</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {employeeOptions.map(emp => (
+                      <label key={emp.value} className="flex items-center gap-2 bg-white border border-slate-200 px-2 py-1.5 rounded-lg cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={currentRule.assignTo?.includes(emp.value)}
+                          onChange={() => toggleAssignee(emp.value)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]"
+                        />
+                        <span className="text-[11px] font-semibold text-slate-700">{emp.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {salesTeamOptions.length > 0 && (
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Client Sales Team</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {salesTeamOptions.map(emp => (
+                      <label key={emp.value} className="flex items-center gap-2 bg-white border border-slate-200 px-2 py-1.5 rounded-lg cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={currentRule.assignTo?.includes(emp.value)}
+                          onChange={() => toggleAssignee(emp.value)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]"
+                        />
+                        <span className="text-[11px] font-semibold text-slate-700">{emp.label.replace(" (Client Sales Team)", "")}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -351,10 +387,10 @@ const LeadAssignmentRules = ({ fields = [], projectId = null }) => {
                     <span className="text-[10px] uppercase font-bold text-slate-400">Then Assign:</span>
                     <div className="flex -space-x-1">
                       {rule.assignTo?.map(u => {
-                        const userObj = typeof u === 'object' ? u : employees.find(e => e._id === u);
-                        const initials = userObj ? `${userObj.firstName?.charAt(0) || ''}${userObj.lastName?.charAt(0) || ''}` : '?';
+                        const userObj = typeof u === 'object' ? u : [...employees, ...salesTeam].find(e => e._id === u);
+                        const initials = userObj ? (userObj.name ? userObj.name.substring(0, 2).toUpperCase() : `${userObj.firstName?.charAt(0) || ''}${userObj.lastName?.charAt(0) || ''}`.toUpperCase()) : '?';
                         return (
-                          <div key={userObj?._id || u} className="w-6 h-6 rounded-full bg-[#3f8cff] text-white flex items-center justify-center text-[9px] font-bold border-2 border-white" title={userObj ? `${userObj.firstName} ${userObj.lastName}` : ''}>
+                          <div key={userObj?._id || u} className="w-6 h-6 rounded-full bg-[#3f8cff] text-white flex items-center justify-center text-[9px] font-bold border-2 border-white" title={userObj ? (userObj.name || `${userObj.firstName || ""} ${userObj.lastName || ""}`) : ''}>
                             {initials}
                           </div>
                         )

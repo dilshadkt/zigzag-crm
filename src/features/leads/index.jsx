@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import { FiPlus, FiDownload, FiTrash2, FiFolder, FiUser } from "react-icons/fi";
+import { FiPlus, FiDownload, FiTrash2, FiFolder, FiUser, FiBriefcase, FiMoreVertical } from "react-icons/fi";
 import LeadsPageHeader from "./components/LeadsPageHeader";
 import LeadsTable from "./components/LeadsTable";
 import LeadsTableShimmer from "./components/LeadsTableShimmer";
@@ -124,7 +124,9 @@ const LeadsFeature = ({
   const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [isBulkMoreMenuOpen, setBulkMoreMenuOpen] = useState(false);
   const [isBulkBranchMenuOpen, setBulkBranchMenuOpen] = useState(false);
+  const [isBulkProjectMenuOpen, setBulkProjectMenuOpen] = useState(false);
   const [bulkBarPos, setBulkBarPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
@@ -948,6 +950,28 @@ const LeadsFeature = ({
     }
   };
 
+  const handleBulkMoveToProject = async (targetProjectId) => {
+    if (selectedLeadIds.length === 0) return;
+
+    try {
+      await bulkUpdateMutation.mutateAsync({
+        leadIds: selectedLeadIds,
+        updateData: {
+          project: targetProjectId
+        },
+      });
+
+      toast.success(`Moved ${selectedLeadIds.length} leads to project`);
+      setSelectedLeadIds([]);
+      setBulkProjectMenuOpen(false);
+      refetchLeads();
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["projectDetails"]);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to move leads to project");
+    }
+  };
+
   const handleDragStart = (e) => {
     // Only drag if left clicking on the bar (not buttons)
     if (e.button !== 0) return;
@@ -1252,87 +1276,109 @@ const LeadsFeature = ({
             </div>
 
             <div className={`flex items-center ${isMobile ? 'gap-3' : 'gap-4'}`} onMouseDown={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => {
-                  setSelectedLeadForAssign('bulk');
-                  setAssignModalOpen(true);
-                }}
-                className={`flex items-center gap-2 text-[13px] font-medium transition-colors hover:text-blue-400`}
-                title="Change Owner"
-              >
-                <FiUser className={`${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
-                {!isMobile && "Change Owner"}
-              </button>
-
               <div className="relative">
-                {canEditLead && (
-                  <button
-                    onClick={() => setBulkBranchMenuOpen(!isBulkBranchMenuOpen)}
-                    className={`flex items-center gap-2 text-[13px] font-medium transition-colors ${isBulkBranchMenuOpen ? 'text-blue-400' : 'hover:text-blue-400'}`}
-                    title="Move to Branch"
-                  >
-                    <FiFolder className={`${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
-                    {!isMobile && "Move to Branch"}
-                  </button>
-                )}
+                <button
+                  onClick={() => setBulkMoreMenuOpen(!isBulkMoreMenuOpen)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-800 transition-colors"
+                  title="More Actions"
+                >
+                  <FiMoreVertical className="w-5 h-5 text-slate-300" />
+                </button>
 
-                {/* Branch Selection Tooltip/Menu */}
-                {isBulkBranchMenuOpen && (
+                {isBulkMoreMenuOpen && (
                   <>
-                    <div
-                      className="fixed inset-0 z-[-1]"
-                      onClick={() => setBulkBranchMenuOpen(false)}
-                    />
-                    <div className={`absolute bottom-full ${isMobile ? 'right-0' : 'left-0'} mb-1.5 w-40 bg-white rounded-xl shadow-2xl border border-slate-100 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200`}>
-                      <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        Select Branch
-                      </div>
-                      {branches && branches.length > 0 ? (
-                        branches.map((branch) => {
-                          const branchId = typeof branch === "string" ? branch : (branch.id || branch.name);
-                          const branchName = typeof branch === "string" ? branch : branch.name;
-                          return (
-                            <button
-                              key={branchId}
-                              onClick={() => {
-                                handleBulkMoveToBranch(branchName);
-                                setBulkBranchMenuOpen(false);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors"
-                            >
-                              {branchName}
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <div className="px-3 py-1.5 text-xs text-slate-400">No branches found</div>
+                    <div className="fixed inset-0 z-[-1]" onClick={() => { setBulkMoreMenuOpen(false); setBulkBranchMenuOpen(false); setBulkProjectMenuOpen(false); }} />
+                    <div className={`absolute bottom-full ${isMobile ? 'right-0' : 'left-0'} mb-2 w-48 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 py-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200 text-slate-200 overflow-hidden`}>
+                      
+                      <button 
+                        onClick={() => { setSelectedLeadForAssign('bulk'); setAssignModalOpen(true); setBulkMoreMenuOpen(false); }} 
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-700 flex items-center gap-3 transition-colors"
+                      >
+                        <FiUser className="w-4 h-4 text-slate-400" /> Change Owner
+                      </button>
+
+                      {canEditLead && (
+                        <div>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setBulkBranchMenuOpen(!isBulkBranchMenuOpen); setBulkProjectMenuOpen(false); }} 
+                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-700 flex items-center gap-3 transition-colors"
+                          >
+                            <FiFolder className="w-4 h-4 text-slate-400" /> Move to Branch
+                          </button>
+                          {isBulkBranchMenuOpen && (
+                            <div className="bg-slate-900 border-y border-slate-700 py-1 max-h-[200px] overflow-y-auto scrollbar-hide">
+                              {branches && branches.length > 0 ? branches.map((branch) => {
+                                const branchId = typeof branch === "string" ? branch : (branch.id || branch.name);
+                                const branchName = typeof branch === "string" ? branch : branch.name;
+                                return (
+                                  <button
+                                    key={branchId}
+                                    onClick={() => { handleBulkMoveToBranch(branchName); setBulkBranchMenuOpen(false); setBulkMoreMenuOpen(false); }}
+                                    className="w-full px-11 py-2 text-left text-xs text-slate-300 hover:bg-slate-800 hover:text-blue-400 transition-colors"
+                                  >
+                                    {branchName}
+                                  </button>
+                                );
+                              }) : <div className="px-11 py-2 text-xs text-slate-500">No branches</div>}
+                            </div>
+                          )}
+                        </div>
                       )}
+
+                      {!isClient && projects && projects.length > 0 && canEditLead && (
+                        <div>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setBulkProjectMenuOpen(!isBulkProjectMenuOpen); setBulkBranchMenuOpen(false); }} 
+                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-700 flex items-center gap-3 transition-colors"
+                          >
+                            <FiBriefcase className="w-4 h-4 text-slate-400" /> Move to Project
+                          </button>
+                          {isBulkProjectMenuOpen && (
+                            <div className="bg-slate-900 border-y border-slate-700 py-1 max-h-[200px] overflow-y-auto scrollbar-hide">
+                              {projects.map((project) => {
+                                const pId = project.id || project._id;
+                                const pName = project.name;
+                                return (
+                                  <button
+                                    key={pId}
+                                    onClick={() => { handleBulkMoveToProject(pId); setBulkProjectMenuOpen(false); setBulkMoreMenuOpen(false); }}
+                                    className="w-full px-11 py-2 text-left text-xs text-slate-300 hover:bg-slate-800 hover:text-blue-400 transition-colors truncate"
+                                    title={pName}
+                                  >
+                                    {pName}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <button 
+                        onClick={async () => {
+                          if (window.confirm(`Are you sure you want to delete ${selectedLeadIds.length} leads?`)) {
+                            try {
+                              await bulkDeleteMutation.mutateAsync(selectedLeadIds);
+                              toast.success(`Successfully deleted ${selectedLeadIds.length} leads`);
+                              setSelectedLeadIds([]);
+                              setBulkMoreMenuOpen(false);
+                              refetchLeads();
+                              queryClient.invalidateQueries(["leads"]);
+                            } catch (error) {
+                              toast.error(error?.response?.data?.message || "Failed to delete leads");
+                            }
+                          }
+                        }} 
+                        disabled={bulkDeleteMutation.isPending}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-700 text-red-400 hover:text-red-300 flex items-center gap-3 border-t border-slate-700 mt-1 transition-colors"
+                      >
+                        <FiTrash2 className="w-4 h-4" /> {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Leads"}
+                      </button>
+
                     </div>
                   </>
                 )}
               </div>
-
-              <button
-                onClick={async () => {
-                  if (window.confirm(`Are you sure you want to delete ${selectedLeadIds.length} leads?`)) {
-                    try {
-                      await bulkDeleteMutation.mutateAsync(selectedLeadIds);
-                      toast.success(`Successfully deleted ${selectedLeadIds.length} leads`);
-                      setSelectedLeadIds([]);
-                      refetchLeads();
-                      queryClient.invalidateQueries(["leads"]);
-                    } catch (error) {
-                      toast.error(error?.response?.data?.message || "Failed to delete leads");
-                    }
-                  }
-                }}
-                className="flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
-                disabled={bulkDeleteMutation.isPending}
-                title="Delete Leads"
-              >
-                <FiTrash2 className="w-4 h-4" />
-                {!isMobile && (bulkDeleteMutation.isPending ? "Deleting..." : "Delete")}
-              </button>
 
               <button
                 onClick={() => setSelectedLeadIds([])}
