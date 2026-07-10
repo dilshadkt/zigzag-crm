@@ -126,6 +126,9 @@ export const useLeadsData = (filters = {}) => {
       validKeys.add("owner");
       // Always allow branch (system meta)
       validKeys.add("branch");
+      validKeys.add("source");
+      validKeys.add("project");
+      validKeys.add("companyName");
 
       // Create a map of field key to field data for enrichment
       const fieldDataMap = new Map();
@@ -154,7 +157,7 @@ export const useLeadsData = (filters = {}) => {
             options: fieldData?.options || col.options || [],
             // Default visibility logic
             visible: col.isSystem
-              ? ["createdAt", "name", "status", "score", "phone", "owner", "branch"].includes(col.key)
+              ? ["createdAt", "name", "status", "score", "phone", "owner", "branch", "source", "project", "companyName"].includes(col.key)
               : false, // Custom fields hidden by default
           };
         });
