@@ -7,6 +7,7 @@ import LeadRowContextMenu from "./LeadRowContextMenu";
 import StatusDropdown from "./StatusDropdown";
 import SelectFieldDropdown from "./SelectFieldDropdown";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
+import { useGetLeadStatuses } from "../../../api/hooks";
 
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
@@ -275,7 +276,7 @@ const LeadRow = memo(({
   onDelete,
   onConvert,
   onCopyURL,
-  statuses,
+  statuses: propStatuses,
   onStatusChange,
   onCustomFieldChange,
   onSourceChange,
@@ -292,6 +293,23 @@ const LeadRow = memo(({
     y: 0,
   });
   const actionButtonRef = useRef(null);
+
+  // Extract project ID for the lead
+  const getProjectId = () => {
+    if (lead?.project) {
+      return typeof lead.project === 'object' ? (lead.project._id || lead.project.id) : lead.project;
+    }
+    if (lead?.campaign?.project) {
+      return typeof lead.campaign.project === 'object' ? (lead.campaign.project._id || lead.campaign.project.id) : lead.campaign.project;
+    }
+    return null;
+  };
+  const projectId = getProjectId();
+  
+  // Fetch project-specific statuses
+  const { data: projectStatusesData } = useGetLeadStatuses(projectId);
+  // Use project statuses if available, otherwise fallback to global statuses passed via props
+  const rowStatuses = (projectId && projectStatusesData?.data) ? projectStatusesData.data : propStatuses;
 
   const handleActionButtonClick = (e) => {
     e.stopPropagation();
@@ -322,7 +340,7 @@ const LeadRow = memo(({
     if (columnRenderers[column.key]) {
       const renderer = columnRenderers[column.key];
       if (column.key === "status") {
-        return renderer(lead, statuses, onStatusChange);
+        return renderer(lead, rowStatuses, onStatusChange);
       }
       if (column.key === "source") {
         return renderer(lead, onSourceChange);

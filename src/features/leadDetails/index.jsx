@@ -57,7 +57,16 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const { mutate: deleteNote } = useDeleteLeadNote();
 
   // Get statuses for the modal
-  const projectId = lead?.project?._id || lead?.project || null;
+  const getProjectId = () => {
+    if (lead?.project) {
+      return typeof lead.project === 'object' ? (lead.project._id || lead.project.id) : lead.project;
+    }
+    if (lead?.campaign?.project) {
+      return typeof lead.campaign.project === 'object' ? (lead.campaign.project._id || lead.campaign.project.id) : lead.campaign.project;
+    }
+    return null;
+  };
+  const projectId = getProjectId();
   const { data: statusesData } = useGetLeadStatuses(projectId);
   const statuses = statusesData?.data || [];
 
