@@ -8,6 +8,7 @@ import {
   useUpdateLeadScoringRule,
   useDeleteLeadScoringRule,
 } from "../../leads/api";
+import { useGetDashboardConfig, useUpdateDashboardConfig } from "../../../api/hooks";
 import CustomSelect from "./CustomSelect";
 
 const OPERATORS = [
@@ -26,6 +27,10 @@ const LeadScoringRules = ({ fields = [], projectId = null }) => {
   const { companyId } = useAuth();
   const { data: response, isLoading } = useGetLeadScoringRules(companyId, projectId);
   const rules = response?.data || [];
+
+  const { data: configData } = useGetDashboardConfig(projectId);
+  const updateConfig = useUpdateDashboardConfig();
+  const config = configData?.data || {};
 
   const createRule = useCreateLeadScoringRule(companyId, projectId);
   const updateRule = useUpdateLeadScoringRule(companyId, projectId);
@@ -145,6 +150,71 @@ const LeadScoringRules = ({ fields = [], projectId = null }) => {
             <FiPlus size={14} /> Add Rule
           </button>
         )}
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm mb-6">
+        <h3 className="text-[13px] font-bold text-slate-800 mb-4">Score Thresholds</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Hot Lead</label>
+              <span className="text-[11px] font-black text-orange-500">{config.hotLeadThreshold || 70}+</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              step="1"
+              value={config.hotLeadThreshold || 70}
+              onChange={(e) => updateConfig.mutate({ 
+                hotLeadThreshold: parseInt(e.target.value),
+                projectId,
+                isProjectWide: !!projectId
+              })}
+              className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Warm Lead</label>
+              <span className="text-[11px] font-black text-amber-500">{config.warmLeadThreshold || 40}+</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              step="1"
+              value={config.warmLeadThreshold || 40}
+              onChange={(e) => updateConfig.mutate({ 
+                warmLeadThreshold: parseInt(e.target.value),
+                projectId,
+                isProjectWide: !!projectId
+              })}
+              className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Cold Lead</label>
+              <span className="text-[11px] font-black text-blue-500">{config.coldLeadThreshold || 0}+</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={config.coldLeadThreshold || 0}
+              onChange={(e) => updateConfig.mutate({ 
+                coldLeadThreshold: parseInt(e.target.value),
+                projectId,
+                isProjectWide: !!projectId
+              })}
+              className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+          </div>
+        </div>
       </div>
 
       {isEditing && currentRule ? (

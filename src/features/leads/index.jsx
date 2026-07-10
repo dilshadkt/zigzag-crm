@@ -132,11 +132,16 @@ const LeadsFeature = ({
   const dragStartPos = useRef({ x: 0, y: 0 });
   const [projectFilterState, setProjectFilter] = useState("");
   const [ownerFilterState, setOwnerFilterState] = useState(() => sessionStorage.getItem('leads_ownerFilter') || "");
-
+  const [scoreFilterState, setScoreFilterState] = useState(() => sessionStorage.getItem('leads_scoreFilter') || "");
   useEffect(() => {
     if (ownerFilterState) sessionStorage.setItem('leads_ownerFilter', ownerFilterState);
     else sessionStorage.removeItem('leads_ownerFilter');
   }, [ownerFilterState]);
+
+  useEffect(() => {
+    if (scoreFilterState) sessionStorage.setItem('leads_scoreFilter', scoreFilterState);
+    else sessionStorage.removeItem('leads_scoreFilter');
+  }, [scoreFilterState]);
   const navigate = useNavigate();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
@@ -187,6 +192,7 @@ const LeadsFeature = ({
     } : {}),
     ...(branchFilter ? { branch: branchFilter } : {}),
     ...(ownerFilterState ? { owner: ownerFilterState } : {}),
+    ...(scoreFilterState ? { scoreCategory: scoreFilterState } : {}),
     ...(isFollowUpOnly ? { isFollowUp: true } : {})
   });
 
@@ -257,10 +263,10 @@ const LeadsFeature = ({
     setPage(1);
   }, [projectFilterState]);
 
-  // Reset page when owner filter changes
+  // Reset page when owner or score filter changes
   useEffect(() => {
     setPage(1);
-  }, [ownerFilterState]);
+  }, [ownerFilterState, scoreFilterState]);
 
   // Use the custom hook to get leads data
   const {
@@ -281,6 +287,7 @@ const LeadsFeature = ({
     // Only force own owner if user is employee AND NOT allowed to see all leads
     // Otherwise allow filtering by owner from ownerFilterState or appliedFilters (dashboard click)
     owner: (isEmployee && !canManageAllLeads) ? user._id : (ownerFilterState || appliedFilters.owner?.value || null),
+    scoreCategory: scoreFilterState || null,
     appliedFilters,
     projectId: projectFilterState || projectFilter || projectId,
     isFollowUp: isFollowUpOnly || activeAction === 'followup',
@@ -1159,6 +1166,26 @@ const LeadsFeature = ({
                 </select>
               </div>
             )}
+            
+            {/* Score Filter */}
+            <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
+              <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
+                <svg className="w-3 h-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Score:
+              </span>
+              <select
+                value={scoreFilterState}
+                onChange={(e) => setScoreFilterState(e.target.value)}
+                className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+              >
+                <option value="">All Scores</option>
+                <option value="hot">Hot Leads</option>
+                <option value="warm">Warm Leads</option>
+                <option value="cold">Cold Leads</option>
+              </select>
+            </div>
           </div>
         )}
 

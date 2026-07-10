@@ -160,45 +160,7 @@ const LeadDashboardConfig = ({ fields, projectId, branches = [] }) => {
         )}
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-orange-50 text-orange-500 rounded-xl shadow-sm shadow-orange-100/50 flex-shrink-0">
-            <FiGrid className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-[12px] font-bold text-slate-800 leading-tight">Hot Lead Threshold</h3>
-            <p className="text-[10px] text-slate-500 font-medium">Automatic classification score.</p>
-          </div>
-        </div>
 
-        <div className="md:col-span-2 flex items-center gap-6 bg-slate-50/50 p-3 rounded-xl border border-slate-50">
-          <div className="flex-1 flex items-center gap-4">
-            <input
-              type="range"
-              min="1"
-              max="100"
-              step="1"
-              value={config.hotLeadThreshold || 70}
-              onChange={(e) => updateConfig.mutate({ 
-                hotLeadThreshold: parseInt(e.target.value),
-                projectId,
-                isProjectWide: !!projectId
-              })}
-              className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#3f8cff] hover:accent-orange-500 transition-colors"
-            />
-            <div className="w-10 h-10 bg-white border-2 border-slate-100 group-hover:border-orange-500 rounded-lg flex flex-col items-center justify-center shadow-sm">
-              <span className="text-[11px] font-black text-[#3f8cff]">{config.hotLeadThreshold || 70}</span>
-              <span className="text-[7px] font-bold text-slate-400 uppercase leading-none">Min</span>
-            </div>
-          </div>
-          
-          <div className="hidden lg:block border-l border-slate-200 pl-6">
-            <p className="text-[10px] text-slate-400 font-medium leading-normal italic max-w-[140px]">
-              Leads with score &ge; <span className="text-orange-500 font-bold">{config.hotLeadThreshold || 70}</span> will be marked as <span className="text-orange-500 font-bold">Hot</span>.
-            </p>
-          </div>
-        </div>
-      </div>
 
       <AddWidgetModal
         isOpen={isModalOpen}

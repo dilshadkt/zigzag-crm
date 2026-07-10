@@ -5,6 +5,7 @@ import LeadStatusBadge from "./LeadStatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import LeadRowContextMenu from "./LeadRowContextMenu";
 import { useState, useRef } from "react";
+import { useGetDashboardConfig } from "../../../api/hooks";
 
 const LeadCard = memo(({
     lead,
@@ -61,6 +62,22 @@ const LeadCard = memo(({
     const owner = lead.clientOwner || lead.owner;
     const isClientTeam = !!lead.clientOwner;
     const leadScore = lead.score ?? 0;
+    const projectId = lead.project ? (typeof lead.project === 'object' ? lead.project._id || lead.project.id : lead.project) : (lead.campaign?.project ? (typeof lead.campaign.project === 'object' ? lead.campaign.project._id || lead.campaign.project.id : lead.campaign.project) : null);
+    const { data: configData } = useGetDashboardConfig(projectId);
+    const thresholds = {
+      hot: configData?.data?.hotLeadThreshold ?? 70,
+      warm: configData?.data?.warmLeadThreshold ?? 40,
+      cold: configData?.data?.coldLeadThreshold ?? 0,
+    };
+    
+    let bgColor, textColor, ringColor, dotColor, label;
+    if (leadScore >= thresholds.hot) {
+      bgColor = "bg-orange-50"; textColor = "text-orange-700"; ringColor = "ring-orange-200"; dotColor = "bg-orange-500"; label = "Hot";
+    } else if (leadScore >= thresholds.warm) {
+      bgColor = "bg-amber-50"; textColor = "text-amber-700"; ringColor = "ring-amber-200"; dotColor = "bg-amber-500"; label = "Warm";
+    } else {
+      bgColor = "bg-blue-50"; textColor = "text-blue-700"; ringColor = "ring-blue-200"; dotColor = "bg-blue-500"; label = "Cold";
+    }
     const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
     const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
 
@@ -127,24 +144,9 @@ const LeadCard = memo(({
                         onStatusChange={(statusId) => onStatusChange(lead, statusId)}
                         compact={true}
                     />
-                    <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ring-1 ${
-                        leadScore >= 76 ? 'bg-emerald-50 ring-emerald-200' :
-                        leadScore >= 51 ? 'bg-blue-50 ring-blue-200' :
-                        leadScore >= 26 ? 'bg-amber-50 ring-amber-200' :
-                        'bg-red-50 ring-red-200'
-                    }`}>
-                        <div className={`w-1 h-1 rounded-full ${
-                            leadScore >= 76 ? 'bg-emerald-500' :
-                            leadScore >= 51 ? 'bg-blue-500' :
-                            leadScore >= 26 ? 'bg-amber-500' :
-                            'bg-red-500'
-                        }`} />
-                        <span className={`text-[10px] font-bold ${
-                            leadScore >= 76 ? 'text-emerald-700' :
-                            leadScore >= 51 ? 'text-blue-700' :
-                            leadScore >= 26 ? 'text-amber-700' :
-                            'text-red-600'
-                        }`}>{leadScore}</span>
+                    <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ring-1 ${ringColor}`}>
+                        <div className={`w-1 h-1 rounded-full ${dotColor}`} />
+                        <span className={`text-[10px] font-bold ${textColor}`}>{label} {leadScore}</span>
                     </div>
                     <button
                         ref={actionButtonRef}

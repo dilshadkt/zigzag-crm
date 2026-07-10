@@ -7,7 +7,7 @@ import LeadRowContextMenu from "./LeadRowContextMenu";
 import StatusDropdown from "./StatusDropdown";
 import SelectFieldDropdown from "./SelectFieldDropdown";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
-import { useGetLeadStatuses } from "../../../api/hooks";
+import { useGetLeadStatuses, useGetDashboardConfig } from "../../../api/hooks";
 
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
@@ -212,22 +212,25 @@ const columnRenderers = {
     </div>
   ),
   owner: (lead) => <OwnerCell owner={lead.owner} clientOwner={lead.clientOwner} />,
-  score: (lead) => {
+  score: (lead, thresholds) => {
     const score = lead.score ?? 0;
-    let bgColor, textColor, ringColor;
-    if (score >= 76) {
-      bgColor = "bg-emerald-50"; textColor = "text-emerald-700"; ringColor = "ring-emerald-200";
-    } else if (score >= 51) {
-      bgColor = "bg-blue-50"; textColor = "text-blue-700"; ringColor = "ring-blue-200";
-    } else if (score >= 26) {
-      bgColor = "bg-amber-50"; textColor = "text-amber-700"; ringColor = "ring-amber-200";
+    const hot = thresholds?.hot ?? 70;
+    const warm = thresholds?.warm ?? 40;
+    const cold = thresholds?.cold ?? 0;
+
+    let bgColor, textColor, ringColor, dotColor, label;
+    if (score >= hot) {
+      bgColor = "bg-orange-50"; textColor = "text-orange-700"; ringColor = "ring-orange-200"; dotColor = "bg-orange-500"; label = "Hot";
+    } else if (score >= warm) {
+      bgColor = "bg-amber-50"; textColor = "text-amber-700"; ringColor = "ring-amber-200"; dotColor = "bg-amber-500"; label = "Warm";
     } else {
-      bgColor = "bg-red-50"; textColor = "text-red-600"; ringColor = "ring-red-200";
+      bgColor = "bg-blue-50"; textColor = "text-blue-700"; ringColor = "ring-blue-200"; dotColor = "bg-blue-500"; label = "Cold";
     }
+    
     return (
       <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg ${bgColor} ring-1 ${ringColor}`}>
-        <div className={`w-1.5 h-1.5 rounded-full ${score >= 76 ? 'bg-emerald-500' : score >= 51 ? 'bg-blue-500' : score >= 26 ? 'bg-amber-500' : 'bg-red-500'}`} />
-        <span className={`text-[12px] font-bold ${textColor}`}>{score}</span>
+        <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+        <span className={`text-[12px] font-bold ${textColor}`}>{label} {score}</span>
       </div>
     );
   },
@@ -311,6 +314,13 @@ const LeadRow = memo(({
   // Use project statuses if available, otherwise fallback to global statuses passed via props
   const rowStatuses = (projectId && projectStatusesData?.data) ? projectStatusesData.data : propStatuses;
 
+  const { data: configData } = useGetDashboardConfig(projectId);
+  const thresholds = {
+    hot: configData?.data?.hotLeadThreshold ?? 70,
+    warm: configData?.data?.warmLeadThreshold ?? 40,
+    cold: configData?.data?.coldLeadThreshold ?? 0,
+  };
+
   const handleActionButtonClick = (e) => {
     e.stopPropagation();
     if (actionButtonRef.current) {
@@ -344,6 +354,9 @@ const LeadRow = memo(({
       }
       if (column.key === "source") {
         return renderer(lead, onSourceChange);
+      }
+      if (column.key === "score") {
+        return renderer(lead, thresholds);
       }
       return renderer(lead);
     }
