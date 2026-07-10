@@ -40,6 +40,12 @@ export const mapLeadDataToFormValue = (field, lead, contact) => {
     return lead[fieldKey];
   }
 
+  // Try nested details.contact (modern structure)
+  if (lead.details?.contact) {
+    const val = lead.details.contact[fieldKey] ?? lead.details.contact[fieldId];
+    if (val !== undefined && val !== null) return String(val);
+  }
+
   // Fallback to nested customFields
   if (lead.customFields) {
     if (lead.customFields instanceof Map) {

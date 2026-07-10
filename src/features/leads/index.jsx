@@ -212,12 +212,13 @@ const LeadsFeature = ({
     const minScore = searchParams.get('minScore');
     const ownerId = searchParams.get('owner');
 
-    if (scheduled === 'today') {
-      setAppliedFilters({
-        scheduled: { operator: 'today', value: 'today' }
-      });
+    // Check for follow-up filter parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    if (action === 'followup') {
+      setAppliedFilters({});
       setActiveAction('followup');
-      toast.success("Showing today's follow-ups");
+      toast.success("Showing all follow-ups");
     } else if (minScore) {
       setAppliedFilters({
         score: { operator: 'greaterThan', value: minScore }
@@ -282,7 +283,7 @@ const LeadsFeature = ({
     owner: (isEmployee && !canManageAllLeads) ? user._id : (ownerFilterState || appliedFilters.owner?.value || null),
     appliedFilters,
     projectId: projectFilterState || projectFilter || projectId,
-    isFollowUp: isFollowUpOnly,
+    isFollowUp: isFollowUpOnly || activeAction === 'followup',
     branchFilter,
     startDate: statsDateRange.startDate,
     endDate: statsDateRange.endDate,
@@ -329,7 +330,7 @@ const LeadsFeature = ({
         setAppliedFilters({ score: { operator: 'lessThan', value: '30' } });
         break;
       case 'followup':
-        setAppliedFilters({ scheduled: { operator: 'today', value: 'today' } });
+        setAppliedFilters({});
         break;
       case 'today':
         setAppliedFilters({ createdAt: { operator: 'today', value: 'today' } });

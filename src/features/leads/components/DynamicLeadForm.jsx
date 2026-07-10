@@ -4,7 +4,7 @@ import { isFieldVisible } from "../../leadSettings/fieldRuleUtils";
 
 // Individual field component for better isolation
 const FormField = memo(({ field, value, error, onChange, statuses }) => {
-  const fieldId = String(field.id);
+  const fieldId = String(field.id || field._id);
   
   const handleChange = useCallback(
     (newValue) => {

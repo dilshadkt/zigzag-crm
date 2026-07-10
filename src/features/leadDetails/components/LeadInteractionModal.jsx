@@ -105,9 +105,10 @@ const LeadInteractionModal = ({
     const newErrors = {};
     formFields.forEach((field) => {
       if (field.required) {
-        const value = formValues[field.id];
+        const id = field.id || field._id;
+        const value = formValues[id];
         if (!value || (field.type === "checkbox" && !value)) {
-          newErrors[field.id] = `${field.label} is required`;
+          newErrors[id] = `${field.label} is required`;
         }
       }
     });
@@ -125,7 +126,8 @@ const LeadInteractionModal = ({
     let formStatusId = statusId; 
 
     formFields.forEach((field) => {
-      const fieldId = String(field.id);
+      const id = field.id || field._id;
+      const fieldId = String(id);
       const fieldKey = field.key || fieldId;
       const fieldValue = formValues[fieldId];
 
