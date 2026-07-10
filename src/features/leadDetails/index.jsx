@@ -211,11 +211,13 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
     localStorage.setItem(`pending_interaction_${leadId}`, JSON.stringify({ type: 'followup' }));
   };
 
-  const handleSaveInteraction = ({ note, statusId, scheduled, isFollowUp }) => {
+  const handleSaveInteraction = ({ interactionData, leadUpdateData }) => {
     if (!leadId) return;
 
+    const { note, statusId, scheduled, isFollowUp } = interactionData || {};
+
     // 1. Add note if provided
-    if (note.trim()) {
+    if (note?.trim()) {
       addNote({
         leadId,
         noteData: { text: note.trim() }
@@ -226,7 +228,7 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
       });
     }
 
-    // 2. Update status and follow-up data
+    // 2. Update status and follow-up data along with dynamic form fields
     const currentStatusId = lead.status?._id || lead.status?.id || lead.status;
     const currentScheduled = lead.scheduled;
     const currentIsFollowUp = lead.isFollowUp;
@@ -234,17 +236,18 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
     const needsUpdate = 
       (statusId && statusId !== currentStatusId) || 
       scheduled !== undefined || 
-      isFollowUp !== currentIsFollowUp;
+      isFollowUp !== currentIsFollowUp ||
+      (leadUpdateData && Object.keys(leadUpdateData).length > 0);
 
     if (needsUpdate) {
-      const updateData = {};
-      if (statusId && statusId !== currentStatusId) updateData.status = statusId;
-      if (scheduled !== undefined) updateData.scheduled = scheduled;
-      if (isFollowUp !== undefined) updateData.isFollowUp = isFollowUp;
+      const finalUpdateData = { ...(leadUpdateData || {}) };
+      if (statusId && statusId !== currentStatusId) finalUpdateData.status = statusId;
+      if (scheduled !== undefined) finalUpdateData.scheduled = scheduled;
+      if (isFollowUp !== undefined) finalUpdateData.isFollowUp = isFollowUp;
 
       updateLead({
         leadId,
-        leadData: updateData
+        leadData: finalUpdateData
       }, {
         onSuccess: () => {
           toast.success("Lead updated successfully");

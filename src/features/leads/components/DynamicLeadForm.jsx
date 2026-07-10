@@ -141,7 +141,7 @@ import { useRef, useState, useEffect } from "react";
 // Animated wrapper — slides the field in/out when its visibility changes
 const AnimatedField = ({ visible, children, zIndex }) => {
   const [rendered, setRendered] = useState(visible);
-  const [animating, setAnimating] = useState(false);
+  const [animating, setAnimating] = useState(visible);
   const [fullyOpen, setFullyOpen] = useState(visible);
   const timerRef = useRef(null);
   const overflowTimerRef = useRef(null);
@@ -203,16 +203,19 @@ const DynamicLeadForm = ({ fields, values, onChange, errors, statuses }) => {
   return (
     <div className="space-y-4">
       {fields.map((field, index) => {
-        if (!field.id) {
+        const id = field.id || field._id;
+        if (!id) {
           console.warn("Field missing id:", field);
           return null;
         }
 
-        const fieldId = String(field.id);
+        const fieldId = String(id);
         const fieldValue = values?.[fieldId] ?? "";
         const fieldError = errors?.[fieldId];
         const visible = isFieldVisible(field, values);
         
+        if (!visible) return null;
+
         return (
           <AnimatedField key={fieldId} visible={visible} zIndex={fields.length - index}>
             <FormField
