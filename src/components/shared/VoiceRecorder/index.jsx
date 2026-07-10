@@ -22,20 +22,28 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
   const streamRef = useRef(null);
   const previewAudioRef = useRef(null);
 
-  // Enum devices
+  // Enum devices and request permission
   useEffect(() => {
-    const getDevices = async () => {
+    const requestPermissionAndGetDevices = async () => {
       try {
+        // Request permission explicitly to ensure proper access and device labels
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop immediately
+
         const allDevices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = allDevices.filter(d => d.kind === "audioinput");
         setDevices(audioInputs);
       } catch (err) {
-        console.error("Error enumerating devices:", err);
+        console.error("Error enumerating devices or getting permission:", err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          // Can optionally show a toast or alert here, but keeping it to console so it doesn't block UI immediately
+          console.warn("Microphone access denied on init.");
+        }
       }
     };
 
     if (isOpen) {
-      getDevices();
+      requestPermissionAndGetDevices();
       // Reset state when opening
       setRecordingTime(0);
       setIsRecording(false);
@@ -198,7 +206,11 @@ const VoiceRecorder = ({ isOpen, onClose, onUpload, isUploading }) => {
       setIsSilenced(true); // Reset silence check
     } catch (err) {
       console.error("Start recording error:", err);
-      alert("Error: " + (err.message || "Microphone access failed. Try selecting a different device."));
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert("Microphone permission denied. Please allow microphone access in your browser settings (usually a lock icon in the URL bar) to record voice notes.");
+      } else {
+        alert("Error: " + (err.message || "Microphone access failed. Please check your microphone connection and permissions."));
+      }
     }
   };
 
