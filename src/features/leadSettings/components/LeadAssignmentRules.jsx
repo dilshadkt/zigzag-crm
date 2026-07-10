@@ -266,14 +266,38 @@ const LeadAssignmentRules = ({ fields = [], projectId = null }) => {
                   />
                 </div>
                 <div className="w-full md:w-1/3 flex-1">
-                  <input
-                    type="text"
-                    value={c.value}
-                    onChange={(e) => updateCriterion(idx, "value", e.target.value)}
-                    className="w-full h-9 rounded-xl border border-slate-200 px-3 text-[12px] focus:border-[#3f8cff] focus:outline-none"
-                    placeholder="Value (leave blank if empty/not empty)"
-                    disabled={["is_empty", "is_not_empty"].includes(c.operator)}
-                  />
+                  {(() => {
+                    const selectedFieldDef = fields.find(f => (f.key || f.id) === c.field);
+                    let options = [];
+                    if (selectedFieldDef && Array.isArray(selectedFieldDef.options) && selectedFieldDef.options.length > 0) {
+                      options = selectedFieldDef.options.map(o => ({ value: o, label: o }));
+                    } else if (c.field === "source") {
+                      options = ["Website", "Referral", "Social Media", "Direct", "Other"].map(o => ({ value: o, label: o }));
+                    }
+
+                    if (options.length > 0) {
+                      return (
+                        <CustomSelect
+                          value={c.value}
+                          onChange={(val) => updateCriterion(idx, "value", val)}
+                          options={options}
+                          disabled={["is_empty", "is_not_empty"].includes(c.operator)}
+                          placeholder="Select Value"
+                        />
+                      );
+                    }
+
+                    return (
+                      <input
+                        type="text"
+                        value={c.value}
+                        onChange={(e) => updateCriterion(idx, "value", e.target.value)}
+                        className="w-full h-9 rounded-xl border border-slate-200 px-3 text-[12px] focus:border-[#3f8cff] focus:outline-none disabled:opacity-50 disabled:bg-slate-50"
+                        placeholder="Value (leave blank if empty/not empty)"
+                        disabled={["is_empty", "is_not_empty"].includes(c.operator)}
+                      />
+                    );
+                  })()}
                 </div>
                 <button onClick={() => handleRemoveCriterion(idx)} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
                   <FiTrash2 size={14} />
