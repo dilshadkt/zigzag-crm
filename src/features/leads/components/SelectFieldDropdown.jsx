@@ -39,7 +39,7 @@ const SelectFieldDropdown = ({ value, options, onValueChange, isPlaceholder = fa
     }, [isOpen]);
 
     const handleOptionSelect = (selectedOption) => {
-        if (onValueChange && selectedOption) {
+        if (onValueChange && selectedOption !== undefined) {
             onValueChange(selectedOption);
         }
         setIsOpen(false);
@@ -105,6 +105,23 @@ const SelectFieldDropdown = ({ value, options, onValueChange, isPlaceholder = fa
                     onMouseDown={(e) => e.stopPropagation()}
                 >
                     <div className="max-h-60 overflow-y-auto flex flex-col">
+                        {!isPlaceholder && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    handleOptionSelect("");
+                                }}
+                                onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-500 hover:bg-slate-50 transition-colors italic border-b border-slate-100"
+                            >
+                                — Clear Selection —
+                            </button>
+                        )}
                         {options.map((option, index) => {
                             const isSelected = option === value;
 
