@@ -247,10 +247,35 @@ const columnRenderers = {
   source: (lead, onSourceChange) => {
     const sources = ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"];
     
+    let currentSource = lead.source;
+    
+    // Normalize source strings that come from webhook like "Facebook Lead Ads"
+    if (currentSource) {
+      const lowerSrc = currentSource.toLowerCase();
+      if (lowerSrc.includes("facebook")) currentSource = "Facebook";
+      else if (lowerSrc.includes("whatsapp")) currentSource = "WhatsApp";
+      else if (lowerSrc.includes("instagram")) currentSource = "Instagram";
+    }
+
+    if (!currentSource || currentSource === "Manual") {
+      if (lead.facebookLeadId || lead.platform?.toLowerCase() === "facebook") {
+        currentSource = "Facebook";
+      } else if (lead.whatsappContactId || lead.platform?.toLowerCase() === "whatsapp") {
+        currentSource = "WhatsApp";
+      } else if (!currentSource) {
+        currentSource = "Manual";
+      }
+    }
+
+    // Prevent select from defaulting to "Manual" if the value isn't in options
+    if (currentSource && !sources.includes(currentSource)) {
+      currentSource = "Other";
+    }
+    
     if (onSourceChange) {
       return (
         <select
-          value={lead.source || "Manual"}
+          value={currentSource}
           onChange={(e) => onSourceChange(lead, e.target.value)}
           className="text-[12px] font-medium px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer w-28"
           onClick={(e) => e.stopPropagation()}
@@ -262,7 +287,7 @@ const columnRenderers = {
       );
     }
     
-    return <div className="text-[13px] font-medium text-slate-700">{lead.source || "—"}</div>;
+    return <div className="text-[13px] font-medium text-slate-700">{currentSource}</div>;
   },
 };
 

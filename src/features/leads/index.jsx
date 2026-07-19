@@ -23,6 +23,9 @@ import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGet
 import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
 import { useCompanyActiveProjects, useGetAllEmployees } from "../../api/hooks";
 import { useGetClientSalesTeam } from "../../api/clientSalesTeam";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -142,6 +145,15 @@ const LeadsFeature = ({
   const [bulkBarPos, setBulkBarPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
+  
+  const [showCustomDateModal, setShowCustomDateModal] = useState(false);
+  const [tempDateRange, setTempDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection'
+    }
+  ]);
   const [projectFilterState, setProjectFilter] = useState("");
   const [ownerFilterState, setOwnerFilterState] = useState(() => sessionStorage.getItem('leads_ownerFilter') || "");
   const [scoreFilterState, setScoreFilterState] = useState(() => sessionStorage.getItem('leads_scoreFilter') || "");
@@ -364,6 +376,12 @@ const LeadsFeature = ({
 
   const handleDatePresetChange = (e) => {
     const preset = e.target.value;
+    
+    if (preset === 'custom') {
+      setShowCustomDateModal(true);
+      return;
+    }
+
     if (!preset) {
       setStatsDateRange({ preset: '', startDate: '', endDate: '' });
       return;
@@ -416,6 +434,23 @@ const LeadsFeature = ({
       startDate: formatDate(start),
       endDate: formatDate(end)
     });
+  };
+
+  const handleApplyCustomDate = () => {
+    const start = tempDateRange[0].startDate;
+    const end = tempDateRange[0].endDate;
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${d}`;
+    };
+    setStatsDateRange({
+      preset: 'custom',
+      startDate: formatDate(start),
+      endDate: formatDate(end)
+    });
+    setShowCustomDateModal(false);
   };
 
   // Initialize columns from generated columns
@@ -1104,6 +1139,7 @@ const LeadsFeature = ({
                 <option value="last_week">Last Week</option>
                 <option value="this_month">This Month</option>
                 <option value="last_month">Last Month</option>
+                <option value="custom">Custom Date Range</option>
               </select>
             </div>
 
@@ -1426,6 +1462,38 @@ const LeadsFeature = ({
           </div>
         )}
       </div>
+
+      {showCustomDateModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowCustomDateModal(false)}>
+          <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-slate-800 mb-4 w-full text-left">Select Custom Date Range</h3>
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <DateRange
+                editableDateInputs={true}
+                onChange={item => setTempDateRange([item.selection])}
+                moveRangeOnFirstSelection={false}
+                ranges={tempDateRange}
+                rangeColors={["#3b82f6"]}
+                className="font-sans"
+              />
+            </div>
+            <div className="flex gap-3 mt-6 w-full justify-end">
+              <button 
+                onClick={() => setShowCustomDateModal(false)}
+                className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleApplyCustomDate}
+                className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm hover:shadow transition-all"
+              >
+                Apply Range
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isColumnEditorOpen && (
         <div
