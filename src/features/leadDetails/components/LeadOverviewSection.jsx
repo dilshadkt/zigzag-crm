@@ -172,9 +172,11 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   // Get form fields - use same pattern as AddLeadModal
   const formFields = useMemo(() => {
     const fields = formConfigData?.data?.fields || [];
+    let processedFields = [];
+    
     if (fields.length === 0) {
       // Default fields if form config is empty
-      return [
+      processedFields = [
         {
           id: "name",
           key: "system_name",
@@ -224,31 +226,46 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
           options: ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"],
         },
       ];
+    } else {
+      // Ensure all fields have unique IDs and keys
+      processedFields = fields.map((field, index) => {
+        const id = field.id || field._id?.toString?.() || field._id || `field_${index}`;
+        return {
+          ...field,
+          id: String(id),
+          key: field.key || id,
+        };
+      });
+      
+      // Always ensure source field exists
+      if (!processedFields.some(f => f.key === "source")) {
+        processedFields.push({
+          id: "source",
+          key: "source",
+          label: "Lead Source",
+          type: "select",
+          required: false,
+          options: ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"],
+        });
+      }
     }
-    // Ensure all fields have unique IDs and keys
-    let processedFields = fields.map((field, index) => {
-      const id = field.id || field._id?.toString?.() || field._id || `field_${index}`;
-      return {
-        ...field,
-        id: String(id),
-        key: field.key || id,
-      };
-    });
-    
-    // Always ensure source field exists
-    if (!processedFields.some(f => f.key === "source")) {
+
+    // Add branch field dynamically
+    if (!processedFields.some(f => f.key === "branch")) {
+      const branchOptions = branches && branches.length > 0 ? ["unknown", ...branches] : [];
       processedFields.push({
-        id: "source",
-        key: "source",
-        label: "Lead Source",
-        type: "select",
+        id: "branch",
+        key: "branch",
+        label: "Branch",
+        type: branchOptions.length > 0 ? "select" : "text",
         required: false,
-        options: ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"],
+        options: branchOptions.length > 0 ? branchOptions : undefined,
+        placeholder: "Enter branch"
       });
     }
     
     return processedFields;
-  }, [formConfigData?.data?.fields]);
+  }, [formConfigData?.data?.fields, branches]);
 
   const statuses = useMemo(() => statusesData?.data || [], [statusesData]);
 
@@ -330,8 +347,17 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
     };
 
     const customFields = {};
+    if (lead.customFields instanceof Map) {
+      for (let [k, v] of lead.customFields) {
+        customFields[k] = v;
+      }
+    } else if (lead.customFields) {
+      Object.assign(customFields, lead.customFields);
+    }
+    
     let statusId = "";
     let sourceValue = lead.source || "";
+    let branchValue = lead.branch || "";
 
     formFields.forEach((field) => {
       const fieldId = String(field.id);
@@ -383,7 +409,14 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
         return;
       }
 
-      // 5. Custom Fields
+      // 5. Branch
+      if (fieldKey === "branch") {
+        branchValue = stringValue;
+        customFields[fieldKey] = fieldValue;
+        return;
+      }
+
+      // 6. Custom Fields
       customFields[fieldKey] = fieldValue;
     });
 
@@ -391,6 +424,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
       contact: contactData,
       status: statusId || lead.status?._id || lead.status?.id || lead.status,
       source: sourceValue,
+      branch: branchValue,
       customFields, // Keyed by stable 'key'
     };
 
@@ -714,9 +748,10 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
             })}
 
             {/* Show additional fields that might not be in form config */}
-            {(lead.branch || lead.customFields?.branch) && (
-              <LabelValue label="Branch" value={lead.branch || lead.customFields?.branch} />
-            )}
+            <LabelValue 
+              label="Branch" 
+              value={lead.branch || (lead.customFields instanceof Map ? lead.customFields.get("branch") : lead.customFields?.branch) || "Unknown"} 
+            />
             {leadDetails?.created && (
               <LabelValue label="Created" value={leadDetails.created} />
             )}
@@ -768,7 +803,16 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
             {(() => {
-              // Get all keys from customFields
+              // 1. Gather standard fields that came from Facebook
+              const standardFbData = [
+                { key: "fb_lead_id", val: lead.facebookLeadId },
+                { key: "fb_name", val: contact?.name || lead.contact?.name },
+                { key: "fb_email", val: contact?.email || lead.contact?.email },
+                { key: "fb_phone", val: contact?.phone || lead.contact?.phone },
+                { key: "fb_platform", val: lead.platform }
+              ].filter(item => item.val && String(item.val).trim() !== "");
+
+              // 2. Gather all keys from customFields
               let customKeys = [];
               if (lead.customFields) {
                 if (lead.customFields instanceof Map) {
@@ -782,33 +826,36 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
               const fbKeys = ["fb_ad_id", "fb_ad_name", "fb_form_id", "fb_created_time"];
               const allPossibleKeys = [...new Set([...customKeys, ...fbKeys])];
 
-              // Filter out keys already shown in the main form or empty metadata
+              // Filter out empty metadata
               const unmappedKeys = allPossibleKeys.filter(key => {
-                // Skip if already in form fields
-                if (formFields.some(f => String(f.id) === key || f.key === key)) return false;
-
-                // Get value to check if it's worth showing
                 let val = "";
                 if (fbKeys.includes(key)) {
                   val = lead[key] || (lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key]);
                 } else {
                   val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
                 }
-
                 return val !== undefined && val !== null && String(val).trim() !== "";
               });
 
-              if (unmappedKeys.length === 0) {
-                return <p className="col-span-full text-sm text-slate-400 italic">All data mapped to main overview.</p>;
+              if (unmappedKeys.length === 0 && standardFbData.length === 0) {
+                return <p className="col-span-full text-sm text-slate-400 italic">No Facebook form data found.</p>;
               }
 
-              return unmappedKeys.map(key => {
-                let val = "";
-                if (fbKeys.includes(key)) {
-                  val = lead[key] || (lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key]);
-                } else {
-                  val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
-                }
+              // Combine both sets of data
+              const allDataToRender = [
+                ...standardFbData,
+                ...unmappedKeys.map(key => {
+                  let val = "";
+                  if (fbKeys.includes(key)) {
+                    val = lead[key] || (lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key]);
+                  } else {
+                    val = lead.customFields instanceof Map ? lead.customFields.get(key) : lead.customFields?.[key];
+                  }
+                  return { key, val };
+                })
+              ];
+
+              return allDataToRender.map(({ key, val }) => {
 
                 return (
                   <div key={key} className="relative group">

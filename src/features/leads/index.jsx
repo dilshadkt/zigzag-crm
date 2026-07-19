@@ -17,6 +17,7 @@ import AddLeadModal from "./components/AddLeadModal";
 import AssignLeadModal from "./components/AssignLeadModal";
 import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
 import LeadsDashboard from "./components/LeadsDashboard";
+import SearchableDropdown from "../../components/shared/dropdown/SearchableDropdown";
 import { useLeadsData } from "./hooks/useLeadsData";
 import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads, useBulkDeleteLeads } from "./api";
 import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
@@ -94,6 +95,17 @@ const LeadsFeature = ({
       return ownerBranch === branchFilter;
     });
   }, [rawOwnersList, branchFilter]);
+
+  const branchOptions = useMemo(() => {
+    if (!branches) return [];
+    const options = branches.map(b => {
+      const branchName = typeof b === "string" ? b : b.name;
+      return { label: branchName, value: branchName };
+    });
+    // Add "Unknown" option
+    options.push({ label: "Unknown / No Branch", value: "unknown" });
+    return options;
+  }, [branches]);
 
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
@@ -1073,7 +1085,7 @@ const LeadsFeature = ({
 
         {/* Global Filters Row */}
         {((branches && branches.length > 0 && !isClient) || true) && (
-          <div className="flex flex-row flex-wrap justify-start sm:justify-end items-center gap-2 sm:gap-3 bg-white p-2 md:p-3 px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 overflow-x-auto no-scrollbar">
+          <div className="flex flex-row flex-wrap justify-start sm:justify-end items-center gap-2 sm:gap-3 bg-white p-2 md:p-3 px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 relative z-50">
             {/* Date Filter */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
@@ -1105,18 +1117,13 @@ const LeadsFeature = ({
                   </svg>
                   Branch View:
                 </span>
-                <select
+                <SearchableDropdown
                   value={branchFilter || ""}
-                  onChange={(e) => onBranchFilterChange(e.target.value)}
-                  className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-                >
-                  <option value="">Global Overview</option>
-                  {branches.map(b => {
-                    const branchId = typeof b === "string" ? b : (b.id || b.name);
-                    const branchName = typeof b === "string" ? b : b.name;
-                    return <option key={branchId} value={branchName}>{branchName}</option>;
-                  })}
-                </select>
+                  onChange={(val) => onBranchFilterChange(val)}
+                  options={branchOptions}
+                  placeholder="Global Overview"
+                  className="min-w-[150px]"
+                />
               </div>
             )}
             {/* Project Filter */}
