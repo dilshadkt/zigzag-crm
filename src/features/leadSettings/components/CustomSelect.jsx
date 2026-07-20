@@ -23,7 +23,11 @@ const CustomSelect = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedOption = options.find(
+    (option) => String(option.value).trim().toLowerCase() === String(value).trim().toLowerCase()
+  );
+
+  const displayLabel = selectedOption ? selectedOption.label : (value ? value : placeholder);
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
@@ -35,7 +39,7 @@ const CustomSelect = ({
           disabled ? "opacity-60 cursor-not-allowed bg-slate-50" : ""
         }`}
       >
-        <span className="truncate pr-2">{selectedOption ? selectedOption.label : placeholder}</span>
+        <span className="truncate pr-2">{displayLabel}</span>
         <FiChevronDown
           size={14}
           className={`transition-transform text-slate-400 shrink-0 ${

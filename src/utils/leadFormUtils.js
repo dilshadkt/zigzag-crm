@@ -31,7 +31,29 @@ export const mapLeadDataToFormValue = (field, lead, contact) => {
 
   // 4. Source Mapping
   if (fieldKey === "source") {
-    return lead.source || "";
+    let currentSource = lead.source || "";
+    
+    // Normalize source strings that come from webhook like "Facebook Lead Ads"
+    if (currentSource) {
+      const lowerSrc = currentSource.toLowerCase();
+      if (lowerSrc.includes("facebook")) currentSource = "Facebook";
+      else if (lowerSrc.includes("whatsapp")) currentSource = "WhatsApp";
+      else if (lowerSrc.includes("instagram")) currentSource = "Instagram";
+    }
+
+    if (!currentSource || currentSource === "Manual") {
+      if (lead.facebookLeadId || lead.platform?.toLowerCase() === "facebook") {
+        currentSource = "Facebook";
+      } else if (lead.whatsappContactId || lead.platform?.toLowerCase() === "whatsapp") {
+        currentSource = "WhatsApp";
+      } else if (!currentSource) {
+        currentSource = "Manual";
+      }
+    }
+    
+    // If we have options, ensure it maps to Other if missing, but we don't have options here.
+    // The CustomSelect fallback will show the literal value if it doesn't match an option.
+    return currentSource;
   }
 
   // 5. Custom Fields Mapping
