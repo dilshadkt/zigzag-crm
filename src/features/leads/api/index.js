@@ -228,9 +228,13 @@ export const useUpdateLead = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ leadId, leadData }) => updateLead(leadId, leadData),
-    onSuccess: () => {
+    onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+      if (leadId) {
+        queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+        queryClient.invalidateQueries({ queryKey: ["leadActivities", leadId] });
+      }
     },
   });
 };
