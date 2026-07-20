@@ -26,6 +26,7 @@ import { useGetClientSalesTeam } from "../../api/clientSalesTeam";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import { format } from "date-fns";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -1130,6 +1131,9 @@ const LeadsFeature = ({
               <select
                 value={statsDateRange?.preset || ''}
                 onChange={handleDatePresetChange}
+                onClick={() => {
+                  if (statsDateRange?.preset === 'custom') setShowCustomDateModal(true);
+                }}
                 className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
               >
                 <option value="">All Time</option>
@@ -1139,7 +1143,11 @@ const LeadsFeature = ({
                 <option value="last_week">Last Week</option>
                 <option value="this_month">This Month</option>
                 <option value="last_month">Last Month</option>
-                <option value="custom">Custom Date Range</option>
+                <option value="custom">
+                  {statsDateRange?.preset === 'custom' && statsDateRange?.startDate && statsDateRange?.endDate
+                    ? `${format(new Date(statsDateRange.startDate), 'MMM d')} - ${format(new Date(statsDateRange.endDate), 'MMM d')}`
+                    : "Custom Date Range"}
+                </option>
               </select>
             </div>
 

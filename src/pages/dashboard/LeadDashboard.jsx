@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     useGetLeadStats,
     useGetLeadStatuses,
     useUpdateLead
 } from "../../features/leads/api";
 import { useGetClientTeamStats } from "../../api/clientSalesTeam";
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css'; 
+import 'react-date-range/dist/theme/default.css';
+import { format } from "date-fns";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     AreaChart, Area, PieChart, Pie, Cell
@@ -38,6 +42,32 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
     const [selectedDays, setSelectedDays] = useState(7);
     const [selectedProject, setSelectedProject] = useState(isClient ? clientProjectId : "all");
     const [selectedCampaign, setSelectedCampaign] = useState("all");
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const datePickerRef = useRef(null);
+    const [dateRange, setDateRange] = useState([
+        {
+            startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
+            endDate: new Date(),
+            key: 'selection'
+        }
+    ]);
+    const [appliedDateRange, setAppliedDateRange] = useState([
+        {
+            startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
+            endDate: new Date(),
+            key: 'selection'
+        }
+    ]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+                setShowDatePicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleNavigate = (path) => {
         if (onNavigateToLeads && path.startsWith('/leads')) {
@@ -55,7 +85,11 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
     const campaigns = campaignsData?.data || [];
 
     const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ 
-        days: selectedDays,
+        days: selectedDays === "custom" ? "all" : selectedDays,
+        ...(selectedDays === "custom" && {
+            startDate: appliedDateRange[0].startDate.toISOString(),
+            endDate: appliedDateRange[0].endDate.toISOString()
+        }),
         project: selectedProject !== "all" ? selectedProject : undefined,
         campaign: selectedCampaign !== "all" ? selectedCampaign : undefined,
         branch: branchFilter || undefined
@@ -147,16 +181,55 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                     </div>
 
                     {/* Days Filter */}
-                    <div className="relative group">
+                    {/* Days Filter */}
+                    <div className="relative group" ref={datePickerRef}>
                         <select
                             value={selectedDays}
-                            onChange={(e) => setSelectedDays(Number(e.target.value))}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedDays(val === "custom" ? val : Number(val));
+                                if (val === "custom") setShowDatePicker(true);
+                                else setShowDatePicker(false);
+                            }}
+                            onClick={() => {
+                                if (selectedDays === "custom") setShowDatePicker(true);
+                            }}
                             className="pl-4 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
                         >
                             <option value={7}>Last 7 Days</option>
                             <option value={30}>Last 30 Days</option>
                             <option value={90}>Last 90 Days</option>
+                            <option value="custom">
+                                {selectedDays === "custom" 
+                                    ? `${format(appliedDateRange[0].startDate, 'MMM d')} - ${format(appliedDateRange[0].endDate, 'MMM d')}`
+                                    : "Custom Date"}
+                            </option>
                         </select>
+
+                        {/* Custom Date Picker Popup */}
+                        {showDatePicker && selectedDays === "custom" && (
+                            <div className="absolute top-full mt-2 right-0 z-50 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 overflow-hidden">
+                                <DateRange
+                                    editableDateInputs={true}
+                                    onChange={item => setDateRange([item.selection])}
+                                    moveRangeOnFirstSelection={false}
+                                    ranges={dateRange}
+                                    rangeColors={['#3f8cff']}
+                                    className="border-0"
+                                />
+                                <div className="flex justify-end pt-2 border-t border-slate-100">
+                                    <button 
+                                        onClick={() => {
+                                            setAppliedDateRange(dateRange);
+                                            setShowDatePicker(false);
+                                        }}
+                                        className="px-4 py-1.5 bg-[#3f8cff] text-white text-[11px] font-bold rounded-lg hover:bg-[#337ae6] transition-colors"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
