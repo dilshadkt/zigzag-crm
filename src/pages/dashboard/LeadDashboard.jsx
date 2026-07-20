@@ -512,143 +512,34 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                     {/* Right Column - Actionable Lists */}
                     {viewMode === 'all' && (
                         <div className="space-y-2">
-                    {/* Hot Leads */}
-                    <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
-                        <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-orange-50/20">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <Flame className="w-3.5 h-3.5 text-orange-500" />
-                                Hot Leads
-                            </h3>
-                            <span className="text-[9px] font-bold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md">
-                                {stats?.hotLeads?.count} Total
-                            </span>
-                        </div>
-                        <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
-                            {stats?.hotLeads?.leads?.length > 0 ? (
-                                stats?.hotLeads?.leads.map(lead => (
-                                    <LeadListItem
-                                        key={lead._id}
-                                        lead={lead}
-                                        onClick={() => onLeadClick(lead._id)}
-                                        onCall={(e) => handleCall(e, lead.contact?.phone)}
-                                        onMail={(e) => handleEmail(e, lead.contact?.email)}
-                                        tag="Hot"
-                                        tagColor="bg-orange-50 text-orange-600"
-                                    />
-                                ))
-                            ) : (
-                                <div className="p-6 text-center text-slate-400 text-xs">No hot leads found</div>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => navigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
-                            className="w-full py-2.5 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50"
-                        >
-                            View All High Score Leads
-                        </button>
-                    </div>
-
-                    {/* Today's Follow-ups */}
-                    <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
-                        <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-emerald-50/20">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <CalendarCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                Today's Follow-ups
-                            </h3>
-                        </div>
-                        <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
-                            {stats?.todayFollowUps?.leads?.length > 0 ? (
-                                stats?.todayFollowUps?.leads.map(lead => (
-                                    <LeadListItem
-                                        key={lead._id}
-                                        lead={lead}
-                                        onClick={() => onLeadClick(lead._id)}
-                                        onCall={(e) => handleCall(e, lead.contact?.phone)}
-                                        onMail={(e) => handleEmail(e, lead.contact?.email)}
-                                        time={new Date(lead.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    />
-                                ))
-                            ) : (
-                                <div className="p-6 text-center text-slate-400 text-xs">No follow-ups for today</div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Weak Leads / Re-engage */}
-                    <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
-                        <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <TrendingDown className="w-3.5 h-3.5 text-slate-400" />
-                                Weak Leads (Re-engage)
-                            </h3>
-                            <button
-                                onClick={() => navigate('/leads')}
-                                className="text-[10px] text-[#3f8cff] font-bold hover:underline"
-                            >
-                                Bulk Follow-up
-                            </button>
-                        </div>
-                        <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
-                            {stats?.weakLeads?.leads?.length > 0 ? (
-                                stats?.weakLeads?.leads.map(lead => (
-                                    <LeadListItem
-                                        key={lead._id}
-                                        lead={lead}
-                                        onClick={() => onLeadClick(lead._id)}
-                                        onCall={(e) => handleCall(e, lead.contact?.phone)}
-                                        onMail={(e) => handleEmail(e, lead.contact?.email)}
-                                        tag="Cold"
-                                        tagColor="bg-slate-50 text-slate-500"
-                                    />
-                                ))
-                            ) : (
-                                <div className="p-6 text-center text-slate-400 text-xs">Great job! No weak leads.</div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Filtered Lead Results - New List Section */}
-                    {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
-                        <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
-                            <div className="p-4 border-b border-slate-50 bg-blue-50/10 flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <ListIcon className="w-4 h-4 text-[#3f8cff]" />
-                                    Filtered Results
-                                </h3>
-                                <span className="text-[10px] font-black text-[#3f8cff] bg-white px-2 py-1 rounded-lg border border-blue-50">
-                                    {stats?.totalLeads || 0} Leads Found
-                                </span>
-                            </div>
-                            <div className="max-h-[600px] overflow-y-auto scrollbar-hide">
-                                {stats?.filteredLeads?.map(lead => (
-                                    <LeadListItem
-                                        key={lead._id}
-                                        lead={lead}
-                                        onClick={() => onLeadClick(lead._id)}
-                                        onCall={(e) => handleCall(e, lead.contact?.phone)}
-                                        onMail={(e) => handleEmail(e, lead.contact?.email)}
-                                    />
-                                ))}
-                                {(!stats?.filteredLeads || stats.filteredLeads.length === 0) && (
-                                    <div className="p-12 text-center">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <Search className="w-6 h-6 text-slate-300" />
-                                        </div>
-                                        <p className="text-xs text-slate-400 font-medium">No specific leads match these filters.</p>
-                                    </div>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => navigate(`/leads?project=${selectedProject}&campaign=${selectedCampaign}`)}
-                                className="w-full py-3 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50 flex items-center justify-center gap-2"
-                            >
-                                View Detailed Lead List
-                                <ArrowUpRight className="w-3.5 h-3.5" />
-                            </button>
+                            <ActionableListsContent 
+                                stats={stats} 
+                                navigate={navigate} 
+                                onLeadClick={onLeadClick} 
+                                handleCall={handleCall} 
+                                handleEmail={handleEmail} 
+                                isClient={isClient} 
+                                selectedProject={selectedProject} 
+                                selectedCampaign={selectedCampaign} 
+                            />
                         </div>
                     )}
-                    </div>
-                )}
+                </div>
+            )}
+            
+            {/* Actionable Lists for stats mode */}
+            {viewMode === 'stats' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-2">
+                    <ActionableListsContent 
+                        stats={stats} 
+                        navigate={navigate} 
+                        onLeadClick={onLeadClick} 
+                        handleCall={handleCall} 
+                        handleEmail={handleEmail} 
+                        isClient={isClient} 
+                        selectedProject={selectedProject} 
+                        selectedCampaign={selectedCampaign} 
+                    />
                 </div>
             )}
         </div>
@@ -744,6 +635,148 @@ const LeadListItem = ({ lead, onClick, onCall, onMail, tag, tagColor, time }) =>
                 </div>
             </div>
         </div>
+    );
+};
+
+const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, handleEmail, isClient, selectedProject, selectedCampaign }) => {
+    return (
+        <>
+            {/* Hot Leads */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
+                <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-orange-50/20">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <Flame className="w-3.5 h-3.5 text-orange-500" />
+                        Hot Leads
+                    </h3>
+                    <span className="text-[9px] font-bold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md">
+                        {stats?.hotLeads?.count || 0} Total
+                    </span>
+                </div>
+                <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
+                    {stats?.hotLeads?.leads?.length > 0 ? (
+                        stats?.hotLeads?.leads.map(lead => (
+                            <LeadListItem
+                                key={lead._id}
+                                lead={lead}
+                                onClick={() => onLeadClick(lead._id)}
+                                onCall={(e) => handleCall(e, lead.contact?.phone)}
+                                onMail={(e) => handleEmail(e, lead.contact?.email)}
+                                tag="Hot"
+                                tagColor="bg-orange-50 text-orange-600"
+                            />
+                        ))
+                    ) : (
+                        <div className="p-6 text-center text-slate-400 text-xs">No hot leads found</div>
+                    )}
+                </div>
+                <button
+                    onClick={() => navigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
+                    className="w-full py-2.5 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50"
+                >
+                    View All High Score Leads
+                </button>
+            </div>
+
+            {/* Today's Follow-ups */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
+                <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-emerald-50/20">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <CalendarCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        Today's Follow-ups
+                    </h3>
+                </div>
+                <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
+                    {stats?.todayFollowUps?.leads?.length > 0 ? (
+                        stats?.todayFollowUps?.leads.map(lead => (
+                            <LeadListItem
+                                key={lead._id}
+                                lead={lead}
+                                onClick={() => onLeadClick(lead._id)}
+                                onCall={(e) => handleCall(e, lead.contact?.phone)}
+                                onMail={(e) => handleEmail(e, lead.contact?.email)}
+                                time={new Date(lead.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            />
+                        ))
+                    ) : (
+                        <div className="p-6 text-center text-slate-400 text-xs">No follow-ups for today</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Weak Leads / Re-engage */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
+                <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <TrendingDown className="w-3.5 h-3.5 text-slate-400" />
+                        Weak Leads (Re-engage)
+                    </h3>
+                    <button
+                        onClick={() => navigate('/leads')}
+                        className="text-[10px] text-[#3f8cff] font-bold hover:underline"
+                    >
+                        Bulk Follow-up
+                    </button>
+                </div>
+                <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
+                    {stats?.weakLeads?.leads?.length > 0 ? (
+                        stats?.weakLeads?.leads.map(lead => (
+                            <LeadListItem
+                                key={lead._id}
+                                lead={lead}
+                                onClick={() => onLeadClick(lead._id)}
+                                onCall={(e) => handleCall(e, lead.contact?.phone)}
+                                onMail={(e) => handleEmail(e, lead.contact?.email)}
+                                tag="Cold"
+                                tagColor="bg-slate-50 text-slate-500"
+                            />
+                        ))
+                    ) : (
+                        <div className="p-6 text-center text-slate-400 text-xs">Great job! No weak leads.</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Filtered Lead Results - New List Section */}
+            {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
+                <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-slate-50 bg-blue-50/10 flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <ListIcon className="w-4 h-4 text-[#3f8cff]" />
+                            Filtered Results
+                        </h3>
+                        <span className="text-[10px] font-black text-[#3f8cff] bg-white px-2 py-1 rounded-lg border border-blue-50">
+                            {stats?.totalLeads || 0} Leads Found
+                        </span>
+                    </div>
+                    <div className="max-h-[600px] overflow-y-auto scrollbar-hide">
+                        {stats?.filteredLeads?.map(lead => (
+                            <LeadListItem
+                                key={lead._id}
+                                lead={lead}
+                                onClick={() => onLeadClick(lead._id)}
+                                onCall={(e) => handleCall(e, lead.contact?.phone)}
+                                onMail={(e) => handleEmail(e, lead.contact?.email)}
+                            />
+                        ))}
+                        {(!stats?.filteredLeads || stats.filteredLeads.length === 0) && (
+                            <div className="p-12 text-center">
+                                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Search className="w-6 h-6 text-slate-300" />
+                                </div>
+                                <p className="text-xs text-slate-400 font-medium">No specific leads match these filters.</p>
+                            </div>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => navigate(`/leads?project=${selectedProject}&campaign=${selectedCampaign}`)}
+                        className="w-full py-3 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50 flex items-center justify-center gap-2"
+                    >
+                        View Detailed Lead List
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
+        </>
     );
 };
 
