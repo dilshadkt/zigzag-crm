@@ -187,12 +187,13 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                             value={selectedDays}
                             onChange={(e) => {
                                 const val = e.target.value;
-                                setSelectedDays(val === "custom" ? val : Number(val));
+                                setSelectedDays(["custom", "all"].includes(val) ? val : Number(val));
                                 if (val === "custom") setShowDatePicker(true);
                                 else setShowDatePicker(false);
                             }}
                             className="pl-4 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
                         >
+                            <option value="all">All Time</option>
                             <option value={7}>Last 7 Days</option>
                             <option value={30}>Last 30 Days</option>
                             <option value={90}>Last 90 Days</option>
