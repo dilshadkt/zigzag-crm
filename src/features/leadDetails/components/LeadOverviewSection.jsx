@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { FiEdit2, FiSave, FiX, FiLink } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import LeadFieldMapModal from "./LeadFieldMapModal";
@@ -7,6 +8,7 @@ import DynamicLeadForm from "../../leads/components/DynamicLeadForm";
 import { mapLeadDataToFormValue } from "../../../utils/leadFormUtils";
 import StatusDropdown from "../../leads/components/StatusDropdown";
 import { toast } from "react-hot-toast";
+import apiClient from "../../../api/client";
 import {
   useGetLeadFormConfig,
   useGetLeadStatuses,
@@ -52,6 +54,7 @@ const BulletList = ({ items }) => (
 );
 
 const LeadOverviewSection = ({ lead, isClient = false }) => {
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
@@ -813,26 +816,52 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
           {(() => {
             const isWhatsApp = lead.platform?.toLowerCase() === "whatsapp" || lead.source?.toLowerCase() === "whatsapp";
             return (
-              <div className="flex items-center gap-2 mb-6">
-                {isWhatsApp ? (
-                  <span className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-[#25D366]">
-                    <FaWhatsapp className="w-5 h-5" />
-                  </span>
-                ) : (
-                  <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#1877F2]">
-                    <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                  </span>
-                )}
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    {isWhatsApp ? "WhatsApp Lead Form Data" : "Facebook Lead Data"}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {isWhatsApp ? "All fields captured from the WhatsApp lead ad form" : "All fields captured from the Facebook form"}
-                  </p>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  {isWhatsApp ? (
+                    <span className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-[#25D366]">
+                      <FaWhatsapp className="w-5 h-5" />
+                    </span>
+                  ) : (
+                    <span className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#1877F2]">
+                      <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                      </svg>
+                    </span>
+                  )}
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      {isWhatsApp ? "WhatsApp Lead Form Data" : "Facebook Lead Data"}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {isWhatsApp ? "All fields captured from the WhatsApp lead ad form" : "All fields captured from the Facebook form"}
+                    </p>
+                  </div>
                 </div>
+                {!isWhatsApp && lead.facebookLeadId && (
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const t = toast.loading("Syncing with Facebook...");
+                        const res = await apiClient.post(`/leads/${lead._id}/sync-facebook`);
+                        if (res.data?.success) {
+                          toast.success(res.data.message || "Synced successfully", { id: t });
+                          queryClient.invalidateQueries(["lead", lead.id || lead._id]);
+                        } else {
+                          toast.error(res.data?.message || "Failed to sync", { id: t });
+                        }
+                      } catch (error) {
+                        toast.error(error.response?.data?.message || "Error syncing with Facebook");
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Sync with FB
+                  </button>
+                )}
               </div>
             );
           })()}
