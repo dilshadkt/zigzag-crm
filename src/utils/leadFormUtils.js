@@ -56,6 +56,17 @@ export const mapLeadDataToFormValue = (field, lead, contact) => {
     return currentSource;
   }
 
+  // 4.5 Created Date Mapping (fb_created_time)
+  if (fieldKey === "fb_created_time") {
+    let val = lead.fb_created_time || (lead.customFields instanceof Map ? lead.customFields.get("fb_created_time") : lead.customFields?.fb_created_time);
+    
+    // Fallback to system createdAt or leadDetails.created
+    if (!val) {
+      val = lead.details?.leadDetails?.created || lead.createdAt;
+    }
+    return val || "";
+  }
+
   // 5. Custom Fields Mapping
   // Try top-level flat structure first (e.g., from AddLeadModal or legacy)
   if (lead[fieldKey] !== undefined && lead[fieldKey] !== null) {

@@ -263,6 +263,18 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
         placeholder: "Enter branch"
       });
     }
+
+    // Add created date field dynamically
+    if (!processedFields.some(f => f.key === "fb_created_time")) {
+      processedFields.push({
+        id: "fb_created_time",
+        key: "fb_created_time",
+        label: "Created Date",
+        type: "date",
+        required: false,
+        placeholder: "Select created date"
+      });
+    }
     
     return processedFields;
   }, [formConfigData?.data?.fields, branches]);

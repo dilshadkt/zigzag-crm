@@ -104,11 +104,14 @@ const OwnerCell = ({ owner, clientOwner }) => {
 };
 
 const columnRenderers = {
-  createdAt: (lead) => (
-    <div className="text-xs whitespace-nowrap font-semibold text-slate-500">
-      {formatDate(lead.createdAt || lead.createdOn)}
-    </div>
-  ),
+  createdAt: (lead) => {
+    const fbTime = lead.fb_created_time || lead.customFields?.fb_created_time;
+    return (
+      <div className="text-xs whitespace-nowrap font-semibold text-slate-500">
+        {formatDate(fbTime || lead.createdAt || lead.createdOn)}
+      </div>
+    );
+  },
   name: (lead) => {
     const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
     const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
