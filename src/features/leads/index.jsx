@@ -289,6 +289,11 @@ const LeadsFeature = ({
     setPage(1);
   }, [projectFilterState]);
 
+  // Reset page when stats date range changes
+  useEffect(() => {
+    setPage(1);
+  }, [statsDateRange]);
+
   // Reset page when owner or score filter changes
   useEffect(() => {
     setPage(1);
