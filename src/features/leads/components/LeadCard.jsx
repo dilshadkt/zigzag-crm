@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { FiMoreVertical, FiMail, FiPhone, FiCalendar, FiUser } from "react-icons/fi";
-import { FaFacebook, FaWhatsapp } from "react-icons/fa";
+import { FaFacebook, FaWhatsapp, FaInstagram } from "react-icons/fa";
 import LeadStatusBadge from "./LeadStatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import LeadRowContextMenu from "./LeadRowContextMenu";
@@ -78,8 +78,14 @@ const LeadCard = memo(({
     } else {
       bgColor = "bg-blue-50"; textColor = "text-blue-700"; ringColor = "ring-blue-200"; dotColor = "bg-blue-500"; label = "Cold";
     }
-    const isWhatsApp = !!lead.whatsappContactId || lead.source?.toLowerCase() === "whatsapp" || lead.platform?.toLowerCase() === "whatsapp";
-    const isFacebook = !isWhatsApp && (!!lead.facebookLeadId || lead.source?.toLowerCase() === "facebook" || lead.platform?.toLowerCase() === "facebook");
+    const source = lead.source?.toLowerCase();
+    const platform = lead.customFields?.platform?.toLowerCase() || lead.platform?.toLowerCase();
+    
+    const isInstagram = source === "instagram" || platform === "ig" || platform === "instagram";
+    const isWhatsApp = !isInstagram && (!!lead.whatsappContactId || source === "whatsapp" || platform === "whatsapp");
+    const isFacebook = !isWhatsApp && !isInstagram && (!!lead.facebookLeadId || source === "facebook" || platform === "facebook" || (source && source.includes("facebook")));
+
+    const fbTime = lead.fb_created_time || lead.customFields?.fb_created_time;
 
     const formatDate = (date) => {
         if (!date) return "—";
@@ -120,6 +126,9 @@ const LeadCard = memo(({
                             {isWhatsApp && (
                                 <FaWhatsapp className="text-[#25D366] w-3.5 h-3.5 flex-shrink-0" title="WhatsApp Lead" />
                             )}
+                            {isInstagram && (
+                                <FaInstagram className="text-[#E1306C] w-3.5 h-3.5 flex-shrink-0" title="Instagram Lead" />
+                            )}
                             {(lead.branch || lead.customFields?.branch) && (
                                 <span className="text-[10px] text-slate-400 font-semibold ml-0.5 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
                                     {lead.branch || lead.customFields?.branch}
@@ -133,7 +142,7 @@ const LeadCard = memo(({
                         </h3>
                         <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
                             <FiCalendar size={9} />
-                            {formatDate(lead.createdAt || lead.createdOn)}
+                            {formatDate(fbTime || lead.createdAt || lead.createdOn)}
                         </div>
                     </div>
                 </div>
