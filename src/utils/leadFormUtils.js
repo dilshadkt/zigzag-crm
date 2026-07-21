@@ -41,11 +41,14 @@ export const mapLeadDataToFormValue = (field, lead, contact) => {
       else if (lowerSrc.includes("instagram")) currentSource = "Instagram";
     }
 
-    if (!currentSource || currentSource === "Manual") {
-      if (lead.facebookLeadId || lead.platform?.toLowerCase() === "facebook") {
-        currentSource = "Facebook";
-      } else if (lead.whatsappContactId || lead.platform?.toLowerCase() === "whatsapp") {
+    if (!currentSource || currentSource === "Manual" || currentSource === "Facebook") {
+      const platform = lead.customFields?.platform?.toLowerCase() || lead.platform?.toLowerCase();
+      if (platform === "ig" || platform === "instagram") {
+        currentSource = "Instagram";
+      } else if (lead.whatsappContactId || platform === "whatsapp") {
         currentSource = "WhatsApp";
+      } else if (lead.facebookLeadId || platform === "facebook") {
+        currentSource = "Facebook";
       } else if (!currentSource) {
         currentSource = "Manual";
       }
