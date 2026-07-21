@@ -86,6 +86,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
 
     const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ 
         days: selectedDays === "custom" ? "all" : selectedDays,
+        timezoneOffset: new Date().getTimezoneOffset(),
         ...(selectedDays === "custom" && {
             startDate: appliedDateRange[0].startDate.toISOString(),
             endDate: appliedDateRange[0].endDate.toISOString()
