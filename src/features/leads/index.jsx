@@ -209,6 +209,7 @@ const LeadsFeature = ({
 
   // Stats
   const { data: statsData, isLoading: statsLoading } = useGetLeadStats({
+    days: "all",
     project: projectFilterState || projectFilter || projectId,
     timezoneOffset: new Date().getTimezoneOffset(),
     ...(statsDateRange.startDate && statsDateRange.endDate ? {
@@ -1131,9 +1132,6 @@ const LeadsFeature = ({
               <select
                 value={statsDateRange?.preset || ''}
                 onChange={handleDatePresetChange}
-                onClick={() => {
-                  if (statsDateRange?.preset === 'custom') setShowCustomDateModal(true);
-                }}
                 className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
               >
                 <option value="">All Time</option>
@@ -1149,6 +1147,15 @@ const LeadsFeature = ({
                     : "Custom Date Range"}
                 </option>
               </select>
+              {statsDateRange?.preset === 'custom' && (
+                <button
+                  onClick={() => setShowCustomDateModal(true)}
+                  className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-colors border border-indigo-100"
+                  title="Edit Custom Date Range"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                </button>
+              )}
             </div>
 
             {/* Branch Filter (Provided by Parent) */}

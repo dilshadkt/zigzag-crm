@@ -191,9 +191,6 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                                 if (val === "custom") setShowDatePicker(true);
                                 else setShowDatePicker(false);
                             }}
-                            onClick={() => {
-                                if (selectedDays === "custom") setShowDatePicker(true);
-                            }}
                             className="pl-4 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
                         >
                             <option value={7}>Last 7 Days</option>
@@ -205,6 +202,18 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                                     : "Custom Date"}
                             </option>
                         </select>
+                        {selectedDays === 'custom' && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDatePicker(true);
+                                }}
+                                className="absolute right-[-28px] top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 hover:bg-blue-100 text-[#3f8cff] rounded-lg transition-colors"
+                                title="Edit Custom Date Range"
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                        )}
 
                         {/* Custom Date Picker Popup */}
                         {showDatePicker && selectedDays === "custom" && (
