@@ -752,9 +752,33 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
               label="Branch" 
               value={lead.branch || (lead.customFields instanceof Map ? lead.customFields.get("branch") : lead.customFields?.branch) || "Unknown"} 
             />
-            {leadDetails?.created && (
-              <LabelValue label="Created" value={leadDetails.created} />
-            )}
+            {(() => {
+              const fbCreatedTime = lead.fb_created_time || 
+                (lead.customFields instanceof Map ? lead.customFields.get("fb_created_time") : lead.customFields?.fb_created_time);
+              
+              let displayCreated = leadDetails?.created;
+              
+              if (fbCreatedTime) {
+                try {
+                  const date = new Date(fbCreatedTime);
+                  if (!isNaN(date.getTime())) {
+                    displayCreated = date.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    });
+                  } else {
+                    displayCreated = fbCreatedTime;
+                  }
+                } catch (e) {
+                  displayCreated = fbCreatedTime;
+                }
+              }
+              
+              return displayCreated ? (
+                <LabelValue label="Created" value={displayCreated} />
+              ) : null;
+            })()}
             {leadDetails?.salesPerson && (
               <LabelValue label="Sales Person" value={leadDetails.salesPerson} />
             )}
