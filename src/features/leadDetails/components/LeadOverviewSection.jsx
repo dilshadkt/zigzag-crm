@@ -912,7 +912,17 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
                           MAP FIELD
                         </button>
                       </div>
-                      <p className="text-sm font-semibold text-slate-700 break-words">{String(val)}</p>
+                      <p className="text-sm font-semibold text-slate-700 break-words">
+                        {(key === "fb_created_time" || key === "created_time") && !isNaN(new Date(String(val)).getTime())
+                          ? new Date(String(val)).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : String(val)}
+                      </p>
                     </div>
                   </div>
                 );
