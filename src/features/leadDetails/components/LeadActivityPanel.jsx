@@ -84,8 +84,13 @@ const LeadActivityPanel = ({ activity }) => {
                   <p className="text-sm font-semibold text-slate-900">
                     {activityTitle}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    {formattedDate || "Unknown date"}
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    {item.performedBy && (
+                      <span className="font-medium text-slate-700">
+                        {`${item.performedBy.firstName || ''} ${item.performedBy.lastName || ''}`.trim() || item.performedBy.name || item.performedBy.email || "System"} •
+                      </span>
+                    )}
+                    <span>{formattedDate || "Unknown date"}</span>
                   </p>
                 </div>
               </div>

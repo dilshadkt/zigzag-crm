@@ -131,11 +131,10 @@ const LeadInteractionModal = ({
       const fieldKey = field.key || fieldId;
       const fieldValue = formValues[fieldId];
 
-      if (fieldValue === undefined || fieldValue === null || fieldValue === "") return;
+      if (fieldValue === undefined || fieldValue === null) return;
 
       const stringValue = String(fieldValue).trim();
-      if (!stringValue) return;
-
+      
       if (fieldKey === "system_name") { contactData.name = stringValue; return; }
       if (fieldKey === "system_email") { contactData.email = stringValue; return; }
       if (fieldKey === "system_phone") { contactData.phone = stringValue; return; }
@@ -147,13 +146,17 @@ const LeadInteractionModal = ({
       }
 
       if (fieldKey === "status") {
-        formStatusId = stringValue; // Form status overrides interaction status if present
+        // Only set status if it's not empty
+        if (stringValue) formStatusId = stringValue; 
         return;
       }
 
-      if (fieldKey === "source") { sourceValue = stringValue; return; }
+      if (fieldKey === "source") { 
+        if (stringValue) sourceValue = stringValue; 
+        return; 
+      }
 
-      customFields[fieldKey] = fieldValue;
+      customFields[fieldKey] = stringValue;
     });
 
     const leadUpdateData = {
