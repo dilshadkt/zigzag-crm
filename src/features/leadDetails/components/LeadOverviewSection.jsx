@@ -731,9 +731,13 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
               } else if (field.type === "select" && value) {
                 // For select fields, try to get the label from options
                 const option = field.options?.find(
-                  (opt) => opt === value || opt.value === value
+                  (opt) => opt === value || opt.value === value || opt.id === value || opt.name === value
                 );
-                displayValue = option?.label || option || value;
+                if (option) {
+                  displayValue = typeof option === "object" ? (option.label || option.name || option.id) : option;
+                } else {
+                  displayValue = value;
+                }
               }
 
               // Show all fields (don't filter out empty ones)

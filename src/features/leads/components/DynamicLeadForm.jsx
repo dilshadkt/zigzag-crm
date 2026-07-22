@@ -50,10 +50,14 @@ const FormField = memo(({ field, value, error, onChange, statuses }) => {
           onChange={handleChange}
           options={[
             { value: "", label: `Select ${field.label}` },
-            ...(field.options || []).map((option) => ({
-              value: option,
-              label: option,
-            })),
+            ...(field.options || []).map((option) => {
+              const val = typeof option === "object" ? (option.value || option.id || option.name) : option;
+              const lbl = typeof option === "object" ? (option.label || option.name || option.id) : option;
+              return {
+                value: val,
+                label: lbl,
+              };
+            }),
           ]}
         />
         {error && <span className="text-xs text-red-500">{error}</span>}
