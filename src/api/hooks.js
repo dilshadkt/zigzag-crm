@@ -211,10 +211,9 @@ export const useCompanyActiveProjects = () => {
       apiClient
         .get("/projects/company/active")
         .then((res) => res.data?.projects),
-    staleTime: 1000 * 60 * 2, // 2 minutes (Prevents frequent refetches)
-    cacheTime: 1000 * 60 * 10, // 10 minutes (Keeps it in cache)
-    refetchOnWindowFocus: false, // Prevents automatic refetch when window gains focus
-    // refetchOnReconnect: false, // Prevents refetch when network reconnects
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 

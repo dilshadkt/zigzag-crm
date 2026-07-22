@@ -841,16 +841,20 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
                 {!isWhatsApp && lead.facebookLeadId && (
                   <button 
                     onClick={async () => {
+                      let t;
                       try {
-                        const t = toast.loading("Syncing with Facebook...");
+                        t = toast.loading("Syncing with Facebook...");
                         const res = await apiClient.post(`/leads/${lead._id}/sync-facebook`);
                         if (res.data?.success) {
-                          toast.success(res.data.message || "Synced successfully", { id: t });
+                          toast.dismiss(t);
+                          toast.success(res.data.message || "Synced successfully");
                           queryClient.invalidateQueries(["lead", lead.id || lead._id]);
                         } else {
-                          toast.error(res.data?.message || "Failed to sync", { id: t });
+                          toast.dismiss(t);
+                          toast.error(res.data?.message || "Failed to sync");
                         }
                       } catch (error) {
+                        toast.dismiss(t);
                         toast.error(error.response?.data?.message || "Error syncing with Facebook");
                       }
                     }}

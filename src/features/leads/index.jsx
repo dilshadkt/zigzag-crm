@@ -100,16 +100,7 @@ const LeadsFeature = ({
     });
   }, [rawOwnersList, branchFilter]);
 
-  const branchOptions = useMemo(() => {
-    if (!branches) return [];
-    const options = branches.map(b => {
-      const branchName = typeof b === "string" ? b : b.name;
-      return { label: branchName, value: branchName };
-    });
-    // Add "Unknown" option
-    options.push({ label: "Unknown / No Branch", value: "unknown" });
-    return options;
-  }, [branches]);
+
 
   const { hasPermission } = usePermissions();
   const isAdmin = user?.role === "company-admin";
@@ -206,6 +197,38 @@ const LeadsFeature = ({
   useEffect(() => {
     sessionStorage.setItem('leads_statsDateRange', JSON.stringify(statsDateRange));
   }, [statsDateRange]);
+
+  // Compute branches to show based on selected project
+  const actualBranches = useMemo(() => {
+    // If branches are explicitly passed (e.g., from Project Overview), use them
+    if (branches && branches.length > 0) return branches;
+    
+    // If we are on the global leads page and a specific project is filtered
+    const activeProjectId = projectFilterState || projectFilter || projectId;
+    
+    console.log("actualBranches calc:", { activeProjectId, projectsCount: projects?.length });
+    
+    if (activeProjectId && projects && projects.length > 0) {
+      const selectedProject = projects.find(p => (p.id === activeProjectId || p._id === activeProjectId));
+      console.log("selectedProject found:", !!selectedProject, "has branches:", !!selectedProject?.customFields?.branches);
+      if (selectedProject?.customFields?.branches) {
+        return selectedProject.customFields.branches;
+      }
+    }
+    
+    return [];
+  }, [branches, projectFilterState, projectFilter, projectId, projects]);
+
+  const branchOptions = useMemo(() => {
+    if (!actualBranches) return [];
+    const options = actualBranches.map(b => {
+      const branchName = typeof b === "string" ? b : b.name;
+      return { label: branchName, value: branchName };
+    });
+    // Add "Unknown" option
+    options.push({ label: "Unknown / No Branch", value: "unknown" });
+    return options;
+  }, [actualBranches]);
 
   // Stats
   const { data: statsData, isLoading: statsLoading } = useGetLeadStats({
@@ -1164,7 +1187,7 @@ const LeadsFeature = ({
             </div>
 
             {/* Branch Filter (Provided by Parent) */}
-            {branches && branches.length > 0 && typeof onBranchFilterChange === 'function' && (
+            {actualBranches && actualBranches.length > 0 && typeof onBranchFilterChange === 'function' && (
               <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
                 <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
                   <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1310,7 +1333,7 @@ const LeadsFeature = ({
                   onCustomFieldChange={handleCustomFieldChange}
                   onSourceChange={handleSourceChange}
                   onMoveToBranch={handleMoveToBranch}
-                  branches={branches}
+                  branches={actualBranches}
                   canManage={canEditLead}
                   projects={projects}
                   onMoveToProject={!isClient ? handleMoveToProject : null}
@@ -1388,7 +1411,7 @@ const LeadsFeature = ({
                         <FiUser className="w-4 h-4 text-slate-400" /> Change Owner
                       </button>
 
-                      {canEditLead && (
+                      {canEditLead && actualBranches && actualBranches.length > 0 && (
                         <div>
                           <button 
                             onClick={(e) => { e.stopPropagation(); setBulkBranchMenuOpen(!isBulkBranchMenuOpen); setBulkProjectMenuOpen(false); }} 
@@ -1398,7 +1421,7 @@ const LeadsFeature = ({
                           </button>
                           {isBulkBranchMenuOpen && (
                             <div className="bg-slate-900 border-y border-slate-700 py-1 max-h-[200px] overflow-y-auto scrollbar-hide">
-                              {branches && branches.length > 0 ? branches.map((branch) => {
+                              {actualBranches.map((branch) => {
                                 const branchId = typeof branch === "string" ? branch : (branch.id || branch.name);
                                 const branchName = typeof branch === "string" ? branch : branch.name;
                                 return (
@@ -1410,7 +1433,7 @@ const LeadsFeature = ({
                                     {branchName}
                                   </button>
                                 );
-                              }) : <div className="px-11 py-2 text-xs text-slate-500">No branches</div>}
+                              })}
                             </div>
                           )}
                         </div>
@@ -1573,7 +1596,7 @@ const LeadsFeature = ({
         onClose={() => setAddLeadModalOpen(false)}
         onSuccess={handleLeadCreated}
         projectId={projectId}
-        branches={branches}
+        branches={actualBranches}
         defaultBranch={branchFilter}
       />
 
