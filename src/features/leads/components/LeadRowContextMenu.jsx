@@ -231,19 +231,23 @@ const LeadRowContextMenu = ({
  
                 {item.hasSubmenu && showBranches && item.label === "Move to Branch" && (
                   <div className="bg-gray-50 border-y border-gray-100 py-1">
-                    {branches.map((branch) => (
-                      <button
-                        key={branch.id || branch.name}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onMoveToBranch(lead, branch.name);
-                          onClose();
-                        }}
-                        className="w-full px-10 py-1.5 text-left text-[12px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                      >
-                        {branch.name}
-                      </button>
-                    ))}
+                    {branches.map((branch) => {
+                      const branchId = typeof branch === "string" ? branch : (branch.id || branch.name);
+                      const branchName = typeof branch === "string" ? branch : branch.name;
+                      return (
+                        <button
+                          key={branchId}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMoveToBranch(lead, branchName);
+                            onClose();
+                          }}
+                          className="w-full px-10 py-1.5 text-left text-[12px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          {branchName}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 

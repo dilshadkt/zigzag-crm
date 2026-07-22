@@ -204,20 +204,23 @@ const LeadsFeature = ({
 
   // Compute branches to show based on selected project
   const actualBranches = useMemo(() => {
-    // If branches are explicitly passed (e.g., from Project Overview), use them
-    if (branches && branches.length > 0) return branches;
+    let rawBranches = [];
     
-    // If we are on the global leads page and a specific project is filtered
-    const activeProjectId = projectFilterState || projectFilter || projectId;
-    
-    console.log("actualBranches calc:", { activeProjectId, projectsCount: projects?.length });
-    
-    if (activeProjectId && projects && projects.length > 0) {
-      const selectedProject = projects.find(p => (p.id === activeProjectId || p._id === activeProjectId));
-      if (selectedProject?.customFields?.branches && Array.isArray(selectedProject.customFields.branches)) {
-        const validBranches = selectedProject.customFields.branches.filter(b => b && (typeof b === 'string' ? b.trim() !== '' : true));
-        if (validBranches.length > 0) return validBranches;
+    if (branches && branches.length > 0) {
+      rawBranches = branches;
+    } else {
+      const activeProjectId = projectFilterState || projectFilter || projectId;
+      if (activeProjectId && projects && projects.length > 0) {
+        const selectedProject = projects.find(p => (p.id === activeProjectId || p._id === activeProjectId));
+        if (selectedProject?.customFields?.branches && Array.isArray(selectedProject.customFields.branches)) {
+          rawBranches = selectedProject.customFields.branches;
+        }
       }
+    }
+    
+    if (rawBranches && rawBranches.length > 0) {
+      const validBranches = rawBranches.filter(b => b && (typeof b === 'string' ? b.trim() !== '' : true));
+      if (validBranches.length > 0) return validBranches;
     }
     
     return [];
@@ -1410,7 +1413,8 @@ const LeadsFeature = ({
                         <FiUser className="w-4 h-4 text-slate-400" /> Change Owner
                       </button>
 
-                      {canEditLead && actualBranches && actualBranches.length > 0 && (
+                      {/* Move to Branch - Clients can also do this */}
+                      {(canEditLead || isClient) && actualBranches && actualBranches.length > 0 && (
                         <div>
                           <button 
                             onClick={(e) => { e.stopPropagation(); setBulkBranchMenuOpen(!isBulkBranchMenuOpen); setBulkProjectMenuOpen(false); }} 
@@ -1438,7 +1442,7 @@ const LeadsFeature = ({
                         </div>
                       )}
 
-                      {!isClient && projects && projects.length > 0 && canEditLead && (
+                      {!isClient && projects && projects.length > 0 && (canEditLead || isClient) && (
                         <div>
                           <button 
                             onClick={(e) => { e.stopPropagation(); setBulkProjectMenuOpen(!isBulkProjectMenuOpen); setBulkBranchMenuOpen(false); }} 
