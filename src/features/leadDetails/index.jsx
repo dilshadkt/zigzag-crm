@@ -26,20 +26,20 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const notes = useMemo(() => {
     // If we have data from the hook, use it. Otherwise fallback to prop (for initial load)
     const rawNotes = notesData?.data || lead.details?.notes || [];
-    
+
     return rawNotes.map(note => ({
       _id: note._id || note.id,
       id: note._id || note.id,
       text: note.text,
-      author: (note.author && typeof note.author === 'object') 
+      author: (note.author && typeof note.author === 'object')
         ? `${note.author.firstName || ''} ${note.author.lastName || ''}`.trim() || note.author.email || "Unknown Author"
         : note.author || "Unknown Author",
-      date: note.createdAt 
+      date: note.createdAt
         ? new Date(note.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          })
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        })
         : note.date,
       isEdited: note.isEdited
     }));
@@ -233,9 +233,9 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
     const currentScheduled = lead.scheduled;
     const currentIsFollowUp = lead.isFollowUp;
 
-    const needsUpdate = 
-      (statusId && statusId !== currentStatusId) || 
-      scheduled !== undefined || 
+    const needsUpdate =
+      (statusId && statusId !== currentStatusId) ||
+      scheduled !== undefined ||
       isFollowUp !== currentIsFollowUp ||
       (leadUpdateData && Object.keys(leadUpdateData).length > 0);
 
@@ -348,11 +348,11 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
             {tabContent}
           </div>
         </div>
-        <div className="min-w-[350px] hidden lg:flex flex-col space-y-3 ">
+        <div className="w-[400px] shrink-0 hidden lg:flex flex-col space-y-3 ">
           <LeadActivityPanel
             activity={lead.details?.activities || lead.details?.activity || []}
           />
-          <LeadQuickActions 
+          <LeadQuickActions
             onCall={handleCallClick}
             onWhatsapp={handleWhatsappClick}
             onEmail={() => setActiveTab("Emails")}

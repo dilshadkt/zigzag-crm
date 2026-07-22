@@ -13,9 +13,13 @@ import { logout } from "../../../store/slice/authSlice";
 import { useGetLeads } from "../../../features/leads/api";
 import { useProjectDetails } from "../../../api/hooks";
 import LeadDashboardPage from "../LeadDashboard";
+import LeadDetailsPage from "../../leads/LeadDetails";
+import { useLocation } from "react-router-dom";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLeadDetailRoute = location.pathname.includes('/leads/');
   const { user } = useAuth();
   const permissions = user?.permissions || [];
   const [activeTab, setActiveTab] = useState(() => {
@@ -58,6 +62,11 @@ const ClientDashboard = () => {
   };
 
   const handleDashboardNavigation = (path) => {
+    if (path.startsWith('/leads/') && path.length > '/leads/'.length) {
+      navigate(`/portal${path}`);
+      return;
+    }
+
     if (path.includes('scheduled=today')) {
       setActiveTab("followups");
     } else {
@@ -243,7 +252,11 @@ const ClientDashboard = () => {
         {/* Main Viewport */}
         <main className="flex-1 overflow-hidden p-3 pb-[80px] sm:pb-6 sm:p-6 flex flex-col gap-3">
           <div className="flex-1 bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
-            {activeTab === "overview" ? (
+            {isLeadDetailRoute ? (
+              <div className="h-full w-full relative">
+                 <LeadDetailsPage isClient={true} />
+              </div>
+            ) : activeTab === "overview" ? (
               <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                 <OverviewTab currentProject={currentProject} isClient />
               </div>
