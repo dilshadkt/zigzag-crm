@@ -283,8 +283,15 @@ const LeadsFeature = ({
     const filterField = urlParams.get('filterField');
     const filterValue = urlParams.get('filterValue');
 
-    if (action === 'followup') {
+    const hasDashboardParams = action || minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue);
+    
+    if (hasDashboardParams) {
+      // Clear any stale custom filters when navigating from dashboard
       setAppliedFilters({});
+    }
+
+    if (action === 'followup') {
+      setIsFollowUpOnly(true);
       setActiveAction('followup');
       toast.success("Showing all follow-ups");
     } else if (minScore) {
