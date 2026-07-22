@@ -100,7 +100,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
     }
   };
   // Get contact from both possible locations
-  const contact = lead.contact || lead.details?.contact || {};
+  const contact = lead.contact || lead.details?.contact;
 
   const leadDetails = lead.details?.leadDetails || {};
   // Get AI suggestions from lead data (backwards compatible)
@@ -121,7 +121,7 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   }, [lead, contact]);
   const projectId = typeof lead.project === "object" ? lead.project?._id : lead.project;
   const { data: projectDetails } = useProjectDetails(projectId);
-  const branches = projectDetails?.customFields?.branches || [];
+  const branches = projectDetails?.customFields?.branches;
 
   const { data: formConfigData, isLoading: isLoadingFormConfig } =
     useGetLeadFormConfig(projectId);
@@ -331,8 +331,8 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
       });
     } else if (!isEditing) {
       // Clear form values when exiting edit mode
-      setFormValues({});
-      setErrors({});
+      setFormValues(prev => Object.keys(prev).length === 0 ? prev : {});
+      setErrors(prev => Object.keys(prev).length === 0 ? prev : {});
     }
   }, [isEditing, formFields, lead, contact]);
 
