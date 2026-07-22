@@ -90,15 +90,19 @@ const LeadsFeature = ({
   const { data: salesTeamData } = useGetClientSalesTeam(projectId || null);
   const rawOwnersList = (isClient || projectId) ? (salesTeamData?.data || []) : (employeesData?.employees || []);
   
+  // Use local state if prop is not provided
+  const [branchFilterState, setBranchFilterState] = useState("");
+  const activeBranchFilter = branchFilter || branchFilterState;
+
   // Filter owners list by branch if a branch filter is applied
   const ownersList = useMemo(() => {
-    if (!branchFilter) return rawOwnersList;
+    if (!activeBranchFilter) return rawOwnersList;
     return rawOwnersList.filter(owner => {
       // Depending on the model, branch might be nested or direct
       const ownerBranch = owner.branch || owner.customFields?.branch;
-      return ownerBranch === branchFilter;
+      return ownerBranch === activeBranchFilter;
     });
-  }, [rawOwnersList, branchFilter]);
+  }, [rawOwnersList, activeBranchFilter]);
 
 
 
@@ -210,9 +214,9 @@ const LeadsFeature = ({
     
     if (activeProjectId && projects && projects.length > 0) {
       const selectedProject = projects.find(p => (p.id === activeProjectId || p._id === activeProjectId));
-      console.log("selectedProject found:", !!selectedProject, "has branches:", !!selectedProject?.customFields?.branches);
-      if (selectedProject?.customFields?.branches) {
-        return selectedProject.customFields.branches;
+      if (selectedProject?.customFields?.branches && Array.isArray(selectedProject.customFields.branches)) {
+        const validBranches = selectedProject.customFields.branches.filter(b => b && (typeof b === 'string' ? b.trim() !== '' : true));
+        if (validBranches.length > 0) return validBranches;
       }
     }
     
@@ -239,7 +243,7 @@ const LeadsFeature = ({
       startDate: statsDateRange.startDate,
       endDate: statsDateRange.endDate
     } : {}),
-    ...(branchFilter ? { branch: branchFilter } : {}),
+    ...(activeBranchFilter ? { branch: activeBranchFilter } : {}),
     ...(ownerFilterState ? { owner: ownerFilterState } : {}),
     ...(scoreFilterState ? { scoreCategory: scoreFilterState } : {}),
     ...(isFollowUpOnly ? { isFollowUp: true } : {})
@@ -305,7 +309,7 @@ const LeadsFeature = ({
   // Reset page when branch filter changes
   useEffect(() => {
     setPage(1);
-  }, [branchFilter]);
+  }, [activeBranchFilter]);
 
   // Reset page when project filter changes
   useEffect(() => {
@@ -345,7 +349,7 @@ const LeadsFeature = ({
     appliedFilters,
     projectId: projectFilterState || projectFilter || projectId,
     isFollowUp: isFollowUpOnly || activeAction === 'followup',
-    branchFilter,
+    branchFilter: activeBranchFilter,
     startDate: statsDateRange.startDate,
     endDate: statsDateRange.endDate,
     timezoneOffset: new Date().getTimezoneOffset(),
@@ -1150,17 +1154,17 @@ const LeadsFeature = ({
 
         {/* Global Filters Row */}
         {((branches && branches.length > 0 && !isClient) || true) && (
-          <div className="flex flex-row flex-wrap justify-start sm:justify-end items-center gap-2 sm:gap-3 bg-white p-2 md:p-3 px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 relative z-50">
+          <div className="flex flex-row overflow-x-auto scrollbar-hide items-center gap-2 sm:gap-3 bg-white p-2 md:p-2.5 px-3 md:px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 relative z-50 w-full">
             {/* Date Filter */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
-                <svg className="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                Date Range:
+            <div className="flex flex-col gap-1 flex-1 min-w-[130px]">
+              <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                Date Range
               </span>
+              <div className="flex items-center gap-1">
               <select
                 value={statsDateRange?.preset || ''}
                 onChange={handleDatePresetChange}
-                className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
               >
                 <option value="">All Time</option>
                 <option value="today">Today</option>
@@ -1184,43 +1188,44 @@ const LeadsFeature = ({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
               )}
+              </div>
             </div>
 
-            {/* Branch Filter (Provided by Parent) */}
-            {actualBranches && actualBranches.length > 0 && typeof onBranchFilterChange === 'function' && (
-              <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
-                <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
-                  <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Branch View:
+            {/* Branch Filter */}
+            {actualBranches && actualBranches.length > 0 && (
+              <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
+                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                  Branch View
                 </span>
                 <SearchableDropdown
-                  value={branchFilter || ""}
-                  onChange={(val) => onBranchFilterChange(val)}
+                  value={activeBranchFilter || ""}
+                  onChange={(val) => {
+                    if (onBranchFilterChange) {
+                      onBranchFilterChange(val);
+                    } else {
+                      setBranchFilterState(val);
+                    }
+                  }}
                   options={branchOptions}
                   placeholder="Global Overview"
-                  className="min-w-[150px]"
+                  className="w-full"
                 />
               </div>
             )}
             {/* Project Filter */}
             {!isClient && !projectId && (
-              <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
-                <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
-                  <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3" />
-                  </svg>
-                  Project View:
+              <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
+                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                  Project View
                 </span>
                 <select
                   value={projectFilterState || ""}
                   onChange={(e) => {
                     setProjectFilter(e.target.value);
+                    setBranchFilterState(""); // Reset branch when project changes
                     if (onProjectFilterChange) onProjectFilterChange(e.target.value);
                   }}
-                  className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                  className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
                 >
                   <option value="">All Projects</option>
                   {projects.map(p => (
@@ -1231,17 +1236,14 @@ const LeadsFeature = ({
             )}
             {/* Owner Filter */}
             {ownersList && ownersList.length > 0 && (
-              <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
-                <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
-                  <svg className="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Owner:
+              <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
+                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                  Owner
                 </span>
                 <select
                   value={ownerFilterState}
                   onChange={(e) => setOwnerFilterState(e.target.value)}
-                  className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                  className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
                 >
                   <option value="">All Owners</option>
                   {ownersList.map(u => {
@@ -1254,17 +1256,14 @@ const LeadsFeature = ({
             )}
             
             {/* Score Filter */}
-            <div className="flex items-center gap-1.5 sm:gap-2 border-l border-slate-200 pl-2 sm:pl-3">
-              <span className="hidden sm:flex text-[10px] font-extrabold text-slate-400 uppercase tracking-widest items-center gap-1.5">
-                <svg className="w-3 h-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Score:
-              </span>
+            <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
+                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                  Score
+                </span>
               <select
                 value={scoreFilterState}
                 onChange={(e) => setScoreFilterState(e.target.value)}
-                className="w-auto px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none min-w-[110px] cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+                className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
               >
                 <option value="">All Scores</option>
                 <option value="hot">Hot Leads</option>
