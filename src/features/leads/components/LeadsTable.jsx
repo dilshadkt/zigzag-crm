@@ -213,6 +213,7 @@ const LeadsTable = ({
                     index={virtualRow.index}
                     projects={projects}
                     onMoveToProject={onMoveToProject}
+                    measureRef={rowVirtualizer.measureElement}
                   />
                 );
               })}

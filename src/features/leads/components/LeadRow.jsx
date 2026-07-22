@@ -8,6 +8,7 @@ import StatusDropdown from "./StatusDropdown";
 import SelectFieldDropdown from "./SelectFieldDropdown";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 import { useGetLeadStatuses, useGetDashboardConfig } from "../../../api/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 
 const checkboxClasses =
   "h-[14px] w-[14px] rounded border-2 border-slate-300 text-[#3f8cff] focus:ring-[#3f8cff]/40";
@@ -334,6 +335,7 @@ const LeadRow = memo(({
   index,
   projects = [],
   onMoveToProject,
+  measureRef,
 }) => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
@@ -354,17 +356,42 @@ const LeadRow = memo(({
   };
   const projectId = getProjectId();
   
-  // Fetch project-specific statuses
-  const { data: projectStatusesData } = useGetLeadStatuses(projectId);
+  const queryClient = useQueryClient();
+  
+  // Use queryClient.getQueryData instead of useQuery to prevent massive observer overhead during virtual scrolling
+  const projectStatusesData = projectId ? queryClient.getQueryData(["leadStatuses", projectId]) : null;
   // Use project statuses if available, otherwise fallback to global statuses passed via props
   const rowStatuses = (projectId && projectStatusesData?.data) ? projectStatusesData.data : propStatuses;
 
-  const { data: configData } = useGetDashboardConfig(projectId);
+  const configData = projectId ? queryClient.getQueryData(["dashboardConfig", projectId]) : null;
   const thresholds = {
     hot: configData?.data?.hotLeadThreshold ?? 70,
     warm: configData?.data?.warmLeadThreshold ?? 40,
     cold: configData?.data?.coldLeadThreshold ?? 0,
   };
+
+  // Prefetch data in background if missing
+  useEffect(() => {
+    if (projectId) {
+      if (!queryClient.getQueryData(["leadStatuses", projectId])) {
+        // We do a soft prefetch without creating permanent observers in this component
+        import("../../../api/client").then(({ default: apiClient }) => {
+          queryClient.prefetchQuery({
+            queryKey: ["leadStatuses", projectId],
+            queryFn: () => apiClient.get("/leads/settings/statuses", { params: { projectId } }).then(res => res.data)
+          });
+        });
+      }
+      if (!queryClient.getQueryData(["dashboardConfig", projectId])) {
+        import("../../../api/client").then(({ default: apiClient }) => {
+          queryClient.prefetchQuery({
+            queryKey: ["dashboardConfig", projectId],
+            queryFn: () => apiClient.get(`/projects/${projectId}/dashboard-config`).then(res => res.data)
+          });
+        });
+      }
+    }
+  }, [projectId, queryClient]);
 
   const handleActionButtonClick = (e) => {
     e.stopPropagation();
@@ -460,6 +487,8 @@ const LeadRow = memo(({
   return (
     <>
       <tr
+        ref={measureRef}
+        data-index={index}
         className="border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50/70 transition-colors group"
         onClick={() => onRowClick && onRowClick(lead)}
       >

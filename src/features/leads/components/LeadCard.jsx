@@ -5,7 +5,7 @@ import LeadStatusBadge from "./LeadStatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import LeadRowContextMenu from "./LeadRowContextMenu";
 import { useState, useRef } from "react";
-import { useGetDashboardConfig } from "../../../api/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 
 const LeadCard = memo(({
     lead,
@@ -63,13 +63,27 @@ const LeadCard = memo(({
     const isClientTeam = !!lead.clientOwner;
     const leadScore = lead.score ?? 0;
     const projectId = lead.project ? (typeof lead.project === 'object' ? lead.project._id || lead.project.id : lead.project) : (lead.campaign?.project ? (typeof lead.campaign.project === 'object' ? lead.campaign.project._id || lead.campaign.project.id : lead.campaign.project) : null);
-    const { data: configData } = useGetDashboardConfig(projectId);
+    const queryClient = useQueryClient();
+    const configData = projectId ? queryClient.getQueryData(["dashboardConfig", projectId]) : null;
     const thresholds = {
       hot: configData?.data?.hotLeadThreshold ?? 70,
       warm: configData?.data?.warmLeadThreshold ?? 40,
       cold: configData?.data?.coldLeadThreshold ?? 0,
     };
     
+    // Prefetch data in background if missing
+    React.useEffect(() => {
+      if (projectId) {
+        if (!queryClient.getQueryData(["dashboardConfig", projectId])) {
+          import("../../../api/client").then(({ default: apiClient }) => {
+            queryClient.prefetchQuery({
+              queryKey: ["dashboardConfig", projectId],
+              queryFn: () => apiClient.get(`/projects/${projectId}/dashboard-config`).then(res => res.data)
+            });
+          });
+        }
+      }
+    }, [projectId, queryClient]);
     let bgColor, textColor, ringColor, dotColor, label;
     if (leadScore >= thresholds.hot) {
       bgColor = "bg-orange-50"; textColor = "text-orange-700"; ringColor = "ring-orange-200"; dotColor = "bg-orange-500"; label = "Hot";
