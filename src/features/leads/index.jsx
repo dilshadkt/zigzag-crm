@@ -277,6 +277,12 @@ const LeadsFeature = ({
     // Check for follow-up filter parameter in URL
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
+    const statusParam = urlParams.get('status');
+    const startDateParam = urlParams.get('startDate');
+    const endDateParam = urlParams.get('endDate');
+    const filterField = urlParams.get('filterField');
+    const filterValue = urlParams.get('filterValue');
+
     if (action === 'followup') {
       setAppliedFilters({});
       setActiveAction('followup');
@@ -292,6 +298,27 @@ const LeadsFeature = ({
         owner: { operator: 'equals', value: ownerId }
       });
       toast.success("Filtering leads by assigned employee");
+    }
+
+    if (statusParam) {
+      setActiveStatusId(statusParam);
+      toast.success("Filtering leads by status");
+    }
+
+    if (startDateParam && endDateParam) {
+      setStatsDateRange({
+        startDate: startDateParam,
+        endDate: endDateParam,
+        preset: 'custom'
+      });
+      toast.success("Filtering leads by date range");
+    }
+
+    if (filterField && filterValue) {
+      setAppliedFilters({
+        [filterField]: { operator: 'equals', value: filterValue }
+      });
+      toast.success(`Filtering by ${filterField}`);
     }
 
     // Clear params from URL to avoid re-applying on refresh if not desired, 
@@ -1278,7 +1305,7 @@ const LeadsFeature = ({
         )}
 
         {/* dashboard section  */}
-        {showDashboard && (
+        {showDashboard && Object.keys(appliedFilters).length === 0 && (
           <div className="shrink-0 bg-white rounded-2xl p-2 md:p-3 md:px-4 border border-slate-100 overflow-x-auto
            touch-pan-x scrollbar-hide">
             <LeadsDashboard
@@ -1291,6 +1318,46 @@ const LeadsFeature = ({
               statsDateRange={statsDateRange}
               setStatsDateRange={setStatsDateRange}
             />
+          </div>
+        )}
+
+        {/* Active Insights / Custom Filters Section */}
+        {Object.keys(appliedFilters).length > 0 && !activeAction && (
+          <div className="shrink-0 bg-indigo-50/50 rounded-2xl p-3 md:px-4 border border-indigo-100 flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filtered By:
+              </span>
+              {Object.entries(appliedFilters).map(([key, filter]) => (
+                <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-xl border border-indigo-200 shadow-sm">
+                  <span className="text-xs font-medium text-indigo-500 uppercase tracking-wider">{key.replace('custom_', '')}:</span>
+                  <span className="text-sm font-bold text-slate-700">{filter.value}</span>
+                  <button 
+                    onClick={() => {
+                      setAppliedFilters(prev => {
+                        const next = { ...prev };
+                        delete next[key];
+                        return next;
+                      });
+                    }}
+                    className="ml-1 text-slate-400 hover:text-red-500 transition-colors p-0.5 hover:bg-red-50 rounded-md"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button 
+              onClick={() => setAppliedFilters({})}
+              className="text-xs font-bold text-indigo-600 hover:text-white px-4 py-2 hover:bg-indigo-600 bg-white rounded-xl shadow-sm border border-indigo-200 transition-all duration-300"
+            >
+              Clear Filter
+            </button>
           </div>
         )}
         <div className="relative bg-white grow shrink-0 rounded-2xl border border-slate-100 pb-2">

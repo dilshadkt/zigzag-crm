@@ -33,7 +33,7 @@ import { useCompanyActiveProjects } from "../../api/hooks";
 import { useGetCampaignsByCompany } from "../../api/campaigns";
 import { Filter, X, Briefcase, Megaphone, List as ListIcon } from "lucide-react";
 
-const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }) => {
+const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, onBranchFilterChange, branches = [] }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isAdmin = user?.role === 'company-admin';
@@ -85,9 +85,9 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
     const campaigns = campaignsData?.data || [];
 
     const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ 
-        days: selectedDays === "custom" ? "all" : selectedDays,
+        days: ["custom", "today", "yesterday"].includes(selectedDays) ? "all" : selectedDays,
         timezoneOffset: new Date().getTimezoneOffset(),
-        ...(selectedDays === "custom" && {
+        ...(["custom", "today", "yesterday"].includes(selectedDays) && {
             startDate: appliedDateRange[0].startDate.toISOString(),
             endDate: appliedDateRange[0].endDate.toISOString()
         }),
@@ -130,6 +130,51 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
     }
 
     const COLORS = ['#3f8cff', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+
+    const handleWidgetClick = (field, id) => {
+        if (!id || !onNavigateToLeads) return;
+        
+        let queryParam = '';
+        if (field === 'status') {
+            queryParam = `status=${encodeURIComponent(id)}`;
+        } else if (field === 'owner') {
+            queryParam = `filterField=owner&filterValue=${encodeURIComponent(id)}`;
+        } else if (field === 'month') {
+            // id is "YYYY-MM"
+            const date = new Date(id + "-01T00:00:00Z");
+            const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)).toISOString();
+            const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999)).toISOString();
+            queryParam = `startDate=${start}&endDate=${end}`;
+        } else {
+            queryParam = `filterField=${encodeURIComponent(field)}&filterValue=${encodeURIComponent(id)}`;
+        }
+        
+        // Append the dashboard's active date filter for context (unless it's the monthly chart which forces its own dates)
+        if (field !== 'month') {
+            let currentStartDate = null;
+            let currentEndDate = null;
+
+            if (selectedDays === "today" || selectedDays === "yesterday" || selectedDays === "custom") {
+                currentStartDate = appliedDateRange[0]?.startDate;
+                currentEndDate = appliedDateRange[0]?.endDate;
+            } else if (selectedDays !== "all") {
+                const days = Number(selectedDays);
+                currentEndDate = new Date();
+                currentStartDate = new Date();
+                currentStartDate.setDate(currentStartDate.getDate() - days);
+            }
+
+            if (currentStartDate && currentEndDate) {
+                const start = new Date(currentStartDate);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(currentEndDate);
+                end.setHours(23, 59, 59, 999);
+                queryParam += `&startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
+            }
+        }
+        
+        onNavigateToLeads(`/leads?${queryParam}`);
+    };
 
     return (
         <div className="space-y-2 p-1 bg-slate-50/50">
@@ -181,6 +226,27 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                         </select>
                     </div>
 
+                    {/* Branch Filter */}
+                    {branches && branches.length > 0 && onBranchFilterChange && (
+                        <div className="relative group flex-1 min-w-[150px]">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                            </div>
+                            <select
+                                value={branchFilter || ""}
+                                onChange={(e) => onBranchFilterChange(e.target.value)}
+                                className="w-full pl-9 pr-8 py-2 bg-slate-50 hover:bg-slate-100 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none transition-all duration-300"
+                            >
+                                <option value="">All Branches</option>
+                                {branches.map((branch, idx) => (
+                                    <option key={branch._id || branch.id || idx} value={branch.name || branch.value || branch}>
+                                        {branch.name || branch.label || branch}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {/* Days Filter */}
                     {/* Days Filter */}
                     <div className="relative group" ref={datePickerRef}>
@@ -188,13 +254,28 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                             value={selectedDays}
                             onChange={(e) => {
                                 const val = e.target.value;
-                                setSelectedDays(["custom", "all"].includes(val) ? val : Number(val));
-                                if (val === "custom") setShowDatePicker(true);
-                                else setShowDatePicker(false);
+                                if (val === "today") {
+                                    const today = new Date();
+                                    setAppliedDateRange([{ startDate: today, endDate: today, key: 'selection' }]);
+                                    setSelectedDays("today");
+                                    setShowDatePicker(false);
+                                } else if (val === "yesterday") {
+                                    const yesterday = new Date();
+                                    yesterday.setDate(yesterday.getDate() - 1);
+                                    setAppliedDateRange([{ startDate: yesterday, endDate: yesterday, key: 'selection' }]);
+                                    setSelectedDays("yesterday");
+                                    setShowDatePicker(false);
+                                } else {
+                                    setSelectedDays(["custom", "all"].includes(val) ? val : Number(val));
+                                    if (val === "custom") setShowDatePicker(true);
+                                    else setShowDatePicker(false);
+                                }
                             }}
                             className="pl-4 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none"
                         >
                             <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
                             <option value={7}>Last 7 Days</option>
                             <option value={30}>Last 30 Days</option>
                             <option value={90}>Last 90 Days</option>
@@ -372,6 +453,8 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                                             outerRadius={70}
                                             paddingAngle={5}
                                             dataKey="count"
+                                            onClick={(data) => handleWidgetClick('status', data?.payload?._id || data?._id)}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             {stats?.statusStats?.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
@@ -413,7 +496,14 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                                             cursor={{ fill: '#f8fafc' }}
                                             contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
                                         />
-                                        <Bar dataKey="count" fill="#3f8cff" radius={[4, 4, 0, 0]} barSize={16} />
+                                        <Bar 
+                                            dataKey="count" 
+                                            fill="#3f8cff" 
+                                            radius={[4, 4, 0, 0]} 
+                                            barSize={16} 
+                                            onClick={(data) => handleWidgetClick('month', data?._id)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -434,11 +524,27 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                                                     <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
                                                     <YAxis hide />
                                                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
-                                                    <Bar dataKey="count" fill="#3f8cff" radius={[4, 4, 0, 0]} barSize={16} />
+                                                    <Bar 
+                                                        dataKey="count" 
+                                                        fill="#3f8cff" 
+                                                        radius={[4, 4, 0, 0]} 
+                                                        barSize={16} 
+                                                        onClick={(data) => handleWidgetClick(widget.field, data?.payload?.originalId || data?.payload?._id || data?._id)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
                                                 </BarChart>
                                             ) : widget.type === 'pie' ? (
                                                 <PieChart>
-                                                    <Pie data={widget.data} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="count" nameKey="_id">
+                                                    <Pie 
+                                                        data={widget.data} 
+                                                        innerRadius={50} 
+                                                        outerRadius={70} 
+                                                        paddingAngle={5} 
+                                                        dataKey="count" 
+                                                        nameKey="_id"
+                                                        onClick={(data) => handleWidgetClick(widget.field, data?.payload?._id || data?._id)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
                                                         {widget.data.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                                                         ))}
@@ -457,7 +563,15 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter }
                                                     <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
                                                     <YAxis hide />
                                                     <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
-                                                    <Area type="monotone" dataKey="count" stroke="#3f8cff" strokeWidth={2} fillOpacity={1} fill={`url(#color-${widget.widgetId})`} />
+                                                    <Area 
+                                                        type="monotone" 
+                                                        dataKey="count" 
+                                                        stroke="#3f8cff" 
+                                                        strokeWidth={2} 
+                                                        fillOpacity={1} 
+                                                        fill={`url(#color-${widget.widgetId})`} 
+                                                        activeDot={{ onClick: (e, payload) => handleWidgetClick(widget.field, payload?.payload?.originalId || payload?.payload?._id), cursor: 'pointer' }}
+                                                    />
                                                 </AreaChart>
                                             )}
                                         </ResponsiveContainer>

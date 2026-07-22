@@ -1,51 +1,27 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import LeadsFeature from "../../../features/leads";
-import Campaigns from "../../campaigns";
-import { OverviewTab } from "../../../components/projects/projectOverview/OverviewTab";
-import InsightsTab from "../../../components/projects/projectOverview/InsightsTab";
-import ScheduleTab from "../../../components/projects/projectOverview/ScheduleTab";
-import SalesTeamTab from "./SalesTeamTab";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import logo from "../../../assets/icons/logo.svg";
 import { useAuth } from "../../../hooks/useAuth";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../store/slice/authSlice";
 import { useGetLeads } from "../../../features/leads/api";
 import { useProjectDetails } from "../../../api/hooks";
-import LeadDashboardPage from "../LeadDashboard";
-import LeadDetailsPage from "../../leads/LeadDetails";
-import { useLocation } from "react-router-dom";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isLeadDetailRoute = location.pathname.includes('/leads/');
   const { user } = useAuth();
   const permissions = user?.permissions || [];
-  const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = sessionStorage.getItem("client_portal_tab");
-    if (savedTab) {
-      // Validate saved tab against permissions (followups uses leads permission)
-      const permCheck = savedTab === "followups" ? "leads" : savedTab;
-      if (permissions.includes(`view_${permCheck}`)) return savedTab;
-    }
-    if (permissions.includes("view_overview")) return "overview";
-    if (permissions.includes("view_dashboard")) return "dashboard";
-    if (permissions.includes("view_leads")) return "leads";
-    if (permissions.includes("view_campaigns")) return "campaigns";
-    return "leads";
-  });
-
-  React.useEffect(() => {
-    sessionStorage.setItem("client_portal_tab", activeTab);
-  }, [activeTab]);
+  
+  // Get active tab from URL path
+  const pathParts = location.pathname.split("/").filter(Boolean);
+  const activeTab = pathParts[pathParts.length - 1] || "dashboard";
+  
   const dispatch = useDispatch();
-  const [selectedBranchId, setSelectedBranchId] = useState("");
 
   const projectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
   const { data: currentProject, isLoading: projectLoading } = useProjectDetails(projectId);
   const branches = currentProject?.customFields?.branches || currentProject?.branches || (typeof user?.project === "object" ? (user.project.customFields?.branches || user.project.branches) : null) || [];
-  const activeBranchFilter = selectedBranchId || user?.branchName || "";
   const { data: followUpsData } = useGetLeads({
     project: projectId,
     isFollowUp: true,
@@ -62,15 +38,22 @@ const ClientDashboard = () => {
   };
 
   const handleDashboardNavigation = (path) => {
-    if (path.startsWith('/leads/') && path.length > '/leads/'.length) {
-      navigate(`/portal${path}`);
+    if (path.startsWith('/leads')) {
+      const searchParams = path.includes('?') ? path.substring(path.indexOf('?')) : '';
+      const basePath = path.includes('?') ? path.substring(0, path.indexOf('?')) : path;
+      
+      if (basePath.startsWith('/leads/') && basePath.length > '/leads/'.length) {
+        navigate(`/portal${path}`);
+        return;
+      }
+      navigate(`/portal/leads${searchParams}`);
       return;
     }
 
     if (path.includes('scheduled=today')) {
-      setActiveTab("followups");
+      navigate("/portal/follow-ups");
     } else {
-      setActiveTab("leads");
+      navigate("/portal/leads");
     }
   };
 
@@ -102,7 +85,7 @@ const ClientDashboard = () => {
           <nav className="flex flex-col gap-1.5 mt-4">
             {permissions.includes("view_overview") && (
               <button
-                onClick={() => setActiveTab("overview")}
+                onClick={() => navigate("/portal/overview")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "overview"
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
@@ -115,7 +98,7 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_dashboard") && (
               <button
-                onClick={() => setActiveTab("dashboard")}
+                onClick={() => navigate("/portal/dashboard")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "dashboard"
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
@@ -128,9 +111,9 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_leads") && (
               <button
-                onClick={() => setActiveTab("leads")}
+                onClick={() => navigate("/portal/leads")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
-                  activeTab === "leads"
+                  activeTab === "leads" || location.pathname.includes("/portal/leads/")
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
                     : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                 }`}
@@ -141,9 +124,9 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_leads") && (
               <button
-                onClick={() => setActiveTab("followups")}
+                onClick={() => navigate("/portal/follow-ups")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
-                  activeTab === "followups"
+                  activeTab === "follow-ups"
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
                     : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                 }`}
@@ -157,7 +140,7 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_campaigns") && (
               <button
-                onClick={() => setActiveTab("campaigns")}
+                onClick={() => navigate("/portal/campaigns")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "campaigns"
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
@@ -170,7 +153,7 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_insights") && (
               <button
-                onClick={() => setActiveTab("insights")}
+                onClick={() => navigate("/portal/insights")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "insights"
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
@@ -183,7 +166,7 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_schedule") && (
               <button
-                onClick={() => setActiveTab("schedule")}
+                onClick={() => navigate("/portal/schedule")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "schedule"
                     ? "bg-blue-50/50 text-blue-600 shadow-sm border border-blue-100/50"
@@ -196,9 +179,9 @@ const ClientDashboard = () => {
             )}
             {permissions.includes("view_sales_team") && (
               <button
-                onClick={() => setActiveTab("sales_team")}
+                onClick={() => navigate("/portal/sales-team")}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${
-                  activeTab === "sales_team"
+                  activeTab === "sales-team" || activeTab === "sales_team"
                     ? "bg-indigo-50/60 text-indigo-600 shadow-sm border border-indigo-100/50"
                     : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                 }`}
@@ -252,37 +235,14 @@ const ClientDashboard = () => {
         {/* Main Viewport */}
         <main className="flex-1 overflow-hidden p-3 pb-[80px] sm:pb-6 sm:p-6 flex flex-col gap-3">
           <div className="flex-1 bg-white rounded-2xl sm:rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/50 overflow-hidden relative">
-            {isLeadDetailRoute ? (
-              <div className="h-full w-full relative">
-                 <LeadDetailsPage isClient={true} />
-              </div>
-            ) : activeTab === "overview" ? (
-              <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <OverviewTab currentProject={currentProject} isClient />
-              </div>
-            ) : activeTab === "leads" ? (
-              <LeadsFeature isClient projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} onBranchFilterChange={!user?.branchName ? setSelectedBranchId : undefined} />
-            ) : activeTab === "followups" ? (
-              <LeadsFeature isClient isFollowUpOnly projectId={projectId} branchFilter={activeBranchFilter} branches={branches} onSelectLead={handleSelectLead} onBranchFilterChange={!user?.branchName ? setSelectedBranchId : undefined} />
-            ) : activeTab === "campaigns" ? (
-              <Campaigns isClient projectId={projectId} branchFilter={""} />
-            ) : activeTab === "insights" ? (
-              <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <LeadDashboardPage viewMode="insights" branchFilter={activeBranchFilter} onNavigateToLeads={handleDashboardNavigation} />
-              </div>
-            ) : activeTab === "schedule" ? (
-              <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <ScheduleTab currentProject={currentProject} isClient />
-              </div>
-            ) : activeTab === "dashboard" ? (
-              <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <LeadDashboardPage viewMode="stats" branchFilter={activeBranchFilter} onNavigateToLeads={handleDashboardNavigation} />
-              </div>
-            ) : activeTab === "sales_team" ? (
-              <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                <SalesTeamTab projectId={projectId} />
-              </div>
-            ) : null}
+             <Outlet context={{ 
+                 projectId, 
+                 currentProject, 
+                 branches, 
+                 handleSelectLead, 
+                 handleDashboardNavigation,
+                 user 
+             }} />
           </div>
         </main>
 
@@ -290,7 +250,7 @@ const ClientDashboard = () => {
         <nav className="sm:hidden absolute bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm border-t border-slate-200/60 z-50 px-2 py-2 flex justify-around items-center pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           {permissions.includes("view_dashboard") && (
             <button
-              onClick={() => setActiveTab("dashboard")}
+              onClick={() => navigate("/portal/dashboard")}
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
                 activeTab === "dashboard" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
               }`}
@@ -303,9 +263,9 @@ const ClientDashboard = () => {
           )}
           {permissions.includes("view_leads") && (
             <button
-              onClick={() => setActiveTab("leads")}
+              onClick={() => navigate("/portal/leads")}
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-                activeTab === "leads" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                activeTab === "leads" || location.pathname.includes("/portal/leads/") ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
               }`}
             >
               <div className={`p-1.5 rounded-lg mb-0.5 ${activeTab === "leads" ? "bg-blue-50" : ""}`}>
@@ -316,12 +276,12 @@ const ClientDashboard = () => {
           )}
           {permissions.includes("view_leads") && (
             <button
-              onClick={() => setActiveTab("followups")}
+              onClick={() => navigate("/portal/follow-ups")}
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-                activeTab === "followups" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                activeTab === "follow-ups" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
               }`}
             >
-              <div className={`p-1.5 rounded-lg mb-0.5 relative ${activeTab === "followups" ? "bg-blue-50" : ""}`}>
+              <div className={`p-1.5 rounded-lg mb-0.5 relative ${activeTab === "follow-ups" ? "bg-blue-50" : ""}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 {followUpsCount > 0 && <span className="absolute top-1.5 right-1.5 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 border border-white"></span></span>}
               </div>
@@ -330,7 +290,7 @@ const ClientDashboard = () => {
           )}
           {permissions.includes("view_insights") && (
             <button
-              onClick={() => setActiveTab("insights")}
+              onClick={() => navigate("/portal/insights")}
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
                 activeTab === "insights" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
               }`}
@@ -343,12 +303,12 @@ const ClientDashboard = () => {
           )}
           {permissions.includes("view_sales_team") && (
             <button
-              onClick={() => setActiveTab("sales_team")}
+              onClick={() => navigate("/portal/sales-team")}
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-                activeTab === "sales_team" ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                activeTab === "sales-team" || activeTab === "sales_team" ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
               }`}
             >
-              <div className={`p-1.5 rounded-lg mb-0.5 ${activeTab === "sales_team" ? "bg-indigo-50" : ""}`}>
+              <div className={`p-1.5 rounded-lg mb-0.5 ${activeTab === "sales-team" || activeTab === "sales_team" ? "bg-indigo-50" : ""}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
               </div>
               <span className="text-[10px] font-bold">Team</span>

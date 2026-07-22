@@ -79,6 +79,17 @@ const Leaderboard = lazy(() => import("../pages/Leaderboard"));
 const Integration = lazy(() => import("../pages/settings/Integration"));
 const SocialSettings = lazy(() => import("../pages/settings/SocialSettings"));
 
+import { 
+  ClientOverviewPage, 
+  ClientStatsDashboardPage, 
+  ClientLeadsPage, 
+  ClientFollowUpsPage, 
+  ClientCampaignsPage, 
+  ClientInsightsPage, 
+  ClientSchedulePage, 
+  ClientSalesTeamPage,
+  ClientLeadDetailsPage 
+} from "../pages/dashboard/ClientDashboard/ClientPages";
 
 const AppRoutes = () => {
   return (
@@ -485,8 +496,21 @@ const AppRoutes = () => {
           <Route element={<AuthLayout />}>
             <Route path="login" element={<PortalSignIn />} />
           </Route>
-          <Route path="dashboard" element={<ClientDashboard />} />
-          <Route path="leads/:leadId" element={<ClientDashboard />} />
+          
+          <Route element={<ClientDashboard />}>
+            <Route path="dashboard" element={<ClientStatsDashboardPage />} />
+            <Route path="overview" element={<ClientOverviewPage />} />
+            <Route path="leads" element={<ClientLeadsPage />} />
+            <Route path="leads/:leadId" element={<ClientLeadDetailsPage />} />
+            <Route path="follow-ups" element={<ClientFollowUpsPage />} />
+            <Route path="campaigns" element={<ClientCampaignsPage />} />
+            <Route path="insights" element={<ClientInsightsPage />} />
+            <Route path="schedule" element={<ClientSchedulePage />} />
+            <Route path="sales-team" element={<ClientSalesTeamPage />} />
+            
+            {/* Default redirect */}
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
         </Route>
 
         <Route path="unauthorized" element={<Unauthorized />} />
