@@ -159,9 +159,11 @@ rounded-3xl  flex flex-col  p-4"
         </div>
         <div className="flex flex-col gap-y-2 my-4">
           <h4 className="font-medium">Description</h4>
-          <p className="text-[#0A1629]/80 text-sm line-clamp-3" title={currentProject?.description}>
-            {currentProject?.description}
-          </p>
+          <div 
+            className="text-[#0A1629]/80 text-sm line-clamp-3 prose prose-sm max-w-none prose-p:my-0" 
+            title={typeof currentProject?.description === 'string' ? currentProject.description.replace(/<[^>]*>?/gm, '') : ''}
+            dangerouslySetInnerHTML={{ __html: currentProject?.description }}
+          />
         </div>
         <div className="flex flex-col gap-y-5 mt-1">
           <div className="flex flex-col gap-y-2">

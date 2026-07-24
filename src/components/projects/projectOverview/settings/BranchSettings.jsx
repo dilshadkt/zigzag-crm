@@ -17,6 +17,7 @@ export const BranchSettings = ({
   const [branchUsername, setBranchUsername] = useState("");
   const [branchPassword, setBranchPassword] = useState("");
   const [editingBranchId, setEditingBranchId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const branches = currentProject?.customFields?.branchLogins || [];
 
@@ -26,6 +27,7 @@ export const BranchSettings = ({
       return;
     }
 
+    setIsLoading(true);
     try {
       let updatedBranches = [...branches];
       if (editingBranchId) {
@@ -69,6 +71,8 @@ export const BranchSettings = ({
     } catch (error) {
       console.error(editingBranchId ? "Failed to update branch:" : "Failed to add branch:", error);
       toast.error(editingBranchId ? "Failed to update branch" : "Failed to add branch");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -294,9 +298,20 @@ export const BranchSettings = ({
           <div className="flex gap-2">
             <button
               onClick={handleAddBranch}
-              className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all shadow-sm shadow-indigo-200/50"
+              disabled={isLoading}
+              className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-all shadow-sm shadow-indigo-200/50 flex items-center justify-center gap-2"
             >
-              {editingBranchId ? "Update Branch Login" : "Add Branch Login"}
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {editingBranchId ? "Updating..." : "Adding..."}
+                </>
+              ) : (
+                editingBranchId ? "Update Branch Login" : "Add Branch Login"
+              )}
             </button>
             {editingBranchId && (
               <button
@@ -306,7 +321,8 @@ export const BranchSettings = ({
                   setBranchUsername("");
                   setBranchPassword("");
                 }}
-                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-all"
+                disabled={isLoading}
+                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-gray-700 text-xs font-semibold rounded-lg transition-all"
               >
                 Cancel
               </button>
@@ -316,7 +332,12 @@ export const BranchSettings = ({
 
         {branches.length > 0 && (
           <div className="mt-5 border-t border-indigo-100 pt-4 space-y-2.5">
-            <h5 className="text-xs font-bold text-indigo-900 mb-2">Configured Branches</h5>
+            <div className="flex items-center justify-between mb-2">
+              <h5 className="text-xs font-bold text-indigo-900">Configured Branches</h5>
+              <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                {branches.length} {branches.length === 1 ? 'Branch' : 'Branches'}
+              </span>
+            </div>
             {branches.map((branch, idx) => {
               const isLegacyString = typeof branch === "string";
               const branchId = isLegacyString ? branch : branch.id;

@@ -70,9 +70,10 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Description</span>
-            <p className="text-xs text-gray-600 leading-relaxed bg-[#F8FAFC] p-3 rounded-xl border border-gray-100">
-              {currentProject?.description || "No description provided."}
-            </p>
+            <div 
+              className="text-xs text-gray-600 leading-relaxed bg-[#F8FAFC] p-3 rounded-xl border border-gray-100 prose prose-sm max-w-none prose-p:my-0"
+              dangerouslySetInnerHTML={{ __html: currentProject?.description || "No description provided." }}
+            />
           </div>
 
           <div className="space-y-5">
