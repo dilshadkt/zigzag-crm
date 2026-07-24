@@ -76,7 +76,7 @@ const CalendarDay = ({
 
       {/* Projects, Tasks and Birthdays for this date */}
       {item?.fullDate && (
-        <div className="w-[88%] flex flex-col gap-1 pr-1">
+        <div className="w-full flex flex-col gap-1 mt-6">
           {isLoading ? (
             <div className="animate-pulse">
               <div className="h-6 bg-gray-200 rounded-md mb-1"></div>

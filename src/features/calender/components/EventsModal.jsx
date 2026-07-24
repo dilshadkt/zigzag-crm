@@ -13,23 +13,40 @@ const EventsModal = ({
 }) => {
   if (!isOpen || !selectedDayData) return null;
 
-  const { projects, tasks, subtasks, birthdays, formattedDate } =
-    selectedDayData;
+  const { projects, tasks, subtasks, birthdays, formattedDate } = selectedDayData;
   const totalEvents =
     projects.length + tasks.length + subtasks.length + birthdays.length;
 
+  const allTasks = tasks || [];
+  const stats = {
+    pending: allTasks.filter(t => t.status === "todo").length,
+    progressing: allTasks.filter(t => t.status === "in-progress").length,
+    publishPending: allTasks.filter(t => t.isPublishPending).length,
+  };
+
   return (
     <div className="fixed inset-0 bg-black/45 bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
+            <h2 className="text-lg font-bold text-gray-800">
               Events for {formattedDate}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {totalEvents} event{totalEvents !== 1 ? "s" : ""}
-            </p>
+            </h2>
+            <div className="flex gap-3 mt-2">
+              <div className="bg-purple-50 text-purple-700 px-2 py-1 rounded-md border border-purple-200 shadow-sm flex items-center gap-1.5">
+                <span className="text-sm">🚀</span>
+                <span className="text-[10px] uppercase font-bold">Ready to Publish: {stats.publishPending}</span>
+              </div>
+              <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md border border-blue-200 shadow-sm flex items-center gap-1.5">
+                <span className="text-sm">🔄</span>
+                <span className="text-[10px] uppercase font-bold">In Progress: {stats.progressing}</span>
+              </div>
+              <div className="bg-gray-50 text-gray-600 px-2 py-1 rounded-md border border-gray-200 shadow-sm flex items-center gap-1.5">
+                <span className="text-sm">⏳</span>
+                <span className="text-[10px] uppercase font-bold">Pending: {stats.pending}</span>
+              </div>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -40,7 +57,7 @@ const EventsModal = ({
         </div>
 
         {/* Modal Content */}
-        <div className="p-4 overflow-y-auto max-h-[60vh]">
+        <div className="p-4 overflow-y-auto max-h-[75vh]">
           {/* Birthdays Section */}
           {birthdays.length > 0 && (
             <div className="mb-4">

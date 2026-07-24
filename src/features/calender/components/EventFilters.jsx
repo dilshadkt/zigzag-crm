@@ -14,6 +14,7 @@ const EventFilters = ({
   onToggleFilter,
   assignerFilter,
   onAssignerFilterChange,
+  projectFilter,
   onProjectFilterChange,
   publishPendingOnly,
   onTogglePublishPending,

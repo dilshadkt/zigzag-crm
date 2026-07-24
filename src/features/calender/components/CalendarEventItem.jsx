@@ -148,6 +148,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
     : (task.computedProgress || 0);
 
   const isPublishPending = task.isPublishPending;
+  const subtasksCount = task.subtasksCount || { total: 0, completed: 0 };
 
   return (
     <div
@@ -181,19 +182,33 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
           : ""
       } - ${progress}% Completed`}
     >
-      {/* Progress bar in background */}
-      <div
-        className={`absolute left-0 top-0 bottom-0 ${
-          isCarriedTask
-            ? "bg-orange-300"
-            : isBeingCarried
-            ? "bg-blue-300"
-            : colorStyle.progress || "bg-gray-200"
-        } opacity-30 transition-all duration-300`}
-        style={{ width: `${progress}%` }}
-      ></div>
+      {/* Background segments for subtasks */}
+      {subtasksCount.list && subtasksCount.list.length > 0 && (
+        <div className="absolute inset-0 flex z-0">
+          {subtasksCount.list.map((st, idx) => {
+            const isCompleted = ["completed", "approved", "client-approved"].includes(st.status);
+            const firstLetter = st.title ? st.title.charAt(0).toUpperCase() : "";
+            
+            return (
+              <div
+                key={st._id}
+                className={`flex-1 border-r border-white/40 last:border-r-0 flex items-center justify-center bg-opacity-20 transition-colors ${
+                  isCompleted
+                    ? "bg-green-500"
+                    : colorStyle.progress || "bg-gray-200"
+                }`}
+              >
+                <span className="text-sm font-extrabold text-black/70 select-none hidden group-hover:block">
+                  {firstLetter}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-      <div className="flex flex-col gap-1 relative z-10">
+      {/* Task Content - hide on hover if it has subtasks */}
+      <div className={`flex flex-col gap-1 relative z-10 transition-opacity duration-200 ${subtasksCount.list && subtasksCount.list.length > 0 ? 'group-hover:opacity-0' : ''}`}>
         {/* Publish Pending Badge */}
         {isPublishPending && (
           <div className="flex items-center gap-1">

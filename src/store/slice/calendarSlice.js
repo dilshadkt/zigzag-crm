@@ -140,6 +140,7 @@ const calendarSlice = createSlice({
   },
 });
 
+export const {
   setEventFilters,
   toggleEventFilter,
   togglePublishPendingFilter,
