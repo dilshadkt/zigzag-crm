@@ -33,6 +33,10 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
   const managedOthers = currentProject?.socialMedia?.other?.filter(v => v.manage) || [];
   const hasSocialMedia = managedSocials.length > 0 || managedOthers.length > 0;
 
+  const branchLogins = currentProject?.customFields?.branchLogins || [];
+  const legacyBranches = currentProject?.customFields?.branches || [];
+  const branches = branchLogins.length > 0 ? branchLogins : legacyBranches.filter(b => typeof b === 'object' && b.username);
+
   return (
     <div className="flex-1 overflow-y-auto flex flex-col gap-6 pr-4 pb-24 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
       {/* Section 1: Stats Summary (Top) - COMPACT */}
@@ -205,14 +209,14 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
       )}
 
       {/* Section: Branch Details */}
-      {currentProject?.customFields?.branches && currentProject.customFields.branches.length > 0 && (
+      {branches.length > 0 && (
         <div className="bg-white p-5 rounded-2xl border border-gray-100">
           <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
             <div className="w-1 h-4 bg-teal-500 rounded-full"></div>
             Configured Branches
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentProject.customFields.branches.map((branch, idx) => (
+            {branches.map((branch, idx) => (
               <div key={branch.id || idx} className="flex flex-col gap-2 p-3 bg-[#F8FAFC] rounded-xl border border-gray-100 transition-colors">
                 <span className="text-xs font-bold text-gray-800 line-clamp-1" title={branch.name}>{branch.name}</span>
                 <div className="flex flex-col gap-1 mt-1">

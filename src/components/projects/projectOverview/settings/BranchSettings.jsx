@@ -18,7 +18,7 @@ export const BranchSettings = ({
   const [branchPassword, setBranchPassword] = useState("");
   const [editingBranchId, setEditingBranchId] = useState(null);
 
-  const branches = currentProject?.customFields?.branches || [];
+  const branches = currentProject?.customFields?.branchLogins || [];
 
   const handleAddBranch = async () => {
     if (!branchName || !branchUsername || !branchPassword) {
@@ -49,7 +49,7 @@ export const BranchSettings = ({
       const updatedData = {
         customFields: {
           ...(currentProject?.customFields || {}),
-          branches: updatedBranches,
+          branchLogins: updatedBranches,
         },
       };
 
@@ -79,7 +79,7 @@ export const BranchSettings = ({
       const updatedData = {
         customFields: {
           ...(currentProject?.customFields || {}),
-          branches: branches.filter((b) => {
+          branchLogins: branches.filter((b) => {
             const id = typeof b === "string" ? b : b.id;
             return id !== branchId;
           }),

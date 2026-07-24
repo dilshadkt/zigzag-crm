@@ -315,7 +315,9 @@ const SalesTeamTab = ({ projectId }) => {
   const [viewingPersonId, setViewingPersonId] = useState(null);
 
   const { data: currentProject } = useProjectDetails(projectId);
-  const branches = currentProject?.customFields?.branches || currentProject?.branches || [];
+  const branchLogins = currentProject?.customFields?.branchLogins || [];
+  const legacyBranches = currentProject?.customFields?.branches || currentProject?.branches || [];
+  const branches = branchLogins.length > 0 ? branchLogins : legacyBranches;
 
   const { data: teamData, isLoading } = useGetClientSalesTeam(projectId);
   const team = teamData?.data || [];

@@ -565,7 +565,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             onSelectLead={(lead) => navigate(`/leads/${lead._id || lead.id}`, { state: { from: window.location.pathname } })}
             onOpenSettings={() => setActiveTab("settings")}
             branchFilter={selectedBranchId}
-            branches={currentProject?.customFields?.branches}
+            branches={currentProject?.customFields?.branchLogins?.length > 0 ? currentProject.customFields.branchLogins : currentProject?.customFields?.branches}
             onBranchFilterChange={setSelectedBranchId}
           />
         </div>

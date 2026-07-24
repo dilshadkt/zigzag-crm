@@ -21,7 +21,9 @@ const ClientDashboard = () => {
 
   const projectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
   const { data: currentProject, isLoading: projectLoading } = useProjectDetails(projectId);
-  const branches = currentProject?.customFields?.branches || currentProject?.branches || (typeof user?.project === "object" ? (user.project.customFields?.branches || user.project.branches) : null) || [];
+  const branchLogins = currentProject?.customFields?.branchLogins || (typeof user?.project === "object" ? user.project.customFields?.branchLogins : null) || [];
+  const legacyBranches = currentProject?.customFields?.branches || currentProject?.branches || (typeof user?.project === "object" ? (user.project.customFields?.branches || user.project.branches) : null) || [];
+  const branches = branchLogins.length > 0 ? branchLogins : legacyBranches;
   const { data: followUpsData } = useGetLeads({
     project: projectId,
     isFollowUp: true,
