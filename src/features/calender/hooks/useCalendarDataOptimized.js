@@ -5,7 +5,8 @@ export const useCalendarDataOptimized = (
   currentDate,
   eventFilters,
   assignerFilter,
-  projectFilter
+  projectFilter,
+  publishPendingOnly
 ) => {
   const { data: calendarData, isLoading } = useGetCalendarData(currentDate);
 
@@ -22,7 +23,7 @@ export const useCalendarDataOptimized = (
 
     // Filter projects for this date
     let projectsForDate =
-      eventFilters.projects && projects
+      !publishPendingOnly && eventFilters.projects && projects
         ? projects.filter((project) =>
           isSameDay(new Date(project.endDate), dateObj)
         )
@@ -41,6 +42,11 @@ export const useCalendarDataOptimized = (
       allTasks = tasks.filter((task) =>
         isSameDay(new Date(task.dueDate), dateObj)
       );
+
+      // Apply publishPendingOnly filter
+      if (publishPendingOnly) {
+        allTasks = allTasks.filter(task => task.isPublishPending === true);
+      }
 
       // Apply assigner filter if selected
       if (assignerFilter && assignerFilter.length > 0) {
@@ -67,17 +73,17 @@ export const useCalendarDataOptimized = (
     }
 
     // Separate parent tasks and subtasks
-    const parentTasks = eventFilters.tasks
+    const parentTasks = eventFilters.tasks || publishPendingOnly
       ? allTasks.filter((task) => !task.parentTask)
       : [];
 
-    const subtasks = eventFilters.subtasks
+    const subtasks = (!publishPendingOnly && eventFilters.subtasks)
       ? allTasks.filter((task) => task.parentTask)
       : [];
 
     // Filter birthdays for this date
     const birthdaysForDate =
-      eventFilters.birthdays && birthdays
+      !publishPendingOnly && eventFilters.birthdays && birthdays
         ? birthdays.filter((birthday) => {
             const dobDate = new Date(birthday.dob);
             return dobDate.getDate() === dateObj.getDate();

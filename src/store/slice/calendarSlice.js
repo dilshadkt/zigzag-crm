@@ -12,6 +12,7 @@ const createDefaultState = () => ({
   },
   assignerFilter: [],
   projectFilter: [],
+  publishPendingOnly: false,
   currentDate: new Date().toISOString(), // Store as ISO string for serialization
 });
 
@@ -62,6 +63,7 @@ const loadState = () => {
         ...defaultState.eventFilters,
         ...parsedState?.eventFilters,
       },
+      publishPendingOnly: parsedState?.publishPendingOnly || false,
     };
   } catch (error) {
     return defaultState;
@@ -79,6 +81,10 @@ const calendarSlice = createSlice({
     toggleEventFilter(state, action) {
       const filterType = action.payload;
       state.eventFilters[filterType] = !state.eventFilters[filterType];
+      persistState(state);
+    },
+    togglePublishPendingFilter(state) {
+      state.publishPendingOnly = !state.publishPendingOnly;
       persistState(state);
     },
     setAssignerFilter(state, action) {
@@ -118,6 +124,7 @@ const calendarSlice = createSlice({
       state.eventFilters = defaultState.eventFilters;
       state.assignerFilter = defaultState.assignerFilter;
       state.projectFilter = defaultState.projectFilter;
+      state.publishPendingOnly = defaultState.publishPendingOnly;
       state.currentDate = defaultState.currentDate;
       persistState(state);
     },
@@ -127,14 +134,15 @@ const calendarSlice = createSlice({
       state.eventFilters = reloadedState.eventFilters;
       state.assignerFilter = reloadedState.assignerFilter;
       state.projectFilter = reloadedState.projectFilter;
+      state.publishPendingOnly = reloadedState.publishPendingOnly;
       state.currentDate = reloadedState.currentDate;
     },
   },
 });
 
-export const {
   setEventFilters,
   toggleEventFilter,
+  togglePublishPendingFilter,
   setAssignerFilter,
   setProjectFilter,
   setCurrentDate,

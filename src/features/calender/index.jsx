@@ -34,6 +34,7 @@ import {
   setProjectFilter,
   setCurrentDate as setCalendarCurrentDate,
   reloadCalendarState,
+  togglePublishPendingFilter,
 } from "../../store/slice/calendarSlice";
 
 const Calendar = () => {
@@ -42,6 +43,7 @@ const Calendar = () => {
     eventFilters,
     assignerFilter,
     projectFilter,
+    publishPendingOnly,
     currentDate: persistedCurrentDate,
   } = useSelector((state) => state.calendar);
 
@@ -110,7 +112,8 @@ const Calendar = () => {
     currentDate,
     eventFilters,
     assignerFilter,
-    projectFilter
+    projectFilter,
+    publishPendingOnly
   );
 
   const handlePrevMonth = () => {
@@ -150,6 +153,10 @@ const Calendar = () => {
   // Toggle event filter
   const handleToggleEventFilter = (filterType) => {
     dispatch(toggleEventFilter(filterType));
+  };
+
+  const handleTogglePublishPending = () => {
+    dispatch(togglePublishPendingFilter());
   };
 
   // Handle assigner filter change
@@ -248,10 +255,12 @@ const Calendar = () => {
         <EventFilters
           eventFilters={eventFilters}
           onToggleFilter={handleToggleEventFilter}
+          onTogglePublishPending={handleTogglePublishPending}
           assignerFilter={assignerFilter}
           onAssignerFilterChange={handleAssignerFilterChange}
           projectFilter={projectFilter}
           onProjectFilterChange={handleProjectFilterChange}
+          publishPendingOnly={publishPendingOnly}
           calendarData={calendarData}
           canEditTasks={canEditTasks}
         />

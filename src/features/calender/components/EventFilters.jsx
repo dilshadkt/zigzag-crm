@@ -14,8 +14,9 @@ const EventFilters = ({
   onToggleFilter,
   assignerFilter,
   onAssignerFilterChange,
-  projectFilter,
   onProjectFilterChange,
+  publishPendingOnly,
+  onTogglePublishPending,
   calendarData,
   canEditTasks,
 }) => {
@@ -401,6 +402,20 @@ const EventFilters = ({
       >
         <FaGift className="text-sm" />
         Events
+      </button>
+
+      {/* Ready to Publish Filter */}
+      <button
+        onClick={() => onTogglePublishPending()}
+        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-bold transition-all duration-200 ${
+          publishPendingOnly
+          ? "bg-purple-100 text-purple-700 border border-purple-200 shadow-[0_0_6px_rgba(168,85,247,0.4)]"
+          : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+          }`}
+        title="Show Only Ready to Publish Tasks"
+      >
+        <span>🚀</span>
+        Ready to Publish
       </button>
     </div>
   );
