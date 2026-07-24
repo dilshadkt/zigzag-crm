@@ -30,48 +30,56 @@ const statusColors = {
     text: "text-gray-800",
     border: "border-gray-200",
     dot: "bg-gray-500",
+    progress: "bg-gray-200",
   },
   "in-progress": {
     bg: "bg-blue-50",
     text: "text-blue-800",
     border: "border-blue-200",
     dot: "bg-blue-500",
+    progress: "bg-blue-200",
   },
   completed: {
     bg: "bg-green-50",
     text: "text-green-800",
     border: "border-green-200",
     dot: "bg-green-500",
+    progress: "bg-green-200",
   },
   "on-review": {
     bg: "bg-purple-50",
     text: "text-purple-800",
     border: "border-purple-200",
     dot: "bg-purple-500",
+    progress: "bg-purple-200",
   },
   "on-hold": {
     bg: "bg-yellow-50",
     text: "text-yellow-800",
     border: "border-yellow-200",
     dot: "bg-yellow-500",
+    progress: "bg-yellow-200",
   },
   "re-work": {
     bg: "bg-red-50",
     text: "text-red-800",
     border: "border-red-200",
     dot: "bg-red-500",
+    progress: "bg-red-200",
   },
   approved: {
     bg: "bg-emerald-50",
     text: "text-emerald-800",
     border: "border-emerald-200",
     dot: "bg-emerald-500",
+    progress: "bg-emerald-200",
   },
   "client-approved": {
     bg: "bg-indigo-50",
     text: "text-indigo-800",
     border: "border-indigo-200",
     dot: "bg-indigo-500",
+    progress: "bg-indigo-200",
   },
 };
 
@@ -97,6 +105,7 @@ const extraTaskColors = {
   text: "text-red-800",
   border: "border-red-300",
   dot: "bg-indigo-500",
+  progress: "bg-red-200",
 };
 
 // Risk color mapping for at-risk tasks/subtasks
@@ -106,12 +115,14 @@ const riskColors = {
     text: "text-red-900",
     border: "border-red-400",
     dot: "bg-red-600",
+    progress: "bg-red-200",
   },
   near: {
     bg: "bg-orange-50",
     text: "text-orange-900",
     border: "border-orange-400",
     dot: "bg-orange-600",
+    progress: "bg-orange-200",
   },
 };
 

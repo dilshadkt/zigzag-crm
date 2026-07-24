@@ -143,6 +143,12 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const progress = ["completed", "approved", "client-approved"].includes(task.status) 
+    ? 100 
+    : (task.computedProgress || 0);
+
+  const isPublishPending = task.isPublishPending;
+
   return (
     <div
       onClick={() => onNavigate(task)}
@@ -152,12 +158,14 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
           : isBeingCarried
           ? "bg-blue-50 text-blue-900 border-blue-400"
           : `${colorStyle.bg} ${colorStyle.text} ${colorStyle.border}`
-      } border-2
+      } border-2 group
       rounded-md px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all 
       duration-200 relative overflow-hidden ${
         isExtraTask ? "border-dashed" : ""
       } ${isCarriedTask ? "border-l-4" : ""} ${
         isBeingCarried ? "border-dashed border-2" : ""
+      } ${
+        isPublishPending ? "border-purple-500 shadow-[0_0_6px_rgba(168,85,247,0.4)]" : ""
       }`}
       title={`${isExtraTask ? "Extra Task" : "Task"}: ${task.title} (${
         task.priority || "medium"
@@ -171,9 +179,37 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
         isBeingCarried
           ? ` - Also showing on ${formatDate(task.carriedToDate)}`
           : ""
-      }`}
+      } - ${progress}% Completed`}
     >
+      {/* Progress bar in background */}
+      <div
+        className={`absolute left-0 top-0 bottom-0 ${
+          isCarriedTask
+            ? "bg-orange-300"
+            : isBeingCarried
+            ? "bg-blue-300"
+            : colorStyle.progress || "bg-gray-200"
+        } opacity-30 transition-all duration-300`}
+        style={{ width: `${progress}%` }}
+      ></div>
+
       <div className="flex flex-col gap-1 relative z-10">
+        {/* Publish Pending Badge */}
+        {isPublishPending && (
+          <div className="flex items-center gap-1">
+            <span
+              className={`${
+                showExtraDetails
+                  ? "text-[10px] px-2 py-1"
+                  : "text-[9px] px-1.5 py-0.5"
+              } bg-purple-100 text-purple-700 border border-purple-300 rounded-full font-bold flex items-center gap-1 shadow-sm`}
+            >
+              <span>🚀</span>
+              <span>Ready to Publish</span>
+            </span>
+          </div>
+        )}
+
         {/* Carried Task Badge */}
         {isCarriedTask && (
           <div className="flex items-center gap-1">
@@ -267,8 +303,11 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
           </div>
 
           <div className="flex flex-col  items-end">
-            <span className={`text-[10px] italic ml-auto ${getDueDateColor(task.dueDate, task.status) || "opacity-75"}`}>
+            <span className={`text-[10px] italic ml-auto group-hover:hidden ${getDueDateColor(task.dueDate, task.status) || "opacity-75"}`}>
               {statusText}
+            </span>
+            <span className={`text-[10px] italic font-bold ml-auto hidden group-hover:block ${getDueDateColor(task.dueDate, task.status) || "opacity-75"}`}>
+              {progress}%
             </span>
             {showExtraDetails && (
               <div className="flex gap-x-0.5">
@@ -319,6 +358,10 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const progress = ["completed", "approved", "client-approved"].includes(subtask.status) 
+    ? 100 
+    : 0;
+
   return (
     <div
       onClick={() => onNavigate(subtask)}
@@ -328,7 +371,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
           : isBeingCarried
           ? "bg-blue-50 text-blue-900 border-blue-400"
           : `${colorStyle.bg} ${colorStyle.text} ${colorStyle.border}`
-      } border-2
+      } border-2 group
       rounded-md px-2 py-1.5 cursor-pointer hover:shadow-sm transition-all 
       duration-200 relative overflow-hidden ${
         isExtraSubtask ? "border-dashed" : ""
@@ -458,8 +501,11 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
           </div>
 
           <div className="flex flex-col items-end">
-            <span className={`text-[10px] italic ml-auto ${getDueDateColor(subtask.dueDate, subtask.status) || "opacity-75"}`}>
+            <span className={`text-[10px] italic ml-auto group-hover:hidden ${getDueDateColor(subtask.dueDate, subtask.status) || "opacity-75"}`}>
               {statusText}
+            </span>
+            <span className={`text-[10px] italic font-bold ml-auto hidden group-hover:block ${getDueDateColor(subtask.dueDate, subtask.status) || "opacity-75"}`}>
+              {progress}%
             </span>
             {showExtraDetails && (
               <div className="flex gap-x-0.5">
