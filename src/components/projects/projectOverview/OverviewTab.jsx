@@ -70,7 +70,7 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Description</span>
-            <div 
+            <div
               className="text-xs text-gray-600 leading-relaxed bg-[#F8FAFC] p-3 rounded-xl border border-gray-100 prose prose-sm max-w-none prose-p:my-0"
               dangerouslySetInnerHTML={{ __html: currentProject?.description || "No description provided." }}
             />
@@ -174,15 +174,22 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                                   </span>
                                   <span className="text-[10px] font-bold text-gray-700">
                                     {v.toString().match(/^https?:\/\//) || v.toString().startsWith('www.') ? (
-                                      <a
-                                        href={v.toString().startsWith('www.') ? `https://${v}` : v}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-blue-500 hover:underline flex items-center gap-0.5"
-                                      >
-                                        Link
-                                        <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                                      </a>
+                                      v.toString().match(/\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i) ? (
+                                        <a href={v.toString().startsWith('www.') ? `https://${v}` : v} target="_blank" rel="noreferrer" className="block mt-2 group h-24 w-24 overflow-hidden
+                                          ">
+                                          <img src={v.toString().startsWith('www.') ? `https://${v}` : v} alt="Preview" className="h-full w-full object-cover group-hover:scale-125 transition-transform duration-300" />
+                                        </a>
+                                      ) : (
+                                        <a
+                                          href={v.toString().startsWith('www.') ? `https://${v}` : v}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-blue-500 hover:underline flex items-center gap-0.5"
+                                        >
+                                          Link
+                                          <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                        </a>
+                                      )
                                     ) : (
                                       v.toString()
                                     )}
@@ -194,12 +201,26 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                         })}
                       </div>
                     ) : value.toString().match(/^https?:\/\//) || value.toString().startsWith('www.') ? (
-                      <a href={value.toString().startsWith('www.') ? `https://${value}` : value} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center gap-1 truncate max-w-full">
-                        <span className="truncate">{value}</span>
-                        <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                      </a>
+                      value.toString().match(/\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i) ? (
+                        <a href={value.toString().startsWith('www.') ? `https://${value}` : value} target="_blank" rel="noreferrer" className="block mt-2 group max-h-64 w-full overflow-hidden rounded-xl border border-gray-200 ">
+                          <img src={value.toString().startsWith('www.') ? `https://${value}` : value} alt="Preview" className="w-full max-h-64 object-cover object-top group-hover:scale-105 transition-transform duration-300" />
+                        </a>
+                      ) : (
+                        <a href={value.toString().startsWith('www.') ? `https://${value}` : value} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center gap-1 truncate max-w-full">
+                          <span className="truncate">{value}</span>
+                          <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
+                      )
                     ) : (
-                      <span className="break-words line-clamp-2" title={value.toString()}>{value.toString()}</span>
+                      typeof value === 'string' && /<[a-z][\s\S]*>/i.test(value) ? (
+                        <div
+                          className="prose prose-sm max-w-none prose-p:my-0 text-xs text-gray-700 line-clamp-3"
+                          title={value.replace(/<[^>]*>?/gm, '')}
+                          dangerouslySetInnerHTML={{ __html: value }}
+                        />
+                      ) : (
+                        <span className="break-words line-clamp-2" title={value.toString()}>{value.toString()}</span>
+                      )
                     )}
                   </div>
                 </div>
