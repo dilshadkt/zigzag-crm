@@ -15,7 +15,16 @@ const FileUpload = ({
   disabled,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [localValue, setLocalValue] = useState("");
   const fileInputRef = useRef(null);
+
+  React.useEffect(() => {
+    if (value?.[name]) {
+      setLocalValue(value[name]);
+    } else {
+      setLocalValue("");
+    }
+  }, [value, name]);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -28,6 +37,7 @@ const FileUpload = ({
 
         if (response.success) {
           const fileUrl = response.fileUrl;
+          setLocalValue(fileUrl);
           if (onchange) {
             onchange({ target: { name, value: fileUrl } });
           }
@@ -49,7 +59,7 @@ const FileUpload = ({
     return url.split("/").pop();
   };
 
-  const fieldValue = value?.[name] || "";
+  const fieldValue = localValue;
 
   return (
     <div className={clsx("flex relative flex-col gap-y-[7px]", className)}>
@@ -118,6 +128,7 @@ const FileUpload = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setLocalValue("");
                       onchange({ target: { name, value: "" } });
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}
