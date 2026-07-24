@@ -192,9 +192,9 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
             return (
               <div
                 key={st._id}
-                className={`flex-1 border-r border-white/40 last:border-r-0 flex items-center justify-center bg-opacity-20 transition-colors ${
+                className={`flex-1 border-r border-black/20 last:border-r-0 flex items-center justify-center bg-opacity-[0.15] transition-colors ${
                   isCompleted
-                    ? "bg-green-500"
+                    ? "bg-green-300"
                     : colorStyle.progress || "bg-gray-200"
                 }`}
               >
