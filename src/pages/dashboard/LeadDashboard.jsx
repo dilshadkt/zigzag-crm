@@ -88,8 +88,8 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
         days: ["custom", "today", "yesterday"].includes(selectedDays) ? "all" : selectedDays,
         timezoneOffset: new Date().getTimezoneOffset(),
         ...(["custom", "today", "yesterday"].includes(selectedDays) && {
-            startDate: appliedDateRange[0].startDate.toISOString(),
-            endDate: appliedDateRange[0].endDate.toISOString()
+            startDate: format(appliedDateRange[0].startDate, 'yyyy-MM-dd'),
+            endDate: format(appliedDateRange[0].endDate, 'yyyy-MM-dd')
         }),
         project: selectedProject !== "all" ? selectedProject : undefined,
         campaign: selectedCampaign !== "all" ? selectedCampaign : undefined,
