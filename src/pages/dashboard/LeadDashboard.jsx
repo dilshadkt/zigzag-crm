@@ -255,14 +255,20 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                             onChange={(e) => {
                                 const val = e.target.value;
                                 if (val === "today") {
-                                    const today = new Date();
-                                    setAppliedDateRange([{ startDate: today, endDate: today, key: 'selection' }]);
+                                    const startToday = new Date();
+                                    startToday.setHours(0, 0, 0, 0);
+                                    const endToday = new Date();
+                                    endToday.setHours(23, 59, 59, 999);
+                                    setAppliedDateRange([{ startDate: startToday, endDate: endToday, key: 'selection' }]);
                                     setSelectedDays("today");
                                     setShowDatePicker(false);
                                 } else if (val === "yesterday") {
-                                    const yesterday = new Date();
-                                    yesterday.setDate(yesterday.getDate() - 1);
-                                    setAppliedDateRange([{ startDate: yesterday, endDate: yesterday, key: 'selection' }]);
+                                    const startYesterday = new Date();
+                                    startYesterday.setDate(startYesterday.getDate() - 1);
+                                    startYesterday.setHours(0, 0, 0, 0);
+                                    const endYesterday = new Date(startYesterday);
+                                    endYesterday.setHours(23, 59, 59, 999);
+                                    setAppliedDateRange([{ startDate: startYesterday, endDate: endYesterday, key: 'selection' }]);
                                     setSelectedDays("yesterday");
                                     setShowDatePicker(false);
                                 } else {
