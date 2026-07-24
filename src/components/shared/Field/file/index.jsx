@@ -16,6 +16,7 @@ const FileUpload = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [localValue, setLocalValue] = useState("");
+  const [localError, setLocalError] = useState("");
   const fileInputRef = useRef(null);
 
   React.useEffect(() => {
@@ -29,6 +30,14 @@ const FileUpload = ({
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      setLocalError("");
+      // Check if file is larger than 20MB
+      if (file.size > 20 * 1024 * 1024) {
+        setLocalError("File size must be less than 20MB");
+        if (e.target) e.target.value = null;
+        return;
+      }
+
       setIsUploading(true);
       try {
         const formData = new FormData();
@@ -63,8 +72,9 @@ const FileUpload = ({
 
   return (
     <div className={clsx("flex relative flex-col gap-y-[7px]", className)}>
-      <label className="text-sm pl-[6px] font-bold text-[#7D8592]">
+      <label className="flex items-center gap-2 text-sm pl-[6px] font-bold text-[#7D8592]">
         {title}
+        <span className="text-[10px] font-normal text-gray-400">(Max: 20MB)</span>
       </label>
       <div className="w-full relative">
         {!fieldValue ? (
@@ -152,9 +162,9 @@ const FileUpload = ({
           </div>
         )}
 
-        {errors?.[name] && touched?.[name] && (
+        {(localError || (errors?.[name] && touched?.[name])) && (
           <span className="text-[10px] text-red-500 bg-white absolute left-10 px-3 -bottom-[6px] w-fit mx-auto z-20">
-            {errors?.[name]}
+            {localError || errors?.[name]}
           </span>
         )}
       </div>

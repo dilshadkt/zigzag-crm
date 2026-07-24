@@ -135,6 +135,7 @@ const LeadsFeature = ({
   const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [isFromInsights, setIsFromInsights] = useState(false);
   const [isBulkMoreMenuOpen, setBulkMoreMenuOpen] = useState(false);
   const [isBulkBranchMenuOpen, setBulkBranchMenuOpen] = useState(false);
   const [isBulkProjectMenuOpen, setBulkProjectMenuOpen] = useState(false);
@@ -290,6 +291,7 @@ const LeadsFeature = ({
     if (hasDashboardParams) {
       // Clear any stale custom filters when navigating from dashboard
       setAppliedFilters({});
+      setIsFromInsights(true);
     }
 
     if (action === 'followup') {
@@ -1314,9 +1316,8 @@ const LeadsFeature = ({
         )}
 
         {/* dashboard section  */}
-        {showDashboard && Object.keys(appliedFilters).length === 0 && (
-          <div className="shrink-0 bg-white rounded-2xl p-2 md:p-3 md:px-4 border border-slate-100 overflow-x-auto
-           touch-pan-x scrollbar-hide">
+        {showDashboard && (!isFromInsights || Object.keys(appliedFilters).length === 0) && (
+          <div className="shrink-0 bg-white rounded-2xl p-2 md:p-3 md:px-4 border border-slate-100 overflow-x-auto touch-pan-x scrollbar-hide">
             <LeadsDashboard
               stats={leadStats}
               isLoading={statsLoading}
