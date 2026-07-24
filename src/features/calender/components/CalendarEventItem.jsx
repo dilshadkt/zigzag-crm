@@ -475,7 +475,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
                     className="rounded-full"
                   />
                 ) : (
-                  subtask.project.name.slice(0, 1)
+                  subtask?.project?.name?.slice(0, 1) || "S"
                 )}
               </span>
             )}
