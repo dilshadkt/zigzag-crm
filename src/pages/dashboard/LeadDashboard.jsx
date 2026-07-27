@@ -132,7 +132,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     const COLORS = ['#3f8cff', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
 
     const handleWidgetClick = (field, id) => {
-        if (!id || !onNavigateToLeads) return;
+        if (!id) return;
         
         let queryParam = '';
         if (field === 'status') {
@@ -173,7 +173,20 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
             }
         }
         
-        onNavigateToLeads(`/leads?${queryParam}`);
+        if (selectedProject && selectedProject !== "all") {
+            queryParam += `&project=${encodeURIComponent(selectedProject)}`;
+        }
+        
+        if (selectedCampaign && selectedCampaign !== "all") {
+            queryParam += `&campaign=${encodeURIComponent(selectedCampaign)}`;
+        }
+
+        const targetPath = `/leads?${queryParam}`;
+        if (onNavigateToLeads) {
+            onNavigateToLeads(targetPath);
+        } else {
+            navigate(targetPath);
+        }
     };
 
     return (

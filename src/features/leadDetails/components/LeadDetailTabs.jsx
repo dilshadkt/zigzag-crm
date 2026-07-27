@@ -1,4 +1,4 @@
-const LeadDetailTabs = ({ tabs, activeTab, onTabChange }) => {
+const LeadDetailTabs = ({ tabs, activeTab, onTabChange, counts = {} }) => {
   return (
     <div className="flex overflow-x-auto scrollbar-hide gap-1 lg:gap-2 bg-gray-50 p-1 rounded-xl border-slate-100 px-1 w-full lg:w-auto">
       <div className="flex gap-1 lg:gap-2">
@@ -14,7 +14,7 @@ const LeadDetailTabs = ({ tabs, activeTab, onTabChange }) => {
                   : "text-slate-500 hover:text-slate-800"
                 }`}
             >
-              {tab}
+              {tab} {counts[tab] !== undefined && `(${counts[tab]})`}
             </button>
           );
         })}

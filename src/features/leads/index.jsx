@@ -151,7 +151,10 @@ const LeadsFeature = ({
       key: 'selection'
     }
   ]);
-  const [projectFilterState, setProjectFilter] = useState("");
+  const [projectFilterState, setProjectFilter] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('project') || "";
+  });
   const [ownerFilterState, setOwnerFilterState] = useState(() => sessionStorage.getItem('leads_ownerFilter') || "");
   const [scoreFilterState, setScoreFilterState] = useState(() => sessionStorage.getItem('leads_scoreFilter') || "");
   useEffect(() => {
@@ -285,8 +288,10 @@ const LeadsFeature = ({
     const endDateParam = urlParams.get('endDate');
     const filterField = urlParams.get('filterField');
     const filterValue = urlParams.get('filterValue');
+    const projectParam = urlParams.get('project');
+    const campaignParam = urlParams.get('campaign');
 
-    const hasDashboardParams = action || minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue);
+    const hasDashboardParams = action || minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue) || projectParam || campaignParam;
     
     if (hasDashboardParams) {
       // Clear any stale custom filters when navigating from dashboard
@@ -325,11 +330,20 @@ const LeadsFeature = ({
       toast.success("Filtering leads by date range");
     }
 
+    let newFilters = {};
     if (filterField && filterValue) {
-      setAppliedFilters({
-        [filterField]: { operator: 'equals', value: filterValue }
-      });
-      toast.success(`Filtering by ${filterField}`);
+      newFilters[filterField] = { operator: 'equals', value: filterValue };
+    }
+    if (campaignParam && campaignParam !== 'all') {
+      newFilters['campaign'] = { operator: 'equals', value: campaignParam };
+    }
+    
+    if (Object.keys(newFilters).length > 0) {
+      setAppliedFilters(newFilters);
+    }
+
+    if (projectParam) {
+      setProjectFilter(projectParam);
     }
 
     // Clear params from URL to avoid re-applying on refresh if not desired, 

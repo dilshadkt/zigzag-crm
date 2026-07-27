@@ -99,6 +99,11 @@ export const logLeadActivity = async ({ leadId, ...activityData }) => {
   return response.data;
 };
 
+export const logLeadInteraction = async ({ leadId, interactionData, leadUpdateData }) => {
+  const response = await apiClient.post(`/leads/${leadId}/interaction`, { interactionData, leadUpdateData });
+  return response.data;
+};
+
 export const getLeadFormConfig = async (projectId = null) => {
   const params = projectId ? { project: projectId } : {};
   const response = await apiClient.get("/leads/settings/form-config", { params });
@@ -366,6 +371,18 @@ export const useLogLeadActivity = () => {
     onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries(["leadActivities", leadId]);
       queryClient.invalidateQueries(["lead", leadId]);
+    },
+  });
+};
+
+export const useLogLeadInteraction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leadId, interactionData, leadUpdateData }) => logLeadInteraction({ leadId, interactionData, leadUpdateData }),
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries(["leadActivities", leadId]);
+      queryClient.invalidateQueries(["lead", leadId]);
+      queryClient.invalidateQueries(["leadNotes", leadId]);
     },
   });
 };

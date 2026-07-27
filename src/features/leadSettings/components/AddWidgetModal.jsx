@@ -44,8 +44,10 @@ const AddWidgetModal = ({ isOpen, onClose, onSave, fields, editingWidget = null,
     { key: "status", label: "Lead Status (System)" },
     { key: "source", label: "Source (System)" },
     { key: "owner", label: "Owner (System)" },
+    { key: "campaign", label: "Campaign (System)" },
+    { key: "campaignSource", label: "Campaign Source (System)" },
     ...(branches && branches.length > 0 ? [{ key: "branch", label: "Branch (System)" }] : []),
-    ...fields.filter(f => ["select", "checkbox", "text"].includes(f.type))
+    ...fields.filter(f => !['file', 'image', 'title', 'section'].includes(f.type))
   ];
 
   return (

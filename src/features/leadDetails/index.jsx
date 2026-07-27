@@ -6,14 +6,14 @@ import LeadOverviewSection from "./components/LeadOverviewSection";
 import LeadTimeline from "./components/LeadTimeline";
 import LeadNotes from "./components/LeadNotes";
 import LeadAttachments from "./components/LeadAttachments";
-import LeadEmails from "./components/LeadEmails";
+import LeadFollowUpHistory from "./components/LeadFollowUpHistory";
 import LeadActivityPanel from "./components/LeadActivityPanel";
 import LeadQuickActions from "./components/LeadQuickActions";
-import { useUploadLeadAttachment, useLogLeadActivity, useAddLeadNote, useUpdateLead, useGetLeadStatuses, useUpdateLeadNote, useDeleteLeadNote, useGetLeadNotes } from "../leads/api";
+import { useUploadLeadAttachment, useGetLeadActivities, useLogLeadActivity, useLogLeadInteraction, useAddLeadNote, useUpdateLead, useGetLeadStatuses, useUpdateLeadNote, useDeleteLeadNote, useGetLeadNotes } from "../leads/api";
 import LeadInteractionModal from "./components/LeadInteractionModal";
 import { toast } from "react-hot-toast";
 
-const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Emails"];
+const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Follow Up History"];
 
 const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
@@ -22,6 +22,7 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   // Use notes from lead.details (will be updated when API refetches)
   // Fetch notes via hook to ensure we have IDs for edit/delete
   const { data: notesData } = useGetLeadNotes(leadId);
+  const { data: activitiesData, isLoading: activitiesLoading } = useGetLeadActivities(leadId);
 
   const notes = useMemo(() => {
     // If we have data from the hook, use it. Otherwise fallback to prop (for initial load)
@@ -51,6 +52,7 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const { mutateAsync: uploadAttachment, isLoading: isUploadingAttachment } =
     useUploadLeadAttachment();
   const { mutate: logActivity } = useLogLeadActivity();
+  const { mutate: logInteraction } = useLogLeadInteraction();
   const { mutate: addNote } = useAddLeadNote();
   const { mutate: updateLead } = useUpdateLead();
   const { mutate: updateNote } = useUpdateLeadNote();
@@ -214,49 +216,20 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const handleSaveInteraction = ({ interactionData, leadUpdateData }) => {
     if (!leadId) return;
 
-    const { note, statusId, scheduled, isFollowUp } = interactionData || {};
-
-    // 1. Add note if provided
-    if (note?.trim()) {
-      addNote({
-        leadId,
-        noteData: { text: note.trim() }
-      }, {
+    logInteraction(
+      { leadId, interactionData, leadUpdateData },
+      {
         onSuccess: () => {
-          toast.success("Note added successfully");
+          toast.success("Follow-up interaction saved successfully!");
+          setIsInteractionModalOpen(false);
+          // Clear persistence
+          localStorage.removeItem(`pending_interaction_${leadId}`);
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || "Failed to save interaction");
         }
-      });
-    }
-
-    // 2. Update status and follow-up data along with dynamic form fields
-    const currentStatusId = lead.status?._id || lead.status?.id || lead.status;
-    const currentScheduled = lead.scheduled;
-    const currentIsFollowUp = lead.isFollowUp;
-
-    const needsUpdate =
-      (statusId && statusId !== currentStatusId) ||
-      scheduled !== undefined ||
-      isFollowUp !== currentIsFollowUp ||
-      (leadUpdateData && Object.keys(leadUpdateData).length > 0);
-
-    if (needsUpdate) {
-      const finalUpdateData = { ...(leadUpdateData || {}) };
-      if (statusId && statusId !== currentStatusId) finalUpdateData.status = statusId;
-      if (scheduled !== undefined) finalUpdateData.scheduled = scheduled;
-      if (isFollowUp !== undefined) finalUpdateData.isFollowUp = isFollowUp;
-
-      updateLead({
-        leadId,
-        leadData: finalUpdateData
-      }, {
-        onSuccess: () => {
-          toast.success("Lead updated successfully");
-        }
-      });
-    }
-
-    // Interaction successfully saved, clear persistence
-    localStorage.removeItem(`pending_interaction_${leadId}`);
+      }
+    );
   };
 
   const tabContent = useMemo(() => {
@@ -290,8 +263,14 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
             onUpload={handleUploadFile}
           />
         );
-      case "Emails":
-        return <LeadEmails emails={lead.details.emails} />;
+      case "Follow Up History":
+        return (
+          <LeadFollowUpHistory
+            activities={activitiesData?.data || lead.activities || []}
+            isLoading={activitiesLoading}
+            followUpCount={lead.followUpCount || 0}
+          />
+        );
       case "Overview":
       default:
         return <LeadOverviewSection lead={lead} isClient={isClient} />;
@@ -341,6 +320,7 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
                 tabs={TABS}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                counts={{ "Follow Up History": lead.followUpCount || 0 }}
               />
             </div>
           </div>
