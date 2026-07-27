@@ -20,6 +20,7 @@ import { CampaignTab } from "./CampaignTab";
 import { SettingsTab } from "./SettingsTab";
 import InsightsTab from "./InsightsTab";
 import ScheduleTab from "./ScheduleTab";
+import { ReportsTab } from "./ReportsTab";
 import { ProjectOverViewShimmer } from "../ProjectDetailShimmer";
 
 // Status configuration
@@ -100,6 +101,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
       { id: "kanban", label: "Task Kanban", visible: true },
       { id: "list", label: "Task List", visible: true },
       { id: "lead", label: "Lead", visible: hasPermission("tasks", "viewLead") },
+      { id: "reports", label: "Lead Reports", visible: hasPermission("tasks", "viewLead") },
       { id: "campaign", label: "Campaign", visible: hasPermission("tasks", "viewCampaign") },
       { id: "insights", label: "Insights", visible: hasSocialConfig },
       { id: "schedule", label: "Schedule", visible: hasSocialConfig },
@@ -443,13 +445,13 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
 
   return (
     <div className="col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
-      <div className="flexBetween mb-3 border-b border-gray-100 flex-shrink-0">
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center mb-3 border-b border-gray-100 flex-shrink-0 gap-4">
+        <div className="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide pb-1 flex-1">
           {availableTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === tab.id
+              className={`whitespace-nowrap flex-shrink-0 px-4 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === tab.id
                 ? "bg-white/30 shadow-sm text-blue-600"
                 : "bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
@@ -458,7 +460,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <PrimaryButton
             icon={"/icons/refresh.svg"}
             className={"bg-white hover:bg-gray-50 transition-colors"}
@@ -577,6 +579,16 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           projectCampaigns={projectCampaigns}
           currentProject={currentProject}
           onRefresh={handleRefresh}
+        />
+      )}
+
+      {activeTab === "reports" && (
+        <ReportsTab 
+          currentProject={currentProject} 
+          onBranchClick={(branchName) => {
+            setSelectedBranchId(branchName === "Unassigned" ? "" : branchName);
+            setActiveTab("lead");
+          }}
         />
       )}
 

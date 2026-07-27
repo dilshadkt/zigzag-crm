@@ -535,3 +535,17 @@ export const useMapFacebookField = () => {
     },
   });
 };
+
+
+export const getProjectBranchReport = async (projectId, params = {}) => {
+  const response = await apiClient.get(`/leads/report/project-branch/${projectId}`, { params });
+  return response.data;
+};
+
+export const useGetProjectBranchReport = (projectId, params = {}) => {
+  return useQuery({
+    queryKey: ['projectBranchReport', projectId, params],
+    queryFn: () => getProjectBranchReport(projectId, params),
+    enabled: !!projectId,
+  });
+};

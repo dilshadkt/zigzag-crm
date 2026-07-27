@@ -121,7 +121,16 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   }, [lead, contact]);
   const projectId = typeof lead.project === "object" ? lead.project?._id : lead.project;
   const { data: projectDetails } = useProjectDetails(projectId);
-  const branches = projectDetails?.customFields?.branches;
+  
+  const branches = useMemo(() => {
+    const rawBranchLogins = projectDetails?.customFields?.branchLogins || [];
+    const rawLegacyBranches = projectDetails?.customFields?.branches || projectDetails?.branches || [];
+    
+    if (rawBranchLogins.length > 0) {
+      return rawBranchLogins.map(b => b.name || b.branch).filter(Boolean);
+    }
+    return rawLegacyBranches;
+  }, [projectDetails]);
 
   const { data: formConfigData, isLoading: isLoadingFormConfig } =
     useGetLeadFormConfig(projectId);

@@ -88,7 +88,8 @@ import {
   ClientInsightsPage, 
   ClientSchedulePage, 
   ClientSalesTeamPage,
-  ClientLeadDetailsPage 
+  ClientLeadDetailsPage,
+  ClientLeadReportsPage
 } from "../pages/dashboard/ClientDashboard/ClientPages";
 
 const AppRoutes = () => {
@@ -502,6 +503,7 @@ const AppRoutes = () => {
             <Route path="overview" element={<ClientOverviewPage />} />
             <Route path="leads" element={<ClientLeadsPage />} />
             <Route path="leads/:leadId" element={<ClientLeadDetailsPage />} />
+            <Route path="lead-reports" element={<ClientLeadReportsPage />} />
             <Route path="follow-ups" element={<ClientFollowUpsPage />} />
             <Route path="campaigns" element={<ClientCampaignsPage />} />
             <Route path="insights" element={<ClientInsightsPage />} />

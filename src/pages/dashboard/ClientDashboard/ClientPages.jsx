@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import LeadsFeature from "../../../features/leads";
 import Campaigns from "../../campaigns";
 import { OverviewTab } from "../../../components/projects/projectOverview/OverviewTab";
@@ -7,6 +7,7 @@ import ScheduleTab from "../../../components/projects/projectOverview/ScheduleTa
 import SalesTeamTab from "./SalesTeamTab";
 import LeadDashboardPage from "../LeadDashboard";
 import LeadDetailsPage from "../../leads/LeadDetails";
+import { ReportsTab } from "../../../components/projects/projectOverview/ReportsTab";
 
 export const ClientOverviewPage = () => {
   const { currentProject } = useOutletContext();
@@ -37,8 +38,14 @@ export const ClientStatsDashboardPage = () => {
 
 export const ClientLeadsPage = () => {
   const { projectId, branches, handleSelectLead, user } = useOutletContext();
-  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [selectedBranchId, setSelectedBranchId] = useState(searchParams.get("branch") || "");
   const activeBranchFilter = selectedBranchId || user?.branchName || "";
+
+  useEffect(() => {
+    const branch = searchParams.get("branch");
+    if (branch) setSelectedBranchId(branch);
+  }, [searchParams]);
 
   return (
     <LeadsFeature 
@@ -117,6 +124,18 @@ export const ClientLeadDetailsPage = () => {
   return (
     <div className="h-full w-full relative">
        <LeadDetailsPage isClient={true} />
+    </div>
+  );
+};
+
+export const ClientLeadReportsPage = () => {
+  const { currentProject, handleDashboardNavigation } = useOutletContext();
+  return (
+    <div className="h-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+      <ReportsTab 
+        currentProject={currentProject} 
+        onBranchClick={(branchId) => handleDashboardNavigation(`/leads?branch=${encodeURIComponent(branchId)}`)}
+      />
     </div>
   );
 };

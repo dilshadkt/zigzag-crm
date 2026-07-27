@@ -145,11 +145,15 @@ const LeadFieldMapModal = ({
                         required
                       >
                         <option value="">Select Branch...</option>
-                        {branches.map((b) => (
-                          <option key={b.id || b.name} value={b.name}>
-                            {b.name}
-                          </option>
-                        ))}
+                        {branches.map((b) => {
+                          const branchName = typeof b === 'string' ? b : (b.name || b.branch);
+                          const branchId = typeof b === 'string' ? b : (b.id || b._id || branchName);
+                          return (
+                            <option key={branchId} value={branchName}>
+                              {branchName}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                   </div>

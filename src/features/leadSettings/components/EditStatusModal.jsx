@@ -12,10 +12,23 @@ const COLOR_OPTIONS = [
   { label: "Indigo", value: "#6366f1" },
 ];
 
+const CATEGORY_OPTIONS = [
+  { label: "Other", value: "Other" },
+  { label: "New", value: "New" },
+  { label: "Contacted", value: "Contacted" },
+  { label: "Qualified", value: "Qualified" },
+  { label: "Hot", value: "Hot" },
+  { label: "Warm", value: "Warm" },
+  { label: "Cold", value: "Cold" },
+  { label: "Won", value: "Won" },
+  { label: "Lost", value: "Lost" },
+];
+
 const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    category: "Other",
     color: "#94a3b8",
     order: 0,
     isDefault: false,
@@ -27,6 +40,7 @@ const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
       setFormData({
         name: status.name || "",
         description: status.description || "",
+        category: status.category || "Other",
         color: status.color || "#94a3b8",
         order: status.order || 0,
         isDefault: status.isDefault || false,
@@ -69,6 +83,7 @@ const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
     onSave({
       name: formData.name.trim(),
       description: formData.description.trim(),
+      category: formData.category,
       color: formData.color,
       order: Number(formData.order),
       isDefault: formData.isDefault,
@@ -80,7 +95,7 @@ const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
-        className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl"
+        className="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -94,8 +109,11 @@ const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-4">
+              <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Status Name <span className="text-red-500">*</span>
             </label>
@@ -116,18 +134,40 @@ const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Description
+              Base Category <span className="text-red-500">*</span>
             </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-              className="w-full h-24 rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-[#3f8cff] resize-none"
-              placeholder="Enter status description"
+            <select
+              value={formData.category}
+              onChange={(e) => handleChange("category", e.target.value)}
+              className="w-full h-11 rounded-2xl border border-slate-200 px-3 text-sm focus:outline-none focus:border-[#3f8cff] bg-white"
               disabled={isLoading}
-            />
+            >
+              {CATEGORY_OPTIONS.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 mt-1">Used for accurate reporting and grouping</p>
           </div>
 
           <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                className="w-full h-32 rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-[#3f8cff] resize-none"
+                placeholder="Enter status description"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-4">
+            <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Color
             </label>
@@ -198,10 +238,12 @@ const EditStatusModal = ({ isOpen, onClose, status, onSave, isLoading }) => {
                   Set as Default
                 </span>
               </label>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 pt-4">
+          <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
