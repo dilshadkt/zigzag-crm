@@ -459,7 +459,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* Status Distribution */}
                         <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
                             <h3 className="text-sm font-bold text-slate-800 mb-4">Status Distribution</h3>
@@ -521,6 +521,38 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                                             radius={[4, 4, 0, 0]} 
                                             barSize={16} 
                                             onClick={(data) => handleWidgetClick('month', data?._id)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Won Leads Follow Ups */}
+                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
+                            <h3 className="text-sm font-bold text-slate-800 mb-4">Won Leads by Follow-Ups</h3>
+                            <div className="flex-1 min-h-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={stats?.wonLeadsFollowUpStats}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis
+                                            dataKey="_id"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 9, fill: '#94a3b8' }}
+                                            tickFormatter={(val) => `${val} F/U`}
+                                        />
+                                        <YAxis hide />
+                                        <Tooltip
+                                            cursor={{ fill: '#f8fafc' }}
+                                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
+                                        />
+                                        <Bar 
+                                            dataKey="count" 
+                                            fill="#10b981" 
+                                            radius={[4, 4, 0, 0]} 
+                                            barSize={24} 
+                                            onClick={(data) => handleWidgetClick('followUpCount', data?._id)}
                                             style={{ cursor: 'pointer' }}
                                         />
                                     </BarChart>
