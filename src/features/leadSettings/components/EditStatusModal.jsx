@@ -17,9 +17,6 @@ const CATEGORY_OPTIONS = [
   { label: "New", value: "New" },
   { label: "Contacted", value: "Contacted" },
   { label: "Qualified", value: "Qualified" },
-  { label: "Hot", value: "Hot" },
-  { label: "Warm", value: "Warm" },
-  { label: "Cold", value: "Cold" },
   { label: "Won", value: "Won" },
   { label: "Lost", value: "Lost" },
 ];
