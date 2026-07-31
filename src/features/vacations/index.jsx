@@ -49,7 +49,7 @@ const Vacations = () => {
   const year = currentDate.getFullYear();
 
   const { data: companyVacationsData, isLoading: isLoadingEmployees } =
-    useGetCompanyVacations(month, year);
+    useGetCompanyVacations(null, null);
 
   const { data: calendarData, isLoading: isLoadingCalendar } =
     useGetVacationsCalendar(month, year);
