@@ -3,22 +3,27 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, Medal, Star, TrendingUp, Calendar,
   Filter, Users, Award, ArrowRight, Activity,
-  Zap, AlertCircle, Clock, CheckCircle2
+  Zap, AlertCircle, Clock, CheckCircle2, Settings, X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
+import { LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area, AreaChart
 } from "recharts";
-import { getLeaderboard, getPerformanceTrend } from "../../api/service";
+import { getLeaderboard, getPerformanceTrend, getNudges, addBonusPoints } from "../../api/service";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { useAuth } from "../../hooks/useAuth";
 
 const Leaderboard = () => {
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [type, setType] = useState("weekly");
   const [data, setData] = useState([]);
   const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Admin Score Modal
+  const [scoreModal, setScoreModal] = useState({ isOpen: false, user: null, item: null });
+  const [scoreForm, setScoreForm] = useState({ points: "", targetScore: "", reason: "" });
 
   useEffect(() => {
     fetchData();
@@ -52,6 +57,26 @@ const Leaderboard = () => {
 
   const handleRowClick = (userId) => {
     navigate(`/employees/${userId}?tab=Performance`);
+  };
+
+  const handleAdminScoreSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        userId: scoreModal.user._id,
+        periodType: type,
+        reason: scoreForm.reason || "Admin Adjustment",
+      };
+      if (scoreForm.points) payload.points = Number(scoreForm.points);
+      if (scoreForm.targetScore) payload.targetScore = Number(scoreForm.targetScore);
+
+      await addBonusPoints(payload);
+      setScoreModal({ isOpen: false, user: null, item: null });
+      setScoreForm({ points: "", targetScore: "", reason: "" });
+      fetchData(); // refresh data
+    } catch (err) {
+      console.error("Failed to update score", err);
+    }
   };
 
   return (
@@ -158,9 +183,12 @@ const Leaderboard = () => {
                         <p className="text-[10px] text-[#7D8592]">{item.user?.position}</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-black text-[#0A1629]">{item.totalScore}</span>
+                        <div className="flex items-end flex-col">
+                          <span className="text-sm font-black text-[#0A1629]">{Math.round(item.normalizedScore || 0)}%</span>
+                          <span className="text-[9px] text-[#7D8592]">Pts: {item.totalScore}</span>
+                        </div>
                         <div className="w-12 h-1 bg-gray-100 rounded-full mt-1">
-                          <div className={`h-full rounded-full ${index === 0 ? 'bg-yellow-400' : 'bg-[#3F8CFF]'}`} style={{ width: `${item.totalScore}%` }} />
+                          <div className={`h-full rounded-full ${index === 0 ? 'bg-yellow-400' : 'bg-[#3F8CFF]'}`} style={{ width: `${Math.min(100, Math.round(item.normalizedScore || 0))}%` }} />
                         </div>
                       </div>
                     </motion.div>
@@ -213,45 +241,95 @@ const Leaderboard = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="p-1.5 bg-green-50 rounded-lg">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-emerald-50 rounded-lg">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                </div>
+                                <span className="text-xs font-bold text-gray-700">{item.meta?.totalTasks || 0} Tasks</span>
                               </div>
-                              <span className="text-xs font-bold text-gray-700">{item.meta?.totalTasks || 0}</span>
+                              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest pl-9">+{item.activityScore || 0} pts</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-1.5">
-                                <Clock className={`w-3.5 h-3.5 ${item.meta?.lateTasks > 0 ? 'text-amber-500' : 'text-gray-300'}`} />
-                                <span className="text-xs font-bold text-gray-600">{item.meta?.lateTasks || 0}</span>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className={`w-3.5 h-3.5 ${item.meta?.lateTasks > 0 ? 'text-amber-500' : 'text-gray-300'}`} />
+                                  <span className="text-xs font-bold text-gray-600">{item.meta?.lateTasks || 0} Delays</span>
+                                </div>
+                                {item.meta?.lateTasks === 0 && item.meta?.totalTasks > 0 && (
+                                  <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-emerald-200 inline-block w-max">Punctual</span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <Activity className={`w-3.5 h-3.5 ${item.meta?.reworkCount > 0 ? 'text-red-500' : 'text-gray-300'}`} />
-                                <span className="text-xs font-bold text-gray-600">{item.meta?.reworkCount || 0}</span>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5">
+                                  <AlertCircle className={`w-3.5 h-3.5 ${item.meta?.reworkCount > 0 ? 'text-rose-500' : 'text-gray-300'}`} />
+                                  <span className="text-xs font-bold text-gray-600">{item.meta?.reworkCount || 0} Mistakes</span>
+                                </div>
+                                {item.meta?.reworkCount > 10 && (
+                                  <span className="text-[9px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-rose-200 inline-block w-max">Critical</span>
+                                )}
                               </div>
+                            </div>
+                            {(item.penaltyScore > 0) && (
+                              <div className="mt-1.5 text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1">
+                                <span>-{item.penaltyScore} pts</span>
+                                <span className="text-[8px] text-rose-300 font-medium normal-case tracking-normal">(Deductions)</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-700">{item.meta?.attendanceDays || 0} Days</span>
+                                {item.meta?.lateArrivals > 0 && (
+                                  <span className="text-[9px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-full border border-rose-100">
+                                    {item.meta?.lateArrivals} LATE
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-black text-[#3F8CFF] uppercase tracking-widest">+{item.attendanceScore || 0} pts</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-gray-700">{item.meta?.attendanceDays || 0}d</span>
-                              {item.meta?.lateArrivals > 0 && (
-                                <span className="text-[9px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">
-                                  {item.meta?.lateArrivals} LATE
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-black text-[#0A1629]">{Math.round(item.normalizedScore || 0)}%</span>
+                                <Zap className="w-3.5 h-3.5 text-blue-400 fill-blue-400" />
+                              </div>
+                              <span className="text-[10px] text-[#7D8592] font-semibold">{item.totalScore} Total Pts</span>
+                              {item.bonusScore > 0 && (
+                                <span className="text-[9px] font-black text-yellow-500 uppercase tracking-widest mt-0.5">
+                                  +{item.bonusScore} Bonus
+                                </span>
+                              )}
+                              {item.bonusScore < 0 && (
+                                <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest mt-0.5">
+                                  {item.bonusScore} Penalty
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-black text-[#0A1629]">{item.totalScore}</span>
-                              <Zap className="w-3.5 h-3.5 text-blue-400 fill-blue-400" />
-                            </div>
-                          </td>
                           <td className="px-6 py-4 text-right">
-                            <button className="p-2 bg-gray-50 rounded-lg group-hover:bg-[#3F8CFF] group-hover:text-white transition-all">
-                              <ArrowRight className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              {currentUser?.role === "company-admin" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setScoreForm({ points: 0, targetScore: item.targetScore || 1000, reason: "" });
+                                    setScoreModal({ isOpen: true, user: item.user, item });
+                                  }}
+                                  className="p-2 bg-gray-50 rounded-lg group-hover:bg-[#3F8CFF] group-hover:text-white transition-all"
+                                  title="Adjust Score (Admin)"
+                                >
+                                  <Settings className="w-4 h-4" />
+                                </button>
+                              )}
+                              <button className="p-2 bg-gray-50 rounded-lg group-hover:bg-[#3F8CFF] group-hover:text-white transition-all">
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -263,6 +341,76 @@ const Leaderboard = () => {
           </div>
         )}
       </div>
+
+      {/* Admin Score Adjustment Modal */}
+      <AnimatePresence>
+        {scoreModal.isOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl"
+            >
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-[#0A1629]">Adjust Score: {scoreModal.user?.firstName}</h3>
+                <button onClick={() => setScoreModal({ isOpen: false, user: null, item: null })} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <form onSubmit={handleAdminScoreSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Target Score</label>
+                  <input
+                    type="number"
+                    value={scoreForm.targetScore}
+                    onChange={(e) => setScoreForm({ ...scoreForm, targetScore: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3F8CFF]/50"
+                    placeholder="e.g. 1000"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">Updates the baseline target for this employee's percentage calculation.</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Bonus / Penalty Points</label>
+                  <input
+                    type="number"
+                    value={scoreForm.points}
+                    onChange={(e) => setScoreForm({ ...scoreForm, points: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3F8CFF]/50"
+                    placeholder="e.g. 50 or -20"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">Will be added (or subtracted) from their current bonus score.</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Reason</label>
+                  <input
+                    type="text"
+                    value={scoreForm.reason}
+                    onChange={(e) => setScoreForm({ ...scoreForm, reason: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3F8CFF]/50"
+                    placeholder="e.g. Excellent SEO performance"
+                  />
+                </div>
+                <div className="pt-4 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setScoreModal({ isOpen: false, user: null, item: null })}
+                    className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 text-sm font-bold text-white bg-[#3F8CFF] hover:bg-blue-600 rounded-xl shadow-md"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

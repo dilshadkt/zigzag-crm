@@ -8,6 +8,7 @@ import notificationSound from "../../assets/audio/new-notification-017-352293.mp
 import { useAttendanceManager } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import AttendanceModal from "../../components/header/components/AttendanceModal";
+import GlobalNudges from "../../components/shared/GlobalNudges";
 
 const DashboardLayout = () => {
   const queryClient = useQueryClient();
@@ -109,6 +110,9 @@ const DashboardLayout = () => {
           </div>
         </div>
       )}
+
+      {/* Global Real-time Nudges */}
+      <GlobalNudges />
     </main>
   );
 };

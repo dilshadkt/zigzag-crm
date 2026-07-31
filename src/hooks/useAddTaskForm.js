@@ -14,6 +14,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     taskMonth: defaultValue?.taskMonth || "",
     startDate: defaultValue?.startDate || "",
     dueDate: defaultValue?.dueDate || "",
+    timeEstimate: defaultValue?.timeEstimate || "",
     priority: defaultValue?.priority || "Low",
     assignedTo: defaultValue?.assignedTo
       ? Array.isArray(defaultValue.assignedTo)
@@ -57,6 +58,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
       .matches(/^\d{4}-\d{2}$/, "Task month must be in YYYY-MM format"),
     startDate: Yup.string().required("Start date is required"),
     dueDate: Yup.string().required("Due date is required"),
+    timeEstimate: Yup.number().nullable(),
     priority: Yup.string().required("Priority is required"),
     assignedTo: Yup.array().min(1, "At least one assignee is required"),
     requiresClientApproval: Yup.boolean(),

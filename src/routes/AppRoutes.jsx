@@ -32,6 +32,7 @@ const CompanyTasks = lazy(() => import("../pages/companyTasks"));
 const MyTasks = lazy(() => import("../pages/myTasks"));
 const MySubTasks = lazy(() => import("../pages/mySubTasks"));
 const MyProjects = lazy(() => import("../pages/myProjects"));
+const MyPoints = lazy(() => import("../pages/myPoints"));
 const TodayTasks = lazy(() => import("../pages/todayTasks"));
 const Board = lazy(() => import("../pages/board"));
 const Account = lazy(() => import("../pages/settings/accounts"));
@@ -149,6 +150,15 @@ const AppRoutes = () => {
             element={
               <RouteAccess>
                 <CostDashboard />
+              </RouteAccess>
+            }
+          />
+
+          <Route
+            path="my-points"
+            element={
+              <RouteAccess>
+                <MyPoints />
               </RouteAccess>
             }
           />

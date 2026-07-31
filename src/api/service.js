@@ -212,6 +212,7 @@ export const createTask = async (taskData, projectId) => {
     taskGroup: taskData?.taskGroup,
     extraTaskWorkType: taskData?.extraTaskWorkType,
     taskMonth: taskData?.taskMonth,
+    timeEstimate: taskData?.timeEstimate,
 
     // taskFlow will be conditionally added below
     // Recurring task fields
@@ -243,6 +244,7 @@ export const createTaskFromBoard = async (taskData) => {
     dueDate: taskData?.dueDate,
     startDate: taskData?.startDate,
     taskMonth: taskData?.taskMonth,
+    timeEstimate: taskData?.timeEstimate,
 
     // Board-specific fields
     isBoardTask: true,
@@ -1223,6 +1225,17 @@ export const addBonusPoints = async (bonusData) => {
     throw error;
   }
 };
+
+export const getNudges = async () => {
+  try {
+    const response = await apiClient.get("/performance/nudges");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching nudges:", error);
+    throw error;
+  }
+};
+
 export const updateCompany = async (companyId, updatedData) => {
   const { data } = await apiClient.patch(`/companies/${companyId}`, updatedData);
   return data;
@@ -1230,5 +1243,26 @@ export const updateCompany = async (companyId, updatedData) => {
 
 export const updateProjectSocialConfig = async (projectId, config) => {
   const response = await apiClient.patch(`/projects/${projectId}/social-config`, config);
+  return response.data;
+};
+
+// Task Category APIs
+export const getTaskCategories = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/task-categories`);
+  return response.data.data;
+};
+
+export const createTaskCategory = async (companyId, data) => {
+  const response = await apiClient.post(`/companies/${companyId}/task-categories`, data);
+  return response.data;
+};
+
+export const updateTaskCategory = async (companyId, categoryId, data) => {
+  const response = await apiClient.put(`/companies/${companyId}/task-categories/${categoryId}`, data);
+  return response.data;
+};
+
+export const deleteTaskCategory = async (companyId, categoryId) => {
+  const response = await apiClient.delete(`/companies/${companyId}/task-categories/${categoryId}`);
   return response.data;
 };

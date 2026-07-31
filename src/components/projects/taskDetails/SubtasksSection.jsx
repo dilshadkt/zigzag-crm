@@ -122,6 +122,10 @@ const SubtasksSection = ({
   // Check if user can delete subtasks (company admin or has tasks delete permission)
   const canDeleteSubtasks = isCompany || isAdmin || hasPermission("tasks", "delete");
 
+  const isReporter = taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id);
+  const isManager = (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id;
+  const isProjectReviewer = isReporter || isManager;
+
   const formatTime = (minutes) => {
     if (!minutes) return "0m";
     const hours = Math.floor(minutes / 60);
@@ -166,8 +170,8 @@ const SubtasksSection = ({
       (assignedUser) => (assignedUser._id || assignedUser) === user?._id
     );
 
-    // Show if user is assigned to subtask, has view/create permission, is assigned to parent task, or is admin
-    return isAssignedToSubTask || canManageSubtasks || isAdmin || hasPermission("tasks", "view");
+    // Show if user is assigned to subtask, has view/create permission, is assigned to parent task, or is admin or project reviewer
+    return isAssignedToSubTask || canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer;
   };
 
   // Get subtask styling classes based on assignment and admin status
@@ -184,7 +188,7 @@ const SubtasksSection = ({
 
     if (isAssignedToSubTask) {
       return "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300";
-    } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view")) {
+    } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer) {
       return "bg-gray-50 hover:bg-gray-100";
     } else {
       return "hidden";
@@ -413,14 +417,16 @@ const SubtasksSection = ({
                           isCompany ||
                           isAdmin ||
                           hasPermission("tasks", "changeStatus") ||
-                          hasPermission("tasks", "edit")
+                          hasPermission("tasks", "edit") ||
+                          isProjectReviewer
                         }
                         canEdit={
                           isCompany ||
                           hasPermission("tasks", "changeStatus") ||
-                          isAssignedToSubTask
+                          isAssignedToSubTask ||
+                          isProjectReviewer
                         }
-                        canEditTask={canEditTask}
+                        canEditTask={canEditTask || isProjectReviewer}
                         isAdmin={isAdmin}
                       />
                       {/* Edit button for users with permission and assigned users */}

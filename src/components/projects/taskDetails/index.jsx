@@ -112,10 +112,11 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   // Check permissions for task status change
   const canChangeStatus =
     isCompany ||
-    hasPermission("tasks", "changeStatus");
+    hasPermission("tasks", "changeStatus") ||
+    (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id);
 
   // Check permissions for subtask management
-  const canManageSubtasks = isCompany || isAdmin || hasPermission("tasks", "create") || isCreatorOfTask;
+  const canManageSubtasks = isCompany || isAdmin || hasPermission("tasks", "create") || isCreatorOfTask || (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id);
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
@@ -123,14 +124,18 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
 
   // Filter subtasks based on user role and permissions
   const visibleSubTasks = React.useMemo(() => {
-    if (isCompany || isAdmin || hasPermission("tasks", "view") || isAssignedToTask) {
+    const isReporter = taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id);
+    const isManager = (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id;
+    const isProjectReviewer = isReporter || isManager;
+
+    if (isCompany || isAdmin || hasPermission("tasks", "view") || isAssignedToTask || isProjectReviewer) {
       return subTasks;
     }
     // For regular users not assigned to the parent task, only show subtasks assigned to them
     return subTasks.filter(subTask =>
       subTask.assignedTo?.some(assigned => (assigned._id || assigned) === user?._id)
     );
-  }, [subTasks, isCompany, isAdmin, hasPermission, isAssignedToTask, user?._id]);
+  }, [subTasks, isCompany, isAdmin, hasPermission, isAssignedToTask, user?._id, taskDetails?.project]);
 
 
 
@@ -344,7 +349,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                 <StatusButton
                   taskDetails={taskDetails}
                   disabled={!canChangeStatus}
-                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask}
+                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask || (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id)}
                 />
               </div>
             </div>

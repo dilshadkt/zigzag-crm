@@ -4,6 +4,7 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
+    this.pendingListeners = [];
   }
 
   // Initialize socket connection
@@ -72,25 +73,59 @@ class SocketService {
       console.log("🔔 New notification received via socket:", data);
     });
 
+    this.socket.on("points_awarded", (data) => {
+      console.log("🏆 Points awarded via socket:", data);
+    });
+
     this.socket.on("new_lead", (data) => {
       console.log("🎯 New lead received via socket:", data);
     });
 
+    // Attach pending listeners
+    if (this.pendingListeners.length > 0) {
+      this.pendingListeners.forEach(({ event, callback }) => {
+        this.socket.on(event, callback);
+      });
+      // We don't clear them in case it reconnects, but socket.io handles reconnects internally.
+      // We'll keep them to avoid double registering if connect is called again.
+    }
+
     return this.socket;
+  }
+
+  _addListener(event, callback) {
+    if (this.socket) {
+      this.socket.on(event, callback);
+    } else {
+      this.pendingListeners.push({ event, callback });
+    }
+  }
+
+  _removeListener(event, callback) {
+    if (this.socket) {
+      this.socket.off(event, callback);
+    }
+    this.pendingListeners = this.pendingListeners.filter(
+      (l) => l.event !== event || l.callback !== callback
+    );
   }
 
   // Listen for new leads
   onNewLead(callback) {
-    if (this.socket) {
-      this.socket.on("new_lead", callback);
-    }
+    this._addListener("new_lead", callback);
+  }
+
+  onPointsAwarded(callback) {
+    this._addListener("points_awarded", callback);
   }
 
   // Remove lead listener
   offNewLead(callback) {
-    if (this.socket) {
-      this.socket.off("new_lead", callback);
-    }
+    this._removeListener("new_lead", callback);
+  }
+
+  offPointsAwarded(callback) {
+    this._removeListener("points_awarded", callback);
   }
 
   // Disconnect socket
@@ -152,30 +187,22 @@ class SocketService {
 
   // Listen for task status changes
   onTaskStatusChange(callback) {
-    if (this.socket) {
-      this.socket.on("task_status_changed", callback);
-    }
-  }
-
-  // Listen for new notifications
-  onNewNotification(callback) {
-    if (this.socket) {
-      this.socket.on("new_notification", callback);
-    }
+    this._addListener("task_status_changed", callback);
   }
 
   // Remove task status change listener
   offTaskStatusChange(callback) {
-    if (this.socket) {
-      this.socket.off("task_status_changed", callback);
-    }
+    this._removeListener("task_status_changed", callback);
+  }
+
+  // Listen for new notifications
+  onNewNotification(callback) {
+    this._addListener("new_notification", callback);
   }
 
   // Remove notification listener
   offNewNotification(callback) {
-    if (this.socket) {
-      this.socket.off("new_notification", callback);
-    }
+    this._removeListener("new_notification", callback);
   }
 
   // Listen for new messages

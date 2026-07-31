@@ -15,15 +15,31 @@ import { getMyPerformance, getEmployeePerformance } from "../../api/service";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { usePermissions } from "../../hooks/usePermissions";
 import CEOBonusModal from "../performance/CEOBonusModal";
+import socketService from "../../services/socketService";
 
 const Performance = ({ employeeId, selectedMonth }) => {
   const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pointsLedger, setPointsLedger] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { isAdmin } = usePermissions();
 
   useEffect(() => {
     fetchPerformance();
+  }, [employeeId, selectedMonth]);
+
+  useEffect(() => {
+    const handlePointsAwarded = (data) => {
+      setTimeout(() => {
+        fetchPerformance();
+      }, 500);
+    };
+
+    socketService.onPointsAwarded(handlePointsAwarded);
+
+    return () => {
+      socketService.offPointsAwarded(handlePointsAwarded);
+    };
   }, [employeeId, selectedMonth]);
 
   const fetchPerformance = async () => {
@@ -39,6 +55,7 @@ const Performance = ({ employeeId, selectedMonth }) => {
 
       if (res.success) {
         setPerformance(res.performance);
+        setPointsLedger(res.pointsLedger || []);
       }
     } catch (err) {
       console.error("Error fetching performance:", err);
@@ -51,36 +68,36 @@ const Performance = ({ employeeId, selectedMonth }) => {
 
   const scoreItems = [
     { 
-      label: "Task Execution", 
-      score: performance?.executionScore || 0, 
-      max: 40, 
+      label: "Activity Score", 
+      score: performance?.activityScore || 0, 
+      isPenalty: false,
       icon: <Target className="w-5 h-5 text-blue-500" />,
       color: "bg-blue-500",
-      description: "Timeliness of subtasks" 
+      description: "Points from completed tasks" 
     },
     { 
-      label: "Quality", 
-      score: performance?.qualityScore || 0, 
-      max: 30, 
-      icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
-      color: "bg-emerald-500",
-      description: "Error-free completion" 
-    },
-    { 
-      label: "Attendance", 
+      label: "Attendance Score", 
       score: performance?.attendanceScore || 0, 
-      max: 20, 
-      icon: <Clock className="w-5 h-5 text-orange-500" />,
-      color: "bg-orange-500",
-      description: "Punctuality & Discipline" 
+      isPenalty: false,
+      icon: <Clock className="w-5 h-5 text-emerald-500" />,
+      color: "bg-emerald-500",
+      description: "Points for punctuality & presence" 
     },
     { 
-      label: "CEO/Creativity Bonus", 
+      label: "Penalties & Deductions", 
+      score: performance?.penaltyScore || 0, 
+      isPenalty: true,
+      icon: <AlertCircle className="w-5 h-5 text-rose-500" />,
+      color: "bg-rose-500",
+      description: "Deductions for delays and mistakes" 
+    },
+    { 
+      label: "Bonus / Admin Points", 
       score: performance?.bonusScore || 0, 
-      max: 10, 
+      isPenalty: false,
       icon: <Zap className="w-5 h-5 text-purple-500" />,
       color: "bg-purple-500",
-      description: "Special recognition" 
+      description: "Special recognition & adjustments" 
     },
   ];
 
@@ -107,14 +124,14 @@ const Performance = ({ employeeId, selectedMonth }) => {
               fill="transparent"
               strokeDasharray={440}
               initial={{ strokeDashoffset: 440 }}
-              animate={{ strokeDashoffset: 440 - (440 * (performance?.totalScore || 0)) / 100 }}
+              animate={{ strokeDashoffset: 440 - (440 * Math.min(100, Math.max(0, performance?.normalizedScore || 0))) / 100 }}
               transition={{ duration: 1.5, ease: "easeOut" }}
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute flex flex-col items-center">
-            <span className="text-4xl font-black text-gray-800">{performance?.totalScore || 0}</span>
-            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Total Pts</span>
+            <span className="text-4xl font-black text-gray-800">{Math.round(performance?.normalizedScore || 0)}%</span>
+            <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">{performance?.totalScore || 0} Pts</span>
           </div>
         </div>
 
@@ -176,23 +193,10 @@ const Performance = ({ employeeId, selectedMonth }) => {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xl font-black text-gray-800">{item.score}</span>
-                <span className="text-xs text-gray-400 font-bold">/{item.max}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100">
-                <motion.div 
-                  className={`h-full ${item.color}`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(item.score / item.max) * 100}%` }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                />
-              </div>
-              <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                <span>Effort</span>
-                <span>{Math.round((item.score / item.max) * 100)}%</span>
+                <span className={`text-2xl font-black ${item.isPenalty ? 'text-rose-500' : 'text-gray-800'}`}>
+                  {item.isPenalty ? "-" : "+"}{item.score}
+                </span>
+                <span className="text-xs text-gray-400 font-bold ml-1">pts</span>
               </div>
             </div>
           </motion.div>
@@ -220,6 +224,51 @@ const Performance = ({ employeeId, selectedMonth }) => {
             </div>
           </div>
         ))}
+      </motion.div>
+
+      {/* Points Ledger Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mt-8"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-indigo-50 rounded-xl border border-indigo-100">
+            <Clock className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-gray-800">Points History</h2>
+            <p className="text-xs text-gray-500">A detailed ledger of how points were earned and lost this period.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+          {pointsLedger.length === 0 ? (
+            <div className="text-center py-8 text-sm text-gray-500">No point history available for this period.</div>
+          ) : (
+            pointsLedger.map((entry, idx) => (
+              <div 
+                key={entry.id || idx} 
+                className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`p-2 rounded-lg ${entry.type === 'earned' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {entry.type === 'earned' ? <Plus className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-800">{entry.title}</h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{entry.reason}</p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-medium">{new Date(entry.date).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className={`text-lg font-black ${entry.type === 'earned' ? 'text-green-600' : 'text-red-600'}`}>
+                  {entry.points > 0 ? `+${entry.points}` : entry.points}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </motion.div>
     </div>
   );

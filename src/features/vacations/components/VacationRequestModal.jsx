@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useCreateVacationRequest } from "../hooks/useVacations";
+import { useCreateVacationRequest, useGetEmployeeVacations } from "../hooks/useVacations";
 import {
   format,
   addDays,
@@ -12,6 +12,8 @@ import { RxCross2 } from "react-icons/rx";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGetMyVacations, useGetLeavePolicy } from "../../../api/hooks";
+import { useEmpoyees } from "../../../api/hooks";
+import { usePermissions } from "../../../hooks/usePermissions";
 
 const VacationRequestModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -20,6 +22,7 @@ const VacationRequestModal = ({ onClose }) => {
     endDate: format(new Date(), "yyyy-MM-dd"),
     project: "",
     reason: "",
+    employeeId: "",
   });
   const [selectionMode, setSelectionMode] = useState("start");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -28,10 +31,16 @@ const VacationRequestModal = ({ onClose }) => {
 
   const createVacationMutation = useCreateVacationRequest();
 
-  const { user } = useAuth();
+  const { user, isCompany } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canApproveVacations = isCompany || hasPermission("vacations", "approve");
+
   const { data: leavePolicy } = useGetLeavePolicy(user?.company);
   const { data: myVacationsData } = useGetMyVacations();
 
+  // Only fetch employees if user is an admin or HR
+  const { data: employeesData } = useEmpoyees(1, null, "");
+  const employeesList = canApproveVacations ? (employeesData?.employees || []) : [];
   const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
   const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
   const unpaidLeavePolicy = leavePolicy?.find((p) => p.id === "unpaid" || p.name?.toLowerCase().includes("unpaid"));
@@ -40,9 +49,12 @@ const VacationRequestModal = ({ onClose }) => {
   const sickLeaveLimit = sickLeavePolicy ? sickLeavePolicy.yearlyQuota : 12;
   const remoteWorkLimit = unpaidLeavePolicy ? unpaidLeavePolicy.yearlyQuota : 50;
 
-  const usedVacation = myVacationsData?.summary?.vacation || 0;
-  const usedSick = myVacationsData?.summary?.sick_leave || 0;
-  const usedRemote = myVacationsData?.summary?.remote_work || 0;
+  const { data: employeeVacationsData } = useGetEmployeeVacations(formData.employeeId);
+  const employeeVacationsSummary = employeeVacationsData?.summary;
+
+  const usedVacation = formData.employeeId ? (employeeVacationsSummary?.vacation || 0) : (myVacationsData?.summary?.vacation || 0);
+  const usedSick = formData.employeeId ? (employeeVacationsSummary?.sick_leave || 0) : (myVacationsData?.summary?.sick_leave || 0);
+  const usedRemote = formData.employeeId ? (employeeVacationsSummary?.remote_work || 0) : (myVacationsData?.summary?.remote_work || 0);
 
   const vacationBalance = vacationLimit - usedVacation;
   const sickBalance = sickLeaveLimit - usedSick;
@@ -75,6 +87,7 @@ const VacationRequestModal = ({ onClose }) => {
         endDate: new Date(formData.endDate).toISOString(),
         reason: formData.reason,
         project: formData.project || undefined,
+        employeeId: formData.employeeId || undefined,
       });
       onClose();
     } catch (error) {
@@ -276,8 +289,8 @@ const VacationRequestModal = ({ onClose }) => {
                       type="button"
                       onClick={() => handleTypeChange(key)}
                       className={`flex-1 py-2 px-1 rounded-lg text-[9px] font-bold transition-all capitalize flex flex-col items-center justify-center
-                        ${formData.type === key 
-                          ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200/50" 
+                        ${formData.type === key
+                          ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200/50"
                           : "text-slate-400 hover:text-slate-600"
                         }`}
                     >
@@ -297,9 +310,29 @@ const VacationRequestModal = ({ onClose }) => {
                   value={formData.reason}
                   onChange={handleChange}
                   placeholder="Explain your leave request..."
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none min-h-[120px] resize-none font-medium text-slate-600"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none min-h-[90px] resize-none font-medium text-slate-600"
                 />
               </div>
+
+              {canApproveVacations && (
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Employee (Optional)</label>
+                  <select
+                    name="employeeId"
+                    value={formData.employeeId}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none font-medium"
+                    style={{ color: "#1e293b" }}
+                  >
+                    <option value="" style={{ color: "#1e293b" }}>Select Employee (Default: Self)</option>
+                    {employeesList.map(emp => (
+                      <option key={emp._id} value={emp._id} style={{ color: "#1e293b" }}>
+                        {emp.name || `${emp.firstName} ${emp.lastName}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {submitError && (

@@ -184,10 +184,20 @@ const DailyChecklistDrawer = ({ projects = [] }) => {
             // Only consider active tasks from definitions that are assigned to the current user
             const definitions = project.dailyChecklist?.filter(t => {
                 if (!t.active) return false;
+                
+                const assignedId = t.assignedTo?._id || t.assignedTo;
+                const isAssignedToMe = assignedId && assignedId.toString() === currentUserId?.toString();
+                
+                // Employees should ONLY see their own tasks in this personal drawer
+                if (user?.role === "employee") {
+                    return isAssignedToMe;
+                }
+                
+                // Admins or those with explicit permission can see all
                 if (user?.role === "company-admin") return true;
                 if (hasPermission("dashboard", "viewAllChecklistData")) return true;
-                const assignedId = t.assignedTo?._id || t.assignedTo;
-                return assignedId && assignedId.toString() === currentUserId?.toString();
+                
+                return isAssignedToMe;
             }) || [];
 
             if (definitions.length > 0) {

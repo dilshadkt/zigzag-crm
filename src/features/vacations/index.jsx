@@ -20,6 +20,7 @@ import {
   useUpdateVacationStatus,
   useUpdateVacationRequest,
 } from "./hooks/useVacations";
+import { useGetMyVacations } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 
@@ -42,45 +43,7 @@ const Vacations = () => {
     isCompany || hasPermission("vacations", "approve");
   const canEditVacations = isCompany || hasPermission("vacations", "edit");
 
-  if (!canViewVacations) {
-    return (
-      <section className="flex flex-col h-full gap-y-3">
-        <div className="flexBetween ">
-          <Header>Vacations</Header>
-        </div>
-        <div className="bg-white h-full flexCenter rounded-3xl p-6 text-center">
-          <div className="max-w-md">
-            <div className="w-16 h-16 bg-red-100 rounded-full flexCenter mx-auto mb-4">
-              <svg
-                className="w-8 h-8 text-red-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Access Denied
-            </h3>
-            <p className="text-gray-600 mb-4">
-              You don't have permission to view vacation data. Please contact
-              your administrator to request access.
-            </p>
-            <div className="text-sm text-gray-500">
-              Required permissions:{" "}
-              <span className="font-medium">vacations.view</span>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // We removed the Access Denied block so employees can view their own vacations
 
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
@@ -91,11 +54,14 @@ const Vacations = () => {
   const { data: calendarData, isLoading: isLoadingCalendar } =
     useGetVacationsCalendar(month, year);
 
+  const { data: myVacationsData, isLoading: isLoadingMyVacations } =
+    useGetMyVacations();
+
   const updateVacationMutation = useUpdateVacationStatus();
   const updateVacationRequestMutation = useUpdateVacationRequest();
 
   const handleUpdateVacationStatus = ({ vacationId, status, notes = "" }) => {
-    updateVacationMutation.mutate({ vacationId, status, notes });
+    return updateVacationMutation.mutateAsync({ vacationId, status, notes });
   };
 
   const handleModifyVacationRequest = (vacationId, updates) => {
@@ -146,20 +112,71 @@ const Vacations = () => {
     return ["#F4F9FD", true, false];
   };
 
-  const displayedEmployees = !isCompany && user?._id
-    ? companyVacationsData?.employees?.filter(
-        (item) => (item.employee?._id || item.employee?.id) === user._id
-      )
-    : companyVacationsData?.employees;
+  let displayedEmployees = companyVacationsData?.employees;
+  let displayedCalendar = calendarData?.calendar;
 
-  const displayedCalendar = !isCompany && user?._id
-    ? calendarData?.calendar?.filter(
-        (item) => (item.employee?._id || item.employee?.id) === user._id
-      )
-    : calendarData?.calendar;
+  if (!canViewVacations) {
+    // If they can't view company vacations, mock the structure using their own data
+    displayedEmployees = [
+      {
+        employee: {
+          id: user?._id || user?.id,
+          name: user?.name || "Me",
+          profileImage: user?.profileImage || null,
+        },
+        vacations: {
+          vacation: myVacationsData?.summary?.vacation || 0,
+          sick_leave: myVacationsData?.summary?.sick_leave || 0,
+          remote_work: myVacationsData?.summary?.remote_work || 0,
+        },
+        vacationRequests: (myVacationsData?.vacations || []).map(v => ({
+          ...v,
+          id: v._id,
+        })),
+      },
+    ];
+
+    // Build their own calendar dates
+    const myDates = [];
+    (myVacationsData?.vacations || []).forEach((vacation) => {
+      const vStart = new Date(vacation.startDate);
+      const vEnd = new Date(vacation.endDate);
+      const eStart = new Date(Math.max(vStart.getTime(), startOfMonth(currentDate).getTime()));
+      const eEnd = new Date(Math.min(vEnd.getTime(), endOfMonth(currentDate).getTime()));
+      
+      const curr = new Date(eStart);
+      while (curr <= eEnd) {
+        myDates.push({
+          date: format(curr, "yyyy-MM-dd"),
+          type: vacation.type,
+          status: vacation.status,
+          isOriginal: true,
+        });
+        curr.setDate(curr.getDate() + 1);
+      }
+    });
+
+    displayedCalendar = [
+      {
+        employee: {
+          id: user?._id || user?.id,
+          name: user?.name || "Me",
+          profileImage: user?.profileImage || null,
+        },
+        dates: myDates,
+      }
+    ];
+  } else if (!isCompany && user?._id) {
+    displayedEmployees = companyVacationsData?.employees?.filter(
+      (item) => (item.employee?._id || item.employee?.id) === user._id
+    );
+    displayedCalendar = calendarData?.calendar?.filter(
+      (item) => (item.employee?._id || item.employee?.id) === user._id
+    );
+  }
 
   const renderStat = () => {
-    if (isLoadingEmployees || isLoadingCalendar) {
+    if (isLoadingEmployees || isLoadingCalendar || isLoadingMyVacations) {
       return (
         <div className="w-full h-64 flex items-center justify-center">
           <Spinner />

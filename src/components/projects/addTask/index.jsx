@@ -13,6 +13,7 @@ import {
   useGetAllEmployees,
   useGetWorkSchedule,
   useGetHolidays,
+  useGetTaskCategories,
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
@@ -53,6 +54,9 @@ const AddTask = ({
   // Fetch company holidays
   const { data: holidays = [] } = useGetHolidays(companyId);
 
+  // Fetch company task categories
+  const { data: taskCategories = [] } = useGetTaskCategories(companyId);
+
   const handleClose = () => {
     resetForm();
     setShowModalTask(false);
@@ -67,6 +71,7 @@ const AddTask = ({
       task_description: initialValues.task_description || "",
       project: initialValues.project?._id || initialValues.project || null,
       taskGroup: initialValues.taskGroup || "",
+      taskCategory: initialValues.taskCategory?._id || initialValues.taskCategory || "",
       taskFlow: initialValues.taskFlow?._id || initialValues.taskFlow || "",
       extraTaskWorkType: initialValues.extraTaskWorkType || "",
       // taskMonth: isEdit ? selectedMonth : initialValues.selectedMonth || "",
@@ -92,6 +97,7 @@ const AddTask = ({
       customFields: initialValues.customFields || [],
       subtasks: initialValues.subtasks || [],
       attachments: initialValues.attachments || [],
+      timeEstimate: initialValues.timeEstimate || "",
     };
   };
 
@@ -747,7 +753,7 @@ bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter"
     >
       <div
         className="p-10 bg-white pt-12  px-12 flex flex-col
-rounded-3xl max-w-[800px] w-full h-full relative"
+rounded-3xl max-w-[1000px] w-full h-full relative"
       >
         <>
           <div className="w-full h-full flex flex-col overflow-y-auto">
@@ -903,7 +909,7 @@ rounded-3xl max-w-[800px] w-full h-full relative"
             <form
               action=" "
               onSubmit={handleSubmit}
-              className="mt-3 flex flex-col gap-y-4"
+              className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4"
             >
               {/* Hidden input for taskMonth */}
               <input
@@ -934,11 +940,29 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                       defaultValue="Select task group"
                       disabled={isEdit || isLoadingProjectDetails}
                     />
+
+                    {/* Task Category */}
+                    <Select
+                      errors={errors}
+                      touched={touched}
+                      name={"taskCategory"}
+                      selectedValue={values?.taskCategory || ""}
+                      value={values?.taskCategory || ""}
+                      onChange={handleChange}
+                      title="Task Category"
+                      options={[
+                        { label: "None", value: "" },
+                        ...taskCategories
+                          .filter((c) => c.isActive)
+                          .map((c) => ({ label: c.name, value: c._id }))
+                      ]}
+                      defaultValue=""
+                      required={false}
+                    />
                   </>
                 )}
 
-              {/* ── Dates (before Task Flow so preview shows immediately) */}
-              <div className="grid gap-x-4 grid-cols-2">
+              {/* ── Dates (flow naturally in the 2-column grid) */}
                       {/* Start Date */}
                       <div>
                         <DatePicker
@@ -984,7 +1008,21 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                           </div>
                         )}
                       </div>
-                    </div>
+
+                      {/* Time Estimate */}
+                      <div className="col-span-2 sm:col-span-1">
+                        <Input
+                          title="Time Estimate (Hours)"
+                          placeholder="e.g. 24"
+                          errors={errors}
+                          name="timeEstimate"
+                          type="number"
+                          onchange={handleChange}
+                          touched={touched}
+                          value={values.timeEstimate || ""}
+                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                        />
+                      </div>
 
               {((!isOtherProjectSelected && !isNoProjectSelected) ||
                 !showProjectSelection) && (
@@ -1037,26 +1075,31 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                   </>
                 )}
 
-              <Input
-                placeholder="Task Name"
-                title="Task Name"
-                errors={errors}
-                name={"title"}
-                onchange={handleChange}
-                touched={touched}
-                value={values}
-                disabled={!isFormEnabled && !isOtherProjectSelected}
-              />
-              <Description
-                errors={errors}
-                onChange={handleChange}
-                touched={touched}
-                name={"task_description"}
-                value={values}
-                title="Task Description"
-                placeholder="Add task description"
-                disabled={!isFormEnabled && !isOtherProjectSelected}
-              />
+              <div className="col-span-2 sm:col-span-1">
+                <Input
+                  placeholder="Task Name"
+                  title="Task Name"
+                  errors={errors}
+                  name={"title"}
+                  onchange={handleChange}
+                  touched={touched}
+                  value={values}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
+              
+              <div className="col-span-2">
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"task_description"}
+                  value={values}
+                  title="Task Description"
+                  placeholder="Add task description"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
 
               <Select
                 errors={errors}
@@ -1093,7 +1136,7 @@ rounded-3xl max-w-[800px] w-full h-full relative"
 
               {/* Main Task Availability Conflicts */}
               {availabilityConflicts.filter(c => c.label === 'main').length > 0 && (
-                <div className="mt-2 space-y-1">
+                <div className="col-span-2 mt-2 space-y-1">
                   {availabilityConflicts.filter(c => c.label === 'main').map((conflict, idx) => (
                     <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg">
                       <FiAlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
@@ -1112,7 +1155,7 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                 </div>
               )}
 
-              <div className="flex items-center gap-2 mb-2 mt-4 px-1">
+              <div className="flex items-center gap-2 px-1">
                 <input
                   type="checkbox"
                   id="requiresClientApproval"
@@ -1130,7 +1173,7 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                 </label>
               </div>
 
-              <div className="flex items-center gap-2 mb-2 mt-2 px-1">
+              <div className="flex items-center gap-2 px-1">
                 <input
                   type="checkbox"
                   id="requiresWorkLink"
@@ -1149,7 +1192,7 @@ rounded-3xl max-w-[800px] w-full h-full relative"
               </div>
 
               {/* Recurring Task Section */}
-              <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="col-span-2 border-t border-gray-200 pt-4 mt-2">
                 <h5 className="text-sm font-medium text-gray-700 mb-3">
                   Task Recurring
                 </h5>
@@ -1235,29 +1278,33 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                   )}
               </div>
 
-              <Description
-                errors={errors}
-                onChange={handleChange}
-                touched={touched}
-                name={"copyOfDescription"}
-                value={values?.copyOfDescription || ""}
-                title="Content for Description"
-                placeholder="Add copy of description"
-                disabled={!isFormEnabled && !isOtherProjectSelected}
-              />
-              <Description
-                errors={errors}
-                onChange={handleChange}
-                touched={touched}
-                name={"description"}
-                value={values?.description || ""}
-                title="Description for publishing"
-                placeholder="Add some description of the task"
-                disabled={!isFormEnabled && !isOtherProjectSelected}
-              />
+              <div className="col-span-2">
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"copyOfDescription"}
+                  value={values?.copyOfDescription || ""}
+                  title="Content for Description"
+                  placeholder="Add copy of description"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
+              <div className="col-span-2">
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"description"}
+                  value={values?.description || ""}
+                  title="Description for publishing"
+                  placeholder="Add some description of the task"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
 
               {/* Dynamic Custom Fields Section */}
-              <div className="border-t border-gray-200 pt-4 mt-2">
+              <div className="col-span-2 border-t border-gray-200 pt-4">
                 <div className="flexBetween mb-3">
                   <h5 className="text-sm font-medium text-gray-700">
                     Additional Fields (e.g. Shooting URL)
@@ -1328,7 +1375,7 @@ rounded-3xl max-w-[800px] w-full h-full relative"
                 )}
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <FileAndLinkUpload
                   fileClassName={"grid grid-cols-3 gap-3"}
                   initialFiles={

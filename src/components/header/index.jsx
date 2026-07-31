@@ -13,6 +13,10 @@ import { usePermissions } from "../../hooks/usePermissions";
 import { MdDashboard } from "react-icons/md";
 import logo from "../../assets/icons/logo.svg";
 import { SIDE_MENU } from "../../constants";
+import { getMyPerformance } from "../../api/service";
+import socketService from "../../services/socketService";
+import { toast } from "react-hot-toast";
+import { Zap } from "lucide-react";
 
 // Import components
 import SearchBar from "./components/SearchBar";
@@ -29,6 +33,7 @@ const DashboardHeader = () => {
   const [isAttendanceMenuOpen, setAttendanceMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shiftElapsedTime, setShiftElapsedTime] = useState(0);
+  const [currentScore, setCurrentScore] = useState(0);
 
   // Hooks
   const { user } = useAuth();
@@ -187,6 +192,60 @@ const DashboardHeader = () => {
     return () => clearInterval(interval);
   }, [isShiftActive, shiftStartTime]);
 
+  useEffect(() => {
+    if (isCompanyAdmin) return;
+
+    fetchScore();
+
+    const handlePointsAwarded = (data) => {
+      console.log("[Gamification Debug] Header received points_awarded socket event:", data);
+      
+      // If the backend provided the new score directly, update instantly!
+      if (data.newTotalScore !== undefined) {
+        setCurrentScore(data.newTotalScore);
+      } else {
+        // Fallback: Add a small delay to ensure backend has completed all database transactions
+        setTimeout(() => {
+          fetchScore();
+        }, 500);
+      }
+      
+      // Determine style based on if it's a penalty or bonus
+      if (data.title?.includes("Delayed") || data.message?.includes("-")) {
+        toast.error(
+          <div>
+            <strong>{data.title}</strong>
+            <p className="text-sm mt-1">{data.message}</p>
+          </div>
+        );
+      } else {
+        toast.success(
+          <div>
+            <strong>{data.title}</strong>
+            <p className="text-sm mt-1">{data.message}</p>
+          </div>
+        );
+      }
+    };
+
+    socketService.onPointsAwarded(handlePointsAwarded);
+
+    return () => {
+      socketService.offPointsAwarded(handlePointsAwarded);
+    };
+  }, []);
+
+  const fetchScore = async () => {
+    try {
+      const res = await getMyPerformance("monthly");
+      if (res.success && res.performance) {
+        setCurrentScore(res.performance.totalScore || 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch score", err);
+    }
+  };
+
   // Utility functions
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -261,6 +320,18 @@ const DashboardHeader = () => {
           isRunning={isRunning}
           formatTime={formatTime}
         />
+
+        {/* Current Score Display */}
+        {!isCompanyAdmin && (
+          <div 
+            onClick={() => navigate(`/my-points`)}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full mr-2 hover:bg-blue-100 transition-colors cursor-pointer" 
+            title="Your Current Score"
+          >
+            <Zap className="w-4 h-4 text-blue-500 fill-blue-500" />
+            <span className="text-sm font-black text-blue-700">{currentScore} <span className="text-[10px] font-bold text-blue-400 uppercase">Pts</span></span>
+          </div>
+        )}
 
         {/* User Profile */}
         <UserProfile user={user} />

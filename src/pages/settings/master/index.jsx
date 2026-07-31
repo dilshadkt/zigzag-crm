@@ -18,8 +18,20 @@ import WorkScheduleSection from "../../../components/settings/company/WorkSchedu
 // Leave Policy imports
 import LeavePolicySection from "../../../components/settings/company/LeavePolicySection";
 
+// Task Categories imports
+import TaskCategoryHeader from "../../../components/settings/company/TaskCategoryHeader";
+import TaskCategorySection from "../../../components/settings/company/TaskCategorySection";
+import TaskCategoryModal from "../../../components/settings/company/TaskCategoryModal";
+
+// Gamification imports
+import GamificationRulesSection from "../../../components/settings/company/GamificationRulesSection";
+
 import { useAuth } from "../../../hooks/useAuth";
 import {
+  useGetTaskCategories,
+  useCreateTaskCategory,
+  useUpdateTaskCategory,
+  useDeleteTaskCategory,
   useGetProjectFields,
   useCreateProjectField,
   useUpdateProjectField,
@@ -91,6 +103,38 @@ const Master = () => {
       updateField.mutate({ fieldId: selectedField._id || selectedField.id, fieldData: values });
     } else {
       createField.mutate(values);
+    }
+  };
+
+  // ── Task Categories ──────────────────────────────────────────────────────────
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useGetTaskCategories(companyId);
+
+  const createCategory = useCreateTaskCategory(companyId, () => {
+    toast.success("Task category added successfully");
+    handleCategoryModalClose();
+  });
+  const updateCategory = useUpdateTaskCategory(companyId, () => {
+    toast.success("Task category updated successfully");
+    handleCategoryModalClose();
+  });
+  const deleteCategory = useDeleteTaskCategory(companyId, () => {
+    toast.success("Task category deleted successfully");
+  });
+
+  const handleEditCategory = (category) => { setSelectedCategory(category); setShowCategoryModal(true); };
+  const handleDeleteCategory = (category) => {
+    if (window.confirm("Are you sure you want to delete this category?"))
+      deleteCategory.mutate(category._id);
+  };
+  const handleCategoryModalClose = () => { setShowCategoryModal(false); setSelectedCategory(null); };
+  const handleSaveCategory = (values) => {
+    if (selectedCategory) {
+      updateCategory.mutate({ categoryId: selectedCategory._id, data: values });
+    } else {
+      createCategory.mutate(values);
     }
   };
 
@@ -175,6 +219,18 @@ const Master = () => {
       {/* ── Divider ── */}
       <div className="border-t border-gray-100" />
 
+      {/* ── Gamification Rules ── */}
+      <div className="flex flex-col">
+        <SectionHeader
+          title="Gamification & Performance"
+          description="Configure how points are awarded or deducted for employee performance."
+        />
+        <GamificationRulesSection />
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="border-t border-gray-100" />
+
       {/* ── Leave Policy ── */}
       <div className="flex flex-col">
         <SectionHeader
@@ -232,6 +288,26 @@ const Master = () => {
         </div>
       </div>
 
+      {/* ── Divider ── */}
+      <div className="border-t border-gray-100" />
+
+      {/* ── Task Categories ── */}
+      <div className="flex flex-col">
+        <TaskCategoryHeader
+          categoriesCount={categories ? categories.length : 0}
+          onAdd={() => setShowCategoryModal(true)}
+        />
+        <div className="flex-1 space-y-4">
+          <TaskCategorySection
+            categories={categories || []}
+            isLoading={categoriesLoading}
+            error={categoriesError}
+            onEdit={handleEditCategory}
+            onDelete={handleDeleteCategory}
+          />
+        </div>
+      </div>
+
       {/* ── Modals ── */}
       {showFieldModal && (
         <ProjectFieldModal
@@ -239,6 +315,15 @@ const Master = () => {
           onClose={handleFieldModalClose}
           field={selectedField}
           onSave={handleSaveField}
+        />
+      )}
+
+      {showCategoryModal && (
+        <TaskCategoryModal
+          isOpen={showCategoryModal}
+          onClose={handleCategoryModalClose}
+          category={selectedCategory}
+          onSave={handleSaveCategory}
         />
       )}
 

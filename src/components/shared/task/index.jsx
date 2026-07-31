@@ -6,6 +6,7 @@ import { FiMoreVertical } from "react-icons/fi";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import { formatDate } from "../../../lib/dateUtils";
+import { formatDistanceToNow } from "date-fns";
 
 const priorityColors = {
   low: "#00D097", // green
@@ -78,16 +79,29 @@ const Task = memo(({
     task.project.reporters[0].firstName
   );
 
-  const getOnReviewDate = () => {
-    if (task?.status === "on-review" && task?.activityLog) {
-      const reviewLogs = task.activityLog.filter(log => log.changeType === "status_change" && log.newValue === "on-review");
-      if (reviewLogs.length > 0) {
-        return formatDate(reviewLogs[reviewLogs.length - 1].createdAt);
+  const getStatusTime = () => {
+    let date = null;
+    if ((task?.status === "on-review" || task?.status === "approved") && task?.activityLog) {
+      const logs = task.activityLog.filter(log => log.changeType === "status_change" && log.newValue === task.status);
+      if (logs.length > 0) {
+        date = logs[logs.length - 1].createdAt;
+      }
+    }
+    if (!date && task?.updatedAt && (task?.status === "on-review" || task?.status === "approved")) {
+      date = task.updatedAt;
+    }
+    
+    if (date) {
+      try {
+        const timeAgo = formatDistanceToNow(new Date(date), { addSuffix: true });
+        return timeAgo.replace('about ', '');
+      } catch (e) {
+        return null;
       }
     }
     return null;
   };
-  const onReviewDate = getOnReviewDate();
+  const statusTimeAgo = getStatusTime();
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
@@ -347,7 +361,7 @@ const Task = memo(({
           </div>
         )}
       </div>
-      <div className={`col-span-1 md:col-span-5 grid ${task?.status === "on-review" ? 'grid-cols-5 gap-1' : 'grid-cols-4'}`}>
+      <div className="col-span-1 md:col-span-5 grid grid-cols-4">
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Estimate</span>
           <h4 className="truncate">{task?.timeEstimate}h</h4>
@@ -355,13 +369,10 @@ const Task = memo(({
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Due Date</span>
           <h4 className="text-sm font-medium truncate">{formatDate(task?.dueDate)}</h4>
+          {(task?.status === "on-review" || task?.status === "approved") && statusTimeAgo && (
+            <span className="text-[11px] text-gray-500 capitalize -mt-1 font-medium">{statusTimeAgo}</span>
+          )}
         </div>
-        {task?.status === "on-review" && (
-          <div className="flex flex-col gap-y-1">
-            <span className="text-sm text-[#91929E]">Review Date</span>
-            <h4 className="text-sm font-medium truncate">{onReviewDate || "-"}</h4>
-          </div>
-        )}
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Assignees</span>
           {task?.assignedTo?.length > 0 ? (

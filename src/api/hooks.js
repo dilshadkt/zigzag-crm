@@ -328,6 +328,7 @@ export const useCreateTask = (handleClose, projectId) => {
       queryClient.invalidateQueries({
         queryKey: ["projectTasks", projectId],
       });
+      window.dispatchEvent(new Event('taskCreated'));
       handleClose(data);
       // toast.success('Target set successfully!');
     },
@@ -348,6 +349,7 @@ export const useCreateTaskFromBoard = (handleClose) => {
       } else {
         queryClient.invalidateQueries(["employeeTasks", user?._id]);
       }
+      window.dispatchEvent(new Event('taskCreated'));
       handleClose(data);
       // toast.success('Task created successfully!');
     },
@@ -1639,6 +1641,7 @@ export const useCreateSubTask = (parentTaskId) => {
     onSuccess: () => {
       queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
       queryClient.invalidateQueries(["getTaskById", parentTaskId]);
+      window.dispatchEvent(new Event('taskCreated'));
     },
   });
 };
@@ -3025,5 +3028,47 @@ export const useGetMentionsAndTags = (instagramId) => {
 export const useSearchHashtag = () => {
   return useMutation({
     mutationFn: searchHashtag
+  });
+};
+
+// Task Category Hooks
+export const useGetTaskCategories = (companyId) => {
+  return useQuery({
+    queryKey: ["taskCategories", companyId],
+    queryFn: () => import("./service").then(m => m.getTaskCategories(companyId)),
+    enabled: !!companyId,
+  });
+};
+
+export const useCreateTaskCategory = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => import("./service").then(m => m.createTaskCategory(companyId, data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["taskCategories", companyId] });
+      if (onSuccess) onSuccess();
+    },
+  });
+};
+
+export const useUpdateTaskCategory = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ categoryId, data }) => import("./service").then(m => m.updateTaskCategory(companyId, categoryId, data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["taskCategories", companyId] });
+      if (onSuccess) onSuccess();
+    },
+  });
+};
+
+export const useDeleteTaskCategory = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (categoryId) => import("./service").then(m => m.deleteTaskCategory(companyId, categoryId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["taskCategories", companyId] });
+      if (onSuccess) onSuccess();
+    },
   });
 };

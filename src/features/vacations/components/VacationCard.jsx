@@ -38,14 +38,39 @@ const VacationCard = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedRequests, setExpandedRequests] = useState(true); // Default expanded for better visibility
   const [modifyingRequest, setModifyingRequest] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
   const pendingRequests = item.vacationRequests.filter((req) => req.status === "pending");
   const otherRequests = item.vacationRequests.filter((req) => req.status !== "pending");
 
-  const handleApprove = (requestId) => updateStatus({ vacationId: requestId, status: "approved" });
-  const handleReject = (requestId) => updateStatus({ vacationId: requestId, status: "rejected" });
+  const handleApprove = async (requestId) => {
+    setProcessingId(requestId);
+    try {
+      await updateStatus({ vacationId: requestId, status: "approved" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    setProcessingId(requestId);
+    try {
+      await updateStatus({ vacationId: requestId, status: "rejected" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleModifyOpen = (request) => { setModifyingRequest(request); setMenuOpen(false); };
-  const handleCancel = (requestId) => updateStatus({ vacationId: requestId, status: "cancelled" });
+
+  const handleCancel = async (requestId) => {
+    setProcessingId(requestId);
+    try {
+      await updateStatus({ vacationId: requestId, status: "cancelled" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleModifySave = (requestId, newDates) => {
     if (!onModifyRequest) return Promise.resolve();
@@ -148,17 +173,27 @@ const VacationCard = ({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleApprove(request.id)}
-                        className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 shadow-sm shadow-emerald-100 transition-all"
+                        disabled={processingId === request.id}
+                        className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 shadow-sm shadow-emerald-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Approve"
                       >
-                        <FaCheck size={10} />
+                        {processingId === request.id ? (
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <FaCheck size={10} />
+                        )}
                       </button>
                       <button
                         onClick={() => handleReject(request.id)}
-                        className="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-sm shadow-rose-100 transition-all"
+                        disabled={processingId === request.id}
+                        className="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 shadow-sm shadow-rose-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Reject"
                       >
-                        <FaTimes size={10} />
+                        {processingId === request.id ? (
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <FaTimes size={10} />
+                        )}
                       </button>
                       {canModifyVacations && (
                         <button
@@ -173,9 +208,10 @@ const VacationCard = ({
                   ) : request.status === "pending" && canModifyVacations ? (
                     <button
                       onClick={() => handleCancel(request.id)}
-                      className="text-[10px] font-bold text-gray-400 hover:text-rose-500 px-2 py-1 transition-colors"
+                      disabled={processingId === request.id}
+                      className="text-[10px] font-bold text-gray-400 hover:text-rose-500 px-2 py-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Cancel
+                      {processingId === request.id ? "Cancelling..." : "Cancel"}
                     </button>
                   ) : null}
                 </div>
