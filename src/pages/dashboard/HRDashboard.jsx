@@ -149,7 +149,6 @@ const HRDashboardPage = () => {
         }, { presentDays: 0, leaveDays: 0, workingHours: 0, breakTime: 0, overtime: 0, lateCount: 0 });
     }, [reportData, selectedEmployeeId]);
 
-    // Group the overtime data for display
     const overtimeList = useMemo(() => {
         if (!reportData || !Array.isArray(reportData)) return [];
         if (selectedEmployeeId) {
@@ -161,6 +160,61 @@ const HRDashboardPage = () => {
         }
         return reportData.filter(row => row.totalOvertimeHours > 0);
     }, [reportData, selectedEmployeeId]);
+
+    // Group daily logs by date so multiple shifts on the same day appear as a single row
+    const groupedDailyLogs = useMemo(() => {
+        if (!singleEmployeeReport?.dailyLogs) return [];
+        
+        const groups = {};
+        
+        singleEmployeeReport.dailyLogs.forEach(log => {
+            if (!log.date) return;
+            const dateStr = new Date(log.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            
+            if (!groups[dateStr]) {
+                groups[dateStr] = {
+                    date: dateStr,
+                    originalDate: log.date,
+                    clockInTime: log.clockInTime,
+                    clockOutTime: log.clockOutTime,
+                    totalHours: Number(log.totalHours || 0),
+                    breakTime: Number(log.breakTime || 0),
+                    isLate: log.isLate,
+                    lateBy: log.lateBy || 0,
+                    isActive: !log.clockOutTime
+                };
+            } else {
+                const current = groups[dateStr];
+                
+                // Earliest clock in
+                if (log.clockInTime && (!current.clockInTime || new Date(log.clockInTime) < new Date(current.clockInTime))) {
+                    current.clockInTime = log.clockInTime;
+                }
+                
+                // Latest clock out (or keep active)
+                if (!log.clockOutTime) {
+                    current.isActive = true;
+                    current.clockOutTime = null;
+                } else if (!current.isActive && log.clockOutTime) {
+                    if (!current.clockOutTime || new Date(log.clockOutTime) > new Date(current.clockOutTime)) {
+                        current.clockOutTime = log.clockOutTime;
+                    }
+                }
+                
+                // Sum hours and breaks
+                current.totalHours += Number(log.totalHours || 0);
+                current.breakTime += Number(log.breakTime || 0);
+                
+                // Late logic
+                if (log.isLate && (!current.clockInTime || new Date(log.clockInTime) === new Date(current.clockInTime))) {
+                    current.isLate = true;
+                    if (log.lateBy > current.lateBy) current.lateBy = log.lateBy;
+                }
+            }
+        });
+        
+        return Object.values(groups).sort((a, b) => new Date(a.originalDate) - new Date(b.originalDate));
+    }, [singleEmployeeReport]);
 
     return (
         <div className="flex flex-col gap-4 h-full   overflow-y-auto p-2 md:p-4">
@@ -563,18 +617,18 @@ const HRDashboardPage = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {singleEmployeeReport.dailyLogs.map((log, lidx) => (
+                                            {groupedDailyLogs.map((log, lidx) => (
                                                 <tr key={lidx} className="hover:bg-slate-50/50 transition-colors">
                                                     <td className="py-2 px-3 font-medium text-slate-800">
-                                                        {new Date(log.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                                        {log.date}
                                                     </td>
                                                     <td className="py-2 px-3 text-slate-600">
                                                         {log.clockInTime ? new Date(log.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
                                                     </td>
                                                     <td className="py-2 px-3 text-slate-600">
-                                                        {log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "Active / Working"}
+                                                        {log.isActive ? "Active / Working" : (log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A")}
                                                     </td>
-                                                    <td className="py-2 px-3 font-bold text-slate-700">{log.totalHours || 0} hrs</td>
+                                                    <td className="py-2 px-3 font-bold text-slate-700">{Number(log.totalHours || 0).toFixed(2)} hrs</td>
                                                     <td className="py-2 px-3 text-slate-500">{log.breakTime || 0} mins</td>
                                                     <td className="py-2 px-3">
                                                         {log.isLate ? (
