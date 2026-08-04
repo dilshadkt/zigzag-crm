@@ -131,7 +131,7 @@ const LeadsDashboard = ({ stats, isLoading, activeStatusId, onStatusClick, onAct
             />
             <StatCard
                 title="Follow-ups"
-                value={stats?.todayFollowUps?.count || 0}
+                value={stats?.upcomingFollowUps?.count || 0}
                 icon={Calendar}
                 color="#10b981"
                 isLoading={isLoading}

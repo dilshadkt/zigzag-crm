@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
@@ -193,6 +193,22 @@ const LeadsFeature = ({
     else sessionStorage.removeItem('leads_followUpCount');
   }, [followUpCountState]);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('scheduled') === 'today') {
+      setAppliedFilters(prev => {
+        if (prev.scheduled?.operator === 'today') return prev;
+        return {
+          ...prev,
+          scheduled: { operator: 'today', value: '' }
+        };
+      });
+      // Also ensure we are showing leads instead of dashboard when navigating directly to filtered view
+      setShowDashboard(false);
+    }
+  }, [location.search]);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   useEffect(() => {
