@@ -389,7 +389,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                         value={stats?.todayFollowUps?.count}
                         icon={CalendarCheck}
                         color="emerald"
-                        onClick={() => handleNavigate('/leads?scheduled=today')}
+                        onClick={() => handleNavigate('/leads?scheduled=today&action=followup')}
                     />
                 </div>
             )}

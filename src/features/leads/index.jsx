@@ -195,20 +195,7 @@ const LeadsFeature = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('scheduled') === 'today') {
-      setAppliedFilters(prev => {
-        if (prev.scheduled?.operator === 'today') return prev;
-        return {
-          ...prev,
-          scheduled: { operator: 'today', value: '' }
-        };
-      });
-      // Also ensure we are showing leads instead of dashboard when navigating directly to filtered view
-      setShowDashboard(false);
-    }
-  }, [location.search]);
+
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   useEffect(() => {
@@ -333,28 +320,38 @@ const LeadsFeature = ({
     const projectParam = urlParams.get('project');
     const campaignParam = urlParams.get('campaign');
 
-    const hasDashboardParams = action || minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue) || projectParam || campaignParam;
+    const scheduledParam = urlParams.get('scheduled');
     
+    const hasDashboardParams = action || minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue) || projectParam || campaignParam || scheduledParam;
+    
+    let newFilters = {};
+
     if (hasDashboardParams) {
       // Clear any stale custom filters when navigating from dashboard
-      setAppliedFilters({});
       setIsFromInsights(true);
+      setActiveStatusId(null);
+      setScoreFilterState("");
+      setStatusCategoryState("");
+      setFollowUpCountState("");
+      setShowDashboard(false);
+    }
+    
+    if (scheduledParam === 'today') {
+      setStatsDateRange({ startDate: '', endDate: '', preset: 'all' });
+      newFilters['scheduled'] = { operator: 'today', value: '' };
+      toast.success("Showing today's follow-ups");
     }
 
     if (action === 'followup') {
-      setIsFollowUpOnly(true);
       setActiveAction('followup');
+      setStatsDateRange({ preset: '', startDate: '', endDate: '' });
       toast.success("Showing all follow-ups");
     } else if (minScore) {
-      setAppliedFilters({
-        score: { operator: 'greaterThan', value: minScore }
-      });
+      newFilters['score'] = { operator: 'greaterThan', value: minScore };
       setActiveAction('hot');
       toast.success(`Showing leads with score > ${minScore}`);
     } else if (ownerId) {
-      setAppliedFilters({
-        owner: { operator: 'equals', value: ownerId }
-      });
+      newFilters['owner'] = { operator: 'equals', value: ownerId };
       toast.success("Filtering leads by assigned employee");
     }
 
@@ -372,7 +369,6 @@ const LeadsFeature = ({
       toast.success("Filtering leads by date range");
     }
 
-    let newFilters = {};
     if (filterField && filterValue) {
       newFilters[filterField] = { operator: 'equals', value: filterValue };
     }
@@ -380,7 +376,7 @@ const LeadsFeature = ({
       newFilters['campaign'] = { operator: 'equals', value: campaignParam };
     }
     
-    if (Object.keys(newFilters).length > 0) {
+    if (hasDashboardParams) {
       setAppliedFilters(newFilters);
     }
 
