@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useEmpoyees } from "../../../api/hooks";
+import { useGetAllEmployees } from "../../../api/hooks";
 import { useCreateTaskFlow, useUpdateTaskFlow } from "../../../api/hooks";
 import ModalLayout from "../../shared/modal";
 import { FiPlus, FiTrash2, FiLayers, FiUser, FiHash, FiCheckCircle, FiInfo, FiChevronRight, FiChevronDown, FiSearch, FiCheck } from "react-icons/fi";
@@ -119,7 +119,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
       : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]
   );
 
-  const { data: employeesData } = useEmpoyees(1);
+  const { data: employeesData } = useGetAllEmployees();
   const employees = employeesData?.employees || [];
 
   const taskTypes = [
