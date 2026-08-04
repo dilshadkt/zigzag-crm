@@ -810,6 +810,19 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
             {leadDetails?.salesPerson && (
               <LabelValue label="Sales Person" value={leadDetails.salesPerson} />
             )}
+            {lead.scheduled && (
+              <LabelValue 
+                label="Next Follow Up" 
+                value={new Date(lead.scheduled).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit"
+                })} 
+                valueClassName="text-[#3f8cff] font-semibold"
+              />
+            )}
             {leadDetails?.campaignName && (
               <LabelValue label="Campaign" value={leadDetails.campaignName} />
             )}

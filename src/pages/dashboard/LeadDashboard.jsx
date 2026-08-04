@@ -6,7 +6,7 @@ import {
 } from "../../features/leads/api";
 import { useGetClientTeamStats } from "../../api/clientSalesTeam";
 import { DateRange } from 'react-date-range';
-import 'react-date-range/dist/styles.css'; 
+import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { format } from "date-fns";
 import {
@@ -79,12 +79,12 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
 
     // Fetch filters data
     const { data: projects = [] } = useCompanyActiveProjects();
-    const { data: campaignsData } = useGetCampaignsByCompany(user?.company, { 
-        projectId: selectedProject !== "all" ? selectedProject : undefined 
+    const { data: campaignsData } = useGetCampaignsByCompany(user?.company, {
+        projectId: selectedProject !== "all" ? selectedProject : undefined
     });
     const campaigns = campaignsData?.data || [];
 
-    const { data: statsData, isLoading: statsLoading } = useGetLeadStats({ 
+    const { data: statsData, isLoading: statsLoading } = useGetLeadStats({
         days: ["custom", "today", "yesterday"].includes(selectedDays) ? "all" : selectedDays,
         timezoneOffset: new Date().getTimezoneOffset(),
         ...(["custom", "today", "yesterday"].includes(selectedDays) && {
@@ -133,7 +133,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
 
     const handleWidgetClick = (field, id) => {
         if (!id) return;
-        
+
         let queryParam = '';
         if (field === 'status') {
             queryParam = `status=${encodeURIComponent(id)}`;
@@ -148,7 +148,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
         } else {
             queryParam = `filterField=${encodeURIComponent(field)}&filterValue=${encodeURIComponent(id)}`;
         }
-        
+
         // Append the dashboard's active date filter for context (unless it's the monthly chart which forces its own dates)
         if (field !== 'month') {
             let currentStartDate = null;
@@ -172,11 +172,11 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                 queryParam += `&startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
             }
         }
-        
+
         if (selectedProject && selectedProject !== "all") {
             queryParam += `&project=${encodeURIComponent(selectedProject)}`;
         }
-        
+
         if (selectedCampaign && selectedCampaign !== "all") {
             queryParam += `&campaign=${encodeURIComponent(selectedCampaign)}`;
         }
@@ -197,7 +197,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                     <h1 className="text-xl font-bold text-[#0A1629]">Lead Dashboard</h1>
                     <p className="text-xs text-slate-500">Track and manage your leads across projects and campaigns.</p>
                 </div>
-                
+
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Project Filter */}
                     {!isClient && (
@@ -299,7 +299,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                             <option value={30}>Last 30 Days</option>
                             <option value={90}>Last 90 Days</option>
                             <option value="custom">
-                                {selectedDays === "custom" 
+                                {selectedDays === "custom"
                                     ? `${format(appliedDateRange[0].startDate, 'MMM d')} - ${format(appliedDateRange[0].endDate, 'MMM d')}`
                                     : "Custom Date"}
                             </option>
@@ -329,7 +329,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                                     className="border-0"
                                 />
                                 <div className="flex justify-end pt-2 border-t border-slate-100">
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             setAppliedDateRange(dateRange);
                                             setShowDatePicker(false);
@@ -369,38 +369,38 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
             {/* Quick Stats Grid */}
             {(viewMode === 'all' || viewMode === 'stats') && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                <StatCard
-                    title="Total Leads"
-                    value={stats?.totalLeads}
-                    icon={Users}
-                    color="blue"
-                    trend={`${stats?.trends?.totalLeadsTrend >= 0 ? '+' : ''}${stats?.trends?.totalLeadsTrend || 0}%`}
-                    trendUp={stats?.trends?.totalLeadsTrend >= 0}
-                    onClick={() => handleNavigate('/leads')}
-                />
-                <StatCard
-                    title="New Today"
-                    value={stats?.newLeadsToday}
-                    icon={Target}
-                    color="amber"
-                    trend={`${stats?.trends?.newTodayTrend >= 0 ? '+' : ''}${stats?.trends?.newTodayTrend || 0}%`}
-                    trendUp={stats?.trends?.newTodayTrend >= 0}
-                    onClick={() => handleNavigate('/leads')}
-                />
-                <StatCard
-                    title="Hot Leads"
-                    value={stats?.hotLeads?.count}
-                    icon={Flame}
-                    color="orange"
-                    onClick={() => handleNavigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
-                />
-                <StatCard
-                    title="Today's Follow-ups"
-                    value={stats?.todayFollowUps?.count}
-                    icon={CalendarCheck}
-                    color="emerald"
-                    onClick={() => handleNavigate('/leads?scheduled=today')}
-                />
+                    <StatCard
+                        title="Total Leads"
+                        value={stats?.totalLeads}
+                        icon={Users}
+                        color="blue"
+                        trend={`${stats?.trends?.totalLeadsTrend >= 0 ? '+' : ''}${stats?.trends?.totalLeadsTrend || 0}%`}
+                        trendUp={stats?.trends?.totalLeadsTrend >= 0}
+                        onClick={() => handleNavigate('/leads')}
+                    />
+                    <StatCard
+                        title="New Today"
+                        value={stats?.newLeadsToday}
+                        icon={Target}
+                        color="amber"
+                        trend={`${stats?.trends?.newTodayTrend >= 0 ? '+' : ''}${stats?.trends?.newTodayTrend || 0}%`}
+                        trendUp={stats?.trends?.newTodayTrend >= 0}
+                        onClick={() => handleNavigate('/leads')}
+                    />
+                    <StatCard
+                        title="Hot Leads"
+                        value={stats?.hotLeads?.count}
+                        icon={Flame}
+                        color="orange"
+                        onClick={() => handleNavigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
+                    />
+                    <StatCard
+                        title="Today's Follow-ups"
+                        value={stats?.todayFollowUps?.count}
+                        icon={CalendarCheck}
+                        color="emerald"
+                        onClick={() => handleNavigate('/leads?scheduled=today')}
+                    />
                 </div>
             )}
 
@@ -408,386 +408,386 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                 <div className={`grid grid-cols-1 gap-2 ${viewMode === 'all' ? 'lg:grid-cols-3' : ''}`}>
                     {/* Left Column - Performance & Trends */}
                     <div className={`${viewMode === 'all' ? 'lg:col-span-2' : ''} space-y-2`}>
-                    {/* Performance Chart */}
-                    <div className="bg-white p-5 rounded-[2rem] border border-slate-100">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <Trophy className="w-4 h-4 text-[#3f8cff]" />
-                                Sales Performance
-                            </h3>
-                            <select
-                                value={selectedDays}
-                                onChange={(e) => setSelectedDays(Number(e.target.value))}
-                                className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer"
-                            >
-                                <option value={7}>Last 7 Days</option>
-                                <option value={30}>Last 30 Days</option>
-                                <option value={90}>Last 90 Days</option>
-                            </select>
-                        </div>
-                        <div className="h-[320px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={stats?.trends?.daily}>
-                                    <defs>
-                                        <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3f8cff" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#3f8cff" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis
-                                        dataKey="_id"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 9, fill: '#94a3b8' }}
-                                        tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { weekday: 'short' })}
-                                    />
-                                    <YAxis hide />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="count"
-                                        stroke="#3f8cff"
-                                        strokeWidth={2}
-                                        fillOpacity={1}
-                                        fill="url(#colorCount)"
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Status Distribution */}
-                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
-                            <h3 className="text-sm font-bold text-slate-800 mb-4">Status Distribution</h3>
-                            <div className="flex-1 min-h-0">
+                        {/* Performance Chart */}
+                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <Trophy className="w-4 h-4 text-[#3f8cff]" />
+                                    Sales Performance
+                                </h3>
+                                <select
+                                    value={selectedDays}
+                                    onChange={(e) => setSelectedDays(Number(e.target.value))}
+                                    className="bg-slate-50 border-none text-[10px] font-bold text-slate-500 rounded-lg px-2 py-1 focus:ring-0 cursor-pointer"
+                                >
+                                    <option value={7}>Last 7 Days</option>
+                                    <option value={30}>Last 30 Days</option>
+                                    <option value={90}>Last 90 Days</option>
+                                </select>
+                            </div>
+                            <div className="h-[320px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={stats?.statusStats}
-                                            innerRadius={50}
-                                            outerRadius={70}
-                                            paddingAngle={5}
+                                    <AreaChart data={stats?.trends?.daily}>
+                                        <defs>
+                                            <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3f8cff" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#3f8cff" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis
+                                            dataKey="_id"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 9, fill: '#94a3b8' }}
+                                            tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { weekday: 'short' })}
+                                        />
+                                        <YAxis hide />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
+                                        />
+                                        <Area
+                                            type="monotone"
                                             dataKey="count"
-                                            onClick={(data) => handleWidgetClick('status', data?.payload?._id || data?._id)}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            {stats?.statusStats?.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                    </PieChart>
+                                            stroke="#3f8cff"
+                                            strokeWidth={2}
+                                            fillOpacity={1}
+                                            fill="url(#colorCount)"
+                                        />
+                                    </AreaChart>
                                 </ResponsiveContainer>
                             </div>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2 overflow-y-auto max-h-[60px] scrollbar-hide">
-                                {stats?.statusStats?.map((status, i) => (
-                                    <div key={status._id} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
-                                        <div className="flex items-center gap-1.5 overflow-hidden">
-                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: status.color || COLORS[i % COLORS.length] }}></div>
-                                            <span className="text-[10px] font-bold text-slate-600 truncate">{status.name}</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Status Distribution */}
+                            <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
+                                <h3 className="text-sm font-bold text-slate-800 mb-4">Status Distribution</h3>
+                                <div className="flex-1 min-h-0">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={stats?.statusStats}
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={5}
+                                                dataKey="count"
+                                                onClick={(data) => handleWidgetClick('status', data?.payload?._id || data?._id)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                {stats?.statusStats?.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2 overflow-y-auto max-h-[60px] scrollbar-hide">
+                                    {stats?.statusStats?.map((status, i) => (
+                                        <div key={status._id} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
+                                            <div className="flex items-center gap-1.5 overflow-hidden">
+                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: status.color || COLORS[i % COLORS.length] }}></div>
+                                                <span className="text-[10px] font-bold text-slate-600 truncate">{status.name}</span>
+                                            </div>
+                                            <span className="text-[10px] font-black text-[#3f8cff] bg-blue-50 px-1 rounded-[4px]">{status.count || 0}</span>
                                         </div>
-                                        <span className="text-[10px] font-black text-[#3f8cff] bg-blue-50 px-1 rounded-[4px]">{status.count || 0}</span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Overall Progress */}
+                            <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
+                                <h3 className="text-sm font-bold text-slate-800 mb-4">Overall Growth</h3>
+                                <div className="flex-1 min-h-0">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={stats?.trends?.monthly}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis
+                                                dataKey="_id"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 9, fill: '#94a3b8' }}
+                                                tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short' })}
+                                            />
+                                            <YAxis hide />
+                                            <Tooltip
+                                                cursor={{ fill: '#f8fafc' }}
+                                                contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
+                                            />
+                                            <Bar
+                                                dataKey="count"
+                                                fill="#3f8cff"
+                                                radius={[4, 4, 0, 0]}
+                                                barSize={16}
+                                                onClick={(data) => handleWidgetClick('month', data?._id)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Won Leads Follow Ups */}
+                            <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
+                                <h3 className="text-sm font-bold text-slate-800 mb-4">Won Leads by Follow-Ups</h3>
+                                <div className="flex-1 min-h-0">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={stats?.wonLeadsFollowUpStats}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis
+                                                dataKey="_id"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 9, fill: '#94a3b8' }}
+                                                tickFormatter={(val) => `${val} F/U`}
+                                            />
+                                            <YAxis hide />
+                                            <Tooltip
+                                                cursor={{ fill: '#f8fafc' }}
+                                                contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
+                                            />
+                                            <Bar
+                                                dataKey="count"
+                                                fill="#10b981"
+                                                radius={[4, 4, 0, 0]}
+                                                barSize={24}
+                                                onClick={(data) => handleWidgetClick('followUpCount', data?._id)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Dynamic Widgets */}
+                        {stats?.customWidgets && stats.customWidgets.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {stats.customWidgets.map((widget) => (
+                                    <div key={widget.widgetId} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
+                                        <h3 className="text-sm font-bold text-slate-800 mb-4">{widget.title}</h3>
+                                        <div className="flex-1 min-h-0">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                {widget.type === 'bar' ? (
+                                                    <BarChart data={widget.data}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                        <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                                                        <YAxis hide />
+                                                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
+                                                        <Bar
+                                                            dataKey="count"
+                                                            fill="#3f8cff"
+                                                            radius={[4, 4, 0, 0]}
+                                                            barSize={16}
+                                                            onClick={(data) => handleWidgetClick(widget.field, data?.payload?.originalId || data?.payload?._id || data?._id)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        />
+                                                    </BarChart>
+                                                ) : widget.type === 'pie' ? (
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={widget.data}
+                                                            innerRadius={50}
+                                                            outerRadius={70}
+                                                            paddingAngle={5}
+                                                            dataKey="count"
+                                                            nameKey="_id"
+                                                            onClick={(data) => handleWidgetClick(widget.field, data?.payload?._id || data?._id)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            {widget.data.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                                                            ))}
+                                                        </Pie>
+                                                        <Tooltip />
+                                                    </PieChart>
+                                                ) : (
+                                                    <AreaChart data={widget.data}>
+                                                        <defs>
+                                                            <linearGradient id={`color-${widget.widgetId}`} x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="5%" stopColor="#3f8cff" stopOpacity={0.1} />
+                                                                <stop offset="95%" stopColor="#3f8cff" stopOpacity={0} />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                        <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                                                        <YAxis hide />
+                                                        <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
+                                                        <Area
+                                                            type="monotone"
+                                                            dataKey="count"
+                                                            stroke="#3f8cff"
+                                                            strokeWidth={2}
+                                                            fillOpacity={1}
+                                                            fill={`url(#color-${widget.widgetId})`}
+                                                            activeDot={{ onClick: (e, payload) => handleWidgetClick(widget.field, payload?.payload?.originalId || payload?.payload?._id), cursor: 'pointer' }}
+                                                        />
+                                                    </AreaChart>
+                                                )}
+                                            </ResponsiveContainer>
+                                        </div>
+                                        {widget.type === 'pie' ? (
+                                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-4 overflow-y-auto max-h-[80px] scrollbar-hide px-1">
+                                                {widget.data.map((entry, index) => (
+                                                    <div key={index} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
+                                                        <div className="flex items-center gap-1.5 overflow-hidden">
+                                                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color || COLORS[index % COLORS.length] }}></div>
+                                                            <span className="text-[10px] font-bold text-slate-600 truncate">{entry._id || 'N/A'}</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-black text-[#3f8cff] bg-blue-50 px-1 rounded-[4px]">{entry.count || 0}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="mt-4 space-y-1 overflow-y-auto max-h-[80px] scrollbar-hide px-1">
+                                                {widget.data.slice(0, 5).map((entry, index) => (
+                                                    <div key={index} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
+                                                        <span className="text-[10px] font-bold text-slate-600 truncate">{entry._id || 'N/A'}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-1 bg-blue-100 rounded-full w-12 overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-[#3f8cff]"
+                                                                    style={{ width: `${Math.min(100, (entry.count / (widget.data[0]?.count || 1)) * 100)}%` }}
+                                                                ></div>
+                                                            </div>
+                                                            <span className="text-[10px] font-black text-[#3f8cff] min-w-[20px] text-right">{entry.count || 0}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        )}
 
-                        {/* Overall Progress */}
-                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
-                            <h3 className="text-sm font-bold text-slate-800 mb-4">Overall Growth</h3>
-                            <div className="flex-1 min-h-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={stats?.trends?.monthly}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis
-                                            dataKey="_id"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fontSize: 9, fill: '#94a3b8' }}
-                                            tickFormatter={(val) => new Date(val).toLocaleDateString('en-US', { month: 'short' })}
-                                        />
-                                        <YAxis hide />
-                                        <Tooltip
-                                            cursor={{ fill: '#f8fafc' }}
-                                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
-                                        />
-                                        <Bar 
-                                            dataKey="count" 
-                                            fill="#3f8cff" 
-                                            radius={[4, 4, 0, 0]} 
-                                            barSize={16} 
-                                            onClick={(data) => handleWidgetClick('month', data?._id)}
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* Won Leads Follow Ups */}
-                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
-                            <h3 className="text-sm font-bold text-slate-800 mb-4">Won Leads by Follow-Ups</h3>
-                            <div className="flex-1 min-h-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={stats?.wonLeadsFollowUpStats}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis
-                                            dataKey="_id"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fontSize: 9, fill: '#94a3b8' }}
-                                            tickFormatter={(val) => `${val} F/U`}
-                                        />
-                                        <YAxis hide />
-                                        <Tooltip
-                                            cursor={{ fill: '#f8fafc' }}
-                                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }}
-                                        />
-                                        <Bar 
-                                            dataKey="count" 
-                                            fill="#10b981" 
-                                            radius={[4, 4, 0, 0]} 
-                                            barSize={24} 
-                                            onClick={(data) => handleWidgetClick('followUpCount', data?._id)}
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Custom Dynamic Widgets */}
-                    {stats?.customWidgets && stats.customWidgets.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {stats.customWidgets.map((widget) => (
-                                <div key={widget.widgetId} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[320px]">
-                                    <h3 className="text-sm font-bold text-slate-800 mb-4">{widget.title}</h3>
-                                    <div className="flex-1 min-h-0">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            {widget.type === 'bar' ? (
-                                                <BarChart data={widget.data}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                    <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
-                                                    <YAxis hide />
-                                                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
-                                                    <Bar 
-                                                        dataKey="count" 
-                                                        fill="#3f8cff" 
-                                                        radius={[4, 4, 0, 0]} 
-                                                        barSize={16} 
-                                                        onClick={(data) => handleWidgetClick(widget.field, data?.payload?.originalId || data?.payload?._id || data?._id)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    />
-                                                </BarChart>
-                                            ) : widget.type === 'pie' ? (
-                                                <PieChart>
-                                                    <Pie 
-                                                        data={widget.data} 
-                                                        innerRadius={50} 
-                                                        outerRadius={70} 
-                                                        paddingAngle={5} 
-                                                        dataKey="count" 
-                                                        nameKey="_id"
-                                                        onClick={(data) => handleWidgetClick(widget.field, data?.payload?._id || data?._id)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    >
-                                                        {widget.data.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                                                        ))}
-                                                    </Pie>
-                                                    <Tooltip />
-                                                </PieChart>
-                                            ) : (
-                                                <AreaChart data={widget.data}>
-                                                    <defs>
-                                                        <linearGradient id={`color-${widget.widgetId}`} x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor="#3f8cff" stopOpacity={0.1} />
-                                                            <stop offset="95%" stopColor="#3f8cff" stopOpacity={0} />
-                                                        </linearGradient>
-                                                    </defs>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                    <XAxis dataKey="_id" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8' }} />
-                                                    <YAxis hide />
-                                                    <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: 'none', fontSize: '10px' }} />
-                                                    <Area 
-                                                        type="monotone" 
-                                                        dataKey="count" 
-                                                        stroke="#3f8cff" 
-                                                        strokeWidth={2} 
-                                                        fillOpacity={1} 
-                                                        fill={`url(#color-${widget.widgetId})`} 
-                                                        activeDot={{ onClick: (e, payload) => handleWidgetClick(widget.field, payload?.payload?.originalId || payload?.payload?._id), cursor: 'pointer' }}
-                                                    />
-                                                </AreaChart>
-                                            )}
-                                        </ResponsiveContainer>
-                                    </div>
-                                    {widget.type === 'pie' ? (
-                                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-4 overflow-y-auto max-h-[80px] scrollbar-hide px-1">
-                                            {widget.data.map((entry, index) => (
-                                                <div key={index} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
-                                                    <div className="flex items-center gap-1.5 overflow-hidden">
-                                                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color || COLORS[index % COLORS.length] }}></div>
-                                                        <span className="text-[10px] font-bold text-slate-600 truncate">{entry._id || 'N/A'}</span>
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-[#3f8cff] bg-blue-50 px-1 rounded-[4px]">{entry.count || 0}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="mt-4 space-y-1 overflow-y-auto max-h-[80px] scrollbar-hide px-1">
-                                            {widget.data.slice(0, 5).map((entry, index) => (
-                                                <div key={index} className="flex items-center justify-between gap-1.5 border-b border-slate-50 pb-1">
-                                                    <span className="text-[10px] font-bold text-slate-600 truncate">{entry._id || 'N/A'}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-1 bg-blue-100 rounded-full w-12 overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-[#3f8cff]"
-                                                                style={{ width: `${Math.min(100, (entry.count / (widget.data[0]?.count || 1)) * 100)}%` }}
-                                                            ></div>
+                        {/* Employee Leaderboard - Admins Only */}
+                        {isAdmin && (
+                            <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[380px]">
+                                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                        <Users className="w-4 h-4 text-[#3f8cff]" />
+                                        Team Lead Distribution
+                                    </h3>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Top 10 Employees</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto scrollbar-hide pr-1">
+                                    {stats?.employeeLeads?.map((emp, i) => (
+                                        <div
+                                            key={emp._id}
+                                            onClick={() => navigate(`/leads?owner=${emp._id}`)}
+                                            className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-[#3f8cff]/20 transition-all h-fit cursor-pointer group/emp"
+                                        >
+                                            <div className="flex items-center gap-2.5 overflow-hidden">
+                                                <div className="relative">
+                                                    {emp.profileImage ? (
+                                                        <img src={emp.profileImage} alt={emp.firstName} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold uppercase">
+                                                            {emp.firstName?.charAt(0)}{emp.lastName?.charAt(0)}
                                                         </div>
-                                                        <span className="text-[10px] font-black text-[#3f8cff] min-w-[20px] text-right">{entry.count || 0}</span>
-                                                    </div>
+                                                    )}
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></div>
                                                 </div>
-                                            ))}
+                                                <div className="overflow-hidden">
+                                                    <p className="text-[11px] font-bold text-slate-800 truncate">{emp.firstName} {emp.lastName}</p>
+                                                    <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.role || 'Employee'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-[13px] font-black text-[#3f8cff] leading-none">{emp.count}</p>
+                                                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">Leads</p>
+                                            </div>
                                         </div>
+                                    ))}
+                                    {(!stats?.employeeLeads || stats?.employeeLeads.length === 0) && (
+                                        <div className="col-span-full py-8 text-center text-slate-400 text-xs">No assignments found</div>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            </div>
+                        )}
 
-                    {/* Employee Leaderboard - Admins Only */}
-                    {isAdmin && (
-                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[380px]">
-                            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-[#3f8cff]" />
-                                    Team Lead Distribution
-                                </h3>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Top 10 Employees</span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto scrollbar-hide pr-1">
-                                {stats?.employeeLeads?.map((emp, i) => (
-                                    <div
-                                        key={emp._id}
-                                        onClick={() => navigate(`/leads?owner=${emp._id}`)}
-                                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-[#3f8cff]/20 transition-all h-fit cursor-pointer group/emp"
-                                    >
-                                        <div className="flex items-center gap-2.5 overflow-hidden">
-                                            <div className="relative">
-                                                {emp.profileImage ? (
-                                                    <img src={emp.profileImage} alt={emp.firstName} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold uppercase">
-                                                        {emp.firstName?.charAt(0)}{emp.lastName?.charAt(0)}
-                                                    </div>
-                                                )}
-                                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></div>
-                                            </div>
-                                            <div className="overflow-hidden">
-                                                <p className="text-[11px] font-bold text-slate-800 truncate">{emp.firstName} {emp.lastName}</p>
-                                                <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.role || 'Employee'}</p>
-                                            </div>
+                        {/* Client Sales Team Leaderboard - Clients Only */}
+                        {isClient && (
+                            <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[380px]">
+                                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                        <Users className="w-4 h-4 text-indigo-500" />
+                                        Sales Team Performance
+                                    </h3>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Your Team</span>
+                                </div>
+                                <div className="grid  grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3  overflow-y-auto scrollbar-hide pr-1">
+                                    {clientTeamStatsLoading ? (
+                                        <div className="col-span-full flex items-center justify-center h-full">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                                         </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className="text-[13px] font-black text-[#3f8cff] leading-none">{emp.count}</p>
-                                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">Leads</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!stats?.employeeLeads || stats?.employeeLeads.length === 0) && (
-                                    <div className="col-span-full py-8 text-center text-slate-400 text-xs">No assignments found</div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Client Sales Team Leaderboard - Clients Only */}
-                    {isClient && (
-                        <div className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col h-[380px]">
-                            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-indigo-500" />
-                                    Sales Team Performance
-                                </h3>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Your Team</span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto scrollbar-hide pr-1">
-                                {clientTeamStatsLoading ? (
-                                    <div className="col-span-full flex items-center justify-center h-full">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                                    </div>
-                                ) : clientTeamStats.map((emp) => (
-                                    <div
-                                        key={emp._id}
-                                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-indigo-500/20 transition-all h-fit group/emp"
-                                    >
-                                        <div className="flex items-center gap-2.5 overflow-hidden">
-                                            <div className="relative">
-                                                {emp.avatar ? (
-                                                    <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center text-xs font-bold uppercase">
-                                                        {emp.name?.split(' ').map(n=>n[0]).join('').slice(0,2) || 'S'}
-                                                    </div>
-                                                )}
-                                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></div>
+                                    ) : clientTeamStats.map((emp) => (
+                                        <div
+                                            key={emp._id}
+                                            className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 hover:border-indigo-500/20 transition-all h-fit group/emp"
+                                        >
+                                            <div className="flex items-center gap-2.5 overflow-hidden">
+                                                <div className="relative">
+                                                    {emp.avatar ? (
+                                                        <img src={emp.avatar} alt={emp.name} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center text-xs font-bold uppercase">
+                                                            {emp.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'S'}
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></div>
+                                                </div>
+                                                <div className="overflow-hidden">
+                                                    <p className="text-[11px] font-bold text-slate-800 truncate">{emp.name || 'Unknown'}</p>
+                                                    <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.role || 'Agent'}</p>
+                                                </div>
                                             </div>
-                                            <div className="overflow-hidden">
-                                                <p className="text-[11px] font-bold text-slate-800 truncate">{emp.name || 'Unknown'}</p>
-                                                <p className="text-[9px] text-slate-400 font-medium capitalize">{emp.role || 'Agent'}</p>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-[13px] font-black text-indigo-600 leading-none">{emp.stats?.total || 0}</p>
+                                                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">Leads</p>
                                             </div>
                                         </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <p className="text-[13px] font-black text-indigo-600 leading-none">{emp.stats?.total || 0}</p>
-                                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">Leads</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!clientTeamStats || clientTeamStats.length === 0) && !clientTeamStatsLoading && (
-                                    <div className="col-span-full py-8 text-center text-slate-400 text-xs">No team leads assigned yet</div>
-                                )}
+                                    ))}
+                                    {(!clientTeamStats || clientTeamStats.length === 0) && !clientTeamStatsLoading && (
+                                        <div className="col-span-full py-8 text-center text-slate-400 text-xs">No team leads assigned yet</div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
                     </div>
 
                     {/* Right Column - Actionable Lists */}
                     {viewMode === 'all' && (
                         <div className="space-y-2">
-                            <ActionableListsContent 
-                                stats={stats} 
-                                navigate={navigate} 
-                                onLeadClick={onLeadClick} 
-                                handleCall={handleCall} 
-                                handleEmail={handleEmail} 
-                                isClient={isClient} 
-                                selectedProject={selectedProject} 
-                                selectedCampaign={selectedCampaign} 
+                            <ActionableListsContent
+                                stats={stats}
+                                navigate={navigate}
+                                onLeadClick={onLeadClick}
+                                handleCall={handleCall}
+                                handleEmail={handleEmail}
+                                isClient={isClient}
+                                selectedProject={selectedProject}
+                                selectedCampaign={selectedCampaign}
                             />
                         </div>
                     )}
                 </div>
             )}
-            
+
             {/* Actionable Lists for stats mode */}
             {viewMode === 'stats' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-2">
-                    <ActionableListsContent 
-                        stats={stats} 
-                        navigate={navigate} 
-                        onLeadClick={onLeadClick} 
-                        handleCall={handleCall} 
-                        handleEmail={handleEmail} 
-                        isClient={isClient} 
-                        selectedProject={selectedProject} 
-                        selectedCampaign={selectedCampaign} 
+                    <ActionableListsContent
+                        stats={stats}
+                        navigate={navigate}
+                        onLeadClick={onLeadClick}
+                        handleCall={handleCall}
+                        handleEmail={handleEmail}
+                        isClient={isClient}
+                        selectedProject={selectedProject}
+                        selectedCampaign={selectedCampaign}
                     />
                 </div>
             )}

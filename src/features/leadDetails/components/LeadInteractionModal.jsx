@@ -280,7 +280,20 @@ const LeadInteractionModal = ({
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700">Mark as Follow-up Lead?</label>
                     <button
-                      onClick={() => setIsFollowUp(!isFollowUp)}
+                      onClick={() => {
+                        const newFollowUpState = !isFollowUp;
+                        setIsFollowUp(newFollowUpState);
+                        if (newFollowUpState) {
+                          const contactedStatus = statuses.find(s => s.category?.toLowerCase() === 'contacted');
+                          if (contactedStatus) {
+                            setStatusId(contactedStatus.id || contactedStatus._id);
+                            const statusField = formFields.find(f => f.key === "status" || String(f.id) === "status");
+                            if (statusField) {
+                              setFormValues(prev => ({ ...prev, [statusField.id]: contactedStatus.id || contactedStatus._id }));
+                            }
+                          }
+                        }
+                      }}
                       className={`w-12 h-6 rounded-full transition-all relative ${
                         isFollowUp ? 'bg-[#3f8cff]' : 'bg-slate-200'
                       }`}

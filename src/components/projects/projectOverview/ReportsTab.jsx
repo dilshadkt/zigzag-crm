@@ -1,9 +1,44 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useGetProjectBranchReport } from "../../../features/leads/api";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
-export const ReportsTab = ({ currentProject, onBranchClick }) => {
-  const { data: reportData, isLoading } = useGetProjectBranchReport(currentProject?._id);
+export const ReportsTab = ({ currentProject, onBranchClick, onCategoryClick }) => {
+  const [dateFilterType, setDateFilterType] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+
+  const dateParams = useMemo(() => {
+    const now = new Date();
+    let startDate = null;
+    let endDate = null;
+
+    switch (dateFilterType) {
+      case "today":
+        startDate = startOfDay(now).toISOString();
+        endDate = endOfDay(now).toISOString();
+        break;
+      case "week":
+        startDate = startOfWeek(now, { weekStartsOn: 1 }).toISOString();
+        endDate = endOfWeek(now, { weekStartsOn: 1 }).toISOString();
+        break;
+      case "month":
+        startDate = startOfMonth(now).toISOString();
+        endDate = endOfMonth(now).toISOString();
+        break;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          startDate = startOfDay(new Date(customStartDate)).toISOString();
+          endDate = endOfDay(new Date(customEndDate)).toISOString();
+        }
+        break;
+      default:
+        break;
+    }
+
+    return (startDate && endDate) ? { startDate, endDate } : {};
+  }, [dateFilterType, customStartDate, customEndDate]);
+
+  const { data: reportData, isLoading } = useGetProjectBranchReport(currentProject?._id, dateParams);
 
   const branches = reportData?.data || [];
 
@@ -50,10 +85,42 @@ export const ReportsTab = ({ currentProject, onBranchClick }) => {
 
   return (
     <div className="flex flex-col h-full bg-white rounded-[2rem] border border-slate-100 p-6 overflow-hidden">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800">LEADS OVERVIEW</h3>
           <p className="text-xs text-slate-500">Branch-wise lead performance and conversion matrix</p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          {dateFilterType === "custom" && (
+            <div className="flex items-center gap-2">
+              <input 
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+              <span className="text-slate-400 text-sm">to</span>
+              <input 
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+          )}
+          
+          <select 
+            value={dateFilterType}
+            onChange={(e) => setDateFilterType(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer font-medium shadow-sm min-w-[140px]"
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
         </div>
       </div>
 
@@ -87,18 +154,42 @@ export const ReportsTab = ({ currentProject, onBranchClick }) => {
                     {branch._id}
                   </button>
                 </td>
-                <td className="py-3 px-4 text-xs font-semibold text-slate-600 text-center border-r border-slate-100">{branch.totalLeads}</td>
-                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">{branch.call1}</td>
-                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">{branch.call2}</td>
-                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">{branch.call3}</td>
-                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">{branch.call4}</td>
-                <td className="py-3 px-4 text-xs font-medium text-blue-600 text-center border-r border-slate-100 bg-blue-50/30">{branch.contacted}</td>
-                <td className="py-3 px-4 text-xs font-medium text-purple-600 text-center border-r border-slate-100 bg-purple-50/30">{branch.qualified}</td>
-                <td className="py-3 px-4 text-xs font-bold text-orange-600 text-center border-r border-slate-100 bg-orange-50/30">{branch.hot}</td>
-                <td className="py-3 px-4 text-xs font-medium text-amber-600 text-center border-r border-slate-100 bg-amber-50/30">{branch.warm}</td>
-                <td className="py-3 px-4 text-xs font-medium text-sky-600 text-center border-r border-slate-100 bg-sky-50/30">{branch.cold}</td>
-                <td className="py-3 px-4 text-xs font-black text-emerald-600 text-center border-r border-slate-100 bg-emerald-50/30">{branch.won}</td>
-                <td className="py-3 px-4 text-xs font-black text-rose-600 text-center bg-rose-50/30">{branch.lost}</td>
+                <td className="py-3 px-4 text-xs font-semibold text-slate-600 text-center border-r border-slate-100">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id)} className="hover:text-blue-600 hover:underline">{branch.totalLeads}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'followUpCount', 1)} className="hover:text-blue-600 hover:underline">{branch.call1}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'followUpCount', 2)} className="hover:text-blue-600 hover:underline">{branch.call2}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'followUpCount', 3)} className="hover:text-blue-600 hover:underline">{branch.call3}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-slate-600 text-center border-r border-slate-100">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'followUpCount', 4)} className="hover:text-blue-600 hover:underline">{branch.call4}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-blue-600 text-center border-r border-slate-100 bg-blue-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'statusCategory', 'Contacted')} className="hover:underline">{branch.contacted}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-purple-600 text-center border-r border-slate-100 bg-purple-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'statusCategory', 'Qualified')} className="hover:underline">{branch.qualified}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-bold text-orange-600 text-center border-r border-slate-100 bg-orange-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'scoreCategory', 'hot')} className="hover:underline">{branch.hot}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-amber-600 text-center border-r border-slate-100 bg-amber-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'scoreCategory', 'warm')} className="hover:underline">{branch.warm}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-medium text-sky-600 text-center border-r border-slate-100 bg-sky-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'scoreCategory', 'cold')} className="hover:underline">{branch.cold}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-black text-emerald-600 text-center border-r border-slate-100 bg-emerald-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'statusCategory', 'Won')} className="hover:underline">{branch.won}</button>
+                </td>
+                <td className="py-3 px-4 text-xs font-black text-rose-600 text-center bg-rose-50/30">
+                  <button onClick={() => onCategoryClick && onCategoryClick(branch._id, 'statusCategory', 'Lost')} className="hover:underline">{branch.lost}</button>
+                </td>
               </tr>
             ))}
             {branches.length === 0 && (

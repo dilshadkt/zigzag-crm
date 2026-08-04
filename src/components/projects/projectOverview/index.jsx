@@ -589,6 +589,21 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
             setSelectedBranchId(branchName === "Unassigned" ? "" : branchName);
             setActiveTab("lead");
           }}
+          onCategoryClick={(branchName, filterType, filterValue) => {
+            setSelectedBranchId(branchName === "Unassigned" ? "" : branchName);
+            
+            const url = new URL(window.location);
+            url.searchParams.delete('scoreCategory');
+            url.searchParams.delete('statusCategory');
+            url.searchParams.delete('followUpCount');
+            
+            if (filterType) {
+              url.searchParams.set(filterType, filterValue);
+            }
+            
+            window.history.pushState({}, '', url);
+            setActiveTab("lead");
+          }}
         />
       )}
 

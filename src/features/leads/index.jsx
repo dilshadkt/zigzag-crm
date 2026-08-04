@@ -156,7 +156,22 @@ const LeadsFeature = ({
     return params.get('project') || "";
   });
   const [ownerFilterState, setOwnerFilterState] = useState(() => sessionStorage.getItem('leads_ownerFilter') || "");
-  const [scoreFilterState, setScoreFilterState] = useState(() => sessionStorage.getItem('leads_scoreFilter') || "");
+  
+  const [scoreFilterState, setScoreFilterState] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('scoreCategory') || sessionStorage.getItem('leads_scoreFilter') || "";
+  });
+  
+  const [statusCategoryState, setStatusCategoryState] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('statusCategory') || sessionStorage.getItem('leads_statusCategory') || "";
+  });
+  
+  const [followUpCountState, setFollowUpCountState] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('followUpCount') || sessionStorage.getItem('leads_followUpCount') || "";
+  });
+
   useEffect(() => {
     if (ownerFilterState) sessionStorage.setItem('leads_ownerFilter', ownerFilterState);
     else sessionStorage.removeItem('leads_ownerFilter');
@@ -166,6 +181,16 @@ const LeadsFeature = ({
     if (scoreFilterState) sessionStorage.setItem('leads_scoreFilter', scoreFilterState);
     else sessionStorage.removeItem('leads_scoreFilter');
   }, [scoreFilterState]);
+
+  useEffect(() => {
+    if (statusCategoryState) sessionStorage.setItem('leads_statusCategory', statusCategoryState);
+    else sessionStorage.removeItem('leads_statusCategory');
+  }, [statusCategoryState]);
+
+  useEffect(() => {
+    if (followUpCountState) sessionStorage.setItem('leads_followUpCount', followUpCountState);
+    else sessionStorage.removeItem('leads_followUpCount');
+  }, [followUpCountState]);
   const navigate = useNavigate();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
@@ -379,7 +404,7 @@ const LeadsFeature = ({
   // Reset page when owner or score filter changes
   useEffect(() => {
     setPage(1);
-  }, [ownerFilterState, scoreFilterState]);
+  }, [ownerFilterState, scoreFilterState, statusCategoryState, followUpCountState]);
 
   // Use the custom hook to get leads data
   const {
@@ -401,6 +426,8 @@ const LeadsFeature = ({
     // Otherwise allow filtering by owner from ownerFilterState or appliedFilters (dashboard click)
     owner: (isEmployee && !canManageAllLeads) ? user._id : (ownerFilterState || appliedFilters.owner?.value || null),
     scoreCategory: scoreFilterState || null,
+    statusCategory: statusCategoryState || null,
+    followUpCount: followUpCountState || null,
     appliedFilters,
     projectId: projectFilterState || projectFilter || projectId,
     isFollowUp: isFollowUpOnly || activeAction === 'followup',

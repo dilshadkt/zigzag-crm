@@ -197,7 +197,7 @@ const LeadDetailsPage = ({ isClient = false }) => {
           Lead not found or has been removed.
         </p>
         <button
-          onClick={() => navigate(isClient ? "/portal/dashboard" : "/leads")}
+          onClick={() => navigate(isClient ? "/portal/leads" : "/leads")}
           className="px-4 py-2 rounded-full bg-[#3f8cff] text-white font-medium"
         >
           Back to Leads
@@ -216,7 +216,7 @@ const LeadDetailsPage = ({ isClient = false }) => {
           Lead not found or has been removed.
         </p>
         <button
-          onClick={() => navigate(isClient ? "/portal/dashboard" : "/leads")}
+          onClick={() => navigate(isClient ? "/portal/leads" : "/leads")}
           className="px-4 py-2 rounded-full bg-[#3f8cff] text-white font-medium"
         >
           Back to Leads
@@ -237,7 +237,7 @@ const LeadDetailsPage = ({ isClient = false }) => {
         if (location.state?.from) {
           navigate(location.state.from);
         } else {
-          navigate(isClient ? "/portal/dashboard" : "/leads");
+          navigate(isClient ? "/portal/leads" : "/leads");
         }
       }}
       isClient={isClient}

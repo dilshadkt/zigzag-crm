@@ -19,6 +19,8 @@ export const useLeadsData = (filters = {}) => {
     endDate,
     timezoneOffset,
     scoreCategory,
+    statusCategory,
+    followUpCount,
   } = filters;
 
   // Fetch leads data
@@ -46,6 +48,8 @@ export const useLeadsData = (filters = {}) => {
     endDate,
     timezoneOffset,
     scoreCategory,
+    statusCategory,
+    followUpCount,
   });
 
   // Fetch form configuration
