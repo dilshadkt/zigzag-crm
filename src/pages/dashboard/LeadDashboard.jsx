@@ -13,25 +13,15 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
-import {
-    Flame,
-    TrendingDown,
-    CalendarCheck,
-    Users,
-    Trophy,
-    Target,
-    ArrowUpRight,
-    ArrowDownRight,
-    Search,
-    Mail,
-    Phone
+import { 
+    Users, Phone, Mail, ArrowUpRight, ArrowDownRight, Trophy, Target, Flame, TrendingUp, Filter, AlertCircle, RefreshCcw, FileText, CheckCircle2, TrendingDown, Clock, Search, X, ChevronDown, ListIcon, LayoutGrid, SlidersHorizontal, CalendarCheck, MapPin, Building, Briefcase, Plus, Calendar 
 } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
 import { useCompanyActiveProjects } from "../../api/hooks";
 import { useGetCampaignsByCompany } from "../../api/campaigns";
-import { Filter, X, Briefcase, Megaphone, List as ListIcon } from "lucide-react";
+import { Megaphone } from "lucide-react";
 
 const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, onBranchFilterChange, branches = [] }) => {
     const navigate = useNavigate();
@@ -778,7 +768,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
 
             {/* Actionable Lists for stats mode */}
             {viewMode === 'stats' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 mt-2">
                     <ActionableListsContent
                         stats={stats}
                         navigate={navigate}
@@ -948,6 +938,32 @@ const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, hand
                         ))
                     ) : (
                         <div className="p-6 text-center text-slate-400 text-xs">No follow-ups for today</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Upcoming Follow-ups */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden">
+                <div className="p-3.5 border-b border-slate-50 flex items-center justify-between bg-purple-50/20">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-purple-500" />
+                        Upcoming Follow-ups
+                    </h3>
+                </div>
+                <div className="divide-y divide-slate-50 h-[380px] overflow-y-auto scrollbar-hide">
+                    {stats?.upcomingFollowUps?.leads?.length > 0 ? (
+                        stats?.upcomingFollowUps?.leads.map(lead => (
+                            <LeadListItem
+                                key={lead._id}
+                                lead={lead}
+                                onClick={() => onLeadClick(lead._id)}
+                                onCall={(e) => handleCall(e, lead.contact?.phone)}
+                                onMail={(e) => handleEmail(e, lead.contact?.email)}
+                                time={new Date(lead.scheduled).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            />
+                        ))
+                    ) : (
+                        <div className="p-6 text-center text-slate-400 text-xs">No upcoming follow-ups</div>
                     )}
                 </div>
             </div>

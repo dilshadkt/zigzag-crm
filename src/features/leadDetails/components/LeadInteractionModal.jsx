@@ -51,9 +51,27 @@ const LeadInteractionModal = ({
   }, [formConfigData]);
 
   useEffect(() => {
+    let initialStatusId = "";
+    let contactedStatus = null;
+    let currentStatusName = "";
+
     if (lead?.status) {
-      const currentStatusId = lead.status._id || lead.status.id || lead.status;
-      setStatusId(currentStatusId);
+      initialStatusId = lead.status._id || lead.status.id || lead.status;
+      currentStatusName = (lead.status.name || lead.status.category || "").toLowerCase();
+      
+      if (currentStatusName === "new" && statuses && statuses.length > 0) {
+        contactedStatus = statuses.find(s => 
+          (s.category && s.category.toLowerCase() === 'contacted') || 
+          (s.name && s.name.toLowerCase() === 'contacted') ||
+          (s.name && s.name.toLowerCase().includes('contacted'))
+        );
+        
+        if (contactedStatus) {
+          initialStatusId = contactedStatus.id || contactedStatus._id;
+        }
+      }
+      
+      setStatusId(initialStatusId);
     }
     if (isOpen) {
       setNote("");
@@ -82,6 +100,13 @@ const LeadInteractionModal = ({
               value = String(value);
             }
           }
+          
+          if (field.key === "status" || fieldId === "status" || field.label?.toLowerCase() === "status") {
+            if (currentStatusName === "new" && contactedStatus) {
+                value = contactedStatus.id || contactedStatus._id;
+            }
+          }
+
           initialValues[fieldId] = value !== null && value !== undefined ? String(value) : "";
         });
         setFormValues(initialValues);
@@ -170,7 +195,7 @@ const LeadInteractionModal = ({
       interactionData: {
         note, 
         statusId: formStatusId, 
-        scheduled: scheduledDate,
+        scheduled: scheduledDate ? new Date(scheduledDate).toISOString() : null,
         isFollowUp 
       },
       leadUpdateData

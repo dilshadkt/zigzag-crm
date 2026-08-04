@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, memo } from "react";
-import { FiMoreVertical } from "react-icons/fi";
+import { FiMoreVertical, FiClock } from "react-icons/fi";
 import { FaFacebook, FaWhatsapp, FaInstagram } from "react-icons/fa";
 // ... (rest of imports)
 import LeadStatusBadge from "./LeadStatusBadge";
@@ -127,6 +127,11 @@ const columnRenderers = {
           <div className="text-[13px] whitespace-nowrap font-medium text-slate-900">
             {lead.name || lead.contact?.name || "—"}
           </div>
+          {lead.isFollowUp && (
+            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 text-purple-600" title="Follow-up Scheduled">
+                <FiClock size={12} />
+            </div>
+          )}
           {isFacebook && (
             <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
           )}
@@ -169,6 +174,11 @@ const columnRenderers = {
           <div className="text-[13px] font-medium text-slate-900">
             {lead.name || lead.contact?.name || "—"}
           </div>
+          {lead.isFollowUp && (
+            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 text-purple-600" title="Follow-up Scheduled">
+                <FiClock size={12} />
+            </div>
+          )}
           {isFacebook && (
             <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
           )}

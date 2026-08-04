@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { FiMoreVertical, FiMail, FiPhone, FiCalendar, FiUser } from "react-icons/fi";
+import { FiMoreVertical, FiMail, FiPhone, FiCalendar, FiUser, FiClock } from "react-icons/fi";
 import { FaFacebook, FaWhatsapp, FaInstagram } from "react-icons/fa";
 import LeadStatusBadge from "./LeadStatusBadge";
 import StatusDropdown from "./StatusDropdown";
@@ -134,6 +134,11 @@ const LeadCard = memo(({
                     <div>
                         <h3 className="text-[13px] font-bold text-slate-900 leading-tight flex items-center gap-1.5 flex-wrap">
                             {leadName}
+                            {lead.isFollowUp && (
+                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 text-purple-600 ml-1" title="Follow-up Scheduled">
+                                    <FiClock size={12} />
+                                </div>
+                            )}
                             {isFacebook && (
                                 <FaFacebook className="text-[#1877F2] w-3.5 h-3.5 flex-shrink-0" title="Facebook Lead" />
                             )}
@@ -143,18 +148,33 @@ const LeadCard = memo(({
                             {isInstagram && (
                                 <FaInstagram className="text-[#E1306C] w-3.5 h-3.5 flex-shrink-0" title="Instagram Lead" />
                             )}
-                            {(lead.branch || lead.customFields?.branch) && (
-                                <span className="text-[10px] text-slate-400 font-semibold ml-0.5 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                    {lead.branch || lead.customFields?.branch}
-                                </span>
-                            )}
-                            {lead.project && (
-                                <span className="text-[10px] text-[#3f8cff] font-semibold ml-1 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                                    {typeof lead.project === 'object' ? lead.project.name : 'Project'}
-                                </span>
-                            )}
                         </h3>
-                        <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                        <div className="mt-1 mb-0.5 flex flex-col gap-1.5">
+                            {/* Branch and Project */}
+                            {((lead.branch || lead.customFields?.branch) || (lead.project && !window.location.pathname.includes('/portal'))) && (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    {(lead.branch || lead.customFields?.branch) && (
+                                        <span className="inline-block text-[9px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-wide">
+                                            {lead.branch || lead.customFields?.branch}
+                                        </span>
+                                    )}
+                                    {lead.project && !window.location.pathname.includes('/portal') && (
+                                        <span className="inline-block text-[10px] text-[#3f8cff] font-semibold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                            {typeof lead.project === 'object' ? lead.project.name : 'Project'}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Follow-up Date */}
+                            {lead.isFollowUp && lead.scheduled && (
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md w-fit border border-purple-100">
+                                    <FiClock size={10} />
+                                    {new Date(lead.scheduled).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-1">
                             <FiCalendar size={9} />
                             {formatDate(fbTime || lead.createdAt || lead.createdOn)}
                         </div>
@@ -167,10 +187,6 @@ const LeadCard = memo(({
                         onStatusChange={(statusId) => onStatusChange(lead, statusId)}
                         compact={true}
                     />
-                    <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ring-1 ${ringColor}`}>
-                        <div className={`w-1 h-1 rounded-full ${dotColor}`} />
-                        <span className={`text-[10px] font-bold ${textColor}`}>{label} {leadScore}</span>
-                    </div>
                     <button
                         ref={actionButtonRef}
                         onClick={handleActionButtonClick}
@@ -227,6 +243,11 @@ const LeadCard = memo(({
                 >
                     Create Task
                 </button> */}
+                
+                <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ring-1 ${ringColor}`}>
+                    <div className={`w-1 h-1 rounded-full ${dotColor}`} />
+                    <span className={`text-[10px] font-bold ${textColor}`}>{label} {leadScore}</span>
+                </div>
             </div>
 
             <LeadRowContextMenu

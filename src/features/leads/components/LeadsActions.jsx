@@ -26,6 +26,7 @@ const LeadsActions = ({
   onSearchChange,
   isClient,
   canAddLead = true,
+  onOpenMobileGlobalFilters,
 }) => {
   return (
     <div className="flex items-center  w-full justify-between">
@@ -40,10 +41,17 @@ const LeadsActions = ({
         >
           <FiPieChart size={18} />
         </button>
+        <button
+          onClick={onOpenMobileGlobalFilters}
+          className="flex md:hidden items-center justify-center bg-blue-50 border border-blue-100 text-blue-600 h-9 w-9 rounded-full hover:bg-blue-100 transition-colors"
+          aria-label="Global filters"
+        >
+          <FiFilter size={16} />
+        </button>
         {(!isClient || canAddLead) && (
           <button
             onClick={onAddLead}
-            className="flex items-center justify-center bg-[#3f8cff] text-white h-9 w-9 md:h-11 md:w-auto md:px-5 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"
+            className="hidden md:flex items-center justify-center bg-[#3f8cff] text-white h-9 w-9 md:h-11 md:w-auto md:px-5 rounded-full shadow-sm hover:bg-[#2f6bff] transition-colors"
             aria-label="Add lead"
           >
             <FiPlus size={18} className="md:w-[16px]" />
@@ -52,7 +60,7 @@ const LeadsActions = ({
         )}
         <button
           onClick={onAddFilter}
-          className="flex items-center justify-center border border-slate-200 text-slate-700 h-9 w-9 md:h-11 md:w-auto md:px-4 rounded-full hover:border-slate-300 transition-colors"
+          className="hidden md:flex items-center justify-center border border-slate-200 text-slate-700 h-9 w-9 md:h-11 md:w-auto md:px-4 rounded-full hover:border-slate-300 transition-colors"
           aria-label="Add filter"
         >
           <FiFilter size={16} className="md:w-[16px]" />
@@ -68,7 +76,7 @@ const LeadsActions = ({
         </button>
         <button
           onClick={onToggleLayout}
-          className={` ml-2  md:ml-0 ${iconButtonClasses}`}
+          className={`hidden md:flex ml-2 md:ml-0 ${iconButtonClasses}`}
           aria-label="Toggle layout"
         >
           <FiColumns size={18} />

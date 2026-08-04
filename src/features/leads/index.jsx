@@ -134,6 +134,7 @@ const LeadsFeature = ({
   const [isAssignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedLeadForAssign, setSelectedLeadForAssign] = useState(null);
   const [isFilterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [isMobileGlobalFiltersOpen, setIsMobileGlobalFiltersOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
   const [isFromInsights, setIsFromInsights] = useState(false);
   const [isBulkMoreMenuOpen, setBulkMoreMenuOpen] = useState(false);
@@ -1226,6 +1227,144 @@ const LeadsFeature = ({
     XLSX.writeFile(wb, "lead_import_template.xlsx");
   };
 
+  const globalFiltersContent = (
+    <>
+      {/* Date Filter */}
+      <div className="flex flex-col gap-1 flex-1 min-w-[130px]">
+        <span className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest md:hidden mb-0.5">
+          Date Range
+        </span>
+        <span className="hidden md:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+          Date Range
+        </span>
+        <div className="flex items-center gap-1">
+          <select
+            value={statsDateRange?.preset || ''}
+            onChange={handleDatePresetChange}
+            className="w-full px-3 md:px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+          >
+            <option value="">All Time</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this_week">This Week</option>
+            <option value="last_week">Last Week</option>
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="custom">
+              {statsDateRange?.preset === 'custom' && statsDateRange?.startDate && statsDateRange?.endDate
+                ? `${format(new Date(statsDateRange.startDate), 'MMM d')} - ${format(new Date(statsDateRange.endDate), 'MMM d')}`
+                : "Custom Date Range"}
+            </option>
+          </select>
+          {statsDateRange?.preset === 'custom' && (
+            <button
+              onClick={() => setShowCustomDateModal(true)}
+              className="p-2 md:p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-colors border border-indigo-100"
+              title="Edit Custom Date Range"
+            >
+              <svg className="w-4 h-4 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Branch Filter */}
+      {actualBranches && actualBranches.length > 0 && (
+        <div className="flex flex-col gap-1 md:pl-2 flex-1 min-w-[130px]">
+          <span className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest md:hidden mb-0.5">
+            Branch View
+          </span>
+          <span className="hidden md:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+            Branch View
+          </span>
+          <SearchableDropdown
+            value={activeBranchFilter || ""}
+            onChange={(val) => {
+              if (onBranchFilterChange) {
+                onBranchFilterChange(val);
+              } else {
+                setBranchFilterState(val);
+              }
+            }}
+            options={branchOptions}
+            placeholder="Global Overview"
+            className="w-full text-xs"
+          />
+        </div>
+      )}
+
+      {/* Project Filter */}
+      {!isClient && !projectId && (
+        <div className="flex flex-col gap-1 md:pl-2 flex-1 min-w-[130px]">
+          <span className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest md:hidden mb-0.5">
+            Project View
+          </span>
+          <span className="hidden md:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+            Project View
+          </span>
+          <select
+            value={projectFilterState || ""}
+            onChange={(e) => {
+              setProjectFilter(e.target.value);
+              setBranchFilterState(""); // Reset branch when project changes
+              if (onProjectFilterChange) onProjectFilterChange(e.target.value);
+            }}
+            className="w-full px-3 md:px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+          >
+            <option value="">All Projects</option>
+            {projects.map(p => (
+              <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Owner Filter */}
+      {ownersList && ownersList.length > 0 && (
+        <div className="flex flex-col gap-1 md:pl-2 flex-1 min-w-[130px]">
+          <span className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest md:hidden mb-0.5">
+            Owner
+          </span>
+          <span className="hidden md:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+            Owner
+          </span>
+          <select
+            value={ownerFilterState}
+            onChange={(e) => setOwnerFilterState(e.target.value)}
+            className="w-full px-3 md:px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+          >
+            <option value="">All Owners</option>
+            {ownersList.map(u => {
+              const id = u._id || u.id;
+              const name = (isClient || projectId) ? u.name : (`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.name || "Unknown");
+              return <option key={id} value={id}>{name}</option>;
+            })}
+          </select>
+        </div>
+      )}
+      
+      {/* Score Filter */}
+      <div className="flex flex-col gap-1 md:pl-2 flex-1 min-w-[130px]">
+        <span className="block text-[10px] font-medium text-slate-500 uppercase tracking-widest md:hidden mb-0.5">
+          Score
+        </span>
+        <span className="hidden md:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+          Score
+        </span>
+        <select
+          value={scoreFilterState}
+          onChange={(e) => setScoreFilterState(e.target.value)}
+          className="w-full px-3 md:px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
+        >
+          <option value="">All Scores</option>
+          <option value="hot">Hot Leads</option>
+          <option value="warm">Warm Leads</option>
+          <option value="cold">Cold Leads</option>
+        </select>
+      </div>
+    </>
+  );
+
   return (
     <section className="h-full overflow-hidden">
       <div 
@@ -1236,123 +1375,8 @@ const LeadsFeature = ({
 
         {/* Global Filters Row */}
         {((branches && branches.length > 0 && !isClient) || true) && (
-          <div className="flex flex-row overflow-x-auto scrollbar-hide items-center gap-2 sm:gap-3 bg-white p-2 md:p-2.5 px-3 md:px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 relative z-50 w-full">
-            {/* Date Filter */}
-            <div className="flex flex-col gap-1 flex-1 min-w-[130px]">
-              <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-                Date Range
-              </span>
-              <div className="flex items-center gap-1">
-              <select
-                value={statsDateRange?.preset || ''}
-                onChange={handleDatePresetChange}
-                className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-              >
-                <option value="">All Time</option>
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="this_week">This Week</option>
-                <option value="last_week">Last Week</option>
-                <option value="this_month">This Month</option>
-                <option value="last_month">Last Month</option>
-                <option value="custom">
-                  {statsDateRange?.preset === 'custom' && statsDateRange?.startDate && statsDateRange?.endDate
-                    ? `${format(new Date(statsDateRange.startDate), 'MMM d')} - ${format(new Date(statsDateRange.endDate), 'MMM d')}`
-                    : "Custom Date Range"}
-                </option>
-              </select>
-              {statsDateRange?.preset === 'custom' && (
-                <button
-                  onClick={() => setShowCustomDateModal(true)}
-                  className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-colors border border-indigo-100"
-                  title="Edit Custom Date Range"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                </button>
-              )}
-              </div>
-            </div>
-
-            {/* Branch Filter */}
-            {actualBranches && actualBranches.length > 0 && (
-              <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
-                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-                  Branch View
-                </span>
-                <SearchableDropdown
-                  value={activeBranchFilter || ""}
-                  onChange={(val) => {
-                    if (onBranchFilterChange) {
-                      onBranchFilterChange(val);
-                    } else {
-                      setBranchFilterState(val);
-                    }
-                  }}
-                  options={branchOptions}
-                  placeholder="Global Overview"
-                  className="w-full"
-                />
-              </div>
-            )}
-            {/* Project Filter */}
-            {!isClient && !projectId && (
-              <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
-                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-                  Project View
-                </span>
-                <select
-                  value={projectFilterState || ""}
-                  onChange={(e) => {
-                    setProjectFilter(e.target.value);
-                    setBranchFilterState(""); // Reset branch when project changes
-                    if (onProjectFilterChange) onProjectFilterChange(e.target.value);
-                  }}
-                  className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-                >
-                  <option value="">All Projects</option>
-                  {projects.map(p => (
-                    <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {/* Owner Filter */}
-            {ownersList && ownersList.length > 0 && (
-              <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
-                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-                  Owner
-                </span>
-                <select
-                  value={ownerFilterState}
-                  onChange={(e) => setOwnerFilterState(e.target.value)}
-                  className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-                >
-                  <option value="">All Owners</option>
-                  {ownersList.map(u => {
-                    const id = u._id || u.id;
-                    const name = (isClient || projectId) ? u.name : (`${u.firstName || ""} ${u.lastName || ""}`.trim() || u.name || "Unknown");
-                    return <option key={id} value={id}>{name}</option>;
-                  })}
-                </select>
-              </div>
-            )}
-            
-            {/* Score Filter */}
-            <div className="flex flex-col gap-1 pl-2 sm:pl-3 flex-1 min-w-[130px]">
-                <span className="hidden sm:block text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-                  Score
-                </span>
-              <select
-                value={scoreFilterState}
-                onChange={(e) => setScoreFilterState(e.target.value)}
-                className="w-full px-2 sm:px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none cursor-pointer bg-slate-50/50 hover:bg-white transition-all duration-300 text-slate-700"
-              >
-                <option value="">All Scores</option>
-                <option value="hot">Hot Leads</option>
-                <option value="warm">Warm Leads</option>
-                <option value="cold">Cold Leads</option>
-              </select>
-            </div>
+          <div className="hidden md:flex flex-row overflow-x-auto scrollbar-hide items-center gap-2 sm:gap-3 bg-white p-2 md:p-2.5 px-3 md:px-4 border border-slate-100 rounded-xl shrink-0 animate-in fade-in duration-300 relative z-50 w-full">
+            {globalFiltersContent}
           </div>
         )}
 
@@ -1427,6 +1451,7 @@ const LeadsFeature = ({
               onToggleDashboard={() => setShowDashboard(!showDashboard)}
               isClient={isClient}
               canAddLead={canAddLead}
+              onOpenMobileGlobalFilters={() => setIsMobileGlobalFiltersOpen(true)}
             />
           </div>
           {isLoading ? (
@@ -1755,6 +1780,41 @@ const LeadsFeature = ({
           <FiPlus size={22} />
         </button>
       )}
+      {isMobileGlobalFiltersOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          <div 
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsMobileGlobalFiltersOpen(false)}
+          />
+          <div className="fixed right-0 top-0 h-full w-[85vw] max-w-[320px] bg-slate-50 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out border-l border-slate-200">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-white">
+              <h2 className="text-sm font-bold text-slate-800">Global Overview</h2>
+              <button
+                onClick={() => setIsMobileGlobalFiltersOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <div className="flex flex-col gap-4">
+                {globalFiltersContent}
+              </div>
+            </div>
+            <div className="p-4 bg-white border-t border-slate-200">
+              <button 
+                onClick={() => setIsMobileGlobalFiltersOpen(false)}
+                className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all"
+              >
+                Apply & View Leads
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </section>
   );
 };
