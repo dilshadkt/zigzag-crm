@@ -11,8 +11,7 @@ import {
 import { RxCross2 } from "react-icons/rx";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { useAuth } from "../../../hooks/useAuth";
-import { useGetMyVacations, useGetLeavePolicy } from "../../../api/hooks";
-import { useEmpoyees } from "../../../api/hooks";
+import { useGetMyVacations, useGetLeavePolicy, useGetAllEmployees } from "../../../api/hooks";
 import { usePermissions } from "../../../hooks/usePermissions";
 
 const VacationRequestModal = ({ onClose }) => {
@@ -39,7 +38,7 @@ const VacationRequestModal = ({ onClose }) => {
   const { data: myVacationsData } = useGetMyVacations();
 
   // Only fetch employees if user is an admin or HR
-  const { data: employeesData } = useEmpoyees(1, null, "");
+  const { data: employeesData } = useGetAllEmployees(canApproveVacations);
   const employeesList = canApproveVacations ? (employeesData?.employees || []) : [];
   const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
   const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
