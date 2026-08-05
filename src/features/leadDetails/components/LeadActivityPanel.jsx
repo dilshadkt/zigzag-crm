@@ -6,6 +6,7 @@ import {
   FiMessageSquare,
   FiCalendar,
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 
 const iconMap = {
   email: FiMail,
@@ -28,6 +29,7 @@ const iconMap = {
   meeting_completed: FiMessageSquare,
   followup_scheduled: FiCalendar,
   converted: FiUserCheck,
+  whatsapp_conversation: FaWhatsapp,
 };
 
 const LeadActivityPanel = ({ activity }) => {
