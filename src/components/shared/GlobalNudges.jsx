@@ -9,6 +9,8 @@ const GlobalNudges = () => {
   const [nudges, setNudges] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState([]);
+  const [toastVisibleIds, setToastVisibleIds] = useState([]);
+  const isInitialFetch = React.useRef(true);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -17,6 +19,24 @@ const GlobalNudges = () => {
       const res = await getNudges();
       if (res.success) {
         setNudges(res.nudges);
+        
+        const storedSeen = JSON.parse(localStorage.getItem('seenNudgeIds') || '[]');
+        const currentIds = res.nudges.map(n => n.id);
+        
+        // Find which ones are brand new
+        const newlyDiscovered = currentIds.filter(id => !storedSeen.includes(id));
+        
+        if (!isInitialFetch.current && newlyDiscovered.length > 0) {
+            setToastVisibleIds(prev => [...prev, ...newlyDiscovered]);
+        }
+        
+        // Keep our seen list clean (only active nudges are remembered)
+        const nextSeen = [...new Set([...storedSeen.filter(id => currentIds.includes(id)), ...newlyDiscovered])];
+        localStorage.setItem('seenNudgeIds', JSON.stringify(nextSeen));
+        
+        if (isInitialFetch.current) {
+            isInitialFetch.current = false;
+        }
       }
     } catch (err) {
       console.error("Failed to fetch nudges", err);
@@ -46,7 +66,10 @@ const GlobalNudges = () => {
   }, []);
 
   useEffect(() => {
-    fetchNudges();
+    // Only fetch if it's not the initial load, since the empty array useEffect handles the initial one.
+    if (!isInitialFetch.current) {
+       fetchNudges();
+    }
   }, [location.pathname]);
 
   if (nudges.length === 0) return null;
@@ -60,12 +83,13 @@ const GlobalNudges = () => {
   const ringColor = dangerCount > 0 ? "ring-red-200" : warningCount > 0 ? "ring-amber-200" : "ring-green-200";
 
   const handleDismissToast = (id, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setDismissed((prev) => [...prev, id]);
   };
 
   const handleNudgeClick = (nudge) => {
     setIsOpen(false); // Close the drawer
+    setDismissed((prev) => [...prev, nudge.id]); // Auto-dismiss toast on click
     if (nudge.id === 'review-nudge') {
       navigate('/task-on-review');
     } else if (nudge.projectId && nudge.taskId) {
@@ -73,7 +97,7 @@ const GlobalNudges = () => {
     }
   };
 
-  const toastVisibleNudges = nudges.filter((n) => !dismissed.includes(n.id));
+  const toastVisibleNudges = nudges.filter((n) => toastVisibleIds.includes(n.id) && !dismissed.includes(n.id));
 
   return (
     <>
