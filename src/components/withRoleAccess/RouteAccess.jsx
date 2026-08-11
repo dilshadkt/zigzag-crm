@@ -43,10 +43,11 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
   const allowedRoutes = user.positionDetails.allowedRoutes || [];
   const canAccessAdminDashboard = hasAdminDashboardAccess();
 
-  // Dashboard, Board, Settings, and Company Dashboard (if has permission) are always accessible
+  // Dashboard, Board, Settings, My Points, and Company Dashboard (if has permission) are always accessible
   if (
     currentPath === "/" ||
     currentPath === "/board" ||
+    currentPath === "/my-points" ||
     currentPath.startsWith("/settings") ||
     (currentPath === "/company-dashboard" && canAccessAdminDashboard)
   ) {
