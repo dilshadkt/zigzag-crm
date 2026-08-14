@@ -124,6 +124,41 @@ class SocketService {
     this._removeListener("new_lead", callback);
   }
 
+  // Listen for lead updates (status change, edit, etc.)
+  onLeadUpdated(callback) {
+    this._addListener("lead_updated", callback);
+  }
+
+  offLeadUpdated(callback) {
+    this._removeListener("lead_updated", callback);
+  }
+
+  // Listen for new_lead_received (global company notification)
+  onNewLeadReceived(callback) {
+    this._addListener("new_lead_received", callback);
+  }
+
+  offNewLeadReceived(callback) {
+    this._removeListener("new_lead_received", callback);
+  }
+
+  // Join a named room (e.g. "company_<id>", "project_<id>")
+  joinRoom(roomName) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit("join_room", roomName);
+    } else {
+      // Queue it for when socket connects
+      this.pendingListeners.push({ event: "__join_room__", roomName });
+    }
+  }
+
+  // Leave a named room
+  leaveRoom(roomName) {
+    if (this.socket) {
+      this.socket.emit("leave_room", roomName);
+    }
+  }
+
   offPointsAwarded(callback) {
     this._removeListener("points_awarded", callback);
   }

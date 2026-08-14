@@ -27,6 +27,7 @@ import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
+import socketService from "../../services/socketService";
 
 const STORAGE_KEY = "leads-column-visibility";
 
@@ -388,6 +389,52 @@ const LeadsFeature = ({
     // but typically we keep them. User asked to "list the lead who need to follow up"
     // so applying it on mount is better.
   }, []);
+
+  // ─── Real-time: Subscribe to new lead events via Socket.IO ───────────────
+  useEffect(() => {
+    const companyId = user?.company;
+    if (!companyId) return;
+
+    const companyRoom = `company_${companyId}`;
+
+    // Join the company-level room so the backend can target us
+    socketService.joinRoom(companyRoom);
+
+    // Also join the project room if a project is selected
+    const activeProjectId = projectFilterState || projectFilter || projectId;
+    if (activeProjectId) {
+      socketService.joinRoom(`project_${activeProjectId}`);
+    }
+
+    // Handler: a new lead arrived (from FB webhook / WhatsApp / manual creation)
+    const handleNewLead = (data) => {
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
+      const leadName = data?.contact?.name || "New lead";
+      toast.success(`🎯 ${leadName} just came in!`, { duration: 4000 });
+    };
+
+    // Handler: global company notification (campaignName + leadName)
+    const handleNewLeadReceived = (data) => {
+      queryClient.invalidateQueries(["leads"]);
+      queryClient.invalidateQueries(["leadStats"]);
+      if (data?.leadName && data?.campaignName) {
+        toast.success(`📥 ${data.leadName} via "${data.campaignName}"`, { duration: 4000 });
+      }
+    };
+
+    socketService.onNewLead(handleNewLead);
+    socketService.onNewLeadReceived(handleNewLeadReceived);
+
+    return () => {
+      socketService.offNewLead(handleNewLead);
+      socketService.offNewLeadReceived(handleNewLeadReceived);
+      socketService.leaveRoom(companyRoom);
+      if (activeProjectId) {
+        socketService.leaveRoom(`project_${activeProjectId}`);
+      }
+    };
+  }, [user?.company, projectFilterState, projectFilter, projectId, queryClient]);
 
   // Debounce search term
   useEffect(() => {
