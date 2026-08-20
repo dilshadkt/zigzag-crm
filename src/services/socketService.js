@@ -5,6 +5,7 @@ class SocketService {
     this.socket = null;
     this.isConnected = false;
     this.pendingListeners = [];
+    this.joinedRooms = new Set(); // track rooms to re-join on reconnect
   }
 
   // Initialize socket connection
@@ -36,6 +37,10 @@ class SocketService {
 
     this.socket.on("connect", () => {
       this.isConnected = true;
+      // Re-join all rooms after connect/reconnect
+      this.joinedRooms.forEach((roomName) => {
+        this.socket.emit("join_room", roomName);
+      });
     });
 
     this.socket.on("disconnect", (reason) => {
@@ -144,16 +149,16 @@ class SocketService {
 
   // Join a named room (e.g. "company_<id>", "project_<id>")
   joinRoom(roomName) {
+    this.joinedRooms.add(roomName); // always track it for reconnects
     if (this.socket && this.isConnected) {
       this.socket.emit("join_room", roomName);
-    } else {
-      // Queue it for when socket connects
-      this.pendingListeners.push({ event: "__join_room__", roomName });
     }
+    // If not yet connected, the room will be joined in the "connect" handler above
   }
 
   // Leave a named room
   leaveRoom(roomName) {
+    this.joinedRooms.delete(roomName);
     if (this.socket) {
       this.socket.emit("leave_room", roomName);
     }

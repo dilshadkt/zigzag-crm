@@ -106,13 +106,13 @@ const OwnerCell = ({ owner, clientOwner }) => {
 
 const columnRenderers = {
   createdAt: (lead) => {
-    const fbTime = lead.fb_created_time || lead.customFields?.fb_created_time;
     return (
       <div className="text-xs whitespace-nowrap font-semibold text-slate-500">
-        {formatDate(fbTime || lead.createdAt || lead.createdOn)}
+        {formatDate(lead.createdAt || lead.createdOn)}
       </div>
     );
   },
+
   name: (lead) => {
     const source = lead.source?.toLowerCase();
     const platform = lead.customFields?.platform?.toLowerCase() || lead.platform?.toLowerCase();

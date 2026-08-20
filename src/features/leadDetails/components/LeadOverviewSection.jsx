@@ -781,31 +781,41 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
               value={lead.branch || (lead.customFields instanceof Map ? lead.customFields.get("branch") : lead.customFields?.branch) || "Unknown"} 
             />
             {(() => {
+              // "Lead Date" = actual date the lead arrived (fb_created_time takes priority)
               const fbCreatedTime = lead.fb_created_time || 
                 (lead.customFields instanceof Map ? lead.customFields.get("fb_created_time") : lead.customFields?.fb_created_time);
               
-              let displayCreated = leadDetails?.created;
-              
-              if (fbCreatedTime) {
+              const formatD = (d) => {
                 try {
-                  const date = new Date(fbCreatedTime);
+                  const date = new Date(d);
                   if (!isNaN(date.getTime())) {
-                    displayCreated = date.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    });
-                  } else {
-                    displayCreated = fbCreatedTime;
+                    return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
                   }
-                } catch (e) {
-                  displayCreated = fbCreatedTime;
-                }
-              }
-              
-              return displayCreated ? (
-                <LabelValue label="Created" value={displayCreated} />
-              ) : null;
+                } catch (e) {}
+                return String(d);
+              };
+
+              const leadDate = fbCreatedTime ? formatD(fbCreatedTime) : (lead.createdAt ? formatD(lead.createdAt) : null);
+              const crmDate = lead.createdAt ? formatD(lead.createdAt) : null;
+              const isDifferent = fbCreatedTime && crmDate && leadDate !== crmDate;
+
+              return (
+                <>
+                  {leadDate && (
+                    <LabelValue
+                      label="Lead Date"
+                      value={leadDate}
+                      valueClassName={isDifferent ? "text-amber-600 font-semibold" : "text-slate-900"}
+                    />
+                  )}
+                  {crmDate && isDifferent && (
+                    <LabelValue
+                      label="CRM Created"
+                      value={crmDate}
+                    />
+                  )}
+                </>
+              );
             })()}
             {leadDetails?.salesPerson && (
               <LabelValue label="Sales Person" value={leadDetails.salesPerson} />
