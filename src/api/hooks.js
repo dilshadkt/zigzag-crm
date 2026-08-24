@@ -3072,3 +3072,45 @@ export const useDeleteTaskCategory = (companyId, onSuccess) => {
     },
   });
 };
+
+// Department Hooks
+export const useGetDepartments = (companyId) => {
+  return useQuery({
+    queryKey: ["departments", companyId],
+    queryFn: () => import("./service").then(m => m.getDepartments(companyId)),
+    enabled: !!companyId,
+  });
+};
+
+export const useCreateDepartment = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => import("./service").then(m => m.createDepartment(companyId, data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments", companyId] });
+      if (onSuccess) onSuccess();
+    },
+  });
+};
+
+export const useUpdateDepartment = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ departmentId, data }) => import("./service").then(m => m.updateDepartment(companyId, departmentId, data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments", companyId] });
+      if (onSuccess) onSuccess();
+    },
+  });
+};
+
+export const useDeleteDepartment = (companyId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (departmentId) => import("./service").then(m => m.deleteDepartment(companyId, departmentId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments", companyId] });
+      if (onSuccess) onSuccess();
+    },
+  });
+};

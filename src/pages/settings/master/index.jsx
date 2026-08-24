@@ -23,6 +23,11 @@ import TaskCategoryHeader from "../../../components/settings/company/TaskCategor
 import TaskCategorySection from "../../../components/settings/company/TaskCategorySection";
 import TaskCategoryModal from "../../../components/settings/company/TaskCategoryModal";
 
+// Departments imports
+import DepartmentHeader from "../../../components/settings/company/DepartmentHeader";
+import DepartmentSection from "../../../components/settings/company/DepartmentSection";
+import DepartmentModal from "../../../components/settings/company/DepartmentModal";
+
 // Gamification imports
 import GamificationRulesSection from "../../../components/settings/company/GamificationRulesSection";
 
@@ -32,6 +37,10 @@ import {
   useCreateTaskCategory,
   useUpdateTaskCategory,
   useDeleteTaskCategory,
+  useGetDepartments,
+  useCreateDepartment,
+  useUpdateDepartment,
+  useDeleteDepartment,
   useGetProjectFields,
   useCreateProjectField,
   useUpdateProjectField,
@@ -135,6 +144,38 @@ const Master = () => {
       updateCategory.mutate({ categoryId: selectedCategory._id, data: values });
     } else {
       createCategory.mutate(values);
+    }
+  };
+
+  // ── Departments ──────────────────────────────────────────────────────────────
+  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+
+  const { data: departments, isLoading: departmentsLoading, error: departmentsError } = useGetDepartments(companyId);
+
+  const createDepartment = useCreateDepartment(companyId, () => {
+    toast.success("Department added successfully");
+    handleDepartmentModalClose();
+  });
+  const updateDepartment = useUpdateDepartment(companyId, () => {
+    toast.success("Department updated successfully");
+    handleDepartmentModalClose();
+  });
+  const deleteDepartment = useDeleteDepartment(companyId, () => {
+    toast.success("Department deleted successfully");
+  });
+
+  const handleEditDepartment = (department) => { setSelectedDepartment(department); setShowDepartmentModal(true); };
+  const handleDeleteDepartment = (department) => {
+    if (window.confirm("Are you sure you want to delete this department?"))
+      deleteDepartment.mutate(department._id);
+  };
+  const handleDepartmentModalClose = () => { setShowDepartmentModal(false); setSelectedDepartment(null); };
+  const handleSaveDepartment = (values) => {
+    if (selectedDepartment) {
+      updateDepartment.mutate({ departmentId: selectedDepartment._id, data: values });
+    } else {
+      createDepartment.mutate(values);
     }
   };
 
@@ -308,6 +349,26 @@ const Master = () => {
         </div>
       </div>
 
+      {/* ── Divider ── */}
+      <div className="border-t border-gray-100" />
+
+      {/* ── Departments ── */}
+      <div className="flex flex-col">
+        <DepartmentHeader
+          departmentsCount={departments ? departments.length : 0}
+          onAdd={() => setShowDepartmentModal(true)}
+        />
+        <div className="flex-1 space-y-4">
+          <DepartmentSection
+            departments={departments || []}
+            isLoading={departmentsLoading}
+            error={departmentsError}
+            onEdit={handleEditDepartment}
+            onDelete={handleDeleteDepartment}
+          />
+        </div>
+      </div>
+
       {/* ── Modals ── */}
       {showFieldModal && (
         <ProjectFieldModal
@@ -324,6 +385,16 @@ const Master = () => {
           onClose={handleCategoryModalClose}
           category={selectedCategory}
           onSave={handleSaveCategory}
+          departments={departments}
+        />
+      )}
+
+      {showDepartmentModal && (
+        <DepartmentModal
+          isOpen={showDepartmentModal}
+          onClose={handleDepartmentModalClose}
+          department={selectedDepartment}
+          onSave={handleSaveDepartment}
         />
       )}
 

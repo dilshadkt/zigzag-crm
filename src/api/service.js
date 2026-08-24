@@ -1266,3 +1266,24 @@ export const deleteTaskCategory = async (companyId, categoryId) => {
   const response = await apiClient.delete(`/companies/${companyId}/task-categories/${categoryId}`);
   return response.data;
 };
+
+// Department APIs
+export const getDepartments = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/departments`);
+  return response.data.data;
+};
+
+export const createDepartment = async (companyId, data) => {
+  const response = await apiClient.post(`/companies/${companyId}/departments`, data);
+  return response.data;
+};
+
+export const updateDepartment = async (companyId, departmentId, data) => {
+  const response = await apiClient.put(`/companies/${companyId}/departments/${departmentId}`, data);
+  return response.data;
+};
+
+export const deleteDepartment = async (companyId, departmentId) => {
+  const response = await apiClient.delete(`/companies/${companyId}/departments/${departmentId}`);
+  return response.data;
+};
