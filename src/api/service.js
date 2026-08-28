@@ -224,6 +224,7 @@ export const createTask = async (taskData, projectId) => {
     requiresClientApproval: taskData?.requiresClientApproval,
     customFields: taskData?.customFields,
     subtasks: taskData?.subtasks,
+    taskCategory: taskData?.taskCategory || undefined,
   };
   if (taskData?.taskFlow) {
     data.taskFlow = taskData.taskFlow; // Only add if present
@@ -259,6 +260,7 @@ export const createTaskFromBoard = async (taskData) => {
     requiresClientApproval: taskData?.requiresClientApproval,
     customFields: taskData?.customFields,
     subtasks: taskData?.subtasks,
+    taskCategory: taskData?.taskCategory || undefined,
   };
 
   // Handle project field based on selection

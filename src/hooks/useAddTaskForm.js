@@ -9,6 +9,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     task_description: defaultValue?.task_description || "",
     project: defaultValue?.project || null,
     taskGroup: defaultValue?.taskGroup || "",
+    taskCategory: defaultValue?.taskCategory || "",
     taskFlow: defaultValue?.taskFlow || "",
     extraTaskWorkType: defaultValue?.extraTaskWorkType || "",
     taskMonth: defaultValue?.taskMonth || "",
