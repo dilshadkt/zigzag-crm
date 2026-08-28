@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import SubTaskStatusButton from "../subTaskStatus";
+import SubtaskActionBar from "./SubtaskActionBar";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
 import WorkLinkModal from "../../shared/workLinkModal";
@@ -409,26 +410,65 @@ const SubtasksSection = ({
                         <span className="text-[10px] font-semibold uppercase">Log</span>
                       </button>
 
-                      <SubTaskStatusButton
-                        subTask={subtask}
-                        parentTaskId={taskDetails?._id}
-                        parentTaskFlow={taskDetails?.taskFlow}
-                        showAllOptions={
-                          isCompany ||
-                          isAdmin ||
-                          hasPermission("tasks", "changeStatus") ||
-                          hasPermission("tasks", "edit") ||
-                          isProjectReviewer
+                      {/* Permission-gated status controls */}
+                      {(() => {
+                        const userIsReviewer = isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus");
+                        // Admin/reviewer who is NOT the assigned employee → show dropdown as before
+                        if (userIsReviewer && !isAssignedToSubTask) {
+                          return (
+                            <SubTaskStatusButton
+                              subTask={subtask}
+                              parentTaskId={taskDetails?._id}
+                              parentTaskFlow={taskDetails?.taskFlow}
+                              showAllOptions={true}
+                              canEdit={true}
+                              canEditTask={canEditTask || isProjectReviewer}
+                              isAdmin={isAdmin}
+                            />
+                          );
                         }
-                        canEdit={
-                          isCompany ||
-                          hasPermission("tasks", "changeStatus") ||
-                          isAssignedToSubTask ||
-                          isProjectReviewer
+                        // Admin/reviewer who IS also assigned → show dropdown (they have both powers)
+                        if (userIsReviewer && isAssignedToSubTask) {
+                          return (
+                            <SubtaskActionBar
+                              subtask={subtask}
+                              parentTaskId={taskDetails?._id}
+                              parentTaskFlow={taskDetails?.taskFlow}
+                              isAssigned={true}
+                              isReviewer={false}
+                              isCompany={isCompany}
+                              isAdmin={isAdmin}
+                            />
+                          );
                         }
-                        canEditTask={canEditTask || isProjectReviewer}
-                        isAdmin={isAdmin}
-                      />
+                        // Assigned employee (not reviewer) → action bar
+                        if (isAssignedToSubTask) {
+                          return (
+                            <SubtaskActionBar
+                              subtask={subtask}
+                              parentTaskId={taskDetails?._id}
+                              parentTaskFlow={taskDetails?.taskFlow}
+                              isAssigned={true}
+                              isReviewer={false}
+                              isCompany={isCompany}
+                              isAdmin={isAdmin}
+                            />
+                          );
+                        }
+                        // Not assigned, not reviewer → read-only label
+                        return (
+                          <SubtaskActionBar
+                            subtask={subtask}
+                            parentTaskId={taskDetails?._id}
+                            parentTaskFlow={taskDetails?.taskFlow}
+                            isAssigned={false}
+                            isReviewer={false}
+                            isCompany={isCompany}
+                            isAdmin={isAdmin}
+                          />
+                        );
+                      })()}
+
                       {/* Edit button for users with permission and assigned users */}
                       {(canEditTask || isAdmin) && (
                         <button
@@ -682,6 +722,20 @@ const SubtasksSection = ({
                   isCompany={isCompany}
                   isAdmin={isAdmin}
                 />
+
+                {/* Reviewer Action Bar — shown below the subtask card for reviewers */}
+                {(isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus")) &&
+                  (subtask.status === "on-review" || subtask.status === "approved") && (
+                  <SubtaskActionBar
+                    subtask={subtask}
+                    parentTaskId={taskDetails?._id}
+                    parentTaskFlow={taskDetails?.taskFlow}
+                    isAssigned={false}
+                    isReviewer={true}
+                    isCompany={isCompany}
+                    isAdmin={isAdmin}
+                  />
+                )}
               </div>
             );
           })}

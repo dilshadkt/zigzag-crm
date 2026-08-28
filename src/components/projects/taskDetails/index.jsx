@@ -195,6 +195,12 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     setShowSubTaskModal(true);
   };
 
+  const totalTimeTaken = React.useMemo(() => {
+    const parentTime = taskDetails?.totalActualTime || 0;
+    const subTasksTime = subTasks.reduce((sum, st) => sum + (st.totalActualTime || 0), 0);
+    return parentTime + subTasksTime;
+  }, [taskDetails?.totalActualTime, subTasks]);
+
   return (
     <>
       <div className="col-span-3 overflow-y-auto  mr-3 flex flex-col">
@@ -262,13 +268,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                     <FiActivity className="w-2.5 h-2.5" />
                     Timeline
                   </span>
-                  {taskDetails?.totalActualTime !== undefined && (
+                  {totalTimeTaken > 0 && (
                     <span
                       className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
-                      title={`Total actual time spent: ${formatTime(taskDetails.totalActualTime)}`}
+                      title={`Total actual time spent: ${formatTime(totalTimeTaken)}`}
                     >
                       <FiClock className="w-2.5 h-2.5" />
-                      Time Taken: {formatTime(taskDetails.totalActualTime)}
+                      Time Taken: {formatTime(totalTimeTaken)}
                     </span>
                   )}
                   {taskDetails?.performance > 0 && (
