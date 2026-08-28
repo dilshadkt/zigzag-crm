@@ -6,18 +6,12 @@ import {
   useDeleteTaskFlow,
   useRestoreTaskFlow,
   usePermanentDeleteTaskFlow,
-  useGetPositions,
-  useDeletePosition,
-  useRestorePosition,
 } from "../../../api/hooks";
 
 // Import components
 import TaskFlowModal from "../../../components/settings/company/TaskFlowModal";
 import TaskFlowHeader from "../../../components/settings/company/TaskFlowHeader";
 import TaskFlowSection from "../../../components/settings/company/TaskFlowSection";
-import PositionHeader from "../../../components/settings/company/PositionHeader";
-import PositionTable from "../../../components/settings/company/PositionTable";
-import AddPosition from "../../../components/settings/positions/addPosition";
 import Modal from "../../../components/shared/modal";
 import { FiTrash2, FiAlertCircle } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -26,7 +20,6 @@ const Company = () => {
   const { companyId } = useAuth();
   const { hasPermission } = usePermissions();
 
-  const canManagePositions = hasPermission("settings", "managePositions");
   const canManageTaskFlows = hasPermission("settings", "manageTaskFlows");
 
   // Task Flow State
@@ -43,12 +36,7 @@ const Company = () => {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [taskFlowToDelete, setTaskFlowToDelete] = useState(null);
 
-  // Positions State
-  const [showPositionModal, setShowPositionModal] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState(null);
-  const { data: positionsData, isLoading: isPositionsLoading } = useGetPositions(companyId);
-  const { mutate: deletePosition } = useDeletePosition(companyId);
-  const { mutate: restorePosition } = useRestorePosition(companyId);
+
 
   // Task Flow Handlers
   const handleDeleteTaskFlow = (taskFlow) => {
@@ -93,57 +81,11 @@ const Company = () => {
     }
   };
 
-  // Position Handlers
-  const handleDeletePosition = (position) => {
-    if (window.confirm("Are you sure you want to delete this position?")) {
-      deletePosition(position._id, {
-        onSuccess: () => toast.success("Position deleted"),
-        onError: (err) => toast.error(err.response?.data?.message || "Error deleting position"),
-      });
-    }
-  };
 
-  const handleRestorePosition = (position) => {
-    restorePosition(position._id, {
-      onSuccess: () => toast.success("Position restored"),
-      onError: (err) => toast.error(err.response?.data?.message || "Error restoring position"),
-    });
-  };
-
-  const handleEditPosition = (position) => {
-    setSelectedPosition(position);
-    setShowPositionModal(true);
-  };
-
-  const handlePositionModalClose = () => {
-    setShowPositionModal(false);
-    setSelectedPosition(null);
-  };
 
   return (
     <div className="h-full overflow-y-auto flex flex-col pr-1">
-      {/* Position Management Section */}
-      {canManagePositions && (
-        <div className="mb-6">
-          <PositionHeader
-            positionsCount={positionsData?.positions?.length || 0}
-            onAdd={() => setShowPositionModal(true)}
-          />
-          <div className="px-1">
-            <PositionTable
-              positions={positionsData}
-              isLoading={isPositionsLoading}
-              onEdit={handleEditPosition}
-              onDelete={handleDeletePosition}
-              onRestore={handleRestorePosition}
-            />
-          </div>
-        </div>
-      )}
 
-      {canManagePositions && canManageTaskFlows && (
-        <div className="w-full h-px bg-gray-100 my-4 px-4" />
-      )}
 
       {/* Task Flow Section */}
       {canManageTaskFlows && (
@@ -166,14 +108,14 @@ const Company = () => {
         </div>
       )}
 
-      {!canManagePositions && !canManageTaskFlows && (
+      {!canManageTaskFlows && (
         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
             <FiAlertCircle className="w-8 h-8 text-gray-300" />
           </div>
           <h3 className="text-[16px] font-bold text-gray-800 mb-1">Restricted Content</h3>
           <p className="text-[13px] text-gray-400 max-w-xs">
-            You do not have permission to access management features for positions or task flows.
+            You do not have permission to access management features for task flows.
           </p>
         </div>
       )}
@@ -188,14 +130,7 @@ const Company = () => {
         />
       )}
 
-      {showPositionModal && (
-        <AddPosition
-          isOpen={showPositionModal}
-          setShowModal={handlePositionModalClose}
-          initialValues={selectedPosition}
-          companyId={companyId}
-        />
-      )}
+
 
       {/* Permanent Delete Confirmation Modal */}
       <Modal

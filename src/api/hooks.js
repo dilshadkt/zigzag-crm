@@ -749,10 +749,11 @@ export const useUpdatePermissions = (companyId) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["updatePermissions"],
-    mutationFn: ({ positionId, permissions }) =>
+    mutationFn: ({ positionId, permissions, allowedRoutes }) =>
       apiClient
         .put(`/companies/${companyId}/positions/${positionId}/permissions`, {
           permissions,
+          allowedRoutes,
         })
         .then((res) => res.data),
     onSuccess: () => {

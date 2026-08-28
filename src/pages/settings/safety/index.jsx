@@ -16,6 +16,16 @@ import {
   FiClock,
   FiTarget,
   FiSettings,
+  FiLayout,
+  FiGrid,
+  FiCalendar,
+  FiMessageSquare,
+  FiZap,
+  FiCloud,
+  FiBarChart2,
+  FiFileText,
+  FiChevronRight,
+  FiPlus
 } from "react-icons/fi";
 import { MdSecurity, MdHistory, MdDevices, MdEdit } from "react-icons/md";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -24,6 +34,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useGetPositions, useUpdatePermissions } from "../../../api/hooks";
 import { verifyCurrentPassword, changePassword } from "../../../api/service";
 import ModalLayout from "../../../components/shared/modal";
+import AddPosition from "../../../components/settings/positions/addPosition";
 
 // Permission definitions organized by category
 const PERMISSION_CATEGORIES = {
@@ -123,10 +134,37 @@ const PERMISSION_CATEGORIES = {
   },
 };
 
+const MODULES = [
+  { id: "dashboard", type: "system", label: "Main Dashboard", icon: <FiActivity />, desc: "Central intelligence & overview", permissionKey: "dashboard" },
+  { id: "projects", type: "route", label: "Client Hub", icon: <FiLayout />, desc: "Client & project management", permissionKey: "projects" },
+  { id: "board", type: "route", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards", permissionKey: "tasks" },
+  { id: "calendar", type: "route", label: "Timeline", icon: <FiCalendar />, desc: "Global scheduling system", permissionKey: null },
+  { id: "vacations", type: "route", label: "Time Off", icon: <FiMap />, desc: "Leave & vacation management", permissionKey: "vacations" },
+  { id: "employees", type: "route", label: "Team Directory", icon: <FiUsers />, desc: "Workforce data management", permissionKey: "employees" },
+  { id: "messenger", type: "route", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub", permissionKey: null },
+  { id: "leads", type: "route", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking", permissionKey: "leads" },
+  { id: "lead-dashboard", type: "route", label: "Lead Dashboard", icon: <FiBarChart2 />, desc: "Sales & performance analytics hub", permissionKey: null },
+  { id: "leaderboard", type: "route", label: "Leaderboard", icon: <FiBarChart2 />, desc: "Performance ranking & stats", permissionKey: null },
+  { id: "hr-dashboard", type: "route", label: "HR Dashboard", icon: <FiUsers />, desc: "Workforce & attendance analytics", permissionKey: null },
+  { id: "campaigns", type: "route", label: "Marketing", icon: <FiZap />, desc: "Outreach & campaign data", permissionKey: null },
+  { id: "task-on-review", type: "route", label: "Quality Control", icon: <FiEye />, desc: "Peer review dashboard", permissionKey: null },
+  { id: "task-on-publish", type: "route", label: "Production", icon: <FiCloud />, desc: "Ready for deployment", permissionKey: null },
+  { id: "client-review", type: "route", label: "Approvals", icon: <FiCheck />, desc: "External feedback cycle", permissionKey: null },
+  { id: "attendance", type: "route", label: "Time Tracking", icon: <FiClock />, desc: "Attendance analytics", permissionKey: "attendance" },
+  { id: "workload", type: "route", label: "Workload", icon: <FiBarChart2 />, desc: "Team capacity & distribution", permissionKey: null },
+  { id: "events", type: "route", label: "Company Events", icon: <FiCalendar />, desc: "Corporate events & meets", permissionKey: null },
+  { id: "sticky-notes", type: "route", label: "Quick Notes", icon: <FiFileText />, desc: "Personal scratchpad", permissionKey: null },
+  { id: "timer", type: "route", label: "Active Timer", icon: <FiClock />, desc: "Task time logging", permissionKey: null },
+  { id: "settings", type: "system", label: "Settings & Configuration", icon: <FiSettings />, desc: "System configuration & management", permissionKey: "settings" },
+];
+
 
 // Role Permission Editor Component
 const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
   const [permissions, setPermissions] = useState(role.permissions || {});
+  const [allowedRoutes, setAllowedRoutes] = useState(role.allowedRoutes || []);
+  const [activeModule, setActiveModule] = useState(MODULES[0]);
+
   const { mutate: updatePermissions, isLoading: isSaving } =
     useUpdatePermissions(companyId);
 
@@ -175,6 +213,14 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
     }));
   };
 
+  const handleRouteToggle = (routeValue) => {
+    setAllowedRoutes((prev) =>
+      prev.includes(routeValue)
+        ? prev.filter(r => r !== routeValue)
+        : [...prev, routeValue]
+    );
+  };
+
   const handleAdminDashboardToggle = () => {
     setPermissions((prev) => ({
       ...prev,
@@ -209,11 +255,12 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
       {
         positionId: role._id,
         permissions: permissions,
+        allowedRoutes: allowedRoutes,
       },
       {
         onSuccess: () => {
           toast.success(`Access policy updated for ${role.name}`);
-          onUpdate({ ...role, permissions });
+          onUpdate({ ...role, permissions, allowedRoutes });
           onClose();
         },
         onError: (error) => {
@@ -224,139 +271,230 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
   };
 
   const countActivePermissions = (category) => {
+    if (!category) return 0;
     const categoryPerms = permissions[category] || {};
     return Object.values(categoryPerms).filter(Boolean).length;
+  };
+
+  const isAdminRole = role.name.toLowerCase().includes("admin") || role.name.toLowerCase() === "company-admin";
+
+  const renderModuleScopes = () => {
+    if (isAdminRole) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-amber-50/30 rounded-2xl border border-amber-100">
+          <FiShield className="text-amber-500 text-4xl mb-4" />
+          <h3 className="text-[14px] font-bold text-amber-900 mb-2">System Administrator</h3>
+          <p className="text-[12px] text-amber-700/70 max-w-sm">
+            This role has unrestricted access to all modules and system configurations. Individual scopes cannot be toggled.
+          </p>
+        </div>
+      );
+    }
+
+    const hasAccess = activeModule.type === 'route' ? allowedRoutes.includes(activeModule.id) : true;
+    const permCategory = activeModule.permissionKey ? PERMISSION_CATEGORIES[activeModule.permissionKey] : null;
+
+    return (
+      <div className="flex flex-col gap-6 animate-fadeIn">
+        <div className="flex items-start justify-between bg-white border border-gray-100 p-5 rounded-2xl shadow-sm shadow-gray-200/40">
+          <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl">
+              {activeModule.icon}
+            </div>
+            <div className="flex flex-col gap-1">
+              <h3 className="text-[15px] font-extrabold text-gray-800 tracking-tight">{activeModule.label}</h3>
+              <p className="text-[12px] text-gray-500 font-medium">{activeModule.desc}</p>
+            </div>
+          </div>
+
+          {activeModule.type === 'route' && (
+            <label className="relative flex items-center cursor-pointer group mt-2">
+              <input
+                type="checkbox"
+                checked={hasAccess}
+                onChange={() => handleRouteToggle(activeModule.id)}
+                className="sr-only peer"
+              />
+              <span className="mr-3 text-[11px] font-bold text-gray-400 uppercase group-hover:text-gray-600 transition-colors">
+                Enable Access
+              </span>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[22px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+            </label>
+          )}
+        </div>
+
+        {/* Global Admin Dashboard Toggle for Dashboard Modules */}
+        {activeModule.permissionKey === "dashboard" && (
+          <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-100/50 rounded-2xl p-4 shadow-sm shadow-indigo-500/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-white border border-indigo-100 rounded-xl shadow-sm">
+                  <FiActivity className="text-lg text-indigo-500" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <h3 className="text-[13px] font-bold text-gray-800 tracking-tight">
+                    Intelligence Dashboard Access
+                  </h3>
+                  <p className="text-[11px] text-gray-500 font-medium">
+                    Grant entry to organization analytics and administrative control panels
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={permissions.accessAdminDashboard || false}
+                  onChange={handleAdminDashboardToggle}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-500"></div>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Specific Scopes */}
+        {permCategory ? (
+          <div className={`transition-all duration-300 ${!hasAccess && activeModule.type === 'route' ? 'opacity-40 pointer-events-none' : ''}`}>
+            <div className="flex items-center justify-between mb-4 mt-2">
+              <h4 className="text-[13px] font-bold text-gray-700 tracking-tight flex items-center gap-2">
+                Module Scopes
+                <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] uppercase">
+                  {countActivePermissions(activeModule.permissionKey)} / {permCategory.permissions.length} Enabled
+                </span>
+              </h4>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSelectAll(activeModule.permissionKey)}
+                  className="px-2.5 py-1 text-[10px] font-bold text-blue-500 hover:text-blue-600 transition-colors uppercase tracking-tight"
+                >
+                  Authorize All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeselectAll(activeModule.permissionKey)}
+                  className="px-2.5 py-1 text-[10px] font-bold text-gray-400 hover:text-gray-500 transition-colors uppercase tracking-tight"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {permCategory.permissions.map((perm) => {
+                const isChecked = permissions[activeModule.permissionKey]?.[perm.key] || false;
+                return (
+                  <label
+                    key={perm.key}
+                    className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${isChecked
+                        ? "border-blue-200 bg-blue-50/30 shadow-sm shadow-blue-500/5"
+                        : "border-gray-100 bg-gray-50/30 hover:border-gray-200 hover:bg-white"
+                      }`}
+                  >
+                    <div className="relative flex items-center mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handlePermissionToggle(activeModule.permissionKey, perm.key)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className={`text-[12px] font-bold leading-none ${isChecked ? "text-gray-800" : "text-gray-600"}`}>
+                        {perm.label}
+                      </span>
+                      <p className="text-[11px] text-gray-400 font-medium leading-snug group-hover:text-gray-500 transition-colors">
+                        {perm.description}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-2xl bg-gray-50/30">
+            <FiShield className="text-gray-300 text-3xl mb-3" />
+            <p className="text-[12px] text-gray-500 font-medium text-center max-w-sm">
+              This module doesn't have granular CRUD scopes. Simply enable or disable route access using the toggle above.
+            </p>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <ModalLayout
       isOpen={true}
       setIsOpen={onClose}
-      maxWidth="sm:max-w-4xl"
-      title={`Access Control: ${role.name}`}
+      maxWidth="sm:max-w-5xl"
+      title={`Security Policy: ${role.name}`}
     >
-      <div className="flex flex-col gap-6 w-full">
-        {/* Admin Dashboard Access Section */}
-        <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-100/50 rounded-2xl p-4 shadow-sm shadow-indigo-500/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-2.5 bg-white border border-indigo-100 rounded-xl shadow-sm">
-                <FiShield className="text-lg text-indigo-500" />
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <h3 className="text-[13px] font-bold text-gray-800 tracking-tight">
-                  Intelligence Dashboard Access
-                </h3>
-                <p className="text-[11px] text-gray-500 font-medium">
-                  Grant entry to organization analytics and administrative control panels
-                </p>
-              </div>
+      <div className="flex flex-col w-full h-[65vh] min-h-[500px]">
+        <div className="flex flex-1 overflow-hidden gap-6 pb-4">
+
+          {/* Sidebar */}
+          <div className="w-64 shrink-0 flex flex-col border-r border-gray-100 pr-4 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-2 sticky top-0 bg-white py-1">
+              Modules & Pages
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={permissions.accessAdminDashboard || false}
-                onChange={handleAdminDashboardToggle}
-                className="sr-only peer"
-              />
-              <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-500"></div>
-            </label>
-          </div>
-        </div>
+            <div className="flex flex-col gap-1 pb-4">
+              {MODULES.map(module => {
+                const isActive = activeModule.id === module.id;
+                const hasAccess = module.type === 'route' ? allowedRoutes.includes(module.id) : true;
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 gap-4">
-          {Object.entries(PERMISSION_CATEGORIES).map(
-            ([category, { label, icon, permissions: categoryPermissions }]) => (
-              <div
-                key={category}
-                className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm shadow-gray-200/50 hover:shadow-md hover:shadow-gray-200/50 transition-all duration-300"
-              >
-                <div className="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-base grayscale opacity-80">{icon}</span>
-                    <div className="flex flex-col gap-0.5">
-                      <h3 className="text-[12px] font-bold text-gray-700 uppercase tracking-wide">
-                        {label}
-                      </h3>
-                      <p className="text-[10px] font-bold text-gray-400">
-                        {countActivePermissions(category)} of {categoryPermissions.length} Scopes Enabled
-                      </p>
+                return (
+                  <button
+                    key={module.id}
+                    type="button"
+                    onClick={() => setActiveModule(module)}
+                    className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl transition-all ${isActive
+                        ? "bg-blue-50/50 text-blue-700 ring-1 ring-blue-500/10"
+                        : "hover:bg-gray-50 text-gray-600"
+                      }`}
+                  >
+                    <div className={`p-1.5 rounded-lg shrink-0 ${isActive ? "bg-blue-100/50 text-blue-600" : "bg-white border border-gray-100 text-gray-400"}`}>
+                      {module.icon}
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectAll(category)}
-                      className="px-2.5 py-1 text-[10px] font-bold text-blue-500 hover:text-blue-600 transition-colors uppercase tracking-tight"
-                    >
-                      Authorize All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeselectAll(category)}
-                      className="px-2.5 py-1 text-[10px] font-bold text-gray-400 hover:text-gray-500 transition-colors uppercase tracking-tight"
-                    >
-                      Reset
-                    </button>
-                  </div>
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[12px] font-bold truncate pr-2 ${isActive ? "text-blue-800" : ""}`}>{module.label}</span>
+                        {hasAccess && <FiCheck className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-blue-500" : "text-green-500"}`} />}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {categoryPermissions.map((perm) => {
-                    const isChecked = permissions[category]?.[perm.key] || false;
-                    return (
-                      <label
-                        key={perm.key}
-                        className={`group flex items-start gap-2.5 p-3 rounded-xl border transition-all cursor-pointer ${
-                          isChecked
-                            ? "border-blue-200 bg-blue-50/30"
-                            : "border-gray-100 bg-gray-50/30 hover:border-gray-200 hover:bg-white"
-                        }`}
-                      >
-                        <div className="relative flex items-center mt-0.5">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => handlePermissionToggle(category, perm.key)}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500/20 transition-all"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className={`text-[11px] font-bold leading-none ${isChecked ? "text-gray-800" : "text-gray-500"}`}>
-                            {perm.label}
-                          </span>
-                          <p className="text-[10px] text-gray-400 font-medium leading-tight truncate-2-lines group-hover:text-gray-500 transition-colors">
-                            {perm.description}
-                          </p>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )
-          )}
+          {/* Right Content Area */}
+          <div className="flex-1 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+            {renderModuleScopes()}
+          </div>
+
         </div>
 
         {/* Action Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-2 sticky bottom-0 bg-white">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto shrink-0 bg-white">
           <div className="flex flex-col gap-0.5 ml-1">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-              Active Permission Capacity
+              Active Configuration Capacity
             </span>
             <span className="text-[12px] font-extrabold text-blue-600">
-              {Object.entries(permissions).reduce((acc, [key, value]) => {
+              {allowedRoutes.length} Routes • {Object.entries(permissions).reduce((acc, [key, value]) => {
                 if (key === "accessAdminDashboard") return acc + (value ? 1 : 0);
                 return acc + Object.values(value).filter(Boolean).length;
-              }, 0)} Scopes Defined
+              }, 0)} Scopes Enabled
             </span>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 text-[12px] font-bold text-gray-500 hover:text-gray-700 transition-all"
+              className="px-5 py-2 text-[12px] font-bold text-gray-500 border border-transparent hover:bg-gray-50 rounded-xl transition-all"
             >
               Cancel
             </button>
@@ -366,7 +504,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
               disabled={isSaving}
               className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl text-[12px] font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
             >
-              {isSaving ? "Syncing..." : "Update Security Policy"}
+              {isSaving ? "Syncing Policies..." : "Update Security Policy"}
             </button>
           </div>
         </div>
@@ -387,6 +525,7 @@ const SecuritySettings = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [showRoleEditor, setShowRoleEditor] = useState(false);
+  const [showPositionModal, setShowPositionModal] = useState(false);
 
   const { companyId } = useAuth();
   const { data: positionsData, isLoading: isLoadingPositions } =
@@ -461,10 +600,10 @@ const SecuritySettings = () => {
           </p>
         </div>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Left Column: Role Management */}
-          <div className="xl:col-span-8 flex flex-col gap-6">
+        {/* Content Layout */}
+        <div className="flex flex-col gap-6">
+          {/* Top Section: Role Management */}
+          <div className="flex flex-col gap-6">
             <div className="bg-white border border-gray-100 rounded-2xl shadow-sm shadow-gray-200/40 p-5 flex flex-col h-full">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -476,26 +615,29 @@ const SecuritySettings = () => {
                       Organization Module Policies
                     </h3>
                     <p className="text-[11px] font-medium text-gray-400 uppercase tracking-tighter">
-                      Assign module-level CRUD permissions per role
+                      Assign module-level CRUD permissions and route access per role
                     </p>
                   </div>
                 </div>
-                {!isLoadingPositions && (
-                  <div className="px-3 py-1 bg-blue-50/50 border border-blue-100 rounded-lg">
-                    <span className="text-[10px] font-bold text-blue-600 uppercase">
-                      {positions.length} Active Positions
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  {!isLoadingPositions && (
+                    <div className="px-3 py-1.5 bg-blue-50/50 border border-blue-100 rounded-lg">
+                      <span className="text-[10px] font-bold text-blue-600 uppercase">
+                        {positions.length} Active Positions
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowPositionModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-[11px] font-bold shadow-sm shadow-blue-500/20 transition-all active:scale-95"
+                  >
+                    <FiPlus className="text-[12px]" />
+                    Add Position
+                  </button>
+                </div>
               </div>
 
-              {/* Lockdown Notice */}
-              <div className="bg-amber-50/50 border border-amber-200/50 rounded-2xl p-4 flex gap-4 mb-6">
-                <FiAlertCircle className="text-amber-500 shrink-0 mt-0.5 text-[15px]" />
-                <p className="text-[11px] font-medium text-amber-800/80 leading-relaxed uppercase tracking-tight">
-                  <span className="font-extrabold text-amber-600">Strict Protocol:</span> Primary Administrative roles are hard-locked to prevent accidental organization lockout. All system permissions are implicitly granted.
-                </p>
-              </div>
+
 
               {isLoadingPositions ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-20">
@@ -503,22 +645,20 @@ const SecuritySettings = () => {
                   <p className="mt-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Hydrating Roles...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {positions.map((role) => {
                     const isAdminRole = role.name.toLowerCase().includes("admin") || role.name.toLowerCase() === "company-admin";
                     return (
                       <div
                         key={role._id}
-                        className={`group p-4 border rounded-2xl transition-all duration-300 flex flex-col gap-4 ${
-                          isAdminRole
+                        className={`group p-4 border rounded-2xl transition-all duration-300 flex flex-col gap-4 ${isAdminRole
                             ? "border-amber-100 bg-amber-50/30 shadow-sm shadow-amber-500/5"
                             : "border-gray-50 bg-gray-50/30 hover:bg-white hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/5"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between">
-                          <div className={`p-2.5 rounded-xl border-2 transition-transform group-hover:scale-105 ${
-                            isAdminRole ? "bg-white border-amber-50 text-amber-500" : "bg-white border-gray-50 text-gray-400 group-hover:text-blue-500 group-hover:border-blue-50"
-                          }`}>
+                          <div className={`p-2.5 rounded-xl border-2 transition-transform group-hover:scale-105 ${isAdminRole ? "bg-white border-amber-50 text-amber-500" : "bg-white border-gray-50 text-gray-400 group-hover:text-blue-500 group-hover:border-blue-50"
+                            }`}>
                             <FiShield className="text-[18px]" />
                           </div>
                           {isAdminRole ? (
@@ -539,14 +679,14 @@ const SecuritySettings = () => {
                             {role.name}
                           </h4>
                           <div className="flex items-center gap-2">
-                             <span className="text-[10px] font-bold text-gray-400 py-0.5 rounded uppercase">
-                              {isAdminRole ? "System Root" : `${getPermissionCount(role)} Active Scopes`}
+                            <span className="text-[10px] font-bold text-gray-400 py-0.5 rounded uppercase">
+                              {isAdminRole ? "System Root" : `${role.allowedRoutes?.length || 0} Routes • ${getPermissionCount(role)} Scopes`}
                             </span>
                             <span className={`w-1 h-1 rounded-full ${role.isActive ? "bg-green-500" : "bg-red-400"}`} />
                           </div>
                         </div>
                         <p className="text-[11px] font-medium text-gray-500 leading-snug line-clamp-2">
-                          {isAdminRole ? "Global read/write/delete access across all organization modules and settings." : `Assigned access to ${role.allowedRoutes?.length || 0} core modules.`}
+                          {isAdminRole ? "Global read/write/delete access across all organization modules and settings." : "Customized policy with granular module routing and permissions."}
                         </p>
                       </div>
                     );
@@ -556,10 +696,10 @@ const SecuritySettings = () => {
             </div>
           </div>
 
-          {/* Right Column: Credential Management */}
-          <div className="xl:col-span-4 flex flex-col gap-6">
+          {/* Bottom Section: Credential Management */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {/* Password Section */}
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col gap-6">
+            <div className="xl:col-span-2 bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col gap-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-rose-50 rounded-xl border border-rose-100">
                   <FiLock className="text-rose-500" />
@@ -628,7 +768,7 @@ const SecuritySettings = () => {
             </div>
 
             {/* 2FA Section */}
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/20 p-6 flex flex-col gap-4">
+            <div className="xl:col-span-1 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/20 p-6 flex flex-col gap-4">
               <div className="flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl border border-white/30">
@@ -666,6 +806,15 @@ const SecuritySettings = () => {
             setShowRoleEditor(false);
             setSelectedRole(null);
           }}
+        />
+      )}
+
+      {showPositionModal && (
+        <AddPosition
+          isOpen={showPositionModal}
+          setShowModal={setShowPositionModal}
+          companyId={companyId}
+          initialValues={null}
         />
       )}
     </div>

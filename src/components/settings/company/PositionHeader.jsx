@@ -18,12 +18,14 @@ const PositionHeader = ({ positionsCount, onAdd }) => {
           <div className="text-[11px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
             {positionsCount} Positions
           </div>
-          <PrimaryButton
-            title="Add Position"
-            icon={<Plus size={14} />}
-            className="text-white px-3.5 py-1.5 font-bold text-[12px]"
-            onclick={onAdd}
-          />
+          {onAdd && (
+            <PrimaryButton
+              title="Add Position"
+              icon={<Plus size={14} />}
+              className="text-white px-3.5 py-1.5 font-bold text-[12px]"
+              onclick={onAdd}
+            />
+          )}
         </div>
       </div>
     </div>
