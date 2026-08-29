@@ -3,14 +3,26 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Input from "../../shared/Field/input";
 import DatePicker from "../../shared/Field/date";
+import Select from "../../shared/Field/select";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Progress from "../../shared/progress";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useAuth } from "../../../hooks/useAuth";
-import { useUpdateProfile, useDeleteEmployee } from "../../../api/hooks";
+import {
+  useUpdateProfile,
+  useDeleteEmployee,
+  useGetPositions,
+  useGetDepartments,
+} from "../../../api/hooks";
 import { loginSuccess } from "../../../store/slice/authSlice";
 import { toast } from "react-hot-toast";
+
+const getDepartmentId = (department) => {
+  if (!department) return "";
+  if (typeof department === "object") return String(department._id || "");
+  return String(department);
+};
 
 const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -35,6 +47,46 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
     currentUser?._id === employeeId || currentUser?._id === user?._id;
   const showDeleteButton = isEmployeePage && (isAdmin || canDelete) && !isOwnProfile;
 
+  const companyId = currentCompanyId || currentUser?.company;
+
+  const { data: positionsData, isLoading: positionsLoading } =
+    useGetPositions(companyId);
+  const { data: departments } = useGetDepartments(companyId);
+
+  const positionOptions = React.useMemo(() => {
+    const names = (positionsData?.positions || [])
+      .filter((pos) => pos.isActive)
+      .map((position) => position.name);
+
+    if (user?.position && !names.includes(user.position)) {
+      names.unshift(user.position);
+    }
+
+    return names;
+  }, [positionsData, user?.position]);
+
+  const departmentOptions = React.useMemo(() => {
+    const currentDepartmentId = getDepartmentId(user?.department);
+    const list = (departments || [])
+      .filter(
+        (dept) => dept.isActive || String(dept._id) === currentDepartmentId
+      )
+      .map((dept) => ({ value: String(dept._id), label: dept.name }));
+
+    if (
+      currentDepartmentId &&
+      user?.department?.name &&
+      !list.some((option) => option.value === currentDepartmentId)
+    ) {
+      list.unshift({
+        value: currentDepartmentId,
+        label: user.department.name,
+      });
+    }
+
+    return list;
+  }, [departments, user?.department]);
+
   // Determine which employeeId to use for updates
   const targetEmployeeId = isOwnProfile ? null : employeeId;
 
@@ -46,7 +98,7 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     position: user?.position || "",
-    company: user?.company || "",
+    department: getDepartmentId(user?.department),
     location: user?.location || "",
     birthday: user?.dob || null,
     email: user?.email || "",
@@ -129,6 +181,7 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
           firstName: values.firstName,
           lastName: values.lastName,
           position: values.position,
+          department: values.department || null,
           location: values.location,
           dob: values.birthday,
           phoneNumber: values.mobile,
@@ -141,6 +194,10 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
         if (selectedImageFile) {
           updatePayload = new FormData();
           Object.entries(normalizedData).forEach(([key, value]) => {
+            if (key === "department") {
+              updatePayload.append(key, value || "");
+              return;
+            }
             if (value !== undefined && value !== null && value !== "") {
               updatePayload.append(key, value);
             }
@@ -164,7 +221,7 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
           firstName: user?.firstName || "",
           lastName: user?.lastName || "",
           position: user?.position || "",
-          company: user?.company || "",
+          department: getDepartmentId(user?.department),
           location: user?.location || "",
           birthday: user?.dob || null,
           email: user?.email || "",
@@ -353,24 +410,56 @@ rounded-3xl  flex flex-col "
             title="Last Name"
             placeholder="Doe"
           />
-          <Input
-            readOnly={true}
-            name="position"
-            value={values}
-            title="Position"
-            placeholder="UI/UX Designer"
-          />
+          {isEditMode ? (
+            <Select
+              errors={errors}
+              touched={touched}
+              name="position"
+              value={values.position || ""}
+              onChange={handleChange}
+              title="Position"
+              placeholder="Select Position"
+              options={positionOptions}
+              disabled={positionsLoading || !positionOptions.length}
+            />
+          ) : (
+            <Input
+              readOnly
+              name="position"
+              value={values}
+              title="Position"
+              placeholder="—"
+            />
+          )}
 
-          <Input
-            errors={errors}
-            touched={touched}
-            onchange={handleChange}
-            name={"company"}
-            value={values}
-            readOnly={true}
-            title="Company"
-            placeholder="Cadabra"
-          />
+          {isEditMode ? (
+            <Select
+              errors={errors}
+              touched={touched}
+              name="department"
+              value={values.department || ""}
+              onChange={handleChange}
+              title="Department"
+              placeholder="Select Department"
+              options={departmentOptions}
+              disabled={!departmentOptions.length}
+            />
+          ) : (
+            <Input
+              readOnly
+              name="departmentDisplay"
+              value={{
+                departmentDisplay:
+                  departmentOptions.find(
+                    (option) => option.value === values.department
+                  )?.label ||
+                  user?.department?.name ||
+                  "",
+              }}
+              title="Department"
+              placeholder="Not assigned"
+            />
+          )}
           <Input
             errors={errors}
             touched={touched}

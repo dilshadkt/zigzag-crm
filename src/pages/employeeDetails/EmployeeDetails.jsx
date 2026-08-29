@@ -135,6 +135,7 @@ const EmployeeDetails = () => {
             profileImage: employee.profileImage,
             phoneNumber: employee.phoneNumber,
             position: employee.position,
+            department: employee.department,
             level: employee.level,
             gender: employee.gender,
             dob: employee.dob,
