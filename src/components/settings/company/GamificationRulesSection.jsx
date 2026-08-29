@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { FiSave, FiAlertCircle, FiStar, FiClock, FiTarget, FiCheckCircle, FiUserCheck, FiXCircle } from "react-icons/fi";
+import { FiSave, FiAlertCircle, FiStar, FiClock, FiTarget, FiCheckCircle, FiUserCheck, FiXCircle, FiShield } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGetCompany, useUpdateCompany } from "../../../api/hooks";
 
@@ -110,40 +110,6 @@ const GamificationRulesSection = () => {
             />
           </div>
 
-          {/* Coordinator Penalty */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
-              <FiAlertCircle className="text-amber-500" /> Review Delay Penalty
-            </label>
-            <p className="text-xs text-gray-500 mb-1">
-              Points deducted for Coordinators who fail to review tasks within the time limit.
-            </p>
-            <input
-              type="number"
-              name="coordinatorPenaltyPoints"
-              value={settings.coordinatorPenaltyPoints}
-              onChange={handleChange}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm w-full transition-all"
-            />
-          </div>
-
-          {/* Coordinator Time Limit */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
-              <FiClock className="text-indigo-500" /> Review Time Limit (Hours)
-            </label>
-            <p className="text-xs text-gray-500 mb-1">
-              Maximum hours allowed for a Coordinator to review a task.
-            </p>
-            <input
-              type="number"
-              name="coordinatorReviewTimeLimit"
-              value={settings.coordinatorReviewTimeLimit}
-              onChange={handleChange}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm w-full transition-all"
-            />
-          </div>
-
           {/* Daily Checklist Points */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
@@ -213,6 +179,54 @@ const GamificationRulesSection = () => {
           </div>
         </div>
 
+        {/* Coordinator Review Settings */}
+        <div className="border-t border-gray-200 pt-5 mt-1">
+          <div className="flex items-center gap-2 mb-4">
+            <FiShield className="text-indigo-600 w-5 h-5" />
+            <h3 className="text-sm font-bold text-gray-800">Coordinator Review Timeliness</h3>
+            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Reviewer Penalties</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Points awarded/deducted from the <strong>reviewer or coordinator</strong> based on how quickly they action a task in review.
+            This is separate from employee rejection penalties below — it measures review speed, not task quality.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+                <FiClock className="text-indigo-500" /> Review Time Limit (Hours)
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Maximum hours a coordinator has to review a task before a delay penalty applies.
+              </p>
+              <input
+                type="number"
+                name="coordinatorReviewTimeLimit"
+                value={settings.coordinatorReviewTimeLimit}
+                onChange={handleChange}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+                <FiAlertCircle className="text-amber-500" /> Coordinator Review Delay Penalty
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Points deducted from the <strong>reviewer</strong> when they exceed the time limit above.
+                Does not affect the assigned employee.
+              </p>
+              <input
+                type="number"
+                name="coordinatorPenaltyPoints"
+                value={settings.coordinatorPenaltyPoints}
+                onChange={handleChange}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm w-full transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Two-Tier Review Scoring Section */}
         <div className="border-t border-gray-200 pt-5 mt-1">
           <div className="flex items-center gap-2 mb-4">
@@ -221,7 +235,8 @@ const GamificationRulesSection = () => {
             <span className="text-[10px] bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Employee Rewards</span>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            Points awarded/deducted to <strong>employees</strong> when their tasks pass or fail internal review and client review stages.
+            Points awarded/deducted from the <strong>assigned employee</strong> when their task passes or fails
+            internal review and client review stages. These are quality-based penalties — not related to coordinator review speed.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
