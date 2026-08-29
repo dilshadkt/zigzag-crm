@@ -52,14 +52,16 @@ const GlobalNudges = () => {
     };
 
     socketService.onNewNotification(handleUpdate);
-    
-    // Add global event listener for when local tasks are created via the modal
+    // Assignment fires this before the notification row exists, so it is the
+    // earliest signal available.
+    socketService.onSubtaskAssigned(handleUpdate);
     window.addEventListener("taskCreated", handleUpdate);
     window.addEventListener("taskUpdated", handleUpdate);
 
     return () => {
       clearInterval(interval);
       socketService.offNewNotification(handleUpdate);
+      socketService.offSubtaskAssigned(handleUpdate);
       window.removeEventListener("taskCreated", handleUpdate);
       window.removeEventListener("taskUpdated", handleUpdate);
     };

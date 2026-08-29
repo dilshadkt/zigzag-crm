@@ -1,17 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Sidebar from "../../components/sidebar";
 import { Outlet } from "react-router-dom";
 import DashboardHeader from "../../components/header";
-import socketService from "../../services/socketService";
-import { useQueryClient } from "@tanstack/react-query";
-import notificationSound from "../../assets/audio/new-notification-017-352293.mp3";
 import { useAttendanceManager } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import AttendanceModal from "../../components/header/components/AttendanceModal";
 import GlobalNudges from "../../components/shared/GlobalNudges";
 
 const DashboardLayout = () => {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
   const attendance = useAttendanceManager();
   const [isAttendanceDismissed, setIsAttendanceDismissed] = useState(false);
@@ -19,56 +15,6 @@ const DashboardLayout = () => {
   const isCompanyAdmin = user?.role === "company-admin";
   const isClient = user?.role === "client";
   const showContent = isCompanyAdmin || isClient || attendance.isShiftActive;
-
-  useEffect(() => {
-    // Request notification permission on mount
-    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
-      Notification.requestPermission().catch(e => console.log("Notification permission request failed", e));
-    }
-
-    // Handler for new notifications
-    const handleNewNotification = (notification) => {
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries(["notifications"]);
-      queryClient.invalidateQueries(["unreadNotificationCount"]);
-
-      // Play sound
-      try {
-        const audio = new Audio(notificationSound);
-        audio.play().catch(e => console.log("Audio play failed", e));
-      } catch (e) {
-        console.log("Audio error", e);
-      }
-
-      // Show browser notification
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        const icon =
-          notification.data?.senderImage ||
-          notification.data?.assignedBy?.profileImage ||
-          notification.data?.updatedBy?.profileImage ||
-          notification.data?.submittedBy?.profileImage ||
-          notification.data?.approvedBy?.profileImage ||
-          "/icons/alert.svg";
-
-        try {
-          new Notification(notification.title, {
-            body: notification.message,
-            icon: icon,
-          });
-        } catch (e) {
-          console.error("Failed to show browser notification:", e);
-        }
-      }
-    };
-
-    // Subscribe to notifications
-    socketService.onNewNotification(handleNewNotification);
-
-    return () => {
-      // Unsubscribe on unmount
-      socketService.offNewNotification(handleNewNotification);
-    };
-  }, [queryClient]);
 
   return (
     <main className="bg-[#F4F9FD] h-screen overflow-hidden flex relative">

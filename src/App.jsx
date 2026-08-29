@@ -6,9 +6,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { validateSession } from "./api/service";
 import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 import socketService from "./services/socketService";
+import { unlockNotificationSound, handleTaskStatusChanged } from "./services/realtimeNotificationHandler";
 import AppRoutes from "./routes/AppRoutes";
 import { assetPath } from "./utils/assetPath";
 import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
+import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
 
 const isDesktop = typeof window !== "undefined" && window.desktop;
 const Router = isDesktop ? HashRouter : BrowserRouter;
@@ -64,13 +66,14 @@ function App() {
         // Initialize socket connection after successful authentication
         const token = localStorage.getItem("token");
         if (token) {
-          const socket = socketService.connect(token);
-          
+          socketService.connect(token);
+
           if (user?.company) {
-            socket.emit("join_room", `company_${user.company}`);
-            
-            // Global lead notification with sound
-            socket.on("new_lead_received", (data) => {
+            socketService.joinRoom(`company_${user.company}`);
+          }
+
+          // Global lead notification with sound
+          socketService.onNewLeadReceived((data) => {
                 // Play notification sound
                 try {
                     const audio = new Audio('/src/assets/audio/new-notification-017-352293.mp3');
@@ -90,16 +93,13 @@ function App() {
 
                 // Auto invalidate query cache and force refetch to refresh leads in real-time
                 try {
-                    console.log("[Socket] Invalidating and refetching query keys: leads, leadStats, campaigns");
                     queryClient.invalidateQueries({ queryKey: ["leads"] });
                     queryClient.invalidateQueries({ queryKey: ["leadStats"] });
                     queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-                    console.log("[Socket] Invalidation triggered successfully!");
                 } catch (err) {
                     console.error("[Socket] Refetch failed:", err);
                 }
             });
-          }
         }
       } catch (error) {
         dispatch(logout());
@@ -113,6 +113,32 @@ function App() {
     };
     checkAuth();
   }, [dispatch]);
+
+  // Real-time task status updates (toast/sound/bell live in GlobalNudges)
+  useEffect(() => {
+    if (!isAuthChecked) return;
+
+    const handleTaskStatusChangedEvent = (data) => {
+      handleTaskStatusChanged(data, queryClient);
+    };
+
+    socketService.onTaskStatusChange(handleTaskStatusChangedEvent);
+
+    return () => {
+      socketService.offTaskStatusChange(handleTaskStatusChangedEvent);
+    };
+  }, [isAuthChecked, queryClient]);
+
+  // Unlock notification audio after first user interaction (browser autoplay policy)
+  useEffect(() => {
+    const unlock = () => unlockNotificationSound();
+    document.addEventListener("click", unlock, { once: true });
+    document.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("keydown", unlock);
+    };
+  }, []);
 
   // Show loading spinner while verifying the user
   if (loading || !isAuthChecked) {
@@ -129,6 +155,8 @@ function App() {
         <AppRoutes />
       </Router>
 
+      <RealtimeAlertsProvider />
+
       {showFixProfileModal && (
         <FixProfileImageModal
           isOpen={showFixProfileModal}
@@ -139,8 +167,9 @@ function App() {
 
       <Toaster
         position="top-right"
+        containerStyle={{ zIndex: 2147483647 }}
         toastOptions={{
-          duration: 4000,
+          duration: 3000,
           style: {
             background: "#363636",
             color: "#fff",

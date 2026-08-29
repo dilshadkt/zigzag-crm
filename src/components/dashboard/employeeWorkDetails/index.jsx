@@ -1,15 +1,34 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { useGetEmployeeSubTasksToday } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import socketService from "../../../services/socketService";
 
 const EmployeeWorkDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: todaySubTasks, isLoading } = useGetEmployeeSubTasksToday(
-    user?._id ? user._id : null
+  const { data: todaySubTasks, isLoading, refetch } = useGetEmployeeSubTasksToday(
+    user?._id ? String(user._id) : null
   );
+
+  // Same mechanism as the action-alert popup (GlobalNudges): refetch as soon as
+  // a socket notification arrives so the list updates without a page refresh.
+  useEffect(() => {
+    const handleUpdate = () => {
+      refetch();
+    };
+
+    socketService.onNewNotification(handleUpdate);
+    socketService.onSubtaskAssigned(handleUpdate);
+    window.addEventListener("taskCreated", handleUpdate);
+
+    return () => {
+      socketService.offNewNotification(handleUpdate);
+      socketService.offSubtaskAssigned(handleUpdate);
+      window.removeEventListener("taskCreated", handleUpdate);
+    };
+  }, [refetch]);
 
   const priorityRank = {
     high: 3,
@@ -17,26 +36,30 @@ const EmployeeWorkDetails = () => {
     low: 1,
   };
 
-  const sortedSubTasks = useMemo(() =>
-    todaySubTasks?.subTasks?.slice()?.sort((a, b) => {
-      const aRank = priorityRank[a?.priority?.toLowerCase()] || 0;
-      const bRank = priorityRank[b?.priority?.toLowerCase()] || 0;
-      return bRank - aRank;
-    }) || []
-    , [todaySubTasks]);
+  const sortedSubTasks = useMemo(
+    () =>
+      (todaySubTasks?.subTasks || []).slice().sort((a, b) => {
+        const aRank = priorityRank[a?.priority?.toLowerCase()] || 0;
+        const bRank = priorityRank[b?.priority?.toLowerCase()] || 0;
+        return bRank - aRank;
+      }),
+    [todaySubTasks]
+  );
+
+  const pendingWithReasonSubTasks = useMemo(
+    () => sortedSubTasks.filter((task) => task.hasPendingReasonToday),
+    [sortedSubTasks]
+  );
+
+  const activeSubTasks = useMemo(
+    () => sortedSubTasks.filter((task) => !task.hasPendingReasonToday),
+    [sortedSubTasks]
+  );
 
   const completedItems = [
     ...(todaySubTasks?.completedTasks || []),
     ...(todaySubTasks?.completedSubTasks || []),
   ].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-
-  const pendingWithReasonSubTasks = useMemo(() =>
-    sortedSubTasks.filter(task => task.hasPendingReasonToday)
-    , [sortedSubTasks]);
-
-  const activeSubTasks = useMemo(() =>
-    sortedSubTasks.filter(task => !task.hasPendingReasonToday)
-    , [sortedSubTasks]);
 
   const formatTime = (dateString) => {
     if (!dateString) return "No due date";

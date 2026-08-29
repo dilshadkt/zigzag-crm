@@ -309,8 +309,20 @@ export const useChat = () => {
     }
 
     return () => {
-      socketService.removeAllListeners();
-      socketService.disconnect();
+      // Only detach this hook's chat listeners. Tearing down the shared socket
+      // here also killed global notification delivery.
+      const socket = socketService.getSocket();
+      if (!socket) return;
+
+      socket.off("new_message", handleNewMessage);
+      socket.off("user_typing", handleTypingEvent);
+      socket.off("user_online", handleUserOnline);
+      socket.off("user_offline", handleUserOffline);
+      socket.off("conversation_update", handleConversationUpdate);
+      socket.off("message_update", handleMessageUpdate);
+      socket.off("messages_read", handleMessagesRead);
+      socket.off("message_pinned", handleMessagePinned);
+      socket.off("message_unpinned", handleMessageUnpinned);
     };
   }, [
     handleNewMessage,

@@ -1106,8 +1106,8 @@ export const useGetEmployeeSubTasksToday = (employeeId) => {
         });
     },
     enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -1776,6 +1776,49 @@ export const useRemoveSubTaskAttachment = (subTaskId, parentTaskId) => {
 };
 
 // Notification Hooks
+const updateNotificationCachesAsAllRead = (queryClient) => {
+  queryClient.setQueriesData({ queryKey: ["notifications"] }, (oldData) => {
+    if (!oldData?.notifications) return oldData;
+
+    return {
+      ...oldData,
+      unreadCount: 0,
+      notifications: oldData.notifications.map((notification) =>
+        notification.read ? notification : { ...notification, read: true }
+      ),
+    };
+  });
+
+  queryClient.setQueryData(["unreadNotificationCount"], (oldData) => ({
+    ...(oldData || { success: true }),
+    count: 0,
+  }));
+};
+
+const updateNotificationCachesAsRead = (queryClient, notificationId) => {
+  queryClient.setQueriesData({ queryKey: ["notifications"] }, (oldData) => {
+    if (!oldData?.notifications) return oldData;
+
+    const notification = oldData.notifications.find(
+      (item) => item._id === notificationId
+    );
+    if (!notification || notification.read) return oldData;
+
+    return {
+      ...oldData,
+      unreadCount: Math.max(0, (oldData.unreadCount || 0) - 1),
+      notifications: oldData.notifications.map((item) =>
+        item._id === notificationId ? { ...item, read: true } : item
+      ),
+    };
+  });
+
+  queryClient.setQueryData(["unreadNotificationCount"], (oldData) => ({
+    ...(oldData || { success: true }),
+    count: Math.max(0, (oldData?.count || 0) - 1),
+  }));
+};
+
 export const useGetNotifications = (limit = 10) => {
   return useQuery({
     queryKey: ["notifications", limit],
@@ -1898,8 +1941,10 @@ export const useGetNotifications = (limit = 10) => {
         unreadCount: mockNotifications.filter((n) => !n.read).length,
       }));
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    // Safety net: sockets can drop silently, so keep notifications self-healing.
+    refetchInterval: 1000 * 30,
   });
 };
 
@@ -1909,8 +1954,8 @@ export const useGetUnreadNotificationCount = () => {
     queryFn: () => {
       return getUnreadNotificationCount().catch(() => ({ count: 3 }));
     },
-    staleTime: 1000 * 60 * 1, // 1 minute
-    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -1919,9 +1964,8 @@ export const useMarkNotificationAsRead = () => {
   return useMutation({
     mutationKey: ["markNotificationAsRead"],
     mutationFn: (notificationId) => markNotificationAsRead(notificationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["notifications"]);
-      queryClient.invalidateQueries(["unreadNotificationCount"]);
+    onSuccess: (_, notificationId) => {
+      updateNotificationCachesAsRead(queryClient, notificationId);
     },
   });
 };
@@ -1932,8 +1976,7 @@ export const useMarkAllNotificationsAsRead = () => {
     mutationKey: ["markAllNotificationsAsRead"],
     mutationFn: () => markAllNotificationsAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries(["notifications"]);
-      queryClient.invalidateQueries(["unreadNotificationCount"]);
+      updateNotificationCachesAsAllRead(queryClient);
     },
   });
 };

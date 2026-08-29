@@ -19,6 +19,7 @@ const GamificationRulesSection = () => {
     earlyLeaveRequestPoints: 10,
     lateLeaveRequestPenaltyPoints: 10,
     coordinatorReviewTimeLimit: 4,
+    coordinatorReviewBonusPoints: 5,
     baseTargetScore: 1000,
     // Two-Tier Review Scoring
     internalReviewApprovalPoints: 25,
@@ -184,14 +185,14 @@ const GamificationRulesSection = () => {
           <div className="flex items-center gap-2 mb-4">
             <FiShield className="text-indigo-600 w-5 h-5" />
             <h3 className="text-sm font-bold text-gray-800">Coordinator Review Timeliness</h3>
-            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Reviewer Penalties</span>
+            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Reviewer Incentives</span>
           </div>
           <p className="text-xs text-gray-500 mb-4">
             Points awarded/deducted from the <strong>reviewer or coordinator</strong> based on how quickly they action a task in review.
             This is separate from employee rejection penalties below — it measures review speed, not task quality.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
                 <FiClock className="text-indigo-500" /> Review Time Limit (Hours)
@@ -205,6 +206,22 @@ const GamificationRulesSection = () => {
                 value={settings.coordinatorReviewTimeLimit}
                 onChange={handleChange}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+                <FiStar className="text-emerald-500" /> On-Time Review Bonus
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Points credited to the <strong>reviewer</strong> when they complete a review within the time limit above.
+              </p>
+              <input
+                type="number"
+                name="coordinatorReviewBonusPoints"
+                value={settings.coordinatorReviewBonusPoints !== undefined ? settings.coordinatorReviewBonusPoints : 5}
+                onChange={handleChange}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm w-full transition-all"
               />
             </div>
 

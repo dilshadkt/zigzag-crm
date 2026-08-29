@@ -6,12 +6,27 @@ import {
   useMarkAllNotificationsAsRead,
 } from "../../api/hooks";
 import { useNavigate } from "react-router-dom";
+import socketService from "../../services/socketService";
 
 const NotificationBar = ({ setNotifyMenuOpen }) => {
   const navigate = useNavigate();
-  const { data: notificationsData, isLoading } = useGetNotifications(10);
+  const { data: notificationsData, isLoading, refetch } = useGetNotifications(10);
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      refetch();
+    };
+
+    socketService.onNewNotification(handleUpdate);
+    socketService.onSubtaskAssigned(handleUpdate);
+
+    return () => {
+      socketService.offNewNotification(handleUpdate);
+      socketService.offSubtaskAssigned(handleUpdate);
+    };
+  }, [refetch]);
 
   const notifications = notificationsData?.notifications || [];
   const unreadCount = notificationsData?.unreadCount || 0;

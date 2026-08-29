@@ -6,11 +6,81 @@ class SocketService {
     this.isConnected = false;
     this.pendingListeners = [];
     this.joinedRooms = new Set(); // track rooms to re-join on reconnect
+    this.notificationHandlers = new Set();
+    this.taskStatusHandlers = new Set();
+    this.subtaskAssignedHandlers = new Set();
+  }
+
+  _dispatchToHandlers(handlers, data) {
+    handlers.forEach((handler) => {
+      try {
+        handler(data);
+      } catch (error) {
+        console.error("Socket handler error:", error);
+      }
+    });
+  }
+
+  _bindCoreListeners() {
+    if (!this.socket || this.socket.__coreListenersBound) return;
+
+    this.socket.__coreListenersBound = true;
+
+    this.socket.on("connect", () => {
+      this.isConnected = true;
+      this.joinedRooms.forEach((roomName) => {
+        this.socket.emit("join_room", roomName);
+      });
+    });
+
+    this.socket.on("disconnect", (reason) => {
+      console.log("❌ Disconnected from server:", reason);
+      this.isConnected = false;
+    });
+
+    this.socket.on("connect_error", (error) => {
+      console.error("❌ Connection error:", error.message);
+      this.isConnected = false;
+    });
+
+    this.socket.on("error", () => {});
+
+    this.socket.on("new_notification", (data) => {
+      console.log("🔔 New notification received via socket:", data);
+      this._dispatchToHandlers(this.notificationHandlers, data);
+    });
+
+    this.socket.on("task_status_changed", (data) => {
+      console.log("📋 Task status changed via socket:", data);
+      this._dispatchToHandlers(this.taskStatusHandlers, data);
+    });
+
+    this.socket.on("subtask_assigned", (data) => {
+      console.log("📌 Subtask assigned via socket:", data);
+      this._dispatchToHandlers(this.subtaskAssignedHandlers, data);
+    });
+
+    this.socket.on("points_awarded", (data) => {
+      console.log("🏆 Points awarded via socket:", data);
+    });
+
+    this.socket.on("new_lead", (data) => {
+      console.log("🎯 New lead received via socket:", data);
+    });
   }
 
   // Initialize socket connection
   connect(token) {
     if (this.socket?.connected) {
+      return this.socket;
+    }
+
+    if (this.socket) {
+      this.socket.auth = { token };
+      this._bindCoreListeners();
+      if (!this.socket.connected) {
+        this.socket.connect();
+      }
       return this.socket;
     }
 
@@ -35,64 +105,13 @@ class SocketService {
       reconnectionDelay: 1000,
     });
 
-    this.socket.on("connect", () => {
-      this.isConnected = true;
-      // Re-join all rooms after connect/reconnect
-      this.joinedRooms.forEach((roomName) => {
-        this.socket.emit("join_room", roomName);
-      });
-    });
+    this._bindCoreListeners();
 
-    this.socket.on("disconnect", (reason) => {
-      console.log("❌ Disconnected from server:", reason);
-      this.isConnected = false;
-    });
-
-    this.socket.on("connect_error", (error) => {
-      console.error("❌ Connection error:", error.message);
-      this.isConnected = false;
-    });
-
-    // Add error handler for general socket errors
-    this.socket.on("error", (error) => {});
-
-    // Add debugging for chat events
-    this.socket.on("new_message", (data) => {});
-
-    this.socket.on("message_sent", (data) => {});
-
-    this.socket.on("user_typing", (data) => {});
-
-    this.socket.on("user_online", (data) => {});
-
-    this.socket.on("user_offline", (data) => {});
-
-    this.socket.on("messages_read", (data) => {});
-
-    // Add task status change events
-    this.socket.on("task_status_changed", (data) => {
-      console.log("📋 Task status changed via socket:", data);
-    });
-
-    this.socket.on("new_notification", (data) => {
-      console.log("🔔 New notification received via socket:", data);
-    });
-
-    this.socket.on("points_awarded", (data) => {
-      console.log("🏆 Points awarded via socket:", data);
-    });
-
-    this.socket.on("new_lead", (data) => {
-      console.log("🎯 New lead received via socket:", data);
-    });
-
-    // Attach pending listeners
+    // Attach legacy pending listeners
     if (this.pendingListeners.length > 0) {
       this.pendingListeners.forEach(({ event, callback }) => {
         this.socket.on(event, callback);
       });
-      // We don't clear them in case it reconnects, but socket.io handles reconnects internally.
-      // We'll keep them to avoid double registering if connect is called again.
     }
 
     return this.socket;
@@ -227,22 +246,30 @@ class SocketService {
 
   // Listen for task status changes
   onTaskStatusChange(callback) {
-    this._addListener("task_status_changed", callback);
+    this.taskStatusHandlers.add(callback);
   }
 
   // Remove task status change listener
   offTaskStatusChange(callback) {
-    this._removeListener("task_status_changed", callback);
+    this.taskStatusHandlers.delete(callback);
   }
 
   // Listen for new notifications
   onNewNotification(callback) {
-    this._addListener("new_notification", callback);
+    this.notificationHandlers.add(callback);
   }
 
   // Remove notification listener
   offNewNotification(callback) {
-    this._removeListener("new_notification", callback);
+    this.notificationHandlers.delete(callback);
+  }
+
+  onSubtaskAssigned(callback) {
+    this.subtaskAssignedHandlers.add(callback);
+  }
+
+  offSubtaskAssigned(callback) {
+    this.subtaskAssignedHandlers.delete(callback);
   }
 
   // Listen for new messages
@@ -357,10 +384,13 @@ class SocketService {
     }
   }
 
-  // Remove all listeners
+  // Remove all listeners. Core app listeners (notifications, task events) are
+  // re-bound immediately so feature teardown can never kill global real-time.
   removeAllListeners() {
     if (this.socket) {
       this.socket.removeAllListeners();
+      this.socket.__coreListenersBound = false;
+      this._bindCoreListeners();
     }
   }
 
