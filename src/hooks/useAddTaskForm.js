@@ -44,7 +44,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     project: Yup.string().nullable(),
     taskGroup: Yup.string().when("project", {
       is: (project) => project && project !== "" && project !== "other",
-      then: (schema) => schema.required("Task group is required"),
+      then: (schema) => schema.required("Work type is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
     extraTaskWorkType: Yup.string().when(["taskGroup", "project"], {

@@ -27,6 +27,7 @@ import {
 } from "../../../utils/workingDayUtils";
 import { useCheckAvailability } from "../../../features/vacations/hooks/useVacations";
 import { useGetCampaignsByCompany } from "../../../api/campaigns";
+import { getSelectedWorkItems, resolveTaskCategoryId } from "../workDetailsForm/workTypeMapping";
 
 const AddTask = ({
   isOpen,
@@ -256,8 +257,48 @@ const AddTask = ({
     if (!isEdit && values.project !== initialValues?.project) {
       setFieldValue("taskGroup", "");
       setFieldValue("extraTaskWorkType", "");
+      setFieldValue("taskCategory", "");
     }
   }, [values.project, initialValues?.project, setFieldValue, isEdit]);
+
+  // Work type pick fills the Master category used for points — no second dropdown
+  useEffect(() => {
+    if (isEdit) return;
+    let workDetails = null;
+    if (
+      selectedProjectData &&
+      selectedProjectId &&
+      selectedProjectId !== "other"
+    ) {
+      workDetails = selectedProjectData.workDetails?.find(
+        (wd) => wd.month === selectedMonth
+      );
+    } else {
+      workDetails = monthWorkDetails || projectData?.workDetails;
+    }
+
+    const nextId = resolveTaskCategoryId({
+      taskGroup: values.taskGroup,
+      extraTaskWorkType: values.extraTaskWorkType,
+      workDetails,
+      categories: taskCategories,
+    });
+    if (String(values.taskCategory || "") !== String(nextId || "")) {
+      setFieldValue("taskCategory", nextId || "");
+    }
+  }, [
+    values.taskGroup,
+    values.extraTaskWorkType,
+    values.taskCategory,
+    selectedProjectData,
+    selectedProjectId,
+    selectedMonth,
+    monthWorkDetails,
+    projectData,
+    taskCategories,
+    isEdit,
+    setFieldValue,
+  ]);
 
   // Handle automatic custom fields based on task group
   useEffect(() => {
@@ -300,7 +341,7 @@ const AddTask = ({
   useEffect(() => {
     if (values.campaign && values.campaign !== prevCampaignRef.current) {
       setFieldValue("requiresCampaignReport", true);
-      if (!values.taskGroup || values.taskGroup === "Select task group") {
+      if (!values.taskGroup || values.taskGroup === "Select task group" || values.taskGroup === "Select work type") {
         setFieldValue("taskGroup", "campaign");
       }
     }
@@ -546,49 +587,14 @@ const AddTask = ({
 
     const options = [];
 
-    // Add main work types
-    if (workDetails.reels?.count > 0) {
-      options.push({
-        label: `Reels (${workDetails.reels.count} remaining)`,
-        value: "reels",
-      });
-    }
-    if (workDetails.poster?.count > 0) {
-      options.push({
-        label: `Poster (${workDetails.poster.count} remaining)`,
-        value: "poster",
-      });
-    }
-    if (workDetails.motionPoster?.count > 0) {
-      options.push({
-        label: `Motion Poster (${workDetails.motionPoster.count} remaining)`,
-        value: "motionPoster",
-      });
-    }
-    if (workDetails.shooting?.count > 0) {
-      options.push({
-        label: `Shooting (${workDetails.shooting.count} remaining)`,
-        value: "shooting",
-      });
-    }
-    if (workDetails.motionGraphics?.count > 0) {
-      options.push({
-        label: `Motion Graphics (${workDetails.motionGraphics.count} remaining)`,
-        value: "motionGraphics",
-      });
-    }
-
-    // Add other work types
-    if (workDetails.other?.length > 0) {
-      workDetails.other.forEach((item) => {
-        if (item.count > 0) {
-          options.push({
-            label: `${item.name} (${item.count} remaining)`,
-            value: item.name,
-          });
-        }
-      });
-    }
+    getSelectedWorkItems(workDetails, taskCategories).forEach((item) => {
+      if (Number(item.count) > 0) {
+        options.push({
+          label: `${item.name} (${item.count} remaining)`,
+          value: item.kind === "standard" ? item.key : item.name,
+        });
+      }
+    });
 
     // Always add Campaign and Extra Task — they do not consume monthly content quota
     options.push({
@@ -714,7 +720,9 @@ const AddTask = ({
     selectedProjectId === "" || selectedProjectId === null;
 
   const isTaskGroupSelected =
-    values.taskGroup && values.taskGroup !== "Select task group";
+    values.taskGroup &&
+    values.taskGroup !== "Select task group" &&
+    values.taskGroup !== "Select work type";
   const isCampaignTaskSelected = values.taskGroup === "campaign";
   const isExtraTaskSelected = values.taskGroup === "extraTask";
   const isExtraTaskWorkTypeSelected = isExtraTaskSelected
@@ -986,36 +994,17 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                       errors={errors}
                       touched={touched}
                       name={"taskGroup"}
-                      selectedValue={values?.taskGroup || "Select task group"}
-                      value={values?.taskGroup || "Select task group"}
+                      selectedValue={values?.taskGroup || "Select work type"}
+                      value={values?.taskGroup || "Select work type"}
                       onChange={handleChange}
-                      title="Task Group"
+                      title="Work type"
                       options={
                         isLoadingProjectDetails
                           ? [{ label: "Loading...", value: "" }]
                           : taskGroupOptions
                       }
-                      defaultValue="Select task group"
+                      defaultValue="Select work type"
                       disabled={isEdit || isLoadingProjectDetails}
-                    />
-
-                    {/* Task Category */}
-                    <Select
-                      errors={errors}
-                      touched={touched}
-                      name={"taskCategory"}
-                      selectedValue={values?.taskCategory || ""}
-                      value={values?.taskCategory || ""}
-                      onChange={handleChange}
-                      title="Task Category"
-                      options={[
-                        { label: "None", value: "" },
-                        ...taskCategories
-                          .filter((c) => c.isActive)
-                          .map((c) => ({ label: c.name, value: c._id }))
-                      ]}
-                      defaultValue=""
-                      required={false}
                     />
                   </>
                 )}
