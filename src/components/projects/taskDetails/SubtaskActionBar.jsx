@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
+import CampaignReportModal from "../../shared/campaignReportModal";
 import { toast } from "react-hot-toast";
-import { FiPlay, FiPause, FiSend, FiCheck, FiRotateCcw, FiChevronRight } from "react-icons/fi";
+import { FiPlay, FiPause, FiSend, FiCheck, FiRotateCcw, FiChevronRight, FiFileText } from "react-icons/fi";
+import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
 
 /**
  * SubtaskActionBar — replaces the status dropdown for assigned employees
@@ -23,10 +25,12 @@ const SubtaskActionBar = ({
   isAdmin,
 }) => {
   const updateMutation = useUpdateSubTaskById(subtask._id, parentTaskId);
+  const submitCampaignReport = useSubmitSubTaskCampaignReport(subtask._id);
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef(null);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
+  const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
   const status = subtask.status?.toLowerCase() || "todo";
@@ -47,6 +51,15 @@ const SubtaskActionBar = ({
       (flow) =>
         flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() &&
         flow.requiresWorkLink
+    );
+
+  const isCampaignReportRequired =
+    subtask.requiresCampaignReport ||
+    parentTaskFlow?.flows?.some(
+      (flow) =>
+        flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() &&
+        (flow.requiresCampaignReport ||
+          String(flow.taskName || "").toLowerCase() === "campaign")
     );
 
   const getCurrentLink = () => {
@@ -98,7 +111,7 @@ const SubtaskActionBar = ({
       await updateMutation.mutateAsync({ status: newStatus, ...extra });
     } catch (err) {
       console.error("SubtaskActionBar status change error:", err);
-      toast.error("Failed to update status");
+      toast.error(err.response?.data?.message || "Failed to update status");
     }
   };
 
@@ -127,6 +140,20 @@ const SubtaskActionBar = ({
       if (!hasLink || needsNewLink) {
         setPendingAction("on-review");
         setIsWorkLinkModalOpen(true);
+        return;
+      }
+    }
+    if (isCampaignReportRequired) {
+      const lastRework = subtask.reworkHistory?.[subtask.reworkHistory.length - 1];
+      const submittedAt = subtask.campaignReport?.submittedAt
+        ? new Date(subtask.campaignReport.submittedAt)
+        : null;
+      const needsReport =
+        !submittedAt ||
+        (lastRework?.changedAt && submittedAt < new Date(lastRework.changedAt));
+      if (needsReport) {
+        setPendingAction("on-review");
+        setIsCampaignReportModalOpen(true);
         return;
       }
     }
@@ -196,6 +223,22 @@ const SubtaskActionBar = ({
     } catch (err) {
       console.error("Work link submit error:", err);
       toast.error("Failed to submit work link");
+    }
+  };
+
+  const handleCampaignReportSubmit = async (payload) => {
+    try {
+      const result = await submitCampaignReport.mutateAsync(payload);
+      setIsCampaignReportModalOpen(false);
+      if (pendingAction && !result?.sentToReview) {
+        await changeStatus(pendingAction);
+      }
+      setPendingAction(null);
+      toast.success(
+        result?.message || "Campaign report sent to the department head for review"
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit campaign report");
     }
   };
 
@@ -304,6 +347,13 @@ const SubtaskActionBar = ({
           initialValue={getCurrentLink()}
           history={subtask.workLinkHistory}
         />
+        <CampaignReportModal
+          isOpen={isCampaignReportModalOpen}
+          onClose={() => setIsCampaignReportModalOpen(false)}
+          onSubmit={handleCampaignReportSubmit}
+          isLoading={submitCampaignReport.isPending || isUpdating}
+          initialReport={subtask.campaignReport}
+        />
       </>
     );
   }
@@ -323,6 +373,15 @@ const SubtaskActionBar = ({
 
           {status === "on-review" && (
             <>
+              {subtask.campaignReport?.submittedAt && (
+                <button
+                  onClick={() => setIsCampaignReportModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
+                >
+                  <FiFileText className="w-3.5 h-3.5" />
+                  View report
+                </button>
+              )}
               <button
                 onClick={handleApprove}
                 disabled={isUpdating}
@@ -369,6 +428,14 @@ const SubtaskActionBar = ({
           onClose={() => setIsReworkModalOpen(false)}
           onSubmit={handleReworkSubmit}
           isLoading={isUpdating}
+        />
+        <CampaignReportModal
+          isOpen={isCampaignReportModalOpen}
+          onClose={() => setIsCampaignReportModalOpen(false)}
+          onSubmit={handleCampaignReportSubmit}
+          isLoading={false}
+          initialReport={subtask.campaignReport}
+          readOnly
         />
       </>
     );

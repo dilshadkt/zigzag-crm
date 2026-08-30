@@ -26,6 +26,14 @@ const GamificationRulesSection = () => {
     internalReviewRejectionPenalty: 10,
     clientApprovalPoints: 30,
     clientRejectionPenalty: 15,
+    campaignKpiBonusEnabled: false,
+    campaignCtrTarget: 1,
+    campaignCprMax: 0,
+    campaignBudgetTolerance: 0.1,
+    campaignCtrBonusPoints: 5,
+    campaignCprBonusPoints: 5,
+    campaignBudgetBonusPoints: 5,
+    campaignKpiBonusCapPerWeek: 20,
   });
 
   useEffect(() => {
@@ -35,8 +43,11 @@ const GamificationRulesSection = () => {
   }, [data]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setSettings(prev => ({ ...prev, [name]: Number(value) }));
+    const { name, value, type, checked } = e.target;
+    setSettings(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : Number(value),
+    }));
   };
 
   const handleSave = () => {
@@ -323,6 +334,64 @@ const GamificationRulesSection = () => {
                 onChange={handleChange}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm w-full transition-all"
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-2 mb-2">
+            <FiStar className="text-indigo-600 w-5 h-5" />
+            <h3 className="text-sm font-bold text-gray-800">Campaign KPI Bonuses</h3>
+            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Phase 2</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Optional extras awarded when a <strong>campaign report is posted</strong>, comparing the snapshot against targets.
+            Facebook sync never awards points. Weekly cap applies per campaign per person.
+          </p>
+
+          <label className="flex items-center gap-2 mb-4 cursor-pointer">
+            <input
+              type="checkbox"
+              name="campaignKpiBonusEnabled"
+              checked={!!settings.campaignKpiBonusEnabled}
+              onChange={handleChange}
+              className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+            />
+            <span className="text-sm font-medium text-gray-700">Enable KPI bonuses on report submit</span>
+          </label>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">CTR target (%)</label>
+              <p className="text-xs text-gray-500 mb-1">Bonus if snapshot CTR is at or above this value.</p>
+              <input type="number" step="0.01" name="campaignCtrTarget" value={settings.campaignCtrTarget ?? 1} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">CTR bonus points</label>
+              <input type="number" name="campaignCtrBonusPoints" value={settings.campaignCtrBonusPoints ?? 5} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Max CPR (0 = skip)</label>
+              <p className="text-xs text-gray-500 mb-1">Bonus if snapshot CPR is above 0 and at or under this value.</p>
+              <input type="number" step="0.01" name="campaignCprMax" value={settings.campaignCprMax ?? 0} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">CPR bonus points</label>
+              <input type="number" name="campaignCprBonusPoints" value={settings.campaignCprBonusPoints ?? 5} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Budget tolerance</label>
+              <p className="text-xs text-gray-500 mb-1">Spend may exceed budget by this fraction (0.1 = 10%).</p>
+              <input type="number" step="0.01" name="campaignBudgetTolerance" value={settings.campaignBudgetTolerance ?? 0.1} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Budget bonus points</label>
+              <input type="number" name="campaignBudgetBonusPoints" value={settings.campaignBudgetBonusPoints ?? 5} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
+            </div>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Weekly bonus cap per campaign</label>
+              <p className="text-xs text-gray-500 mb-1">Maximum KPI bonus points a person can earn from one campaign in a week (0 = no cap).</p>
+              <input type="number" name="campaignKpiBonusCapPerWeek" value={settings.campaignKpiBonusCapPerWeek ?? 20} onChange={handleChange} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full" />
             </div>
           </div>
         </div>

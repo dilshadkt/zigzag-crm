@@ -26,6 +26,7 @@ import {
   formatShortDate,
 } from "../../../utils/workingDayUtils";
 import { useCheckAvailability } from "../../../features/vacations/hooks/useVacations";
+import { useGetCampaignsByCompany } from "../../../api/campaigns";
 
 const AddTask = ({
   isOpen,
@@ -94,6 +95,8 @@ const AddTask = ({
       dueDateChangeReason: initialValues.dueDateChangeReason || "",
       requiresClientApproval: initialValues.requiresClientApproval || false,
       requiresWorkLink: initialValues.requiresWorkLink || false,
+      campaign: initialValues.campaign?._id || initialValues.campaign || "",
+      requiresCampaignReport: initialValues.requiresCampaignReport || false,
       customFields: initialValues.customFields || [],
       subtasks: initialValues.subtasks || [],
       attachments: initialValues.attachments || [],
@@ -114,6 +117,17 @@ const AddTask = ({
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialValues?.project?._id || initialValues?.project || ""
   );
+
+  const campaignProjectId =
+    selectedProjectId && selectedProjectId !== "other"
+      ? selectedProjectId
+      : null;
+  const { data: projectCampaignsData } = useGetCampaignsByCompany(companyId, {
+    projectId: campaignProjectId || undefined,
+  });
+  const projectCampaigns = projectCampaignsData?.data || [];
+  const prevCampaignRef = useRef(initialValues?.campaign?._id || initialValues?.campaign || "");
+  const prevTaskGroupRef = useRef(initialValues?.taskGroup || "");
 
   // Refs to track previous "master" values for resetting manual subtask edits
   const prevMasterValues = useRef({
@@ -283,6 +297,30 @@ const AddTask = ({
     }
   }, [values.requiresWorkLink, setFieldValue]);
 
+  useEffect(() => {
+    if (values.campaign && values.campaign !== prevCampaignRef.current) {
+      setFieldValue("requiresCampaignReport", true);
+      if (!values.taskGroup || values.taskGroup === "Select task group") {
+        setFieldValue("taskGroup", "campaign");
+      }
+    }
+    if (!values.campaign && prevCampaignRef.current && values.taskGroup !== "campaign") {
+      setFieldValue("requiresCampaignReport", false);
+    }
+    prevCampaignRef.current = values.campaign;
+  }, [values.campaign, values.taskGroup, setFieldValue]);
+
+  useEffect(() => {
+    if (values.taskGroup === "campaign" && prevTaskGroupRef.current !== "campaign") {
+      setFieldValue("requiresCampaignReport", true);
+      setFieldValue("requiresClientApproval", false);
+      setFieldValue("requiresWorkLink", false);
+      setFieldValue("taskFlow", "");
+      setFieldValue("extraTaskWorkType", "");
+    }
+    prevTaskGroupRef.current = values.taskGroup;
+  }, [values.taskGroup, setFieldValue]);
+
   // Handle task flow selection with project membership validation
   useEffect(() => {
     const normalizeId = (val) => {
@@ -347,6 +385,14 @@ const AddTask = ({
           }
           setFieldValue("requiresClientApproval", selectedFlow.flows.some(step => step.requiresClientApproval));
           setFieldValue("requiresWorkLink", selectedFlow.flows.some(step => step.requiresWorkLink));
+          setFieldValue(
+            "requiresCampaignReport",
+            selectedFlow.flows.some(
+              (step) =>
+                step.requiresCampaignReport ||
+                String(step.taskName || "").toLowerCase() === "campaign"
+            )
+          );
         }
       }
     }
@@ -385,6 +431,9 @@ const AddTask = ({
             weightage: s.weightage,
             requiresClientApproval: selectedFlow.flows[idx].requiresClientApproval,
             requiresWorkLink: selectedFlow.flows[idx].requiresWorkLink,
+            requiresCampaignReport:
+              selectedFlow.flows[idx].requiresCampaignReport ||
+              String(selectedFlow.flows[idx].taskName || "").toLowerCase() === "campaign",
             isFromFlow: true
           }));
 
@@ -432,7 +481,8 @@ const AddTask = ({
       dueDate: values.dueDate || new Date().toISOString().split('T')[0],
       isManual: true,
       requiresClientApproval: false,
-      requiresWorkLink: false
+      requiresWorkLink: false,
+      requiresCampaignReport: false
     };
     setFieldValue("subtasks", [...(values.subtasks || []), newSubtask]);
   };
@@ -488,7 +538,10 @@ const AddTask = ({
     }
 
     if (!workDetails) {
-      return [];
+      return [
+        { label: "Campaign", value: "campaign" },
+        { label: "Extra Task", value: "extraTask" },
+      ];
     }
 
     const options = [];
@@ -537,7 +590,11 @@ const AddTask = ({
       });
     }
 
-    // Always add Extra Task option
+    // Always add Campaign and Extra Task — they do not consume monthly content quota
+    options.push({
+      label: "Campaign",
+      value: "campaign",
+    });
     options.push({
       label: "Extra Task",
       value: "extraTask",
@@ -658,6 +715,7 @@ const AddTask = ({
 
   const isTaskGroupSelected =
     values.taskGroup && values.taskGroup !== "Select task group";
+  const isCampaignTaskSelected = values.taskGroup === "campaign";
   const isExtraTaskSelected = values.taskGroup === "extraTask";
   const isExtraTaskWorkTypeSelected = isExtraTaskSelected
     ? values.extraTaskWorkType &&
@@ -962,6 +1020,30 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                   </>
                 )}
 
+              {((!isOtherProjectSelected && !isNoProjectSelected) ||
+                !showProjectSelection) &&
+                campaignProjectId && (
+                  <Select
+                    errors={errors}
+                    touched={touched}
+                    name={"campaign"}
+                    selectedValue={values?.campaign || ""}
+                    value={values?.campaign || ""}
+                    onChange={handleChange}
+                    title={isCampaignTaskSelected ? "Campaign" : "Campaign (optional)"}
+                    options={[
+                      { label: "None", value: "" },
+                      ...projectCampaigns.map((c) => ({
+                        label: c.name,
+                        value: c._id,
+                      })),
+                    ]}
+                    defaultValue=""
+                    required={false}
+                    disabled={!isFormEnabled && !isOtherProjectSelected}
+                  />
+                )}
+
               {/* ── Dates (flow naturally in the 2-column grid) */}
                       {/* Start Date */}
                       <div>
@@ -1025,7 +1107,8 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                       </div>
 
               {((!isOtherProjectSelected && !isNoProjectSelected) ||
-                !showProjectSelection) && (
+                !showProjectSelection) &&
+                !isCampaignTaskSelected && (
                   <>
                     {/* Task Flow Selection */}
                     <Select
@@ -1155,6 +1238,7 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                 </div>
               )}
 
+              {!isCampaignTaskSelected && (
               <div className="flex items-center gap-2 px-1">
                 <input
                   type="checkbox"
@@ -1172,7 +1256,9 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                   Requires Client Approval
                 </label>
               </div>
+              )}
 
+              {!isCampaignTaskSelected && (
               <div className="flex items-center gap-2 px-1">
                 <input
                   type="checkbox"
@@ -1188,6 +1274,25 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                   className="text-sm font-medium text-gray-700 cursor-pointer select-none"
                 >
                   Requires Work Link
+                </label>
+              </div>
+              )}
+
+              <div className="flex items-center gap-2 px-1">
+                <input
+                  type="checkbox"
+                  id="requiresCampaignReport"
+                  name="requiresCampaignReport"
+                  checked={values.requiresCampaignReport}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+                <label
+                  htmlFor="requiresCampaignReport"
+                  className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                >
+                  Requires Campaign Report
                 </label>
               </div>
 
@@ -1500,6 +1605,15 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                                       className="w-3 h-3 rounded text-purple-600"
                                     />
                                     <span className="text-[9px] font-bold text-gray-400 uppercase">Link</span>
+                                  </label>
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={step.requiresCampaignReport}
+                                      onChange={(e) => handleSubtaskChange(index, "requiresCampaignReport", e.target.checked)}
+                                      className="w-3 h-3 rounded text-indigo-600"
+                                    />
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Report</span>
                                   </label>
                                 </div>
                               </div>

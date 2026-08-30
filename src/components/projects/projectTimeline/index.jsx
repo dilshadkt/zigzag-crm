@@ -160,6 +160,7 @@ export default function ProjectTimeline({ tasks = [], currentMonth, onTaskClick,
         if (normalizedGroup.includes("poster")) return "bg-purple-100 text-purple-700";
         if (normalizedGroup.includes("shooting")) return "bg-cyan-100 text-cyan-700";
         if (normalizedGroup.includes("motion")) return "bg-indigo-100 text-indigo-700";
+        if (normalizedGroup.includes("campaign")) return "bg-indigo-100 text-indigo-700";
 
         return "bg-slate-100 text-slate-700";
     };

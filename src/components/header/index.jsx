@@ -6,6 +6,7 @@ import {
   useGetUnreadNotificationCount,
   useGetStickyNotes,
   useAttendanceManager,
+  useIsDepartmentHead,
 } from "../../api/hooks";
 import { syncTimer, updateTimer } from "../../store/slice/timerSlice";
 import { useRouteAccess } from "../../hooks/useRouteAccess";
@@ -36,11 +37,13 @@ const DashboardHeader = () => {
   const [currentScore, setCurrentScore] = useState(0);
 
   // Hooks
-  const { user } = useAuth();
+  const { user, companyId } = useAuth();
+  const effectiveCompanyId = companyId || user?.company;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { userPosition } = useRouteAccess();
   const { hasAdminDashboardAccess } = usePermissions();
+  const { isDepartmentHead } = useIsDepartmentHead(effectiveCompanyId, !!user);
 
   // Data fetching
   const { data: unreadData } = useGetUnreadNotificationCount();
@@ -91,6 +94,27 @@ const DashboardHeader = () => {
     if (item.routeKey === "dashboard") {
       // ONLY Company Admin sees all sub-items under the main "Dashboard"
       if (isCompanyAdmin) {
+        if (isDepartmentHead) {
+          const hasDepartmentDashboard = item.children?.some(
+            (child) => child.routeKey === "department-dashboard"
+          );
+
+          if (!hasDepartmentDashboard) {
+            return {
+              ...item,
+              children: [
+                ...(item.children || []),
+                {
+                  id: 107,
+                  title: "Department Dashboard",
+                  path: "/department-dashboard",
+                  routeKey: "department-dashboard",
+                },
+              ],
+            };
+          }
+        }
+
         return item;
       }
 
@@ -108,7 +132,37 @@ const DashboardHeader = () => {
             child.routeKey === "dashboard" ||
             allowedRoutes.includes(child.routeKey)
         );
+
+        if (isDepartmentHead) {
+          allowedChildren.push({
+            id: 107,
+            title: "Department Dashboard",
+            path: "/department-dashboard",
+            routeKey: "department-dashboard",
+          });
+        }
+
         return { ...item, children: allowedChildren };
+      }
+
+      if (isDepartmentHead) {
+        return {
+          ...item,
+          children: [
+            {
+              id: 101,
+              title: "Main Dashboard",
+              path: "/",
+              routeKey: "dashboard",
+            },
+            {
+              id: 107,
+              title: "Department Dashboard",
+              path: "/department-dashboard",
+              routeKey: "department-dashboard",
+            },
+          ],
+        };
       }
 
       // If no specific dashboard permissions, return a flat "Dashboard" link

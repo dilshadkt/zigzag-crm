@@ -79,6 +79,18 @@ const CampaignRow = ({ campaign, isClient, visibleColumns }) => {
         </div>
       </td>
 
+      {/* Owner */}
+      <td className="py-3.5 px-4">
+        <div className="text-[12px] font-semibold text-gray-700 truncate max-w-[140px]">
+          {campaign.assignedTo
+            ? `${campaign.assignedTo.firstName || ""} ${campaign.assignedTo.lastName || ""}`.trim() || "—"
+            : "—"}
+        </div>
+        {campaign.task?.title && (
+          <div className="text-[10px] text-gray-400 truncate max-w-[140px]">{campaign.task.title}</div>
+        )}
+      </td>
+
       {isVisible("results") && (
         <td className="py-3.5 px-4 text-right">
           <div className="text-[13px] font-semibold text-gray-900">

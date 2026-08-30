@@ -2,25 +2,36 @@ import React from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import ModalLayout from "../../shared/modal";
-import { FiX, FiCheck, FiInfo, FiGrid } from "react-icons/fi";
+import { FiCheck, FiInfo } from "react-icons/fi";
+import { useGetAllEmployees } from "../../../api/hooks";
+
+const getEmployeeName = (employee) =>
+  `${employee.firstName || ""} ${employee.lastName || ""}`.trim();
 
 const DepartmentModal = ({ isOpen, onClose, department, onSave }) => {
   const isEditing = !!department;
+  const { data: employeesData } = useGetAllEmployees(isOpen);
+  const employees = employeesData?.employees || [];
 
   const initialValues = {
     name: department?.name || "",
     description: department?.description || "",
+    head: department?.head?._id || department?.head || "",
     isActive: department?.isActive !== undefined ? department.isActive : true,
   };
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required("Department Name is required").max(100, "Too long"),
     description: Yup.string().max(255, "Too long"),
+    head: Yup.string().nullable(),
     isActive: Yup.boolean(),
   });
 
   const handleSubmit = (values, { setSubmitting }) => {
-    onSave(values);
+    onSave({
+      ...values,
+      head: values.head || null,
+    });
     setSubmitting(false);
   };
 
@@ -85,6 +96,32 @@ const DepartmentModal = ({ isOpen, onClose, department, onSave }) => {
                     {errors.description}
                   </p>
                 )}
+              </div>
+
+              {/* Department Head */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-bold text-gray-700 block">
+                  Department Head
+                </label>
+                <Field
+                  as="select"
+                  name="head"
+                  className={`w-full px-4 py-2.5 bg-gray-50 border ${
+                    errors.head && touched.head
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                      : "border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                  } rounded-xl text-[13px] text-gray-800 transition-all font-medium outline-none`}
+                >
+                  <option value="">Select Department Head</option>
+                  {employees.map((employee) => (
+                    <option key={employee._id} value={employee._id}>
+                      {employee.name || getEmployeeName(employee)}
+                    </option>
+                  ))}
+                </Field>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Optional. Assign the employee who leads this department.
+                </p>
               </div>
 
               {/* Active Status */}

@@ -1,5 +1,13 @@
 import React from "react";
-import { FiEdit3, FiTrash2, FiGrid, FiAlertCircle } from "react-icons/fi";
+import { FiEdit3, FiTrash2, FiGrid, FiAlertCircle, FiUser } from "react-icons/fi";
+
+const getHeadName = (head) => {
+  if (!head) return null;
+  if (typeof head === "object") {
+    return `${head.firstName || ""} ${head.lastName || ""}`.trim() || head.name || null;
+  }
+  return null;
+};
 
 const DepartmentSection = ({
   departments = [],
@@ -61,9 +69,14 @@ const DepartmentSection = ({
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col font-sans">
       <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
         <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-8 pl-1">
+          <div className="col-span-5 pl-1">
             <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
               Department Name & Description
+            </h3>
+          </div>
+          <div className="col-span-3">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+              Department Head
             </h3>
           </div>
           <div className="col-span-2">
@@ -86,7 +99,7 @@ const DepartmentSection = ({
             className="px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group bg-white border-b border-gray-50 last:border-b-0"
           >
             <div className="grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-8">
+              <div className="col-span-5">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm bg-blue-50 text-blue-500">
                     <FiGrid className="w-4 h-4" />
@@ -102,6 +115,21 @@ const DepartmentSection = ({
                     )}
                   </div>
                 </div>
+              </div>
+
+              <div className="col-span-3">
+                {getHeadName(department.head) ? (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
+                      <FiUser className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-[12px] font-medium text-gray-700 truncate">
+                      {getHeadName(department.head)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-gray-400 italic">Not assigned</span>
+                )}
               </div>
 
               <div className="col-span-2">

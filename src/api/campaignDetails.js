@@ -139,3 +139,36 @@ export const useSyncAllCampaignLeads = () => {
     });
 };
 
+export const useSubmitTaskCampaignReport = (taskId) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (payload) => {
+            const { data } = await apiClient.post(`/tasks/${taskId}/campaign-report`, payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["campaigns"]);
+            queryClient.invalidateQueries(["campaign"]);
+            queryClient.invalidateQueries(["task"]);
+            queryClient.invalidateQueries(["subtasks"]);
+        },
+    });
+};
+
+export const useSubmitSubTaskCampaignReport = (subTaskId) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (payload) => {
+            const { data } = await apiClient.post(`/subtasks/${subTaskId}/campaign-report`, payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["campaigns"]);
+            queryClient.invalidateQueries(["campaign"]);
+            queryClient.invalidateQueries(["task"]);
+            queryClient.invalidateQueries(["subtasks"]);
+        },
+    });
+};
+
+

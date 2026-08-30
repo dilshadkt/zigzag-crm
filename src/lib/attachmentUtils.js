@@ -42,6 +42,7 @@ export const cleanTaskData = (taskData) => {
     "extraTaskWorkType",
     "maxRecurrences",
     "recurringEndDate",
+    "campaign",
   ];
 
   objectIdFields.forEach((field) => {

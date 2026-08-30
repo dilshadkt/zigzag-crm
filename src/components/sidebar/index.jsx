@@ -16,14 +16,17 @@ import {
   useGetTasksOnPublish,
   useGetClientReviewTasks,
   useGetUnreadMessageCount,
+  useIsDepartmentHead,
 } from "../../api/hooks";
 import { assetPath } from "../../utils/assetPath";
 const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings"];
 
 const Sidebar = () => {
-  const { user } = useAuth();
+  const { user, companyId } = useAuth();
+  const effectiveCompanyId = companyId || user?.company;
   const { userPosition } = useRouteAccess();
   const { hasAdminDashboardAccess, hasPermission } = usePermissions();
+  const { isDepartmentHead } = useIsDepartmentHead(effectiveCompanyId, !!user);
 
   // Get current month in YYYY-MM format for tasks on review
   const getCurrentMonth = () => {
@@ -100,6 +103,15 @@ const Sidebar = () => {
           children.push(child);
         }
       });
+
+      if (isDepartmentHead) {
+        children.push({
+          id: 107,
+          title: "Department Dashboard",
+          path: "/department-dashboard",
+          routeKey: "department-dashboard",
+        });
+      }
 
       return {
         ...item,

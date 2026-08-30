@@ -41,6 +41,7 @@ export const useRouteAccess = () => {
         "cost-dashboard": "/cost-dashboard",
         "company-dashboard": "/company-dashboard",
         "hr-dashboard": "/hr-dashboard",
+        "department-dashboard": "/department-dashboard",
         leaderboard: "/leaderboard",
         "sticky-notes": "/sticky-notes",
         timer: "/timer",

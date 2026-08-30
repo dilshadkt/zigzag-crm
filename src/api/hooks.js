@@ -935,14 +935,9 @@ export const useGetEmployeeTasks = (employeeId, filters = {}) => {
 
       return apiClient
         .get(`/tasks/employee/${employeeId}?${params.toString()}`)
-        .then((res) => res.data)
-        .catch((error) => {
-          // Fallback data if endpoint doesn't exist
-          console.warn("Employee tasks endpoint not available:", error);
-          return { tasks: [] };
-        });
+        .then((res) => res.data);
     },
-    enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
+    enabled: !!employeeId && employeeId !== null && employeeId !== "null",
   });
 };
 
@@ -955,80 +950,10 @@ export const useGetEmployeeTasksToday = (employeeId) => {
     queryFn: () =>
       apiClient
         .get(`/tasks/employee/${employeeId}/today`)
-        .then((res) => res.data)
-        .catch((error) => {
-          // Fallback data if endpoint doesn't exist
-          return {
-            tasks: [
-              // Sample task data for demonstration
-              {
-                _id: "sample-1",
-                title: "Review project requirements",
-                description:
-                  "Go through the project specifications and prepare feedback",
-                priority: "high",
-                status: "pending",
-                dueDate: new Date().toISOString(),
-                estimatedHours: 2,
-                project: {
-                  _id: "sample-project-1",
-                  name: "Sample-Project",
-                  displayName: "Sample Project",
-                },
-              },
-              {
-                _id: "sample-2",
-                title: "Update documentation",
-                description: "Update the API documentation with recent changes",
-                priority: "medium",
-                status: "in-progress",
-                dueDate: new Date().toISOString(),
-                estimatedHours: 1.5,
-                project: {
-                  _id: "sample-project-2",
-                  name: "Documentation-Project",
-                  displayName: "Documentation Project",
-                },
-              },
-              {
-                _id: "sample-3",
-                title: "Fix login bug",
-                description:
-                  "Resolve the authentication issue reported by users",
-                priority: "high",
-                status: "pending",
-                dueDate: new Date(
-                  Date.now() + 2 * 60 * 60 * 1000
-                ).toISOString(), // 2 hours from now
-                estimatedHours: 3,
-                project: {
-                  _id: "sample-project-3",
-                  name: "Bug-Fixes",
-                  displayName: "Bug Fixes",
-                },
-              },
-              {
-                _id: "sample-4",
-                title: "Code review",
-                description: "Review pull requests from team members",
-                priority: "low",
-                status: "completed",
-                dueDate: new Date(
-                  Date.now() - 1 * 60 * 60 * 1000
-                ).toISOString(), // 1 hour ago
-                estimatedHours: 1,
-                project: {
-                  _id: "sample-project-1",
-                  name: "Sample-Project",
-                  displayName: "Sample Project",
-                },
-              },
-            ],
-          };
-        }),
-    enabled: !!employeeId && employeeId !== null && employeeId !== "null", // Only run if employeeId exists and is valid
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+        .then((res) => res.data),
+    enabled: !!employeeId && employeeId !== null && employeeId !== "null",
+    staleTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 60 * 10,
   });
 };
 
@@ -3132,6 +3057,7 @@ export const useCreateDepartment = (companyId, onSuccess) => {
     mutationFn: (data) => import("./service").then(m => m.createDepartment(companyId, data)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["departments", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["departmentDashboard", companyId] });
       if (onSuccess) onSuccess();
     },
   });
@@ -3143,6 +3069,7 @@ export const useUpdateDepartment = (companyId, onSuccess) => {
     mutationFn: ({ departmentId, data }) => import("./service").then(m => m.updateDepartment(companyId, departmentId, data)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["departments", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["departmentDashboard", companyId] });
       if (onSuccess) onSuccess();
     },
   });
@@ -3154,7 +3081,28 @@ export const useDeleteDepartment = (companyId, onSuccess) => {
     mutationFn: (departmentId) => import("./service").then(m => m.deleteDepartment(companyId, departmentId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["departments", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["departmentDashboard", companyId] });
       if (onSuccess) onSuccess();
     },
   });
+};
+
+export const useGetDepartmentDashboard = (companyId, enabled = true) => {
+  return useQuery({
+    queryKey: ["departmentDashboard", companyId],
+    queryFn: () => import("./service").then((m) => m.getDepartmentDashboard(companyId)),
+    enabled: !!companyId && enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useIsDepartmentHead = (companyId, enabled = true) => {
+  const { data, isLoading, isError, isFetching } = useGetDepartmentDashboard(companyId, enabled);
+
+  return {
+    isDepartmentHead: !!data?.isDepartmentHead,
+    departments: data?.departments || [],
+    isLoading: isLoading || isFetching,
+    isError,
+  };
 };

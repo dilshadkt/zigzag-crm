@@ -1,10 +1,17 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
+import { useIsDepartmentHead } from "../../api/hooks";
+import LoadingSpinner from "../LoadingSpinner";
 
 function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
-  const { user } = useAuth();
+  const { user, companyId } = useAuth();
+  const effectiveCompanyId = companyId || user?.company;
   const { hasAdminDashboardAccess } = usePermissions();
+  const { isDepartmentHead, isLoading: isDepartmentHeadLoading } = useIsDepartmentHead(
+    effectiveCompanyId,
+    !!user && user.role === "employee"
+  );
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -33,6 +40,25 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
   // For employees, check position and position details
   if (!user.position || !user.positionDetails) {
     return <Navigate to={fallbackPath} replace />;
+  }
+
+  if (
+    currentPath === "/department-dashboard" ||
+    currentPath.startsWith("/department-dashboard/team-tasks")
+  ) {
+    if (isDepartmentHeadLoading) {
+      return <LoadingSpinner />;
+    }
+
+    if (isDepartmentHead || user.role === "company-admin") {
+      return children;
+    }
+
+    return <Navigate to={fallbackPath} replace />;
+  }
+
+  if (currentPath.startsWith("/department-dashboard/employee/")) {
+    return children;
   }
 
   // If position is inactive, deny access
@@ -100,6 +126,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       "cost-dashboard": "/cost-dashboard",
       "company-dashboard": "/company-dashboard",
       "hr-dashboard": "/hr-dashboard",
+      "department-dashboard": "/department-dashboard",
       leaderboard: "/leaderboard",
       "sticky-notes": "/sticky-notes",
       timer: "/timer",

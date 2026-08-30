@@ -115,8 +115,11 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
         weightage: flow.weightage !== undefined ? flow.weightage : 1,
         requiresClientApproval: !!flow.requiresClientApproval,
         requiresWorkLink: !!flow.requiresWorkLink,
+        requiresCampaignReport:
+          !!flow.requiresCampaignReport ||
+          String(flow.taskName || "").toLowerCase() === "campaign",
       }))
-      : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]
+      : [{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false, requiresCampaignReport: false }]
   );
 
   const { data: employeesData } = useGetAllEmployees();
@@ -134,7 +137,7 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
 
   const createTaskFlow = useCreateTaskFlow(companyId, () => {
     setName("");
-    setFlows([{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]);
+    setFlows([{ taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false, requiresCampaignReport: false }]);
     onClose();
   });
 
@@ -144,12 +147,19 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
 
   const handleFlowChange = (idx, field, value) => {
     setFlows((prev) =>
-      prev.map((f, i) => (i === idx ? { ...f, [field]: value } : f))
+      prev.map((f, i) => {
+        if (i !== idx) return f;
+        const next = { ...f, [field]: value };
+        if (field === "taskName" && String(value).toLowerCase() === "campaign") {
+          next.requiresCampaignReport = true;
+        }
+        return next;
+      })
     );
   };
 
   const addFlow = () =>
-    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false }]);
+    setFlows((prev) => [...prev, { taskName: "", assignee: "", weightage: 1, requiresClientApproval: false, requiresWorkLink: false, requiresCampaignReport: false }]);
 
   const removeFlow = (idx) =>
     setFlows((prev) => prev.filter((_, i) => i !== idx));
@@ -315,6 +325,21 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                       </div>
                       <span className="text-[10px] font-bold text-gray-400 group-hover/opt:text-gray-600 transition-colors uppercase tracking-wider">
                         Work Link Mandatory
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer group/opt">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={flow.requiresCampaignReport}
+                        onChange={(e) => handleFlowChange(idx, "requiresCampaignReport", e.target.checked)}
+                      />
+                      <div className="w-3.5 h-3.5 rounded border border-gray-300 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 flex items-center justify-center transition-all">
+                        <FiCheckCircle className="text-white w-2.5 h-2.5 opacity-0 peer-checked:opacity-100" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 group-hover/opt:text-gray-600 transition-colors uppercase tracking-wider">
+                        Campaign Report
                       </span>
                     </label>
                   </div>

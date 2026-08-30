@@ -4,10 +4,12 @@ import SubtaskActionBar from "./SubtaskActionBar";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
 import WorkLinkModal from "../../shared/workLinkModal";
+import CampaignReportModal from "../../shared/campaignReportModal";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget, FiEdit3, FiLink } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget, FiEdit3, FiLink, FiFileText } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { useUpdateSubTaskById } from "../../../api/hooks";
+import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
 import { toast } from "react-hot-toast";
 import LinkPreview from "../../shared/LinkPreview";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
@@ -61,6 +63,8 @@ const SubtasksSection = ({
   isAdmin,
   canManageSubtasks,
   canEditTask,
+  headedEmployeeIds,
+  isDepartmentHead,
 }) => {
   const { hasPermission } = usePermissions();
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -71,15 +75,30 @@ const SubtasksSection = ({
   const [timelineSubTask, setTimelineSubTask] = useState(null);
   const [workLinkSubTask, setWorkLinkSubTask] = useState(null);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
+  const [reportSubTask, setReportSubTask] = useState(null);
+  const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
 
   // Status-agnostic update for work link
   const updateSubTaskMutation = useUpdateSubTaskById(workLinkSubTask?._id, taskDetails?._id);
+  const submitCampaignReport = useSubmitSubTaskCampaignReport(reportSubTask?._id);
 
   const isWorkLinkRequired = (subtask) => {
     return subtask?.requiresWorkLink ||
       taskDetails?.taskFlow?.flows?.some(flow =>
         flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink
       );
+  };
+
+  const isCampaignReportRequired = (subtask) => {
+    return (
+      subtask?.requiresCampaignReport ||
+      taskDetails?.taskFlow?.flows?.some(
+        (flow) =>
+          flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() &&
+          (flow.requiresCampaignReport ||
+            String(flow.taskName || "").toLowerCase() === "campaign")
+      )
+    );
   };
 
   const getCurrentLink = (subtask) => {
@@ -120,12 +139,41 @@ const SubtasksSection = ({
     }
   };
 
+  const handleCampaignReportSubmit = async (payload) => {
+    try {
+      const result = await submitCampaignReport.mutateAsync(payload);
+      setIsCampaignReportModalOpen(false);
+      setReportSubTask(null);
+      toast.success(
+        result?.message || "Campaign report sent to the department head for review"
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit campaign report");
+    }
+  };
+
   // Check if user can delete subtasks (company admin or has tasks delete permission)
   const canDeleteSubtasks = isCompany || isAdmin || hasPermission("tasks", "delete");
 
   const isReporter = taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id);
   const isManager = (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id;
   const isProjectReviewer = isReporter || isManager;
+  const teamIds = headedEmployeeIds instanceof Set ? headedEmployeeIds : new Set(headedEmployeeIds || []);
+  const isHeadOfAssignees = (assignedTo = []) =>
+    Boolean(isDepartmentHead) &&
+    assignedTo.some((assignedUser) =>
+      teamIds.has(String(assignedUser._id || assignedUser))
+    );
+  const isCampaignSubtask = (subtask) =>
+    Boolean(
+      subtask?.campaign ||
+        subtask?.requiresCampaignReport ||
+        taskDetails?.campaign ||
+        taskDetails?.requiresCampaignReport ||
+        taskDetails?.taskGroup === "campaign"
+    );
+  const isDepartmentReviewerFor = (subtask) =>
+    isCampaignSubtask(subtask) && isHeadOfAssignees(subtask?.assignedTo);
 
   const formatTime = (minutes) => {
     if (!minutes) return "0m";
@@ -172,7 +220,7 @@ const SubtasksSection = ({
     );
 
     // Show if user is assigned to subtask, has view/create permission, is assigned to parent task, or is admin or project reviewer
-    return isAssignedToSubTask || canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer;
+    return isAssignedToSubTask || canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer || isDepartmentReviewerFor(subtask);
   };
 
   // Get subtask styling classes based on assignment and admin status
@@ -189,7 +237,7 @@ const SubtasksSection = ({
 
     if (isAssignedToSubTask) {
       return "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300";
-    } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer) {
+    } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer || isDepartmentReviewerFor(subtask)) {
       return "bg-gray-50 hover:bg-gray-100";
     } else {
       return "hidden";
@@ -341,6 +389,23 @@ const SubtasksSection = ({
                         ) : "Link Required"}
                       </button>
                     )}
+                    {isCampaignReportRequired(subtask) && (
+                      <button
+                        onClick={() => {
+                          setReportSubTask(subtask);
+                          setIsCampaignReportModalOpen(true);
+                        }}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-full flex items-center gap-1 border transition-colors ${
+                          subtask.campaignReport?.submittedAt
+                            ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                            : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
+                        }`}
+                        title="Post campaign report as completion proof"
+                      >
+                        <FiFileText className="w-2.5 h-2.5" />
+                        {subtask.campaignReport?.submittedAt ? "Report Posted" : "Report Required"}
+                      </button>
+                    )}
 
                     {/* Priority & Rework (Moved to Row 1) */}
                     <span
@@ -412,7 +477,7 @@ const SubtasksSection = ({
 
                       {/* Permission-gated status controls */}
                       {(() => {
-                        const userIsReviewer = isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus");
+                        const userIsReviewer = isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus") || isDepartmentReviewerFor(subtask);
                         // Admin/reviewer who is NOT the assigned employee → show dropdown as before
                         if (userIsReviewer && !isAssignedToSubTask) {
                           return (
@@ -724,7 +789,7 @@ const SubtasksSection = ({
                 />
 
                 {/* Reviewer Action Bar — shown below the subtask card for reviewers */}
-                {(isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus")) &&
+                {(isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus") || isDepartmentReviewerFor(subtask)) &&
                   (subtask.status === "on-review" || subtask.status === "approved") && (
                   <SubtaskActionBar
                     subtask={subtask}
@@ -929,6 +994,23 @@ const SubtasksSection = ({
         isLoading={updateSubTaskMutation.isLoading}
         initialValue={getCurrentLink(workLinkSubTask)}
         history={workLinkSubTask?.workLinkHistory}
+      />
+      <CampaignReportModal
+        isOpen={isCampaignReportModalOpen}
+        onClose={() => {
+          setIsCampaignReportModalOpen(false);
+          setReportSubTask(null);
+        }}
+        onSubmit={handleCampaignReportSubmit}
+        isLoading={submitCampaignReport.isPending}
+        initialReport={reportSubTask?.campaignReport}
+        readOnly={
+          Boolean(reportSubTask) &&
+          isDepartmentReviewerFor(reportSubTask) &&
+          !reportSubTask.assignedTo?.some(
+            (assignedUser) => (assignedUser._id || assignedUser) === user?._id
+          )
+        }
       />
     </div>
   );

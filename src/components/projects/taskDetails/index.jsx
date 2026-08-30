@@ -5,6 +5,7 @@ import { usePermissions } from "../../../hooks/usePermissions";
 import StatusButton from "../../shared/StatusUpadate";
 import Modal from "../../shared/modal";
 import WorkLinkModal from "../../shared/workLinkModal";
+import CampaignReportModal from "../../shared/campaignReportModal";
 import AddSubTask from "../addSubTask";
 import {
   useCreateSubTask,
@@ -12,30 +13,50 @@ import {
   useDeleteSubTask,
   useUpdateSubTaskById,
   useUpdateTaskById,
+  useIsDepartmentHead,
 } from "../../../api/hooks";
+import { useSubmitTaskCampaignReport } from "../../../api/campaignDetails";
 import RecurringTaskInfo from "./RecurringTaskInfo";
 import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
 import TaskAttachments from "./TaskAttachments";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget, FiFlag, FiLink } from "react-icons/fi";
+import { FiActivity, FiClock, FiTarget, FiFlag, FiLink, FiFileText } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress }) => {
-  const { isCompany, user } = useAuth();
+  const { isCompany, user, companyId } = useAuth();
   const { hasPermission } = usePermissions();
+  const effectiveCompanyId = companyId || user?.company;
+  const { isDepartmentHead, departments } = useIsDepartmentHead(
+    effectiveCompanyId,
+    !!user
+  );
   const [showSubTaskModal, setShowSubTaskModal] = useState(false);
   const [editingSubTask, setEditingSubTask] = useState(null);
   const [isReworkHistoryOpen, setIsReworkHistoryOpen] = useState(false);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
+  const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
   const isAdmin = user?.role === "company-admin";
 
   const updateTaskMutation = useUpdateTaskById(taskDetails?._id);
+  const submitCampaignReport = useSubmitTaskCampaignReport(taskDetails?._id);
 
   const isWorkLinkRequired = (task) => {
     return task?.requiresWorkLink ||
       task?.taskFlow?.flows?.some(flow => flow.requiresWorkLink);
+  };
+
+  const isCampaignReportRequired = (task) => {
+    return (
+      task?.requiresCampaignReport ||
+      task?.taskFlow?.flows?.some(
+        (flow) =>
+          flow.requiresCampaignReport ||
+          String(flow.taskName || "").toLowerCase() === "campaign"
+      )
+    );
   };
 
   const getCurrentLink = (task) => {
@@ -75,6 +96,18 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     }
   };
 
+  const handleCampaignReportSubmit = async (payload) => {
+    try {
+      const result = await submitCampaignReport.mutateAsync(payload);
+      setIsCampaignReportModalOpen(false);
+      toast.success(
+        result?.message || "Campaign report sent to the department head for review"
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit campaign report");
+    }
+  };
+
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -97,6 +130,30 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     return `${mins}m`;
   };
 
+  const headedEmployeeIds = React.useMemo(() => {
+    const ids = new Set();
+    (departments || []).forEach((dept) => {
+      (dept.employees || []).forEach((employee) => {
+        if (employee?._id) ids.add(String(employee._id));
+      });
+    });
+    return ids;
+  }, [departments]);
+
+  const isAssignedToAssignees = (assignedTo = []) =>
+    assignedTo.some((assignedUser) =>
+      headedEmployeeIds.has(String(assignedUser._id || assignedUser))
+    );
+
+  const isCampaignWork = Boolean(
+    taskDetails?.campaign ||
+      taskDetails?.requiresCampaignReport ||
+      taskDetails?.taskGroup === "campaign"
+  );
+
+  const isDepartmentReviewer =
+    isDepartmentHead && isCampaignWork && isAssignedToAssignees(taskDetails?.assignedTo);
+
   // Check if current user is assigned to this task
   const isAssignedToTask = taskDetails?.assignedTo?.some(
     (assignedUser) => assignedUser._id === user?._id
@@ -113,6 +170,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const canChangeStatus =
     isCompany ||
     hasPermission("tasks", "changeStatus") ||
+    isDepartmentReviewer ||
     (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id);
 
   // Check permissions for subtask management
@@ -128,14 +186,22 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     const isManager = (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id;
     const isProjectReviewer = isReporter || isManager;
 
-    if (isCompany || isAdmin || hasPermission("tasks", "view") || isAssignedToTask || isProjectReviewer) {
+    if (isCompany || isAdmin || hasPermission("tasks", "view") || isAssignedToTask || isProjectReviewer || isDepartmentHead) {
+      if (isDepartmentHead && !isCompany && !isAdmin && !hasPermission("tasks", "view") && !isAssignedToTask && !isProjectReviewer) {
+        return subTasks.filter((subTask) =>
+          subTask.assignedTo?.some((assigned) =>
+            headedEmployeeIds.has(String(assigned._id || assigned))
+          ) ||
+          subTask.assignedTo?.some((assigned) => (assigned._id || assigned) === user?._id)
+        );
+      }
       return subTasks;
     }
     // For regular users not assigned to the parent task, only show subtasks assigned to them
     return subTasks.filter(subTask =>
       subTask.assignedTo?.some(assigned => (assigned._id || assigned) === user?._id)
     );
-  }, [subTasks, isCompany, isAdmin, hasPermission, isAssignedToTask, user?._id, taskDetails?.project]);
+  }, [subTasks, isCompany, isAdmin, hasPermission, isAssignedToTask, user?._id, taskDetails?.project, isDepartmentHead, headedEmployeeIds]);
 
 
 
@@ -346,6 +412,22 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                         : "Link Required"}
                     </button>
                   )}
+                  {isCampaignReportRequired(taskDetails) && (
+                    <button
+                      onClick={() => setIsCampaignReportModalOpen(true)}
+                      className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md border flex items-center gap-1 transition-all duration-200 ${
+                        taskDetails?.campaignReport?.submittedAt
+                          ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                          : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
+                      }`}
+                      title="Post campaign report as completion proof"
+                    >
+                      <FiFileText className="w-3 h-3" />
+                      {taskDetails?.campaignReport?.submittedAt
+                        ? "Report Posted"
+                        : "Report Required"}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -355,7 +437,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                 <StatusButton
                   taskDetails={taskDetails}
                   disabled={!canChangeStatus}
-                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask || (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id)}
+                  showAllOptions={isCompany || hasPermission("tasks", "edit") || hasPermission("tasks", "changeStatus") || isCreatorOfTask || isDepartmentReviewer || (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id)}
                 />
               </div>
             </div>
@@ -374,6 +456,8 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
               isAdmin={isAdmin}
               canManageSubtasks={canManageSubtasks}
               canEditTask={canEditTask}
+              headedEmployeeIds={headedEmployeeIds}
+              isDepartmentHead={isDepartmentHead}
             />
 
             <TaskAttachments taskDetails={taskDetails} />
@@ -481,6 +565,16 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
         onSubmit={handleWorkLinkSubmit}
         isLoading={updateTaskMutation.isLoading}
         initialValue={getCurrentLink(taskDetails)}
+      />
+      <CampaignReportModal
+        isOpen={isCampaignReportModalOpen}
+        onClose={() => setIsCampaignReportModalOpen(false)}
+        onSubmit={handleCampaignReportSubmit}
+        isLoading={submitCampaignReport.isPending}
+        initialReport={taskDetails?.campaignReport}
+        campaignMetrics={
+          typeof taskDetails?.campaign === "object" ? taskDetails.campaign : null
+        }
       />
     </>
   );

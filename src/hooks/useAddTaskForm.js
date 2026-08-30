@@ -32,6 +32,8 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     maxRecurrences: defaultValue?.maxRecurrences || "",
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
+    campaign: defaultValue?.campaign?._id || defaultValue?.campaign || "",
+    requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],
     subtasks: defaultValue?.subtasks || [],
   };
@@ -54,6 +56,11 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
       then: (schema) => schema.required("Extra task work type is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
+    campaign: Yup.string().when("taskGroup", {
+      is: "campaign",
+      then: (schema) => schema.required("Select a campaign"),
+      otherwise: (schema) => schema.nullable(),
+    }),
     taskMonth: Yup.string()
       .required("Task month is required")
       .matches(/^\d{4}-\d{2}$/, "Task month must be in YYYY-MM format"),
@@ -64,6 +71,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     assignedTo: Yup.array().min(1, "At least one assignee is required"),
     requiresClientApproval: Yup.boolean(),
     requiresWorkLink: Yup.boolean(),
+    requiresCampaignReport: Yup.boolean(),
     copyOfDescription: Yup.string(),
     description: Yup.string(),
     // Recurring validations

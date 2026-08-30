@@ -34,6 +34,7 @@ const AddSubTask = ({
     dueDateChangeReason: initialValues?.dueDateChangeReason || "",
     requiresClientApproval: initialValues?.requiresClientApproval || false,
     requiresWorkLink: initialValues?.requiresWorkLink || false,
+    requiresCampaignReport: initialValues?.requiresCampaignReport || false,
     customFields: initialValues?.customFields || [],
   };
 
@@ -617,6 +618,26 @@ const AddSubTask = ({
                       className="text-sm font-medium text-gray-700 cursor-pointer select-none"
                     >
                       Requires Work Link
+                    </label>
+                  </div>
+                )}
+
+                {!isAssignee && (
+                  <div className="flex items-center gap-2 mb-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="requiresCampaignReport"
+                      name="requiresCampaignReport"
+                      checked={values.requiresCampaignReport}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                      disabled={isLoading}
+                    />
+                    <label
+                      htmlFor="requiresCampaignReport"
+                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                    >
+                      Requires Campaign Report
                     </label>
                   </div>
                 )}

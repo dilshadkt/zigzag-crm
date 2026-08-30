@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 
 // Layout Imports (Still static as they wrap many routes)
 import AuthLayout from "../layouts/auth";
@@ -14,6 +14,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { ProtectedRoute } from "../components/protectedRoute";
 import WithRoleAcess from "../components/withRoleAccess";
 import RouteAccess from "../components/withRoleAccess/RouteAccess";
+import DepartmentDashboardAccess from "../components/withRoleAccess/DepartmentDashboardAccess";
 
 // Lazy Loaded Pages
 const Dashboard = lazy(() => import("../pages/dashboard"));
@@ -76,6 +77,8 @@ const LeadDashboard = lazy(() => import("../pages/dashboard/LeadDashboard"));
 const EmployeeDashboard = lazy(() => import("../pages/dashboard/EmployeeDashboard"));
 const CostDashboard = lazy(() => import("../pages/dashboard/CostDashboard"));
 const HRDashboard = lazy(() => import("../pages/dashboard/HRDashboard"));
+const DepartmentDashboard = lazy(() => import("../pages/dashboard/DepartmentDashboard"));
+const DepartmentTeamTasks = lazy(() => import("../pages/dashboard/DepartmentTeamTasks"));
 const Leaderboard = lazy(() => import("../pages/Leaderboard"));
 const Integration = lazy(() => import("../pages/settings/Integration"));
 const SocialSettings = lazy(() => import("../pages/settings/SocialSettings"));
@@ -92,6 +95,16 @@ import {
   ClientLeadDetailsPage,
   ClientLeadReportsPage
 } from "../pages/dashboard/ClientDashboard/ClientPages";
+
+const DepartmentEmployeeTodayRedirect = () => {
+  const { employeeId } = useParams();
+  return (
+    <Navigate
+      to={`/department-dashboard/team-tasks?employee=${employeeId}`}
+      replace
+    />
+  );
+};
 
 const AppRoutes = () => {
   return (
@@ -126,6 +139,34 @@ const AppRoutes = () => {
             element={
               <RouteAccess>
                 <HRDashboard />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="department-dashboard"
+            element={
+              <RouteAccess>
+                <DepartmentDashboardAccess>
+                  <DepartmentDashboard />
+                </DepartmentDashboardAccess>
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="department-dashboard/team-tasks"
+            element={
+              <RouteAccess>
+                <DepartmentDashboardAccess>
+                  <DepartmentTeamTasks />
+                </DepartmentDashboardAccess>
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="department-dashboard/employee/:employeeId/today"
+            element={
+              <RouteAccess>
+                <DepartmentEmployeeTodayRedirect />
               </RouteAccess>
             }
           />

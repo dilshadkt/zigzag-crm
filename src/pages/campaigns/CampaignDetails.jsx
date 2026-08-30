@@ -1,13 +1,19 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { FiCalendar, FiCheckCircle, FiDollarSign, FiEdit2, FiSave, FiTrash2, FiX, FiChevronDown, FiRefreshCw, FiClock, FiSearch, FiDownload, FiUser, FiPhone, FiMail, FiExternalLink, FiLoader } from "react-icons/fi";
+import { FiCalendar, FiCheckCircle, FiDollarSign, FiEdit2, FiSave, FiTrash2, FiX, FiChevronDown, FiRefreshCw, FiClock, FiSearch, FiDownload, FiUser, FiPhone, FiMail, FiExternalLink, FiLoader, FiPlus, FiFileText } from "react-icons/fi";
 import { FaWhatsapp, FaFacebook } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign, useFetchLiveFacebookData, useSyncCampaignLeads, useGetCampaignLeads } from "../../api/campaignDetails";
+import { useAddLeadsToCampaign, useDeleteCampaign, useGetCampaignById, useRemoveLeadFromCampaign, useUpdateCampaign, useFetchLiveFacebookData, useSyncCampaignLeads, useGetCampaignLeads, useSubmitTaskCampaignReport, useSubmitSubTaskCampaignReport } from "../../api/campaignDetails";
 import AddLeadsModal from "../../components/campaigns/AddLeadsModal";
 import Navigator from "../../components/shared/navigator";
 import socketService from "../../services/socketService";
 import { useQueryClient } from "@tanstack/react-query";
+import AddTask from "../../components/projects/addTask";
+import CampaignReportModal from "../../components/shared/campaignReportModal";
+import { useCreateTaskFromBoard, useGetAllEmployees, useCompanyActiveProjects } from "../../api/hooks";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
+import { uploadSingleFile } from "../../api/service";
+import { useAuth } from "../../hooks/useAuth";
 
 const CampaignDetails = () => {
     const { id } = useParams();
@@ -32,6 +38,8 @@ const CampaignDetails = () => {
     });
     const [syncProgress, setSyncProgress] = useState(0);
     const [syncStatus, setSyncStatus] = useState("Initializing...");
+    const [showAddTask, setShowAddTask] = useState(false);
+    const [reportTarget, setReportTarget] = useState(null);
     const statusDropdownRef = useRef(null);
     const observer = useRef();
 
@@ -224,6 +232,91 @@ const CampaignDetails = () => {
 
     // Real-time socket updates for new leads
     const queryClient = useQueryClient();
+    const { user } = useAuth();
+    const { data: activeProjects } = useCompanyActiveProjects();
+    const { data: employeesData } = useGetAllEmployees();
+    const projects = activeProjects || [];
+    const teams = employeesData?.employees || [];
+    const createTask = useCreateTaskFromBoard(() => {
+        setShowAddTask(false);
+        queryClient.invalidateQueries(["campaign", id]);
+    });
+    const submitTaskReport = useSubmitTaskCampaignReport(
+        reportTarget?.type === "task" ? reportTarget.id : undefined
+    );
+    const submitSubTaskReport = useSubmitSubTaskCampaignReport(
+        reportTarget?.type === "subtask" ? reportTarget.id : undefined
+    );
+
+    const OPEN_WORK = ["todo", "in-progress", "paused", "re-work", "on-hold"];
+    const personName = (u) => {
+        if (!u) return "Unassigned";
+        return `${u.firstName || ""} ${u.lastName || u.name || ""}`.trim() || "Unassigned";
+    };
+
+    const findOpenCampaignWork = () => {
+        const subs = campaign?.linkedSubTasks || [];
+        const tasks = campaign?.linkedTasks || [];
+        const openSub =
+            subs.find((s) => s.requiresCampaignReport && OPEN_WORK.includes(s.status)) ||
+            subs.find((s) => OPEN_WORK.includes(s.status));
+        if (openSub) return { type: "subtask", id: openSub._id, report: openSub.campaignReport, title: openSub.title };
+        const openTask =
+            tasks.find((t) => t.requiresCampaignReport && OPEN_WORK.includes(t.status)) ||
+            tasks.find((t) => OPEN_WORK.includes(t.status));
+        if (openTask) return { type: "task", id: openTask._id, report: openTask.campaignReport, title: openTask.title };
+        return null;
+    };
+
+    const handlePostReport = () => {
+        const target = findOpenCampaignWork();
+        if (!target) {
+            toast("No open campaign task yet — create one to post a report.", { icon: "📋" });
+            setShowAddTask(true);
+            return;
+        }
+        setReportTarget(target);
+    };
+
+    const handleCampaignReportSubmit = async (payload) => {
+        try {
+            if (reportTarget?.type === "subtask") {
+                await submitSubTaskReport.mutateAsync(payload);
+            } else {
+                await submitTaskReport.mutateAsync(payload);
+            }
+            setReportTarget(null);
+            queryClient.invalidateQueries(["campaign", id]);
+            toast.success(
+                "Campaign report submitted and sent to the department head for review"
+            );
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to submit campaign report");
+        }
+    };
+
+    const handleCreateCampaignTask = async (values, { resetForm }) => {
+        try {
+            const updatedValues = cleanTaskData(values);
+            updatedValues.creator = user?._id;
+            updatedValues.campaign = campaign._id;
+            updatedValues.requiresCampaignReport = values.requiresCampaignReport ?? true;
+            if (values?.attachments?.length > 0) {
+                updatedValues.attachments = await processAttachments(values.attachments, uploadSingleFile);
+            }
+            if (!updatedValues.project || updatedValues.project === "other") {
+                updatedValues.project = campaign.project?._id || campaign.project || null;
+            }
+            await createTask.mutateAsync(updatedValues);
+            resetForm();
+            toast.success("Campaign task created");
+        } catch (error) {
+            toast.error("Failed to create task");
+        }
+    };
+
+    const selectedMonth = new Date().toISOString().slice(0, 7);
+    const todayIso = new Date().toISOString().split("T")[0];
     useEffect(() => {
         if (!id) return;
 
@@ -315,6 +408,21 @@ const CampaignDetails = () => {
                         </>
                     ) : (
                         <>
+                            <button
+                                onClick={handlePostReport}
+                                className="px-4 py-2 border font-semibold rounded-xl transition-all flex items-center gap-2 text-sm bg-white text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
+                                title="Post a report on the open campaign task"
+                            >
+                                <FiFileText className="w-4 h-4" />
+                                Post report
+                            </button>
+                            <button
+                                onClick={() => setShowAddTask(true)}
+                                className="px-4 py-2 border font-semibold rounded-xl transition-all flex items-center gap-2 text-sm bg-white text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                            >
+                                <FiPlus className="w-4 h-4" />
+                                Create task
+                            </button>
                             {campaign.facebookAdId && (
                                 <button
                                     onClick={() => {
@@ -443,6 +551,7 @@ const CampaignDetails = () => {
                                                 )}
                                             </div>
                                             <span className="text-xs text-gray-400">• Created by {campaign.createdBy?.firstName || "System"}</span>
+                                            <span className="text-xs text-gray-500">• Owner {personName(campaign.assignedTo)}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -494,6 +603,80 @@ const CampaignDetails = () => {
                                     </div>
                                 </div>
                             </>
+                        )}
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-gray-800">Campaign work</h3>
+                            <p className="text-[11px] text-gray-400">Facebook sync is metrics only. Reports go to the department head.</p>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-5">
+                            {[
+                                ["1", "Create task", "Assign the marketer on Task Group = Campaign"],
+                                ["2", "Post report", "Marketer submits summary + KPI snapshot"],
+                                ["3", "Head reviews", "Department head gets the report on review"],
+                                ["4", "Approve / Rework", "Approve awards points. Rework sends it back."],
+                            ].map(([step, title, detail]) => (
+                                <div key={step} className="rounded-2xl border border-gray-100 bg-gray-50/80 px-3 py-3">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 mb-1">Step {step}</div>
+                                    <div className="text-sm font-semibold text-gray-800">{title}</div>
+                                    <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{detail}</div>
+                                </div>
+                            ))}
+                        </div>
+                        {(!campaign.linkedTasks?.length && !campaign.linkedSubTasks?.length) ? (
+                            <div className="text-sm text-gray-500 py-6 text-center border border-dashed border-gray-200 rounded-2xl">
+                                No linked tasks yet. Create a campaign task to score this work.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {(campaign.linkedTasks || []).map((task) => (
+                                    <button
+                                        key={task._id}
+                                        type="button"
+                                        onClick={() => navigate(`/tasks/${task._id}`)}
+                                        className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/40 transition-colors"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="text-sm font-semibold text-gray-800 truncate">{task.title}</div>
+                                            <div className="text-[11px] text-gray-400">
+                                                {personName(task.assignedTo?.[0])} · {task.status}
+                                                {task.requiresCampaignReport ? " · report required" : ""}
+                                            </div>
+                                        </div>
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                            task.campaignReport?.submittedAt
+                                                ? "bg-green-50 text-green-600"
+                                                : "bg-gray-100 text-gray-500"
+                                        }`}>
+                                            {task.campaignReport?.submittedAt ? "Reported" : "Open"}
+                                        </span>
+                                    </button>
+                                ))}
+                                {(campaign.linkedSubTasks || []).map((sub) => (
+                                    <button
+                                        key={sub._id}
+                                        type="button"
+                                        onClick={() => navigate(`/tasks/${sub.parentTask?._id || sub.parentTask}`)}
+                                        className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/40 transition-colors"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="text-sm font-semibold text-gray-800 truncate">{sub.title}</div>
+                                            <div className="text-[11px] text-gray-400">
+                                                Subtask of {sub.parentTask?.title || "task"} · {personName(sub.assignedTo?.[0])} · {sub.status}
+                                            </div>
+                                        </div>
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                            sub.campaignReport?.submittedAt
+                                                ? "bg-green-50 text-green-600"
+                                                : "bg-gray-100 text-gray-500"
+                                        }`}>
+                                            {sub.campaignReport?.submittedAt ? "Reported" : "Open"}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -727,6 +910,35 @@ const CampaignDetails = () => {
                 campaignId={id}
                 onAdd={handleAddLeads}
                 alreadyAssignedIds={campaign.leads?.map(l => l._id) || []}
+            />
+
+            <CampaignReportModal
+                isOpen={Boolean(reportTarget)}
+                onClose={() => setReportTarget(null)}
+                onSubmit={handleCampaignReportSubmit}
+                isLoading={submitTaskReport.isPending || submitSubTaskReport.isPending}
+                initialReport={reportTarget?.report}
+                campaignMetrics={campaign}
+            />
+
+            <AddTask
+                isOpen={showAddTask}
+                setShowModalTask={setShowAddTask}
+                projects={projects}
+                teams={teams}
+                initialValues={{
+                    title: `Optimize: ${campaign.name}`,
+                    project: campaign.project?._id || campaign.project || "",
+                    campaign: campaign._id,
+                    taskGroup: "campaign",
+                    requiresCampaignReport: true,
+                    startDate: todayIso,
+                    dueDate: todayIso,
+                }}
+                onSubmit={handleCreateCampaignTask}
+                selectedMonth={selectedMonth}
+                isLoading={createTask.isPending}
+                showProjectSelection={!campaign.project}
             />
 
             {/* Full-screen Sync Loading Overlay */}

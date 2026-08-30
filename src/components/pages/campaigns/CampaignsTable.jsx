@@ -65,7 +65,7 @@ const CampaignsTable = ({ campaigns, isLoading, isClient }) => {
   }
 
   const activeColumns = ALL_COLUMNS.filter(c => visibleColumns.includes(c.key));
-  const totalVisibleCols = 2 + activeColumns.length + (isClient ? 0 : 1); // campaign + delivery + data cols + checkbox
+  const totalVisibleCols = 3 + activeColumns.length + (isClient ? 0 : 1); // campaign + delivery + owner + data cols + checkbox
 
   // Calculate summary values
   const summaryValues = {
@@ -116,6 +116,11 @@ const CampaignsTable = ({ campaigns, isLoading, isClient }) => {
                     )}
                     <span className="text-sm font-bold text-gray-900 truncate">{campaign.name}</span>
                   </div>
+                  {campaign.assignedTo && (
+                    <div className="text-[10px] text-gray-400 mt-0.5">
+                      Owner {`${campaign.assignedTo.firstName || ""} ${campaign.assignedTo.lastName || ""}`.trim()}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-lg shrink-0">
                   <div className={`h-1.5 w-1.5 rounded-full ${campaign.status === "active" ? "bg-green-500" : "bg-gray-300"}`} />
@@ -206,6 +211,7 @@ const CampaignsTable = ({ campaigns, isLoading, isClient }) => {
               )}
               <th className="py-3 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[240px]">Campaign</th>
               <th className="py-3 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-28">Delivery</th>
+              <th className="py-3 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-36">Owner</th>
               {activeColumns.map(col => (
                 <th key={col.key} className={`py-3 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-${col.align} whitespace-nowrap`}>
                   {col.label}

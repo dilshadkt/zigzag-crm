@@ -222,6 +222,9 @@ export const createTask = async (taskData, projectId) => {
     recurringEndDate: taskData?.recurringEndDate,
     maxRecurrences: taskData?.maxRecurrences,
     requiresClientApproval: taskData?.requiresClientApproval,
+    requiresWorkLink: taskData?.requiresWorkLink,
+    campaign: taskData?.campaign || undefined,
+    requiresCampaignReport: taskData?.requiresCampaignReport,
     customFields: taskData?.customFields,
     subtasks: taskData?.subtasks,
     taskCategory: taskData?.taskCategory || undefined,
@@ -258,6 +261,9 @@ export const createTaskFromBoard = async (taskData) => {
     recurringEndDate: taskData?.recurringEndDate,
     maxRecurrences: taskData?.maxRecurrences,
     requiresClientApproval: taskData?.requiresClientApproval,
+    requiresWorkLink: taskData?.requiresWorkLink,
+    campaign: taskData?.campaign || undefined,
+    requiresCampaignReport: taskData?.requiresCampaignReport,
     customFields: taskData?.customFields,
     subtasks: taskData?.subtasks,
     taskCategory: taskData?.taskCategory || undefined,
@@ -1288,4 +1294,9 @@ export const updateDepartment = async (companyId, departmentId, data) => {
 export const deleteDepartment = async (companyId, departmentId) => {
   const response = await apiClient.delete(`/companies/${companyId}/departments/${departmentId}`);
   return response.data;
+};
+
+export const getDepartmentDashboard = async (companyId) => {
+  const response = await apiClient.get(`/companies/${companyId}/departments/dashboard`);
+  return response.data.data;
 };

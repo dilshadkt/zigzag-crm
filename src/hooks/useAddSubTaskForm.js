@@ -22,6 +22,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     dueDateChangeReason: defaultValue?.dueDateChangeReason || "",
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
+    requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],
   };
 
@@ -37,6 +38,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     publishUrls: Yup.object(),
     requiresClientApproval: Yup.boolean(),
     requiresWorkLink: Yup.boolean(),
+    requiresCampaignReport: Yup.boolean(),
     customFields: Yup.array().of(
       Yup.object().shape({
         label: Yup.string().required("Label is required"),
