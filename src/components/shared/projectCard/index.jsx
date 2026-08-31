@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { IoArrowUpOutline } from "react-icons/io5";
 import Progress from "../progress";
+import { collectMonthlyExtraWork } from "../../projects/workDetailsForm/workTypeMapping";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -42,11 +43,11 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
     project.workDetails.length > 0
   ) {
     const aggregated = {
-      reels: { count: 0, total: 0 },
-      poster: { count: 0, total: 0 },
-      motionPoster: { count: 0, total: 0 },
-      shooting: { count: 0, total: 0 },
-      motionGraphics: { count: 0, total: 0 },
+      reels: { count: 0, total: 0, extra: 0 },
+      poster: { count: 0, total: 0, extra: 0 },
+      motionPoster: { count: 0, total: 0, extra: 0 },
+      shooting: { count: 0, total: 0, extra: 0 },
+      motionGraphics: { count: 0, total: 0, extra: 0 },
       other: [],
     };
 
@@ -55,6 +56,7 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
         if (month[type]) {
           aggregated[type].count += month[type].count || 0;
           aggregated[type].total += month[type].total || 0;
+          aggregated[type].extra += month[type].extra || 0;
         }
       });
       if (month.other && Array.isArray(month.other)) {
@@ -64,8 +66,14 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
             if (existing) {
               existing.count += item.count || 0;
               existing.total += item.total || 0;
+              existing.extra += item.extra || 0;
             } else {
-              aggregated.other.push({ name: item.name, count: item.count || 0, total: item.total || 0 });
+              aggregated.other.push({
+                name: item.name,
+                count: item.count || 0,
+                total: item.total || 0,
+                extra: item.extra || 0,
+              });
             }
           }
         });
@@ -94,6 +102,7 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
       completed,
       remaining,
       progress,
+      extra: workType.extra || 0,
     };
   };
 
@@ -121,12 +130,15 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
           completed,
           remaining,
           progress,
+          extra: item.extra || 0,
         });
       }
     });
   }
 
-  if (workTypes.length === 0) {
+  const extraWork = collectMonthlyExtraWork(monthlyDetails);
+
+  if (workTypes.length === 0 && extraWork.length === 0) {
     return null;
   }
 
@@ -216,8 +228,29 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
                 <span className="text-gray-400">All done</span>
               )}
             </div>
+            {Number(workType.extra) > 0 && (
+              <span className="text-[10px] font-semibold text-amber-600">
+                +{workType.extra} extra
+              </span>
+            )}
           </div>
         ))}
+        {extraWork.length > 0 && (
+          <div className="pt-2 mt-1 border-t border-amber-100">
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-1.5">
+              Extra work
+            </p>
+            {extraWork.map((item) => (
+              <div
+                key={`${item.kind}-${item.key || item.name}`}
+                className="flex items-center justify-between text-xs py-0.5"
+              >
+                <span className="text-gray-700">{item.name}</span>
+                <span className="font-semibold text-amber-600">+{item.extra}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

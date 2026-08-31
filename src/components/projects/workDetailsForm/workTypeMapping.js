@@ -25,8 +25,48 @@ export const matchStandardWorkType = (name) => {
   return match?.key || null;
 };
 
-const hasQuota = (slot) =>
+export const hasQuota = (slot) =>
   Boolean(slot) && [slot.count, slot.total].some((value) => Number(value) > 0);
+
+export const extraWorkTypeValueFromName = (name) =>
+  matchStandardWorkType(name) || String(name || "").trim();
+
+/** Master category time is stored in minutes. Task timeEstimate is stored in hours. */
+export const taskMinutesToHours = (minutes) => {
+  const mins = Number(minutes);
+  if (!mins || mins <= 0) return null;
+  const hours = mins / 60;
+  return Number.isInteger(hours) ? hours : Math.round(hours * 100) / 100;
+};
+
+export const taskHoursToMinutes = (hours) => {
+  const hrs = Number(hours);
+  if (!hrs || hrs <= 0) return null;
+  const minutes = hrs * 60;
+  return Number.isInteger(minutes) ? minutes : Math.round(minutes * 100) / 100;
+};
+
+export const collectMonthlyExtraWork = (workDetails) => {
+  const extras = [];
+
+  STANDARD_WORK_TYPES.forEach(({ key, label }) => {
+    const extra = Number(workDetails?.[key]?.extra) || 0;
+    if (extra > 0) extras.push({ name: label, extra, kind: "standard", key });
+  });
+
+  (workDetails?.other || []).forEach((item) => {
+    const extra = Number(item?.extra) || 0;
+    if (extra > 0) {
+      extras.push({
+        name: item.name,
+        extra,
+        kind: "other",
+      });
+    }
+  });
+
+  return extras;
+};
 
 export const resolveTaskCategoryId = ({
   taskGroup,
@@ -78,10 +118,12 @@ export const getSelectedWorkItems = (workDetails, categories = []) => {
       taskCategory: matchedCategory?._id || null,
       count: slot.count || 0,
       total: slot.total || 0,
+      extra: slot.extra || 0,
     });
   });
 
   (workDetails?.other || []).forEach((item, otherIndex) => {
+    if (!hasQuota(item)) return;
     items.push({
       kind: "other",
       otherIndex,
@@ -89,6 +131,7 @@ export const getSelectedWorkItems = (workDetails, categories = []) => {
       taskCategory: item.taskCategory || null,
       count: item.count || 0,
       total: item.total || 0,
+      extra: item.extra || 0,
     });
   });
 
@@ -112,6 +155,23 @@ export const addCategoryToWorkDetails = (workDetails, payload, isEditMode = fals
       completed: next[standardKey]?.completed || 0,
       extra: next[standardKey]?.extra || 0,
       description: next[standardKey]?.description || "",
+    };
+    return next;
+  }
+
+  const existingOtherIndex = next.other.findIndex(
+    (item) =>
+      String(item.name || "").trim().toLowerCase() ===
+      String(payload.name || "").trim().toLowerCase()
+  );
+  if (existingOtherIndex >= 0) {
+    next.other[existingOtherIndex] = {
+      ...next.other[existingOtherIndex],
+      name: payload.name,
+      taskCategory:
+        payload.taskCategory || next.other[existingOtherIndex].taskCategory,
+      count,
+      total,
     };
     return next;
   }

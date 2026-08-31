@@ -1,5 +1,6 @@
 import React from "react";
 import { FaInstagram, FaFacebook, FaYoutube, FaLinkedin, FaTwitter, FaGlobe } from "react-icons/fa";
+import { collectMonthlyExtraWork } from "../workDetailsForm/workTypeMapping";
 
 const SocialIcon = ({ platform }) => {
   const iconClass = "text-xl";
@@ -309,7 +310,7 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
       <div className="bg-white rounded-2xl border border-gray-100 ">
         <div className="p-5 border-b border-gray-100 bg-[#F8FAFC]">
           <h3 className="text-sm font-bold text-gray-800">Monthly Performance & Target Metrics</h3>
-          <p className="text-[11px] text-gray-400 mt-1 uppercase tracking-tighter font-semibold">Complete project timeline and work history</p>
+          <p className="text-[11px] text-gray-400 mt-1 uppercase tracking-tighter font-semibold">Complete project timeline, work history, and extra work</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -322,6 +323,7 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                 <th className="px-4 py-4 text-center">Shoot</th>
                 <th className="px-4 py-4 text-center">Graphics</th>
                 <th className="px-6 py-4 text-right">Other Tasks</th>
+                <th className="px-6 py-4 text-right">Extra Work</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -339,6 +341,7 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                     // 'count' represents the remaining items in the backend, so used = total - count
                     const total = metric?.total || 0;
                     const completed = Math.max(0, total - (metric?.count || 0));
+                    const extra = Number(metric?.extra) || 0;
                     return (
                       <td key={idx} className="px-4 py-4">
                         <div className="flex flex-col items-center">
@@ -349,14 +352,17 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                               style={{ width: `${Math.min(100, (completed / (total || 1)) * 100)}%` }}
                             ></div>
                           </div>
+                          {extra > 0 && (
+                            <span className="text-[9px] font-bold text-amber-600 mt-1">+{extra} extra</span>
+                          )}
                         </div>
                       </td>
                     );
                   })}
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-wrap justify-end gap-1.5">
-                      {wd.other && wd.other.length > 0 ? (
-                        wd.other.map((o, i) => {
+                      {wd.other && wd.other.some((o) => Number(o?.total) > 0) ? (
+                        wd.other.filter((o) => Number(o?.total) > 0).map((o, i) => {
                           const oTotal = o?.total || 0;
                           const oCompleted = Math.max(0, oTotal - (o?.count || 0));
                           return (
@@ -365,6 +371,22 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
                             </span>
                           );
                         })
+                      ) : (
+                        <span className="text-[10px] text-gray-300">-</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      {collectMonthlyExtraWork(wd).length > 0 ? (
+                        collectMonthlyExtraWork(wd).map((item) => (
+                          <span
+                            key={`${item.kind}-${item.key || item.name}`}
+                            className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg leading-none whitespace-nowrap"
+                          >
+                            {item.name}: +{item.extra}
+                          </span>
+                        ))
                       ) : (
                         <span className="text-[10px] text-gray-300">-</span>
                       )}

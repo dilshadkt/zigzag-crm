@@ -4,6 +4,7 @@ import { useGetTaskCategories } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   addCategoryToWorkDetails,
+  collectMonthlyExtraWork,
   getSelectedWorkItems,
   matchStandardWorkType,
   removeWorkItem,
@@ -51,6 +52,19 @@ const CategoryQuotaSection = ({
     });
   }, [categories, items]);
 
+  const extraOnlyItems = useMemo(() => {
+    const quotaOtherNames = new Set(
+      items
+        .filter((item) => item.kind === "other")
+        .map((item) => String(item.name || "").trim().toLowerCase())
+    );
+    return collectMonthlyExtraWork(workDetails).filter(
+      (item) =>
+        item.kind === "other" &&
+        !quotaOtherNames.has(String(item.name || "").trim().toLowerCase())
+    );
+  }, [items, workDetails]);
+
   const emit = (next) => onChange?.(next);
 
   const handleAdd = () => {
@@ -97,7 +111,14 @@ const CategoryQuotaSection = ({
             className="border p-3 rounded-lg border-gray-200 bg-white shadow-sm relative"
           >
             <div className="flex items-center justify-between">
-              <h6 className="font-medium text-sm truncate pr-2">{item.name}</h6>
+              <div className="flex items-center gap-2 min-w-0 pr-2">
+                <h6 className="font-medium text-sm truncate">{item.name}</h6>
+                {Number(item.extra) > 0 && (
+                  <span className="shrink-0 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                    +{item.extra} extra
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 {isEditMode && (
                   <div className="flex items-center gap-1">
@@ -155,6 +176,24 @@ const CategoryQuotaSection = ({
           </div>
         ))}
       </div>
+
+      {extraOnlyItems.length > 0 && (
+        <div className="mt-4 p-3 rounded-lg border border-amber-200 bg-amber-50/60">
+          <h6 className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">
+            Extra work this month
+          </h6>
+          <div className="flex flex-wrap gap-1.5">
+            {extraOnlyItems.map((item) => (
+              <span
+                key={item.name}
+                className="text-[11px] font-semibold text-amber-800 bg-white border border-amber-200 px-2 py-1 rounded-lg"
+              >
+                {item.name}: +{item.extra}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showAdd && (
         <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">

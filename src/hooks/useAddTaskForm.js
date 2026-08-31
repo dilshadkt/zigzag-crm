@@ -2,6 +2,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { processAttachments } from "../lib/attachmentUtils";
 import { uploadSingleFile } from "../api/service";
+import { taskMinutesToHours } from "../components/projects/workDetailsForm/workTypeMapping";
 
 export const useAddTaskForm = (defaultValue, onSubmit) => {
   const initialValues = {
@@ -53,7 +54,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
         project &&
         project !== "" &&
         project !== "other",
-      then: (schema) => schema.required("Extra task work type is required"),
+      then: (schema) => schema.required("Work type is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
     campaign: Yup.string().when("taskGroup", {
@@ -92,10 +93,17 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
   });
 
   const handleSubmit = (values, formikBag) => {
+    const minutes = values.timeEstimate;
+    const timeEstimate =
+      minutes === "" || minutes == null
+        ? minutes
+        : taskMinutesToHours(minutes);
+
     // Convert empty string project to null before submitting
     const processedValues = {
       ...values,
       project: values.project === "" ? null : values.project,
+      timeEstimate,
     };
 
     onSubmit(processedValues, formikBag);

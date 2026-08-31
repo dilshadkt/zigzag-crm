@@ -419,7 +419,8 @@ const MediaFilesPanel = ({
                       <div className="space-y-2">
                         {/* Reels */}
                         {projectStats.monthlyWorkDetails.reels &&
-                          projectStats.monthlyWorkDetails.reels.total > 0 && (
+                          (projectStats.monthlyWorkDetails.reels.total > 0 ||
+                            projectStats.monthlyWorkDetails.reels.extra > 0) && (
                             <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -491,7 +492,8 @@ const MediaFilesPanel = ({
 
                         {/* Posters */}
                         {projectStats.monthlyWorkDetails.poster &&
-                          projectStats.monthlyWorkDetails.poster.total > 0 && (
+                          (projectStats.monthlyWorkDetails.poster.total > 0 ||
+                            projectStats.monthlyWorkDetails.poster.extra > 0) && (
                             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -562,8 +564,10 @@ const MediaFilesPanel = ({
 
                         {/* Motion Posters */}
                         {projectStats.monthlyWorkDetails.motionPoster &&
-                          projectStats.monthlyWorkDetails.motionPoster.total >
-                            0 && (
+                          (projectStats.monthlyWorkDetails.motionPoster.total >
+                            0 ||
+                            projectStats.monthlyWorkDetails.motionPoster.extra >
+                              0) && (
                             <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -637,8 +641,9 @@ const MediaFilesPanel = ({
 
                         {/* Shooting */}
                         {projectStats.monthlyWorkDetails.shooting &&
-                          projectStats.monthlyWorkDetails.shooting.total >
-                            0 && (
+                          (projectStats.monthlyWorkDetails.shooting.total > 0 ||
+                            projectStats.monthlyWorkDetails.shooting.extra >
+                              0) && (
                             <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -712,8 +717,10 @@ const MediaFilesPanel = ({
 
                         {/* Motion Graphics */}
                         {projectStats.monthlyWorkDetails.motionGraphics &&
-                          projectStats.monthlyWorkDetails.motionGraphics.total >
-                            0 && (
+                          (projectStats.monthlyWorkDetails.motionGraphics
+                            .total > 0 ||
+                            projectStats.monthlyWorkDetails.motionGraphics
+                              .extra > 0) && (
                             <div className="bg-gradient-to-r from-cyan-50 to-teal-50 border border-cyan-200 rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
@@ -789,7 +796,9 @@ const MediaFilesPanel = ({
                         {projectStats.monthlyWorkDetails.other &&
                           projectStats.monthlyWorkDetails.other.length > 0 &&
                           projectStats.monthlyWorkDetails.other
-                            .filter((item) => item.total > 0)
+                            .filter(
+                              (item) => item.total > 0 || item.extra > 0
+                            )
                             .map((item, index) => (
                               <div
                                 key={index}

@@ -27,7 +27,13 @@ import {
 } from "../../../utils/workingDayUtils";
 import { useCheckAvailability } from "../../../features/vacations/hooks/useVacations";
 import { useGetCampaignsByCompany } from "../../../api/campaigns";
-import { getSelectedWorkItems, resolveTaskCategoryId } from "../workDetailsForm/workTypeMapping";
+import {
+  extraWorkTypeValueFromName,
+  getSelectedWorkItems,
+  matchStandardWorkType,
+  resolveTaskCategoryId,
+  taskHoursToMinutes,
+} from "../workDetailsForm/workTypeMapping";
 
 const AddTask = ({
   isOpen,
@@ -57,7 +63,8 @@ const AddTask = ({
   const { data: holidays = [] } = useGetHolidays(companyId);
 
   // Fetch company task categories
-  const { data: taskCategories = [] } = useGetTaskCategories(companyId);
+  const { data: taskCategories = [], isLoading: isLoadingTaskCategories } =
+    useGetTaskCategories(companyId);
 
   const handleClose = () => {
     resetForm();
@@ -101,7 +108,10 @@ const AddTask = ({
       customFields: initialValues.customFields || [],
       subtasks: initialValues.subtasks || [],
       attachments: initialValues.attachments || [],
-      timeEstimate: initialValues.timeEstimate || "",
+      timeEstimate:
+        taskHoursToMinutes(initialValues.timeEstimate) ??
+        initialValues.timeEstimate ??
+        "",
     };
   };
 
@@ -300,11 +310,68 @@ const AddTask = ({
     setFieldValue,
   ]);
 
+  // Prefill time estimate from the selected Master category (minutes)
+  useEffect(() => {
+    if (isEdit) return;
+    if (!values.taskGroup || values.taskGroup === "campaign") return;
+    if (
+      values.taskGroup === "extraTask" &&
+      (!values.extraTaskWorkType ||
+        values.extraTaskWorkType === "Select work type")
+    ) {
+      return;
+    }
+
+    let workDetails = null;
+    if (
+      selectedProjectData &&
+      selectedProjectId &&
+      selectedProjectId !== "other"
+    ) {
+      workDetails = selectedProjectData.workDetails?.find(
+        (wd) => wd.month === selectedMonth
+      );
+    } else {
+      workDetails = monthWorkDetails || projectData?.workDetails;
+    }
+
+    const categoryId = resolveTaskCategoryId({
+      taskGroup: values.taskGroup,
+      extraTaskWorkType: values.extraTaskWorkType,
+      workDetails,
+      categories: taskCategories,
+    });
+    if (!categoryId) return;
+
+    const category = (taskCategories || []).find(
+      (item) => String(item._id) === String(categoryId)
+    );
+    const minutes = Number(category?.time) || 0;
+    if (minutes <= 0) return;
+
+    if (String(values.timeEstimate ?? "") !== String(minutes)) {
+      setFieldValue("timeEstimate", minutes);
+    }
+  }, [
+    values.taskGroup,
+    values.extraTaskWorkType,
+    values.timeEstimate,
+    selectedProjectData,
+    selectedProjectId,
+    selectedMonth,
+    monthWorkDetails,
+    projectData,
+    taskCategories,
+    isEdit,
+    setFieldValue,
+  ]);
+
   // Handle automatic custom fields based on task group
   useEffect(() => {
     if (
       values.taskGroup === "shooting" ||
-      (values.taskGroup === "extraTask" && values.extraTaskWorkType === "shooting")
+      (values.taskGroup === "extraTask" &&
+        matchStandardWorkType(values.extraTaskWorkType) === "shooting")
     ) {
       const hasUrlField = values.customFields?.some(
         (field) =>
@@ -581,7 +648,7 @@ const AddTask = ({
     if (!workDetails) {
       return [
         { label: "Campaign", value: "campaign" },
-        { label: "Extra Task", value: "extraTask" },
+        { label: "Other", value: "extraTask" },
       ];
     }
 
@@ -596,13 +663,13 @@ const AddTask = ({
       }
     });
 
-    // Always add Campaign and Extra Task — they do not consume monthly content quota
+    // Always add Campaign and Other — they do not consume monthly content quota
     options.push({
       label: "Campaign",
       value: "campaign",
     });
     options.push({
-      label: "Extra Task",
+      label: "Other",
       value: "extraTask",
     });
 
@@ -627,49 +694,23 @@ const AddTask = ({
     return options;
   };
 
-  // Get extra task work type options based on selected project
   const getExtraTaskWorkTypeOptions = () => {
-    // Use selected project data if available, otherwise fall back to monthWorkDetails or projectData
-    let workDetails = null;
-
-    if (
-      selectedProjectData &&
-      selectedProjectId &&
-      selectedProjectId !== "other"
-    ) {
-      // Find the work details for the selected month from the selected project
-      const projectMonthWorkDetails = selectedProjectData.workDetails?.find(
-        (wd) => wd.month === selectedMonth
-      );
-      workDetails = projectMonthWorkDetails;
-    } else {
-      // Fallback to provided work details
-      workDetails = monthWorkDetails || projectData?.workDetails;
-    }
-
-    if (!workDetails) return [];
-
-    const options = [];
-    options.push({ label: "Reels", value: "reels" });
-    options.push({ label: "Poster", value: "poster" });
-    options.push({ label: "Motion Poster", value: "motionPoster" });
-    options.push({ label: "Shooting", value: "shooting" });
-    options.push({ label: "Motion Graphics", value: "motionGraphics" });
-
-    // Add other work types
-    if (workDetails.other?.length > 0) {
-      workDetails.other.forEach((item) => {
-        options.push({
-          label: item.name,
-          value: item.name,
-        });
+    const seen = new Set();
+    return (taskCategories || [])
+      .filter((category) => category?.isActive !== false)
+      .map((category) => ({
+        label:
+          Number(category.points) > 0
+            ? `${category.name} (${category.points} pts)`
+            : category.name,
+        value: extraWorkTypeValueFromName(category.name),
+      }))
+      .filter((option) => {
+        const key = String(option.value || "").toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
       });
-    }
-
-    // Add general option
-    options.push({ label: "General Extra Task", value: "general" });
-
-    return options;
   };
 
   // Get assignee options based on selected project
@@ -1006,6 +1047,32 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                       defaultValue="Select work type"
                       disabled={isEdit || isLoadingProjectDetails}
                     />
+                    {isExtraTaskSelected && (
+                      <div className="space-y-1.5">
+                        <Select
+                          errors={errors}
+                          touched={touched}
+                          name={"extraTaskWorkType"}
+                          selectedValue={
+                            values?.extraTaskWorkType || "Select work type"
+                          }
+                          value={values?.extraTaskWorkType || "Select work type"}
+                          onChange={handleChange}
+                          title="Category"
+                          options={
+                            isLoadingTaskCategories
+                              ? [{ label: "Loading...", value: "" }]
+                              : extraTaskWorkTypeOptions
+                          }
+                          defaultValue="Select work type"
+                          disabled={isLoadingTaskCategories}
+                        />
+                        <p className="text-[11px] text-amber-600 px-0.5">
+                          Counted as extra work for this month. Does not use the
+                          project quota.
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -1083,14 +1150,14 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                       {/* Time Estimate */}
                       <div className="col-span-2 sm:col-span-1">
                         <Input
-                          title="Time Estimate (Hours)"
-                          placeholder="e.g. 24"
+                          title="Time Estimate (mins)"
+                          placeholder="e.g. 120"
                           errors={errors}
                           name="timeEstimate"
                           type="number"
                           onchange={handleChange}
                           touched={touched}
-                          value={values.timeEstimate || ""}
+                          value={values}
                           disabled={!isFormEnabled && !isOtherProjectSelected}
                         />
                       </div>
@@ -1121,28 +1188,6 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                         <FiClock className="w-3 h-3" />
                         Set parent Start &amp; Due dates to preview the flow schedule.
                       </div>
-                    )}
-
-                    {/* Extra Task Work Type Selection */}
-                    {isExtraTaskSelected && (
-                      <Select
-                        errors={errors}
-                        touched={touched}
-                        name={"extraTaskWorkType"}
-                        selectedValue={
-                          values?.extraTaskWorkType || "Select work type"
-                        }
-                        value={values?.extraTaskWorkType || "Select work type"}
-                        onChange={handleChange}
-                        title="Extra Task Work Type"
-                        options={
-                          isLoadingProjectDetails
-                            ? [{ label: "Loading...", value: "" }]
-                            : extraTaskWorkTypeOptions
-                        }
-                        defaultValue="Select work type"
-                        disabled={isLoadingProjectDetails}
-                      />
                     )}
                   </>
                 )}
