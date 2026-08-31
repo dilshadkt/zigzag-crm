@@ -1224,6 +1224,31 @@ export const getMyPerformance = async (type = "monthly") => {
   }
 };
 
+export const resetCompanyPerformance = async ({ dryRun = false } = {}) => {
+  try {
+    const url = dryRun
+      ? "/performance/reset?dryRun=true"
+      : "/performance/reset";
+    const response = await apiClient.post(url, dryRun ? {} : { confirm: "RESET" });
+    return response.data;
+  } catch (error) {
+    console.error("Error resetting company performance:", error);
+    throw error;
+  }
+};
+
+export const resetEmployeePerformance = async (employeeId) => {
+  try {
+    const response = await apiClient.post(
+      `/performance/reset/employee/${employeeId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error resetting employee performance:", error);
+    throw error;
+  }
+};
+
 export const addBonusPoints = async (bonusData) => {
   try {
     const response = await apiClient.post("/performance/bonus", bonusData);

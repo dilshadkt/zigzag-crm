@@ -176,8 +176,9 @@ const SubtaskActionBar = ({
   };
 
   const handleForwardToClient = () => {
-    // Client approved → completed
-    changeStatus("completed");
+    // Must be client-approved, not completed: the client approval bonus is only
+    // awarded on the approved -> client-approved transition.
+    changeStatus("client-approved");
   };
 
   const handleClientReject = () => {

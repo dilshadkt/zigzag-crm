@@ -8,13 +8,18 @@ import {
   TrendingUp, 
   Target, 
   Zap,
-  BarChart3
+  BarChart3,
+  RotateCcw,
+  AlertTriangle
 } from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import { getMyPerformance, getEmployeePerformance } from "../../api/service";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { usePermissions } from "../../hooks/usePermissions";
+import { useResetEmployeePerformance } from "../../api/hooks";
 import CEOBonusModal from "../performance/CEOBonusModal";
+import Modal from "../shared/modal";
 import socketService from "../../services/socketService";
 
 const Performance = ({ employeeId, selectedMonth }) => {
@@ -22,7 +27,21 @@ const Performance = ({ employeeId, selectedMonth }) => {
   const [loading, setLoading] = useState(true);
   const [pointsLedger, setPointsLedger] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const { isAdmin } = usePermissions();
+  const resetEmployeeScores = useResetEmployeePerformance();
+
+  const handleResetScores = () => {
+    resetEmployeeScores.mutate(employeeId, {
+      onSuccess: (res) => {
+        toast.success(res?.message || "Employee scores reset");
+        setShowResetModal(false);
+        fetchPerformance();
+      },
+      onError: (err) =>
+        toast.error(err?.response?.data?.message || "Failed to reset scores"),
+    });
+  };
 
   useEffect(() => {
     fetchPerformance();
@@ -160,6 +179,15 @@ const Performance = ({ employeeId, selectedMonth }) => {
                  Give Bonus
                </button>
              )}
+             {isAdmin() && employeeId && (
+               <button
+                 onClick={() => setShowResetModal(true)}
+                 className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-2xl text-sm font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+               >
+                 <RotateCcw className="w-4 h-4" />
+                 Reset Scores
+               </button>
+             )}
           </div>
         </div>
       </motion.div>
@@ -171,6 +199,45 @@ const Performance = ({ employeeId, selectedMonth }) => {
         employeeId={employeeId} 
         onBonusAdded={fetchPerformance} 
       />
+
+      <Modal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        title="Reset This Employee's Scores"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50/60 rounded-xl border border-red-100">
+            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="text-sm text-gray-700">
+              <p className="font-semibold text-red-700">This cannot be undone.</p>
+              <p className="mt-1">
+                Every scoring period for this employee is deleted and they start from
+                zero. Work and attendance recorded before now stops counting, so the
+                score will not build back up on its own. Bonus history is lost
+                permanently.
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600">
+            Other employees are not affected.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowResetModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleResetScores}
+              disabled={resetEmployeeScores.isPending}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50"
+            >
+              {resetEmployeeScores.isPending ? "Resetting..." : "Reset Scores"}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

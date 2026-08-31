@@ -89,6 +89,8 @@ import {
   saveLeavePolicy,
   getCompanyById,
   updateCompany,
+  resetCompanyPerformance,
+  resetEmployeePerformance,
 } from "./service";
 import { 
   getScheduledPosts, 
@@ -2905,6 +2907,29 @@ export const useUpdateCompany = () => {
     mutationFn: ({ companyId, data }) => updateCompany(companyId, data),
     onSuccess: (_, { companyId }) => {
       queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+};
+
+export const useResetCompanyPerformance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (options) => resetCompanyPerformance(options),
+    onSuccess: (_, options) => {
+      if (options?.dryRun) return;
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["performance"] });
+    },
+  });
+};
+
+export const useResetEmployeePerformance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (employeeId) => resetEmployeePerformance(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["performance"] });
     },
   });
 };

@@ -1,20 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useGetAllEmployees } from "../../../api/hooks";
+import { useGetAllEmployees, useGetTaskCategories } from "../../../api/hooks";
 import { useCreateTaskFlow, useUpdateTaskFlow } from "../../../api/hooks";
 import ModalLayout from "../../shared/modal";
 import { FiPlus, FiTrash2, FiLayers, FiUser, FiHash, FiCheckCircle, FiInfo, FiChevronRight, FiChevronDown, FiSearch, FiCheck } from "react-icons/fi";
 import clsx from "clsx";
 
-const SearchableSelect = ({ options, value, onChange, placeholder }) => {
+const SearchableSelect = ({ options, value, onChange, placeholder, valueKey = "_id", labelKey = "name", icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const dropdownRef = useRef(null);
 
-  const selectedOption = options.find((opt) => opt._id === value);
+  const selectedOption = options?.find((opt) => opt[valueKey] === value);
 
-  const filteredOptions = options.filter((opt) =>
-    opt.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = options?.filter((opt) =>
+    opt[labelKey]?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -26,8 +27,40 @@ const SearchableSelect = ({ options, value, onChange, placeholder }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchTerm, isOpen]);
+
+  const handleKeyDown = (e) => {
+    if (!isOpen) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % filteredOptions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev - 1 + filteredOptions.length) % filteredOptions.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredOptions[highlightedIndex]) {
+        onChange(filteredOptions[highlightedIndex][valueKey]);
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <div className="relative flex-1" ref={dropdownRef}>
+    <div className="relative flex-1" ref={dropdownRef} onKeyDown={handleKeyDown}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -36,15 +69,15 @@ const SearchableSelect = ({ options, value, onChange, placeholder }) => {
         <div className="flex items-center gap-2 overflow-hidden">
           {selectedOption ? (
             <div className="w-5 h-5 rounded bg-blue-100 text-blue-600 flex items-center justify-center text-[9px] shrink-0">
-              {selectedOption.name.charAt(0).toUpperCase()}
+              {selectedOption[labelKey]?.charAt(0).toUpperCase()}
             </div>
           ) : (
             <div className="w-5 h-5 rounded bg-gray-50 text-gray-300 flex items-center justify-center shrink-0">
-              <FiUser className="w-3 h-3" />
+              {icon || <FiUser className="w-3 h-3" />}
             </div>
           )}
           <span className={clsx("truncate pr-1", !selectedOption && "text-gray-400 font-medium")}>
-            {selectedOption ? selectedOption.name : placeholder}
+            {selectedOption ? selectedOption[labelKey] : placeholder}
           </span>
         </div>
         <FiChevronDown className={clsx("w-3.5 h-3.5 text-gray-300 transition-transform shrink-0", isOpen && "rotate-180")} />
@@ -58,7 +91,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder }) => {
               <input
                 autoFocus
                 className="w-full bg-white border border-gray-200 rounded-lg py-1.5 pl-8 pr-2 text-[11px] font-medium outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
-                placeholder="Search team member..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -66,35 +99,37 @@ const SearchableSelect = ({ options, value, onChange, placeholder }) => {
           </div>
           <div className="max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((opt) => (
+              filteredOptions.map((opt, index) => (
                 <button
-                  key={opt._id}
+                  key={opt[valueKey] || index}
                   type="button"
                   onClick={() => {
-                    onChange(opt._id);
+                    onChange(opt[valueKey]);
                     setIsOpen(false);
                     setSearchTerm("");
                   }}
                   className={clsx(
                     "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all text-left mb-0.5 last:mb-0",
-                    value === opt._id
+                    value === opt[valueKey]
                       ? "bg-blue-50 text-blue-600"
+                      : index === highlightedIndex
+                      ? "bg-gray-100 text-gray-800"
                       : "text-gray-600 hover:bg-gray-50"
                   )}
                 >
                   <div className={clsx(
                     "w-5 h-5 rounded-md flex items-center justify-center text-[9px] shrink-0",
-                    value === opt._id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-400"
+                    value === opt[valueKey] ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-400"
                   )}>
-                    {opt.name.charAt(0).toUpperCase()}
+                    {opt[labelKey]?.charAt(0).toUpperCase()}
                   </div>
-                  <span className="flex-1 truncate">{opt.name}</span>
-                  {value === opt._id && <FiCheck className="w-3 h-3 shrink-0" />}
+                  <span className="flex-1 truncate">{opt[labelKey]}</span>
+                  {value === opt[valueKey] && <FiCheck className="w-3 h-3 shrink-0" />}
                 </button>
               ))
             ) : (
               <div className="py-4 px-2 text-center text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                No members found
+                No results found
               </div>
             )}
           </div>
@@ -125,15 +160,8 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
   const { data: employeesData } = useGetAllEmployees();
   const employees = employeesData?.employees || [];
 
-  const taskTypes = [
-    "content",
-    "design",
-    "publish",
-    "campaign",
-    "motion",
-    "video editing",
-    "video shooting",
-  ];
+  const { data: categories, isLoading: categoriesLoading } = useGetTaskCategories(companyId);
+
 
   const createTaskFlow = useCreateTaskFlow(companyId, () => {
     setName("");
@@ -247,19 +275,15 @@ const TaskFlowModal = ({ isOpen, onClose, companyId, taskFlow = null }) => {
                     </div>
 
                     {/* Task Selection */}
-                    <div className="flex-1">
-                      <select
-                        className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-bold text-gray-700 outline-none focus:border-blue-400 transition-colors cursor-pointer appearance-none"
-                        value={flow.taskName}
-                        onChange={(e) => handleFlowChange(idx, "taskName", e.target.value)}
-                        required
-                      >
-                        <option value="">Select Stage Type</option>
-                        {taskTypes.map((type) => (
-                          <option key={type} value={type} className="capitalize">{type}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <SearchableSelect
+                      options={categories || []}
+                      value={flow.taskName}
+                      onChange={(val) => handleFlowChange(idx, "taskName", val)}
+                      placeholder={categoriesLoading ? "Loading Categories..." : "Select Stage Type"}
+                      valueKey="name"
+                      labelKey="name"
+                      icon={<FiLayers className="w-3 h-3" />}
+                    />
 
                     <FiChevronRight className="text-gray-300 shrink-0" />
 

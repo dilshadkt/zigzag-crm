@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import { FiSave, FiAlertCircle, FiStar, FiClock, FiTarget, FiCheckCircle, FiUserCheck, FiXCircle, FiShield } from "react-icons/fi";
+import toast from "react-hot-toast";
+import { FiSave, FiAlertCircle, FiStar, FiClock, FiTarget, FiCheckCircle, FiUserCheck, FiXCircle, FiShield, FiAlertTriangle, FiRotateCcw, FiCalendar } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
-import { useGetCompany, useUpdateCompany } from "../../../api/hooks";
+import { useGetCompany, useUpdateCompany, useResetCompanyPerformance } from "../../../api/hooks";
+import Modal from "../../shared/modal";
 
 const GamificationRulesSection = () => {
-  const { companyId } = useAuth();
-  
+  const { companyId, user } = useAuth();
+  const isCompanyAdmin = user?.role === "company-admin";
+
   const { data, isLoading } = useGetCompany(companyId);
   const updateCompany = useUpdateCompany();
+  const resetPerformance = useResetCompanyPerformance();
+
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [resetPreview, setResetPreview] = useState(null);
   
   const [settings, setSettings] = useState({
     taskCompletePoints: 10,
@@ -21,6 +28,9 @@ const GamificationRulesSection = () => {
     coordinatorReviewTimeLimit: 4,
     coordinatorReviewBonusPoints: 5,
     baseTargetScore: 1000,
+    attendanceDayPoints: 5,
+    lateArrivalPenaltyPoints: 5,
+    lateArrivalGraceMinutes: 10,
     // Two-Tier Review Scoring
     internalReviewApprovalPoints: 25,
     internalReviewRejectionPenalty: 10,
@@ -63,6 +73,39 @@ const GamificationRulesSection = () => {
       }
     );
   };
+
+  const openResetModal = () => {
+    setResetConfirmText("");
+    setResetPreview(null);
+    setShowResetModal(true);
+    // Show the admin exactly how much is about to be deleted before they confirm.
+    resetPerformance.mutate(
+      { dryRun: true },
+      {
+        onSuccess: (res) => setResetPreview(res),
+        onError: () => setResetPreview(null),
+      }
+    );
+  };
+
+  const handleResetScores = () => {
+    resetPerformance.mutate(
+      { dryRun: false },
+      {
+        onSuccess: (res) => {
+          toast.success(res?.message || "Performance scores reset");
+          setShowResetModal(false);
+          setResetConfirmText("");
+        },
+        onError: (err) =>
+          toast.error(
+            err?.response?.data?.message || "Failed to reset performance scores"
+          ),
+      }
+    );
+  };
+
+  const lastResetAt = data?.company?.performanceScoresResetAt;
 
   if (isLoading) return <div className="p-4 text-sm text-gray-500">Loading settings...</div>;
 
@@ -187,6 +230,57 @@ const GamificationRulesSection = () => {
               value={settings.lateLeaveRequestPenaltyPoints !== undefined ? settings.lateLeaveRequestPenaltyPoints : 10}
               onChange={handleChange}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm w-full transition-all"
+            />
+          </div>
+
+          {/* Attendance Day Points */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+              <FiCalendar className="text-cyan-500" /> Attendance Day Points
+            </label>
+            <p className="text-xs text-gray-500 mb-1">
+              Points awarded for each day the employee is present. Counted once per calendar day, however many times they clock in.
+            </p>
+            <input
+              type="number"
+              name="attendanceDayPoints"
+              value={settings.attendanceDayPoints !== undefined ? settings.attendanceDayPoints : 5}
+              onChange={handleChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 text-sm w-full transition-all"
+            />
+          </div>
+
+          {/* Late Arrival Penalty */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+              <FiAlertCircle className="text-amber-500" /> Late Arrival Penalty
+            </label>
+            <p className="text-xs text-gray-500 mb-1">
+              Points deducted for each day the employee clocks in after their scheduled start time.
+            </p>
+            <input
+              type="number"
+              name="lateArrivalPenaltyPoints"
+              value={settings.lateArrivalPenaltyPoints !== undefined ? settings.lateArrivalPenaltyPoints : 5}
+              onChange={handleChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm w-full transition-all"
+            />
+          </div>
+
+          {/* Late Arrival Grace */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+              <FiClock className="text-gray-500" /> Late Arrival Grace (mins)
+            </label>
+            <p className="text-xs text-gray-500 mb-1">
+              How many minutes past the shift start are forgiven before a clock-in counts as late. Shift times are set under Weekly Off Rules.
+            </p>
+            <input
+              type="number"
+              name="lateArrivalGraceMinutes"
+              value={settings.lateArrivalGraceMinutes !== undefined ? settings.lateArrivalGraceMinutes : 10}
+              onChange={handleChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500 text-sm w-full transition-all"
             />
           </div>
         </div>
@@ -406,7 +500,113 @@ const GamificationRulesSection = () => {
             {updateCompany.isPending ? "Saving..." : "Save Gamification Rules"}
           </button>
         </div>
+
+        {isCompanyAdmin && (
+          <div className="pt-5 border-t border-red-100">
+            <div className="flex items-center gap-2 mb-2">
+              <FiAlertTriangle className="text-red-600 w-5 h-5" />
+              <h3 className="text-sm font-bold text-gray-800">Danger Zone</h3>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50/40 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Reset all performance scores
+                </p>
+                <p className="text-xs text-gray-600 mt-1 max-w-xl">
+                  Clears every employee's scores and starts everyone from zero. Tasks
+                  and attendance completed before the reset stop counting, so scores
+                  will not build back up on their own.
+                </p>
+                {lastResetAt && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Last reset on{" "}
+                    {new Date(lastResetAt).toLocaleString(undefined, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={openResetModal}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-red-300 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-sm font-medium rounded-xl transition-all shrink-0 active:scale-95"
+              >
+                <FiRotateCcw className="w-4 h-4" />
+                Reset Scores
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <Modal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        title="Reset All Performance Scores"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50/60 rounded-xl border border-red-100">
+            <FiAlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="text-sm text-gray-700">
+              <p className="font-semibold text-red-700">This cannot be undone.</p>
+              <p className="mt-1">
+                Bonus and penalty history, including review bonuses, checklist points
+                and manual adjustments, is deleted permanently and cannot be
+                recalculated.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            {resetPerformance.isPending && !resetPreview ? (
+              <p>Checking how much data is affected...</p>
+            ) : resetPreview ? (
+              <p>
+                This will delete{" "}
+                <span className="font-semibold text-gray-900">
+                  {resetPreview.scoresToDelete}
+                </span>{" "}
+                score {resetPreview.scoresToDelete === 1 ? "record" : "records"} and
+                reset{" "}
+                <span className="font-semibold text-gray-900">
+                  {resetPreview.employeesToReset}
+                </span>{" "}
+                {resetPreview.employeesToReset === 1 ? "employee" : "employees"} to
+                zero.
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+              Type RESET to confirm
+            </label>
+            <input
+              type="text"
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              placeholder="RESET"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowResetModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleResetScores}
+              disabled={resetConfirmText !== "RESET" || resetPerformance.isPending}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resetPerformance.isPending ? "Resetting..." : "Reset Scores"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

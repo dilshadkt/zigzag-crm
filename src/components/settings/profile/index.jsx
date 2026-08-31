@@ -45,6 +45,9 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   const isAdmin = currentUser?.role === "company-admin";
   const isOwnProfile =
     currentUser?._id === employeeId || currentUser?._id === user?._id;
+  const isEmployeeOwnProfile =
+    isOwnProfile && currentUser?.role === "employee";
+  const canEditPositionDepartment = !isEmployeeOwnProfile;
   const showDeleteButton = isEmployeePage && (isAdmin || canDelete) && !isOwnProfile;
 
   const companyId = currentCompanyId || currentUser?.company;
@@ -180,14 +183,17 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
         const normalizedData = {
           firstName: values.firstName,
           lastName: values.lastName,
-          position: values.position,
-          department: values.department || null,
           location: values.location,
           dob: values.birthday,
           phoneNumber: values.mobile,
           skype: values.skype,
           email: values.email,
         };
+
+        if (canEditPositionDepartment) {
+          normalizedData.position = values.position;
+          normalizedData.department = values.department || null;
+        }
 
         let updatePayload = normalizedData;
 
@@ -410,7 +416,7 @@ rounded-3xl  flex flex-col "
             title="Last Name"
             placeholder="Doe"
           />
-          {isEditMode ? (
+          {isEditMode && canEditPositionDepartment ? (
             <Select
               errors={errors}
               touched={touched}
@@ -432,7 +438,7 @@ rounded-3xl  flex flex-col "
             />
           )}
 
-          {isEditMode ? (
+          {isEditMode && canEditPositionDepartment ? (
             <Select
               errors={errors}
               touched={touched}

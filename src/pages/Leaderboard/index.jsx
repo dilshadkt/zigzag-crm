@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, Medal, Star, TrendingUp, Calendar,
   Filter, Users, Award, ArrowRight, Activity,
-  Zap, AlertCircle, Clock, CheckCircle2, Settings, X
+  Zap, AlertCircle, Clock, CheckCircle2, Settings, X, ChevronDown
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { format, subMonths, subWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area, AreaChart
 } from "recharts";
@@ -13,31 +14,88 @@ import { getLeaderboard, getPerformanceTrend, getNudges, addBonusPoints } from "
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAuth } from "../../hooks/useAuth";
 
+const getPeriodKeyForDate = (date, type) =>
+  format(date, type === "weekly" ? "yyyy-'W'II" : "yyyy-MM");
+
+const buildPeriodOptions = (type, count = 12) => {
+  const now = new Date();
+  return Array.from({ length: count }, (_, index) => {
+    const date = type === "weekly" ? subWeeks(now, index) : subMonths(now, index);
+    const key = getPeriodKeyForDate(date, type);
+
+    if (type === "weekly") {
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+      return {
+        key,
+        label:
+          index === 0
+            ? `This week (${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d")})`
+            : `${format(weekStart, "MMM d")} – ${format(weekEnd, "MMM d, yyyy")}`,
+        isCurrent: index === 0,
+      };
+    }
+
+    return {
+      key,
+      label: index === 0 ? `This month (${format(date, "MMMM yyyy")})` : format(date, "MMMM yyyy"),
+      isCurrent: index === 0,
+    };
+  });
+};
+
+const formatPeriodLabel = (periodKey, type) => {
+  if (!periodKey) return "";
+  if (type === "monthly") {
+    const [year, month] = periodKey.split("-");
+    if (!year || !month) return periodKey;
+    return format(new Date(Number(year), Number(month) - 1, 1), "MMMM yyyy");
+  }
+  return periodKey.replace("W", " Week ");
+};
+
 const Leaderboard = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
-  const [type, setType] = useState("weekly");
+  const [type, setType] = useState("monthly");
+  const [periodKey, setPeriodKey] = useState("");
+  const [activePeriodKey, setActivePeriodKey] = useState("");
   const [data, setData] = useState([]);
   const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const periodOptions = useMemo(() => buildPeriodOptions(type), [type]);
+  const selectedPeriodKey = periodKey || periodOptions[0]?.key || "";
+  const isCurrentPeriod = selectedPeriodKey === periodOptions[0]?.key;
+  const selectedPeriodLabel =
+    periodOptions.find((option) => option.key === selectedPeriodKey)?.label ||
+    formatPeriodLabel(activePeriodKey, type);
   
   // Admin Score Modal
   const [scoreModal, setScoreModal] = useState({ isOpen: false, user: null, item: null });
   const [scoreForm, setScoreForm] = useState({ points: "", targetScore: "", reason: "" });
 
   useEffect(() => {
-    fetchData();
+    setPeriodKey("");
   }, [type]);
+
+  useEffect(() => {
+    fetchData();
+  }, [type, periodKey]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      const effectivePeriodKey = periodKey || undefined;
       const [leaderboardRes, trendRes] = await Promise.all([
-        getLeaderboard(type),
+        getLeaderboard(type, effectivePeriodKey),
         getPerformanceTrend(type)
       ]);
 
-      if (leaderboardRes.success) setData(leaderboardRes.leaderboard);
+      if (leaderboardRes.success) {
+        setData(leaderboardRes.leaderboard);
+        setActivePeriodKey(leaderboardRes.periodKey || "");
+      }
       if (trendRes.success) setTrendData(trendRes.trend);
     } catch (err) {
       console.error("Failed to load leaderboard data");
@@ -83,28 +141,64 @@ const Leaderboard = () => {
     <div className="min-h-screen bg-[#F4F9FD] ">
       <div className="max-w-7xl mx-auto space-y-3">
         {/* Header & Toggle */}
-        <header className="flex justify-between items-center">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-[#0A1629]">Team Leaderboard</h1>
+            <div>
+              <h1 className="text-xl font-bold text-[#0A1629]">Team Leaderboard</h1>
+              <p className="text-[11px] text-[#7D8592] font-medium mt-0.5 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                {selectedPeriodLabel}
+                {!isCurrentPeriod && (
+                  <span className="text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase">
+                    Past {type === "weekly" ? "week" : "month"}
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
 
-          <div className="flex bg-white/50 backdrop-blur-sm p-1.5 rounded-xl border border-gray-200/50">
-            {["weekly", "monthly"].map((t) => (
-              <button
-                key={t}
-                onClick={() => setType(t)}
-                className={`px-6 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${type === t ? "bg-[#3F8CFF] text-white shadow-md" : "text-[#7D8592] hover:bg-gray-100"
-                  }`}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <select
+                value={selectedPeriodKey}
+                onChange={(e) => setPeriodKey(e.target.value)}
+                className="appearance-none bg-white border border-gray-200 rounded-xl pl-3 pr-9 py-2 text-xs font-bold text-[#0A1629] focus:outline-none focus:ring-2 focus:ring-[#3F8CFF]/30 min-w-[190px]"
               >
-                {t}
-              </button>
-            ))}
+                {periodOptions.map((option) => (
+                  <option key={option.key} value={option.key}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-[#7D8592] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            <div className="flex bg-white/50 backdrop-blur-sm p-1.5 rounded-xl border border-gray-200/50">
+              {["weekly", "monthly"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setType(t)}
+                  className={`px-6 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${type === t ? "bg-[#3F8CFF] text-white shadow-md" : "text-[#7D8592] hover:bg-gray-100"
+                    }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
         {loading ? (
           <div className="flex justify-center items-center h-[60vh]">
             <LoadingSpinner />
+          </div>
+        ) : data.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <Trophy className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-sm font-bold text-[#0A1629]">No leaderboard data</h3>
+            <p className="text-xs text-[#7D8592] mt-1">
+              No performance records found for {selectedPeriodLabel}.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -313,7 +407,7 @@ const Leaderboard = () => {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              {currentUser?.role === "company-admin" && (
+                              {currentUser?.role === "company-admin" && isCurrentPeriod && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

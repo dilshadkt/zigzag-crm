@@ -181,11 +181,11 @@ const SubTaskStatusButton = ({
     }
 
     try {
-      // Map final approval statuses to completed behind the scenes
+      // client-approved is sent as-is so the client approval bonus can fire.
+      // Internal approval on a subtask that needs no client sign-off goes
+      // straight to completed, which by design earns no review bonus.
       let finalStatus = newStatus;
-      if (newStatus === "client-approved") {
-        finalStatus = "completed";
-      } else if (newStatus === "approved" && !isClientApprovalRequired) {
+      if (newStatus === "approved" && !isClientApprovalRequired) {
         finalStatus = "completed";
       }
       

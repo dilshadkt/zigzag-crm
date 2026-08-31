@@ -7,6 +7,7 @@ import {
   FiInfo,
   FiSave,
   FiLoader,
+  FiClock,
 } from "react-icons/fi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -285,15 +286,28 @@ const WorkScheduleSection = ({
 }) => {
   // Local state — a map { [day 0-6]: Set<occurrence> }
   const [ruleMap, setRuleMap] = useState(() => rulesToMap([]));
+  const [workingHours, setWorkingHours] = useState({
+    start: "09:00",
+    end: "18:00",
+  });
   const [isDirty, setIsDirty] = useState(false);
 
   // Sync from server data
   useEffect(() => {
     if (schedule) {
       setRuleMap(rulesToMap(schedule.weeklyOffs || []));
+      setWorkingHours({
+        start: schedule.workingHours?.start || "09:00",
+        end: schedule.workingHours?.end || "18:00",
+      });
       setIsDirty(false);
     }
   }, [schedule]);
+
+  const updateWorkingHours = (field, value) => {
+    setWorkingHours((prev) => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
 
   const currentRules = mapToRules(ruleMap);
   const activePresetId = detectPreset(currentRules);
@@ -309,7 +323,7 @@ const WorkScheduleSection = ({
   };
 
   const handleSave = () => {
-    onSave({ weeklyOffs: currentRules });
+    onSave({ weeklyOffs: currentRules, workingHours });
   };
 
   // Summary counts
@@ -423,6 +437,51 @@ const WorkScheduleSection = ({
               onChange={(set) => updateDay(dayMeta.day, set)}
             />
           ))}
+        </div>
+      </div>
+
+      {/* ── Working Hours ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FiClock className="w-3.5 h-3.5 text-cyan-500" />
+            <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+              Working Hours
+            </h4>
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <FiInfo className="w-3 h-3" />
+            <span>Used to decide if a clock-in counts as late</span>
+          </div>
+        </div>
+        <div className="p-4 flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-600 uppercase tracking-wide">
+              Shift start
+            </label>
+            <input
+              type="time"
+              value={workingHours.start}
+              onChange={(e) => updateWorkingHours("start", e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-600 uppercase tracking-wide">
+              Shift end
+            </label>
+            <input
+              type="time"
+              value={workingHours.end}
+              onChange={(e) => updateWorkingHours("end", e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-xl text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
+            />
+          </div>
+          <p className="text-[11px] text-gray-400 sm:self-end sm:pb-2 max-w-sm">
+            Clock-ins after the shift start, beyond the grace period set in
+            Gamification, are recorded as late and deduct points. Weekly offs and
+            holidays are ignored.
+          </p>
         </div>
       </div>
 
