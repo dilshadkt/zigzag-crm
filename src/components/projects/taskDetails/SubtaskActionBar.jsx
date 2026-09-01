@@ -162,13 +162,9 @@ const SubtaskActionBar = ({
 
   // Reviewer actions
   const handleApprove = () => {
-    if (isClientApprovalRequired) {
-      // Move to approved (internal), not completed
-      changeStatus("approved");
-    } else {
-      // No client approval needed → completed
-      changeStatus("completed");
-    }
+    // Always send "approved". The API completes the subtask when no client
+    // step is required; otherwise it stays approved until client review.
+    changeStatus("approved");
   };
 
   const handleReject = () => {
@@ -176,8 +172,8 @@ const SubtaskActionBar = ({
   };
 
   const handleForwardToClient = () => {
-    // Must be client-approved, not completed: the client approval bonus is only
-    // awarded on the approved -> client-approved transition.
+    // Send client-approved so the API can tell this apart from a skip-to-complete.
+    // It then stores the subtask as completed.
     changeStatus("client-approved");
   };
 
@@ -338,6 +334,17 @@ const SubtaskActionBar = ({
                 : "✅ Completed"}
             </span>
           )}
+
+          {(isAdmin || isCompany) && status === "client-approved" && (
+            <button
+              onClick={() => changeStatus("completed")}
+              disabled={isUpdating}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
+            >
+              <FiCheck className="w-3 h-3" />
+              Complete
+            </button>
+          )}
         </div>
 
         <WorkLinkModal
@@ -359,8 +366,8 @@ const SubtaskActionBar = ({
     );
   }
 
-  // REVIEWER ACTION BAR (admin / reporter / manager viewing on-review or approved subtask)
-  if (isReviewer && (status === "on-review" || status === "approved")) {
+  // REVIEWER ACTION BAR (admin / reporter / manager viewing on-review, approved, or client-approved)
+  if (isReviewer && (status === "on-review" || status === "approved" || ((isAdmin || isCompany) && status === "client-approved"))) {
     return (
       <>
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dashed border-gray-200">
@@ -421,6 +428,28 @@ const SubtaskActionBar = ({
                 Client Rejected
               </button>
             </>
+          )}
+
+          {status === "approved" && !isClientApprovalRequired && (
+            <button
+              onClick={handleApprove}
+              disabled={isUpdating}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
+            >
+              <FiCheck className="w-3.5 h-3.5" />
+              Mark Complete
+            </button>
+          )}
+
+          {(isAdmin || isCompany) && status === "client-approved" && (
+            <button
+              onClick={() => changeStatus("completed")}
+              disabled={isUpdating}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
+            >
+              <FiCheck className="w-3.5 h-3.5" />
+              Complete
+            </button>
           )}
         </div>
 

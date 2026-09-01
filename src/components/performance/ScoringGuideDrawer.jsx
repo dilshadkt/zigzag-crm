@@ -32,9 +32,7 @@ const DEFAULTS = {
   attendanceDayPoints: 5,
   lateArrivalPenaltyPoints: 5,
   lateArrivalGraceMinutes: 10,
-  internalReviewApprovalPoints: 25,
   internalReviewRejectionPenalty: 10,
-  clientApprovalPoints: 30,
   clientRejectionPenalty: 15,
   campaignKpiBonusEnabled: false,
   campaignCtrTarget: 1,
@@ -202,16 +200,6 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
               title="Request leave early"
               detail="Ask 7 or more days before the leave date."
               value={settings.earlyLeaveRequestPoints}
-            />
-            <RuleRow
-              title="Pass internal review"
-              detail="Your task is approved after internal review."
-              value={settings.internalReviewApprovalPoints}
-            />
-            <RuleRow
-              title="Get client approval"
-              detail="The client accepts the work after review."
-              value={settings.clientApprovalPoints}
             />
           </Section>
 

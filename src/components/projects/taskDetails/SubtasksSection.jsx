@@ -790,7 +790,9 @@ const SubtasksSection = ({
 
                 {/* Reviewer Action Bar — shown below the subtask card for reviewers */}
                 {(isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus") || isDepartmentReviewerFor(subtask)) &&
-                  (subtask.status === "on-review" || subtask.status === "approved") && (
+                  (subtask.status === "on-review" ||
+                    subtask.status === "approved" ||
+                    ((isCompany || isAdmin) && subtask.status === "client-approved")) && (
                   <SubtaskActionBar
                     subtask={subtask}
                     parentTaskId={taskDetails?._id}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { FiSave, FiAlertCircle, FiStar, FiClock, FiTarget, FiCheckCircle, FiUserCheck, FiXCircle, FiShield, FiAlertTriangle, FiRotateCcw, FiCalendar } from "react-icons/fi";
+import { FiSave, FiAlertCircle, FiStar, FiClock, FiTarget, FiUserCheck, FiXCircle, FiShield, FiAlertTriangle, FiRotateCcw, FiCalendar } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGetCompany, useUpdateCompany, useResetCompanyPerformance } from "../../../api/hooks";
 import Modal from "../../shared/modal";
@@ -32,10 +32,7 @@ const GamificationRulesSection = () => {
     attendanceDayPoints: 5,
     lateArrivalPenaltyPoints: 5,
     lateArrivalGraceMinutes: 10,
-    // Two-Tier Review Scoring
-    internalReviewApprovalPoints: 25,
     internalReviewRejectionPenalty: 10,
-    clientApprovalPoints: 30,
     clientRejectionPenalty: 15,
     campaignKpiBonusEnabled: false,
     campaignCtrTarget: 1,
@@ -63,7 +60,17 @@ const GamificationRulesSection = () => {
 
   const handleSave = () => {
     updateCompany.mutate(
-      { companyId, data: { gamificationSettings: settings } },
+      {
+        companyId,
+        data: {
+          gamificationSettings: {
+            ...settings,
+            // Approval bonuses were removed: completion + on-time review already cover a pass.
+            internalReviewApprovalPoints: 0,
+            clientApprovalPoints: 0,
+          },
+        },
+      },
       {
         onSuccess: () => {
           toast.success("Gamification settings saved successfully");
@@ -368,37 +375,20 @@ const GamificationRulesSection = () => {
           </div>
         </div>
 
-        {/* Two-Tier Review Scoring Section */}
+        {/* Review Rework Penalties */}
         <div className="border-t border-gray-200 pt-5 mt-1">
           <div className="flex items-center gap-2 mb-4">
             <FiUserCheck className="text-violet-600 w-5 h-5" />
-            <h3 className="text-sm font-bold text-gray-800">Two-Tier Review Scoring</h3>
-            <span className="text-[10px] bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Employee Rewards</span>
+            <h3 className="text-sm font-bold text-gray-800">Review Rework Penalties</h3>
+            <span className="text-[10px] bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Employee only</span>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            Points awarded/deducted from the <strong>assigned employee</strong> when their task passes or fails
-            internal review and client review stages. These are quality-based penalties — not related to coordinator review speed.
+            Passing a review does <strong>not</strong> add extra points. The assignee already earns
+            category/completion points, and the reviewer already earns the on-time review bonus above.
+            These values only deduct from the <strong>assigned employee</strong> when work is sent back.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Internal Review Approval */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
-                <FiCheckCircle className="text-emerald-500" /> Internal Review — Approval Bonus
-              </label>
-              <p className="text-xs text-gray-500 mb-1">
-                Points awarded when a task passes internal review (on-review → approved).
-              </p>
-              <input
-                type="number"
-                name="internalReviewApprovalPoints"
-                value={settings.internalReviewApprovalPoints !== undefined ? settings.internalReviewApprovalPoints : 25}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm w-full transition-all"
-              />
-            </div>
-
-            {/* Internal Review Rejection */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
                 <FiXCircle className="text-orange-500" /> Internal Review — Rejection Penalty
@@ -415,24 +405,6 @@ const GamificationRulesSection = () => {
               />
             </div>
 
-            {/* Client Approval */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
-                <FiCheckCircle className="text-blue-500" /> Client Review — Approval Bonus
-              </label>
-              <p className="text-xs text-gray-500 mb-1">
-                Points awarded when a client approves the task (approved → client-approved).
-              </p>
-              <input
-                type="number"
-                name="clientApprovalPoints"
-                value={settings.clientApprovalPoints !== undefined ? settings.clientApprovalPoints : 30}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm w-full transition-all"
-              />
-            </div>
-
-            {/* Client Rejection */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
                 <FiXCircle className="text-red-500" /> Client Review — Rejection Penalty

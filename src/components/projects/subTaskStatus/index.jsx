@@ -91,7 +91,7 @@ const SubTaskStatusButton = ({
     },
     {
       value: "completed",
-      label: "Completed",
+      label: "Complete",
       color: "bg-green-100 text-green-800",
     },
   ];
@@ -109,11 +109,10 @@ const SubTaskStatusButton = ({
   // Get status options based on user role or explicit override
   const statusOptions = (isCompany || showAllOptions)
     ? adminStatusOptions.filter(opt => {
-        // Always hide "Completed" as a manual option; it's handled via Approved/Client Approved
-        if (opt.value === "completed") return false;
+        // Complete is admin-only, for closing work still on client-approved.
+        if (opt.value === "completed") return isCompany || isAdmin;
 
         if (isClientApprovalRequired) {
-          // If client approval is required, show everything except manual "Completed"
           return true;
         }
         // If client approval is NOT required, hide "Client Approved"
@@ -140,7 +139,16 @@ const SubTaskStatusButton = ({
     }
 
     // Check if work link is required for the selected status
-    if ((newStatus === "on-review" || newStatus === "completed" || newStatus === "client-approved") && isWorkLinkRequired) {
+    const isAdminCompletingFinishedWork =
+      (isCompany || isAdmin) &&
+      newStatus === "completed" &&
+      ["approved", "client-approved", "completed"].includes(subTask.status);
+
+    if (
+      !isAdminCompletingFinishedWork &&
+      (newStatus === "on-review" || newStatus === "completed" || newStatus === "client-approved") &&
+      isWorkLinkRequired
+    ) {
       // Check if link already exists in custom fields or publish URLs
       const hasLink = (subTask.customFields || []).some(f => 
         (f.label?.toLowerCase().includes("work link") || f.label?.toLowerCase().includes("google drive") || f.label?.toLowerCase().includes("url")) && 
@@ -181,16 +189,8 @@ const SubTaskStatusButton = ({
     }
 
     try {
-      // client-approved is sent as-is so the client approval bonus can fire.
-      // Internal approval on a subtask that needs no client sign-off goes
-      // straight to completed, which by design earns no review bonus.
-      let finalStatus = newStatus;
-      if (newStatus === "approved" && !isClientApprovalRequired) {
-        finalStatus = "completed";
-      }
-      
       await updateSubTaskMutation.mutateAsync({
-        status: finalStatus,
+        status: newStatus,
       });
       setIsOpen(false);
     } catch (error) {
@@ -228,16 +228,8 @@ const SubTaskStatusButton = ({
         updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
       }
 
-      // Map final approval statuses to completed behind the scenes
-      let finalStatus = pendingStatus;
-      if (pendingStatus === "client-approved") {
-        finalStatus = "completed";
-      } else if (pendingStatus === "approved" && !isClientApprovalRequired) {
-        finalStatus = "completed";
-      }
-
       await updateSubTaskMutation.mutateAsync({
-        status: finalStatus,
+        status: pendingStatus,
         customFields: updatedFields,
       });
       
