@@ -27,6 +27,7 @@ const GamificationRulesSection = () => {
     lateLeaveRequestPenaltyPoints: 10,
     coordinatorReviewTimeLimit: 4,
     coordinatorReviewBonusPoints: 5,
+    adminInterventionPenaltyPoints: 15,
     baseTargetScore: 1000,
     attendanceDayPoints: 5,
     lateArrivalPenaltyPoints: 5,
@@ -295,6 +296,7 @@ const GamificationRulesSection = () => {
           <p className="text-xs text-gray-500 mb-4">
             Points awarded/deducted from the <strong>reviewer or coordinator</strong> based on how quickly they action a task in review.
             This is separate from employee rejection penalties below — it measures review speed, not task quality.
+            Admins are never scored; if an admin has to step in, the coordinator who missed the review is penalised instead.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -344,6 +346,23 @@ const GamificationRulesSection = () => {
                 value={settings.coordinatorPenaltyPoints}
                 onChange={handleChange}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm w-full transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+                <FiShield className="text-rose-500" /> Admin Intervention Penalty
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Points deducted from the <strong>project coordinator or reporter</strong> when an admin
+                has to review a task in their place. The admin earns nothing.
+              </p>
+              <input
+                type="number"
+                name="adminInterventionPenaltyPoints"
+                value={settings.adminInterventionPenaltyPoints !== undefined ? settings.adminInterventionPenaltyPoints : 15}
+                onChange={handleChange}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm w-full transition-all"
               />
             </div>
           </div>

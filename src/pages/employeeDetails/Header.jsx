@@ -48,7 +48,9 @@ export const EmployeeHeader = ({
         ))}
       </div>
       <div className="flex items-center gap-x-3">
-        {(activePage === "Overview" || activePage === "Today's Tasks") && (
+        {(activePage === "Overview" ||
+          activePage === "Performance" ||
+          activePage === "Today's Tasks") && (
           <label className="flex flex-col text-xs font-medium text-gray-600">
             <input
               type="month"

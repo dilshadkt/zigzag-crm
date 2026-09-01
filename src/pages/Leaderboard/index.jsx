@@ -357,6 +357,17 @@ const Leaderboard = () => {
             </div>
           </div>
 
+          {!myEntry && currentUser?.role === "company-admin" && (
+            <div className="bg-white rounded-xl border border-amber-100 px-3.5 py-2.5 flex items-start gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-[#7D8592] leading-relaxed">
+                <span className="font-bold text-[#0A1629]">Admins are not ranked.</span> Admin activity is
+                excluded from the leaderboard and team average. When an admin reviews a task, the
+                coordinator who missed that review is penalised instead.
+              </p>
+            </div>
+          )}
+
           {myEntry && (
             <div className="bg-white rounded-xl border border-blue-100 px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
