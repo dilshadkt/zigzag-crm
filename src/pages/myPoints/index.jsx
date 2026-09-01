@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Zap, TrendingUp, TrendingDown, Clock, Award, History, Info } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Zap, Award, History } from "lucide-react";
 import { getMyPerformance } from "../../api/service";
 import LoadingSpinner from "../../components/LoadingSpinner";
-import { format } from "date-fns";
+import PointsLedgerList from "../../components/performance/PointsLedgerList";
 import socketService from "../../services/socketService";
 
 const MyPoints = () => {
-  const navigate = useNavigate();
   const [performance, setPerformance] = useState(null);
   const [pointsLedger, setPointsLedger] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,60 +97,15 @@ const MyPoints = () => {
             </div>
             <h3 className="text-lg font-bold text-gray-700">No points activity yet</h3>
             <p className="text-gray-500 mt-2 max-w-md text-sm">
-              Complete tasks on time or review tasks efficiently to start earning gamification points.
+              Complete tasks on time or clock in on schedule to start earning gamification points.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {pointsLedger.map((entry, idx) => (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                key={entry.id + idx}
-                onClick={() => {
-                  if (entry.projectId && entry.parentTaskId && entry.taskId) {
-                    navigate(`/projects/${entry.projectId}/${entry.parentTaskId}?subTaskId=${entry.taskId}`);
-                  } else if (entry.projectId && entry.taskId) {
-                    // Fallback for older entries where parentTaskId wasn't recorded
-                    navigate(`/projects/${entry.projectId}?subtask=${entry.taskId}`);
-                  }
-                }}
-                className={`group flex rounded-xl border border-gray-200 bg-white transition-all duration-300 overflow-hidden ${
-                  (entry.projectId && entry.taskId) ? "cursor-pointer hover:border-blue-300 hover:shadow-md" : "hover:border-gray-300"
-                }`}
-              >
-                {/* Left Ticket Stub */}
-                <div className={`flex flex-col items-center justify-center p-3 border-r-2 border-dashed ${
-                  entry.type === 'earned' 
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600' 
-                    : 'bg-red-50 border-red-200 text-red-600'
-                } w-20 flex-shrink-0`}>
-                  {entry.type === 'earned' ? <TrendingUp className="w-4 h-4 mb-1 opacity-80" /> : <TrendingDown className="w-4 h-4 mb-1 opacity-80" />}
-                  <span className="text-xl font-black leading-none">
-                    {entry.type === 'earned' ? '+' : ''}{entry.points}
-                  </span>
-                  <span className="text-[9px] font-bold uppercase mt-1 tracking-wider">Pts</span>
-                </div>
-
-                {/* Right Ticket Body */}
-                <div className="p-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                      {entry.title}
-                    </h4>
-                    <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
-                      {entry.reason}
-                    </p>
-                  </div>
-                  <div className="mt-3 flex items-center text-[10px] text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded w-fit">
-                    <Clock className="w-2.5 h-2.5 mr-1 text-gray-400" />
-                    {format(new Date(entry.date), "MMM do yyyy, h:mm a")}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <PointsLedgerList
+            entries={pointsLedger}
+            layout="grid"
+            emptyMessage="No points activity yet"
+          />
         )}
       </div>
     </div>

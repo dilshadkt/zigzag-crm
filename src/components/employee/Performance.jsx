@@ -19,6 +19,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useResetEmployeePerformance } from "../../api/hooks";
 import CEOBonusModal from "../performance/CEOBonusModal";
+import PointsLedgerList from "../performance/PointsLedgerList";
 import Modal from "../shared/modal";
 import socketService from "../../services/socketService";
 
@@ -310,32 +311,11 @@ const Performance = ({ employeeId, selectedMonth }) => {
           </div>
         </div>
 
-        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-          {pointsLedger.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500">No point history available for this period.</div>
-          ) : (
-            pointsLedger.map((entry, idx) => (
-              <div 
-                key={entry.id || idx} 
-                className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg ${entry.type === 'earned' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                    {entry.type === 'earned' ? <Plus className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-800">{entry.title}</h4>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{entry.reason}</p>
-                    <p className="text-[10px] text-gray-400 mt-1 font-medium">{new Date(entry.date).toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className={`text-lg font-black ${entry.type === 'earned' ? 'text-green-600' : 'text-red-600'}`}>
-                  {entry.points > 0 ? `+${entry.points}` : entry.points}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+        <PointsLedgerList
+          entries={pointsLedger}
+          layout="list"
+          emptyMessage="No point history available for this period."
+        />
       </motion.div>
     </div>
   );
