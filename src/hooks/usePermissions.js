@@ -101,6 +101,13 @@ export const usePermissions = () => {
     return userPermissions?.accessAdminDashboard || false;
   };
 
+  const canScheduleMeetings = () => {
+    if (user?.role === "company-admin") {
+      return true;
+    }
+    return Boolean(userPermissions?.meetings?.schedule);
+  };
+
   return {
     hasPermission,
     hasAnyPermission,
@@ -109,6 +116,7 @@ export const usePermissions = () => {
     isAdmin,
     getPositionName,
     hasAdminDashboardAccess,
+    canScheduleMeetings,
     userPermissions,
   };
 };

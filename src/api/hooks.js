@@ -3158,3 +3158,129 @@ export const useIsDepartmentHead = (companyId, enabled = true) => {
     isError,
   };
 };
+
+export const useGetMeetings = () => {
+  return useQuery({
+    queryKey: ["meetings"],
+    queryFn: () => import("./service").then((m) => m.getMeetings()),
+  });
+};
+
+export const useGetUpcomingMeetingCount = () => {
+  return useQuery({
+    queryKey: ["upcomingMeetingCount"],
+    queryFn: () => import("./service").then((m) => m.getUpcomingMeetingCount()),
+    refetchInterval: 60 * 1000,
+  });
+};
+
+export const useCreateMeeting = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => import("./service").then((m) => m.createMeeting(data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingMeetingCount"] });
+    },
+  });
+};
+
+export const useUpdateMeeting = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ meetingId, data }) =>
+      import("./service").then((m) => m.updateMeeting(meetingId, data)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingMeetingCount"] });
+    },
+  });
+};
+
+export const useCancelMeeting = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (meetingId) => import("./service").then((m) => m.cancelMeeting(meetingId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingMeetingCount"] });
+    },
+  });
+};
+
+export const useReportMeetingAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ meetingId, attendees }) =>
+      import("./service").then((m) => m.reportMeetingAttendance(meetingId, attendees)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingMeetingCount"] });
+      queryClient.invalidateQueries({ queryKey: ["myPerformance"] });
+    },
+  });
+};
+
+const invalidateMeetings = (queryClient) => {
+  queryClient.invalidateQueries({ queryKey: ["meetings"] });
+};
+
+export const useAddMeetingActionItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ meetingId, data }) =>
+      import("./service").then((m) => m.addMeetingActionItem(meetingId, data)),
+    onSuccess: () => invalidateMeetings(queryClient),
+  });
+};
+
+export const useUpdateMeetingActionItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ meetingId, itemId, data }) =>
+      import("./service").then((m) => m.updateMeetingActionItem(meetingId, itemId, data)),
+    onSuccess: () => invalidateMeetings(queryClient),
+  });
+};
+
+export const useDeleteMeetingActionItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ meetingId, itemId }) =>
+      import("./service").then((m) => m.deleteMeetingActionItem(meetingId, itemId)),
+    onSuccess: () => invalidateMeetings(queryClient),
+  });
+};
+
+export const useGetGoogleMeetStatus = () => {
+  return useQuery({
+    queryKey: ["googleMeetStatus"],
+    queryFn: () => import("./service").then((m) => m.getGoogleMeetStatus()),
+  });
+};
+
+export const useConnectGoogleMeet = () => {
+  return useMutation({
+    mutationFn: (returnTo) =>
+      import("./service").then((m) => m.getGoogleMeetConnectUrl(returnTo)),
+  });
+};
+
+export const useDisconnectGoogleMeet = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => import("./service").then((m) => m.disconnectGoogleMeet()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["googleMeetStatus"] });
+    },
+  });
+};
+
+export const useGenerateMeetingMeetLink = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (meetingId) =>
+      import("./service").then((m) => m.generateMeetingMeetLink(meetingId)),
+    onSuccess: () => invalidateMeetings(queryClient),
+  });
+};

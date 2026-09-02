@@ -5,6 +5,7 @@ import Select from "../../shared/Field/select";
 import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
 import Input from "../../shared/Field/input";
+import CategoryPicker from "../../shared/Field/categoryPicker";
 import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
 import {
   useCreateTask,
@@ -832,17 +833,6 @@ const AddTask = ({
     }
     setFieldValue("subtasks", updated);
   };
-
-  const getSubtaskCategoryOptions = () =>
-    (Array.isArray(taskCategories) ? taskCategories : [])
-      .filter((category) => category?.isActive !== false)
-      .map((category) => ({
-        label:
-          Number(category.points) > 0
-            ? `${category.name} (${category.points} pts)`
-            : category.name,
-        value: category._id,
-      }));
 
   const getSelectedSubtaskCategoryId = (step) => {
     if (step?.taskCategory) {
@@ -1757,28 +1747,11 @@ const AddTask = ({
                                 placeholder="Subtask name..."
                                 className="min-w-0 flex-1 border-b border-transparent bg-transparent py-0.5 text-sm font-semibold text-gray-800 outline-none focus:border-blue-300"
                               />
-                            ) : null}
-                            <select
-                              value={getSelectedSubtaskCategoryId(step)}
-                              onChange={(e) => handleSubtaskCategoryChange(index, e.target.value)}
-                              disabled={isLoadingTaskCategories}
-                              className={`min-w-0 rounded-lg border px-2 py-1.5 text-sm font-semibold outline-none focus:border-blue-300 ${
-                                step.isFromFlow ? "w-[11.5rem] flex-shrink-0" : "flex-1"
-                              } ${
-                                getSelectedSubtaskCategoryId(step)
-                                  ? "border-gray-200 bg-gray-50 text-gray-800"
-                                  : "border-amber-200 bg-amber-50 text-amber-800"
-                              }`}
-                            >
-                              <option value="">
-                                {isLoadingTaskCategories ? "Loading..." : "Select category..."}
-                              </option>
-                              {getSubtaskCategoryOptions().map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
+                            ) : (
+                              <span className="min-w-0 flex-1 text-sm font-semibold text-gray-800">
+                                {step.taskName || "New subtask"}
+                              </span>
+                            )}
                             <button
                               type="button"
                               onClick={() => removeSubtask(index)}
@@ -1786,6 +1759,18 @@ const AddTask = ({
                             >
                               <FiTrash2 className="h-4 w-4" />
                             </button>
+                          </div>
+
+                          <div className="mt-3">
+                            <CategoryPicker
+                              categories={taskCategories}
+                              value={getSelectedSubtaskCategoryId(step)}
+                              onChange={(categoryId) => handleSubtaskCategoryChange(index, categoryId)}
+                              disabled={isLoadingTaskCategories}
+                              compact
+                              placeholder={isLoadingTaskCategories ? "Loading..." : "Select category..."}
+                              emptyLabel="No category — will not earn points"
+                            />
                           </div>
 
                           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">

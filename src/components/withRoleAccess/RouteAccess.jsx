@@ -74,6 +74,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     currentPath === "/" ||
     currentPath === "/board" ||
     currentPath === "/my-points" ||
+    currentPath === "/meetings" ||
     currentPath.startsWith("/settings") ||
     (currentPath === "/company-dashboard" && canAccessAdminDashboard)
   ) {
@@ -128,6 +129,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       "hr-dashboard": "/hr-dashboard",
       "department-dashboard": "/department-dashboard",
       leaderboard: "/leaderboard",
+      meetings: "/meetings",
       "sticky-notes": "/sticky-notes",
       timer: "/timer",
       notifications: "/notifications",

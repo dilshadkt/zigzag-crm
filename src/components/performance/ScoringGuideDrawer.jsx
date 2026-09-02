@@ -42,6 +42,7 @@ const DEFAULTS = {
   campaignCprBonusPoints: 5,
   campaignBudgetBonusPoints: 5,
   campaignKpiBonusCapPerWeek: 20,
+  meetingAttendancePoints: 10,
 };
 
 const PointsBadge = ({ value, loss = false }) => (
@@ -200,6 +201,11 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
               title="Request leave early"
               detail="Ask 7 or more days before the leave date."
               value={settings.earlyLeaveRequestPoints}
+            />
+            <RuleRow
+              title="Attend a meeting"
+              detail="Marked present in the attendance report after a scheduled meeting."
+              value={settings.meetingAttendancePoints}
             />
           </Section>
 

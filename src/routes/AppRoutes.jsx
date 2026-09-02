@@ -57,6 +57,7 @@ const Master = lazy(() => import("../pages/settings/master"));
 const Notification = lazy(() => import("../pages/settings/notification"));
 const Safety = lazy(() => import("../pages/settings/safety"));
 const NotificationsPage = lazy(() => import("../pages/notifications"));
+const Meetings = lazy(() => import("../pages/meetings"));
 const StickyNotes = lazy(() => import("../pages/stickyNotes"));
 const Timer = lazy(() => import("../pages/timer"));
 const ActivityStreamPage = lazy(() => import("../pages/activityStream"));
@@ -224,6 +225,14 @@ const AppRoutes = () => {
             element={
               <RouteAccess>
                 <Timer />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="meetings"
+            element={
+              <RouteAccess>
+                <Meetings />
               </RouteAccess>
             }
           />

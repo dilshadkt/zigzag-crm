@@ -25,7 +25,8 @@ import {
   FiBarChart2,
   FiFileText,
   FiChevronRight,
-  FiPlus
+  FiPlus,
+  FiVideo
 } from "react-icons/fi";
 import { MdSecurity, MdHistory, MdDevices, MdEdit } from "react-icons/md";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -86,6 +87,13 @@ const PERMISSION_CATEGORIES = {
       { key: "reject", label: "Reject Vacation", description: "Can reject vacation requests" },
       { key: "view", label: "View Vacations", description: "Can view all vacation requests" },
       { key: "create", label: "Create Vacation", description: "Can create vacation requests" },
+    ],
+  },
+  meetings: {
+    label: "Meetings",
+    icon: <FiVideo />,
+    permissions: [
+      { key: "schedule", label: "Schedule Meetings", description: "Can schedule meetings, add a Google Meet link, and report who attended" },
     ],
   },
   attendance: {
@@ -154,6 +162,7 @@ const MODULES = [
   { id: "workload", type: "route", label: "Workload", icon: <FiBarChart2 />, desc: "Team capacity & distribution", permissionKey: null },
   { id: "events", type: "route", label: "Company Events", icon: <FiCalendar />, desc: "Corporate events & meets", permissionKey: null },
   { id: "sticky-notes", type: "route", label: "Quick Notes", icon: <FiFileText />, desc: "Personal scratchpad", permissionKey: null },
+  { id: "meetings", type: "system", label: "Meetings", icon: <FiVideo />, desc: "Schedule meetings and report attendance", permissionKey: "meetings" },
   { id: "timer", type: "route", label: "Active Timer", icon: <FiClock />, desc: "Task time logging", permissionKey: null },
   { id: "settings", type: "system", label: "Settings & Configuration", icon: <FiSettings />, desc: "System configuration & management", permissionKey: "settings" },
 ];
@@ -176,6 +185,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         projects: {},
         employees: {},
         vacations: {},
+        meetings: {},
         attendance: {},
         leads: {},
         settings: {},

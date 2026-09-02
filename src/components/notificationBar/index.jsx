@@ -63,6 +63,8 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         return "/icons/project.svg";
       case "comment":
         return "/icons/comment.svg";
+      case "meeting":
+        return "/icons/alert.svg";
       default:
         return "/icons/alert.svg";
     }
@@ -83,6 +85,8 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         return "bg-yellow-100 text-yellow-600";
       case "comment":
         return "bg-indigo-100 text-indigo-600";
+      case "meeting":
+        return "bg-blue-100 text-blue-600";
       default:
         return "bg-gray-100 text-gray-600";
     }
@@ -124,6 +128,9 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         if (notification.data?.projectId) {
           navigate(`/projects/${notification.data.projectId}/edit`);
         }
+        break;
+      case "meeting":
+        navigate("/meetings");
         break;
       default:
         break;

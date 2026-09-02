@@ -1337,6 +1337,75 @@ export const deleteDepartment = async (companyId, departmentId) => {
   return response.data;
 };
 
+export const getMeetings = async () => {
+  const response = await apiClient.get("/meetings");
+  return response.data;
+};
+
+export const getUpcomingMeetingCount = async () => {
+  const response = await apiClient.get("/meetings/upcoming-count");
+  return response.data;
+};
+
+export const createMeeting = async (data) => {
+  const response = await apiClient.post("/meetings", data);
+  return response.data;
+};
+
+export const updateMeeting = async (meetingId, data) => {
+  const response = await apiClient.put(`/meetings/${meetingId}`, data);
+  return response.data;
+};
+
+export const cancelMeeting = async (meetingId) => {
+  const response = await apiClient.post(`/meetings/${meetingId}/cancel`);
+  return response.data;
+};
+
+export const reportMeetingAttendance = async (meetingId, attendees) => {
+  const response = await apiClient.post(`/meetings/${meetingId}/attendance`, {
+    attendees,
+  });
+  return response.data;
+};
+
+export const addMeetingActionItem = async (meetingId, data) => {
+  const response = await apiClient.post(`/meetings/${meetingId}/items`, data);
+  return response.data;
+};
+
+export const updateMeetingActionItem = async (meetingId, itemId, data) => {
+  const response = await apiClient.patch(`/meetings/${meetingId}/items/${itemId}`, data);
+  return response.data;
+};
+
+export const deleteMeetingActionItem = async (meetingId, itemId) => {
+  const response = await apiClient.delete(`/meetings/${meetingId}/items/${itemId}`);
+  return response.data;
+};
+
+export const generateMeetingMeetLink = async (meetingId) => {
+  const response = await apiClient.post(`/meetings/${meetingId}/meet-link`);
+  return response.data;
+};
+
+export const getGoogleMeetStatus = async () => {
+  const response = await apiClient.get("/meetings/google/status");
+  return response.data;
+};
+
+export const getGoogleMeetConnectUrl = async (returnTo = "/meetings") => {
+  const response = await apiClient.get("/meetings/google/connect", {
+    params: { returnTo },
+  });
+  return response.data;
+};
+
+export const disconnectGoogleMeet = async () => {
+  const response = await apiClient.post("/meetings/google/disconnect");
+  return response.data;
+};
+
 export const getDepartmentDashboard = async (companyId) => {
   const response = await apiClient.get(`/companies/${companyId}/departments/dashboard`);
   return response.data.data;

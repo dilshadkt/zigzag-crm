@@ -7,6 +7,9 @@ import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
 import AssigneeDatePicker from "../../shared/Field/date/AssigneeDatePicker";
 import Input from "../../shared/Field/input";
+import CategoryPicker, {
+  getCategoryDepartmentName,
+} from "../../shared/Field/categoryPicker";
 import { useAddSubTaskForm } from "../../../hooks/useAddSubTaskForm";
 import Modal from "../../shared/modal";
 import { useGetProjectSocialMedia, useGetTaskCategories } from "../../../api/hooks";
@@ -215,19 +218,6 @@ const AddSubTask = ({
     }
   }, [values.requiresWorkLink, setFieldValue]);
 
-  const categoryOptions = useMemo(() => {
-    const categories = Array.isArray(taskCategories) ? taskCategories : [];
-    return [
-      { label: "No category — will not earn category points", value: "" },
-      ...categories
-        .filter((category) => category?.isActive !== false)
-        .map((category) => ({
-          label: `${category.name} (${category.points} pts)`,
-          value: category._id,
-        })),
-    ];
-  }, [taskCategories]);
-
   const selectedCategory = useMemo(() => {
     const categories = Array.isArray(taskCategories) ? taskCategories : [];
     const selectedId = String(values.taskCategory || "");
@@ -365,20 +355,22 @@ const AddSubTask = ({
 
                 {!isAssignee ? (
                   <div>
-                    <Select
-                      errors={errors}
-                      name="taskCategory"
-                      touched={touched}
+                    <label className="mb-[7px] block pl-[6px] text-sm font-bold text-[#7D8592]">
+                      Category
+                    </label>
+                    <CategoryPicker
+                      categories={taskCategories}
                       value={values.taskCategory || ""}
-                      onChange={handleChange}
-                      title="Category"
-                      options={
-                        isLoadingTaskCategories
-                          ? [{ label: "Loading...", value: "" }]
-                          : categoryOptions
+                      onChange={(categoryId) =>
+                        setFieldValue("taskCategory", categoryId || "")
                       }
-                      placeholder="Select a category"
                       disabled={isLoading || isLoadingTaskCategories}
+                      placeholder={
+                        isLoadingTaskCategories
+                          ? "Loading..."
+                          : "Select category..."
+                      }
+                      emptyLabel="No category — will not earn category points"
                     />
                     {hasNoCategory ? (
                       <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
@@ -392,7 +384,11 @@ const AddSubTask = ({
                       </div>
                     ) : (
                       <p className="mt-1.5 px-0.5 text-[11px] text-gray-500">
-                        Completing this step awards {selectedCategory?.points || 0} category points.
+                        Completing this step awards {selectedCategory?.points || 0} category points
+                        {getCategoryDepartmentName(selectedCategory)
+                          ? ` · ${getCategoryDepartmentName(selectedCategory)}`
+                          : ""}
+                        .
                       </p>
                     )}
                   </div>
@@ -408,6 +404,13 @@ const AddSubTask = ({
                           ? `${initialValues.taskCategory.name} (${initialValues.taskCategory.points || 0} pts)`
                           : "No category — will not earn category points"}
                     </p>
+                    {(getCategoryDepartmentName(selectedCategory) ||
+                      getCategoryDepartmentName(initialValues?.taskCategory)) && (
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {getCategoryDepartmentName(selectedCategory) ||
+                          getCategoryDepartmentName(initialValues?.taskCategory)}
+                      </p>
+                    )}
                   </div>
                 )}
 

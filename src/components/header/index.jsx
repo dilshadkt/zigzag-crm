@@ -7,6 +7,7 @@ import {
   useGetStickyNotes,
   useAttendanceManager,
   useIsDepartmentHead,
+  useGetUpcomingMeetingCount,
 } from "../../api/hooks";
 import { syncTimer, updateTimer } from "../../store/slice/timerSlice";
 import { useRouteAccess } from "../../hooks/useRouteAccess";
@@ -48,8 +49,10 @@ const DashboardHeader = () => {
   // Data fetching
   const { data: unreadData } = useGetUnreadNotificationCount();
   const { data: stickyNotes = [] } = useGetStickyNotes();
+  const { data: upcomingMeetingsData } = useGetUpcomingMeetingCount();
   const unreadCount = unreadData?.count || 0;
   const stickyNotesCount = stickyNotes.length || 0;
+  const upcomingMeetingCount = upcomingMeetingsData?.count || 0;
 
   // Attendance management
   const {
@@ -370,6 +373,7 @@ const DashboardHeader = () => {
           onNotifyClick={() => setNotifyMenuOpen(true)}
           unreadCount={unreadCount}
           stickyNotesCount={stickyNotesCount}
+          upcomingMeetingCount={upcomingMeetingCount}
           remainingTime={remainingTime}
           isRunning={isRunning}
           formatTime={formatTime}

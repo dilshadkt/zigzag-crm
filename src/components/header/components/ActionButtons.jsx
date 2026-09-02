@@ -4,6 +4,7 @@ import {
   IoDocumentTextOutline,
   IoTimeOutline,
   IoFingerPrintOutline,
+  IoVideocamOutline,
 } from "react-icons/io5";
 
 const ActionButtons = ({
@@ -15,6 +16,7 @@ const ActionButtons = ({
   onNotifyClick,
   unreadCount,
   stickyNotesCount,
+  upcomingMeetingCount = 0,
   remainingTime,
   isRunning,
   formatTime,
@@ -70,6 +72,20 @@ const ActionButtons = ({
         )}
         {isRunning && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+        )}
+      </Link>
+
+      {/* Meetings */}
+      <Link
+        to="/meetings"
+        className="flex items-center justify-center cursor-pointer w-12 h-12 rounded-[14px] bg-white relative"
+        title="Meetings"
+      >
+        <IoVideocamOutline className="w-5 h-5 text-gray-600" />
+        {upcomingMeetingCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-indigo-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+            {upcomingMeetingCount > 9 ? "9+" : upcomingMeetingCount}
+          </span>
         )}
       </Link>
 

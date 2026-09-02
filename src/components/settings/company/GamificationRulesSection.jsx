@@ -42,6 +42,7 @@ const GamificationRulesSection = () => {
     campaignCprBonusPoints: 5,
     campaignBudgetBonusPoints: 5,
     campaignKpiBonusCapPerWeek: 20,
+    meetingAttendancePoints: 10,
   });
 
   useEffect(() => {
@@ -255,6 +256,23 @@ const GamificationRulesSection = () => {
               value={settings.attendanceDayPoints !== undefined ? settings.attendanceDayPoints : 5}
               onChange={handleChange}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 text-sm w-full transition-all"
+            />
+          </div>
+
+          {/* Meeting Attendance Points */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+              <FiUserCheck className="text-indigo-500" /> Meeting Attendance Points
+            </label>
+            <p className="text-xs text-gray-500 mb-1">
+              Points awarded to each employee who is marked as present after a scheduled meeting.
+            </p>
+            <input
+              type="number"
+              name="meetingAttendancePoints"
+              value={settings.meetingAttendancePoints !== undefined ? settings.meetingAttendancePoints : 10}
+              onChange={handleChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm w-full transition-all"
             />
           </div>
 

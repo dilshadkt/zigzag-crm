@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { 
   useCheckFacebookStatus, 
@@ -7,19 +8,28 @@ import {
   useRefreshFacebookAccounts,
   useSelectFacebookAccount 
 } from "../../api/campaigns";
+import {
+  useConnectGoogleMeet,
+  useDisconnectGoogleMeet,
+  useGetGoogleMeetStatus,
+} from "../../api/hooks";
 import { 
   FiFacebook, FiCheckCircle, FiXCircle, FiRefreshCw, 
-  FiExternalLink, FiSettings, FiActivity, FiLayers, FiChevronRight 
+  FiExternalLink, FiSettings, FiActivity, FiLayers, FiChevronRight, FiVideo
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
 const Integration = () => {
   const { user } = useAuth();
   const isCompanyAdmin = user?.role === "company-admin";
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   
   const { data: fbStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = useCheckFacebookStatus();
   const { data: adAccounts, isLoading: isLoadingAccounts } = useGetFacebookAccounts();
+  const { data: googleStatus, refetch: refetchGoogleStatus } = useGetGoogleMeetStatus();
+  const connectGoogle = useConnectGoogleMeet();
+  const disconnectGoogle = useDisconnectGoogleMeet();
   const { mutate: refreshAccounts, isPending: isRefreshingAccounts } = useRefreshFacebookAccounts();
   const { mutate: syncFacebook, isLoading: isSyncing } = useSyncFacebookAds();
   const { mutate: selectAccount, isLoading: isSelecting } = useSelectFacebookAccount();
@@ -64,6 +74,40 @@ const Integration = () => {
     // Show instructions modal or redirect
     window.open("https://developers.facebook.com/apps", "_blank");
     toast.info("Follow the guide below to set up your Developer App", { duration: 5000 });
+  };
+
+  useEffect(() => {
+    const result = searchParams.get("googleMeet");
+    if (!result) return;
+    if (result === "connected") {
+      toast.success("Google Calendar connected");
+      refetchGoogleStatus();
+    } else {
+      toast.error(searchParams.get("message") || "Google Calendar connection failed");
+    }
+    searchParams.delete("googleMeet");
+    searchParams.delete("message");
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams, refetchGoogleStatus]);
+
+  const handleConnectGoogle = () => {
+    connectGoogle.mutate("/settings/integration", {
+      onSuccess: (res) => {
+        if (res?.url) window.location.href = res.url;
+      },
+      onError: (error) =>
+        toast.error(error?.message || "Could not start Google Calendar connect"),
+    });
+  };
+
+  const handleDisconnectGoogle = () => {
+    if (!window.confirm("Disconnect Google Calendar? New meetings will not get a Meet link automatically.")) {
+      return;
+    }
+    disconnectGoogle.mutate(undefined, {
+      onSuccess: () => toast.success("Google Calendar disconnected"),
+      onError: (error) => toast.error(error?.message || "Could not disconnect Google Calendar"),
+    });
   };
 
   if (!isCompanyAdmin) {
@@ -263,6 +307,62 @@ const Integration = () => {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-[#3F8CFF] opacity-80" />
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
+                <FiVideo className="w-8 h-8 text-[#3F8CFF]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-[16px] font-bold text-gray-800">Google Calendar / Meet</h2>
+                  {googleStatus?.connected ? (
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-wider rounded-full border border-green-100">
+                      <FiCheckCircle className="w-3" /> Connected
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-wider rounded-full border border-gray-100">
+                      <FiXCircle className="w-3" /> Disconnected
+                    </span>
+                  )}
+                </div>
+                <p className="text-[12px] text-gray-500 leading-relaxed max-w-lg">
+                  {googleStatus?.connected
+                    ? `Meetings can auto-create a Google Meet link using ${googleStatus.email}.`
+                    : "Connect a Google account so scheduling a meeting creates a Meet link automatically. The call still opens in Google Meet."}
+                </p>
+                {!googleStatus?.configured && googleStatus && (
+                  <p className="mt-2 text-[11px] text-amber-600">
+                    Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to the API .env, then restart the server.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {googleStatus?.connected ? (
+                <button
+                  onClick={handleDisconnectGoogle}
+                  disabled={disconnectGoogle.isPending}
+                  className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-[12px] font-bold hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              ) : (
+                <button
+                  onClick={handleConnectGoogle}
+                  disabled={connectGoogle.isPending || googleStatus?.configured === false}
+                  className="px-4 py-2 bg-[#3F8CFF] text-white rounded-xl text-[12px] font-bold hover:bg-blue-600 transition-all shadow-md shadow-blue-200 disabled:opacity-50"
+                >
+                  {connectGoogle.isPending ? "Connecting..." : "Connect Google"}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Coming Soon: Google Ads */}
