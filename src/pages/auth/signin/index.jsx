@@ -93,6 +93,10 @@ const SignIn = () => {
               >
                 Don’t have an account?
               </Link>
+              <div className="mt-4 flex gap-4 text-xs text-[#7D8592]">
+                <Link to="/privacy" className="hover:text-[#3F8CFF]">Privacy Policy</Link>
+                <Link to="/terms" className="hover:text-[#3F8CFF]">Terms of Service</Link>
+              </div>
             </div>
           </div>
         </form>

@@ -24,11 +24,15 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const isAuthPage = window.location.pathname.includes('/auth/') || 
-                        window.location.pathname.includes('/portal/login');
+      const path = window.location.pathname;
+      const isPublicPage =
+        path === "/privacy" ||
+        path === "/terms" ||
+        path.startsWith("/auth/") ||
+        path.includes("/portal/login");
       const token = localStorage.getItem("token");
       
-      if (isAuthPage || !token) {
+      if (isPublicPage || !token) {
         dispatch(setLoading(false));
         setIsAuthChecked(true);
         return;

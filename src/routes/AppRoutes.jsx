@@ -58,6 +58,8 @@ const Notification = lazy(() => import("../pages/settings/notification"));
 const Safety = lazy(() => import("../pages/settings/safety"));
 const NotificationsPage = lazy(() => import("../pages/notifications"));
 const Meetings = lazy(() => import("../pages/meetings"));
+const PrivacyPolicy = lazy(() => import("../pages/public/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("../pages/public/TermsOfService"));
 const StickyNotes = lazy(() => import("../pages/stickyNotes"));
 const Timer = lazy(() => import("../pages/timer"));
 const ActivityStreamPage = lazy(() => import("../pages/activityStream"));
@@ -111,6 +113,8 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route
           path="/"
           element={
