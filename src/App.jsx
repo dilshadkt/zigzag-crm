@@ -144,8 +144,12 @@ function App() {
     };
   }, []);
 
-  // Show loading spinner while verifying the user
-  if (loading || !isAuthChecked) {
+  const publicPath =
+    typeof window !== "undefined" &&
+    ["/privacy", "/terms"].includes(window.location.pathname.replace(/\/$/, "") || "/");
+
+  // Public legal pages must load with no login check.
+  if (!publicPath && (loading || !isAuthChecked)) {
     return (
       <div className="h-screen w-full flexCenter">
         <img src={assetPath("icons/loading.svg")} alt="" />
@@ -159,7 +163,7 @@ function App() {
         <AppRoutes />
       </Router>
 
-      <RealtimeAlertsProvider />
+      {!publicPath && <RealtimeAlertsProvider />}
 
       {showFixProfileModal && (
         <FixProfileImageModal

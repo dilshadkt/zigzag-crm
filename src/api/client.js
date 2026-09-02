@@ -39,9 +39,17 @@ apiClient.interceptors.response.use(
   (error) => {
     const isDesktop = typeof window !== "undefined" && window.desktop;
     const redirectToSignIn = () => {
+      const path = window.location.pathname || "";
+      const isPublicLegalPage =
+        path === "/privacy" ||
+        path === "/terms" ||
+        path.startsWith("/privacy/") ||
+        path.startsWith("/terms/");
+      if (isPublicLegalPage) return;
+
       // Check if we are on a portal route
-      const isPortalRoute = window.location.pathname.includes('portal') ||
-        window.location.pathname.includes('client') ||
+      const isPortalRoute = path.includes('portal') ||
+        path.includes('client') ||
         window.location.hash.includes('portal') ||
         window.location.hash.includes('client');
 
