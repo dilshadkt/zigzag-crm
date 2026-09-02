@@ -91,6 +91,8 @@ import {
   updateCompany,
   resetCompanyPerformance,
   resetEmployeePerformance,
+  updatePerformanceLedgerEntry,
+  deletePerformanceLedgerEntry,
 } from "./service";
 import { 
   getScheduledPosts, 
@@ -1661,6 +1663,7 @@ export const useUpdateSubTaskById = (subTaskId, parentTaskId) => {
       queryClient.invalidateQueries(["getSubTaskById", subTaskId]);
       queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
       queryClient.invalidateQueries(["getTaskById", parentTaskId]);
+      queryClient.invalidateQueries({ queryKey: ["performance"] });
     },
   });
 };
@@ -2927,6 +2930,30 @@ export const useResetEmployeePerformance = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (employeeId) => resetEmployeePerformance(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["performance"] });
+    },
+  });
+};
+
+export const useUpdatePerformanceLedgerEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ employeeId, payload }) =>
+      updatePerformanceLedgerEntry(employeeId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["performance"] });
+    },
+  });
+};
+
+export const useDeletePerformanceLedgerEntry = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ employeeId, payload }) =>
+      deletePerformanceLedgerEntry(employeeId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       queryClient.invalidateQueries({ queryKey: ["performance"] });

@@ -91,7 +91,7 @@ const SocialMediaForm = ({ values, setFieldValue, errors, touched }) => {
   return (
     <div className="flex flex-col gap-y-6 ">
       {/* Standard Platforms */}
-      <div className="grid grid-cols-1 gap-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {platforms.map((platform) => (
           <div key={platform} className="border border-gray-200 p-4 rounded-lg">
             <div className="flex items-center justify-between mb-4">

@@ -1259,6 +1259,22 @@ export const addBonusPoints = async (bonusData) => {
   }
 };
 
+export const updatePerformanceLedgerEntry = async (employeeId, payload) => {
+  const response = await apiClient.patch(
+    `/performance/employee/${employeeId}/ledger`,
+    payload
+  );
+  return response.data;
+};
+
+export const deletePerformanceLedgerEntry = async (employeeId, payload) => {
+  const response = await apiClient.delete(
+    `/performance/employee/${employeeId}/ledger`,
+    { data: payload }
+  );
+  return response.data;
+};
+
 export const getNudges = async () => {
   try {
     const response = await apiClient.get("/performance/nudges");

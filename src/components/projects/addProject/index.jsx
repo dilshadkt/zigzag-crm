@@ -13,11 +13,27 @@ import WorkDetailsForm from "../workDetailsForm";
 import SocialMediaForm from "../socialMediaForm";
 import ThumbImage from "../thumbImage";
 import MonthlyWorkDetailsForm from "../monthlyWorkDetailsForm";
-
 import DailyChecklistForm from "../dailyChecklistForm";
-
 import { useGetProjectFields } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+
+const TAB_HINTS = {
+  basic: "Name, dates, and team on the left. Image and files on the right.",
+  customFields: "Fill extra fields configured for your company.",
+  workDetails: "Set this month’s work quota for the project.",
+  socialMedia: "Choose which platforms this project manages.",
+  reporter: "People who receive client-facing updates.",
+  checklist: "Daily tasks the team should complete.",
+};
+
+const BASIC_FIELDS = [
+  "name",
+  "startDate",
+  "endDate",
+  "priority",
+  "description",
+  "teams",
+];
 
 const AddProject = ({
   setShowModalProject,
@@ -28,7 +44,6 @@ const AddProject = ({
 }) => {
   const { companyId } = useAuth();
   const { data: projectFields } = useGetProjectFields(companyId);
-
   const {
     values,
     errors,
@@ -36,90 +51,153 @@ const AddProject = ({
     handleChange,
     touched,
     setFieldValue,
+    setTouched,
+    validateForm,
     isSubmitting,
-  } = useAddProjectForm(initialValues, onSubmit, projectFields); // Pass projectFields to the hook
+    submitCount,
+  } = useAddProjectForm(initialValues, onSubmit, projectFields);
 
-  const [activeTab, setActiveTab] = useState("basic"); // "basic", "workDetails", "socialMedia", "checklist", "customFields"
-  if (!isOpen) {
-    return null;
-  }
+  const [activeTab, setActiveTab] = useState("basic");
+  const [attemptedTabs, setAttemptedTabs] = useState({});
 
-  // Tabs for better organization
   const tabs = [
     { id: "basic", label: "Basic Info" },
-    ...(projectFields && projectFields.length > 0 ? [{ id: "customFields", label: "Additional Info" }] : []),
+    ...(projectFields && projectFields.length > 0
+      ? [{ id: "customFields", label: "Additional Info" }]
+      : []),
     { id: "workDetails", label: "Work Details" },
     { id: "socialMedia", label: "Social Media" },
     { id: "reporter", label: "Reporter" },
     { id: "checklist", label: "Daily Checklist" },
   ];
 
-  const onFormSubmit = (e) => {
-    e.preventDefault();
-    if (activeTab === tabs[tabs.length - 1].id) {
-      handleSubmit(e);
-    }
-  };
+  const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
+  const isLastTab = activeTab === tabs[tabs.length - 1].id;
+  const showTabErrors = (tabId) =>
+    Boolean(attemptedTabs[tabId]) || submitCount > 0;
 
-  const getErrorCount = (tabId) => {
-    if (!errors || Object.keys(errors).length === 0) return 0;
+  const getErrorCount = (tabId, sourceErrors = errors) => {
+    if (!showTabErrors(tabId) || !sourceErrors) return 0;
 
     switch (tabId) {
       case "basic":
-        return [
-          "name",
-          "startDate",
-          "endDate",
-          "priority",
-          "description",
-          "teams",
-        ].filter((key) => errors[key]).length;
+        return BASIC_FIELDS.filter((key) => sourceErrors[key]).length;
       case "customFields":
-        return Object.keys(errors?.customFields || {}).length;
+        return Object.keys(sourceErrors?.customFields || {}).length;
       case "workDetails":
-        return Object.keys(errors?.workDetails || {}).length > 0 ? 1 : 0;
+        return Object.keys(sourceErrors?.workDetails || {}).length > 0 ? 1 : 0;
       case "socialMedia":
-        return Object.keys(errors?.socialMedia || {}).length > 0 ? 1 : 0;
+        return Object.keys(sourceErrors?.socialMedia || {}).length > 0 ? 1 : 0;
       case "reporter":
-        return errors?.reporters ? 1 : 0;
+        return sourceErrors?.reporters ? 1 : 0;
       default:
         return 0;
     }
   };
+
+  const goToTab = (tabId) => setActiveTab(tabId);
+
+  const handleNext = async () => {
+    setAttemptedTabs((prev) => ({ ...prev, [activeTab]: true }));
+
+    if (activeTab === "basic") {
+      const nextTouched = BASIC_FIELDS.reduce(
+        (acc, key) => ({ ...acc, [key]: true }),
+        { ...touched }
+      );
+      setTouched(nextTouched, true);
+      const formErrors = await validateForm();
+      if (BASIC_FIELDS.some((key) => formErrors[key])) return;
+    }
+
+    if (activeTab === "customFields") {
+      setTouched({ ...touched, customFields: true }, true);
+      const formErrors = await validateForm();
+      if (
+        formErrors.customFields &&
+        Object.keys(formErrors.customFields).length > 0
+      ) {
+        return;
+      }
+    }
+
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1].id);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1].id);
+    }
+  };
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+    if (!isLastTab) {
+      handleNext();
+      return;
+    }
+    setAttemptedTabs((prev) => ({ ...prev, [activeTab]: true }));
+    handleSubmit(e);
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div
-      className="fixed z-[1000] left-0 right-0 top-0 bottom-0
-bg-blue-50 flexCenter py-8 backdrop-blur-sm"
-    >
+    <div className="fixed inset-0 z-[1000] bg-[#2155A3]/20 backdrop-blur-sm p-3 md:p-4">
       <form
         onSubmit={onFormSubmit}
-        className="bg-white w-full rounded-3xl py-14 flex flex-col
-  px-28 h-full max-w-[1149px] m-auto relative "
+        className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
       >
-        <h4 className="text-3xl font-bold">
-          {isEditMode ? "Edit Project" : "Add Project"}
-        </h4>
+        <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-5 py-3 md:px-6">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900">
+              {isEditMode ? "Edit Project" : "Add Project"}
+            </h4>
+            <p className="text-xs text-gray-500">
+              {TAB_HINTS[activeTab] || "Complete each step to save the project."}
+            </p>
+          </div>
+          <PrimaryButton
+            onclick={() => !isSubmitting && setShowModalProject(false)}
+            icon={"/icons/cancel.svg"}
+            disable={isSubmitting}
+            className="bg-[#F4F9FD]"
+          />
+        </header>
 
-        {/* Tabs Navigation */}
-        <div className="flex border-b border-gray-200 mt-3">
-          {tabs.map((tab) => {
+        <div className="flex flex-shrink-0 gap-1 overflow-x-auto border-b border-gray-100 px-5 md:px-6">
+          {tabs.map((tab, index) => {
             const errorCount = getErrorCount(tab.id);
+            const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 type="button"
-                className={`px-6 py-3 text-sm cursor-pointer border-b-2 font-medium flex items-center gap-2 transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? "text-blue-600 border-blue-600"
+                className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-all ${
+                  isActive
+                    ? "border-blue-600 text-blue-600"
                     : errorCount > 0
-                    ? "text-red-500 border-transparent hover:text-red-600"
-                    : "text-gray-500 hover:text-gray-700 border-transparent"
+                      ? "border-transparent text-red-500 hover:text-red-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => goToTab(tab.id)}
               >
+                <span
+                  className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : errorCount > 0
+                        ? "bg-red-100 text-red-600"
+                        : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {index + 1}
+                </span>
                 <span>{tab.label}</span>
                 {errorCount > 0 && (
-                  <span className="flex items-center justify-center bg-red-100 text-red-600 text-[10px] font-bold h-4 min-w-[16px] px-1 rounded-full animate-pulse border border-red-200 shadow-sm">
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full border border-red-200 bg-red-100 px-1 text-[10px] font-bold text-red-600">
                     {errorCount}
                   </span>
                 )}
@@ -128,11 +206,10 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
           })}
         </div>
 
-        <div className="w-full grid grid-cols-5 my-7 overflow-hidden gap-x-[50px] h-[calc(100%-180px)]">
-          {/* Basic Info Tab */}
+        <div className="min-h-0 flex-1 overflow-hidden">
           {activeTab === "basic" && (
-            <>
-              <div className="col-span-3 flex flex-col gap-y-4 overflow-y-auto pr-4">
+            <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2">
+              <div className="min-h-0 space-y-5 overflow-y-auto border-gray-100 px-5 py-5 md:px-6 lg:border-r">
                 <Input
                   name={"name"}
                   errors={errors}
@@ -141,33 +218,6 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                   value={values}
                   placeholder="Project Name"
                   title="Project Name"
-                />
-                <div className="grid grid-cols-2 gap-x-4">
-                  <DatePicker
-                    title="Starts"
-                    errors={errors}
-                    name={"startDate"}
-                    onChange={handleChange}
-                    touched={touched}
-                    value={values.startDate}
-                  />
-                  <DatePicker
-                    title="Dead Line"
-                    errors={errors}
-                    name={"endDate"}
-                    onChange={handleChange}
-                    touched={touched}
-                    value={values.endDate}
-                  />
-                </div>
-                <Select
-                  title="Priority"
-                  options={["low", "medium", "high"]}
-                  errors={errors}
-                  name={"priority"}
-                  onChange={handleChange}
-                  touched={touched}
-                  value={values.priority !== null ? values.priority : "low"}
                 />
                 <Description
                   errors={errors}
@@ -178,32 +228,86 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                   title="Description"
                   placeholder="Add some description of the project"
                 />
-                <AddEmployee
-                  defaultSelectedEmployee={values.teams}
-                  onChange={(team) => setFieldValue("teams", team)}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <DatePicker
+                    title="Start date"
+                    errors={errors}
+                    name={"startDate"}
+                    onChange={handleChange}
+                    touched={touched}
+                    value={values.startDate}
+                  />
+                  <DatePicker
+                    title="Due date"
+                    errors={errors}
+                    name={"endDate"}
+                    onChange={handleChange}
+                    touched={touched}
+                    value={values.endDate}
+                  />
+                </div>
+                <Select
+                  title="Priority"
+                  options={[
+                    { label: "Low", value: "low" },
+                    { label: "Medium", value: "medium" },
+                    { label: "High", value: "high" },
+                  ]}
+                  errors={errors}
+                  name={"priority"}
+                  onChange={handleChange}
+                  touched={touched}
+                  value={values.priority !== null ? values.priority : "low"}
                 />
-              </div>
-              <div className="col-span-2 h-full overflow-y-auto flex flex-col pr-4">
-                <ThumbImage
-                  onSelect={(thmbImg) => setFieldValue("thumbImg", thmbImg)}
-                />
-                <FileAndLinkUpload
-                  initialFiles={values?.attachments?.filter(
-                    (file) => file?.type !== "link"
+                <div className="rounded-2xl border border-gray-100 bg-[#F8FAFC] p-4">
+                  <AddEmployee
+                    compact
+                    defaultSelectedEmployee={values.teams}
+                    onChange={(team) => setFieldValue("teams", team)}
+                  />
+                  {touched.teams && errors.teams && (
+                    <p className="mt-2 text-[11px] text-red-500">{errors.teams}</p>
                   )}
-                  initialLinks={values?.attachments?.filter(
-                    (file) => file?.type === "link"
-                  )}
-                  fileClassName={"grid grid-cols-2 gap-3"}
-                  onChange={(files) => setFieldValue("attachments", files)}
-                />
+                </div>
               </div>
-            </>
+              <div className="min-h-0 space-y-5 overflow-y-auto bg-[#F7F9FC] px-5 py-5 md:px-6">
+                <div>
+                  <h5 className="text-sm font-semibold text-gray-800">Project image</h5>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Pick an avatar or upload a jpg/png.
+                  </p>
+                  <ThumbImage
+                    onSelect={(thmbImg) => setFieldValue("thumbImg", thmbImg)}
+                  />
+                </div>
+                <div>
+                  <h5 className="text-sm font-semibold text-gray-800">Attachments</h5>
+                  <p className="mb-3 text-xs text-gray-500">
+                    Optional files and links for this project.
+                  </p>
+                  <FileAndLinkUpload
+                    initialFiles={values?.attachments?.filter(
+                      (file) => file?.type !== "link"
+                    )}
+                    initialLinks={values?.attachments?.filter(
+                      (file) => file?.type === "link"
+                    )}
+                    fileClassName={"grid grid-cols-2 gap-3"}
+                    onChange={(files) => setFieldValue("attachments", files)}
+                  />
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* Work Details Tab */}
           {activeTab === "workDetails" && (
-            <div className="col-span-5 overflow-y-auto pr-4">
+            <div className="h-full min-h-0 overflow-y-auto px-5 py-5 md:px-6">
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-gray-800">Work details</h5>
+                <p className="text-xs text-gray-500">
+                  These counts drive monthly quota and task categories.
+                </p>
+              </div>
               {isEditMode ? (
                 <MonthlyWorkDetailsForm
                   values={values}
@@ -226,9 +330,14 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
             </div>
           )}
 
-          {/* Social Media Tab */}
           {activeTab === "socialMedia" && (
-            <div className="col-span-5 overflow-y-auto pr-4">
+            <div className="h-full min-h-0 overflow-y-auto px-5 py-5 md:px-6">
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-gray-800">Social media</h5>
+                <p className="text-xs text-gray-500">
+                  Turn on Manage for platforms this project owns.
+                </p>
+              </div>
               <SocialMediaForm
                 values={values}
                 setFieldValue={setFieldValue}
@@ -238,18 +347,25 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
             </div>
           )}
 
-          {/* Custom Fields Tab */}
           {activeTab === "customFields" && (
-            <div className="col-span-5 overflow-y-auto pr-4">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="h-full min-h-0 overflow-y-auto px-5 py-5 md:px-6">
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-gray-800">Additional info</h5>
+                <p className="text-xs text-gray-500">
+                  Company-specific fields. Required items are marked with *.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 {projectFields?.map((field) => {
                   const fieldKey = `customFields.${field.key}`;
                   const fieldValue = values.customFields?.[field.key] ?? "";
-                  const fieldTitle = field.required ? `${field.label} *` : field.label;
+                  const fieldTitle = field.required
+                    ? `${field.label} *`
+                    : field.label;
 
                   if (field.type === "textarea") {
                     return (
-                      <div key={field._id} className="col-span-2">
+                      <div key={field._id} className="md:col-span-2">
                         <Description
                           title={fieldTitle}
                           placeholder={field.placeholder}
@@ -280,30 +396,30 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
 
                   if (field.type === "checkbox") {
                     return (
-                      <div key={field._id} className="flex flex-col gap-1 py-2">
-                        <div className="flex items-center gap-x-3">
-                          <input
-                            type="checkbox"
-                            id={field.key}
-                            checked={!!fieldValue}
-                            onChange={(e) => setFieldValue(fieldKey, e.target.checked)}
-                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <label htmlFor={field.key} className="text-sm font-medium text-gray-700">
-                            {fieldTitle}
-                          </label>
-                        </div>
-                        {errors.customFields?.[field.key] && touched.customFields?.[field.key] && (
-                          <span className="text-[10px] text-red-500 ml-8">
-                            {errors.customFields[field.key]}
-                          </span>
-                        )}
-                      </div>
+                      <label
+                        key={field._id}
+                        htmlFor={field.key}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-100 bg-[#F8FAFC] px-3 py-3"
+                      >
+                        <input
+                          type="checkbox"
+                          id={field.key}
+                          checked={!!fieldValue}
+                          onChange={(e) =>
+                            setFieldValue(fieldKey, e.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {fieldTitle}
+                        </span>
+                      </label>
                     );
                   }
+
                   if (field.type === "dynamic_list") {
                     return (
-                      <div key={field._id} className="col-span-2">
+                      <div key={field._id} className="md:col-span-2">
                         <DynamicList
                           title={fieldTitle}
                           placeholder={field.placeholder}
@@ -332,7 +448,7 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                     );
                   }
 
-                   if (field.type === "file" || field.type === "image") {
+                  if (field.type === "file" || field.type === "image") {
                     return (
                       <FileUpload
                         key={field._id}
@@ -361,26 +477,47 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
                       touched={touched.customFields}
                     />
                   );
-
                 })}
               </div>
             </div>
           )}
 
-          {/* Reporter Tab */}
           {activeTab === "reporter" && (
-            <div className="col-span-5 overflow-y-auto pr-4">
-              <AddEmployee
-                label="Reporter"
-                defaultSelectedEmployee={values.reporters}
-                onChange={(reporters) => setFieldValue("reporters", reporters)}
-              />
+            <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2">
+              <div className="min-h-0 overflow-y-auto border-gray-100 px-5 py-5 md:px-6 lg:border-r">
+                <div className="mb-4">
+                  <h5 className="text-sm font-semibold text-gray-800">Reporters</h5>
+                  <p className="text-xs text-gray-500">
+                    Search and add people who should see client updates.
+                  </p>
+                </div>
+                <AddEmployee
+                  compact
+                  label="Reporter"
+                  defaultSelectedEmployee={values.reporters}
+                  onChange={(reporters) => setFieldValue("reporters", reporters)}
+                />
+              </div>
+              <div className="min-h-0 overflow-y-auto bg-[#F7F9FC] px-5 py-5 md:px-6">
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-6">
+                  <h5 className="text-sm font-semibold text-gray-800">Why this matters</h5>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Reporters get visibility on client-facing work. You can skip
+                    this step and add them later.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Daily Checklist Tab */}
           {activeTab === "checklist" && (
-            <div className="col-span-5 overflow-y-auto pr-4">
+            <div className="h-full min-h-0 overflow-y-auto px-5 py-5 md:px-6">
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-gray-800">Daily checklist</h5>
+                <p className="text-xs text-gray-500">
+                  Recurring daily items for this project. Optional.
+                </p>
+              </div>
               <DailyChecklistForm
                 values={values}
                 setFieldValue={setFieldValue}
@@ -391,69 +528,50 @@ bg-blue-50 flexCenter py-8 backdrop-blur-sm"
           )}
         </div>
 
-        <PrimaryButton
-          onclick={() => !isSubmitting && setShowModalProject(false)}
-          icon={"/icons/cancel.svg"}
-          disable={isSubmitting}
-          className={"absolute bg-[#F4F9FD] right-[30px] top-[30px]"}
-        />
-
-        {/* Bottom navigation buttons */}
-        <div className="absolute  bottom-[35px] right-[30px] flex gap-4">
-          {activeTab !== "basic" && (
-            <PrimaryButton
-              key="prev-btn"
-              type="button"
-              title="Previous"
-              disable={isSubmitting}
-              onclick={() => {
-                const currentIndex = tabs.findIndex(
-                  (tab) => tab.id === activeTab
-                );
-                if (currentIndex > 0) {
-                  setActiveTab(tabs[currentIndex - 1].id);
+        <footer className="flex flex-shrink-0 items-center justify-between gap-3 border-t border-gray-100 bg-white px-5 py-3 md:px-6">
+          <p className="text-xs text-gray-500">
+            Step {currentIndex + 1} of {tabs.length}
+          </p>
+          <div className="flex items-center gap-3">
+            {activeTab !== "basic" && (
+              <PrimaryButton
+                key="prev-btn"
+                type="button"
+                title="Previous"
+                disable={isSubmitting}
+                onclick={handlePrevious}
+                className="bg-gray-200 px-4 text-gray-800"
+              />
+            )}
+            {isLastTab ? (
+              <PrimaryButton
+                key="submit-btn"
+                type="submit"
+                loading={isSubmitting}
+                disable={isSubmitting}
+                title={
+                  isSubmitting
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Saving..."
+                    : isEditMode
+                      ? "Save Changes"
+                      : "Save Project"
                 }
-              }}
-              className="bg-gray-200 text-gray-800 px-4"
-            />
-          )}
-
-          {activeTab !== tabs[tabs.length - 1].id ? (
-            <PrimaryButton
-              key="next-btn"
-              type="button"
-              title="Next"
-              disable={isSubmitting}
-              onclick={(e) => {
-                e?.preventDefault();
-                const currentIndex = tabs.findIndex(
-                  (tab) => tab.id === activeTab
-                );
-                if (currentIndex < tabs.length - 1) {
-                  setActiveTab(tabs[currentIndex + 1].id);
-                }
-              }}
-              className="text-white px-4"
-            />
-          ) : (
-            <PrimaryButton
-              key="submit-btn"
-              type="submit"
-              loading={isSubmitting}
-              disable={isSubmitting}
-              title={
-                isSubmitting
-                  ? isEditMode
-                    ? "Updating..."
-                    : "Saving..."
-                  : isEditMode
-                  ? "Save Changes"
-                  : "Save Project"
-              }
-              className="text-white px-4"
-            />
-          )}
-        </div>
+                className="px-4 text-white"
+              />
+            ) : (
+              <PrimaryButton
+                key="next-btn"
+                type="button"
+                title="Next"
+                disable={isSubmitting}
+                onclick={handleNext}
+                className="px-4 text-white"
+              />
+            )}
+          </div>
+        </footer>
       </form>
     </div>
   );

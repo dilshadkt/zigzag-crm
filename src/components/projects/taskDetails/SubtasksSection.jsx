@@ -460,6 +460,23 @@ const SubtasksSection = ({
                         </svg>
                       )}
                       {subtask.title}
+                      {(subtask.taskCategory?.name ||
+                        taskDetails?.taskCategory?.name) && (
+                        <span
+                          className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold border border-indigo-100 rounded-full"
+                          title="Performance category"
+                        >
+                          {subtask.taskCategory?.name ||
+                            taskDetails.taskCategory.name}
+                          {(subtask.taskCategory?.points ??
+                            taskDetails?.taskCategory?.points) != null
+                            ? ` · ${
+                                subtask.taskCategory?.points ??
+                                taskDetails.taskCategory.points
+                              } pts`
+                            : ""}
+                        </span>
+                      )}
                     </h6>
 
                     <div className="flex items-center gap-2 flex-shrink-0">

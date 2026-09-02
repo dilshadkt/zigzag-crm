@@ -11,6 +11,8 @@ import {
   AlertCircle,
   CalendarCheck,
   Zap,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 const CATEGORY_META = {
@@ -62,6 +64,9 @@ const PointsLedgerList = ({
   emptyMessage = "No point history available for this period.",
   layout = "grid",
   onEntryClick,
+  canManage = false,
+  onEdit,
+  onRemove,
 }) => {
   const navigate = useNavigate();
 
@@ -184,11 +189,39 @@ const PointsLedgerList = ({
                   <Clock className="w-2.5 h-2.5 mr-1 text-gray-400" />
                   {format(new Date(entry.date), "MMM do yyyy, h:mm a")}
                 </div>
-                {clickable && (
-                  <span className="text-[10px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                    View task →
-                  </span>
-                )}
+                <div className="flex items-center gap-1">
+                  {canManage && (
+                    <>
+                      <button
+                        type="button"
+                        title="Edit score"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit?.(entry);
+                        }}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Remove score"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove?.(entry);
+                        }}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+                  {clickable && !canManage && (
+                    <span className="text-[10px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      View task →
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>

@@ -480,13 +480,28 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
         }
         isEdit={!!editingSubTask}
         initialValues={
-          editingSubTask || {
-            startDate: taskDetails?.startDate,
-            dueDate: taskDetails?.dueDate,
-            priority: taskDetails?.priority,
-          }
+          editingSubTask
+            ? {
+                ...editingSubTask,
+                taskCategory:
+                  editingSubTask.taskCategory?._id ||
+                  editingSubTask.taskCategory ||
+                  taskDetails?.taskCategory?._id ||
+                  taskDetails?.taskCategory ||
+                  "",
+              }
+            : {
+                startDate: taskDetails?.startDate,
+                dueDate: taskDetails?.dueDate,
+                priority: taskDetails?.priority,
+                taskCategory:
+                  taskDetails?.taskCategory?._id ||
+                  taskDetails?.taskCategory ||
+                  "",
+              }
         }
-        projectData={taskDetails.project} // <-- Pass projectData here
+        projectData={taskDetails.project}
+        parentCategory={taskDetails?.taskCategory}
       />
 
       {/* Rework History Modal */}

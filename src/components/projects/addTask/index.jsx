@@ -17,7 +17,7 @@ import {
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
-import { FiActivity, FiAlertTriangle, FiCalendar, FiClock, FiPlus, FiTarget, FiTrash2 } from "react-icons/fi";
+import { FiAlertTriangle, FiCheck, FiClock, FiPlus, FiTrash2 } from "react-icons/fi";
 import Modal from "../../shared/modal";
 import {
   computeFlowDatesWithSchedule,
@@ -34,6 +34,168 @@ import {
   resolveTaskCategoryId,
   taskHoursToMinutes,
 } from "../workDetailsForm/workTypeMapping";
+
+const formatConflictDate = (value) => {
+  if (!value) return "—";
+  const date = new Date(typeof value === "string" && !value.includes("T")
+    ? `${value}T00:00:00`
+    : value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatConflictRange = (start, end) => {
+  const from = formatConflictDate(start);
+  const to = formatConflictDate(end);
+  return from === to ? from : `${from} – ${to}`;
+};
+
+const getConflictTypeMeta = (type) => {
+  if (type === "sick_leave") return { label: "Sick leave", className: "bg-rose-50 text-rose-700 border-rose-100" };
+  if (type === "vacation") return { label: "Annual leave", className: "bg-amber-50 text-amber-700 border-amber-100" };
+  if (type === "subtask") return { label: "Subtask", className: "bg-indigo-50 text-indigo-700 border-indigo-100" };
+  if (type === "task") return { label: "Task", className: "bg-blue-50 text-blue-700 border-blue-100" };
+  return { label: String(type || "Conflict").replace("_", " "), className: "bg-gray-50 text-gray-600 border-gray-100" };
+};
+
+const getConflictCounts = (items = []) => {
+  const taskCount = items.filter((d) => d.type === "task" || d.type === "subtask").length;
+  const leaveCount = items.filter((d) => d.type === "vacation" || d.type === "sick_leave").length;
+  return { taskCount, leaveCount, total: items.length };
+};
+
+const getConflictSummary = (name, items = []) => {
+  const firstName = String(name || "Employee").trim().split(" ")[0] || "Employee";
+  const { taskCount, leaveCount } = getConflictCounts(items);
+  const parts = [];
+  if (taskCount > 0) {
+    parts.push(`${taskCount} task conflict${taskCount === 1 ? "" : "s"}`);
+  }
+  if (leaveCount > 0) {
+    parts.push(`${leaveCount} leave`);
+  }
+  if (parts.length === 0) {
+    return `${firstName} has schedule conflicts`;
+  }
+  return `${firstName} has ${parts.join(" and ")}`;
+};
+
+const ConflictItem = ({ item }) => {
+  const meta = getConflictTypeMeta(item.type);
+  const scheduledStart = item.originalStart || item.startDate;
+  const scheduledEnd = item.originalEnd || item.endDate;
+  const overlapStart = item.overlapStart || item.startDate;
+  const overlapEnd = item.overlapEnd || item.endDate;
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${meta.className}`}>
+          {meta.label}
+        </span>
+        {item.status ? (
+          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold capitalize text-gray-500">
+            {item.status.replace("-", " ")}
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-1 text-xs font-semibold text-gray-800">
+        {item.title || item.taskName || meta.label}
+      </p>
+      {item.parentTaskName ? (
+        <p className="text-[11px] text-gray-500">Parent: {item.parentTaskName}</p>
+      ) : null}
+      {item.projectName ? (
+        <p className="text-[11px] text-gray-500">Project: {item.projectName}</p>
+      ) : null}
+      <p className="mt-1 text-[11px] text-gray-600">
+        Scheduled: {formatConflictRange(scheduledStart, scheduledEnd)}
+      </p>
+      <p className="text-[11px] font-medium text-amber-700">
+        Overlaps: {formatConflictRange(overlapStart, overlapEnd)}
+      </p>
+    </div>
+  );
+};
+
+const ConflictDetails = ({ conflicts, title, emptyText }) => {
+  const [openConflict, setOpenConflict] = useState(null);
+
+  if (!conflicts?.length) {
+    return emptyText ? (
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-5 text-center">
+        <p className="text-sm font-medium text-gray-500">{emptyText}</p>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <div className="space-y-2">
+      {title ? (
+        <div className="flex items-center gap-2">
+          <FiAlertTriangle className="h-4 w-4 text-amber-500" />
+          <h5 className="text-sm font-semibold text-gray-800">{title}</h5>
+        </div>
+      ) : null}
+      {conflicts.map((conflict, idx) => {
+        const items = conflict.conflictingDates || [];
+        return (
+          <div
+            key={`${conflict.employeeId || idx}-${conflict.label || "main"}`}
+            className="flex items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-white px-3 py-2.5 shadow-sm"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-gray-800">
+                {getConflictSummary(conflict.employeeName, items)}
+              </p>
+              <p className="text-[11px] text-gray-500">
+                {conflict.employeeName}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpenConflict(conflict)}
+              className="flex-shrink-0 rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 hover:bg-amber-100"
+            >
+              View more
+            </button>
+          </div>
+        );
+      })}
+
+      <Modal
+        isOpen={!!openConflict}
+        onClose={() => setOpenConflict(null)}
+        title={openConflict ? getConflictSummary(openConflict.employeeName, openConflict.conflictingDates) : "Conflicts"}
+      >
+        {openConflict && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              {openConflict.employeeName} has {(openConflict.conflictingDates || []).length} overlapping item{(openConflict.conflictingDates || []).length === 1 ? "" : "s"} on these dates.
+            </p>
+            <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+              {(openConflict.conflictingDates || []).map((item, itemIdx) => (
+                <ConflictItem key={itemIdx} item={item} />
+              ))}
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setOpenConflict(null)}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+};
 
 const AddTask = ({
   isOpen,
@@ -66,7 +228,12 @@ const AddTask = ({
   const { data: taskCategories = [], isLoading: isLoadingTaskCategories } =
     useGetTaskCategories(companyId);
 
+  const skipCategoryWarningRef = useRef(false);
+  const [showMissingCategoryModal, setShowMissingCategoryModal] = useState(false);
+
   const handleClose = () => {
+    skipCategoryWarningRef.current = false;
+    setShowMissingCategoryModal(false);
     resetForm();
     setShowModalTask(false);
   };
@@ -115,6 +282,33 @@ const AddTask = ({
     };
   };
 
+  const handleTaskSubmit = async (formData, helpers) => {
+    const categories = Array.isArray(taskCategories) ? taskCategories : [];
+    const missing = (formData.subtasks || []).filter((step) => {
+      if (step?.taskCategory) return false;
+      return !categories.some(
+        (category) =>
+          String(category.name || "").toLowerCase() ===
+          String(step?.taskName || "").toLowerCase()
+      );
+    });
+    const noStepsAndNoTaskCategory =
+      (!formData.subtasks || formData.subtasks.length === 0) &&
+      !formData.taskCategory;
+
+    if (
+      (missing.length > 0 || noStepsAndNoTaskCategory) &&
+      !skipCategoryWarningRef.current
+    ) {
+      setShowMissingCategoryModal(true);
+      helpers?.setSubmitting?.(false);
+      return;
+    }
+
+    skipCategoryWarningRef.current = false;
+    await onSubmit(formData, helpers);
+  };
+
   const {
     values,
     touched,
@@ -123,7 +317,7 @@ const AddTask = ({
     handleSubmit,
     resetForm,
     setFieldValue,
-  } = useAddTaskForm(prepareInitialValues(), onSubmit);
+  } = useAddTaskForm(prepareInitialValues(), handleTaskSubmit);
   // Track selected project separately to avoid hook dependency issues
   const [selectedProjectId, setSelectedProjectId] = useState(
     initialValues?.project?._id || initialValues?.project || ""
@@ -528,8 +722,24 @@ const AddTask = ({
           // Keep manual subtasks and replace/add flow-based ones
           const manualSubtasks = (values.subtasks || []).filter(s => !s.isFromFlow);
           
-          const flowSubtasks = calculatedSteps.map((s, idx) => ({
+          const existingFlowSubtasks = (values.subtasks || []).filter((s) => s.isFromFlow);
+          const flowSubtasks = calculatedSteps.map((s, idx) => {
+            const matchedCategory = (Array.isArray(taskCategories) ? taskCategories : []).find(
+              (category) =>
+                String(category.name || "").toLowerCase() ===
+                String(s.taskName || "").toLowerCase()
+            );
+            const previous = existingFlowSubtasks[idx];
+            const keepPreviousCategory =
+              previous &&
+              String(previous.taskName || "").toLowerCase() ===
+                String(s.taskName || "").toLowerCase() &&
+              previous.taskCategory
+                ? previous.taskCategory
+                : "";
+            return {
             taskName: s.taskName,
+            taskCategory: keepPreviousCategory || matchedCategory?._id || "",
             assignee: typeof s.assignee === 'object' && s.assignee !== null ? s.assignee._id : s.assignee,
             startDate: s.startDate.toISOString().split('T')[0],
             dueDate: s.dueDate.toISOString().split('T')[0],
@@ -543,7 +753,8 @@ const AddTask = ({
               selectedFlow.flows[idx].requiresCampaignReport ||
               String(selectedFlow.flows[idx].taskName || "").toLowerCase() === "campaign",
             isFromFlow: true
-          }));
+          };
+          });
 
           setFieldValue("subtasks", [...flowSubtasks, ...manualSubtasks]);
         }
@@ -560,7 +771,7 @@ const AddTask = ({
         dueDate: values.dueDate
       };
     }
-  }, [values.taskFlow, values.startDate, values.dueDate, taskFlows, weeklyOffs, holidays, setFieldValue]);
+  }, [values.taskFlow, values.startDate, values.dueDate, values.taskCategory, taskFlows, taskCategories, weeklyOffs, holidays, setFieldValue]);
 
   // Handle manual date overrides for subtasks
   const handleSubtaskDateChange = (index, field, newValue) => {
@@ -583,11 +794,13 @@ const AddTask = ({
 
   const addManualSubtask = () => {
     const newSubtask = {
-      taskName: values.title || "",
+      taskName: "",
+      taskCategory: "",
       assignee: values.assignedTo?.[0] || "",
       startDate: values.startDate || new Date().toISOString().split('T')[0],
       dueDate: values.dueDate || new Date().toISOString().split('T')[0],
       isManual: true,
+      isFromFlow: false,
       requiresClientApproval: false,
       requiresWorkLink: false,
       requiresCampaignReport: false
@@ -604,6 +817,81 @@ const AddTask = ({
     const updated = [...(values.subtasks || [])];
     updated[index][field] = value;
     setFieldValue("subtasks", updated);
+  };
+
+  const handleSubtaskCategoryChange = (index, categoryId) => {
+    const categories = Array.isArray(taskCategories) ? taskCategories : [];
+    const category = categories.find(
+      (item) => String(item._id) === String(categoryId)
+    );
+    const updated = [...(values.subtasks || [])];
+    if (!updated[index]) return;
+    updated[index].taskCategory = categoryId || "";
+    if (!updated[index].isFromFlow) {
+      updated[index].taskName = category?.name || "";
+    }
+    setFieldValue("subtasks", updated);
+  };
+
+  const getSubtaskCategoryOptions = () =>
+    (Array.isArray(taskCategories) ? taskCategories : [])
+      .filter((category) => category?.isActive !== false)
+      .map((category) => ({
+        label:
+          Number(category.points) > 0
+            ? `${category.name} (${category.points} pts)`
+            : category.name,
+        value: category._id,
+      }));
+
+  const getSelectedSubtaskCategoryId = (step) => {
+    if (step?.taskCategory) {
+      return typeof step.taskCategory === "object"
+        ? step.taskCategory._id
+        : step.taskCategory;
+    }
+    const match = (Array.isArray(taskCategories) ? taskCategories : []).find(
+      (category) =>
+        String(category.name || "").toLowerCase() ===
+        String(step?.taskName || "").toLowerCase()
+    );
+    return match?._id || "";
+  };
+
+  const uncategorizedSubtasks = (values.subtasks || []).filter(
+    (step) => !getSelectedSubtaskCategoryId(step)
+  );
+  const parentCategory = (Array.isArray(taskCategories) ? taskCategories : []).find(
+    (category) => String(category._id) === String(values.taskCategory || "")
+  );
+  const selectedFlow = taskFlows.find((flow) => flow._id === values.taskFlow);
+  const flowStepsMissingCategory = (selectedFlow?.flows || []).filter((step) => {
+    const name = String(step?.taskName || "").toLowerCase();
+    if (!name) return true;
+    return !(Array.isArray(taskCategories) ? taskCategories : []).some(
+      (category) =>
+        category?.isActive !== false &&
+        String(category.name || "").toLowerCase() === name
+    );
+  });
+  const showFlowCategoryBanner =
+    Boolean(values.taskFlow) &&
+    ((values.subtasks || []).length > 0
+      ? uncategorizedSubtasks.length > 0
+      : flowStepsMissingCategory.length > 0);
+  const missingCategoryCount =
+    (values.subtasks || []).length > 0
+      ? uncategorizedSubtasks.length
+      : flowStepsMissingCategory.length;
+
+  const handleMissingCategoryGoBack = () => {
+    setShowMissingCategoryModal(false);
+  };
+
+  const handleMissingCategorySaveAnyway = () => {
+    skipCategoryWarningRef.current = true;
+    setShowMissingCategoryModal(false);
+    handleSubmit();
   };
 
   // Initialize form when modal opens for editing
@@ -853,22 +1141,67 @@ const AddTask = ({
   };
 
   if (!isOpen) return null;
+
+  const mainConflicts = availabilityConflicts.filter((c) => c.label === "main");
+  const allConflicts = availabilityConflicts;
+
   return (
-    <div
-      className="fixed left-0 right-0 top-0 bottom-0
-bg-[#2155A3]/15 backdrop-blur-sm py-8 z-50 flexCenter"
-    >
-      <div
-        className="p-10 bg-white pt-12  px-12 flex flex-col
-rounded-3xl max-w-[1000px] w-full h-full relative"
-      >
-        <>
-          <div className="w-full h-full flex flex-col overflow-y-auto">
-            <h4 className="text-lg pb-2 font-medium sticky top-0 bg-white z-20">
+    <div className="fixed inset-0 z-[1000] bg-[#2155A3]/20 backdrop-blur-sm p-3 md:p-4">
+      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <header className="flex flex-shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-5 py-3 md:px-6">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900">
               {isEdit ? "Edit Task" : "Add Task"}
             </h4>
+            <p className="text-xs text-gray-500">
+              Task details on the left. Subtasks and conflicts on the right.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedMonth && (
+              <span className="hidden rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 sm:inline-flex">
+                {new Date(`${selectedMonth}-01`).toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+            <PrimaryButton
+              icon="/icons/cancel.svg"
+              disable={isLoading}
+              className="bg-[#F4F9FD]"
+              onclick={() => !isLoading && handleClose()}
+            />
+          </div>
+        </header>
 
-            {/* Project selection for board usage */}
+        {isLoadingProjectDetails &&
+          selectedProjectId &&
+          selectedProjectId !== "other" && (
+            <div className="mx-5 mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 md:mx-6">
+              Loading project details...
+            </div>
+          )}
+        {projectDetailsError &&
+          selectedProjectId &&
+          selectedProjectId !== "other" && (
+            <div className="mx-5 mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800 md:mx-6">
+              Failed to load project details. Please try again.
+            </div>
+          )}
+        {isOtherProjectSelected && (
+          <div className="mx-5 mt-3 rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-800 md:mx-6">
+            External project — work type and flow fields are hidden.
+          </div>
+        )}
+
+        <form
+          action=" "
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
+            <div className="min-h-0 space-y-5 overflow-y-auto border-gray-100 px-5 py-5 md:px-6 lg:border-r">
             {showProjectSelection && (
               <Select
                 errors={errors}
@@ -883,141 +1216,6 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                 required={false}
               />
             )}
-
-            {/* Month indicator */}
-            {selectedMonth && (
-              <div className="mb-2 mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-blue-800">
-                    Creating task for:{" "}
-                    {new Date(selectedMonth + "-01").toLocaleDateString(
-                      "en-US",
-                      { month: "long", year: "numeric" }
-                    )}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Project work details indicator */}
-            {isLoadingProjectDetails &&
-              selectedProjectId &&
-              selectedProjectId !== "other" && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4 text-blue-600 animate-spin"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-blue-800">
-                      Loading project details...
-                    </span>
-                  </div>
-                </div>
-              )}
-
-            {projectDetailsError &&
-              selectedProjectId &&
-              selectedProjectId !== "other" && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4 text-red-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-red-800">
-                      Failed to load project details. Please try again.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-            {/* {selectedProjectData &&
-                selectedProjectId &&
-                selectedProjectId !== "other" && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span className="text-sm font-medium text-green-800">
-                        Using work details from: {selectedProjectData.name}
-                      </span>
-                    </div>
-                  </div>
-                )} */}
-
-            {/* Other project indicator */}
-            {isOtherProjectSelected && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-yellow-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-yellow-800">
-                    Creating task for external project - task group and flow
-                    fields are hidden
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <form
-              action=" "
-              onSubmit={handleSubmit}
-              className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4"
-            >
               {/* Hidden input for taskMonth */}
               <input
                 type="hidden"
@@ -1100,15 +1298,40 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                   />
                 )}
 
-              {/* ── Dates (flow naturally in the 2-column grid) */}
-                      {/* Start Date */}
+              <div>
+                <Input
+                  placeholder="Task Name"
+                  title="Task Name"
+                  errors={errors}
+                  name={"title"}
+                  onchange={handleChange}
+                  touched={touched}
+                  value={values}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
+
+              <div>
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"task_description"}
+                  value={values}
+                  title="Task Description"
+                  placeholder="Add task description"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <DatePicker
                           errors={errors}
                           value={values.startDate}
                           onChange={handleChange}
                           name={"startDate"}
-                          title="Estimate"
+                          title="Start date"
                           touched={touched}
                           disabled={!isFormEnabled && !isOtherProjectSelected}
                         />
@@ -1124,10 +1347,9 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                         )}
                       </div>
 
-                      {/* Due Date */}
                       <div>
                         <DatePicker
-                          title="Dead Line"
+                          title="Due date"
                           errors={errors}
                           value={values.dueDate}
                           onChange={handleDueDateChange}
@@ -1147,8 +1369,7 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                         )}
                       </div>
 
-                      {/* Time Estimate */}
-                      <div className="col-span-2 sm:col-span-1">
+                      <div>
                         <Input
                           title="Time Estimate (mins)"
                           placeholder="e.g. 120"
@@ -1161,12 +1382,12 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                           disabled={!isFormEnabled && !isOtherProjectSelected}
                         />
                       </div>
+              </div>
 
               {((!isOtherProjectSelected && !isNoProjectSelected) ||
                 !showProjectSelection) &&
                 !isCampaignTaskSelected && (
                   <>
-                    {/* Task Flow Selection */}
                     <Select
                       errors={errors}
                       touched={touched}
@@ -1179,55 +1400,38 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                       defaultValue=""
                       disabled={!isFormEnabled}
                     />
-
-
-
-                    {/* No date range set warning for preview */}
                     {values.taskFlow && (!values.startDate || !values.dueDate) && (
                       <div className="bg-blue-50 px-3 py-2.5 text-xs text-blue-500 italic flex items-center gap-1.5 border border-blue-200 rounded-xl">
                         <FiClock className="w-3 h-3" />
                         Set parent Start &amp; Due dates to preview the flow schedule.
                       </div>
                     )}
+                    {showFlowCategoryBanner && (
+                      <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                        <FiAlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+                        <div className="text-xs text-amber-800">
+                          <p className="font-semibold">
+                            {missingCategoryCount} flow step{missingCategoryCount === 1 ? "" : "s"} {missingCategoryCount === 1 ? "has" : "have"} no category.
+                          </p>
+                          <p className="mt-0.5">
+                            Those steps will not earn category points. Choose a category on each subtask on the right so the assignee is credited.
+                          </p>
+                          {(!values.subtasks || values.subtasks.length === 0) &&
+                            flowStepsMissingCategory.some((step) => step.taskName) && (
+                              <p className="mt-1 font-medium">
+                                {flowStepsMissingCategory
+                                  .map((step) => step.taskName)
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
 
-              <div className="col-span-2 sm:col-span-1">
-                <Input
-                  placeholder="Task Name"
-                  title="Task Name"
-                  errors={errors}
-                  name={"title"}
-                  onchange={handleChange}
-                  touched={touched}
-                  value={values}
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-              </div>
-              
-              <div className="col-span-2">
-                <Description
-                  errors={errors}
-                  onChange={handleChange}
-                  touched={touched}
-                  name={"task_description"}
-                  value={values}
-                  title="Task Description"
-                  placeholder="Add task description"
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-              </div>
-
-              <Select
-                errors={errors}
-                name={"priority"}
-                touched={touched}
-                value={values?.priority || "Low"}
-                onChange={handleChange}
-                title="Priority"
-                options={["Low", "Medium", "High"]}
-                disabled={!isFormEnabled && !isOtherProjectSelected}
-              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <MultiSelect
                 title="Assignees"
                 errors={errors}
@@ -1250,200 +1454,68 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                     isLoadingEmployees)
                 }
               />
+              <Select
+                errors={errors}
+                name={"priority"}
+                touched={touched}
+                value={values?.priority || "Low"}
+                onChange={handleChange}
+                title="Priority"
+                options={["Low", "Medium", "High"]}
+                disabled={!isFormEnabled && !isOtherProjectSelected}
+              />
+              </div>
 
-              {/* Main Task Availability Conflicts */}
-              {availabilityConflicts.filter(c => c.label === 'main').length > 0 && (
-                <div className="col-span-2 mt-2 space-y-1">
-                  {availabilityConflicts.filter(c => c.label === 'main').map((conflict, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-100 rounded-lg">
-                      <FiAlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
-                      <div>
-                        <p className="text-[11px] font-bold text-amber-800">
-                          {conflict.employeeName} {conflict.conflictingDates.some(d => d.type === 'task' || d.type === 'subtask') ? 'has schedule conflicts' : 'is on leave'}
-                        </p>
-                        {conflict.conflictingDates.map((d, dIdx) => (
-                          <p key={dIdx} className="text-[10px] text-amber-700 italic">
-                            • {d.type === 'task' || d.type === 'subtask' ? d.taskName : d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+              <div className="rounded-2xl border border-gray-100 bg-[#F8FAFC] p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <FiCheck className="h-4 w-4 text-blue-600" />
+                  <h5 className="text-sm font-semibold text-gray-800">Requirements</h5>
                 </div>
-              )}
-
-              {!isCampaignTaskSelected && (
-              <div className="flex items-center gap-2 px-1">
-                <input
-                  type="checkbox"
-                  id="requiresClientApproval"
-                  name="requiresClientApproval"
-                  checked={values.requiresClientApproval}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-                <label
-                  htmlFor="requiresClientApproval"
-                  className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-                >
-                  Requires Client Approval
-                </label>
-              </div>
-              )}
-
-              {!isCampaignTaskSelected && (
-              <div className="flex items-center gap-2 px-1">
-                <input
-                  type="checkbox"
-                  id="requiresWorkLink"
-                  name="requiresWorkLink"
-                  checked={values.requiresWorkLink}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-                <label
-                  htmlFor="requiresWorkLink"
-                  className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-                >
-                  Requires Work Link
-                </label>
-              </div>
-              )}
-
-              <div className="flex items-center gap-2 px-1">
-                <input
-                  type="checkbox"
-                  id="requiresCampaignReport"
-                  name="requiresCampaignReport"
-                  checked={values.requiresCampaignReport}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-                <label
-                  htmlFor="requiresCampaignReport"
-                  className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-                >
-                  Requires Campaign Report
-                </label>
-              </div>
-
-              {/* Recurring Task Section */}
-              <div className="col-span-2 border-t border-gray-200 pt-4 mt-2">
-                <h5 className="text-sm font-medium text-gray-700 mb-3">
-                  Task Recurring
-                </h5>
-
-                <Select
-                  errors={errors}
-                  name={"recurringPattern"}
-                  touched={touched}
-                  value={values.recurringPattern || "none"}
-                  onChange={handleChange}
-                  title="Repeat"
-                  options={recurringOptions}
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-
-                {values.recurringPattern &&
-                  values.recurringPattern !== "none" && (
-                    <div className="space-y-4 mt-4">
-                      <Input
-                        placeholder="1"
-                        title={`Every ${values.recurringPattern === "daily"
-                          ? "X days"
-                          : values.recurringPattern === "weekly"
-                            ? "X weeks"
-                            : "X months"
-                          }`}
-                        errors={errors}
-                        name={"recurringInterval"}
-                        onchange={handleChange}
-                        touched={touched}
-                        value={values?.recurringInterval || ""}
+                <div className="space-y-2">
+                  {!isCampaignTaskSelected && (
+                    <label htmlFor="requiresClientApproval" className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 border border-gray-100">
+                      <input
+                        type="checkbox"
+                        id="requiresClientApproval"
+                        name="requiresClientApproval"
+                        checked={values.requiresClientApproval}
+                        onChange={handleChange}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600"
                         disabled={!isFormEnabled && !isOtherProjectSelected}
-                        type="number"
-                        min="1"
                       />
-
-                      <div className="grid gap-x-4 grid-cols-2">
-                        <DatePicker
-                          title="End Date (Optional)"
-                          errors={errors}
-                          value={values.recurringEndDate}
-                          onChange={handleChange}
-                          touched={touched}
-                          name={"recurringEndDate"}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
-                        />
-                        <Input
-                          placeholder="10"
-                          title="Max Recurrences (Optional)"
-                          errors={errors}
-                          name={"maxRecurrences"}
-                          onchange={handleChange}
-                          touched={touched}
-                          value={values?.maxRecurrences || ""}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
-                          type="number"
-                          min="1"
-                        />
-                      </div>
-
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <strong>📅 Recurring Schedule:</strong>
-                          <br />
-                          This task will repeat every{" "}
-                          {values.recurringInterval || 1}{" "}
-                          {values.recurringPattern === "daily" &&
-                            (values.recurringInterval > 1 ? "days" : "day")}
-                          {values.recurringPattern === "weekly" &&
-                            (values.recurringInterval > 1 ? "weeks" : "week")}
-                          {values.recurringPattern === "monthly" &&
-                            (values.recurringInterval > 1
-                              ? "months"
-                              : "month")}
-                          {values.recurringEndDate &&
-                            ` until ${values.recurringEndDate}`}
-                          {values.maxRecurrences &&
-                            ` for a maximum of ${values.maxRecurrences} times`}
-                          .
-                        </p>
-                      </div>
-                    </div>
+                      <span className="text-sm font-medium text-gray-700">Client approval</span>
+                    </label>
                   )}
+                  {!isCampaignTaskSelected && (
+                    <label htmlFor="requiresWorkLink" className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 border border-gray-100">
+                      <input
+                        type="checkbox"
+                        id="requiresWorkLink"
+                        name="requiresWorkLink"
+                        checked={values.requiresWorkLink}
+                        onChange={handleChange}
+                        className="h-4 w-4 rounded border-gray-300 text-purple-600"
+                        disabled={!isFormEnabled && !isOtherProjectSelected}
+                      />
+                      <span className="text-sm font-medium text-gray-700">Work link</span>
+                    </label>
+                  )}
+                  <label htmlFor="requiresCampaignReport" className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 border border-gray-100">
+                    <input
+                      type="checkbox"
+                      id="requiresCampaignReport"
+                      name="requiresCampaignReport"
+                      checked={values.requiresCampaignReport}
+                      onChange={handleChange}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                      disabled={!isFormEnabled && !isOtherProjectSelected}
+                    />
+                    <span className="text-sm font-medium text-gray-700">Campaign report</span>
+                  </label>
+                </div>
               </div>
 
-              <div className="col-span-2">
-                <Description
-                  errors={errors}
-                  onChange={handleChange}
-                  touched={touched}
-                  name={"copyOfDescription"}
-                  value={values?.copyOfDescription || ""}
-                  title="Content for Description"
-                  placeholder="Add copy of description"
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-              </div>
-              <div className="col-span-2">
-                <Description
-                  errors={errors}
-                  onChange={handleChange}
-                  touched={touched}
-                  name={"description"}
-                  value={values?.description || ""}
-                  title="Description for publishing"
-                  placeholder="Add some description of the task"
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-              </div>
-
-              {/* Dynamic Custom Fields Section */}
-              <div className="col-span-2 border-t border-gray-200 pt-4">
+              <div className="border-t border-gray-100 pt-4">
                 <div className="flexBetween mb-3">
                   <h5 className="text-sm font-medium text-gray-700">
                     Additional Fields (e.g. Shooting URL)
@@ -1514,8 +1586,32 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                 )}
               </div>
 
-              <div className="col-span-2">
-                <FileAndLinkUpload
+              <div>
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"copyOfDescription"}
+                  value={values?.copyOfDescription || ""}
+                  title="Content for Description"
+                  placeholder="Add copy of description"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
+              <div>
+                <Description
+                  errors={errors}
+                  onChange={handleChange}
+                  touched={touched}
+                  name={"description"}
+                  value={values?.description || ""}
+                  title="Description for publishing"
+                  placeholder="Add some description of the task"
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+              </div>
+
+              <FileAndLinkUpload
                   fileClassName={"grid grid-cols-3 gap-3"}
                   initialFiles={
                     values?.attachments?.filter(
@@ -1531,207 +1627,314 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
                   disable={!isFormEnabled && !isOtherProjectSelected}
                 />
 
-                <div className="flex flex-col gap-3 mt-4">
-                  {/* ── Subtasks Preview/Editor ─────────────── */}
-                  {(values.subtasks && values.subtasks.length > 0 || values.taskFlow) && (
-                    <div className="border border-blue-100 rounded-2xl overflow-hidden mt-1 shadow-sm bg-white">
-                      {/* Header */}
-                      <div className="bg-blue-600 px-4 py-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FiActivity className="w-4 h-4 text-white" />
-                          <span className="text-xs font-bold text-white uppercase tracking-wider">
-                            {values.taskFlow 
-                              ? taskFlows.find(f => f._id === values.taskFlow)?.name 
-                              : "Custom Subtasks"}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={addManualSubtask}
-                          className="text-[10px] bg-white/20 hover:bg-white/30 text-white font-bold py-1 px-2 rounded-lg transition-all flex items-center gap-1"
-                        >
-                          <FiPlus className="w-3 h-3" /> Add Step
-                        </button>
+              <div className="border-t border-gray-100 pt-4">
+                <h5 className="text-sm font-medium text-gray-700 mb-3">
+                  Recurring (optional)
+                </h5>
+                <Select
+                  errors={errors}
+                  name={"recurringPattern"}
+                  touched={touched}
+                  value={values.recurringPattern || "none"}
+                  onChange={handleChange}
+                  title="Repeat"
+                  options={recurringOptions}
+                  disabled={!isFormEnabled && !isOtherProjectSelected}
+                />
+                {values.recurringPattern &&
+                  values.recurringPattern !== "none" && (
+                    <div className="space-y-4 mt-4">
+                      <Input
+                        placeholder="1"
+                        title={`Every ${values.recurringPattern === "daily"
+                          ? "X days"
+                          : values.recurringPattern === "weekly"
+                            ? "X weeks"
+                            : "X months"
+                          }`}
+                        errors={errors}
+                        name={"recurringInterval"}
+                        onchange={handleChange}
+                        touched={touched}
+                        value={values?.recurringInterval || ""}
+                        disabled={!isFormEnabled && !isOtherProjectSelected}
+                        type="number"
+                        min="1"
+                      />
+                      <div className="grid gap-x-4 grid-cols-2">
+                        <DatePicker
+                          title="End Date (Optional)"
+                          errors={errors}
+                          value={values.recurringEndDate}
+                          onChange={handleChange}
+                          touched={touched}
+                          name={"recurringEndDate"}
+                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                        />
+                        <Input
+                          placeholder="10"
+                          title="Max Recurrences (Optional)"
+                          errors={errors}
+                          name={"maxRecurrences"}
+                          onchange={handleChange}
+                          touched={touched}
+                          value={values?.maxRecurrences || ""}
+                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                          type="number"
+                          min="1"
+                        />
                       </div>
-
-                      {/* Step rows */}
-                      <div className="divide-y divide-gray-50">
-                        {values.subtasks?.map((step, index) => {
-                          const assigneeOptions = getAssigneeOptions();
-                          const currentAssigneeId = typeof step.assignee === 'object' ? step.assignee?._id : step.assignee;
-
-                          return (
-                            <div
-                              key={index}
-                              className="bg-white p-3 flex flex-col gap-2 hover:bg-blue-50/20 transition-colors relative group"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 flex-shrink-0 bg-blue-50 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-600 border border-blue-100">
-                                  {index + 1}
-                                </span>
-                                <input
-                                  type="text"
-                                  value={step.taskName}
-                                  onChange={(e) => handleSubtaskChange(index, "taskName", e.target.value)}
-                                  placeholder="Subtask name..."
-                                  className="flex-1 text-xs font-bold text-gray-800 bg-transparent border-b border-transparent focus:border-blue-300 outline-none py-0.5"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeSubtask(index)}
-                                  className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-500 transition-all"
-                                >
-                                  <FiTrash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-
-                              <div className="flex flex-wrap items-center gap-3 pl-7">
-                                {/* Assignee Select */}
-                                <div className="flex items-center gap-1.5 min-w-[120px]">
-                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Assigned To:</span>
-                                  <select
-                                    value={currentAssigneeId || ""}
-                                    onChange={(e) => handleSubtaskChange(index, "assignee", e.target.value)}
-                                    className="text-[10px] font-bold text-blue-600 bg-blue-50/50 border border-blue-100 rounded px-1.5 py-0.5 outline-none"
-                                  >
-                                    <option value="">Select...</option>
-                                    {assigneeOptions.map(opt => (
-                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                {/* Dates */}
-                                <div className="flex items-center gap-1.5">
-                                  <div className="flex items-center bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5">
-                                    <input
-                                      type="date"
-                                      value={step.startDate}
-                                      onChange={(e) => handleSubtaskDateChange(index, "startDate", e.target.value)}
-                                      className="text-[10px] text-gray-600 bg-transparent outline-none"
-                                    />
-                                    <span className="text-[9px] text-gray-300 px-1">—</span>
-                                    <input
-                                      type="date"
-                                      value={step.dueDate}
-                                      onChange={(e) => handleSubtaskDateChange(index, "dueDate", e.target.value)}
-                                      className="text-[10px] text-gray-600 bg-transparent outline-none"
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Requirements */}
-                                <div className="flex items-center gap-3">
-                                  <label className="flex items-center gap-1 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={step.requiresClientApproval}
-                                      onChange={(e) => handleSubtaskChange(index, "requiresClientApproval", e.target.checked)}
-                                      className="w-3 h-3 rounded text-blue-600"
-                                    />
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Approval</span>
-                                  </label>
-                                  <label className="flex items-center gap-1 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={step.requiresWorkLink}
-                                      onChange={(e) => handleSubtaskChange(index, "requiresWorkLink", e.target.checked)}
-                                      className="w-3 h-3 rounded text-purple-600"
-                                    />
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Link</span>
-                                  </label>
-                                  <label className="flex items-center gap-1 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={step.requiresCampaignReport}
-                                      onChange={(e) => handleSubtaskChange(index, "requiresCampaignReport", e.target.checked)}
-                                      className="w-3 h-3 rounded text-indigo-600"
-                                    />
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Report</span>
-                                  </label>
-                                </div>
-                              </div>
-                              
-                              {step.wasAdjusted && (
-                                <div className="flex items-center gap-1 pl-7">
-                                  <FiAlertTriangle className="w-2.5 h-2.5 text-amber-500" />
-                                  <span className="text-[9px] font-medium text-amber-600 italic">
-                                    Shifted from {step.skippedDayType?.toLowerCase()} ({step.skippedDay})
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Subtask Availability Conflicts */}
-                              {availabilityConflicts.filter(c => c.label === `subtask-${index}`).map((conflict, idx) => (
-                                <div key={idx} className="flex items-start gap-1.5 pl-7 mt-1">
-                                  <FiAlertTriangle className="w-3 h-3 text-red-500 mt-0.5" />
-                                  <div>
-                                    <p className="text-[10px] font-bold text-red-600">
-                                      {conflict.employeeName} {conflict.conflictingDates.some(d => d.type === 'task' || d.type === 'subtask') ? 'has schedule conflicts' : 'unavailable'}
-                                    </p>
-                                    {conflict.conflictingDates.map((d, dIdx) => (
-                                      <p key={dIdx} className="text-[9px] text-red-500 italic">
-                                        • {d.type === 'task' || d.type === 'subtask' ? d.taskName : d.type.replace('_', ' ')}: {d.startDate} to {d.endDate}
-                                      </p>
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="bg-gray-50 px-4 py-2 border-t border-gray-100 flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400 font-medium">
-                          {values.subtasks.length} total subtasks
-                        </span>
-                        <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest animate-pulse">
-                          Subtasks will be created with the task
-                        </span>
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Recurring schedule:</strong>
+                          {" "}This task will repeat every{" "}
+                          {values.recurringInterval || 1}{" "}
+                          {values.recurringPattern === "daily" &&
+                            (values.recurringInterval > 1 ? "days" : "day")}
+                          {values.recurringPattern === "weekly" &&
+                            (values.recurringInterval > 1 ? "weeks" : "week")}
+                          {values.recurringPattern === "monthly" &&
+                            (values.recurringInterval > 1
+                              ? "months"
+                              : "month")}
+                          {values.recurringEndDate &&
+                            ` until ${values.recurringEndDate}`}
+                          {values.maxRecurrences &&
+                            ` for a maximum of ${values.maxRecurrences} times`}
+                          .
+                        </p>
                       </div>
                     </div>
                   )}
-
-                  {/* Create Subtask Toggle/Button at the bottom */}
-                  {!values.taskFlow && (
-                    <button
-                      type="button"
-                      onClick={addManualSubtask}
-                      className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-blue-200 rounded-2xl text-blue-500 hover:bg-blue-50 transition-all duration-200"
-                    >
-                      <div className="p-1 bg-blue-100 rounded-full">
-                        <FiPlus className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-bold">Add Subtask with Task Details</span>
-                    </button>
-                  )}
-
-                  {Object.keys(errors).length > 0 && Object.keys(touched).length > 0 && (
-                    <div className="text-red-500 text-xs text-right mb-2">
-                      Please fix the following errors: {Object.keys(errors).join(", ")}
-                    </div>
-                  )}
-                  <div className="flexEnd">
-                    <PrimaryButton
-                      type="submit"
-                      title="Save Task"
-                      loading={isLoading}
-                      disable={(!isFormEnabled && !isOtherProjectSelected) || isLoading}
-                    />
-                  </div>
-                </div>
               </div>
-            </form>
+            </div>
+
+            <div className="min-h-0 space-y-5 overflow-y-auto bg-[#F7F9FC] px-5 py-5 md:px-6">
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-800">Subtasks</h5>
+                    <p className="text-xs text-gray-500">
+                      {values.taskFlow
+                        ? taskFlows.find((f) => f._id === values.taskFlow)?.name || "Task flow"
+                        : "Checklist of work to create with this task"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addManualSubtask}
+                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700"
+                  >
+                    <FiPlus className="h-3 w-3" /> Add step
+                  </button>
+                </div>
+
+                {(values.subtasks && values.subtasks.length > 0) || values.taskFlow ? (
+                  <div className="space-y-3">
+                    {values.subtasks?.map((step, index) => {
+                      const assigneeOptions = getAssigneeOptions();
+                      const currentAssigneeId = typeof step.assignee === "object" ? step.assignee?._id : step.assignee;
+                      const stepConflicts = availabilityConflicts.filter((c) => c.label === `subtask-${index}`);
+
+                      return (
+                        <div
+                          key={index}
+                          className={`rounded-2xl border bg-white p-3 shadow-sm ${
+                            getSelectedSubtaskCategoryId(step)
+                              ? "border-gray-100"
+                              : "border-amber-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-[11px] font-bold text-blue-600">
+                              {index + 1}
+                            </span>
+                            {step.isFromFlow ? (
+                              <input
+                                type="text"
+                                value={step.taskName}
+                                onChange={(e) => handleSubtaskChange(index, "taskName", e.target.value)}
+                                placeholder="Subtask name..."
+                                className="min-w-0 flex-1 border-b border-transparent bg-transparent py-0.5 text-sm font-semibold text-gray-800 outline-none focus:border-blue-300"
+                              />
+                            ) : null}
+                            <select
+                              value={getSelectedSubtaskCategoryId(step)}
+                              onChange={(e) => handleSubtaskCategoryChange(index, e.target.value)}
+                              disabled={isLoadingTaskCategories}
+                              className={`min-w-0 rounded-lg border px-2 py-1.5 text-sm font-semibold outline-none focus:border-blue-300 ${
+                                step.isFromFlow ? "w-[11.5rem] flex-shrink-0" : "flex-1"
+                              } ${
+                                getSelectedSubtaskCategoryId(step)
+                                  ? "border-gray-200 bg-gray-50 text-gray-800"
+                                  : "border-amber-200 bg-amber-50 text-amber-800"
+                              }`}
+                            >
+                              <option value="">
+                                {isLoadingTaskCategories ? "Loading..." : "Select category..."}
+                              </option>
+                              {getSubtaskCategoryOptions().map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => removeSubtask(index)}
+                              className="p-1.5 text-gray-300 transition-all hover:text-red-500"
+                            >
+                              <FiTrash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <select
+                              value={currentAssigneeId || ""}
+                              onChange={(e) => handleSubtaskChange(index, "assignee", e.target.value)}
+                              className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-700 outline-none"
+                            >
+                              <option value="">Assign to...</option>
+                              {assigneeOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1">
+                              <input
+                                type="date"
+                                value={step.startDate}
+                                onChange={(e) => handleSubtaskDateChange(index, "startDate", e.target.value)}
+                                className="w-full bg-transparent text-xs text-gray-600 outline-none"
+                              />
+                              <span className="text-gray-300">–</span>
+                              <input
+                                type="date"
+                                value={step.dueDate}
+                                onChange={(e) => handleSubtaskDateChange(index, "dueDate", e.target.value)}
+                                className="w-full bg-transparent text-xs text-gray-600 outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <label className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={step.requiresClientApproval}
+                                onChange={(e) => handleSubtaskChange(index, "requiresClientApproval", e.target.checked)}
+                                className="h-3.5 w-3.5 rounded text-blue-600"
+                              />
+                              Approval
+                            </label>
+                            <label className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={step.requiresWorkLink}
+                                onChange={(e) => handleSubtaskChange(index, "requiresWorkLink", e.target.checked)}
+                                className="h-3.5 w-3.5 rounded text-purple-600"
+                              />
+                              Link
+                            </label>
+                            <label className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={step.requiresCampaignReport}
+                                onChange={(e) => handleSubtaskChange(index, "requiresCampaignReport", e.target.checked)}
+                                className="h-3.5 w-3.5 rounded text-indigo-600"
+                              />
+                              Report
+                            </label>
+                          </div>
+
+                          {step.wasAdjusted && (
+                            <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-amber-600">
+                              <FiAlertTriangle className="h-3 w-3" />
+                              Shifted from {step.skippedDayType?.toLowerCase()} ({step.skippedDay})
+                            </div>
+                          )}
+
+                          {!getSelectedSubtaskCategoryId(step) && (
+                            <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-2">
+                              <FiAlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
+                              <p className="text-[11px] leading-snug text-amber-800">
+                                No category on this subtask, so it will not earn category points.
+                                {parentCategory
+                                  ? ` If you save anyway, the task work type (${parentCategory.name}, ${parentCategory.points} pts) is used as a fallback.`
+                                  : " Completing it will not credit category points."}
+                              </p>
+                            </div>
+                          )}
+
+                          {stepConflicts.length > 0 && (
+                            <div className="mt-3">
+                              <ConflictDetails conflicts={stepConflicts} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <p className="text-center text-[11px] text-gray-400">
+                      {values.subtasks.length} subtask{values.subtasks.length === 1 ? "" : "s"} will be created with this task
+                    </p>
+                    {uncategorizedSubtasks.length > 0 && (
+                      <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                        <FiAlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+                        <p className="text-xs text-amber-800">
+                          {uncategorizedSubtasks.length} subtask{uncategorizedSubtasks.length === 1 ? " has" : "s have"} no category and will not earn category points.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={addManualSubtask}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-blue-200 py-8 text-blue-500 hover:bg-blue-50"
+                  >
+                    <FiPlus className="h-4 w-4" />
+                    <span className="text-sm font-semibold">Add the first subtask</span>
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-800">Schedule & conflicts</h5>
+                    <p className="text-xs text-gray-500">Who is busy, and on which dates.</p>
+                  </div>
+                  {allConflicts.length > 0 && (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                      {allConflicts.length} issue{allConflicts.length === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+                <ConflictDetails
+                  conflicts={mainConflicts}
+                  emptyText="No assignee conflicts on the main dates."
+                />
+              </div>
+            </div>
           </div>
-          <PrimaryButton
-            icon={"/icons/cancel.svg"}
-            disable={isLoading}
-            className={"bg-[#F4F9FD] absolute z-40 top-7 right-7"}
-            onclick={() => !isLoading && handleClose()}
-          />
-        </>
+
+          <footer className="flex flex-shrink-0 items-center justify-between gap-3 border-t border-gray-100 bg-white px-5 py-3 md:px-6">
+            <div className="text-xs text-gray-500">
+              {uncategorizedSubtasks.length > 0
+                ? `${uncategorizedSubtasks.length} subtask${uncategorizedSubtasks.length === 1 ? "" : "s"} missing a category — they will not earn category points.`
+                : Object.keys(errors).length > 0 && Object.keys(touched).length > 0
+                ? `Please fix: ${Object.keys(errors).join(", ")}`
+                : "Review conflicts before saving."}
+            </div>
+            <PrimaryButton
+              type="submit"
+              title="Save Task"
+              loading={isLoading}
+              disable={(!isFormEnabled && !isOtherProjectSelected) || isLoading}
+            />
+          </footer>
+        </form>
       </div>
 
       {/* Due Date Change Reason Modal */}
@@ -1796,6 +1999,60 @@ rounded-3xl max-w-[1000px] w-full h-full relative"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Confirm Change
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Missing category points warning */}
+      <Modal
+        isOpen={showMissingCategoryModal}
+        onClose={handleMissingCategoryGoBack}
+        title="Some steps have no category"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            {(values.subtasks || []).length === 0 && !values.taskCategory
+              ? "This task has no work type and no categorized subtasks, so completing it will not credit category points."
+              : "These subtasks have no category, so they will not earn category points when completed."}
+          </p>
+          {uncategorizedSubtasks.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                No category
+              </p>
+              <ul className="space-y-1.5">
+                {uncategorizedSubtasks.map((step, idx) => (
+                  <li key={`${step.taskName || "step"}-${idx}`} className="text-sm text-amber-900">
+                    {step.taskName || `Subtask ${idx + 1}`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {parentCategory ? (
+            <p className="text-xs text-gray-500">
+              If you save anyway, the task work type ({parentCategory.name}, {parentCategory.points} pts) will be used as a fallback.
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500">
+              Assign a category on each subtask if you want those points credited. You can still save without one.
+            </p>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleMissingCategoryGoBack}
+              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+            >
+              Go back
+            </button>
+            <button
+              type="button"
+              onClick={handleMissingCategorySaveAnyway}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+            >
+              Save anyway
             </button>
           </div>
         </div>

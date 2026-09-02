@@ -17,10 +17,11 @@ import {
 import toast from "react-hot-toast";
 import { getMyPerformance, getEmployeePerformance } from "../../api/service";
 import { usePermissions } from "../../hooks/usePermissions";
-import { useResetEmployeePerformance } from "../../api/hooks";
+import { useResetEmployeePerformance, useUpdatePerformanceLedgerEntry, useDeletePerformanceLedgerEntry } from "../../api/hooks";
 import CEOBonusModal from "../performance/CEOBonusModal";
 import PointsLedgerList from "../performance/PointsLedgerList";
 import ScoringGuideDrawer from "../performance/ScoringGuideDrawer";
+import EditLedgerEntryModal from "../performance/EditLedgerEntryModal";
 import Modal from "../shared/modal";
 import Progress from "../shared/progress";
 import socketService from "../../services/socketService";
@@ -75,8 +76,23 @@ const Performance = ({ employeeId, selectedMonth }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [removingEntry, setRemovingEntry] = useState(null);
   const { isAdmin } = usePermissions();
   const resetEmployeeScores = useResetEmployeePerformance();
+  const updateLedgerEntry = useUpdatePerformanceLedgerEntry();
+  const deleteLedgerEntry = useDeletePerformanceLedgerEntry();
+  const canManageLedger = Boolean(isAdmin() && employeeId);
+
+  const ledgerPayload = (entry, extra = {}) => ({
+    periodKey: selectedMonth,
+    ledgerKey: entry.id,
+    category: entry.category,
+    source: entry.source,
+    bonusHistoryId: entry.bonusHistoryId,
+    originalPoints: entry.points,
+    ...extra,
+  });
 
   const handleResetScores = () => {
     resetEmployeeScores.mutate(employeeId, {
@@ -88,6 +104,44 @@ const Performance = ({ employeeId, selectedMonth }) => {
       onError: (err) =>
         toast.error(err?.response?.data?.message || "Failed to reset scores"),
     });
+  };
+
+  const handleSaveLedgerEntry = ({ points, reason }) => {
+    if (!editingEntry) return;
+    updateLedgerEntry.mutate(
+      {
+        employeeId,
+        payload: ledgerPayload(editingEntry, { points, reason }),
+      },
+      {
+        onSuccess: () => {
+          toast.success("Score updated");
+          setEditingEntry(null);
+          fetchPerformance();
+        },
+        onError: (err) =>
+          toast.error(err?.response?.data?.message || "Failed to update score"),
+      }
+    );
+  };
+
+  const handleConfirmRemoveLedgerEntry = () => {
+    if (!removingEntry) return;
+    deleteLedgerEntry.mutate(
+      {
+        employeeId,
+        payload: ledgerPayload(removingEntry),
+      },
+      {
+        onSuccess: () => {
+          toast.success("Score removed");
+          setRemovingEntry(null);
+          fetchPerformance();
+        },
+        onError: (err) =>
+          toast.error(err?.response?.data?.message || "Failed to remove score"),
+      }
+    );
   };
 
   useEffect(() => {
@@ -438,6 +492,9 @@ const Performance = ({ employeeId, selectedMonth }) => {
             entries={filteredLedger}
             layout="list"
             emptyMessage="No points activity yet"
+            canManage={canManageLedger}
+            onEdit={setEditingEntry}
+            onRemove={setRemovingEntry}
           />
         )}
       </div>
@@ -448,6 +505,48 @@ const Performance = ({ employeeId, selectedMonth }) => {
         employeeId={employeeId}
         onBonusAdded={fetchPerformance}
       />
+
+      <EditLedgerEntryModal
+        isOpen={Boolean(editingEntry)}
+        entry={editingEntry}
+        onClose={() => setEditingEntry(null)}
+        onSave={handleSaveLedgerEntry}
+        saving={updateLedgerEntry.isPending}
+      />
+
+      <Modal
+        isOpen={Boolean(removingEntry)}
+        onClose={() => setRemovingEntry(null)}
+        title="Remove this score"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Remove{" "}
+            <span className="font-semibold">{removingEntry?.title}</span>
+            {typeof removingEntry?.points === "number"
+              ? ` (${removingEntry.points > 0 ? "+" : ""}${removingEntry.points} pts)`
+              : ""}
+            . The monthly total will update immediately.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setRemovingEntry(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmRemoveLedgerEntry}
+              disabled={deleteLedgerEntry.isPending}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl disabled:opacity-50"
+            >
+              {deleteLedgerEntry.isPending ? "Removing..." : "Remove score"}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <ScoringGuideDrawer
         isOpen={isGuideOpen}

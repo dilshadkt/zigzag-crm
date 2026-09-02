@@ -24,6 +24,8 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
     requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],
+    taskCategory:
+      defaultValue?.taskCategory?._id || defaultValue?.taskCategory || "",
   };
 
   const validationSchema = Yup.object().shape({
