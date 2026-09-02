@@ -9,6 +9,7 @@ import socketService from "./services/socketService";
 import { unlockNotificationSound, handleTaskStatusChanged } from "./services/realtimeNotificationHandler";
 import AppRoutes from "./routes/AppRoutes";
 import { isPublicAppPath } from "./pages/public/publicSite";
+import { assetPath } from "./utils/assetPath";
 import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
 import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
 
