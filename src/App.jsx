@@ -8,7 +8,7 @@ import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 import socketService from "./services/socketService";
 import { unlockNotificationSound, handleTaskStatusChanged } from "./services/realtimeNotificationHandler";
 import AppRoutes from "./routes/AppRoutes";
-import { assetPath } from "./utils/assetPath";
+import { isPublicAppPath } from "./pages/public/publicSite";
 import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
 import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
 
@@ -26,8 +26,7 @@ function App() {
     const checkAuth = async () => {
       const path = window.location.pathname;
       const isPublicPage =
-        path === "/privacy" ||
-        path === "/terms" ||
+        isPublicAppPath(path) ||
         path.startsWith("/auth/") ||
         path.includes("/portal/login");
       const token = localStorage.getItem("token");
@@ -145,8 +144,7 @@ function App() {
   }, []);
 
   const publicPath =
-    typeof window !== "undefined" &&
-    ["/privacy", "/terms"].includes(window.location.pathname.replace(/\/$/, "") || "/");
+    typeof window !== "undefined" && isPublicAppPath(window.location.pathname);
 
   // Public legal pages must load with no login check.
   if (!publicPath && (loading || !isAuthChecked)) {

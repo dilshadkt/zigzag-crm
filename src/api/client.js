@@ -1,4 +1,5 @@
 import axios from "axios";
+import { isPublicAppPath } from "../pages/public/publicSite";
 
 const getBaseURL = () => {
   if (import.meta.env.DEV) {
@@ -40,12 +41,7 @@ apiClient.interceptors.response.use(
     const isDesktop = typeof window !== "undefined" && window.desktop;
     const redirectToSignIn = () => {
       const path = window.location.pathname || "";
-      const isPublicLegalPage =
-        path === "/privacy" ||
-        path === "/terms" ||
-        path.startsWith("/privacy/") ||
-        path.startsWith("/terms/");
-      if (isPublicLegalPage) return;
+      if (isPublicAppPath(path)) return;
 
       // Check if we are on a portal route
       const isPortalRoute = path.includes('portal') ||

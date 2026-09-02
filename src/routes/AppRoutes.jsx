@@ -60,6 +60,7 @@ const NotificationsPage = lazy(() => import("../pages/notifications"));
 const Meetings = lazy(() => import("../pages/meetings"));
 const PrivacyPolicy = lazy(() => import("../pages/public/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("../pages/public/TermsOfService"));
+const PublicLanding = lazy(() => import("../pages/public/Home"));
 const StickyNotes = lazy(() => import("../pages/stickyNotes"));
 const Timer = lazy(() => import("../pages/timer"));
 const ActivityStreamPage = lazy(() => import("../pages/activityStream"));
@@ -113,7 +114,8 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
-        {/* Public: no login required. Google and anyone can open these. */}
+        {/* Public pages — no login. Used for Google OAuth branding too. */}
+        <Route path="/home" element={<PublicLanding />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route

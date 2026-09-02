@@ -1,25 +1,25 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import LoadingSpinner from "../LoadingSpinner";
-import PublicHome from "../../pages/public/Home";
+import { PUBLIC_LANDING_PATH } from "../../pages/public/publicSite";
 
 export const ProtectedRoute = ({ children, requireProfileComplete = true, allowedRoles = [] }) => {
   const { isAuthenticated, loading, isProfileComplete, user } = useAuth();
-  const location = useLocation();
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   if (!isAuthenticated) {
-    const isExactHome = location.pathname === "/";
-    if (isExactHome) {
-      return <PublicHome />;
-    }
-
     const isPortalRoute = window.location.pathname.includes('client') || 
                           window.location.pathname.includes('portal');
-    return <Navigate to={isPortalRoute ? "/portal/login" : "/auth/signin"} />;
+    if (isPortalRoute) {
+      return <Navigate to="/portal/login" />;
+    }
+    if (window.location.pathname === "/" || window.location.pathname === "") {
+      return <Navigate to={PUBLIC_LANDING_PATH} replace />;
+    }
+    return <Navigate to="/auth/signin" />;
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
