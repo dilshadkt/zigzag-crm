@@ -44,9 +44,16 @@ flexCenter overflow-hidden w-6 h-6 scale-85 "
         </div>
         <h4 className="font-medium mt-4">{employee?.name}</h4>
         <span className="text-sm">{employee?.position}</span>
-        <span className="text-[#7D8592] border mt-2 border-[#7D8592]/70 rounded-md px-1 text-xs">
-          {employee?.level}
-        </span>
+        <div className="flex items-center gap-1.5 mt-2">
+          <span className="text-[#7D8592] border border-[#7D8592]/70 rounded-md px-1 text-xs">
+            {employee?.level}
+          </span>
+          {employee?.isOnProbation && (
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+              On probation
+            </span>
+          )}
+        </div>
       </div>
       <div className="w-full h-full grid grid-cols-3  gap-x-3 px-2">
         <div className="flex flex-col items-center">

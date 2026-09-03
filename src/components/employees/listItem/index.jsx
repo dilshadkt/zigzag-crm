@@ -13,6 +13,7 @@ const ListItem = ({ employee, onClick }) => {
           name: employee?.name,
           email: employee?.email,
           profile: employee?.profile,
+          isOnProbation: Boolean(employee?.isOnProbation),
         }}
       />
       <div className="grid grid-cols-3">

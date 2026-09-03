@@ -25,7 +25,14 @@ const UserProfile = ({ user }) => {
         )}
       </div>
       <div className="flex flex-col">
-        <span className="font-medium">{user?.name}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium">{user?.name}</span>
+          {user?.isOnProbation && (
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+              On probation
+            </span>
+          )}
+        </div>
         <span className="text-sm text-[#91929E]">{user?.email}</span>
       </div>
     </div>
