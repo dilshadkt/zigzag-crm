@@ -13,6 +13,7 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGetMyVacations, useGetLeavePolicy, useGetAllEmployees } from "../../../api/hooks";
 import { usePermissions } from "../../../hooks/usePermissions";
+import { getLeaveLimits } from "../../../utils/leaveEntitlement";
 
 const VacationRequestModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -40,13 +41,21 @@ const VacationRequestModal = ({ onClose }) => {
   // Only fetch employees if user is an admin or HR
   const { data: employeesData } = useGetAllEmployees(canApproveVacations);
   const employeesList = canApproveVacations ? (employeesData?.employees || []) : [];
-  const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
-  const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
-  const unpaidLeavePolicy = leavePolicy?.find((p) => p.id === "unpaid" || p.name?.toLowerCase().includes("unpaid"));
+  const selectedEmployee = formData.employeeId
+    ? employeesList.find((emp) => emp._id === formData.employeeId)
+    : null;
+  const targetEmployee = selectedEmployee || {
+    ...user,
+    isOnProbation:
+      user?.isOnProbation || myVacationsData?.employee?.isOnProbation,
+    leaveQuotas: user?.leaveQuotas || myVacationsData?.employee?.leaveQuotas,
+  };
+  const targetOnProbation = Boolean(targetEmployee?.isOnProbation);
 
-  const vacationLimit = casualLeavePolicy ? casualLeavePolicy.yearlyQuota : 16;
-  const sickLeaveLimit = sickLeavePolicy ? sickLeavePolicy.yearlyQuota : 12;
-  const remoteWorkLimit = unpaidLeavePolicy ? unpaidLeavePolicy.yearlyQuota : 50;
+  const limits = getLeaveLimits(targetEmployee, leavePolicy || []);
+  const vacationLimit = limits.vacation;
+  const sickLeaveLimit = limits.sick_leave;
+  const remoteWorkLimit = limits.remote_work;
 
   const { data: employeeVacationsData } = useGetEmployeeVacations(formData.employeeId);
   const employeeVacationsSummary = employeeVacationsData?.summary;
@@ -78,6 +87,14 @@ const VacationRequestModal = ({ onClose }) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitError("");
+
+    if (targetOnProbation) {
+      setSubmitError(
+        "Employees on probation cannot request leave. Leave is not available during the probation period."
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       await createVacationMutation.mutateAsync({
@@ -327,9 +344,16 @@ const VacationRequestModal = ({ onClose }) => {
                     {employeesList.map(emp => (
                       <option key={emp._id} value={emp._id} style={{ color: "#1e293b" }}>
                         {emp.name || `${emp.firstName} ${emp.lastName}`}
+                        {emp.isOnProbation ? " (Probation)" : ""}
                       </option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {targetOnProbation && (
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-[11px] font-semibold text-center">
+                  Don't have leave in probation. This employee cannot request leave.
                 </div>
               )}
             </div>
@@ -343,7 +367,7 @@ const VacationRequestModal = ({ onClose }) => {
             <div className="mt-8">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || targetOnProbation}
                 className="w-full py-3.5 text-xs font-bold text-white bg-indigo-600 
                 rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100"
               >

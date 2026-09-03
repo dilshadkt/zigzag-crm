@@ -15,6 +15,7 @@ import LeaveCard from "../../shared/LeaveCard";
 import { useNavigate } from "react-router-dom";
 import EmployeeProgressStats from "../../dashboard/employeeProgressStats";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { getLeaveLimits, isOnProbation, formatJoiningDate } from "../../../utils/leaveEntitlement";
 
 const EmployeeSettings = () => {
   const { user } = useAuth();
@@ -146,7 +147,14 @@ const EmployeeSettings = () => {
           <Projects projects={projects} isLoading={isLoadingProjects} />
         )}
         {activePage === "Teams" && <Teams teams={teamsData?.teams || []} />}
-        {activePage === "Vacations" && <Vacations employeeId={user?._id} selectedMonth={selectedMonth} selectedYear={selectedYear} />}
+        {activePage === "Vacations" && (
+          <Vacations
+            employeeId={user?._id}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            employee={user}
+          />
+        )}
       </div>
     </div>
   );
@@ -308,7 +316,7 @@ const Teams = ({ teams }) => {
   );
 };
 
-const Vacations = ({ employeeId, selectedMonth, selectedYear }) => {
+const Vacations = ({ employeeId, selectedMonth, selectedYear, employee }) => {
   const { data, isLoading } = useGetEmployeeVacations(
     employeeId,
     selectedMonth,
@@ -317,10 +325,13 @@ const Vacations = ({ employeeId, selectedMonth, selectedYear }) => {
 
   const { user } = useAuth();
   const { data: leavePolicy } = useGetLeavePolicy(user?.company);
+  const employeeRecord = employee || data?.employee || user;
+  const onProbation = isOnProbation(employeeRecord);
 
-  const casualLeavePolicy = leavePolicy?.find((p) => p.id === "casual" || p.name?.toLowerCase().includes("casual"));
-  const sickLeavePolicy = leavePolicy?.find((p) => p.id === "sick" || p.name?.toLowerCase().includes("sick"));
-  const unpaidLeavePolicy = leavePolicy?.find((p) => p.id === "unpaid" || p.name?.toLowerCase().includes("unpaid"));
+  const limits = getLeaveLimits(employeeRecord, leavePolicy || []);
+  const vacationLimit = limits.vacation;
+  const sickLeaveLimit = limits.sick_leave;
+  const remoteWorkLimit = limits.remote_work;
 
   if (isLoading) {
     return (
@@ -332,10 +343,28 @@ const Vacations = ({ employeeId, selectedMonth, selectedYear }) => {
 
   const { summary, vacations } = data || { summary: {}, vacations: [] };
 
-  // Calculate vacation limits from leave policy or fallbacks
-  const vacationLimit = casualLeavePolicy ? casualLeavePolicy.yearlyQuota : 16;
-  const sickLeaveLimit = sickLeavePolicy ? sickLeavePolicy.yearlyQuota : 12;
-  const remoteWorkLimit = unpaidLeavePolicy ? unpaidLeavePolicy.yearlyQuota : 50;
+  if (onProbation) {
+    return (
+      <div className="flex flex-col w-full h-full overflow-y-auto space-y-6">
+        <div className="bg-white rounded-3xl p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center text-2xl">
+            ⏳
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-1">
+            Don't have leave in probation
+          </h3>
+          <p className="text-sm text-gray-500">
+            Leave is not available during the probation period.
+          </p>
+          {employeeRecord?.joiningDate && (
+            <p className="text-xs font-medium text-amber-700 mt-3">
+              Joining date: {formatJoiningDate(employeeRecord.joiningDate)}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full h-full overflow-y-auto space-y-6">

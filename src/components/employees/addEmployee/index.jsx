@@ -3,6 +3,7 @@ import React from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Input from "../../shared/Field/input";
 import Select from "../../shared/Field/select";
+import DatePicker from "../../shared/Field/date";
 import { useAddEmpoloyeeForm } from "../../../hooks/useAddEmpoloyeeForm";
 import { useGetPositions } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
@@ -26,6 +27,7 @@ const CreateEmployee = ({ isOpen, handleClose, onSubmit }) => {
     resetForm,
     touched,
     isSubmitting,
+    setFieldValue,
   } = useAddEmpoloyeeForm({}, onSubmit);
 
   // Extract position names from the API response
@@ -153,6 +155,37 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
               placeholder="Select Experience Level"
               options={["Low", "Medium", "High"]}
             />
+
+            <label className="flex items-center justify-between rounded-[14px] border-2 border-[#D8E0F0]/80 px-4 py-3 cursor-pointer">
+              <div className="pr-3">
+                <p className="text-sm font-semibold text-[#0A1629]">
+                  On probation
+                </p>
+                <p className="text-[11px] text-gray-400 font-medium">
+                  Probation employees cannot request leave
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                name="isOnProbation"
+                checked={Boolean(values.isOnProbation)}
+                onChange={(event) =>
+                  setFieldValue("isOnProbation", event.target.checked)
+                }
+                className="h-4 w-4 accent-[#3F8CFF]"
+              />
+            </label>
+
+            {values.isOnProbation && (
+              <DatePicker
+                errors={errors}
+                touched={touched}
+                onChange={(e) => setFieldValue("joiningDate", e.target.value)}
+                name="joiningDate"
+                value={values.joiningDate}
+                title="Joining Date"
+              />
+            )}
 
             <div>
               <div className="flexEnd">

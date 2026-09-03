@@ -380,6 +380,11 @@ export const useUpdateProfile = (handleSuccess, employeeId = null) => {
       // Invalidate auth-related queries that might contain user profile data
       queryClient.invalidateQueries(["auth"]);
       queryClient.invalidateQueries(["user"]);
+      queryClient.invalidateQueries(["myVacations"]);
+      queryClient.invalidateQueries(["employeeVacations"]);
+      queryClient.invalidateQueries(["companyVacations"]);
+      queryClient.invalidateQueries(["vacationsCalendar"]);
+      queryClient.invalidateQueries(["allEmployees"]);
 
       // Call the success handler if provided
       if (handleSuccess) {

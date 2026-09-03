@@ -190,7 +190,11 @@ const EmployeeDetails = () => {
               />
             )}
             {activePage === "Vacations" && (
-              <Vacations employeeId={employeeId} />
+              <Vacations
+                employeeId={employeeId}
+                employee={employee}
+                canEdit={isAdmin() || canEdit}
+              />
             )}
           </div>
         </div>

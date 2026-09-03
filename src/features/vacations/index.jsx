@@ -23,6 +23,7 @@ import {
 import { useGetMyVacations } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
+import { isOnProbation } from "../../utils/leaveEntitlement";
 
 // Internal feature components
 import Spinner from "./components/Spinner";
@@ -42,6 +43,10 @@ const Vacations = () => {
   const canApproveVacations =
     isCompany || hasPermission("vacations", "approve");
   const canEditVacations = isCompany || hasPermission("vacations", "edit");
+  const currentUserOnProbation = isOnProbation(user);
+  const canOpenRequestModal =
+    canCreateVacationRequest &&
+    (canApproveVacations || !currentUserOnProbation);
 
   // We removed the Access Denied block so employees can view their own vacations
 
@@ -123,6 +128,8 @@ const Vacations = () => {
           id: user?._id || user?.id,
           name: user?.name || "Me",
           profileImage: user?.profileImage || null,
+          isOnProbation: Boolean(user?.isOnProbation),
+          joiningDate: user?.joiningDate || null,
         },
         vacations: {
           vacation: myVacationsData?.summary?.vacation || 0,
@@ -162,6 +169,8 @@ const Vacations = () => {
           id: user?._id || user?.id,
           name: user?.name || "Me",
           profileImage: user?.profileImage || null,
+          isOnProbation: Boolean(user?.isOnProbation),
+          joiningDate: user?.joiningDate || null,
         },
         dates: myDates,
       }
@@ -437,13 +446,18 @@ const Vacations = () => {
             </button>
           </div>
 
-          {canCreateVacationRequest && (
+          {canOpenRequestModal && (
             <PrimaryButton
               icon={"/icons/add.svg"}
               title={"Add Request"}
               className={"px-5 text-white"}
               onclick={() => setShowRequestModal(true)}
             />
+          )}
+          {canCreateVacationRequest && currentUserOnProbation && !canApproveVacations && (
+            <div className="px-4 py-2 rounded-2xl bg-amber-50 border border-amber-100 text-[11px] font-semibold text-amber-700">
+              Don't have leave in probation
+            </div>
           )}
         </div>
       </div>

@@ -91,6 +91,11 @@ const VacationCard = ({
           </div>
           <div>
             <h4 className="text-[13px] font-bold text-gray-800">{item.employee.name}</h4>
+            {item.employee.isOnProbation && (
+              <span className="mt-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
+                Probation
+              </span>
+            )}
             <div className="flex items-center gap-3 mt-0.5">
               <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />

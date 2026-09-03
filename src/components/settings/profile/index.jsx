@@ -107,6 +107,8 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
     email: user?.email || "",
     mobile: user?.phoneNumber || "",
     skype: user?.skype || "",
+    isOnProbation: Boolean(user?.isOnProbation),
+    joiningDate: user?.joiningDate || null,
   };
 
   // Validation schema
@@ -116,6 +118,12 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
       /^[+]?[\d\s\-()]+$/,
       "Invalid phone number format"
     ),
+    joiningDate: Yup.string().when("isOnProbation", {
+      is: true,
+      then: (schema) =>
+        schema.required("Joining date is required for probation"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
   });
 
   // Handle successful profile update
@@ -193,6 +201,19 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
         if (canEditPositionDepartment) {
           normalizedData.position = values.position;
           normalizedData.department = values.department || null;
+          normalizedData.isOnProbation = Boolean(values.isOnProbation);
+          normalizedData.joiningDate = values.isOnProbation
+            ? values.joiningDate || null
+            : values.joiningDate || null;
+        }
+
+        if (
+          canEditPositionDepartment &&
+          normalizedData.isOnProbation &&
+          !normalizedData.joiningDate
+        ) {
+          toast.error("Joining date is required when the employee is on probation");
+          return;
         }
 
         let updatePayload = normalizedData;
@@ -201,6 +222,14 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
           updatePayload = new FormData();
           Object.entries(normalizedData).forEach(([key, value]) => {
             if (key === "department") {
+              updatePayload.append(key, value || "");
+              return;
+            }
+            if (key === "isOnProbation") {
+              updatePayload.append(key, value ? "true" : "false");
+              return;
+            }
+            if (key === "joiningDate") {
               updatePayload.append(key, value || "");
               return;
             }
@@ -213,7 +242,10 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
 
         await updateProfileMutation.mutateAsync(updatePayload);
       } catch (error) {
-        toast.error("Failed to update profile. Please try again.");
+        toast.error(
+          error?.response?.data?.message ||
+            "Failed to update profile. Please try again."
+        );
         console.error("Profile update error:", error);
       }
     },
@@ -233,6 +265,8 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
           email: user?.email || "",
           mobile: user?.phoneNumber || "",
           skype: user?.skype || "",
+          isOnProbation: Boolean(user?.isOnProbation),
+          joiningDate: user?.joiningDate || null,
         },
       });
 
@@ -383,6 +417,11 @@ rounded-3xl  flex flex-col "
         <span className="text-xs text-gray-600  capitalize">
           {user?.position}
         </span>
+        {(values.isOnProbation || user?.isOnProbation) && (
+          <span className="mt-2 inline-flex w-fit items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+            On probation
+          </span>
+        )}
         {selectedImageFile && isEditMode && (
           <span className="text-[11px] text-[#3F8CFF] mt-1">
             New profile photo selected
@@ -485,6 +524,53 @@ rounded-3xl  flex flex-col "
             readOnly={!isEditMode}
             title="Birthday Date"
           />
+        </div>
+        <div className="flex flex-col gap-y-3 mt-7">
+          <h4 className=" font-medium">Employment</h4>
+          {isEditMode && canEditPositionDepartment ? (
+            <label className="flex items-center justify-between rounded-[14px] border-2 border-[#D8E0F0]/80 px-4 py-3 cursor-pointer">
+              <div className="pr-3">
+                <p className="text-sm font-semibold text-[#0A1629]">
+                  On probation
+                </p>
+                <p className="text-[11px] text-gray-400 font-medium">
+                  Probation employees cannot request leave
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                name="isOnProbation"
+                checked={Boolean(values.isOnProbation)}
+                onChange={(event) =>
+                  setFieldValue("isOnProbation", event.target.checked)
+                }
+                className="h-4 w-4 accent-[#3F8CFF]"
+              />
+            </label>
+          ) : (
+            <Input
+              readOnly
+              name="probationDisplay"
+              value={{
+                probationDisplay: values.isOnProbation ? "Yes" : "No",
+              }}
+              title="On probation"
+              placeholder="No"
+            />
+          )}
+          {(isEditMode && canEditPositionDepartment
+            ? values.isOnProbation
+            : Boolean(user?.isOnProbation) || values.isOnProbation) && (
+            <DatePicker
+              errors={errors}
+              touched={touched}
+              onChange={(e) => setFieldValue("joiningDate", e.target.value)}
+              name="joiningDate"
+              value={values.joiningDate}
+              readOnly={!isEditMode || !canEditPositionDepartment}
+              title="Joining Date"
+            />
+          )}
         </div>
         <div className="flex flex-col gap-y-3 mt-7">
           <h4 className=" font-medium">Contact Info</h4>
