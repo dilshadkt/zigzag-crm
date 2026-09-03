@@ -19,6 +19,7 @@ const ProjectDetails = ({
   setShowModalProject,
   setShowModalTask,
   activeProject,
+  hasNoProject = false,
   activeTasks = [],
   progressTasks = [],
   completedTasks = [],
@@ -200,11 +201,14 @@ const ProjectDetails = ({
 
   return (
     <div
-      className={`${isTimelineExpanded || !activeProject ? "col-span-5" : "col-span-4"
-        } h-full md:overflow-hidden flex flex-col`}
+      className={`${
+        isTimelineExpanded || hasNoProject
+          ? "col-span-1 md:col-span-5"
+          : "col-span-1 md:col-span-4"
+      } h-full min-w-0 w-full md:overflow-hidden flex flex-col`}
     >
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between gap-3 w-full shrink-0">
         <h3 className="text-lg font-bold text-gray-700">
           {activeProject?.name || "Tasks"}
         </h3>
@@ -225,8 +229,10 @@ const ProjectDetails = ({
       </div>
 
       {/* Task Sections */}
-      {!activeProject ? (
+      {hasNoProject ? (
         <NoTask>There are no Projects</NoTask>
+      ) : !activeProject ? (
+        <NoTask>Select a project to view tasks</NoTask>
       ) : hasNoTasks ? (
         <NoTask>
           There are no tasks in this project <br /> yet Let's add them

@@ -127,10 +127,14 @@ const Prjects = () => {
   };
 
   useEffect(() => {
-    if (isSuccess && projects?.length > 0 && !selectProject) {
+    if (!isSuccess || !projects?.length) return;
+    const selectedStillExists = projects.some(
+      (project) => project?._id === selectProject
+    );
+    if (!selectProject || !selectedStillExists) {
       dispatch(setActiveProject(projects[0]?._id));
     }
-  }, [isSuccess, projects, selectProject]);
+  }, [isSuccess, projects, selectProject, dispatch]);
 
   const [showModalProject, setShowModalProject] = useState(false);
   const [showModalFilter, setShowModalFilter] = useState(false);
@@ -157,7 +161,7 @@ const Prjects = () => {
   return (
     <section className="flex flex-col h-full gap-y-2">
       <div
-        className="w-full h-full overflow-y-auto gap-y-3 md:gap-y-0 
+        className="w-full h-full min-h-0 overflow-y-auto gap-y-3 md:gap-y-0 
          md:overflow-hidden md:gap-x-3 grid grid-cols-1 md:grid-cols-5"
       >
         {/* current project section  */}
@@ -167,6 +171,7 @@ const Prjects = () => {
         {/* project detail page  */}
         <ProjectDetails
           activeProject={projectWithTasks}
+          hasNoProject={hasNoProject}
           activeTasks={activeTasks}
           completedTasks={completedTasks}
           progressTasks={progressTasks}
