@@ -460,20 +460,14 @@ const SubtasksSection = ({
                         </svg>
                       )}
                       {subtask.title}
-                      {(subtask.taskCategory?.name ||
-                        taskDetails?.taskCategory?.name) && (
+                      {subtask.taskCategory?.name && (
                         <span
                           className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold border border-indigo-100 rounded-full"
-                          title="Performance category"
+                          title="Performance category for this subtask"
                         >
-                          {subtask.taskCategory?.name ||
-                            taskDetails.taskCategory.name}
-                          {(subtask.taskCategory?.points ??
-                            taskDetails?.taskCategory?.points) != null
-                            ? ` · ${
-                                subtask.taskCategory?.points ??
-                                taskDetails.taskCategory.points
-                              } pts`
+                          {subtask.taskCategory.name}
+                          {subtask.taskCategory.points != null
+                            ? ` · ${subtask.taskCategory.points} pts`
                             : ""}
                         </span>
                       )}

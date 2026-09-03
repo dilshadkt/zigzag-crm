@@ -486,8 +486,6 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                 taskCategory:
                   editingSubTask.taskCategory?._id ||
                   editingSubTask.taskCategory ||
-                  taskDetails?.taskCategory?._id ||
-                  taskDetails?.taskCategory ||
                   "",
               }
             : {
