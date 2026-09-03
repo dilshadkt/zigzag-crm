@@ -13,6 +13,7 @@ const DepartmentDashboard = () => {
   const { data, isLoading, error } = useGetDepartmentDashboard(effectiveCompanyId);
   const departments = data?.departments || [];
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const isCompanyAdmin = user?.role === "company-admin";
 
   const activeDepartmentId = useMemo(() => {
     if (!departments.length) return "";
@@ -72,10 +73,23 @@ const DepartmentDashboard = () => {
   }
 
   return (
-    <section className="flex flex-col overflow-y-auto h-full gap-y-3">
-      <div className="flexBetween flex-col md:flex-row gap-2">
+    <section className="flex min-h-0 h-full flex-col gap-y-3">
+      <div className="flexBetween flex-col md:flex-row gap-2 shrink-0">
         <Header>Department Dashboard</Header>
         <div className="flex items-center gap-2">
+          {isCompanyAdmin && departments.length > 0 && (
+            <select
+              value={activeDepartmentId}
+              onChange={(event) => setSelectedDepartmentId(event.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[13px] font-semibold text-gray-700 outline-none focus:border-[#3F8CFF]"
+            >
+              {departments.map((department) => (
+                <option key={department._id} value={department._id}>
+                  {department.name} ({department.employeeCount})
+                </option>
+              ))}
+            </select>
+          )}
           <button
             type="button"
             onClick={() => navigate("/department-dashboard/team-tasks")}
@@ -96,7 +110,7 @@ const DepartmentDashboard = () => {
       </div>
 
       {departments.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 shrink-0">
           {departments.map((department) => (
             <button
               key={department._id}
@@ -115,8 +129,8 @@ const DepartmentDashboard = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex min-h-0 flex-1 flex-col">
+        <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between gap-3 shrink-0">
           <div className="min-w-0">
             <h3 className="text-[16px] font-bold text-gray-800">
               {activeDepartment?.name}
@@ -136,7 +150,7 @@ const DepartmentDashboard = () => {
           </span>
         </div>
 
-        <div className="p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto p-3">
           {activeDepartment?.employees?.length ? (
             <div className="flex flex-col gap-2">
               {activeDepartment.employees.map((employee) => (

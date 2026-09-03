@@ -340,6 +340,11 @@ const Integration = () => {
                     Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to the API .env, then restart the server.
                   </p>
                 )}
+                {googleStatus?.redirectUri ? (
+                  <p className="mt-2 break-all text-[11px] text-gray-400">
+                    Google callback this server sends: {googleStatus.redirectUri}
+                  </p>
+                ) : null}
               </div>
             </div>
 

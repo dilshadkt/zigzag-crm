@@ -8,6 +8,10 @@ const DepartmentDashboardAccess = ({ children, fallbackPath = "/unauthorized" })
   const effectiveCompanyId = companyId || user?.company;
   const { isDepartmentHead, isLoading } = useIsDepartmentHead(effectiveCompanyId, !!user);
 
+  if (user?.role === "company-admin") {
+    return children;
+  }
+
   if (isLoading) {
     return <LoadingSpinner />;
   }

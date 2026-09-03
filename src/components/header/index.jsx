@@ -96,8 +96,7 @@ const DashboardHeader = () => {
     // If the item is "Dashboard", check if sub-items should be shown
     if (item.routeKey === "dashboard") {
       // ONLY Company Admin sees all sub-items under the main "Dashboard"
-      if (isCompanyAdmin) {
-        if (isDepartmentHead) {
+        if (isCompanyAdmin) {
           const hasDepartmentDashboard = item.children?.some(
             (child) => child.routeKey === "department-dashboard"
           );
@@ -116,10 +115,9 @@ const DashboardHeader = () => {
               ],
             };
           }
-        }
 
-        return item;
-      }
+          return item;
+        }
 
       // For others, check if they have specific dashboard permissions (like lead-dashboard)
       const allowedRoutes = userPosition?.allowedRoutes || [];

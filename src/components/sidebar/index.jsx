@@ -104,7 +104,7 @@ const Sidebar = () => {
         }
       });
 
-      if (isDepartmentHead) {
+      if (isDepartmentHead || isCompanyAdmin) {
         children.push({
           id: 107,
           title: "Department Dashboard",
