@@ -1234,9 +1234,11 @@ export const getEmployeePerformance = async (employeeId, type = "monthly", perio
   }
 };
 
-export const getMyPerformance = async (type = "monthly") => {
+export const getMyPerformance = async (type = "monthly", periodKey) => {
   try {
-    const response = await apiClient.get(`/performance/me?type=${type}`);
+    const params = new URLSearchParams({ type });
+    if (periodKey) params.set("periodKey", periodKey);
+    const response = await apiClient.get(`/performance/me?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching my performance:", error);

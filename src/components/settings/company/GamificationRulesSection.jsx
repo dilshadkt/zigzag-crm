@@ -146,7 +146,7 @@ const GamificationRulesSection = () => {
               <FiStar className="text-green-500" /> Task Completion Bonus
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points awarded for completing a task on time (once per subtask, multiplied by weight).
+              Fallback points when a subtask has no category points. Credited once when work is first submitted for review — not again on rework. Category points on the subtask or parent replace this and skip the role multiplier. Late work still gets this credit plus the overdue penalty below.
             </p>
             <input
               type="number"
@@ -163,7 +163,7 @@ const GamificationRulesSection = () => {
               <FiClock className="text-red-500" /> Task Overdue Penalty
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points deducted when an employee misses a deadline.
+              Deducted per late subtask in the period. Lateness is frozen at first submit. After 10 late subtasks in the same week or month, further late ones cost double.
             </p>
             <input
               type="number"
@@ -180,7 +180,7 @@ const GamificationRulesSection = () => {
               <FiStar className="text-purple-500" /> Daily Checklist Bonus
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points awarded when a user completes all daily checklist items.
+              Awarded once per day when the employee finishes every checklist item on every assigned project that day.
             </p>
             <input
               type="number"
@@ -197,7 +197,7 @@ const GamificationRulesSection = () => {
               <FiAlertCircle className="text-red-500" /> Daily Checklist Penalty
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points deducted if a user fails to complete their daily checklist before the end of the day.
+              One deduction at end of day if any assigned project checklist is still incomplete. Shows under Penalties on My Points.
             </p>
             <input
               type="number"
@@ -214,7 +214,7 @@ const GamificationRulesSection = () => {
               <FiStar className="text-teal-500" /> Early Leave Bonus
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points awarded when an employee requests leave 7 or more days in advance.
+              Awarded when approved leave starts 7 or more days after the request. Requests 1–6 days ahead are neither bonus nor penalty.
             </p>
             <input
               type="number"
@@ -231,7 +231,7 @@ const GamificationRulesSection = () => {
               <FiAlertCircle className="text-rose-500" /> Late Leave Penalty
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points deducted when an employee requests leave on the same day or retrospectively (not in advance).
+              Deducted when approved leave is requested the same day or after it has already started. 1–6 days of notice is neutral.
             </p>
             <input
               type="number"
@@ -330,7 +330,7 @@ const GamificationRulesSection = () => {
                 <FiClock className="text-indigo-500" /> Review Time Limit (Hours)
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Maximum hours a coordinator has to review a task before a delay penalty applies.
+                Hours after the employee first submits for review. First on-time review earns the bonus; a slow later re-review can still take the delay penalty.
               </p>
               <input
                 type="number"
@@ -362,8 +362,7 @@ const GamificationRulesSection = () => {
                 <FiAlertCircle className="text-amber-500" /> Coordinator Review Delay Penalty
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Points deducted from the <strong>reviewer</strong> when they exceed the time limit above.
-                Does not affect the assigned employee.
+                Points deducted from the <strong>reviewer</strong> when they exceed the time limit — including on a later re-review. Does not affect the assigned employee.
               </p>
               <input
                 type="number"
@@ -379,8 +378,7 @@ const GamificationRulesSection = () => {
                 <FiShield className="text-rose-500" /> Admin Intervention Penalty
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Points deducted from the <strong>project coordinator or reporter</strong> when an admin
-                has to review a task in their place. The admin earns nothing.
+                Charged to each responsible reviewer (project manager, reporters, and task creator) when an admin reviews instead. The admin earns nothing. Admins are never scored.
               </p>
               <input
                 type="number"
@@ -450,7 +448,7 @@ const GamificationRulesSection = () => {
           </div>
           <p className="text-xs text-gray-500 mb-4">
             Optional extras awarded when a <strong>campaign report is posted</strong>, comparing the snapshot against targets.
-            Facebook sync never awards points. Weekly cap applies per campaign per person.
+            Facebook sync never awards points. The weekly cap is per campaign per person; the bonus also appears on the monthly My Points ledger.
           </p>
 
           <label className="flex items-center gap-2 mb-4 cursor-pointer">

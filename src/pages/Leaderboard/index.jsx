@@ -689,7 +689,7 @@ const Leaderboard = () => {
         </>
       )}
 
-      <ScoringGuideDrawer isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      <ScoringGuideDrawer isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} performance={myEntry} />
 
       <AnimatePresence>
         {scoreModal.isOpen && (

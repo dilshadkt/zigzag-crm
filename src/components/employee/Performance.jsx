@@ -25,6 +25,7 @@ import EditLedgerEntryModal from "../performance/EditLedgerEntryModal";
 import Modal from "../shared/modal";
 import Progress from "../shared/progress";
 import socketService from "../../services/socketService";
+import { splitPerformanceBuckets } from "../../utils/splitPerformanceBuckets";
 
 const FILTERS = [
   { key: "all", label: "All" },
@@ -214,35 +215,36 @@ const Performance = ({ employeeId, selectedMonth }) => {
   const status = getStatus(normalizedScore);
   const monthLabel = getMonthLabel(selectedMonth);
 
+  const buckets = splitPerformanceBuckets(performance);
   const scoreCards = [
     {
       label: "Activity",
-      value: performance?.activityScore || 0,
+      value: buckets.activity,
       icon: Target,
       tone: "text-[#3F8CFF] bg-blue-50 border-blue-100",
-      hint: "Tasks completed",
+      hint: "Tasks submitted for review",
     },
     {
       label: "Attendance",
-      value: performance?.attendanceScore || 0,
+      value: buckets.attendance,
       icon: Clock,
       tone: "text-emerald-600 bg-emerald-50 border-emerald-100",
       hint: "On-time presence",
     },
     {
       label: "Penalties",
-      value: performance?.penaltyScore || 0,
+      value: buckets.penalties,
       prefix: "-",
       icon: AlertCircle,
       tone: "text-rose-500 bg-rose-50 border-rose-100",
-      hint: "Late work & delays",
+      hint: "Late work, rework, review delay, checklist, leave",
     },
     {
       label: "Bonus",
-      value: performance?.bonusScore || 0,
+      value: buckets.bonus,
       icon: Zap,
       tone: "text-violet-600 bg-violet-50 border-violet-100",
-      hint: "Admin recognition",
+      hint: "Reviews, checklist, leave, meetings, admin",
     },
   ];
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { format } from "date-fns";
+import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import {
   Zap,
   History,
@@ -10,12 +10,15 @@ import {
   TrendingUp,
   TrendingDown,
   Lightbulb,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { getMyPerformance } from "../../api/service";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import PointsLedgerList from "../../components/performance/PointsLedgerList";
 import ScoringGuideDrawer from "../../components/performance/ScoringGuideDrawer";
 import socketService from "../../services/socketService";
+import { splitPerformanceBuckets } from "../../utils/splitPerformanceBuckets";
 
 const FILTERS = [
   { key: "all", label: "All" },
@@ -29,12 +32,29 @@ const MyPoints = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [monthCursor, setMonthCursor] = useState(() => startOfMonth(new Date()));
+
+  const monthKey = format(monthCursor, "yyyy-MM");
+  const isCurrentMonth = monthKey === format(startOfMonth(new Date()), "yyyy-MM");
 
   useEffect(() => {
+    const fetchPerformance = async () => {
+      try {
+        setLoading(true);
+        const res = await getMyPerformance("monthly", monthKey);
+        if (res.success) {
+          setPerformance(res.performance);
+          setPointsLedger(res.pointsLedger || []);
+        }
+      } catch (err) {
+        console.error("Error fetching performance points:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPerformance();
-  }, []);
 
-  useEffect(() => {
     const handlePointsAwarded = () => {
       setTimeout(() => {
         fetchPerformance();
@@ -46,22 +66,7 @@ const MyPoints = () => {
     return () => {
       socketService.offPointsAwarded(handlePointsAwarded);
     };
-  }, []);
-
-  const fetchPerformance = async () => {
-    try {
-      setLoading(true);
-      const res = await getMyPerformance("monthly");
-      if (res.success) {
-        setPerformance(res.performance);
-        setPointsLedger(res.pointsLedger || []);
-      }
-    } catch (err) {
-      console.error("Error fetching performance points:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [monthKey]);
 
   const filteredLedger = useMemo(() => {
     if (filter === "earned") {
@@ -89,29 +94,31 @@ const MyPoints = () => {
     [pointsLedger]
   );
 
+  const buckets = splitPerformanceBuckets(performance);
+
   const stats = [
     {
       label: "Activity",
-      value: performance?.activityScore || 0,
+      value: buckets.activity,
       icon: Target,
       tone: "text-[#3F8CFF] bg-blue-50 border-blue-100",
     },
     {
       label: "Attendance",
-      value: performance?.attendanceScore || 0,
+      value: buckets.attendance,
       icon: Clock,
       tone: "text-emerald-600 bg-emerald-50 border-emerald-100",
     },
     {
       label: "Penalties",
-      value: performance?.penaltyScore || 0,
+      value: buckets.penalties,
       prefix: "-",
       icon: AlertCircle,
       tone: "text-rose-500 bg-rose-50 border-rose-100",
     },
     {
       label: "Bonus",
-      value: performance?.bonusScore || 0,
+      value: buckets.bonus,
       icon: Zap,
       tone: "text-violet-600 bg-violet-50 border-violet-100",
     },
@@ -130,10 +137,29 @@ const MyPoints = () => {
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-xl font-bold text-[#0A1629]">My Points</h1>
-          <p className="text-[11px] text-[#7D8592] font-medium mt-0.5 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            {format(new Date(), "MMMM yyyy")}
-          </p>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setMonthCursor((current) => startOfMonth(subMonths(current, 1)))}
+              className="p-0.5 rounded-md text-[#7D8592] hover:bg-gray-100 hover:text-[#0A1629]"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <p className="text-[11px] text-[#7D8592] font-medium flex items-center gap-1.5 min-w-[108px] justify-center">
+              <Calendar className="w-3.5 h-3.5" />
+              {format(monthCursor, "MMMM yyyy")}
+            </p>
+            <button
+              type="button"
+              onClick={() => setMonthCursor((current) => startOfMonth(addMonths(current, 1)))}
+              disabled={isCurrentMonth}
+              className="p-0.5 rounded-md text-[#7D8592] hover:bg-gray-100 hover:text-[#0A1629] disabled:opacity-30 disabled:hover:bg-transparent"
+              aria-label="Next month"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

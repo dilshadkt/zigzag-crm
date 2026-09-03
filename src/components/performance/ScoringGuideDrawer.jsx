@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useGetCompany } from "../../api/hooks";
+import { splitPerformanceBuckets } from "../../utils/splitPerformanceBuckets";
 
 const DEFAULTS = {
   taskCompletePoints: 10,
@@ -28,6 +29,7 @@ const DEFAULTS = {
   lateLeaveRequestPenaltyPoints: 10,
   coordinatorReviewTimeLimit: 4,
   coordinatorReviewBonusPoints: 5,
+  adminInterventionPenaltyPoints: 15,
   baseTargetScore: 1000,
   attendanceDayPoints: 5,
   lateArrivalPenaltyPoints: 5,
@@ -93,13 +95,15 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
 
   if (!isOpen) return null;
 
-  const activity = performance?.activityScore || 0;
-  const attendance = performance?.attendanceScore || 0;
-  const bonus = performance?.bonusScore || 0;
-  const penalty = performance?.penaltyScore || 0;
+  const buckets = splitPerformanceBuckets(performance);
+  const activity = buckets.activity;
+  const attendance = buckets.attendance;
+  const bonus = buckets.bonus;
+  const penalty = buckets.penalties;
   const total = performance?.totalScore ?? activity + attendance + bonus - penalty;
   const target = performance?.targetScore || settings.baseTargetScore;
   const normalized = performance?.normalizedScore;
+  const showPersonalTotals = Boolean(performance);
 
   return (
     <>
@@ -133,12 +137,13 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {showPersonalTotals && (
           <div className="bg-white rounded-xl border border-gray-100 p-3.5">
             <p className="text-[10px] font-bold text-[#7D8592] uppercase tracking-wide mb-2">
               Your total this month
             </p>
             <p className="text-[11px] text-[#7D8592] leading-relaxed mb-3">
-              Activity + Attendance + Bonus − Penalties
+              Activity + Attendance + Bonus − Penalties. Rework, review delay, checklist, and leave deductions are included in Penalties.
             </p>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -176,6 +181,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
               . Leaderboard ranking uses this percentage.
             </p>
           </div>
+          )}
 
           <Section
             icon={TrendingUp}
@@ -183,8 +189,8 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
             title="How you earn points"
           >
             <RuleRow
-              title="Finish a task on time"
-              detail="Base task points, once per subtask. A rework round does not pay this again."
+              title="Submit a subtask for review"
+              detail="Once per subtask, when it first goes on review. Category points replace this fallback. A rework round does not pay again."
               value={settings.taskCompletePoints}
             />
             <RuleRow
@@ -194,12 +200,12 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
             />
             <RuleRow
               title="Complete the daily checklist"
-              detail="Finish every checklist item on a project before the day ends."
+              detail="Finish every checklist item on every assigned project that day."
               value={settings.dailyChecklistPoints}
             />
             <RuleRow
               title="Request leave early"
-              detail="Ask 7 or more days before the leave date."
+              detail="Ask 7 or more days before the leave date. 1–6 days of notice is neither a bonus nor a penalty."
               value={settings.earlyLeaveRequestPoints}
             />
             <RuleRow
@@ -216,7 +222,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
           >
             <RuleRow
               title="Miss a deadline"
-              detail="The task is completed after its due date."
+              detail="The subtask was first submitted after its due date. After 10 late subtasks in the period, further late ones cost double."
               value={settings.taskPenaltyPoints}
               loss
             />
@@ -228,13 +234,13 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
             />
             <RuleRow
               title="Skip the daily checklist"
-              detail="Checklist items are still open at the end of the day."
+              detail="Any assigned project checklist is still open at the end of the day."
               value={settings.dailyChecklistPenaltyPoints}
               loss
             />
             <RuleRow
               title="Request leave late"
-              detail="Leave asked on the same day or after the date has already started."
+              detail="Leave asked on the same day or after it has already started. 1–6 days of notice is neutral."
               value={settings.lateLeaveRequestPenaltyPoints}
               loss
             />
@@ -264,8 +270,14 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
             />
             <RuleRow
               title="Review is delayed"
-              detail="These points come off the reviewer, not the person who did the task."
+              detail="These points come off the reviewer, not the person who did the task. A slow re-review can still be charged."
               value={settings.coordinatorPenaltyPoints}
+              loss
+            />
+            <RuleRow
+              title="Admin has to review instead"
+              detail="Each responsible reviewer (manager, reporters, and task creator) is charged. The admin earns nothing."
+              value={settings.adminInterventionPenaltyPoints}
               loss
             />
           </Section>
@@ -320,7 +332,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
               </li>
               <li className="flex gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                Bonus points are given by admins for extra recognition.
+                Bonus also includes checklist, leave, meetings, campaign reports, and on-time reviews. Admins can add extra recognition.
               </li>
             </ul>
           </div>
