@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCreateVacationRequest, useGetEmployeeVacations } from "../hooks/useVacations";
 import {
   format,
@@ -13,7 +13,7 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGetMyVacations, useGetLeavePolicy, useGetAllEmployees } from "../../../api/hooks";
 import { usePermissions } from "../../../hooks/usePermissions";
-import { getLeaveLimits } from "../../../utils/leaveEntitlement";
+import { getLeaveLimits, UNPAID_LEAVE_TYPE } from "../../../utils/leaveEntitlement";
 
 const VacationRequestModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -56,6 +56,17 @@ const VacationRequestModal = ({ onClose }) => {
   const vacationLimit = limits.vacation;
   const sickLeaveLimit = limits.sick_leave;
   const remoteWorkLimit = limits.remote_work;
+  const unpaidLimit = limits.unpaid_leave;
+
+  useEffect(() => {
+    if (targetOnProbation) {
+      setFormData((prev) =>
+        prev.type === UNPAID_LEAVE_TYPE
+          ? prev
+          : { ...prev, type: UNPAID_LEAVE_TYPE }
+      );
+    }
+  }, [targetOnProbation]);
 
   const { data: employeeVacationsData } = useGetEmployeeVacations(formData.employeeId);
   const employeeVacationsSummary = employeeVacationsData?.summary;
@@ -64,9 +75,13 @@ const VacationRequestModal = ({ onClose }) => {
   const usedSick = formData.employeeId ? (employeeVacationsSummary?.sick_leave || 0) : (myVacationsData?.summary?.sick_leave || 0);
   const usedRemote = formData.employeeId ? (employeeVacationsSummary?.remote_work || 0) : (myVacationsData?.summary?.remote_work || 0);
 
+  const usedUnpaid = formData.employeeId ? (employeeVacationsSummary?.unpaid_leave || 0) : (myVacationsData?.summary?.unpaid_leave || 0);
+
   const vacationBalance = vacationLimit - usedVacation;
   const sickBalance = sickLeaveLimit - usedSick;
   const remoteBalance = remoteWorkLimit - usedRemote;
+  const unpaidBalance =
+    unpaidLimit == null ? "∞" : unpaidLimit - usedUnpaid;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -88,9 +103,9 @@ const VacationRequestModal = ({ onClose }) => {
     setIsSubmitting(true);
     setSubmitError("");
 
-    if (targetOnProbation) {
+    if (targetOnProbation && formData.type !== UNPAID_LEAVE_TYPE) {
       setSubmitError(
-        "Employees on probation cannot request leave. Leave is not available during the probation period."
+        "During probation only unpaid leave can be requested."
       );
       setIsSubmitting(false);
       return;
@@ -288,18 +303,25 @@ const VacationRequestModal = ({ onClose }) => {
 
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-800 tracking-tight">Request Leave</h2>
-              <p className="text-[11px] text-slate-400 font-medium">Select type and provide a reason.</p>
+              <p className="text-[11px] text-slate-400 font-medium">
+                {targetOnProbation
+                  ? "Probation: only unpaid leave is available."
+                  : "Select type and provide a reason."}
+              </p>
             </div>
 
             <div className="space-y-6 flex-1">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Type</label>
                 <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
-                  {[
+                  {(targetOnProbation
+                    ? [{ key: UNPAID_LEAVE_TYPE, label: "unpaid leave", balance: unpaidBalance }]
+                    : [
                     { key: "vacation", label: "vacation", balance: vacationBalance },
                     { key: "sick_leave", label: "sick leave", balance: sickBalance },
                     { key: "remote_work", label: "remote work", balance: remoteBalance },
-                  ].map(({ key, label, balance }) => (
+                    { key: UNPAID_LEAVE_TYPE, label: "unpaid leave", balance: unpaidBalance },
+                  ]).map(({ key, label, balance }) => (
                     <button
                       key={key}
                       type="button"
@@ -353,7 +375,7 @@ const VacationRequestModal = ({ onClose }) => {
 
               {targetOnProbation && (
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-700 text-[11px] font-semibold text-center">
-                  Don't have leave in probation. This employee cannot request leave.
+                  Don't have paid leave in probation. Unpaid leave can be requested.
                 </div>
               )}
             </div>
@@ -367,7 +389,7 @@ const VacationRequestModal = ({ onClose }) => {
             <div className="mt-8">
               <button
                 type="submit"
-                disabled={isSubmitting || targetOnProbation}
+                disabled={isSubmitting}
                 className="w-full py-3.5 text-xs font-bold text-white bg-indigo-600 
                 rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100"
               >

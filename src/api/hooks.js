@@ -9,6 +9,7 @@ import {
   createTaskFromBoard,
   getTaskById,
   updatedProfile,
+  extendEmployeeProbation,
   updateProject,
   updateTaskById,
   updateTaskOrder,
@@ -389,6 +390,25 @@ export const useUpdateProfile = (handleSuccess, employeeId = null) => {
       // Call the success handler if provided
       if (handleSuccess) {
         handleSuccess(data);
+      }
+    },
+  });
+};
+
+export const useExtendEmployeeProbation = (employeeId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["extendProbation", employeeId],
+    mutationFn: (payload) => extendEmployeeProbation(employeeId, payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(["employee"]);
+      queryClient.invalidateQueries(["employees"]);
+      queryClient.invalidateQueries(["allEmployees"]);
+      queryClient.invalidateQueries(["myVacations"]);
+      queryClient.invalidateQueries(["employeeVacations"]);
+      if (data?.employee?._id) {
+        queryClient.setQueryData(["employee", data.employee._id], data);
+        queryClient.invalidateQueries(["employee", data.employee._id]);
       }
     },
   });

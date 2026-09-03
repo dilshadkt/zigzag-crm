@@ -4,7 +4,12 @@ import { useGetEmployeeVacations, useGetLeavePolicy, useUpdateProfile } from "..
 import { useAuth } from "../../hooks/useAuth";
 import Progress from "../shared/progress";
 import LeaveCard from "../shared/LeaveCard";
-import { getLeaveLimits, isOnProbation, formatJoiningDate } from "../../utils/leaveEntitlement";
+import ProbationTrack from "./ProbationTrack";
+import {
+  formatLeaveBalance,
+  getLeaveLimits,
+  isOnProbation,
+} from "../../utils/leaveEntitlement";
 
 const Vacations = ({ employeeId, employee, canEdit = false }) => {
   const [currentDate] = useState(new Date());
@@ -29,8 +34,6 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
 
   const employeeRecord = employee || data?.employee || {};
   const onProbation = isOnProbation(employeeRecord);
-  const joiningDate =
-    employeeRecord?.joiningDate || data?.employee?.joiningDate;
 
   if (isLoading) {
     return (
@@ -89,27 +92,45 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
     vacation: Math.max(0, limits.vacation - (summary?.vacation || 0)),
     sick_leave: Math.max(0, limits.sick_leave - (summary?.sick_leave || 0)),
     remote_work: Math.max(0, limits.remote_work - (summary?.remote_work || 0)),
+    unpaid_leave:
+      limits.unpaid_leave == null
+        ? null
+        : Math.max(0, limits.unpaid_leave - (summary?.unpaid_leave || 0)),
   };
 
   return (
-    <div className="flex flex-col w-full h-full overflow-y-auto">
+    <div className="flex flex-col w-full h-full min-h-0 overflow-y-auto pr-1">
       {onProbation ? (
-        <div className="bg-white rounded-3xl p-8 text-center mb-5">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center text-2xl">
-            ⏳
-          </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-1">
-            Don't have leave in probation
-          </h3>
-          <p className="text-sm text-gray-500 max-w-md mx-auto">
-            This employee is on probation and cannot request or use leave until
-            probation ends.
-          </p>
-          {joiningDate && (
-            <p className="text-xs font-medium text-amber-700 mt-3">
-              Joining date: {formatJoiningDate(joiningDate)}
+        <div className="mb-5 space-y-4">
+          <ProbationTrack employee={employeeRecord} />
+          <div className="bg-white rounded-3xl p-6">
+            <h3 className="text-base font-semibold text-gray-800 mb-1">
+              Don't have paid leave in probation
+            </h3>
+            <p className="text-sm text-gray-500 mb-5">
+              Vacation, sick leave, and remote work are locked until probation
+              ends. Unpaid leave can still be requested.
             </p>
-          )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <LeaveBalanceCard
+                title="Unpaid Leave"
+                remaining={remaining.unpaid_leave ?? "∞"}
+                limit={limits.unpaid_leave}
+                color="#64748B"
+                subtitle={
+                  limits.unpaid_leave == null
+                    ? "Available during probation"
+                    : formatLeaveBalance(remaining.unpaid_leave, limits.unpaid_leave)
+                }
+              />
+              <div className="p-6 rounded-3xl bg-slate-50 border border-dashed border-slate-200">
+                <h4 className="font-semibold text-gray-700">Paid leave</h4>
+                <p className="text-xs text-gray-400 mt-1">
+                  Vacation, sick leave, and remote work unlock after probation.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -184,7 +205,7 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
       <h3 className="text-sm font-bold my-3 ml-1  text-gray-600">
         Vacation Requests
       </h3>
-      <div className="w-full h-full overflow-y-auto">
+      <div className="w-full pb-4">
         {vacations && vacations.length > 0 ? (
           vacations.map((vacation) => (
             <LeaveCard
@@ -206,7 +227,7 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
             />
           ))
         ) : (
-          <div className="bg-white h-full flexCenter rounded-3xl p-6 text-center text-gray-500">
+          <div className="bg-white min-h-[120px] flexCenter rounded-3xl p-6 text-center text-gray-500">
             No vacation requests found
           </div>
         )}
@@ -223,13 +244,14 @@ const LeaveBalanceCard = ({
   isEditing,
   editValue,
   onChange,
+  subtitle,
 }) => (
   <div className="p-6 rounded-3xl bg-white">
     <div className="flex flex-col">
       <div className="flex items-center w-fit relative justify-start">
         <Progress
           size={62}
-          currentValue={remaining}
+          currentValue={typeof remaining === "number" ? remaining : 1}
           target={limit || 1}
           DefaultPathColor={color}
         />
@@ -255,7 +277,7 @@ const LeaveBalanceCard = ({
         </label>
       ) : (
         <p className="text-xs text-gray-400 font-medium">
-          {remaining}/{limit} days available
+          {subtitle || formatLeaveBalance(remaining, limit)}
         </p>
       )}
     </div>

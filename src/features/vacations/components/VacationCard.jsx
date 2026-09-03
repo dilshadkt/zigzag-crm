@@ -96,7 +96,7 @@ const VacationCard = ({
                 Probation
               </span>
             )}
-            <div className="flex items-center gap-3 mt-0.5">
+            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
               <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                 Vac: <span className="text-gray-600">{item?.vacations?.vacation || 0}d</span>
@@ -108,6 +108,10 @@ const VacationCard = ({
               <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                 Rem: <span className="text-gray-600">{item?.vacations?.remote_work || 0}d</span>
+              </span>
+              <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                Unpaid: <span className="text-gray-600">{item?.vacations?.unpaid_leave || 0}d</span>
               </span>
             </div>
           </div>

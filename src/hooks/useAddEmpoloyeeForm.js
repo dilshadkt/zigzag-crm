@@ -13,6 +13,7 @@ export const useAddEmpoloyeeForm = (defaultValue, onSubmit) => {
     level: defaultValue?.level || "",
     isOnProbation: defaultValue?.isOnProbation || false,
     joiningDate: defaultValue?.joiningDate || "",
+    probationPeriodMonths: defaultValue?.probationPeriodMonths || 3,
   };
 
   // Create validation schema matching the employee form fields
@@ -28,11 +29,8 @@ export const useAddEmpoloyeeForm = (defaultValue, onSubmit) => {
     phoneNumber: Yup.string().required("Phone number is required"),
     position: Yup.string().required("Position is required"),
     level: Yup.string().required("Level is required"),
-    joiningDate: Yup.string().when("isOnProbation", {
-      is: true,
-      then: (schema) => schema.required("Joining date is required for probation"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
+    joiningDate: Yup.string().notRequired(),
+    probationPeriodMonths: Yup.number().min(1).max(36),
   });
 
   const formik = useFormik({

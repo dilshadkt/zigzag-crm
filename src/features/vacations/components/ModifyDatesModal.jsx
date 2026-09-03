@@ -212,7 +212,7 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Type</label>
                 <div className="grid grid-cols-1 gap-2">
-                  {['vacation', 'sick_leave', 'remote_work'].map((type) => (
+                  {['vacation', 'sick_leave', 'remote_work', 'unpaid_leave'].map((type) => (
                     <button
                       key={type}
                       type="button"

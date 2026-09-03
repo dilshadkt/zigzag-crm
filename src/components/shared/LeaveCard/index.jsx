@@ -11,6 +11,8 @@ const LeaveCard = ({ request }) => {
         return "#F65160";
       case "remote_work":
         return "#6D5DD3";
+      case "unpaid_leave":
+        return "#64748B";
       default:
         return "#91929E";
     }

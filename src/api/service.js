@@ -378,6 +378,14 @@ export const getClientReviewTasks = async (filters = {}) => {
   }
 };
 
+export const extendEmployeeProbation = async (employeeId, payload) => {
+  const { data } = await apiClient.patch(
+    `/employee/${employeeId}/probation/extend`,
+    payload
+  );
+  return data;
+};
+
 export const createEmployee = async (employeeData) => {
   const { data } = await apiClient.post("/employee", employeeData);
   return data;

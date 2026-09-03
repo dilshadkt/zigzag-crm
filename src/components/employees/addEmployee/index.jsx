@@ -162,7 +162,7 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
                   On probation
                 </p>
                 <p className="text-[11px] text-gray-400 font-medium">
-                  Probation employees cannot request leave
+                  Paid leave is locked. Unpaid leave is allowed.
                 </p>
               </div>
               <input
@@ -177,14 +177,26 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
             </label>
 
             {values.isOnProbation && (
-              <DatePicker
-                errors={errors}
-                touched={touched}
-                onChange={(e) => setFieldValue("joiningDate", e.target.value)}
-                name="joiningDate"
-                value={values.joiningDate}
-                title="Joining Date"
-              />
+              <>
+                <DatePicker
+                  errors={errors}
+                  touched={touched}
+                  onChange={(e) => setFieldValue("joiningDate", e.target.value)}
+                  name="joiningDate"
+                  value={values.joiningDate}
+                  title="Joining Date"
+                />
+                <Input
+                  errors={errors}
+                  touched={touched}
+                  onchange={handleChange}
+                  name="probationPeriodMonths"
+                  value={values}
+                  type="number"
+                  title="Probation period (months)"
+                  placeholder="3"
+                />
+              </>
             )}
 
             <div>

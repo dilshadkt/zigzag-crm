@@ -148,7 +148,7 @@ const EmployeeDetails = () => {
           canDelete={canDelete}
           employeeId={employeeId}
         />
-        <div className="flex-1 flex flex-col gap-y-5">
+        <div className="flex-1 min-h-0 flex flex-col gap-y-5">
           <EmployeeHeader
             isAdmin={isAdmin() || canEdit}
             activePage={activePage}
@@ -161,7 +161,7 @@ const EmployeeDetails = () => {
             selectedProject={selectedProject}
             setSelectedProject={setSelectedProject}
           />
-          <div className="w-full h-full overflow-y-auto">
+          <div className="w-full flex-1 min-h-0 overflow-y-auto">
             {(activePage === "Overview" && (isAdmin() || canEdit)) && (
               <Overview
                 subTasks={filteredSubTasks}

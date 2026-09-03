@@ -17,6 +17,9 @@ import {
 } from "../../../api/hooks";
 import { loginSuccess } from "../../../store/slice/authSlice";
 import { toast } from "react-hot-toast";
+import ProbationTrack from "../../employee/ProbationTrack";
+import ExtendProbationModal from "../../employee/ExtendProbationModal";
+import { DEFAULT_PROBATION_MONTHS } from "../../../utils/leaveEntitlement";
 
 const getDepartmentId = (department) => {
   if (!department) return "";
@@ -27,6 +30,7 @@ const getDepartmentId = (department) => {
 const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExtendProbation, setShowExtendProbation] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(user?.profileImage || "");
   const [imgError, setImgError] = useState(false);
@@ -108,7 +112,9 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
     mobile: user?.phoneNumber || "",
     skype: user?.skype || "",
     isOnProbation: Boolean(user?.isOnProbation),
-    joiningDate: user?.joiningDate || null,
+    joiningDate: user?.joiningDate || user?.createdAt || null,
+    probationPeriodMonths:
+      user?.probationPeriodMonths || DEFAULT_PROBATION_MONTHS,
   };
 
   // Validation schema
@@ -118,12 +124,8 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
       /^[+]?[\d\s\-()]+$/,
       "Invalid phone number format"
     ),
-    joiningDate: Yup.string().when("isOnProbation", {
-      is: true,
-      then: (schema) =>
-        schema.required("Joining date is required for probation"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
+    joiningDate: Yup.mixed().nullable(),
+    probationPeriodMonths: Yup.number().min(1).max(36),
   });
 
   // Handle successful profile update
@@ -202,17 +204,20 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
           normalizedData.position = values.position;
           normalizedData.department = values.department || null;
           normalizedData.isOnProbation = Boolean(values.isOnProbation);
-          normalizedData.joiningDate = values.isOnProbation
-            ? values.joiningDate || null
-            : values.joiningDate || null;
+          normalizedData.joiningDate = values.joiningDate || null;
+          if (values.isOnProbation) {
+            normalizedData.probationPeriodMonths =
+              Number(values.probationPeriodMonths) || DEFAULT_PROBATION_MONTHS;
+          }
         }
 
         if (
           canEditPositionDepartment &&
           normalizedData.isOnProbation &&
-          !normalizedData.joiningDate
+          !normalizedData.joiningDate &&
+          !user?.createdAt
         ) {
-          toast.error("Joining date is required when the employee is on probation");
+          toast.error("Joining date or employee created date is required");
           return;
         }
 
@@ -231,6 +236,10 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
             }
             if (key === "joiningDate") {
               updatePayload.append(key, value || "");
+              return;
+            }
+            if (key === "probationPeriodMonths") {
+              updatePayload.append(key, String(value || DEFAULT_PROBATION_MONTHS));
               return;
             }
             if (value !== undefined && value !== null && value !== "") {
@@ -266,7 +275,9 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
           mobile: user?.phoneNumber || "",
           skype: user?.skype || "",
           isOnProbation: Boolean(user?.isOnProbation),
-          joiningDate: user?.joiningDate || null,
+          joiningDate: user?.joiningDate || user?.createdAt || null,
+          probationPeriodMonths:
+            user?.probationPeriodMonths || DEFAULT_PROBATION_MONTHS,
         },
       });
 
@@ -534,7 +545,7 @@ rounded-3xl  flex flex-col "
                   On probation
                 </p>
                 <p className="text-[11px] text-gray-400 font-medium">
-                  Probation employees cannot request leave
+                  Paid leave is locked. Unpaid leave is allowed.
                 </p>
               </div>
               <input
@@ -561,15 +572,39 @@ rounded-3xl  flex flex-col "
           {(isEditMode && canEditPositionDepartment
             ? values.isOnProbation
             : Boolean(user?.isOnProbation) || values.isOnProbation) && (
-            <DatePicker
-              errors={errors}
-              touched={touched}
-              onChange={(e) => setFieldValue("joiningDate", e.target.value)}
-              name="joiningDate"
-              value={values.joiningDate}
-              readOnly={!isEditMode || !canEditPositionDepartment}
-              title="Joining Date"
-            />
+            <>
+              <DatePicker
+                errors={errors}
+                touched={touched}
+                onChange={(e) => setFieldValue("joiningDate", e.target.value)}
+                name="joiningDate"
+                value={values.joiningDate}
+                readOnly={!isEditMode || !canEditPositionDepartment}
+                title="Joining Date"
+              />
+              {isEditMode && canEditPositionDepartment && (
+                <Input
+                  errors={errors}
+                  touched={touched}
+                  onchange={handleChange}
+                  name="probationPeriodMonths"
+                  value={values}
+                  type="number"
+                  title="Probation period (months)"
+                  placeholder="3"
+                />
+              )}
+              <ProbationTrack employee={user} compact />
+              {canEditPositionDepartment && !isEmployeeOwnProfile && (
+                <button
+                  type="button"
+                  onClick={() => setShowExtendProbation(true)}
+                  className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-sm font-semibold"
+                >
+                  Extend probation
+                </button>
+              )}
+            </>
           )}
         </div>
         <div className="flex flex-col gap-y-3 mt-7">
@@ -657,6 +692,13 @@ rounded-3xl  flex flex-col "
             </div>
           </div>
         </div>
+      )}
+      {showExtendProbation && (
+        <ExtendProbationModal
+          employee={user}
+          employeeId={employeeId || user?._id}
+          onClose={() => setShowExtendProbation(false)}
+        />
       )}
     </div>
   );

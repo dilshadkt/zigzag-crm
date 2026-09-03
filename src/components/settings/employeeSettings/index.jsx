@@ -15,7 +15,8 @@ import LeaveCard from "../../shared/LeaveCard";
 import { useNavigate } from "react-router-dom";
 import EmployeeProgressStats from "../../dashboard/employeeProgressStats";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { getLeaveLimits, isOnProbation, formatJoiningDate } from "../../../utils/leaveEntitlement";
+import { getLeaveLimits, isOnProbation, formatLeaveBalance } from "../../../utils/leaveEntitlement";
+import ProbationTrack from "../../employee/ProbationTrack";
 
 const EmployeeSettings = () => {
   const { user } = useAuth();
@@ -333,6 +334,8 @@ const Vacations = ({ employeeId, selectedMonth, selectedYear, employee }) => {
   const sickLeaveLimit = limits.sick_leave;
   const remoteWorkLimit = limits.remote_work;
 
+  const unpaidLimit = limits.unpaid_leave;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -344,23 +347,23 @@ const Vacations = ({ employeeId, selectedMonth, selectedYear, employee }) => {
   const { summary, vacations } = data || { summary: {}, vacations: [] };
 
   if (onProbation) {
+    const unpaidRemaining =
+      unpaidLimit == null
+        ? null
+        : Math.max(0, unpaidLimit - (summary?.unpaid_leave || 0));
     return (
       <div className="flex flex-col w-full h-full overflow-y-auto space-y-6">
-        <div className="bg-white rounded-3xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center text-2xl">
-            ⏳
-          </div>
+        <ProbationTrack employee={employeeRecord} />
+        <div className="bg-white rounded-3xl p-8">
           <h3 className="text-lg font-semibold text-gray-800 mb-1">
-            Don't have leave in probation
+            Don't have paid leave in probation
           </h3>
-          <p className="text-sm text-gray-500">
-            Leave is not available during the probation period.
+          <p className="text-sm text-gray-500 mb-5">
+            Only unpaid leave can be requested during probation.
           </p>
-          {employeeRecord?.joiningDate && (
-            <p className="text-xs font-medium text-amber-700 mt-3">
-              Joining date: {formatJoiningDate(employeeRecord.joiningDate)}
-            </p>
-          )}
+          <p className="text-sm font-medium text-slate-600">
+            Unpaid leave: {unpaidRemaining == null ? "Unlimited" : formatLeaveBalance(unpaidRemaining, unpaidLimit)}
+          </p>
         </div>
       </div>
     );

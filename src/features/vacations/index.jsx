@@ -44,9 +44,7 @@ const Vacations = () => {
     isCompany || hasPermission("vacations", "approve");
   const canEditVacations = isCompany || hasPermission("vacations", "edit");
   const currentUserOnProbation = isOnProbation(user);
-  const canOpenRequestModal =
-    canCreateVacationRequest &&
-    (canApproveVacations || !currentUserOnProbation);
+  const canOpenRequestModal = canCreateVacationRequest;
 
   // We removed the Access Denied block so employees can view their own vacations
 
@@ -112,6 +110,8 @@ const Vacations = () => {
       return ["#F65160", isApproved, isModifiedOut];
     } else if (vacationOnDate.type === "vacation") {
       return ["#15C0E6", isApproved, isModifiedOut];
+    } else if (vacationOnDate.type === "unpaid_leave") {
+      return ["#64748B", isApproved, isModifiedOut];
     }
 
     return ["#F4F9FD", true, false];
@@ -363,7 +363,7 @@ const Vacations = () => {
           <div className="min-h-[75px] w-full flexStart">
             <div className="min-w-[240px] h-full border-r border-[#E6EBF5]"></div>
             <div className="w-full h-full px-7 flexCenter">
-              <div className="w-full grid grid-cols-3">
+              <div className="w-full grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="flex flex-col gap-y-1">
                   <span className="text-sm text-[#7D8592] font-medium">
                     Sick Leave
@@ -375,30 +375,37 @@ const Vacations = () => {
                     <span>Pending</span>
                   </div>
                 </div>
-                <div className="flexCenter">
-                  <div className="flex flex-col gap-y-1">
-                    <span className="text-sm text-[#7D8592] font-medium">
-                      Work remotely
-                    </span>
-                    <div className="flexStart gap-x-2">
-                      <div className="w-[10px] h-[10px] rounded-full bg-[#6D5DD3]"></div>
-                      <span>Approved</span>
-                      <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#6D5DD3] bg-[#6D5DD3]/50"></div>
-                      <span>Pending</span>
-                    </div>
+                <div className="flex flex-col gap-y-1">
+                  <span className="text-sm text-[#7D8592] font-medium">
+                    Work remotely
+                  </span>
+                  <div className="flexStart gap-x-2">
+                    <div className="w-[10px] h-[10px] rounded-full bg-[#6D5DD3]"></div>
+                    <span>Approved</span>
+                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#6D5DD3] bg-[#6D5DD3]/50"></div>
+                    <span>Pending</span>
                   </div>
                 </div>
-                <div className="flexEnd">
-                  <div className="flex flex-col gap-y-1">
-                    <span className="text-sm text-[#7D8592] font-medium">
-                      Vacation
-                    </span>
-                    <div className="flexStart gap-x-2">
-                      <div className="w-[10px] h-[10px] rounded-full bg-[#15C0E6]"></div>
-                      <span>Approved</span>
-                      <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#15C0E6] bg-[#15C0E6]/50"></div>
-                      <span>Pending</span>
-                    </div>
+                <div className="flex flex-col gap-y-1">
+                  <span className="text-sm text-[#7D8592] font-medium">
+                    Vacation
+                  </span>
+                  <div className="flexStart gap-x-2">
+                    <div className="w-[10px] h-[10px] rounded-full bg-[#15C0E6]"></div>
+                    <span>Approved</span>
+                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#15C0E6] bg-[#15C0E6]/50"></div>
+                    <span>Pending</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-y-1">
+                  <span className="text-sm text-[#7D8592] font-medium">
+                    Unpaid Leave
+                  </span>
+                  <div className="flexStart gap-x-2">
+                    <div className="w-[10px] h-[10px] rounded-full bg-slate-500"></div>
+                    <span>Approved</span>
+                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-slate-500 bg-slate-500/50"></div>
+                    <span>Pending</span>
                   </div>
                 </div>
               </div>
@@ -454,9 +461,9 @@ const Vacations = () => {
               onclick={() => setShowRequestModal(true)}
             />
           )}
-          {canCreateVacationRequest && currentUserOnProbation && !canApproveVacations && (
+          {canCreateVacationRequest && currentUserOnProbation && (
             <div className="px-4 py-2 rounded-2xl bg-amber-50 border border-amber-100 text-[11px] font-semibold text-amber-700">
-              Don't have leave in probation
+              Probation: unpaid leave only
             </div>
           )}
         </div>
