@@ -16,6 +16,7 @@ import {
   useIsDepartmentHead,
 } from "../../../api/hooks";
 import { useSubmitTaskCampaignReport } from "../../../api/campaignDetails";
+import { useRealtimeSubtaskSync } from "../../../hooks/useRealtimeSubtaskSync";
 import RecurringTaskInfo from "./RecurringTaskInfo";
 import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
@@ -179,6 +180,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
     useGetSubTasksByParentTask(taskDetails?._id);
+  useRealtimeSubtaskSync(taskDetails?._id);
 
   // Filter subtasks based on user role and permissions
   const visibleSubTasks = React.useMemo(() => {

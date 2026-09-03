@@ -286,14 +286,14 @@ const CompanyProgressStats = ({ taskMonth }) => {
       {
         id: "client-approved",
         title: "Publishing Pending",
-        value: companyStatsCheck?.statistics?.clientApproved || 0,
-        subtitle: "Ready to publish",
+        value: companyStatsCheck?.statistics?.publishPending ?? companyStatsCheck?.statistics?.clientApproved ?? 0,
+        subtitle: "Publishing & Scheduling left",
         icon: MdBusinessCenter,
         color: "bg-indigo-500",
         borderColor: "hover:border-indigo-500",
         bgColor: "bg-indigo-50",
         textColor: "text-indigo-600",
-        onClick: () => navigate("/task-on-publish"),
+        onClick: () => navigate("/task-on-publish?taskMonth=" + taskMonth),
       },
       {
         id: "re-work",

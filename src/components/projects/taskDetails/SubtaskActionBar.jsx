@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useUpdateSubTaskById } from "../../../api/hooks";
+import { useUpdateSubTaskById, useCreateReworkEvent } from "../../../api/hooks";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
 import CampaignReportModal from "../../shared/campaignReportModal";
@@ -19,16 +19,19 @@ const SubtaskActionBar = ({
   subtask,
   parentTaskId,
   parentTaskFlow,
+  siblingSubtasks = [],
   isAssigned,      // current user is assigned to this subtask
   isReviewer,      // current user can review (admin/reporter/manager)
   isCompany,
   isAdmin,
 }) => {
   const updateMutation = useUpdateSubTaskById(subtask._id, parentTaskId);
+  const reworkMutation = useCreateReworkEvent(parentTaskId);
   const submitCampaignReport = useSubmitSubTaskCampaignReport(subtask._id);
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef(null);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
+  const [reworkSource, setReworkSource] = useState("internal");
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
@@ -168,6 +171,7 @@ const SubtaskActionBar = ({
   };
 
   const handleReject = () => {
+    setReworkSource("internal");
     setIsReworkModalOpen(true);
   };
 
@@ -178,20 +182,18 @@ const SubtaskActionBar = ({
   };
 
   const handleClientReject = () => {
+    setReworkSource("client");
     setIsReworkModalOpen(true);
   };
 
-  const handleReworkSubmit = async ({ reason, voiceNoteUrl }) => {
+  const handleReworkSubmit = async (payload) => {
     try {
-      await updateMutation.mutateAsync({
-        status: "re-work",
-        reworkReason: reason,
-        voiceNoteUrl,
-      });
+      await reworkMutation.mutateAsync(payload);
+      toast.success("Sent back for rework");
       setIsReworkModalOpen(false);
     } catch (err) {
       console.error("Rework submit error:", err);
-      toast.error("Failed to send to rework");
+      toast.error(err.response?.data?.message || "Failed to send to rework");
     }
   };
 
@@ -239,7 +241,7 @@ const SubtaskActionBar = ({
     }
   };
 
-  const isUpdating = updateMutation.isLoading || updateMutation.isPending;
+  const isUpdating = updateMutation.isLoading || updateMutation.isPending || reworkMutation.isPending;
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -457,7 +459,11 @@ const SubtaskActionBar = ({
           isOpen={isReworkModalOpen}
           onClose={() => setIsReworkModalOpen(false)}
           onSubmit={handleReworkSubmit}
-          isLoading={isUpdating}
+          isLoading={reworkMutation.isPending}
+          source={reworkSource}
+          originSubTask={subtask}
+          siblingSubtasks={siblingSubtasks}
+          parentTaskId={parentTaskId}
         />
         <CampaignReportModal
           isOpen={isCampaignReportModalOpen}

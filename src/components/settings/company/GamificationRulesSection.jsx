@@ -146,7 +146,7 @@ const GamificationRulesSection = () => {
               <FiStar className="text-green-500" /> Task Completion Bonus
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Points awarded for completing a task on time (multipled by weight).
+              Points awarded for completing a task on time (once per subtask, multiplied by weight).
             </p>
             <input
               type="number"
@@ -346,7 +346,7 @@ const GamificationRulesSection = () => {
                 <FiStar className="text-emerald-500" /> On-Time Review Bonus
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Points credited to the <strong>reviewer</strong> when they complete a review within the time limit above.
+                Points credited to the <strong>reviewer</strong> the first time they complete a review within the time limit above. Re-reviews do not pay again.
               </p>
               <input
                 type="number"
@@ -398,12 +398,13 @@ const GamificationRulesSection = () => {
           <div className="flex items-center gap-2 mb-4">
             <FiUserCheck className="text-violet-600 w-5 h-5" />
             <h3 className="text-sm font-bold text-gray-800">Review Rework Penalties</h3>
-            <span className="text-[10px] bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Employee only</span>
+            <span className="text-[10px] bg-violet-50 text-violet-600 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Named culprit</span>
           </div>
           <p className="text-xs text-gray-500 mb-4">
-            Passing a review does <strong>not</strong> add extra points. The assignee already earns
-            category/completion points, and the reviewer already earns the on-time review bonus above.
-            These values only deduct from the <strong>assigned employee</strong> when work is sent back.
+            Passing a review does <strong>not</strong> add extra points. Completion
+            and review bonuses are awarded once per subtask. These values deduct
+            from whoever is named as the cause of a rework — that may be the
+            assignee, the internal approver, or nobody.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -412,7 +413,7 @@ const GamificationRulesSection = () => {
                 <FiXCircle className="text-orange-500" /> Internal Review — Rejection Penalty
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Points deducted when a task is sent back for rework after internal review.
+                Points deducted from the named person when work is sent back from internal review.
               </p>
               <input
                 type="number"
@@ -428,7 +429,7 @@ const GamificationRulesSection = () => {
                 <FiXCircle className="text-red-500" /> Client Review — Rejection Penalty
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Points deducted when a client rejects the task and sends it back for rework.
+                Points deducted from the named person when the client rejects work. Defaults to the internal approver; the coordinator can point it at someone else.
               </p>
               <input
                 type="number"

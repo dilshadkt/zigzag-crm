@@ -9,6 +9,7 @@ import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare,
 import VoiceRecorder from "../VoiceRecorder";
 import LinkPreview from "../LinkPreview";
 import { toast } from "react-hot-toast";
+import { isPublishRelatedSubtask } from "../../../utils/isPublishRelated";
 
 const renderContent = (content) => {
   if (!content) return "";
@@ -115,7 +116,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     !!subTask.copyOfDescription || 
     !!subTask.ideas;
     
-  const isPublishSubTask = subTask.title?.toLowerCase().includes("publish");
+  const isPublishSubTask = isPublishRelatedSubtask(subTask);
 
   const prevStatusRef = useRef(subTask?.status);
 

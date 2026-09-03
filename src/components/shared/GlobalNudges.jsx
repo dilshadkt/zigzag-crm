@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { getNudges } from "../../api/service";
 import { FiX, FiBell } from "react-icons/fi";
 import socketService from "../../services/socketService";
+import { extractEntityId, syncSubtaskReviewFromNudge } from "../../services/realtimeNotificationHandler";
 
 const GlobalNudges = () => {
   const [nudges, setNudges] = useState([]);
@@ -11,14 +13,42 @@ const GlobalNudges = () => {
   const [dismissed, setDismissed] = useState([]);
   const [toastVisibleIds, setToastVisibleIds] = useState([]);
   const isInitialFetch = React.useRef(true);
+  const seenReviewNudgeIds = React.useRef(new Set());
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const applyReviewNudgesToTaskCache = (nextNudges) => {
+    const reviewNudges = (nextNudges || []).filter((nudge) =>
+      String(nudge?.id || "").startsWith("review-")
+    );
+    const currentIds = new Set(reviewNudges.map((nudge) => nudge.id));
+
+    for (const id of [...seenReviewNudgeIds.current]) {
+      if (!currentIds.has(id)) seenReviewNudgeIds.current.delete(id);
+    }
+
+    reviewNudges.forEach((nudge) => {
+      if (seenReviewNudgeIds.current.has(nudge.id)) return;
+      seenReviewNudgeIds.current.add(nudge.id);
+      const subTaskId =
+        extractEntityId(nudge.subTaskId) ||
+        (String(nudge.id || "").startsWith("review-subtask-")
+          ? String(nudge.id).slice("review-subtask-".length)
+          : "");
+      syncSubtaskReviewFromNudge(queryClient, {
+        taskId: nudge.taskId,
+        subTaskId,
+      });
+    });
+  };
 
   const fetchNudges = async () => {
     try {
       const res = await getNudges();
       if (res.success) {
         setNudges(res.nudges);
+        applyReviewNudgesToTaskCache(res.nudges);
         
         const storedSeen = JSON.parse(localStorage.getItem('seenNudgeIds') || '[]');
         const currentIds = res.nudges.map(n => n.id);
@@ -52,6 +82,7 @@ const GlobalNudges = () => {
     };
 
     socketService.onNewNotification(handleUpdate);
+    socketService.onTaskStatusChange(handleUpdate);
     // Assignment fires this before the notification row exists, so it is the
     // earliest signal available.
     socketService.onSubtaskAssigned(handleUpdate);
@@ -61,6 +92,7 @@ const GlobalNudges = () => {
     return () => {
       clearInterval(interval);
       socketService.offNewNotification(handleUpdate);
+      socketService.offTaskStatusChange(handleUpdate);
       socketService.offSubtaskAssigned(handleUpdate);
       window.removeEventListener("taskCreated", handleUpdate);
       window.removeEventListener("taskUpdated", handleUpdate);
@@ -92,10 +124,21 @@ const GlobalNudges = () => {
   const handleNudgeClick = (nudge) => {
     setIsOpen(false); // Close the drawer
     setDismissed((prev) => [...prev, nudge.id]); // Auto-dismiss toast on click
+    const subTaskId =
+      extractEntityId(nudge.subTaskId) ||
+      (String(nudge.id || "").startsWith("review-subtask-")
+        ? String(nudge.id).slice("review-subtask-".length)
+        : "");
+    syncSubtaskReviewFromNudge(queryClient, {
+      taskId: nudge.taskId,
+      subTaskId,
+    });
     if (nudge.id === 'review-nudge') {
       navigate('/task-on-review');
     } else if (nudge.projectId && nudge.taskId) {
-      navigate(`/projects/${nudge.projectId}/${nudge.taskId}`);
+      const projectId = extractEntityId(nudge.projectId);
+      const taskId = extractEntityId(nudge.taskId);
+      navigate(`/projects/${projectId}/${taskId}`);
     }
   };
 

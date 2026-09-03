@@ -184,7 +184,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
           >
             <RuleRow
               title="Finish a task on time"
-              detail="Base task points, multiplied by your role. Some work types use a fixed category value instead."
+              detail="Base task points, once per subtask. A rework round does not pay this again."
               value={settings.taskCompletePoints}
             />
             <RuleRow
@@ -239,14 +239,14 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
               loss
             />
             <RuleRow
-              title="Rework after internal review"
-              detail="The task is sent back from internal review."
+              title="Rework attributed to you"
+              detail="Internal review sent the work back and named you as the cause."
               value={settings.internalReviewRejectionPenalty}
               loss
             />
             <RuleRow
-              title="Client sends work back"
-              detail="The client rejects the task and asks for changes."
+              title="Client rejection attributed to you"
+              detail="The client sent work back and you were named as the cause. Downstream subtasks that also have to change are not charged extra."
               value={settings.clientRejectionPenalty}
               loss
             />
@@ -259,7 +259,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
           >
             <RuleRow
               title="Review on time"
-              detail={`Finish the review within ${settings.coordinatorReviewTimeLimit} hours.`}
+              detail={`Finish the first review within ${settings.coordinatorReviewTimeLimit} hours. Later re-reviews do not pay this again.`}
               value={settings.coordinatorReviewBonusPoints}
             />
             <RuleRow

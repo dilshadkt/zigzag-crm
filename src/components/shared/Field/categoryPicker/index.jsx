@@ -1,8 +1,64 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 
 const UNGROUPED = "No department";
+const OVERFLOW_REGEX = /(auto|scroll|overlay)/;
+
+const getScrollParents = (element) => {
+  const parents = [];
+  let node = element?.parentElement;
+
+  while (node && node !== document.documentElement) {
+    const style = window.getComputedStyle(node);
+    if (
+      OVERFLOW_REGEX.test(style.overflowY) ||
+      OVERFLOW_REGEX.test(style.overflowX) ||
+      OVERFLOW_REGEX.test(style.overflow)
+    ) {
+      parents.push(node);
+    }
+    node = node.parentElement;
+  }
+
+  return parents;
+};
+
+const isTriggerOutsideClip = (element) => {
+  if (!element) return true;
+
+  const rect = element.getBoundingClientRect();
+  if (
+    rect.bottom < 0 ||
+    rect.top > window.innerHeight ||
+    rect.right < 0 ||
+    rect.left > window.innerWidth
+  ) {
+    return true;
+  }
+
+  let node = element.parentElement;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    if (
+      OVERFLOW_REGEX.test(style.overflowY) ||
+      style.overflowY === "hidden" ||
+      OVERFLOW_REGEX.test(style.overflowX) ||
+      style.overflowX === "hidden"
+    ) {
+      const parentRect = node.getBoundingClientRect();
+      const hidden =
+        rect.bottom <= parentRect.top ||
+        rect.top >= parentRect.bottom ||
+        rect.right <= parentRect.left ||
+        rect.left >= parentRect.right;
+      if (hidden) return true;
+    }
+    node = node.parentElement;
+  }
+
+  return false;
+};
 
 export const getCategoryDepartmentName = (category) => {
   const department = category?.department;
@@ -75,7 +131,7 @@ const CategoryPicker = ({
     });
   }, [activeCategories, searchTerm]);
 
-  const updateMenuPosition = () => {
+  const updateMenuPosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const width = Math.max(rect.width, menuMinWidth);
@@ -90,7 +146,7 @@ const CategoryPicker = ({
       maxHeight,
       openUp,
     });
-  };
+  }, [menuMinWidth]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -104,20 +160,41 @@ const CategoryPicker = ({
       setIsOpen(false);
     };
 
-    const handleReposition = () => updateMenuPosition();
-    const handleScroll = () => setIsOpen(false);
+    let frame = 0;
+    const handleScroll = (event) => {
+      if (menuRef.current?.contains(event.target)) return;
+
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (isTriggerOutsideClip(triggerRef.current)) {
+          setIsOpen(false);
+          return;
+        }
+        updateMenuPosition();
+      });
+    };
+
+    const scrollParents = getScrollParents(triggerRef.current);
+    const scrollListenerOptions = { capture: true, passive: true };
 
     document.addEventListener("mousedown", handlePointer);
-    window.addEventListener("resize", handleReposition);
-    document.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", handleScroll, scrollListenerOptions);
+    scrollParents.forEach((parent) => {
+      parent.addEventListener("scroll", handleScroll, scrollListenerOptions);
+    });
 
     return () => {
       clearTimeout(timer);
+      cancelAnimationFrame(frame);
       document.removeEventListener("mousedown", handlePointer);
-      window.removeEventListener("resize", handleReposition);
-      document.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", handleScroll, scrollListenerOptions);
+      scrollParents.forEach((parent) => {
+        parent.removeEventListener("scroll", handleScroll, scrollListenerOptions);
+      });
     };
-  }, [isOpen, menuMinWidth]);
+  }, [isOpen, updateMenuPosition]);
 
   useEffect(() => {
     if (!isOpen) setSearchTerm("");

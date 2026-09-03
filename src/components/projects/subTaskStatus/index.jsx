@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useUpdateSubTaskById } from "../../../api/hooks";
+import { useUpdateSubTaskById, useCreateReworkEvent } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
@@ -11,6 +11,7 @@ const SubTaskStatusButton = ({
   canEdit = true,
   showAllOptions = false,
   parentTaskFlow = [],
+  siblingSubtasks = [],
   canEditTask = false,
   isAdmin = false,
 }) => {
@@ -18,7 +19,9 @@ const SubTaskStatusButton = ({
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
+  const [reworkSource, setReworkSource] = useState("internal");
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
+  const reworkMutation = useCreateReworkEvent(parentTaskId);
   const { isCompany } = useAuth();
 
   const getCurrentLink = (subt) => {
@@ -132,6 +135,11 @@ const SubTaskStatusButton = ({
     if (!canEdit || isLocked) return;
 
     if (newStatus === "re-work") {
+      setReworkSource(
+        ["approved", "client-approved", "completed"].includes(subTask.status)
+          ? "client"
+          : "internal"
+      );
       setPendingStatus(newStatus);
       setIsReworkModalOpen(true);
       setIsOpen(false);
@@ -198,17 +206,15 @@ const SubTaskStatusButton = ({
     }
   };
 
-  const handleReworkSubmit = async ({ reason, voiceNoteUrl }) => {
+  const handleReworkSubmit = async (payload) => {
     try {
-      await updateSubTaskMutation.mutateAsync({
-        status: pendingStatus,
-        reworkReason: reason,
-        voiceNoteUrl,
-      });
+      await reworkMutation.mutateAsync(payload);
+      toast.success("Sent back for rework");
       setIsReworkModalOpen(false);
       setPendingStatus(null);
     } catch (error) {
       console.error("Error updating subtask status with rework:", error);
+      toast.error(error.response?.data?.message || "Failed to send to rework");
     }
   };
 
@@ -250,7 +256,7 @@ const SubTaskStatusButton = ({
         onClick={() => canEdit && !isLocked && setIsOpen(!isOpen)}
         className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 shadow-sm flex items-center gap-1.5 ${currentStatus?.color || "bg-gray-100 text-gray-800"
           } ${(!canEdit || isLocked) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover:scale-105 active:scale-95"} ${isBypassed ? "border border-blue-400" : ""}`}
-        disabled={updateSubTaskMutation.isLoading || !canEdit || isLocked}
+        disabled={updateSubTaskMutation.isLoading || reworkMutation.isPending || !canEdit || isLocked}
         title={isLocked ? "This subtask is locked until preceding tasks are completed" : (!canEdit ? "You can only edit subtasks assigned to you" : isBypassed ? "Locked subtask (Bypassed due to permissions)" : "")}
       >
         {subTask.isLocked && !isLocked ? (
@@ -298,7 +304,11 @@ const SubTaskStatusButton = ({
         isOpen={isReworkModalOpen}
         onClose={() => setIsReworkModalOpen(false)}
         onSubmit={handleReworkSubmit}
-        isLoading={updateSubTaskMutation.isLoading}
+        isLoading={reworkMutation.isPending}
+        source={reworkSource}
+        originSubTask={subTask}
+        siblingSubtasks={siblingSubtasks}
+        parentTaskId={parentTaskId}
       />
 
       <WorkLinkModal

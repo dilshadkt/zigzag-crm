@@ -17,6 +17,8 @@ const TaskQuickFilters = ({
   showSubtasks = true,
   onToggleTasks,
   onToggleSubtasks,
+  taskCount,
+  subtaskCount,
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -115,6 +117,15 @@ const TaskQuickFilters = ({
       >
         <MdTask className="text-sm" />
         Tasks
+        {typeof taskCount === "number" && (
+          <span
+            className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              showTasks ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            {taskCount}
+          </span>
+        )}
       </button>
 
       {/* Subtasks Toggle Button */}
@@ -129,6 +140,15 @@ const TaskQuickFilters = ({
       >
         <MdSubdirectoryArrowRight className="text-sm" />
         Subtasks
+        {typeof subtaskCount === "number" && (
+          <span
+            className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              showSubtasks ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            {subtaskCount}
+          </span>
+        )}
       </button>
 
       {/* Divider */}

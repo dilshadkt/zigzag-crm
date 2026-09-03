@@ -413,7 +413,7 @@ const EventFilters = ({
           ? "bg-purple-100 text-purple-700 border border-purple-200 shadow-[0_0_6px_rgba(168,85,247,0.4)]"
           : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
           }`}
-        title="Show Only Ready to Publish Tasks"
+        title="Show tasks where only a Publish / Publishing & Scheduling step is still pending"
       >
         <span>🚀</span>
         Ready to Publish

@@ -71,9 +71,15 @@ const MobileSidebar = ({
     }
     if (
       menuItem.routeKey === "task-on-publish" &&
-      tasksOnPublishData?.tasks?.length
+      (tasksOnPublishData?.statistics?.publishPending ||
+        tasksOnPublishData?.tasks?.length)
     ) {
-      return tasksOnPublishData.tasks.length;
+      return (
+        tasksOnPublishData.statistics?.publishPending ??
+        tasksOnPublishData.tasks.filter(
+          (task) => !task.parentTask && task.type !== "subtask"
+        ).length
+      );
     }
     if (
       menuItem.routeKey === "client-review" &&

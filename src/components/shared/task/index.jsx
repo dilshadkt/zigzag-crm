@@ -303,6 +303,11 @@ const Task = memo(({
                 Subtask
               </span>
             )}
+            {task?.isPublishPending && (
+              <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                Ready to Publish
+              </span>
+            )}
             {isExtraTask && (
               <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">
                 Extra

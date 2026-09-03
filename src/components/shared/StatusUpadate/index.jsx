@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { IoIosArrowDown } from "react-icons/io";
-import { useUpdateTaskById } from "../../../api/hooks";
+import { useUpdateTaskById, useCreateReworkEvent, useGetSubTasksByParentTask } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../reworkReasonModal";
 import { updateSubTaskById, getSubTasksByParentTask } from "../../../api/service";
@@ -94,6 +94,8 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
   const { mutate, isLoading } = useUpdateTaskById(taskDetails._id, () =>
     setMenuOpen(false)
   );
+  const reworkMutation = useCreateReworkEvent(taskDetails._id);
+  const { data: siblingSubtasks = [] } = useGetSubTasksByParentTask(taskDetails._id);
 
   // Get status options based on user role or explicit override
   const statusOptions = (isCompany || showAllOptions)
@@ -220,16 +222,17 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
     setMenuOpen(false);
   };
 
-  const handleReworkSubmit = ({ reason, voiceNoteUrl }) => {
-    mutate(
-      { status: pendingStatus, reworkReason: reason, voiceNoteUrl },
-      {
-        onSuccess: () => {
-          setIsReworkModalOpen(false);
-          setPendingStatus(null);
-        },
-      }
-    );
+  const handleReworkSubmit = (payload) => {
+    reworkMutation.mutate(payload, {
+      onSuccess: () => {
+        mutate({ status: "re-work" });
+        setIsReworkModalOpen(false);
+        setPendingStatus(null);
+      },
+      onError: (error) => {
+        console.error("Failed to send task to rework:", error);
+      },
+    });
   };
 
   // Get color scheme based on current status
@@ -293,7 +296,11 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
         isOpen={isReworkModalOpen}
         onClose={() => setIsReworkModalOpen(false)}
         onSubmit={handleReworkSubmit}
-        isLoading={isLoading}
+        isLoading={reworkMutation.isPending || isLoading}
+        source="internal"
+        originSubTask={siblingSubtasks[0]}
+        siblingSubtasks={siblingSubtasks}
+        parentTaskId={taskDetails._id}
       />
     </div>
   );

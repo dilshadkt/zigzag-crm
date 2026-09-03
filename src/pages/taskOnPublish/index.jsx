@@ -1,11 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  FiAlertCircle,
-  FiCalendar,
-  FiClock,
-  FiEye,
   FiCheckCircle,
+  FiSearch,
 } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetTasksOnPublish } from "../../api/hooks";
@@ -19,6 +16,9 @@ import { assetPath } from "../../utils/assetPath";
 import MoveToCampaignModal from "../../components/tasks/MoveToCampaignModal";
 import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
 
+const isSubTaskItem = (task) =>
+  Boolean(task?.parentTask || task?.isSubTask || task?.type === "subtask");
+
 const TaskOnPublish = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -26,7 +26,6 @@ const TaskOnPublish = () => {
   const [searchParams] = useSearchParams();
   const filter = searchParams.get("filter");
 
-  // Get current month in YYYY-MM format as default
   const getCurrentMonth = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -35,13 +34,12 @@ const TaskOnPublish = () => {
   };
 
   const taskMonth = searchParams.get("taskMonth") || getCurrentMonth();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Get all tasks on publish across the company
   const {
     data: tasksOnPublishData,
     isLoading,
     refetch,
-    error,
   } = useGetTasksOnPublish({
     page: 1,
     limit: 100,
@@ -51,89 +49,36 @@ const TaskOnPublish = () => {
   });
   const [filteredTasks, setFilteredTasks] = useState([]);
 
-  // Auto-refresh when component mounts
   useEffect(() => {
     refetch();
   }, [refetch]);
 
-  // Listen for real-time task status changes
   useEffect(() => {
     const handleTaskStatusChange = (data) => {
-      console.log("📋 Task status changed in task-on-publish:", data);
-
-      // If a task was moved to "client-approved", refresh the task list
-      if (data.newStatus === "client-approved") {
-        console.log("🔄 Refreshing task list due to new task client-approved");
-        refetch();
-
-        // Show a toast notification for new client-approved task
-        if (data.updatedBy && data.updatedBy._id !== user?._id) {
-          // Only show notification if it wasn't the current user who moved the task
-          const notification = document.createElement("div");
-          notification.className =
-            "fixed top-4 right-4 bg-indigo-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full";
-          notification.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              <div>
-                <div class="font-medium">New Task Client Approved</div>
-                <div class="text-sm opacity-90">"${data.taskTitle}" approved by client ${data.updatedBy.name}</div>
-              </div>
-            </div>
-          `;
-          document.body.appendChild(notification);
-
-          // Animate in
-          setTimeout(() => {
-            notification.classList.remove("translate-x-full");
-          }, 100);
-
-          // Remove after 5 seconds
-          setTimeout(() => {
-            notification.classList.add("translate-x-full");
-            setTimeout(() => {
-              document.body.removeChild(notification);
-            }, 300);
-          }, 5000);
-        }
-      }
-      // If a task was moved away from "client-approved", also refresh to remove it
-      else if (data.oldStatus === "client-approved") {
-        console.log(
-          "🔄 Refreshing task list due to task moved from client-approved"
-        );
+      if (data.newStatus === "client-approved" || data.oldStatus === "client-approved") {
         refetch();
       }
     };
 
     const handleNewNotification = (data) => {
-      console.log("🔔 New notification in task-on-publish:", data);
-      // Refresh if it's a task-related notification
-      if (
-        data.type === "task_client_approved" ||
-        data.type === "task_updated"
-      ) {
+      if (data.type === "task_client_approved" || data.type === "task_updated") {
         refetch();
-        // Also invalidate the tasks on publish query
         queryClient.invalidateQueries(["tasksOnPublish"]);
       }
     };
 
-    // Set up socket listeners
     socketService.onTaskStatusChange(handleTaskStatusChange);
     socketService.onNewNotification(handleNewNotification);
 
-    // Cleanup listeners on unmount
     return () => {
       socketService.offTaskStatusChange(handleTaskStatusChange);
       socketService.offNewNotification(handleNewNotification);
     };
-  }, [refetch]);
+  }, [queryClient, refetch, user?._id]);
 
-  // Filter states
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     search: "",
     priority: [],
     project: [],
@@ -146,20 +91,23 @@ const TaskOnPublish = () => {
   });
 
   const [showTasks, setShowTasks] = useState(() => {
-    const saved = localStorage.getItem(`task_on_publish_showTasks`);
+    const saved = localStorage.getItem("task_on_publish_showTasks_v2");
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [showSubtasks, setShowSubtasks] = useState(() => {
-    const saved = localStorage.getItem(`task_on_publish_showSubtasks`);
-    return saved !== null ? JSON.parse(saved) : true;
+    const saved = localStorage.getItem("task_on_publish_showSubtasks_v2");
+    return saved !== null ? JSON.parse(saved) : false;
   });
 
   useEffect(() => {
-    localStorage.setItem(`task_on_publish_showTasks`, JSON.stringify(showTasks));
+    localStorage.setItem("task_on_publish_showTasks_v2", JSON.stringify(showTasks));
   }, [showTasks]);
 
   useEffect(() => {
-    localStorage.setItem(`task_on_publish_showSubtasks`, JSON.stringify(showSubtasks));
+    localStorage.setItem(
+      "task_on_publish_showSubtasks_v2",
+      JSON.stringify(showSubtasks)
+    );
   }, [showSubtasks]);
 
   const [superFilters, setSuperFilters] = useState({ assignedTo: [], project: [] });
@@ -182,14 +130,14 @@ const TaskOnPublish = () => {
     const usersMap = new Map();
     const projectsMap = new Map();
 
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       if (task.project?._id) {
         projectsMap.set(task.project._id, task.project);
       }
       if (task.assignedTo && Array.isArray(task.assignedTo)) {
-        task.assignedTo.forEach(user => {
-          if (user?._id) {
-            usersMap.set(user._id, user);
+        task.assignedTo.forEach((assignee) => {
+          if (assignee?._id) {
+            usersMap.set(assignee._id, assignee);
           }
         });
       }
@@ -197,23 +145,24 @@ const TaskOnPublish = () => {
 
     return {
       users: Array.from(usersMap.values()),
-      projects: Array.from(projectsMap.values())
+      projects: Array.from(projectsMap.values()),
     };
   };
 
-  // Filter task based on the process and active filters
   const filterTasks = (tasks) => {
+    const term = searchTerm.trim().toLowerCase();
+
     return tasks.filter((task) => {
-      // Apply URL-based filter first
       const today = new Date();
       let passesUrlFilter = true;
 
       switch (filter) {
-        case "overdue":
+        case "overdue": {
           const dueDate = new Date(task.dueDate);
           passesUrlFilter = dueDate < today;
           break;
-        case "today":
+        }
+        case "today": {
           const taskDueDate = new Date(task.dueDate);
           const todayStart = new Date(today);
           todayStart.setHours(0, 0, 0, 0);
@@ -222,7 +171,8 @@ const TaskOnPublish = () => {
           passesUrlFilter =
             taskDueDate >= todayStart && taskDueDate <= todayEnd;
           break;
-        case "this-week":
+        }
+        case "this-week": {
           const weekStart = new Date(today);
           weekStart.setDate(today.getDate() - today.getDay());
           weekStart.setHours(0, 0, 0, 0);
@@ -233,13 +183,28 @@ const TaskOnPublish = () => {
           passesUrlFilter =
             taskWeekDate >= weekStart && taskWeekDate <= weekEnd;
           break;
+        }
+        default:
+          break;
       }
 
       if (!passesUrlFilter) return false;
 
-      // Apply additional filters if activeFilters is set
+      if (term) {
+        const haystack = [
+          task.title,
+          task.project?.name,
+          task.project?.displayName,
+          task.parentTask?.title,
+          task.taskCategory?.name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(term)) return false;
+      }
+
       if (activeFilters) {
-        // Filter by status
         if (
           activeFilters.status.length > 0 &&
           !activeFilters.status.includes(task.status)
@@ -247,7 +212,6 @@ const TaskOnPublish = () => {
           return false;
         }
 
-        // Filter by priority
         if (
           activeFilters.priority.length > 0 &&
           !activeFilters.priority.includes(task.priority)
@@ -255,7 +219,6 @@ const TaskOnPublish = () => {
           return false;
         }
 
-        // Filter by date range
         if (
           activeFilters.dateRange.startDate &&
           activeFilters.dateRange.endDate
@@ -269,21 +232,20 @@ const TaskOnPublish = () => {
         }
       }
 
-      // Filter by assignedTo (super filter)
       if (superFilters.assignedTo?.length > 0) {
-        const taskAssigneeIds = task.assignedTo?.map(u => u._id) || [];
-        const hasAssignee = superFilters.assignedTo.some(id => taskAssigneeIds.includes(id));
+        const taskAssigneeIds = task.assignedTo?.map((assignee) => assignee._id) || [];
+        const hasAssignee = superFilters.assignedTo.some((id) =>
+          taskAssigneeIds.includes(id)
+        );
         if (!hasAssignee) return false;
       }
 
-      // Filter by project (super filter)
       if (superFilters.project?.length > 0) {
         const projectId = task.project?._id;
         if (!projectId || !superFilters.project.includes(projectId)) return false;
       }
 
-      // Tasks / Subtasks visibility
-      const isSubTask = task.parentTask || task.isSubTask;
+      const isSubTask = isSubTaskItem(task);
       if (isSubTask && !showSubtasks) return false;
       if (!isSubTask && !showTasks) return false;
 
@@ -292,157 +254,106 @@ const TaskOnPublish = () => {
   };
 
   useEffect(() => {
-    if (tasksOnPublishData?.tasks) {
-      console.log(
-        "🔍 All tasks on publish (client-approved) from API:",
-        tasksOnPublishData.tasks.length
-      );
+    if (!tasksOnPublishData?.tasks) return;
 
-      // All tasks from this API are already client-approved status
-      let filtered = filterTasks([...tasksOnPublishData.tasks]);
+    let nextTasks = filterTasks([...tasksOnPublishData.tasks]);
 
-      console.log("🔍 Tasks after filtering:", filtered.length);
+    nextTasks.sort((a, b) => {
+      let aValue;
+      let bValue;
 
-      // Apply sorting
-      filtered.sort((a, b) => {
-        let aValue, bValue;
-
-        switch (filters.sortBy) {
-          case "title":
-            aValue = a.title.toLowerCase();
-            bValue = b.title.toLowerCase();
-            break;
-          case "priority":
-            const priorityOrder = { high: 3, medium: 2, low: 1 };
-            aValue = priorityOrder[a.priority] || 0;
-            bValue = priorityOrder[b.priority] || 0;
-            break;
-          case "createdAt":
-            aValue = new Date(a.createdAt);
-            bValue = new Date(b.createdAt);
-            break;
-          default: // dueDate
-            aValue = new Date(a.dueDate);
-            bValue = new Date(b.dueDate);
+      switch (filters.sortBy) {
+        case "title":
+          aValue = (a.title || "").toLowerCase();
+          bValue = (b.title || "").toLowerCase();
+          break;
+        case "priority": {
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          aValue = priorityOrder[a.priority?.toLowerCase?.()] || 0;
+          bValue = priorityOrder[b.priority?.toLowerCase?.()] || 0;
+          break;
         }
-
-        if (filters.sortOrder === "desc") {
-          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-        } else {
-          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        }
-      });
-
-      setFilteredTasks(filtered);
-    }
-  }, [tasksOnPublishData, filter, activeFilters, filters, superFilters, showTasks, showSubtasks]);
-
-  const handleFilterChange = (filters) => {
-    setActiveFilters(filters);
-  };
-
-  const getFilterTitle = () => {
-    switch (filter) {
-      case "overdue":
-        return "Overdue Client Approved Tasks & Subtasks";
-      case "today":
-        return "Today's Client Approved Tasks & Subtasks";
-      case "this-week":
-        return "This Week's Client Approved Tasks & Subtasks";
-      default:
-        return "Client Approved Tasks & Subtasks";
-    }
-  };
-
-  const getFilterIcon = () => {
-    switch (filter) {
-      case "overdue":
-        return FiAlertCircle;
-      case "today":
-        return FiCalendar;
-      case "this-week":
-        return FiClock;
-      default:
-        return FiCheckCircle;
-    }
-  };
-
-  const getFilterColor = () => {
-    switch (filter) {
-      case "overdue":
-        return "text-red-500";
-      case "today":
-        return "text-blue-500";
-      case "this-week":
-        return "text-green-500";
-      default:
-        return "text-green-500";
-    }
-  };
-
-  const getEmptyStateMessage = () => {
-    if (isLoading) return "Loading client approved tasks and subtasks...";
-
-    if (filteredTasks.length === 0) {
-      if (filter) {
-        return `No client approved tasks or subtasks found for ${filter.replace(
-          "-",
-          " "
-        )}`;
+        case "createdAt":
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
+          break;
+        default:
+          aValue = new Date(a.dueDate);
+          bValue = new Date(b.dueDate);
       }
-      return "No tasks or subtasks are currently client approved";
-    }
 
-    return "";
+      if (filters.sortOrder === "desc") {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    });
+
+    setFilteredTasks(nextTasks);
+  }, [
+    tasksOnPublishData,
+    filter,
+    activeFilters,
+    filters,
+    superFilters,
+    showTasks,
+    showSubtasks,
+    searchTerm,
+  ]);
+
+  const handleFilterChange = (nextFilters) => {
+    setActiveFilters(nextFilters);
   };
 
-  // State for Move to Campaign Modal
+  const typeCounts = useMemo(() => {
+    const items = tasksOnPublishData?.tasks || [];
+    const taskCount = items.filter((task) => !isSubTaskItem(task)).length;
+    return {
+      taskCount,
+      subtaskCount: items.length - taskCount,
+    };
+  }, [tasksOnPublishData]);
+
+  const summary = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    return {
+      total: filteredTasks.length,
+      overdue: filteredTasks.filter(
+        (task) => task.dueDate && new Date(task.dueDate) < todayStart
+      ).length,
+      today: filteredTasks.filter((task) => {
+        if (!task.dueDate) return false;
+        const due = new Date(task.dueDate);
+        return due >= todayStart && due <= todayEnd;
+      }).length,
+      high: filteredTasks.filter(
+        (task) => String(task.priority || "").toLowerCase() === "high"
+      ).length,
+    };
+  }, [filteredTasks]);
+
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [selectedTaskForCampaign, setSelectedTaskForCampaign] = useState(null);
 
-  const handleMoreOptions = (task, e) => {
-    // For now, assuming direct "Move to Campaign" action. 
-    // If you want a dropdown menu first, implement that here.
-    // Based on user request "while click that we need the option to move the task to compaign while click that a modal will come"
-    // I will interpret this as clicking the icon opens the modal directly, OR clicking the icon opens a menu where one option opens the modal.
-    // Given the phrasing "while click that we need the option to move the task", it implies an intermediate step (menu).
-    // However, for simplicity and typical "more" icon behavior, let's assume clicking it creates the intent. 
-    // Actually, let's make a small popover or simply assume the main action for "more" right now is this. 
-    // A better UX would be a small dropdown. But I'll start by opening the modal directly if it is the ONLY option, OR use a context menu library if available.
-    // Since I don't see a context menu component ready-to-use in the imports, I will make the button trigger a small custom dropdown that has "Move to Campaign"
-
-    // ... Actually the user said "while click that we need the option to move the task... while click that a modal will come", suggesting TWO clicks.
-    // 1. Click more icon -> shows option "Move to Campaign"
-    // 2. Click option -> shows Modal.
-
-    // For this implementation, I will just open the modal directly for speed, as it's the primary requested feature. 
-    // If multiple options are needed later, we can add a menu.
-    // Wait, let me implement a simple Menu? No, I'll Open Modal directly for now as "More" often implies "Actions"
-    // User: "while click that we need the option... while click that a modal will come"
-    // Okay, I will implement a small inline menu state? No, that's complex to coordinate globally.
-    // I will make the "More" button open the "Move To Campaign" modal directly for now to unblock the feature, 
-    // unless I can easily reuse FilterMenu or similar? No.
-    // I'll stick to: Click More -> Open Modal. 
-
+  const handleMoreOptions = (task) => {
     setSelectedTaskForCampaign(task);
     setShowCampaignModal(true);
   };
 
   const handleTaskClick = (task) => {
     if (task.type === "subtask") {
-      // For subtasks, navigate to the parent task detail page
       if (task.parentTask?._id) {
         navigate(`/tasks/${task.parentTask._id}?subtask=${task._id}`);
       } else if (task.project?._id) {
         navigate(`/projects/${task.project._id}?subtask=${task._id}`);
       }
+    } else if (task.project?._id) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
     } else {
-      // For regular tasks
-      if (task.project?._id) {
-        navigate(`/projects/${task.project._id}/${task._id}`);
-      } else {
-        navigate(`/tasks/${task._id}`);
-      }
+      navigate(`/tasks/${task._id}`);
     }
   };
 
@@ -455,86 +366,125 @@ const TaskOnPublish = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          <div className="">
-            {/* Header */}
-            <div className="flexBetween mb-6">
-              <div className="flex items-center gap-3">
-                <Navigator />
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800">
-                    {getFilterTitle()}
+    <div className="flex h-full flex-col bg-[#F4F9FD]">
+      <div className="flex-1 overflow-y-auto pb-8">
+        <div className="mb-5 rounded-3xl border border-purple-100 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex items-start gap-3">
+              <Navigator />
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-100 text-lg">
+                    🚀
+                  </span>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Publishing Pending
                   </h3>
-                  <p className="text-sm text-gray-500">
-                    {filteredTasks.length} client approved item
-                    {filteredTasks.length !== 1 ? "s" : ""}
-                    {tasksOnPublishData?.statistics && (
-                      <span className="ml-2">
-                        ({tasksOnPublishData.statistics.total} total)
-                      </span>
-                    )}
-                  </p>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                <PrimaryButton
-                  icon={"/icons/refresh.svg"}
-                  className={"bg-white hover:bg-gray-50 transition-colors"}
-                  onclick={() => refetch()}
-                />
-                <PrimaryButton
-                  icon={"/icons/filter.svg"}
-                  className={"bg-white hover:bg-gray-50 transition-colors"}
-                  onclick={() => setShowFilter(true)}
-                />
+                <p className="mt-1 max-w-xl text-sm text-gray-500">
+                  Tasks where only the Publishing & Scheduling step is left.
+                  Client-approved work is included here too.
+                </p>
               </div>
             </div>
 
-            {/* Quick Filters */}
-            <div className="mb-6">
-              <TaskQuickFilters
-                superFilters={superFilters}
-                onFilterChange={handleSuperFilterChange}
-                onMultiSelectFilter={handleMultiSelectFilter}
-                users={getFilterOptions(tasksOnPublishData?.tasks || []).users}
-                projects={getFilterOptions(tasksOnPublishData?.tasks || []).projects}
-                showTasks={showTasks}
-                showSubtasks={showSubtasks}
-                onToggleTasks={() => setShowTasks((prev) => !prev)}
-                onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+            <div className="flex gap-2">
+              <PrimaryButton
+                icon="/icons/refresh.svg"
+                className="bg-white hover:bg-gray-50"
+                onclick={() => refetch()}
+              />
+              <PrimaryButton
+                icon="/icons/filter.svg"
+                className="bg-white hover:bg-gray-50"
+                onclick={() => setShowFilter(true)}
               />
             </div>
+          </div>
 
-            {/* Tasks List */}
-            <div className="flex flex-col h-full pb-5 gap-y-4 rounded-xl overflow-hidden overflow-y-auto">
-              {filteredTasks.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <FiCheckCircle className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No client approved tasks or subtasks
-                  </h3>
-                  <p className="text-gray-500">{getEmptyStateMessage()}</p>
-                </div>
-              ) : (
-                filteredTasks.map((task, index) => (
-                  <Task
-                    key={task._id}
-                    task={task}
-                    onClick={handleTaskClick}
-                    isBoardView={false}
-                    index={index}
-                    isMoreOptions={true}
-                    onMoreOptions={handleMoreOptions}
-                  />
-                ))
-              )}
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-2xl border border-purple-100 bg-purple-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-purple-500">
+                Showing
+              </p>
+              <p className="mt-1 text-2xl font-bold text-purple-700">{summary.total}</p>
+            </div>
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-red-400">
+                Overdue
+              </p>
+              <p className="mt-1 text-2xl font-bold text-red-600">{summary.overdue}</p>
+            </div>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-blue-400">
+                Due today
+              </p>
+              <p className="mt-1 text-2xl font-bold text-blue-600">{summary.today}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-amber-500">
+                High priority
+              </p>
+              <p className="mt-1 text-2xl font-bold text-amber-600">{summary.high}</p>
             </div>
           </div>
+        </div>
+
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2">
+            <FiSearch className="h-4 w-4 flex-shrink-0 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by task, project, or category..."
+              className="w-full bg-transparent text-sm text-gray-700 outline-none"
+            />
+          </div>
+
+          <TaskQuickFilters
+            superFilters={superFilters}
+            onFilterChange={handleSuperFilterChange}
+            onMultiSelectFilter={handleMultiSelectFilter}
+            users={getFilterOptions(tasksOnPublishData?.tasks || []).users}
+            projects={getFilterOptions(tasksOnPublishData?.tasks || []).projects}
+            showTasks={showTasks}
+            showSubtasks={showSubtasks}
+            onToggleTasks={() => setShowTasks((prev) => !prev)}
+            onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+            taskCount={typeCounts.taskCount}
+            subtaskCount={typeCounts.subtaskCount}
+          />
+        </div>
+
+        <div className="flex flex-col gap-y-4 pb-5">
+          {filteredTasks.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-purple-200 bg-white px-6 py-14 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-50">
+                <FiCheckCircle className="h-8 w-8 text-purple-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Nothing waiting to publish
+              </h3>
+              <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+                {searchTerm
+                  ? "No matching tasks for that search. Try another name or turn on Subtasks."
+                  : "When a task only has Publishing & Scheduling left, it will show up here."}
+              </p>
+            </div>
+          ) : (
+            filteredTasks.map((task, index) => (
+              <Task
+                key={task._id}
+                task={task}
+                onClick={handleTaskClick}
+                isBoardView={false}
+                index={index}
+                isMoreOptions={true}
+                onMoreOptions={handleMoreOptions}
+              />
+            ))
+          )}
         </div>
       </div>
 
@@ -552,8 +502,6 @@ const TaskOnPublish = () => {
             setSelectedTaskForCampaign(null);
           }}
           onSuccess={() => {
-            // Refetch tasks if needed, or maybe the task status changes?
-            // For now, simple refetch or just close.
             refetch();
           }}
         />

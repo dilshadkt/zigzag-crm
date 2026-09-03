@@ -463,6 +463,18 @@ export const updateSubTaskById = async (subTaskId, updateData) => {
   }
 };
 
+export const createReworkEvent = async (taskId, payload) => {
+  const response = await apiClient.post(`/tasks/${taskId}/rework`, payload);
+  return response.data;
+};
+
+export const getReworkCandidates = async (taskId, { originSubTaskId, source } = {}) => {
+  const response = await apiClient.get(`/tasks/${taskId}/rework-candidates`, {
+    params: { originSubTaskId, source },
+  });
+  return response.data;
+};
+
 export const deleteSubTask = async (subTaskId) => {
   try {
     const response = await apiClient.delete(`/subtasks/${subTaskId}`);

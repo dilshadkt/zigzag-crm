@@ -20,6 +20,8 @@ import {
   getSubTasksByParentTask,
   getSubTaskById,
   updateSubTaskById,
+  createReworkEvent,
+  getReworkCandidates,
   deleteSubTask,
   addSubTaskAttachments,
   removeSubTaskAttachment,
@@ -1607,6 +1609,11 @@ export const useGetSubTasksByParentTask = (parentTaskId) => {
     queryFn: () => getSubTasksByParentTask(parentTaskId),
     select: (data) => data?.subTasks || [],
     enabled: !!parentTaskId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    // select() + default structural sharing can skip re-renders when a
+    // socket patch only changes nested status fields.
+    structuralSharing: false,
   });
 };
 
@@ -1690,6 +1697,27 @@ export const useUpdateSubTaskById = (subTaskId, parentTaskId) => {
       queryClient.invalidateQueries(["getTaskById", parentTaskId]);
       queryClient.invalidateQueries({ queryKey: ["performance"] });
     },
+  });
+};
+
+export const useCreateReworkEvent = (parentTaskId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["createReworkEvent", parentTaskId],
+    mutationFn: (payload) => createReworkEvent(parentTaskId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["subTasksByParentTask", parentTaskId]);
+      queryClient.invalidateQueries(["getTaskById", parentTaskId]);
+      queryClient.invalidateQueries({ queryKey: ["performance"] });
+    },
+  });
+};
+
+export const useGetReworkCandidates = (parentTaskId, originSubTaskId, source, enabled = false) => {
+  return useQuery({
+    queryKey: ["reworkCandidates", parentTaskId, originSubTaskId, source],
+    queryFn: () => getReworkCandidates(parentTaskId, { originSubTaskId, source }),
+    enabled: !!parentTaskId && !!enabled,
   });
 };
 

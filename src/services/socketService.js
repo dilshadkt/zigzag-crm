@@ -55,6 +55,14 @@ class SocketService {
       this._dispatchToHandlers(this.taskStatusHandlers, data);
     });
 
+    this.socket.on("subtask_status_changed", (data) => {
+      this._dispatchToHandlers(this.taskStatusHandlers, {
+        ...data,
+        isSubtask: true,
+        taskId: data.taskId || data.subTaskId,
+      });
+    });
+
     this.socket.on("subtask_assigned", (data) => {
       console.log("📌 Subtask assigned via socket:", data);
       this._dispatchToHandlers(this.subtaskAssignedHandlers, data);

@@ -14,6 +14,7 @@ import { useAddSubTaskForm } from "../../../hooks/useAddSubTaskForm";
 import Modal from "../../shared/modal";
 import { useGetProjectSocialMedia, useGetTaskCategories } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import { isPublishRelatedName } from "../../../utils/isPublishRelated";
 
 const socialPlatforms = [
   {
@@ -239,7 +240,9 @@ const AddSubTask = ({
 
   const titleKey = String(values.title || "").toLowerCase();
   const isContentSubtask = titleKey === "content";
-  const isPublishSubtask = titleKey === "publish";
+  const isPublishSubtask =
+    isPublishRelatedName(values.title) ||
+    isPublishRelatedName(selectedCategory?.name);
   const hasNoCategory = !values.taskCategory;
 
   const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
