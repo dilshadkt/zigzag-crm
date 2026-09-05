@@ -464,11 +464,12 @@ const TaskOnReview = () => {
                 showSubtasks={showSubtasks}
                 onToggleTasks={() => setShowTasks((prev) => !prev)}
                 onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+                nowrap
               />
             </div>
 
             {/* Tasks List */}
-            <div className="flex flex-col h-full pb-5 gap-y-4 rounded-xl overflow-hidden overflow-y-auto">
+            <div className="flex flex-col h-full pb-5 gap-y-2 rounded-xl overflow-hidden overflow-y-auto">
               {filteredTasks.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -487,6 +488,7 @@ const TaskOnReview = () => {
                     onClick={handleTaskClick}
                     isBoardView={false}
                     index={index}
+                    compact
                   />
                 ))
               )}

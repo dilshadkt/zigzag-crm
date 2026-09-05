@@ -33,6 +33,7 @@ import {
   getTasksOnReview,
   getTasksOnPublish,
   getClientReviewTasks,
+  markSentToClient,
   getUnscheduledTasks,
   scheduleSubTask,
   // Sticky Notes imports
@@ -1525,6 +1526,17 @@ export const useGetClientReviewTasks = (filters = {}) => {
       pagination: data?.pagination || {},
       statistics: data?.statistics || {},
     }),
+  });
+};
+
+export const useMarkSentToClient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, isSubtask }) =>
+      markSentToClient(itemId, { isSubtask }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["clientReviewTasks"]);
+    },
   });
 };
 

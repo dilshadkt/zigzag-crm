@@ -2,7 +2,7 @@ import React, { memo, useState } from "react";
 // ... (rest of imports)
 import Progress from "../progress";
 import { IoArrowUpOutline } from "react-icons/io5";
-import { FiMoreVertical } from "react-icons/fi";
+import { FiMoreVertical, FiSend } from "react-icons/fi";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import { formatDate } from "../../../lib/dateUtils";
@@ -55,6 +55,69 @@ const getProgressValue = (status) => {
   }
 };
 
+const getSentToClientMeta = (task) => {
+  if (!task?.sentToClientAt) return null;
+  const sender = [task.sentToClientBy?.firstName, task.sentToClientBy?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  let timeAgo = "";
+  try {
+    timeAgo = formatDistanceToNow(new Date(task.sentToClientAt), {
+      addSuffix: true,
+    }).replace("about ", "");
+  } catch (error) {
+    timeAgo = "";
+  }
+  return {
+    sender: sender || "Someone",
+    timeAgo,
+  };
+};
+
+const SentToClientAction = ({
+  task,
+  onSendToClient,
+  isSendingToClient,
+  compact = false,
+}) => {
+  const meta = getSentToClientMeta(task);
+  if (meta) {
+    return (
+      <div
+        className={`${compact ? "" : "mt-2"} inline-flex max-w-full items-center gap-1.5 rounded-full bg-teal-100 px-2.5 py-1 text-[11px] font-semibold text-teal-800`}
+        title={`Sent to client by ${meta.sender} on ${new Date(
+          task.sentToClientAt
+        ).toLocaleString()}`}
+      >
+        <FiSend className="h-3 w-3 shrink-0" />
+        <span className="truncate">
+          {compact
+            ? `${meta.sender}${meta.timeAgo ? ` · ${meta.timeAgo}` : ""}`
+            : `Sent to client · ${meta.sender}${meta.timeAgo ? ` · ${meta.timeAgo}` : ""}`}
+        </span>
+      </div>
+    );
+  }
+
+  if (!onSendToClient) return null;
+
+  return (
+    <button
+      type="button"
+      disabled={isSendingToClient}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSendToClient(task);
+      }}
+      className={`${compact ? "" : "mt-2"} inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60`}
+    >
+      <FiSend className="h-3 w-3" />
+      {isSendingToClient ? "Sending..." : "Send to client"}
+    </button>
+  );
+};
+
 const Task = memo(({
   task,
   onClick,
@@ -65,13 +128,28 @@ const Task = memo(({
   onDragOver,
   onDrop,
   isMoreOptions,
-  onMoreOptions
+  onMoreOptions,
+  onSendToClient,
+  isSendingToClient,
+  compact = false,
 }) => {
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
   const priorityColor =
     priorityColors[task?.priority?.toLowerCase()] || priorityColors.medium;
   const progressValue = task?.computedProgress !== undefined ? task.computedProgress : getProgressValue(task?.status);
   const isExtraTask = task?.taskGroup === "extraTask";
+  const isSubtaskItem = task?.itemType === "subtask" || task?.type === "subtask";
+  const isSentToClient = Boolean(task?.sentToClientAt);
+  const compactCardTone = isSentToClient
+    ? "bg-teal-50 border-teal-200"
+    : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50/60";
+  const cardTone = isSentToClient
+    ? "bg-teal-50 ring-2 ring-teal-300 border-l-4 border-teal-500"
+    : isSubtaskItem
+      ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+      : isExtraTask
+        ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
+        : "bg-white";
   const hasReporters = !!(
     task?.project?.reporters &&
     task.project.reporters.length > 0 &&
@@ -128,6 +206,97 @@ const Task = memo(({
     }
   };
 
+  if (compact) {
+    const parentTitle = task?.parentTask?.title;
+    return (
+      <div
+        onClick={() => handleClick()}
+        className={`flex items-center gap-4 px-4 py-3 rounded-2xl border cursor-pointer transition-colors ${compactCardTone}`}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <h4 className="font-medium text-[#0A1629] truncate">
+              {task?.title}
+            </h4>
+            {isSubtaskItem && (
+              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
+                Subtask
+              </span>
+            )}
+            {isExtraTask && (
+              <span className="shrink-0 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
+                Extra
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 truncate text-xs text-gray-500">
+            {task?.project?.name || task?.project?.displayName || "Extra task"}
+            {parentTitle ? ` · ${parentTitle}` : ""}
+            {hasReporters
+              ? ` · ${task.project.reporters.map((r) => r.firstName).join(", ")}`
+              : ""}
+          </p>
+        </div>
+
+        <div className="hidden sm:block w-24 shrink-0 text-sm text-gray-600">
+          {formatDate(task?.dueDate)}
+        </div>
+
+        <div className="hidden md:flex items-center shrink-0">
+          {task?.assignedTo?.length > 0 ? (
+            <div className="flex -space-x-1">
+              {task.assignedTo.slice(0, 3).map((user, index) => (
+                <UserAvatar key={user._id || index} user={user} />
+              ))}
+              {task.assignedTo.length > 3 && (
+                <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 text-[10px] flexCenter font-medium text-gray-600 shrink-0">
+                  +{task.assignedTo.length - 3}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-gray-100 flexCenter">
+              <span className="text-xs text-gray-400">—</span>
+            </div>
+          )}
+        </div>
+
+        <div
+          className="hidden lg:flex items-center gap-1 shrink-0 w-20"
+          style={{ color: priorityColor }}
+        >
+          <IoArrowUpOutline className="text-sm" />
+          <span className="text-xs font-medium">{task?.priority}</span>
+        </div>
+
+        <span className="hidden md:inline-flex shrink-0 rounded-lg bg-[#E0F9F2] px-2.5 py-1 text-[11px] font-medium capitalize text-[#00D097]">
+          {task?.status}
+        </span>
+
+        <SentToClientAction
+          task={task}
+          onSendToClient={onSendToClient}
+          isSendingToClient={isSendingToClient}
+          compact
+        />
+
+        {isMoreOptions && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onMoreOptions && onMoreOptions(task, event);
+            }}
+            className="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 shrink-0"
+            title="More options"
+          >
+            <FiMoreVertical size={18} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (isBoardView) {
     return (
       <div
@@ -138,12 +307,7 @@ const Task = memo(({
         onClick={() => handleClick()}
         title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
         className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md 
-          transition-shadow relative ${task?.itemType === "subtask"
-            ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
-            : isExtraTask
-              ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
-              : "bg-white"
-          }`}
+          transition-shadow relative ${cardTone}`}
       >
         {/* Subtask Badge */}
         {task?.itemType === "subtask" && (
@@ -260,12 +424,7 @@ const Task = memo(({
       onClick={() => handleClick()}
       title={task?.itemType === "subtask" ? "Click to view parent task" : ""}
       className={`grid gap-y-5 md:gap-y-0 grid-cols-1 md:grid-cols-10 cursor-pointer md:gap-x-3
-         px-5 py-5 rounded-3xl relative ${task?.itemType === "subtask"
-          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
-          : isExtraTask
-            ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
-            : "bg-white"
-        }`}
+         px-5 py-5 rounded-3xl relative ${cardTone}`}
     >
       {/* Subtask Badge for List View */}
       {task?.itemType === "subtask" && (
@@ -313,6 +472,11 @@ const Task = memo(({
                 Extra
               </span>
             )}
+            {isSentToClient && (
+              <span className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                Sent to client
+              </span>
+            )}
             {task?.isBoardTask &&
               !task?.project &&
               !task?.itemType === "subtask" && (
@@ -344,6 +508,11 @@ const Task = memo(({
               )}
             </div>
           )}
+          <SentToClientAction
+            task={task}
+            onSendToClient={onSendToClient}
+            isSendingToClient={isSendingToClient}
+          />
         </div>
 
         <div className="visible md:hidden">

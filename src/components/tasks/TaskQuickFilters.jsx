@@ -19,6 +19,9 @@ const TaskQuickFilters = ({
   onToggleSubtasks,
   taskCount,
   subtaskCount,
+  extraFilters = null,
+  nowrap = false,
+  className = "",
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -104,7 +107,7 @@ const TaskQuickFilters = ({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className={`flex items-center gap-2 ${extraFilters || nowrap ? "flex-nowrap" : "flex-wrap"} ${className}`}>
       {/* Tasks Toggle Button */}
       <button
         onClick={onToggleTasks}
@@ -318,6 +321,13 @@ const TaskQuickFilters = ({
           </div>
         )}
       </div>
+
+      {extraFilters ? (
+        <>
+          <div className="w-px h-6 bg-gray-300 shrink-0" />
+          <div className="flex items-center gap-2 shrink-0">{extraFilters}</div>
+        </>
+      ) : null}
     </div>
   );
 };

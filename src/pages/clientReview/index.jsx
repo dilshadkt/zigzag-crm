@@ -6,9 +6,11 @@ import {
   FiClock,
   FiEye,
   FiCheckCircle,
+  FiSend,
 } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useGetClientReviewTasks } from "../../api/hooks";
+import { toast } from "react-hot-toast";
+import { useGetClientReviewTasks, useMarkSentToClient } from "../../api/hooks";
 import Navigator from "../../components/shared/navigator";
 import { useAuth } from "../../hooks/useAuth";
 import socketService from "../../services/socketService";
@@ -68,6 +70,8 @@ const ClientReview = () => {
   }, [showSubtasks]);
 
   const [superFilters, setSuperFilters] = useState({ assignedTo: [], project: [] });
+  const [sentFilter, setSentFilter] = useState("all");
+  const markSentMutation = useMarkSentToClient();
 
   const handleSuperFilterChange = (type, value) => {
     setSuperFilters((prev) => ({ ...prev, [type]: value }));
@@ -284,6 +288,9 @@ const ClientReview = () => {
       if (isSubTask && !showSubtasks) return false;
       if (!isSubTask && !showTasks) return false;
 
+      if (sentFilter === "sent" && !task.sentToClientAt) return false;
+      if (sentFilter === "unsent" && task.sentToClientAt) return false;
+
       return true;
     });
   };
@@ -332,7 +339,7 @@ const ClientReview = () => {
 
       setFilteredTasks(filtered);
     }
-  }, [clientReviewData, filter, activeFilters, filters, superFilters, showTasks, showSubtasks]);
+  }, [clientReviewData, filter, activeFilters, filters, superFilters, showTasks, showSubtasks, sentFilter]);
 
   const handleFilterChange = (filters) => {
     setActiveFilters(filters);
@@ -418,6 +425,36 @@ const ClientReview = () => {
 
     navigate(`/tasks/${task._id}`);
   };
+
+  const handleSendToClient = (task) => {
+    if (!task?._id || markSentMutation.isPending) return;
+    markSentMutation.mutate(
+      {
+        itemId: task._id,
+        isSubtask: task.type === "subtask" || Boolean(task.parentTask),
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message || "Marked as sent to client");
+        },
+        onError: (error) => {
+          toast.error(
+            error?.response?.data?.message || "Failed to mark as sent to client"
+          );
+        },
+      }
+    );
+  };
+
+  const sentCounts = React.useMemo(() => {
+    const tasks = clientReviewData?.tasks || [];
+    const sent = tasks.filter((task) => task.sentToClientAt).length;
+    return {
+      total: tasks.length,
+      sent,
+      unsent: tasks.length - sent,
+    };
+  }, [clientReviewData]);
 
   const formatMonthKey = (monthKey) => {
     if (monthKey === "Other") return "Other Tasks";
@@ -524,6 +561,38 @@ const ClientReview = () => {
                 showSubtasks={showSubtasks}
                 onToggleTasks={() => setShowTasks((prev) => !prev)}
                 onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+                extraFilters={
+                  <>
+                    {[
+                      { id: "all", label: "All", count: sentCounts.total },
+                      { id: "unsent", label: "Not sent", count: sentCounts.unsent },
+                      { id: "sent", label: "Sent to client", count: sentCounts.sent },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setSentFilter(option.id)}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors border ${
+                          sentFilter === option.id
+                            ? "bg-teal-100 text-teal-700 border-teal-200"
+                            : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
+                        }`}
+                      >
+                        {option.id === "sent" && <FiSend className="h-3 w-3" />}
+                        {option.label}
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            sentFilter === option.id
+                              ? "bg-teal-600 text-white"
+                              : "bg-gray-200 text-gray-600"
+                          }`}
+                        >
+                          {option.count}
+                        </span>
+                      </button>
+                    ))}
+                  </>
+                }
               />
             </div>
 
@@ -551,7 +620,7 @@ const ClientReview = () => {
                         </span>
                       </h4>
                     </div>
-                    <div className="flex flex-col gap-y-4">
+                    <div className="flex flex-col gap-y-2">
                       {group.tasks.map((task, index) => (
                         <Task
                           key={task._id}
@@ -559,6 +628,12 @@ const ClientReview = () => {
                           onClick={handleTaskClick}
                           isBoardView={false}
                           index={index}
+                          compact
+                          onSendToClient={handleSendToClient}
+                          isSendingToClient={
+                            markSentMutation.isPending &&
+                            markSentMutation.variables?.itemId === task._id
+                          }
                         />
                       ))}
                     </div>
