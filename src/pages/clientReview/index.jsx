@@ -393,22 +393,30 @@ const ClientReview = () => {
     return "";
   };
 
+  const getEntityId = (value) => {
+    if (!value) return null;
+    if (typeof value === "string") return value;
+    return value._id || null;
+  };
+
   const handleTaskClick = (task) => {
-    if (task.type === "subtask") {
-      // For subtasks, navigate to the parent task detail page
-      if (task.parentTask?._id) {
-        navigate(`/tasks/${task.parentTask._id}?subtask=${task._id}`);
-      } else if (task.project?._id) {
-        navigate(`/projects/${task.project._id}?subtask=${task._id}`);
-      }
-    } else {
-      // For regular tasks
-      if (task.project?._id) {
-        navigate(`/projects/${task.project._id}/${task._id}`);
-      } else {
-        navigate(`/tasks/${task._id}`);
-      }
+    const projectId = getEntityId(task.project);
+    const parentTaskId = getEntityId(task.parentTask);
+    const isSubtask = task.type === "subtask" || Boolean(parentTaskId);
+    const destinationTaskId =
+      isSubtask && parentTaskId ? parentTaskId : task._id;
+
+    if (projectId) {
+      navigate(`/projects/${projectId}/${destinationTaskId}`);
+      return;
     }
+
+    if (isSubtask && parentTaskId) {
+      navigate(`/tasks/${parentTaskId}?subtask=${task._id}`);
+      return;
+    }
+
+    navigate(`/tasks/${task._id}`);
   };
 
   const formatMonthKey = (monthKey) => {
