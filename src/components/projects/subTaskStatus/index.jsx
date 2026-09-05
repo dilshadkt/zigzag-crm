@@ -261,7 +261,13 @@ const SubTaskStatusButton = ({
             : currentStatus?.color || "bg-gray-100 text-gray-800"
           } ${(!canEdit || isLocked) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover:scale-105 active:scale-95"} ${isBypassed ? "border border-blue-400" : ""}`}
         disabled={updateSubTaskMutation.isLoading || reworkMutation.isPending || !canEdit || isLocked}
-        title={isLocked ? (subTask.lockedReason || "This subtask is locked until preceding tasks are completed") : (!canEdit ? "You can only edit subtasks assigned to you" : isBypassed ? "Locked subtask (Bypassed due to permissions)" : "")}
+        title={
+          isLocked
+            ? (subTask.lockedReason || "This subtask is locked until preceding tasks are completed")
+            : waitingForClient
+            ? "Internally approved. Waiting for client review."
+            : (!canEdit ? "You can only edit subtasks assigned to you" : isBypassed ? "Locked subtask (Bypassed due to permissions)" : "")
+        }
       >
         {subTask.isLocked && !isLocked ? (
           // Show unlocked icon if it's normally locked but bypassed
@@ -276,7 +282,7 @@ const SubTaskStatusButton = ({
         {updateSubTaskMutation.isLoading
           ? "Updating..."
           : waitingForClient
-          ? "Internal approved — waiting for client"
+          ? "Waiting for client"
           : currentStatus?.label || "To Do"}
       </button>
 

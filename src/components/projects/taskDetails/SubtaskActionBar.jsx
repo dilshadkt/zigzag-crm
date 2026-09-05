@@ -340,6 +340,7 @@ const SubtaskActionBar = ({
           {/* Read-only status for post-review states */}
           {["on-review", "approved", "completed", "client-approved"].includes(status) && (
             <span
+              title={waitingForClient ? "Internally approved. Waiting for client review." : undefined}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
                 status === "on-review"
                   ? "bg-purple-50 text-purple-700 border-purple-200"
@@ -353,7 +354,7 @@ const SubtaskActionBar = ({
               {status === "on-review"
                 ? "📋 In Review"
                 : waitingForClient
-                ? "Internal approved — waiting for client"
+                ? "Waiting for client"
                 : status === "approved"
                 ? "✅ Approved"
                 : status === "client-approved"
@@ -519,12 +520,19 @@ const SubtaskActionBar = ({
     const info =
       status === "approved" && isClientApprovalRequired
         ? {
-            label: "Internal approved — waiting for client",
+            label: "Waiting for client",
             cls: "bg-amber-50 text-amber-700 border-amber-200",
           }
         : statusLabels[status] || statusLabels["todo"];
     return (
-      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${info.cls}`}>
+      <span
+        title={
+          status === "approved" && isClientApprovalRequired
+            ? "Internally approved. Waiting for client review."
+            : undefined
+        }
+        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${info.cls}`}
+      >
         {info.label}
       </span>
     );

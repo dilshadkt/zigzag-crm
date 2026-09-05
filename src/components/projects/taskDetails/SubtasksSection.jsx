@@ -6,7 +6,7 @@ import Modal from "../../shared/modal";
 import WorkLinkModal from "../../shared/workLinkModal";
 import CampaignReportModal from "../../shared/campaignReportModal";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget, FiEdit3, FiLink, FiFileText } from "react-icons/fi";
+import { FiActivity, FiClock, FiEdit3, FiLink, FiFileText } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { useUpdateSubTaskById } from "../../../api/hooks";
 import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
@@ -88,6 +88,16 @@ const SubtasksSection = ({
         flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresWorkLink
       );
   };
+
+  const needsClientApproval = (subtask) =>
+    Boolean(
+      subtask?.requiresClientApproval ||
+        taskDetails?.taskFlow?.flows?.some(
+          (flow) =>
+            flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() &&
+            flow.requiresClientApproval
+        )
+    );
 
   const isCampaignReportRequired = (subtask) => {
     return (
@@ -267,6 +277,12 @@ const SubtasksSection = ({
             );
 
             const isLocked = subtask.isLocked && !isCompany && !isAdmin;
+            const waitingForClient =
+              subtask.status === "approved" && needsClientApproval(subtask);
+            const showApprovalNeeded =
+              needsClientApproval(subtask) &&
+              !waitingForClient &&
+              !["client-approved", "completed"].includes(subtask.status);
 
             return (
               <div
@@ -275,200 +291,9 @@ const SubtasksSection = ({
                   subtask
                 )}`}
               >
-                <div className="flex flex-col gap-2 mb-4">
-                  {/* Row 1: Flags & Indicators (Full Width to prevent wrapping) */}
-                  <div className="flex flex-wrap items-center gap-1.5 w-full">
-                    {/* Content Indicators */}
-                    {(subtask.copyOfDescription || subtask.title?.toLowerCase().includes("content")) && (
-                      <div
-                        className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
-                        title="Has Content Description"
-                      >
-                        <FiEdit3 className="w-2.5 h-2.5" />
-                        Content
-                      </div>
-                    )}
-                    {subtask.ideas && (
-                      <div
-                        className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-md text-[9px] font-bold uppercase"
-                        title="Has Ideas"
-                      >
-                        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3a1 1 0 012 0v2a1 1 0 11-2 0V5zM9 9a1 1 0 000 2v3a1 1 0 102 0v-3a1 1 0 00-2 0z" />
-                        </svg>
-                        Ideas
-                      </div>
-                    )}
-                    {subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0 && (
-                      <div
-                        className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[9px] font-bold uppercase"
-                        title={`${Object.keys(subtask.publishUrls).length} Publish URLs`}
-                      >
-                        <FiLink className="w-2.5 h-2.5" />
-                        URLs ({Object.keys(subtask.publishUrls).length})
-                      </div>
-                    )}
-
-                    {isAssignedToSubTask && (
-                      <span
-                        className="px-2 py-0.5 bg-blue-100 text-blue-500 text-[10px] font-medium 
-                      rounded-full flex items-center gap-1"
-                      >
-                        <svg
-                          className="w-2.5 h-2.5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Assigned
-                      </span>
-                    )}
-
-                    {subtask?.totalActualTime !== undefined && (
-                      <span
-                        className="px-2 py-0.5 text-[10px] font-semibold rounded-full border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
-                        title={`Total actual time spent: ${formatTime(subtask.totalActualTime)}`}
-                      >
-                        <FiClock className="w-2.5 h-2.5" />
-                        Time Taken: {formatTime(subtask.totalActualTime)}
-                      </span>
-                    )}
-                    {/* {subtask?.performance > 0 && (
-                      <span
-                        className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border flex items-center gap-1 ${subtask.performance >= 100
-                          ? "bg-green-50 text-green-600 border-green-100"
-                          : subtask.performance >= 70
-                            ? "bg-yellow-50 text-yellow-600 border-yellow-100"
-                            : "bg-red-50 text-red-600 border-red-100"
-                          }`}
-                        title={`Performance: ${subtask.performance}% (Estimate vs Actual)`}
-                      >
-                        <FiTarget className="w-2.5 h-2.5" />
-                        {subtask.performance}%
-                      </span>
-                    )} */}
-                    {(subtask?.requiresClientApproval || taskDetails?.taskFlow?.flows?.some(flow => flow.taskName?.toLowerCase() === subtask.title?.toLowerCase() && flow.requiresClientApproval)) && (
-                      <span
-                        className="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-bold 
-                      rounded-full flex items-center gap-1 border border-purple-200"
-                        title="Client approval is required for this subtask"
-                      >
-                        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Approval Required
-                      </span>
-                    )}
-                    {subtask.status === "approved" &&
-                      (subtask?.requiresClientApproval ||
-                        taskDetails?.taskFlow?.flows?.some(
-                          (flow) =>
-                            flow.taskName?.toLowerCase() ===
-                              subtask.title?.toLowerCase() &&
-                            flow.requiresClientApproval
-                        )) && (
-                      <span
-                        className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold 
-                      rounded-full flex items-center gap-1 border border-amber-200"
-                        title="Internally approved. Waiting for client review."
-                      >
-                        Internal approved — waiting for client
-                      </span>
-                    )}
-                    {isWorkLinkRequired(subtask) && (
-                      <button
-                        onClick={() => {
-                          setWorkLinkSubTask(subtask);
-                          setIsWorkLinkModalOpen(true);
-                        }}
-                        className={`px-2 py-0.5 text-[10px] font-bold 
-                      rounded-full flex items-center gap-1 border transition-colors ${getCurrentLink(subtask)
-                            ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
-                            : "bg-orange-100 text-orange-600 border-orange-200 hover:bg-orange-200"}`}
-                        title={getCurrentLink(subtask) ? "Work link provided. Click to edit." : "Work link is mandatory for this subtask. Click to add."}
-                      >
-                        <FiLink className="w-2.5 h-2.5" />
-                        {getCurrentLink(subtask) ? (
-                          <span className="flex items-center gap-1">
-                            Work Link Attached
-                            {subtask.workLinkHistory?.length > 1 && (
-                              <span className="bg-green-200 text-green-800 px-1 rounded text-[8px]">
-                                {subtask.workLinkHistory.length}
-                              </span>
-                            )}
-                          </span>
-                        ) : "Link Required"}
-                      </button>
-                    )}
-                    {isCampaignReportRequired(subtask) && (
-                      <button
-                        onClick={() => {
-                          setReportSubTask(subtask);
-                          setIsCampaignReportModalOpen(true);
-                        }}
-                        className={`px-2 py-0.5 text-[10px] font-bold rounded-full flex items-center gap-1 border transition-colors ${
-                          subtask.campaignReport?.submittedAt
-                            ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
-                            : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
-                        }`}
-                        title="Post campaign report as completion proof"
-                      >
-                        <FiFileText className="w-2.5 h-2.5" />
-                        {subtask.campaignReport?.submittedAt ? "Report Posted" : "Report Required"}
-                      </button>
-                    )}
-
-                    {/* Priority & Rework (Moved to Row 1) */}
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-colors ${subtask.priority === "High"
-                        ? "bg-red-100 text-red-800 border border-red-200"
-                        : subtask.priority === "Medium"
-                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                          : "bg-green-100 text-green-800 border border-green-200"
-                        }`}
-                    >
-                      {subtask.priority}
-                    </span>
-
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 transition-all duration-200 ${subtask.reworkCount > 0
-                        ? "bg-red-50 text-red-600 border-red-100 cursor-pointer hover:bg-red-100 hover:shadow-sm"
-                        : "bg-gray-50 text-gray-400 border-gray-100 cursor-help"
-                        }`}
-                      title={subtask.reworkCount > 0 ? `This subtask has been sent to rework ${subtask.reworkCount} times` : "No rework history"}
-                      onClick={() => {
-                        if (subtask.reworkCount > 0) {
-                          setReworkSubTask(subtask);
-                          setReworkModalOpen(true);
-                        }
-                      }}
-                    >
-                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      {subtask.reworkCount || 0}
-                    </span>
-
-                    {subtask.pendingReasons && subtask.pendingReasons.length > 0 && (
-                      <span
-                        className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 rounded-full flex items-center gap-1"
-                        title="Reason submitted for uncompleted task during checkout"
-                      >
-                        <svg className="w-2.5 h-2.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Reason Added
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Row 2: Title & Actions */}
-                  <div className="flexBetween items-center gap-4">
+                <div className="flex flex-col gap-2.5 mb-3">
+                  {/* Title & status first so the card isn't a wall of chips */}
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                     <h6 className={`font-semibold text-sm flex items-center gap-2 ${isLocked ? 'text-gray-400' : 'text-gray-800'}`}>
                       {isLocked && (
@@ -496,17 +321,16 @@ const SubtasksSection = ({
                     )}
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button
                         onClick={() => {
                           setTimelineSubTask(subtask);
                           setTimelineModalOpen(true);
                         }}
-                        className="p-1 px-2 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
+                        className="p-1.5 text-blue-500 rounded-lg hover:bg-blue-50 transition-colors"
                         title="View subtask activity timeline"
                       >
-                        <FiActivity className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-semibold uppercase">Log</span>
+                        <FiActivity className="w-4 h-4" />
                       </button>
 
                       {/* Permission-gated status controls */}
@@ -578,11 +402,10 @@ const SubtasksSection = ({
                         );
                       })()}
 
-                      {/* Edit button for users with permission and assigned users */}
                       {(canEditTask || isAdmin) && (
                         <button
                           onClick={() => onEditSubTask(subtask)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-blue-500 hover:text-blue-700 p-1"
+                          className="text-gray-400 hover:text-blue-600 p-1"
                           title="Edit subtask"
                         >
                           <svg
@@ -594,11 +417,10 @@ const SubtasksSection = ({
                           </svg>
                         </button>
                       )}
-                      {/* Users with delete permission can delete subtasks */}
                       {canDeleteSubtasks && (
                         <button
                           onClick={() => onDeleteSubTask(subtask._id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-700 p-1"
+                          className="text-gray-400 hover:text-red-600 p-1"
                           title="Delete subtask"
                         >
                           <svg
@@ -616,6 +438,128 @@ const SubtasksSection = ({
                       )}
                     </div>
                   </div>
+
+                  <div className="flex flex-wrap items-center gap-1">
+                    {subtask.copyOfDescription && (
+                      <div
+                        className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded-md text-[9px] font-bold uppercase"
+                        title="Has Content Description"
+                      >
+                        <FiEdit3 className="w-2.5 h-2.5" />
+                        Content
+                      </div>
+                    )}
+                    {subtask.ideas && (
+                      <div
+                        className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded-md text-[9px] font-bold uppercase"
+                        title="Has Ideas"
+                      >
+                        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3a1 1 0 012 0v2a1 1 0 11-2 0V5zM9 9a1 1 0 000 2v3a1 1 0 102 0v-3a1 1 0 00-2 0z" />
+                        </svg>
+                        Ideas
+                      </div>
+                    )}
+                    {subtask.publishUrls && Object.keys(subtask.publishUrls).length > 0 && (
+                      <div
+                        className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-md text-[9px] font-bold uppercase"
+                        title={`${Object.keys(subtask.publishUrls).length} Publish URLs`}
+                      >
+                        <FiLink className="w-2.5 h-2.5" />
+                        URLs ({Object.keys(subtask.publishUrls).length})
+                      </div>
+                    )}
+                    {subtask?.totalActualTime > 0 && (
+                      <span
+                        className="px-1.5 py-0.5 text-[10px] font-semibold rounded-md border flex items-center gap-1 bg-orange-50 text-orange-600 border-orange-100"
+                        title={`Total actual time spent: ${formatTime(subtask.totalActualTime)}`}
+                      >
+                        <FiClock className="w-2.5 h-2.5" />
+                        {formatTime(subtask.totalActualTime)}
+                      </span>
+                    )}
+                    {showApprovalNeeded && (
+                      <span
+                        className="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-semibold rounded-md border border-purple-100"
+                        title="Client approval is required for this subtask"
+                      >
+                        Needs client
+                      </span>
+                    )}
+                    {isWorkLinkRequired(subtask) && (
+                      <button
+                        onClick={() => {
+                          setWorkLinkSubTask(subtask);
+                          setIsWorkLinkModalOpen(true);
+                        }}
+                        className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-md flex items-center gap-1 border transition-colors ${getCurrentLink(subtask)
+                            ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                            : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"}`}
+                        title={getCurrentLink(subtask) ? "Work link provided. Click to edit." : "Work link is mandatory for this subtask. Click to add."}
+                      >
+                        <FiLink className="w-2.5 h-2.5" />
+                        {getCurrentLink(subtask) ? "Link" : "Link needed"}
+                      </button>
+                    )}
+                    {isCampaignReportRequired(subtask) && (
+                      <button
+                        onClick={() => {
+                          setReportSubTask(subtask);
+                          setIsCampaignReportModalOpen(true);
+                        }}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-full flex items-center gap-1 border transition-colors ${
+                          subtask.campaignReport?.submittedAt
+                            ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                            : "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100"
+                        }`}
+                        title="Post campaign report as completion proof"
+                      >
+                        <FiFileText className="w-2.5 h-2.5" />
+                        {subtask.campaignReport?.submittedAt ? "Report Posted" : "Report Required"}
+                      </button>
+                    )}
+
+                    {/* Priority & Rework (Moved to Row 1) */}
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase transition-colors ${subtask.priority === "High"
+                        ? "bg-red-100 text-red-800 border border-red-200"
+                        : subtask.priority === "Medium"
+                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                          : "bg-green-100 text-green-800 border border-green-200"
+                        }`}
+                    >
+                      {subtask.priority}
+                    </span>
+
+                    {subtask.reworkCount > 0 && (
+                    <span
+                      className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border flex items-center gap-1 bg-red-50 text-red-600 border-red-100 cursor-pointer hover:bg-red-100"
+                      title={`This subtask has been sent to rework ${subtask.reworkCount} times`}
+                      onClick={() => {
+                        setReworkSubTask(subtask);
+                        setReworkModalOpen(true);
+                      }}
+                    >
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      {subtask.reworkCount}
+                    </span>
+                    )}
+
+                    {subtask.pendingReasons && subtask.pendingReasons.length > 0 && (
+                      <span
+                        className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 rounded-full flex items-center gap-1"
+                        title="Reason submitted for uncompleted task during checkout"
+                      >
+                        <svg className="w-2.5 h-2.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Reason Added
+                      </span>
+                    )}
+                  </div>
+
                 </div>
                 {/* Basic description (always shown) */}
                 {subtask.description && (
