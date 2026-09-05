@@ -176,27 +176,25 @@ left-0 right-0 bottom-0 top-0 flexCenter backdrop-blur-sm"
               />
             </label>
 
+            <DatePicker
+              errors={errors}
+              touched={touched}
+              onChange={(e) => setFieldValue("joiningDate", e.target.value)}
+              name="joiningDate"
+              value={values.joiningDate}
+              title="Joining Date"
+            />
             {values.isOnProbation && (
-              <>
-                <DatePicker
-                  errors={errors}
-                  touched={touched}
-                  onChange={(e) => setFieldValue("joiningDate", e.target.value)}
-                  name="joiningDate"
-                  value={values.joiningDate}
-                  title="Joining Date"
-                />
-                <Input
-                  errors={errors}
-                  touched={touched}
-                  onchange={handleChange}
-                  name="probationPeriodMonths"
-                  value={values}
-                  type="number"
-                  title="Probation period (months)"
-                  placeholder="3"
-                />
-              </>
+              <Input
+                errors={errors}
+                touched={touched}
+                onchange={handleChange}
+                name="probationPeriodMonths"
+                value={values}
+                type="number"
+                title="Probation period (months)"
+                placeholder="3"
+              />
             )}
 
             <div>

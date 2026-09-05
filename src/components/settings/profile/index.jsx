@@ -569,19 +569,19 @@ rounded-3xl  flex flex-col "
               placeholder="No"
             />
           )}
+          <DatePicker
+            errors={errors}
+            touched={touched}
+            onChange={(e) => setFieldValue("joiningDate", e.target.value)}
+            name="joiningDate"
+            value={values.joiningDate}
+            readOnly={!isEditMode || !canEditPositionDepartment}
+            title="Joining Date"
+          />
           {(isEditMode && canEditPositionDepartment
             ? values.isOnProbation
             : Boolean(user?.isOnProbation) || values.isOnProbation) && (
             <>
-              <DatePicker
-                errors={errors}
-                touched={touched}
-                onChange={(e) => setFieldValue("joiningDate", e.target.value)}
-                name="joiningDate"
-                value={values.joiningDate}
-                readOnly={!isEditMode || !canEditPositionDepartment}
-                title="Joining Date"
-              />
               {isEditMode && canEditPositionDepartment && (
                 <Input
                   errors={errors}
