@@ -96,15 +96,16 @@ const MobileSidebar = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      onClick={onClose}
-      className="bg-[#2155A3]/15 fixed w-full h-screen flex p-2 flex-col inset-0 m-auto z-[1000]"
-    >
+    <div className="fixed inset-0 z-[1000]">
       <div
+        onClick={onClose}
+        className="absolute inset-0 bg-[#2155A3]/20"
+      />
+      <aside
         onClick={(e) => {
           e.stopPropagation();
         }}
-        className="bg-white w-[220px] overflow-hidden flex flex-col justify-between rounded-3xl h-[calc(100dvh-80px)] mt-16 p-3"
+        className="absolute top-0 left-0 z-[1] flex h-full w-[min(240px,85vw)] flex-col justify-between overflow-hidden bg-white p-3 shadow-2xl"
       >
         <div className="flex flex-col h-full overflow-y-auto">
           <img src={logo} alt="" className="w-10" />
@@ -210,7 +211,7 @@ const MobileSidebar = ({
           </span>
           <span className="absolute hidden group-hover:block -right-2.5 h-full w-1 bg-[#3F8CFF]"></span>
         </button>
-      </div>
+      </aside>
     </div>
   );
 };

@@ -117,20 +117,20 @@ const Dashboard = () => {
     selectedDate.getFullYear() === new Date().getFullYear();
 
   return (
-    <section className="flex flex-col">
+    <section className="flex flex-col gap-1 pb-4">
 
-      <div className="flexBetween ">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <span className="text-sm md:text-base text-[#7D8592]">
             Welcome back,
             <span className="font-semibold text-gray-800 ml-2">
-              {user?.firstName} !{/* <Header>Dashboard</Header> */}
+              {user?.firstName} !
             </span>
           </span>
         </div>
         <div
-          className=" h-8 md:h-11 flexCenter text-sm gap-x-2 text-[#0A1629] px-3 md:px-5
-         rounded-md md:rounded-[14px] w-fit bg-[#E6EDF5]"
+          className="h-9 md:h-11 flex items-center justify-center text-sm gap-x-1.5 md:gap-x-2 text-[#0A1629] px-2.5 md:px-5
+         rounded-xl md:rounded-[14px] w-full sm:w-fit bg-[#E6EDF5] shrink-0"
         >
           <button
             onClick={goToPreviousMonth}
@@ -139,7 +139,7 @@ const Dashboard = () => {
           >
             <MdOutlineKeyboardArrowLeft className="w-4 h-4" />
           </button>
-          <img src="/icons/calender.svg" alt="" loading="lazy" className="w-4 md:w-5" />
+          <img src="/icons/calender.svg" alt="" loading="lazy" className="w-4 md:w-5 shrink-0" />
           <span
             className={`text-xs whitespace-nowrap md:text-base 
               cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
@@ -165,7 +165,7 @@ const Dashboard = () => {
       </div>
 
       {/* Progress Stats Section - Show different components based on user role and permissions */}
-      <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
+      <div className="w-full mt-3">
         <EmployeeProgressStats taskMonth={taskMonth} />
       </div>
 
@@ -173,9 +173,8 @@ const Dashboard = () => {
         <CompletionTrendChart userId={user?._id} />
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-6 mt-4">
-        {/* employee work details - now full width */}
-        <div className="md:col-span-7">
+      <div className="w-full grid grid-cols-1 gap-2 md:gap-6 mt-4">
+        <div className="min-w-0">
           <Suspense fallback={<div>Loading Employee Work Details...</div>}>
             <EmployeeWorkDetails />
           </Suspense>
@@ -192,20 +191,20 @@ const Dashboard = () => {
       />
 
       {/* Team Insights Section */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-6 mt-5">
-        <div className="lg:col-span-6 xl:col-span-4">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 mt-5">
+        <div className="lg:col-span-6 xl:col-span-4 min-w-0">
           <DashboardRanking />
         </div>
-        <div className="lg:col-span-6 xl:col-span-4">
+        <div className="lg:col-span-6 xl:col-span-4 min-w-0">
           <NearestEvents selectedDate={selectedDate} />
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
-        <div className="md:col-span-5">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-7 gap-3 md:gap-4 mt-5 pb-5">
+        <div className="lg:col-span-5 min-w-0">
           <EmployeeTodayTasks />
         </div>
-        <div className="md:col-span-2 flex flex-col gap-6">
+        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6 min-w-0">
           <NearestEvents selectedDate={selectedDate} />
           <TodayReworkTasks />
         </div>

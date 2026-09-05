@@ -142,11 +142,13 @@ const Prjects = () => {
 
   const projectsLoading = user?.role === "company-admin" ? isCompanyLoading : isEmployeeLoading;
   const hasNoProject = isSuccess && (!projects || projects.length === 0);
-  const isLoading = projectsLoading || projectLoading || tasksLoading;
+  const detailsLoading = Boolean(selectProject) && (projectLoading || tasksLoading);
 
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  // Mobile master-detail: list + search first; details after selecting a project
+  const [mobileShowDetails, setMobileShowDetails] = useState(false);
 
-  if (isLoading) return <ProjectsShimmer />;
+  if (projectsLoading) return <ProjectsShimmer />;
 
   const activeTasks = projectWithTasks?.tasks?.filter(
     (task) => task?.status === "todo"
@@ -158,17 +160,24 @@ const Prjects = () => {
     (task) => task?.status === "completed"
   );
 
+  const showListPanel = !isTimelineExpanded && !hasNoProject;
+  // On mobile: list until a project is opened. Desktop always shows details beside list.
+  const showDetailsPanel = hasNoProject || mobileShowDetails || isTimelineExpanded;
+
   return (
-    <section className="flex flex-col h-full gap-y-2">
+    <section className="flex flex-col h-full gap-y-2 min-h-0">
       <div
         className="w-full h-full min-h-0 overflow-y-auto gap-y-3 md:gap-y-0 
          md:overflow-hidden md:gap-x-3 grid grid-cols-1 md:grid-cols-5"
       >
-        {/* current project section  */}
-        {!isTimelineExpanded && !hasNoProject && (
-          <CurrentProject projects={projects} selectProject={selectProject} />
+        {showListPanel && (
+          <CurrentProject
+            projects={projects}
+            selectProject={selectProject}
+            onProjectSelect={() => setMobileShowDetails(true)}
+            className={mobileShowDetails ? "hidden md:flex" : "flex"}
+          />
         )}
-        {/* project detail page  */}
         <ProjectDetails
           activeProject={projectWithTasks}
           hasNoProject={hasNoProject}
@@ -182,6 +191,20 @@ const Prjects = () => {
           onMonthChange={setSelectedMonth}
           isTimelineExpanded={isTimelineExpanded}
           setIsTimelineExpanded={setIsTimelineExpanded}
+          onMobileBack={
+            hasNoProject
+              ? undefined
+              : () => {
+                  setMobileShowDetails(false);
+                  setIsTimelineExpanded(false);
+                }
+          }
+          isLoading={detailsLoading}
+          className={
+            showDetailsPanel
+              ? "flex"
+              : "hidden md:flex"
+          }
         />
       </div>
 

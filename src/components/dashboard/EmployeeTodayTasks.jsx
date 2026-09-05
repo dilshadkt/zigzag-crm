@@ -20,16 +20,15 @@ const EmployeeTodayTasks = () => {
     const completedItems = [...completedTasks, ...completedSubTasks];
 
     return (
-        <div className="bg-white rounded-[2rem] p-4  border border-gray-100 h-[470px] flex flex-col">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-4 border border-gray-100 min-h-[360px] md:min-h-[420px] md:h-[470px] flex flex-col">
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-3">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
                         Employees Today Tasks
                     </h3>
-                    {/* <p className="text-sm text-gray-500">Real-time task tracking for all employees</p> */}
                 </div>
 
-                <div className="relative min-w-[200px]">
+                <div className="relative w-full sm:w-auto sm:min-w-[200px]">
                     <select
                         value={selectedEmployeeId}
                         onChange={(e) => setSelectedEmployeeId(e.target.value)}
@@ -53,9 +52,9 @@ const EmployeeTodayTasks = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 flex-1 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 flex-1 lg:overflow-hidden min-h-0">
                 {/* Active Today */}
-                <div className="flex flex-col h-full bg-slate-50 rounded-2xl p-3 overflow-hidden">
+                <div className="flex flex-col h-full bg-slate-50 rounded-2xl p-3 overflow-hidden min-h-[240px] lg:min-h-0">
                     <div className="flex items-center justify-between mb-4 px-2">
                         <h4 className="font-semibold text-gray-700 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
@@ -63,7 +62,7 @@ const EmployeeTodayTasks = () => {
                         </h4>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[280px] lg:max-h-none scrollbar-thin scrollbar-thumb-gray-200">
                         {isLoading ? (
                             <div className="flex flex-col gap-3">
                                 {[1, 2, 3].map((i) => (
@@ -84,7 +83,7 @@ const EmployeeTodayTasks = () => {
                 </div>
 
                 {/* Completed Today */}
-                <div className="flex flex-col h-full bg-emerald-50 rounded-2xl p-4 overflow-hidden">
+                <div className="flex flex-col h-full bg-emerald-50 rounded-2xl p-3 md:p-4 overflow-hidden min-h-[240px] lg:min-h-0">
                     <div className="flex items-center justify-between mb-4 px-2">
                         <h4 className="font-semibold text-emerald-700 flex items-center gap-2">
                             <FaCheckCircle className="text-emerald-500" />
@@ -92,7 +91,7 @@ const EmployeeTodayTasks = () => {
                         </h4>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-emerald-100">
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[280px] lg:max-h-none scrollbar-thin scrollbar-thumb-emerald-100">
                         {isLoading ? (
                             <div className="flex flex-col gap-3">
                                 {[1, 2, 3].map((i) => (

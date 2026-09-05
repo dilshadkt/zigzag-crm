@@ -23,24 +23,23 @@ const ActionButton = ({
   const { hasPermission } = usePermissions();
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2 w-full md:flex-row md:flex-wrap md:items-center md:w-auto md:gap-2">
       <MonthSelector
         selectedMonth={selectedMonth}
         onMonthChange={onMonthChange}
         activeProject={activeProject}
+        className="w-full md:w-auto"
       />
 
-
-
-      <div className="flex gap-2">
-        <div className="flex gap-x-2">
+      <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+        <div className="flex gap-x-1.5 md:gap-x-2">
           {hasPermission("projects", "create") && (
             <PrimaryButton
               icon={<Plus size={18} />}
-              title={"Add Project"}
+              title={<span className="hidden sm:inline">Add Project</span>}
               onclick={() => setShowModalProject(true)}
               className={
-                "text-gray-700 font-medium hover:bg-[#3f8cff] hover:text-white bg-white px-5"
+                "text-gray-700 font-medium hover:bg-[#3f8cff] hover:text-white bg-white px-2.5 sm:px-5"
               }
             />
           )}
@@ -48,25 +47,26 @@ const ActionButton = ({
             <PrimaryButton
               disable={!activeProject}
               icon={<Plus size={18} />}
-              title={"Add Task"}
+              title={<span className="hidden sm:inline">Add Task</span>}
               onclick={() => setShowModalTask(true)}
               className={
-                "text-gray-700 font-medium hover:bg-[#3f8cff] hover:text-white bg-white px-5"
+                "text-gray-700 font-medium hover:bg-[#3f8cff] hover:text-white bg-white px-2.5 sm:px-5"
               }
             />
           )}
         </div>
         <PrimaryButton
           icon={"/icons/refresh.svg"}
-          className={"bg-white  transition-colors"}
+          className={"bg-white transition-colors px-2.5"}
           onclick={handleRefresh}
         />
         <PrimaryButton
           icon={"/icons/timeline.svg"}
-          className={`transition-colors ${viewMode === "timeline"
-            ? "bg-blue-50 border-blue-300"
-            : "bg-white hover:bg-gray-50"
-            }`}
+          className={`transition-colors px-2.5 ${
+            viewMode === "timeline"
+              ? "bg-blue-50 border-blue-300"
+              : "bg-white hover:bg-gray-50"
+          }`}
           onclick={() => {
             if (viewMode === "timeline") {
               setViewMode("board");
@@ -78,10 +78,11 @@ const ActionButton = ({
         />
         <button
           onClick={() => setShowSubtasks(!showSubtasks)}
-          className={`p-2 rounded-lg border transition-colors ${showSubtasks
-            ? "bg-blue-50 border-blue-300 text-blue-600"
-            : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-            }`}
+          className={`p-2 rounded-lg border transition-colors ${
+            showSubtasks
+              ? "bg-blue-50 border-blue-300 text-blue-600"
+              : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+          }`}
           title={showSubtasks ? "Hide Subtasks" : "Show Subtasks"}
         >
           <svg
@@ -109,13 +110,12 @@ const ActionButton = ({
         </button>
         <PrimaryButton
           icon={viewMode === "list" ? board : list}
-          className={"bg-white hover:bg-gray-50 transition-colors"}
+          className={"bg-white hover:bg-gray-50 transition-colors px-2.5"}
           onclick={() => {
             setViewMode(viewMode === "list" ? "board" : "list");
             setIsTimelineExpanded(false);
           }}
         />
-
       </div>
     </div>
   );

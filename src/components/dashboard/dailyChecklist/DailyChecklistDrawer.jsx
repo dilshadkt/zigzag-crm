@@ -14,7 +14,7 @@ const CircularProgress = ({ value, onClick }) => {
     return (
         <button
             onClick={onClick}
-            className="fixed bottom-8 right-8 z-[50] group transition-transform hover:scale-105"
+            className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-[50] group transition-transform hover:scale-105"
             title="Daily Tasks Progress"
         >
             <div className="relative flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg border border-blue-100">

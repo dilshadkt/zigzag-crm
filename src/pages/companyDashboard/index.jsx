@@ -140,9 +140,9 @@ const CompanyDashboard = () => {
     selectedDate.getFullYear() === new Date().getFullYear();
 
   return (
-    <section className="flex flex-col">
-      <div className="flexBetween">
-        <div>
+    <section className="flex flex-col gap-1 pb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <span className="text-sm md:text-base text-[#7D8592]">
             Company Dashboard
             <span className="font-semibold text-gray-800 ml-2">
@@ -151,8 +151,8 @@ const CompanyDashboard = () => {
           </span>
         </div>
         <div
-          className="h-8 md:h-11 flexCenter text-sm gap-x-2 text-[#0A1629] px-3 md:px-5
-         rounded-md md:rounded-[14px] w-fit bg-[#E6EDF5]"
+          className="h-9 md:h-11 flex items-center justify-center text-sm gap-x-1.5 md:gap-x-2 text-[#0A1629] px-2.5 md:px-5
+         rounded-xl md:rounded-[14px] w-full sm:w-fit bg-[#E6EDF5] shrink-0"
         >
           <button
             onClick={goToPreviousMonth}
@@ -161,7 +161,7 @@ const CompanyDashboard = () => {
           >
             <MdOutlineKeyboardArrowLeft className="w-4 h-4" />
           </button>
-          <img src="/icons/calender.svg" alt="" className="w-4 md:w-5" />
+          <img src="/icons/calender.svg" alt="" className="w-4 md:w-5 shrink-0" />
           <span
             className={`text-xs whitespace-nowrap md:text-base 
               cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
@@ -187,7 +187,7 @@ const CompanyDashboard = () => {
       </div>
 
       {/* Company Progress Stats Section */}
-      <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
+      <div className="w-full mt-3">
         <CompanyProgressStats taskMonth={taskMonth} />
       </div>
 
@@ -197,26 +197,26 @@ const CompanyDashboard = () => {
         <CompletionTrendChart userId={null} />
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-6 mt-5">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6 mt-5">
         {/* Workload section */}
-        <div className="col-span-1 md:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <WorkLoad />
         </div>
 
         {/* Pending work / Nearest event */}
-        <div className="col-span-1">
+        <div className="lg:col-span-1 min-w-0">
           <PendingWork taskMonth={taskMonth} />
         </div>
       </div>
 
       {/* Projects Section */}
-      <div className="w-full grid gap-y-5 md:gap-x-6 mt-5 grid-cols-1 md:grid-cols-7">
-        <div className="md:px-4 md:h-[470px] pb-3 pt-5 flex flex-col rounded-3xl col-span-1 md:col-span-5">
-          <div className="flexBetween w-full">
-            <h4 className="font-semibold text-lg text-gray-800">Projects</h4>
+      <div className="w-full grid gap-y-5 md:gap-x-6 mt-5 grid-cols-1 lg:grid-cols-7">
+        <div className="px-1 md:px-4 md:h-[470px] pb-3 pt-3 md:pt-5 flex flex-col rounded-3xl col-span-1 lg:col-span-5 min-w-0">
+          <div className="flex items-center justify-between w-full gap-2">
+            <h4 className="font-semibold text-base md:text-lg text-gray-800">Projects</h4>
             <Link
               to="/projects-analytics"
-              className="text-[#3F8CFF] text-sm cursor-pointer flexStart gap-x-2"
+              className="text-[#3F8CFF] text-sm cursor-pointer flex items-center gap-x-1 shrink-0"
             >
               <span>View all</span>
               <MdOutlineKeyboardArrowRight />
@@ -225,8 +225,8 @@ const CompanyDashboard = () => {
           {/* Project list section */}
           <div className="flex flex-col h-full gap-y-2 md:gap-y-3 mt-3">
             {isLoadingProjects ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-pulse">
+              <div className="flex items-center justify-center h-full min-h-[120px]">
+                <div className="animate-pulse w-full">
                   <div className="h-20 bg-gray-200 rounded-xl mb-3"></div>
                   <div className="h-20 bg-gray-200 rounded-xl mb-3"></div>
                   <div className="h-20 bg-gray-200 rounded-xl"></div>
@@ -243,7 +243,7 @@ const CompanyDashboard = () => {
                 />
               ))
             ) : (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-full min-h-[100px]">
                 <p className="text-gray-500 text-center">
                   No projects available
                 </p>
@@ -254,27 +254,27 @@ const CompanyDashboard = () => {
           <DashboardCampaigns />
         </div>
         {/* Sidebar: Activity stream and nearest events */}
-        <div className="flex flex-col gap-5 md:col-span-2">
+        <div className="flex flex-col gap-5 lg:col-span-2 min-w-0">
           <ActivityStream />
           <NearestEvents selectedDate={selectedDate} />
         </div>
       </div>
 
       {/* Team Insights Section */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-6 mt-5">
-        <div className="lg:col-span-8">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 mt-5">
+        <div className="lg:col-span-8 min-w-0">
           <EmployeesTodayStatus />
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-4 min-w-0">
           <DashboardRanking />
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-4 mt-5 pb-5">
-        <div className="md:col-span-5">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-7 gap-3 md:gap-4 mt-5 pb-5">
+        <div className="lg:col-span-5 min-w-0">
           <EmployeeTodayTasks />
         </div>
-        <div className="md:col-span-2 flex flex-col gap-6">
+        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6 min-w-0">
           <PendingWork taskMonth={taskMonth} />
           <TodayReworkTasks />
         </div>

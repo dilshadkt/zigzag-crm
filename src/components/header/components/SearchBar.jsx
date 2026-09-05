@@ -41,7 +41,7 @@ const SearchBar = ({ accessiblePages = [] }) => {
     (filteredRoutes.length > 0);
 
   return (
-    <div className="hidden lg:block relative w-1/3" ref={searchRef}>
+    <div className="relative w-full max-w-xl" ref={searchRef}>
       <div className="relative">
         <input
           type="text"

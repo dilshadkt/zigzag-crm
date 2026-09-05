@@ -37,11 +37,11 @@ const ActionButtons = ({
         )}
       </Link>
 
-      {/* Clock In Button - Hidden once shift is active */}
+      {/* Clock In — visible on all devices while not on shift */}
       {!isShiftActive && (
         <button
           onClick={onAttendanceClick}
-          className="flexCenter cursor-pointer w-12 h-12 rounded-[14px] bg-white relative hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flexCenter cursor-pointer w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] bg-white relative hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           disabled={statusLoading || isClockingIn}
           title="Clock in"
         >
@@ -78,7 +78,7 @@ const ActionButtons = ({
       {/* Meetings */}
       <Link
         to="/meetings"
-        className="flex items-center justify-center cursor-pointer w-12 h-12 rounded-[14px] bg-white relative"
+        className="flex items-center justify-center cursor-pointer w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] bg-white relative shrink-0"
         title="Meetings"
       >
         <IoVideocamOutline className="w-5 h-5 text-gray-600" />
@@ -92,7 +92,7 @@ const ActionButtons = ({
       {/* Notifications */}
       <button
         onClick={onNotifyClick}
-        className="flexCenter cursor-pointer w-12 h-12 rounded-[14px] bg-white relative"
+        className="flexCenter cursor-pointer w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] bg-white relative shrink-0"
       >
         <img src={"/icons/alert.svg"} alt="" className="w-5" />
         {unreadCount > 0 && (

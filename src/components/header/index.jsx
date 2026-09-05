@@ -332,36 +332,39 @@ const DashboardHeader = () => {
   };
 
   return (
-    <div className="bg-white lg:bg-transparent rounded-xl py-1 md:py-0 flexBetween">
-      {/* Mobile Logo */}
-      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
-        <img src={logo} alt="" className="w-10 h-10 ml-3" />
+    <div className="bg-white lg:bg-transparent rounded-xl py-1 md:py-0 flex items-center gap-2 w-full min-w-0">
+      {/* Left: mobile menu */}
+      <button
+        type="button"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="md:hidden shrink-0 flex items-center justify-center w-11 h-11 rounded-xl"
+        aria-label="Open menu"
+      >
+        <img src={logo} alt="" className="w-9 h-9" />
       </button>
 
-      {/* Search Bar */}
-      <SearchBar accessiblePages={filteredSidebar} />
+      {/* Center: search (desktop) */}
+      <div className="min-w-0 flex-1 hidden lg:block">
+        <SearchBar accessiblePages={filteredSidebar} />
+      </div>
 
-      {/* Right Side Actions */}
-      <div className="flexEnd gap-x-2">
-        {/* Attendance Status */}
-        <div className="hidden md:block">
-          <AttendanceStatus
-            isShiftActive={isShiftActive}
-            isOnBreak={isOnBreak}
-            shiftElapsedTime={shiftElapsedTime}
-            isClockingOut={isClockingOut}
-            clockOutError={clockOutError}
-            onEndShift={endShift}
-            onStartBreak={handleStartBreak}
-            onEndBreak={handleEndBreak}
-            isStartingBreak={isStartingBreak}
-            isEndingBreak={isEndingBreak}
-            isEndShiftBlocked={isEndShiftBlocked}
-            pendingTasksWithoutReasonCount={pendingTasksWithoutReasonCount}
-          />
-        </div>
+      {/* Right: attendance + actions + profile */}
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <AttendanceStatus
+          isShiftActive={isShiftActive}
+          isOnBreak={isOnBreak}
+          shiftElapsedTime={shiftElapsedTime}
+          isClockingOut={isClockingOut}
+          clockOutError={clockOutError}
+          onEndShift={endShift}
+          onStartBreak={handleStartBreak}
+          onEndBreak={handleEndBreak}
+          isStartingBreak={isStartingBreak}
+          isEndingBreak={isEndingBreak}
+          isEndShiftBlocked={isEndShiftBlocked}
+          pendingTasksWithoutReasonCount={pendingTasksWithoutReasonCount}
+        />
 
-        {/* Action Buttons */}
         <ActionButtons
           isShiftActive={isShiftActive}
           isOnBreak={isOnBreak}
@@ -377,19 +380,20 @@ const DashboardHeader = () => {
           formatTime={formatTime}
         />
 
-        {/* Current Score Display */}
         {!isCompanyAdmin && (
-          <div 
+          <div
             onClick={() => navigate(`/my-points`)}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full mr-2 hover:bg-blue-100 transition-colors cursor-pointer" 
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
             title="Your Current Score"
           >
             <Zap className="w-4 h-4 text-blue-500 fill-blue-500" />
-            <span className="text-sm font-black text-blue-700">{currentScore} <span className="text-[10px] font-bold text-blue-400 uppercase">Pts</span></span>
+            <span className="text-sm font-black text-blue-700">
+              {currentScore}{" "}
+              <span className="text-[10px] font-bold text-blue-400 uppercase">Pts</span>
+            </span>
           </div>
         )}
 
-        {/* User Profile */}
         <UserProfile user={user} />
       </div>
 

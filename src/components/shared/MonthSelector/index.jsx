@@ -155,7 +155,7 @@ const MonthSelector = ({
       {/* Month Display Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium transition-all duration-200 hover:border-gray-300 min-w-[120px]"
+        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium transition-all duration-200 hover:border-gray-300 w-full sm:min-w-[120px] sm:w-auto"
       >
         <MdDateRange className="text-gray-400 text-sm" />
         <span className="font-medium text-gray-700 truncate">

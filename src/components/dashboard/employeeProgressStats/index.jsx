@@ -55,27 +55,27 @@ const SortableStatsCard = ({ stat, onClick }) => {
       {...attributes}
       onClick={onClick}
       className={`${stat.bgColor
-        } rounded-xl p-4 flex flex-col items-center
-       justify-center text-center cursor-pointer border-1 border-transparent
+        } rounded-xl p-3 md:p-4 flex flex-col items-center
+       justify-center text-center cursor-pointer border border-transparent
          ${stat.borderColor
-        } transform group relative overflow-hidden transition-all duration-200
+        } transform group relative overflow-hidden transition-all duration-200 min-w-0
          ${isDragging
           ? "shadow-lg scale-105 rotate-2"
           : "hover:scale-105"
         }`}
     >
-      <div className={`${stat.color} p-3 rounded-lg mb-3`}>
-        <Icon className="w-4 h-4 text-white" />
+      <div className={`${stat.color} p-2 md:p-3 rounded-lg mb-2 md:mb-3`}>
+        <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
       </div>
       <div
-        className={`text-2xl font-bold ${stat.textColor} mb-2`}
+        className={`text-xl md:text-2xl font-bold ${stat.textColor} mb-1 md:mb-2`}
       >
         {stat.value}
       </div>
-      <p className="text-sm font-medium text-gray-700 mb-1">
+      <p className="text-[11px] md:text-sm font-medium text-gray-700 mb-0.5 md:mb-1 line-clamp-2 leading-tight">
         {stat.title}
       </p>
-      <p className="text-xs text-gray-500">{stat.subtitle}</p>
+      <p className="hidden sm:block text-xs text-gray-500 line-clamp-1">{stat.subtitle}</p>
       {/* Hover indicator */}
       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <span className="text-xs text-gray-400">→</span>
@@ -83,7 +83,7 @@ const SortableStatsCard = ({ stat, onClick }) => {
       {/* Drag indicator with listeners */}
       <div
         {...listeners}
-        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-move"
+        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-move hidden md:block"
       >
         <span className="text-xs text-gray-400">⋮⋮</span>
       </div>
@@ -106,7 +106,9 @@ const EmployeeProgressStats = ({ taskMonth }) => {
 
   // Sensors for drag and drop
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -439,10 +441,10 @@ const EmployeeProgressStats = ({ taskMonth }) => {
 
   if (isLoading) {
     return (
-      <div className="px-4 col-span-7 bg-white h-full pb-3 pt-5 flex flex-col rounded-3xl">
+      <div className="px-3 md:px-4 w-full bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
               <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
             ))}
@@ -453,29 +455,22 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   }
 
   return (
-    <div className="px-4 col-span-7 bg-white h-full overflow-hidden pb-3 pt-5 flex flex-col rounded-3xl">
-      <div className="flexBetween mb-4">
-        <h4 className="font-semibold text-lg text-gray-800">
+    <div className="px-3 md:px-4 w-full bg-white h-full overflow-hidden pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h4 className="font-semibold text-base md:text-lg text-gray-800">
           My Task Progress
         </h4>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-xl md:text-2xl font-bold text-blue-600">
               {completionRate}%
             </div>
           </div>
-          {/* <div className="h-8 w-px bg-gray-100 mx-1"></div>
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-teal-600">
-              {statistics.onTimeCompletionRate || 0}%
-            </div>
-            <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">On-Time<br />Rate</div>
-          </div> */}
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <div className="flex justify-between text-xs text-gray-500 mb-2">
           <span>Task Completion Progress</span>
           <span>{completionRate}%</span>
@@ -495,7 +490,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={cardOrder || []} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 flex-1">
             {orderedStats.map((stat) => (
               <SortableStatsCard
                 key={stat.id}

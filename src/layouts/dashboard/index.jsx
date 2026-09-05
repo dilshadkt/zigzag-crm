@@ -40,8 +40,8 @@ const DashboardLayout = () => {
             onClose={() => setIsAttendanceDismissed(true)}
           />
           <div className="fixed bottom-10 left-0 right-0 flexCenter flex-col gap-2 z-[10001] pointer-events-none">
-            <p className="text-[11px] text-white/70 uppercase font-bold tracking-[0.3em] bg-black/20 px-6 py-2.5 rounded-full border border-white/10 backdrop-blur-md">
-              Zigzag CRM Security Access
+            <p className="text-[11px] text-white/80 font-medium tracking-wide bg-black/25 px-5 py-2 rounded-full border border-white/10 backdrop-blur-md">
+              Clock in to continue
             </p>
           </div>
         </div>

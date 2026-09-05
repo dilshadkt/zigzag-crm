@@ -61,11 +61,11 @@ const AlertCard = ({ alert, project }) => {
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
-      <div className="flex justify-between items-start">
-        <span className="font-semibold text-gray-800 line-clamp-1">
+      <div className="flex justify-between items-start gap-2">
+        <span className="font-semibold text-gray-800 line-clamp-2 min-w-0">
           {project?.name || alert.data?.projectName}
         </span>
-        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full whitespace-nowrap">
+        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full whitespace-nowrap shrink-0">
           {(() => {
             if (!project?.endDate) return "Due today";
             const end = new Date(project.endDate);

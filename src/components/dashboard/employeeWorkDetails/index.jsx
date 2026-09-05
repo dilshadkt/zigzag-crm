@@ -181,12 +181,12 @@ const EmployeeWorkDetails = () => {
   };
 
   return (
-    <div className="px-5 bg-white h-full pb-5 pt-5 flex
+    <div className="px-3 md:px-5 bg-white h-full pb-4 md:pb-5 pt-4 md:pt-5 flex
      flex-col rounded-2xl  min-h-[340px]
      border border-gray-100">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-2 h-full min-w-0">
         {/* Today's Work Section */}
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full min-w-0">
           <div className="flexBetween mb-4">
             <h4 className="font-semibold text-gray-800">Assigned Tasks</h4>
             {todaySubTasks?.subTasks?.length > 0 && (
@@ -251,7 +251,7 @@ const EmployeeWorkDetails = () => {
         </div>
 
         {/* Today's Completed Section */}
-        <div className="flex flex-col h-full border-l border-gray-100 pl-2 md:pl-4">
+        <div className="flex flex-col h-full min-w-0 md:border-l border-gray-100 md:pl-4 pt-4 md:pt-0 border-t md:border-t-0">
           <div className="flexBetween mb-4">
             <h4 className="font-semibold text-gray-800">Completed Today</h4>
             <div className="flex items-center gap-2">

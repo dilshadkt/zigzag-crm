@@ -14,7 +14,7 @@ const TodayReworkTasks = () => {
     const allReworkItems = [...reworkTasks, ...reworkSubTasks];
 
     return (
-        <div className="bg-white rounded-[2rem] p-5  border border-gray-100 flex flex-col h-[400px]">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-gray-100 flex flex-col min-h-[320px] md:h-[400px]">
             <div className="flex flex-col gap-3 mb-4">
                 <div>
                     <h3 className="text-base font-bold text-red-600 flex items-center gap-2">

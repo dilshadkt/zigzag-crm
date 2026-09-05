@@ -62,6 +62,8 @@ const TaskOnReview = () => {
   }, [showSubtasks]);
 
   const [superFilters, setSuperFilters] = useState({ assignedTo: [], project: [] });
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [mobileShowDetails, setMobileShowDetails] = useState(false);
 
   const handleSuperFilterChange = (type, value) => {
     setSuperFilters((prev) => ({ ...prev, [type]: value }));
@@ -273,6 +275,23 @@ const TaskOnReview = () => {
         if (!projectId || !superFilters.project.includes(projectId)) return false;
       }
 
+      // Search by title / project / assignee
+      const searchQuery = filters.search?.trim().toLowerCase();
+      if (searchQuery) {
+        const title = task.title?.toLowerCase() || "";
+        const projectName = task.project?.name?.toLowerCase() || "";
+        const assignees = (task.assignedTo || [])
+          .map((u) => `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase())
+          .join(" ");
+        if (
+          !title.includes(searchQuery) &&
+          !projectName.includes(searchQuery) &&
+          !assignees.includes(searchQuery)
+        ) {
+          return false;
+        }
+      }
+
       // Tasks / Subtasks visibility
       const isSubTask = task.parentTask || task.isSubTask;
       if (isSubTask && !showSubtasks) return false;
@@ -388,20 +407,39 @@ const TaskOnReview = () => {
   };
 
   const handleTaskClick = (task) => {
-    if (task.type === "subtask") {
-      // For subtasks, navigate to the parent task detail page
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    if (isMobile) {
+      setSelectedTask(task);
+      setMobileShowDetails(true);
+      return;
+    }
+    openFullTask(task);
+  };
+
+  const openFullTask = (task) => {
+    if (task.type === "subtask" || task.itemType === "subtask" || task.parentTask) {
       if (task.parentTask?._id) {
         navigate(`/projects/${task.project._id}/${task.parentTask._id}`);
       } else if (task.project?._id) {
         navigate(`/projects/${task.project._id}/${task._id}`);
       }
+    } else if (task.project?._id) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
     } else {
-      // For regular tasks
-      if (task.project?._id) {
-        navigate(`/projects/${task.project._id}/${task._id}`);
-      } else {
-        navigate(`/tasks/${task._id}`);
-      }
+      navigate(`/tasks/${task._id}`);
+    }
+  };
+
+  const formatDueDate = (isoDate) => {
+    if (!isoDate) return "No due date";
+    try {
+      return new Date(isoDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "No due date";
     }
   };
 
@@ -414,86 +452,235 @@ const TaskOnReview = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          <div className="">
-            {/* Header */}
-            <div className="flexBetween mb-6">
-              <div className="flex items-center gap-3">
-                <Navigator />
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800">
-                    {getFilterTitle()}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {filteredTasks.length} item
-                    {filteredTasks.length !== 1 ? "s" : ""} on review
-                    {tasksOnReviewData?.statistics && (
-                      <span className="ml-2">
-                        ({tasksOnReviewData.statistics.total} total)
-                      </span>
-                    )}
+    <div className="flex flex-col h-full min-h-0 bg-gray-50">
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 px-1 md:px-0">
+          {/* Mobile details view */}
+          {mobileShowDetails && selectedTask ? (
+            <div className="md:hidden flex flex-col gap-4 pb-6">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileShowDetails(false);
+                    setSelectedTask(null);
+                  }}
+                  className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-gray-200 text-gray-700"
+                  aria-label="Back to task list"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">
+                    On review
                   </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <PrimaryButton
-                  icon={"/icons/refresh.svg"}
-                  className={"bg-white hover:bg-gray-50 transition-colors"}
-                  onclick={() => refetch()}
-                />
-                <PrimaryButton
-                  icon={"/icons/filter.svg"}
-                  className={"bg-white hover:bg-gray-50 transition-colors"}
-                  onclick={() => setShowFilter(true)}
-                />
-              </div>
-            </div>
-            
-            {/* Quick Filters */}
-            <div className="mb-6">
-              <TaskQuickFilters
-                superFilters={superFilters}
-                onFilterChange={handleSuperFilterChange}
-                onMultiSelectFilter={handleMultiSelectFilter}
-                users={getFilterOptions(tasksOnReviewData?.tasks || []).users}
-                projects={getFilterOptions(tasksOnReviewData?.tasks || []).projects}
-                showTasks={showTasks}
-                showSubtasks={showSubtasks}
-                onToggleTasks={() => setShowTasks((prev) => !prev)}
-                onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-                nowrap
-              />
-            </div>
-
-            {/* Tasks List */}
-            <div className="flex flex-col h-full pb-5 gap-y-2 rounded-xl overflow-hidden overflow-y-auto">
-              {filteredTasks.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <FiEye className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No tasks or subtasks on review
+                  <h3 className="text-base font-semibold text-gray-800 truncate">
+                    {selectedTask.title}
                   </h3>
-                  <p className="text-gray-500">{getEmptyStateMessage()}</p>
                 </div>
-              ) : (
-                filteredTasks.map((task, index) => (
-                  <Task
-                    key={task._id}
-                    task={task}
-                    onClick={handleTaskClick}
-                    isBoardView={false}
-                    index={index}
-                    compact
-                  />
-                ))
-              )}
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col gap-4">
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700">
+                    {selectedTask.status?.replace("-", " ") || "on review"}
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700">
+                    {selectedTask.priority || "medium"} priority
+                  </span>
+                  {(selectedTask.type === "subtask" ||
+                    selectedTask.itemType === "subtask" ||
+                    selectedTask.parentTask) && (
+                    <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700">
+                      Subtask
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Project</p>
+                    <p className="font-medium text-gray-800">
+                      {selectedTask.project?.name || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Due date</p>
+                    <p className="font-medium text-gray-800">
+                      {formatDueDate(selectedTask.dueDate)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Assignees</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedTask.assignedTo || []).length > 0 ? (
+                        selectedTask.assignedTo.map((user) => (
+                          <span
+                            key={user._id}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-2.5 py-1 text-xs text-gray-700"
+                          >
+                            {(user.firstName || "").slice(0, 1)}
+                            {user.firstName} {user.lastName}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-500">Unassigned</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedTask.description && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Description</p>
+                    <div
+                      className="text-sm text-gray-700 line-clamp-6 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          typeof selectedTask.description === "string"
+                            ? selectedTask.description
+                            : "",
+                      }}
+                    />
+                  </div>
+                )}
+
+                <PrimaryButton
+                  title="Open full task"
+                  className="w-full text-white mt-1"
+                  onclick={() => openFullTask(selectedTask)}
+                />
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 p-2">
+                <Task
+                  task={selectedTask}
+                  onClick={() => openFullTask(selectedTask)}
+                  isBoardView={false}
+                  compact
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="">
+              {/* Header */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6">
+                <div className="flex items-start gap-2 md:gap-3 min-w-0">
+                  <Navigator />
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-medium text-gray-800 leading-snug">
+                      {getFilterTitle()}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {filteredTasks.length} item
+                      {filteredTasks.length !== 1 ? "s" : ""} on review
+                      {tasksOnReviewData?.statistics && (
+                        <span className="ml-2">
+                          ({tasksOnReviewData.statistics.total} total)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 shrink-0 self-end sm:self-auto">
+                  <PrimaryButton
+                    icon={"/icons/refresh.svg"}
+                    className={"bg-white hover:bg-gray-50 transition-colors"}
+                    onclick={() => refetch()}
+                  />
+                  <PrimaryButton
+                    icon={"/icons/filter.svg"}
+                    className={"bg-white hover:bg-gray-50 transition-colors"}
+                    onclick={() => setShowFilter(true)}
+                  />
+                </div>
+              </div>
+
+              {/* Search */}
+              <div className="mb-3 md:mb-4">
+                <label className="w-full text-sm text-[#91929E]">
+                  <span className="sr-only">Search tasks</span>
+                  <div className="flex items-center gap-2 rounded-full bg-white border border-[#E4E6E8] md:border-gray-200 px-3 py-2.5">
+                    <img
+                      src="/icons/search.svg"
+                      alt=""
+                      className="h-4 w-4 shrink-0"
+                    />
+                    <input
+                      type="text"
+                      value={filters.search}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          search: e.target.value,
+                        }))
+                      }
+                      placeholder="Search by title, project, or assignee"
+                      className="w-full bg-transparent text-sm text-[#0A1629] placeholder:text-[#91929E] focus:outline-none"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              {/* Quick Filters */}
+              <div className="mb-4 md:mb-6 overflow-x-auto scrollbar-thin -mx-1 px-1">
+                <TaskQuickFilters
+                  superFilters={superFilters}
+                  onFilterChange={handleSuperFilterChange}
+                  onMultiSelectFilter={handleMultiSelectFilter}
+                  users={getFilterOptions(tasksOnReviewData?.tasks || []).users}
+                  projects={
+                    getFilterOptions(tasksOnReviewData?.tasks || []).projects
+                  }
+                  showTasks={showTasks}
+                  showSubtasks={showSubtasks}
+                  onToggleTasks={() => setShowTasks((prev) => !prev)}
+                  onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+                  nowrap
+                  className="min-w-max md:min-w-0"
+                />
+              </div>
+
+              {/* Tasks List */}
+              <div className="flex flex-col h-full pb-5 gap-y-2 rounded-xl overflow-hidden overflow-y-auto">
+                {filteredTasks.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <FiEye className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No tasks or subtasks on review
+                    </h3>
+                    <p className="text-gray-500">{getEmptyStateMessage()}</p>
+                  </div>
+                ) : (
+                  filteredTasks.map((task, index) => (
+                    <Task
+                      key={task._id}
+                      task={task}
+                      onClick={handleTaskClick}
+                      isBoardView={false}
+                      index={index}
+                      compact
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

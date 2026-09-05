@@ -11,17 +11,17 @@ const EmployeesTodayStatus = () => {
   const inactiveEmployees = employees.filter(emp => emp.pendingCount === 0 && emp.completedCount === 0);
 
   return (
-    <div className="bg-white rounded-[2rem] p-5  border border-gray-100 flex flex-col h-[550px]">
+    <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-gray-100 flex flex-col min-h-0 md:min-h-[420px] md:h-[550px]">
       <div className="mb-3">
-        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
           Team Daily Status
         </h3>
         {/* <p className="text-xs text-gray-500 line-clamp-1">Finished vs still working</p> */}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 md:overflow-hidden min-h-0">
         {/* Working / Pending Column */}
-        <div className="flex flex-col bg-slate-50 rounded-2xl p-4 border border-slate-100 overflow-hidden">
+        <div className="flex flex-col bg-slate-50 rounded-2xl p-3 md:p-4 border border-slate-100 overflow-hidden min-h-[220px] md:min-h-0">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-xs text-slate-700 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
@@ -29,7 +29,7 @@ const EmployeesTodayStatus = () => {
             </h4>
           </div>
 
-          <div className="space-y-2 overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+          <div className="space-y-2 overflow-y-auto flex-1 max-h-[280px] md:max-h-none pr-1 scrollbar-thin scrollbar-thumb-slate-200">
             {isLoading ? (
               <LoadingPulse count={2} />
             ) : workingEmployees.length === 0 ? (
@@ -43,7 +43,7 @@ const EmployeesTodayStatus = () => {
         </div>
 
         {/* Finished / Completed Column */}
-        <div className="flex flex-col bg-emerald-50 rounded-2xl p-4 border border-emerald-100 overflow-hidden">
+        <div className="flex flex-col bg-emerald-50 rounded-2xl p-3 md:p-4 border border-emerald-100 overflow-hidden min-h-[220px] md:min-h-0">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-xs text-emerald-700 flex items-center gap-2">
               <FaCheckCircle className="text-emerald-500" />
@@ -51,7 +51,7 @@ const EmployeesTodayStatus = () => {
             </h4>
           </div>
 
-          <div className="space-y-2 overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-emerald-200">
+          <div className="space-y-2 overflow-y-auto flex-1 max-h-[280px] md:max-h-none pr-1 scrollbar-thin scrollbar-thumb-emerald-200">
             {isLoading ? (
               <LoadingPulse count={2} />
             ) : finishedEmployees.length === 0 ? (
@@ -76,15 +76,15 @@ const EmployeesTodayStatus = () => {
 };
 
 const EmployeeCard = ({ emp, status }) => (
-  <div className="bg-white p-4 rounded-2xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md group">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Avatar user={emp} size="w-11 h-11" />
-        <div>
-          <h5 className="font-bold text-gray-800 text-sm group-hover:text-blue-600 transition-colors">
+  <div className="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md group min-w-0">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+        <Avatar user={emp} size="w-10 h-10 md:w-11 md:h-11" />
+        <div className="min-w-0">
+          <h5 className="font-bold text-gray-800 text-sm group-hover:text-blue-600 transition-colors truncate">
             {emp.firstName} {emp.lastName}
           </h5>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-2 md:gap-3 mt-1 flex-wrap">
             <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold">
               <FaCheckCircle className="text-[10px]" /> {emp.completedCount} Done
             </span>
@@ -95,13 +95,13 @@ const EmployeeCard = ({ emp, status }) => (
         </div>
       </div>
 
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end gap-1 shrink-0">
         {status === 'finished' ? (
-          <span className="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2.5 py-1 rounded-lg uppercase tracking-wider">
-            100% DONE
+          <span className="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2 py-1 rounded-lg uppercase tracking-wider">
+            Done
           </span>
         ) : (
-          <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-12 md:w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full"
               style={{ width: `${Math.min(100, (emp.completedCount / (emp.completedCount + emp.pendingCount)) * 100)}%` }}

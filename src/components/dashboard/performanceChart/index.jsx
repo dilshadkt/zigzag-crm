@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     BarChart,
     Bar,
@@ -10,7 +10,23 @@ import {
     Cell,
 } from "recharts";
 import { useGetCompletionTrend } from "../../../api/hooks/dashboard";
-import { FiActivity, FiChevronDown, FiZap, FiTarget } from "react-icons/fi";
+import { FiActivity, FiChevronDown, FiZap } from "react-icons/fi";
+
+const useIsMobile = (breakpoint = 768) => {
+    const [isMobile, setIsMobile] = useState(() =>
+        typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+    );
+
+    useEffect(() => {
+        const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+        const update = () => setIsMobile(mq.matches);
+        update();
+        mq.addEventListener("change", update);
+        return () => mq.removeEventListener("change", update);
+    }, [breakpoint]);
+
+    return isMobile;
+};
 
 const RangeSelector = ({ range, setRange }) => (
     <div className="relative">
@@ -67,7 +83,11 @@ const CustomTooltip = ({ active, payload }) => {
 
 const CompletionTrendChart = ({ userId = null }) => {
     const [range, setRange] = useState(14);
+    const isMobile = useIsMobile();
     const { data, isLoading } = useGetCompletionTrend(userId, range);
+    const chartMargin = isMobile
+        ? { top: 10, right: 4, left: 0, bottom: 0 }
+        : { top: 10, right: 10, left: -25, bottom: 0 };
 
     if (isLoading) {
         return (
@@ -90,7 +110,7 @@ const CompletionTrendChart = ({ userId = null }) => {
     return (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full relative">
             {/* CHART 1: PRODUCTIVITY PULSE (Daily Target vs. Actual) */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 flex flex-col min-h-[460px]">
+            <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-100 flex flex-col min-h-[360px] md:min-h-[460px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-50 rounded-2xl">
@@ -104,22 +124,23 @@ const CompletionTrendChart = ({ userId = null }) => {
                     <RangeSelector range={range} setRange={setRange} />
                 </div>
 
-                <div className="w-full h-[280px] relative">
+                <div className="w-full h-[220px] md:h-[280px] relative">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }} barGap={range > 14 ? 2 : 4}>
+                        <BarChart data={chartData} margin={chartMargin} barGap={range > 14 ? 2 : 4}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                             <XAxis
                                 dataKey="label"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#9CA3AF', fontSize: 10, fontWeight: 600 }}
+                                tick={{ fill: '#9CA3AF', fontSize: isMobile ? 9 : 10, fontWeight: 600 }}
                                 dy={15}
+                                interval={isMobile && range > 7 ? 1 : 0}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#9CA3AF', fontSize: 10, fontWeight: 600 }}
-                                width={40}
+                                width={isMobile ? 28 : 40}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F9FAFB', radius: 8 }} />
                             <Bar
@@ -157,7 +178,7 @@ const CompletionTrendChart = ({ userId = null }) => {
             </div>
 
             {/* CHART 2: QUALITY AUDIT (Rework Pulse) */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 flex flex-col min-h-[460px]">
+            <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-100 flex flex-col min-h-[360px] md:min-h-[460px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-red-50 rounded-2xl">
@@ -171,22 +192,23 @@ const CompletionTrendChart = ({ userId = null }) => {
                     <RangeSelector range={range} setRange={setRange} />
                 </div>
 
-                <div className="w-full h-[280px] relative">
+                <div className="w-full h-[220px] md:h-[280px] relative">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                        <BarChart data={chartData} margin={chartMargin}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                             <XAxis
                                 dataKey="label"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#9CA3AF', fontSize: 10, fontWeight: 600 }}
+                                tick={{ fill: '#9CA3AF', fontSize: isMobile ? 9 : 10, fontWeight: 600 }}
                                 dy={15}
+                                interval={isMobile && range > 7 ? 1 : 0}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#9CA3AF', fontSize: 10, fontWeight: 600 }}
-                                width={40}
+                                width={isMobile ? 28 : 40}
                             />
                             <Tooltip
                                 cursor={{ fill: '#FFF1F2', radius: 8 }}

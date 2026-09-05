@@ -35,8 +35,8 @@ const EmployeeCard = ({ employee, index }) => {
     <div
       onClick={handleClick}
       key={employee._id || index}
-      className="flex flex-col items-center rounded-3xl bg-[#F4F9FD] p-4 py-4 
-             h-fit cursor-pointer"
+      className="flex flex-col items-center rounded-2xl md:rounded-3xl bg-[#F4F9FD] p-3 md:p-4 py-4 
+             h-fit cursor-pointer min-w-0"
     >
       <div className="relative">
         <Progress
@@ -59,11 +59,11 @@ const EmployeeCard = ({ employee, index }) => {
           )}
         </div>
       </div>
-      <div className="flex flex-col items-center gap-y-1 mt-2">
-        <h4 className="font-medium text-center text-sm capitalize">
+      <div className="flex flex-col items-center gap-y-1 mt-2 w-full min-w-0">
+        <h4 className="font-medium text-center text-sm capitalize line-clamp-2 w-full px-1 leading-tight">
           {employeeName}
         </h4>
-        <span className="text-sm text-gray-500">
+        <span className="text-xs md:text-sm text-gray-500 line-clamp-2 w-full text-center px-1 leading-tight">
           {employee.position || "—"}
         </span>
         <div className="text-[#7D8592] border-2 text-xs border-[#7D8592]/60 rounded-lg px-2 mt-2">

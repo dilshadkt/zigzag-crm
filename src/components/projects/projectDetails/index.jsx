@@ -27,6 +27,9 @@ const ProjectDetails = ({
   onMonthChange,
   isTimelineExpanded,
   setIsTimelineExpanded,
+  onMobileBack,
+  className = "",
+  isLoading = false,
 }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -205,13 +208,37 @@ const ProjectDetails = ({
         isTimelineExpanded || hasNoProject
           ? "col-span-1 md:col-span-5"
           : "col-span-1 md:col-span-4"
-      } h-full min-w-0 w-full md:overflow-hidden flex flex-col`}
+      } h-full min-w-0 w-full md:overflow-hidden flex-col ${className || "flex"}`}
     >
       {/* Header */}
-      <div className="flex items-end justify-between gap-3 w-full shrink-0">
-        <h3 className="text-lg font-bold text-gray-700">
-          {activeProject?.name || "Tasks"}
-        </h3>
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between w-full shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          {onMobileBack && (
+            <button
+              type="button"
+              onClick={onMobileBack}
+              className="md:hidden shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-gray-200 text-gray-700"
+              aria-label="Back to projects"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+          )}
+          <h3 className="text-base md:text-lg font-bold text-gray-700 truncate">
+            {activeProject?.name || "Tasks"}
+          </h3>
+        </div>
         <ActionButton
           selectedMonth={selectedMonth}
           onMonthChange={onMonthChange}
@@ -229,7 +256,14 @@ const ProjectDetails = ({
       </div>
 
       {/* Task Sections */}
-      {hasNoProject ? (
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center min-h-[200px]">
+          <div className="flex flex-col items-center gap-3 text-gray-400">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm">Loading project…</span>
+          </div>
+        </div>
+      ) : hasNoProject ? (
         <NoTask>There are no Projects</NoTask>
       ) : !activeProject ? (
         <NoTask>Select a project to view tasks</NoTask>
