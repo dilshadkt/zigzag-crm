@@ -270,6 +270,8 @@ const AddTask = ({
       maxRecurrences: initialValues.maxRecurrences || "",
       dueDateChangeReason: initialValues.dueDateChangeReason || "",
       requiresClientApproval: initialValues.requiresClientApproval || false,
+      sequentialSubtasks:
+        initialValues.sequentialSubtasks ?? Boolean(initialValues.taskFlow),
       requiresWorkLink: initialValues.requiresWorkLink || false,
       campaign: initialValues.campaign?._id || initialValues.campaign || "",
       requiresCampaignReport: initialValues.requiresCampaignReport || false,
@@ -687,6 +689,7 @@ const AddTask = ({
             setFieldValue("assignedTo", mergedAssignees);
           }
           setFieldValue("requiresClientApproval", selectedFlow.flows.some(step => step.requiresClientApproval));
+          setFieldValue("sequentialSubtasks", true);
           setFieldValue("requiresWorkLink", selectedFlow.flows.some(step => step.requiresWorkLink));
           setFieldValue(
             "requiresCampaignReport",
@@ -1463,6 +1466,7 @@ const AddTask = ({
                 </div>
                 <div className="space-y-2">
                   {!isCampaignTaskSelected && (
+                    <>
                     <label htmlFor="requiresClientApproval" className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 border border-gray-100">
                       <input
                         type="checkbox"
@@ -1475,6 +1479,24 @@ const AddTask = ({
                       />
                       <span className="text-sm font-medium text-gray-700">Client approval</span>
                     </label>
+                    <label htmlFor="sequentialSubtasks" className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 border border-gray-100">
+                      <input
+                        type="checkbox"
+                        id="sequentialSubtasks"
+                        name="sequentialSubtasks"
+                        checked={Boolean(values.sequentialSubtasks)}
+                        onChange={handleChange}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                        disabled={!isFormEnabled && !isOtherProjectSelected}
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Run subtasks in order</span>
+                        <p className="text-[11px] text-gray-400 font-medium">
+                          Next step stays locked until the previous one is finished, including client approval.
+                        </p>
+                      </div>
+                    </label>
+                    </>
                   )}
                   {!isCampaignTaskSelected && (
                     <label htmlFor="requiresWorkLink" className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 border border-gray-100">

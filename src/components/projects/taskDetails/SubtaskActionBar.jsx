@@ -24,6 +24,8 @@ const SubtaskActionBar = ({
   isReviewer,      // current user can review (admin/reporter/manager)
   isCompany,
   isAdmin,
+  isLocked = false,
+  lockedReason = "",
 }) => {
   const updateMutation = useUpdateSubTaskById(subtask._id, parentTaskId);
   const reworkMutation = useCreateReworkEvent(parentTaskId);
@@ -110,6 +112,10 @@ const SubtaskActionBar = ({
 
   // ─── Status change helpers ──────────────────────────────────────────────
   const changeStatus = async (newStatus, extra = {}) => {
+    if (isLocked && newStatus !== "paused") {
+      toast.error(lockedReason || "This subtask is locked until the previous one is finished.");
+      return;
+    }
     try {
       await updateMutation.mutateAsync({ status: newStatus, ...extra });
     } catch (err) {
@@ -242,6 +248,9 @@ const SubtaskActionBar = ({
   };
 
   const isUpdating = updateMutation.isLoading || updateMutation.isPending || reworkMutation.isPending;
+  const waitingForClient =
+    status === "approved" && isClientApprovalRequired;
+  const actionsDisabled = isUpdating || isLocked;
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -249,6 +258,15 @@ const SubtaskActionBar = ({
   if (isAssigned && !isReviewer) {
     return (
       <>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          {isLocked && (
+            <span
+              className="max-w-[220px] text-right text-[11px] font-medium text-amber-700"
+              title={lockedReason}
+            >
+              {lockedReason || "Locked until the previous subtask is finished."}
+            </span>
+          )}
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Timer display (always visible when there's any time logged) */}
           {(status === "in-progress" || elapsed > 0) && (
@@ -272,7 +290,8 @@ const SubtaskActionBar = ({
           {(status === "todo" || status === "re-work") && (
             <button
               onClick={handleStart}
-              disabled={isUpdating}
+              disabled={actionsDisabled}
+              title={isLocked ? lockedReason : undefined}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
             >
               <FiPlay className="w-3 h-3" />
@@ -296,7 +315,8 @@ const SubtaskActionBar = ({
           {status === "paused" && (
             <button
               onClick={handleResume}
-              disabled={isUpdating}
+              disabled={actionsDisabled}
+              title={isLocked ? lockedReason : undefined}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
             >
               <FiPlay className="w-3 h-3" />
@@ -308,7 +328,8 @@ const SubtaskActionBar = ({
           {(status === "in-progress" || status === "paused") && (
             <button
               onClick={handleSubmitForReview}
-              disabled={isUpdating}
+              disabled={actionsDisabled}
+              title={isLocked ? lockedReason : undefined}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500 hover:bg-violet-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
             >
               <FiSend className="w-3 h-3" />
@@ -322,6 +343,8 @@ const SubtaskActionBar = ({
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
                 status === "on-review"
                   ? "bg-purple-50 text-purple-700 border-purple-200"
+                  : waitingForClient
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
                   : status === "approved"
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                   : "bg-green-50 text-green-700 border-green-200"
@@ -329,6 +352,8 @@ const SubtaskActionBar = ({
             >
               {status === "on-review"
                 ? "📋 In Review"
+                : waitingForClient
+                ? "Internal approved — waiting for client"
                 : status === "approved"
                 ? "✅ Approved"
                 : status === "client-approved"
@@ -347,6 +372,7 @@ const SubtaskActionBar = ({
               Complete
             </button>
           )}
+        </div>
         </div>
 
         <WorkLinkModal
@@ -490,7 +516,13 @@ const SubtaskActionBar = ({
       completed: { label: "Completed", cls: "bg-green-50 text-green-600 border-green-200" },
       "on-hold": { label: "On Hold", cls: "bg-yellow-50 text-yellow-600 border-yellow-200" },
     };
-    const info = statusLabels[status] || statusLabels["todo"];
+    const info =
+      status === "approved" && isClientApprovalRequired
+        ? {
+            label: "Internal approved — waiting for client",
+            cls: "bg-amber-50 text-amber-700 border-amber-200",
+          }
+        : statusLabels[status] || statusLabels["todo"];
     return (
       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${info.cls}`}>
         {info.label}

@@ -127,9 +127,10 @@ const SubTaskStatusButton = ({
     (status) => status.value === subTask.status
   );
 
-  // Check if subtask is locked (sequential flow dependency)
-  // Bypass lock if user is company, admin, or has edit permission
-  const isLocked = subTask.isLocked && !isCompany && !isAdmin && !canEditTask;
+  // Sequential lock: only company-admin can start a later step early.
+  const isLocked = subTask.isLocked && !isCompany && !isAdmin;
+  const waitingForClient =
+    subTask.status === "approved" && isClientApprovalRequired;
 
   const handleStatusChange = async (newStatus) => {
     if (!canEdit || isLocked) return;
@@ -248,16 +249,19 @@ const SubTaskStatusButton = ({
     }
   };
 
-  const isBypassed = subTask.isLocked && (isCompany || isAdmin || canEditTask);
+  const isBypassed = subTask.isLocked && (isCompany || isAdmin);
 
   return (
     <div className="relative">
       <button
         onClick={() => canEdit && !isLocked && setIsOpen(!isOpen)}
-        className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 shadow-sm flex items-center gap-1.5 ${currentStatus?.color || "bg-gray-100 text-gray-800"
+        className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 shadow-sm flex items-center gap-1.5 ${
+          waitingForClient
+            ? "bg-amber-100 text-amber-800"
+            : currentStatus?.color || "bg-gray-100 text-gray-800"
           } ${(!canEdit || isLocked) ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:shadow-md hover:scale-105 active:scale-95"} ${isBypassed ? "border border-blue-400" : ""}`}
         disabled={updateSubTaskMutation.isLoading || reworkMutation.isPending || !canEdit || isLocked}
-        title={isLocked ? "This subtask is locked until preceding tasks are completed" : (!canEdit ? "You can only edit subtasks assigned to you" : isBypassed ? "Locked subtask (Bypassed due to permissions)" : "")}
+        title={isLocked ? (subTask.lockedReason || "This subtask is locked until preceding tasks are completed") : (!canEdit ? "You can only edit subtasks assigned to you" : isBypassed ? "Locked subtask (Bypassed due to permissions)" : "")}
       >
         {subTask.isLocked && !isLocked ? (
           // Show unlocked icon if it's normally locked but bypassed
@@ -271,6 +275,8 @@ const SubTaskStatusButton = ({
         )}
         {updateSubTaskMutation.isLoading
           ? "Updating..."
+          : waitingForClient
+          ? "Internal approved — waiting for client"
           : currentStatus?.label || "To Do"}
       </button>
 
