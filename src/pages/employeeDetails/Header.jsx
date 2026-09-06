@@ -16,42 +16,46 @@ export const EmployeeHeader = ({
   const tasksBadgeCount = todaySubTasksCount;
 
   return (
-    <div className="flexBetween">
-      <div className="flex bg-[#E6EDF5] rounded-full p-1">
-        {[
-          ...(isAdmin ? ["Overview"] : []),
-          "Performance",
-          "Projects",
-          "Teams",
-          "Today's Tasks",
-          "Vacations",
-        ].map((item, index) => (
-          <button
-            key={index}
-            onClick={() => setActivePage(item)}
-            className={`${activePage === item
-              ? `bg-[#3F8CFF] text-white`
-              : `bg-[#E6EDF5] text-[#0A1629]`
-              } text-sm py-2 px-8 
-                  cursor-pointer flex  gap-x-1 rounded-full font-medium relative`}
-          >
-            {item}
-            {item === "Today's Tasks" && tasksBadgeCount > 0 && (
-              <span
-                className=" -top-0 -right-2 bg-white text-gray-600
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="overflow-x-auto scrollbar-thin -mx-1 px-1">
+        <div className="flex bg-[#E6EDF5] rounded-full p-1 w-max min-w-full sm:min-w-0">
+          {[
+            ...(isAdmin ? ["Overview"] : []),
+            "Performance",
+            "Projects",
+            "Teams",
+            "Today's Tasks",
+            "Vacations",
+          ].map((item, index) => (
+            <button
+              key={index}
+              onClick={() => setActivePage(item)}
+              className={`${
+                activePage === item
+                  ? `bg-[#3F8CFF] text-white`
+                  : `bg-[#E6EDF5] text-[#0A1629]`
+              } text-xs sm:text-sm py-2 px-3 sm:px-6 md:px-8
+                  cursor-pointer flex gap-x-1 rounded-full font-medium relative whitespace-nowrap shrink-0`}
+            >
+              {item}
+              {item === "Today's Tasks" && tasksBadgeCount > 0 && (
+                <span
+                  className=" -top-0 -right-2 bg-white text-gray-600
                      text-xs rounded-full w-5 h-5 flex items-center justify-center"
-              >
-                {tasksBadgeCount}
-              </span>
-            )}
-          </button>
-        ))}
+                >
+                  {tasksBadgeCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="flex items-center gap-x-3">
+      <div className="flex items-center gap-x-3 shrink-0">
         {(activePage === "Overview" ||
           activePage === "Performance" ||
           activePage === "Today's Tasks") && (
           <label className="flex flex-col text-xs font-medium text-gray-600">
+            <span className="sr-only">Select month</span>
             <input
               type="month"
               value={selectedMonth}
@@ -60,13 +64,11 @@ export const EmployeeHeader = ({
             />
           </label>
         )}
-        {activePage === "Teams" && (
+        {activePage === "Projects" && projectOptions?.length > 0 && (
           <Dropdown
             options={projectOptions}
             value={selectedProject}
             onChange={setSelectedProject}
-            placeholder="Select project"
-            className="w-64 bg-[#E6EDF5] rounded-lg font-medium"
           />
         )}
       </div>

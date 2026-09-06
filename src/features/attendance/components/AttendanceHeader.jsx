@@ -90,17 +90,17 @@ const AttendanceHeader = ({
   }, [attendanceData, isExporting]);
 
   return (
-    <div className="flex items-center justify-between mb-2">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
       {/* Title and Date Display */}
-      <div className="flex items-center gap-x-3">
-        <h1 className="text-3xl font-bold text-gray-800">Attendance</h1>
-        <span className="text-gray-600 text-[15px] font-semibold">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Attendance</h1>
+        <span className="text-gray-600 text-sm md:text-[15px] font-semibold">
           {displayDate}
         </span>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-2 md:gap-3">
         <ExportButton
           isExporting={isExporting}
           onExport={handleExportReport}

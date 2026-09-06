@@ -179,14 +179,15 @@ const DepartmentTeamFilters = ({
         ))}
       </div>
 
-      <div className="hidden md:flex flex-wrap gap-2 items-center">
-        <div className="relative">
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search tasks..."
+            aria-label="Search tasks"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs w-44 lg:w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="pl-9 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs w-full sm:w-44 lg:w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

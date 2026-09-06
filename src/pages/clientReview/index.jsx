@@ -283,6 +283,22 @@ const ClientReview = () => {
         if (!projectId || !superFilters.project.includes(projectId)) return false;
       }
 
+      const searchQuery = filters.search?.trim().toLowerCase();
+      if (searchQuery) {
+        const title = task.title?.toLowerCase() || "";
+        const projectName = task.project?.name?.toLowerCase() || "";
+        const assignees = (task.assignedTo || [])
+          .map((u) => `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase())
+          .join(" ");
+        if (
+          !title.includes(searchQuery) &&
+          !projectName.includes(searchQuery) &&
+          !assignees.includes(searchQuery)
+        ) {
+          return false;
+        }
+      }
+
       // Tasks / Subtasks visibility
       const isSubTask = task.parentTask || task.isSubTask;
       if (isSubTask && !showSubtasks) return false;
@@ -516,11 +532,11 @@ const ClientReview = () => {
         <div className="flex-1 overflow-y-auto">
           <div className="">
             {/* Header */}
-            <div className="flexBetween mb-6">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6">
+              <div className="flex items-start gap-2 md:gap-3 min-w-0">
                 <Navigator />
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800">
+                <div className="min-w-0">
+                  <h3 className="text-base md:text-lg font-medium text-gray-800 leading-snug">
                     {getFilterTitle()}
                   </h3>
                   <p className="text-sm text-gray-500">
@@ -535,7 +551,7 @@ const ClientReview = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0 self-end sm:self-auto">
                 <PrimaryButton
                   icon={"/icons/refresh.svg"}
                   className={"bg-white hover:bg-gray-50 transition-colors"}
@@ -548,9 +564,28 @@ const ClientReview = () => {
                 />
               </div>
             </div>
+
+            {/* Search */}
+            <div className="mb-3 md:mb-4">
+              <label className="w-full text-sm text-[#91929E]">
+                <span className="sr-only">Search tasks</span>
+                <div className="flex items-center gap-2 rounded-full bg-white border border-[#E4E6E8] px-3 py-2.5">
+                  <img src="/icons/search.svg" alt="" className="h-4 w-4 shrink-0" />
+                  <input
+                    type="text"
+                    value={filters.search}
+                    onChange={(e) =>
+                      setFilters((prev) => ({ ...prev, search: e.target.value }))
+                    }
+                    placeholder="Search by title, project, or assignee"
+                    className="w-full bg-transparent text-sm text-[#0A1629] placeholder:text-[#91929E] focus:outline-none"
+                  />
+                </div>
+              </label>
+            </div>
             
             {/* Quick Filters */}
-            <div className="mb-6">
+            <div className="mb-4 md:mb-6">
               <TaskQuickFilters
                 superFilters={superFilters}
                 onFilterChange={handleSuperFilterChange}
@@ -561,6 +596,7 @@ const ClientReview = () => {
                 showSubtasks={showSubtasks}
                 onToggleTasks={() => setShowTasks((prev) => !prev)}
                 onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+                className="flex-wrap"
                 extraFilters={
                   <>
                     {[

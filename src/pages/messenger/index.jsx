@@ -9,6 +9,7 @@ const Messenger = () => {
     group: false,
     direct: false,
   });
+  const [mobileShowChat, setMobileShowChat] = useState(false);
 
   const {
     conversations,
@@ -56,6 +57,7 @@ const Messenger = () => {
       type: isGroup ? "project" : "direct",
     };
     await selectConversation(conversationData);
+    setMobileShowChat(true);
   };
 
   const handleSendMessage = async () => {
@@ -181,7 +183,7 @@ const Messenger = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-4 w-full h-full bg-white rounded-2xl overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-4 w-full h-full bg-white rounded-2xl overflow-hidden min-h-0">
         <ConversationList
           conversations={conversations}
           collapsedSections={collapsedSections}
@@ -191,6 +193,7 @@ const Messenger = () => {
           loading={loading}
           error={loading ? null : error}
           onCreateDirectConversation={handleCreateDirectConversation}
+          className={mobileShowChat ? "hidden md:flex" : "flex"}
         />
 
         <ChatWindow
@@ -217,6 +220,8 @@ const Messenger = () => {
           onMentionSelect={handleMentionSelect}
           participants={participants}
           currentUserId={localStorage.getItem("userId")}
+          onMobileBack={() => setMobileShowChat(false)}
+          className={mobileShowChat ? "flex" : "hidden md:flex"}
         />
       </div>
     </section>

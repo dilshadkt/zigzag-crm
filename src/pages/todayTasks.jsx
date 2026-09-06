@@ -254,15 +254,16 @@ const TodayTasks = () => {
   return (
     <div className=" flex flex-col h-full">
       {/* Header */}
-      <div className="flexBetween ">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+            aria-label="Go back"
           >
             <FiArrowLeft className="w-5 h-5" />
           </button>
-          <div>
+          <div className="min-w-0">
             <Header>Today's Tasks</Header>
             <p className="text-sm text-gray-500 ">
               {filteredItems.length} task
@@ -271,14 +272,15 @@ const TodayTasks = () => {
           </div>
         </div>
         {/* Search and Filters */}
-        <div className="mb-5">
-          <div className="flex gap-3 mb-2">
+        <div className="w-full sm:w-auto sm:min-w-[280px] md:min-w-[360px]">
+          <div className="flex gap-2 md:gap-3 mb-2">
             {/* Search */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-w-0">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search tasks..."
+                aria-label="Search today's tasks"
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -288,14 +290,15 @@ const TodayTasks = () => {
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${
+              className={`px-3 md:px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors shrink-0 ${
                 hasActiveFilters()
                   ? "border-blue-500 bg-blue-50 text-blue-600"
                   : "border-gray-200 hover:border-gray-300"
               }`}
+              aria-label="Toggle filters"
             >
               <FiFilter className="w-4 h-4" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters() && (
                 <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
               )}

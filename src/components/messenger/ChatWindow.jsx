@@ -33,6 +33,8 @@ const ChatWindow = ({
   onMentionSelect,
   participants = [],
   currentUserId,
+  onMobileBack,
+  className = "",
 }) => {
   const messagesContainerRef = useRef(null);
   const messageRefs = useRef({});
@@ -78,9 +80,9 @@ const ChatWindow = ({
 
   if (!selectedConversation) {
     return (
-      <div className="col-span-3 overflow-y-auto flex flex-col">
+      <div className={`col-span-1 md:col-span-3 overflow-y-auto flex-col ${className || "flex"}`}>
         <div className="flex items-center justify-center text-gray-500 h-full">
-          <div className="text-center">
+          <div className="text-center px-4">
             <svg
               className="w-16 h-16 mx-auto mb-4 text-gray-300"
               fill="none"
@@ -106,10 +108,11 @@ const ChatWindow = ({
 
   if (loading) {
     return (
-      <div className="col-span-3 overflow-y-auto flex flex-col">
+      <div className={`col-span-1 md:col-span-3 overflow-y-auto flex-col ${className || "flex"}`}>
         <ChatHeader
           selectedConversation={selectedConversation}
           onlineUsers={onlineUsers}
+          onMobileBack={onMobileBack}
         />
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -119,12 +122,13 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="col-span-3 overflow-y-auto flex flex-col relative">
+    <div className={`col-span-1 md:col-span-3 overflow-y-auto flex-col relative min-h-0 ${className || "flex"}`}>
       <ChatHeader
         selectedConversation={selectedConversation}
         onlineUsers={onlineUsers}
         onClearChat={onClearChat}
         onShowMediaPanel={() => setShowMediaPanel(true)}
+        onMobileBack={onMobileBack}
       />
 
       {/* Media & Files Panel */}

@@ -5,6 +5,7 @@ const ChatHeader = ({
   onlineUsers = [],
   onClearChat,
   onShowMediaPanel,
+  onMobileBack,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -53,11 +54,24 @@ const ChatHeader = ({
   }, [showMenu]);
 
   return (
-    <div className="h-[70px] flex items-center justify-between border-b border-gray-200 px-6">
+    <div className="h-[70px] flex items-center justify-between border-b border-gray-200 px-3 md:px-6 gap-2">
       {/* Left side - Avatar and Info (clickable to open media panel) */}
+      <div className="flex items-center gap-1 min-w-0 flex-1">
+        {onMobileBack && (
+          <button
+            type="button"
+            onClick={onMobileBack}
+            className="md:hidden shrink-0 flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 text-gray-700"
+            aria-label="Back to conversations"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
       <button
         onClick={onShowMediaPanel}
-        className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2 -ml-3 transition-colors cursor-pointer"
+        className="flex items-center gap-2 md:gap-3 hover:bg-gray-50 rounded-lg px-2 md:px-3 py-2 md:-ml-3 transition-colors cursor-pointer min-w-0"
         title="View shared media and files"
       >
         <div className="relative">
@@ -85,12 +99,12 @@ const ChatHeader = ({
             </>
           )}
         </div>
-        <div className="text-left">
-          <h3 className="font-semibold text-gray-900">
+        <div className="text-left min-w-0">
+          <h3 className="font-semibold text-gray-900 truncate">
             {selectedConversation.name}
           </h3>
           {selectedConversation.isGroup ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 truncate">
               {getOnlineCount()} of {getTotalMembers()} members online
             </p>
           ) : (
@@ -104,6 +118,7 @@ const ChatHeader = ({
           )}
         </div>
       </button>
+      </div>
 
       {/* Right side - Actions */}
       <div className="flex items-center gap-2 relative" ref={menuRef}>

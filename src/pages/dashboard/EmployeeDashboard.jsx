@@ -15,7 +15,7 @@ const EmployeeDashboardPage = () => {
         <div className="flex flex-col gap-6">
             <h2 className="text-xl font-bold">Employee Dashboard</h2>
             
-            <div className="w-full grid grid-cols-7 gap-x-6 mt-3">
+            <div className="w-full grid grid-cols-1 mt-3 min-w-0">
                 <EmployeeProgressStats taskMonth={taskMonth} />
             </div>
 

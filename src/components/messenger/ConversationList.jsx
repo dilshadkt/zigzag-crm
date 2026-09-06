@@ -14,6 +14,7 @@ const ConversationList = ({
   loading = false,
   error = null,
   onCreateDirectConversation,
+  className = "",
 }) => {
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
 
@@ -50,8 +51,8 @@ const ConversationList = ({
 
   if (error) {
     return (
-      <div className="border-r border-gray-200 overflow-y-auto col-span-1 flex flex-col">
-        <div className="h-[70px] flexBetween border-b border-gray-200 p-6">
+      <div className={`border-r border-gray-200 overflow-y-auto col-span-1 flex-col ${className || "flex"}`}>
+        <div className="h-[70px] flexBetween border-b border-gray-200 p-4 md:p-6">
           <h4 className="font-bold text-gray-800">Conversations</h4>
         </div>
         <div className="flex items-center justify-center p-8 text-red-500">
@@ -63,8 +64,8 @@ const ConversationList = ({
 
   return (
     <>
-      <div className="border-r border-gray-200 overflow-y-auto col-span-1 flex flex-col">
-        <div className="h-[70px] flexBetween border-b border-gray-200 p-6">
+      <div className={`border-r border-gray-200 overflow-y-auto col-span-1 flex-col min-h-0 ${className || "flex"}`}>
+        <div className="h-[70px] flexBetween border-b border-gray-200 p-4 md:p-6">
           <h4 className="font-bold text-gray-800">Conversations</h4>
           <div className="flexEnd">
             {/* Add new conversation button */}
@@ -72,6 +73,7 @@ const ConversationList = ({
               onClick={handleStartNewChat}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title="Start new conversation"
+              aria-label="Start new conversation"
             >
               <svg
                 className="w-5 h-5 text-gray-600"

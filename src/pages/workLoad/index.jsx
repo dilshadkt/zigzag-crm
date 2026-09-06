@@ -17,14 +17,14 @@ const WorkLoad = () => {
       <div className="flexBetween mb-6">
         <Header>Current Workload</Header>
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {employees.map((employee, index) => (
           <div
             onClick={() => {
               navigate(`/employees/${employee._id}`);
             }}
             key={employee._id || index}
-            className="flex flex-col items-center cursor-pointer rounded-3xl bg-white p-4 py-4"
+            className="flex flex-col items-center cursor-pointer rounded-2xl md:rounded-3xl bg-white p-3 md:p-4 py-4 min-w-0"
           >
             <div className="relative">
               <Progress
@@ -32,7 +32,7 @@ const WorkLoad = () => {
                 strokeWidth={2}
                 currentValue={employee?.progress_value || 50}
               />
-              <div className="absolute top-0 left-0 right-0 bottom-0 w-full h-full rounded-full w-6 h-6 scale-85 flexCenter overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 bottom-0 w-full h-full rounded-full scale-85 flexCenter overflow-hidden">
                 <img
                   src={employee?.profile || `/image/dummy/avatar1.svg`}
                   alt=""
@@ -40,9 +40,9 @@ const WorkLoad = () => {
                 />
               </div>
             </div>
-            <div className="flex flex-col items-center gap-y-1 mt-2">
-              <h4 className="font-medium">{employee.name}</h4>
-              <span className="text-sm text-gray-500">{employee.position}</span>
+            <div className="flex flex-col items-center gap-y-1 mt-2 w-full min-w-0">
+              <h4 className="font-medium text-sm text-center truncate w-full px-1">{employee.name}</h4>
+              <span className="text-xs md:text-sm text-gray-500 truncate w-full text-center px-1">{employee.position}</span>
               <div className="text-[#7D8592] border-2 text-xs border-[#7D8592]/60 rounded-lg px-2 mt-2">
                 {employee.level || "Middle"}
               </div>

@@ -430,32 +430,35 @@ const TaskOnPublish = () => {
           </div>
         </div>
 
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex min-w-[220px] max-w-sm flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-1.5">
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="flex w-full md:min-w-[220px] md:max-w-sm md:flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-1.5">
             <FiSearch className="h-4 w-4 flex-shrink-0 text-gray-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search by task, project, or category..."
+              aria-label="Search publishing tasks"
               className="w-full bg-transparent text-sm text-gray-700 outline-none"
             />
           </div>
 
-          <TaskQuickFilters
-            superFilters={superFilters}
-            onFilterChange={handleSuperFilterChange}
-            onMultiSelectFilter={handleMultiSelectFilter}
-            users={getFilterOptions(tasksOnPublishData?.tasks || []).users}
-            projects={getFilterOptions(tasksOnPublishData?.tasks || []).projects}
-            showTasks={showTasks}
-            showSubtasks={showSubtasks}
-            onToggleTasks={() => setShowTasks((prev) => !prev)}
-            onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-            taskCount={typeCounts.taskCount}
-            subtaskCount={typeCounts.subtaskCount}
-            nowrap
-          />
+          <div className="w-full md:w-auto overflow-x-auto">
+            <TaskQuickFilters
+              superFilters={superFilters}
+              onFilterChange={handleSuperFilterChange}
+              onMultiSelectFilter={handleMultiSelectFilter}
+              users={getFilterOptions(tasksOnPublishData?.tasks || []).users}
+              projects={getFilterOptions(tasksOnPublishData?.tasks || []).projects}
+              showTasks={showTasks}
+              showSubtasks={showSubtasks}
+              onToggleTasks={() => setShowTasks((prev) => !prev)}
+              onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+              taskCount={typeCounts.taskCount}
+              subtaskCount={typeCounts.subtaskCount}
+              className="flex-wrap"
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-y-2 pb-5">

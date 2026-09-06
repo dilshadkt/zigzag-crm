@@ -76,19 +76,21 @@ const BoardFilters = ({
     };
 
     return (
-        <div className="flexBetween px-1 mb-1">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-1 mb-2">
             <Header className={"whitespace-nowrap md:text-lg 2xl:text-xl"}>Task Board</Header>
-            <div className="hidden md:flex gap-2 2xl:gap-1 items-center">
+            <div className="flex flex-wrap gap-2 2xl:gap-1 items-center w-full md:w-auto">
                 <MonthSelector
                     selectedMonth={selectedMonth}
                     onMonthChange={onMonthChange}
+                    className="w-full sm:w-auto"
                 />
 
                 {/* Search Input */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto flex-1 sm:flex-none min-w-0">
                     <input
                         type="text"
                         placeholder="Search tasks..."
+                        aria-label="Search tasks"
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
                         className="pl-9 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs w-full md:w-40 lg:w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -104,7 +106,7 @@ const BoardFilters = ({
                 <div className="relative" ref={projectDropdownRef}>
                     <button
                         onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-                        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-gray-200 hover:border-gray-300 min-w-[130px]"
+                        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-gray-200 hover:border-gray-300 min-w-0 sm:min-w-[130px] flex-1 sm:flex-none"
                     >
                         <MdFolder className="text-gray-400 text-sm" />
                         <span className="max-w-[90px] truncate text-gray-700">
@@ -147,7 +149,7 @@ const BoardFilters = ({
                 <div className="relative" ref={priorityDropdownRef}>
                     <button
                         onClick={() => setIsPriorityDropdownOpen(!isPriorityDropdownOpen)}
-                        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-gray-200 hover:border-gray-300 min-w-[130px]"
+                        className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-gray-200 hover:border-gray-300 min-w-0 sm:min-w-[130px] flex-1 sm:flex-none"
                     >
                         <MdFlag className={`${selectedPriority === 'high' ? 'text-red-500' : selectedPriority === 'medium' ? 'text-yellow-500' : selectedPriority === 'low' ? 'text-green-500' : 'text-gray-400'} text-sm`} />
                         <span className="text-gray-700">{getSelectedPriorityName()}</span>
@@ -180,7 +182,7 @@ const BoardFilters = ({
                     <div className="relative" ref={assigneeDropdownRef}>
                         <button
                             onClick={() => setIsAssigneeDropdownOpen(!isAssigneeDropdownOpen)}
-                            className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-gray-200 hover:border-gray-300 min-w-[130px]"
+                            className="flex items-center cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-gray-200 hover:border-gray-300 min-w-0 sm:min-w-[130px] flex-1 sm:flex-none"
                         >
                             <MdPerson className="text-gray-400 text-sm" />
                             <span className="max-w-[90px] truncate text-gray-700">

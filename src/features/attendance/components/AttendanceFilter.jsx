@@ -173,20 +173,21 @@ const AttendanceFilter = ({
   }, [selectedFilter, filterOptions]);
 
   return (
-    <div className="flex items-center justify-between mb-2">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-2">
       {/* Search and Filters */}
-      <div className="flex items-center gap-x-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 w-full lg:w-auto">
         {/* Search Input */}
-        <div className="relative">
+        <div className="relative w-full sm:w-auto sm:min-w-[200px] md:min-w-[256px]">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <IoSearchOutline className="text-gray-400" />
           </div>
           <input
             type="text"
             placeholder="Search employee"
+            aria-label="Search employee"
             value={localSearchTerm}
             onChange={handleSearchInputChange}
-            className="pl-10 pr-4 py-2 border bg-white text-sm border-gray-200 rounded-lg w-64 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            className="pl-10 pr-4 py-2 border bg-white text-sm border-gray-200 rounded-lg w-full outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
           {localSearchTerm && (
             <button

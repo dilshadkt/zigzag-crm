@@ -88,25 +88,27 @@ const Employees = () => {
   return (
     <section className="flex flex-col overflow-y-auto  h-full gap-y-2 md:gap-y-3">
       {/* header  */}
-      <div className="flexBetween flex-col md:flex-row ">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Header>Employees ({pagination.total})</Header>
-        <ButtonToggle
-          setValue={setStat}
-          value={stat}
-          values={["list", "activity"]}
-        />
-        <div className=" hidden md:flex items-center justify-end  gap-x-5">
-          <PrimaryButton
-            icon={"/icons/filter.svg"}
-            className={"bg-white px-2 mt-3 hover:bg-gray-50 transition-colors"}
-            onclick={() => setShowFilter(true)}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <ButtonToggle
+            setValue={setStat}
+            value={stat}
+            values={["list", "activity"]}
           />
-          <PrimaryButton
-            icon={"/icons/add.svg"}
-            onclick={() => setShowAddEmployee(true)}
-            title={"Add Employee"}
-            className={"mt-3 px-5 text-white"}
-          />
+          <div className="flex items-center gap-2">
+            <PrimaryButton
+              icon={"/icons/filter.svg"}
+              className={"bg-white px-2 hover:bg-gray-50 transition-colors"}
+              onclick={() => setShowFilter(true)}
+            />
+            <PrimaryButton
+              icon={"/icons/add.svg"}
+              onclick={() => setShowAddEmployee(true)}
+              title={<span className="hidden sm:inline">Add Employee</span>}
+              className={"px-2.5 sm:px-5 text-white"}
+            />
+          </div>
         </div>
       </div>
       {/* body part  */}

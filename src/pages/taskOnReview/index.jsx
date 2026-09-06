@@ -636,7 +636,7 @@ const TaskOnReview = () => {
               </div>
 
               {/* Quick Filters */}
-              <div className="mb-4 md:mb-6 overflow-x-auto scrollbar-thin -mx-1 px-1">
+              <div className="mb-4 md:mb-6">
                 <TaskQuickFilters
                   superFilters={superFilters}
                   onFilterChange={handleSuperFilterChange}
@@ -649,8 +649,7 @@ const TaskOnReview = () => {
                   showSubtasks={showSubtasks}
                   onToggleTasks={() => setShowTasks((prev) => !prev)}
                   onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-                  nowrap
-                  className="min-w-max md:min-w-0"
+                  className="flex-wrap"
                 />
               </div>
 
