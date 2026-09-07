@@ -46,7 +46,7 @@ const MobileCreateFab = ({
 
   return createPortal(
     <div
-      className={`fixed bottom-[90px] left-6 z-[80] md:hidden ${className}`}
+      className={`fixed bottom-48 right-8 z-[80] md:hidden ${className}`}
     >
       {open && (
         <button
@@ -57,7 +57,7 @@ const MobileCreateFab = ({
         />
       )}
 
-      <div className="relative z-[80] flex flex-col-reverse items-start gap-3">
+      <div className="relative z-[80] flex flex-col-reverse items-end gap-3">
         <button
           type="button"
           onClick={handleMainClick}
