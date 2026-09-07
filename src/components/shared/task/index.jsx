@@ -181,6 +181,31 @@ const Task = memo(({
   };
   const statusTimeAgo = getStatusTime();
 
+  const getOnReviewSubmittedAt = () => {
+    if (Array.isArray(task?.activityLog)) {
+      const onReviewLogs = task.activityLog.filter(
+        (log) =>
+          log.changeType === "status_change" &&
+          String(log.newValue || "").toLowerCase() === "on-review"
+      );
+      if (onReviewLogs.length > 0) {
+        return onReviewLogs[0].createdAt;
+      }
+    }
+    return task?.scoringCreditedAt || task?.completedAt || null;
+  };
+  const onReviewSubmittedAt = getOnReviewSubmittedAt();
+  const dueDateLabel = formatDate(task?.dueDate);
+  const submittedOnReviewLabel = onReviewSubmittedAt
+    ? formatDate(onReviewSubmittedAt)
+    : null;
+  const isDueOverdue =
+    task?.dueDate &&
+    !["completed", "client-approved"].includes(
+      String(task?.status || "").toLowerCase()
+    ) &&
+    new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
+
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
     onDragStart && onDragStart(e, index);
@@ -211,7 +236,7 @@ const Task = memo(({
     return (
       <div
         onClick={() => handleClick()}
-        className={`flex items-center gap-4 px-4 py-3 rounded-2xl border cursor-pointer transition-colors ${compactCardTone}`}
+        className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 px-4 py-3 rounded-2xl border cursor-pointer transition-colors ${compactCardTone}`}
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
@@ -236,63 +261,87 @@ const Task = memo(({
               ? ` · ${task.project.reporters.map((r) => r.firstName).join(", ")}`
               : ""}
           </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+            <span
+              className={`inline-flex items-center gap-1 font-medium ${
+                isDueOverdue ? "text-rose-600" : "text-gray-600"
+              }`}
+              title={task?.dueDate ? new Date(task.dueDate).toLocaleString() : "No deadline"}
+            >
+              <span className="text-gray-400 font-semibold uppercase tracking-wide text-[10px]">
+                Deadline
+              </span>
+              {dueDateLabel || "—"}
+            </span>
+            <span
+              className="inline-flex items-center gap-1 font-medium text-violet-700"
+              title={
+                onReviewSubmittedAt
+                  ? new Date(onReviewSubmittedAt).toLocaleString()
+                  : "Not submitted for review yet"
+              }
+            >
+              <span className="text-violet-400 font-semibold uppercase tracking-wide text-[10px]">
+                On review
+              </span>
+              {submittedOnReviewLabel || "—"}
+            </span>
+          </div>
         </div>
 
-        <div className="hidden sm:block w-24 shrink-0 text-sm text-gray-600">
-          {formatDate(task?.dueDate)}
-        </div>
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0 self-stretch sm:self-auto">
+          <div className="hidden md:flex items-center shrink-0">
+            {task?.assignedTo?.length > 0 ? (
+              <div className="flex -space-x-1">
+                {task.assignedTo.slice(0, 3).map((user, index) => (
+                  <UserAvatar key={user._id || index} user={user} />
+                ))}
+                {task.assignedTo.length > 3 && (
+                  <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 text-[10px] flexCenter font-medium text-gray-600 shrink-0">
+                    +{task.assignedTo.length - 3}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-gray-100 flexCenter">
+                <span className="text-xs text-gray-400">—</span>
+              </div>
+            )}
+          </div>
 
-        <div className="hidden md:flex items-center shrink-0">
-          {task?.assignedTo?.length > 0 ? (
-            <div className="flex -space-x-1">
-              {task.assignedTo.slice(0, 3).map((user, index) => (
-                <UserAvatar key={user._id || index} user={user} />
-              ))}
-              {task.assignedTo.length > 3 && (
-                <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 text-[10px] flexCenter font-medium text-gray-600 shrink-0">
-                  +{task.assignedTo.length - 3}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-gray-100 flexCenter">
-              <span className="text-xs text-gray-400">—</span>
-            </div>
+          <div
+            className="hidden lg:flex items-center gap-1 shrink-0 w-20"
+            style={{ color: priorityColor }}
+          >
+            <IoArrowUpOutline className="text-sm" />
+            <span className="text-xs font-medium">{task?.priority}</span>
+          </div>
+
+          <span className="hidden md:inline-flex shrink-0 rounded-lg bg-[#E0F9F2] px-2.5 py-1 text-[11px] font-medium capitalize text-[#00D097]">
+            {task?.status}
+          </span>
+
+          <SentToClientAction
+            task={task}
+            onSendToClient={onSendToClient}
+            isSendingToClient={isSendingToClient}
+            compact
+          />
+
+          {isMoreOptions && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onMoreOptions && onMoreOptions(task, event);
+              }}
+              className="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 shrink-0"
+              title="More options"
+            >
+              <FiMoreVertical size={18} />
+            </button>
           )}
         </div>
-
-        <div
-          className="hidden lg:flex items-center gap-1 shrink-0 w-20"
-          style={{ color: priorityColor }}
-        >
-          <IoArrowUpOutline className="text-sm" />
-          <span className="text-xs font-medium">{task?.priority}</span>
-        </div>
-
-        <span className="hidden md:inline-flex shrink-0 rounded-lg bg-[#E0F9F2] px-2.5 py-1 text-[11px] font-medium capitalize text-[#00D097]">
-          {task?.status}
-        </span>
-
-        <SentToClientAction
-          task={task}
-          onSendToClient={onSendToClient}
-          isSendingToClient={isSendingToClient}
-          compact
-        />
-
-        {isMoreOptions && (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onMoreOptions && onMoreOptions(task, event);
-            }}
-            className="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 shrink-0"
-            title="More options"
-          >
-            <FiMoreVertical size={18} />
-          </button>
-        )}
       </div>
     );
   }
@@ -542,10 +591,28 @@ const Task = memo(({
         </div>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Due Date</span>
-          <h4 className="text-sm font-medium truncate">{formatDate(task?.dueDate)}</h4>
-          {(task?.status === "on-review" || task?.status === "approved") && statusTimeAgo && (
-            <span className="text-[11px] text-gray-500 capitalize -mt-1 font-medium">{statusTimeAgo}</span>
+          <h4 className={`text-sm font-medium truncate ${isDueOverdue ? "text-rose-600" : ""}`}>
+            {formatDate(task?.dueDate) || "—"}
+          </h4>
+          {submittedOnReviewLabel && (
+            <span
+              className="text-[11px] text-violet-600 font-medium"
+              title={
+                onReviewSubmittedAt
+                  ? new Date(onReviewSubmittedAt).toLocaleString()
+                  : undefined
+              }
+            >
+              On review {submittedOnReviewLabel}
+            </span>
           )}
+          {!submittedOnReviewLabel &&
+            (task?.status === "on-review" || task?.status === "approved") &&
+            statusTimeAgo && (
+              <span className="text-[11px] text-gray-500 capitalize -mt-1 font-medium">
+                {statusTimeAgo}
+              </span>
+            )}
         </div>
         <div className="flex flex-col gap-y-1">
           <span className="text-sm text-[#91929E]">Assignees</span>
