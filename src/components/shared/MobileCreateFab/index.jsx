@@ -14,10 +14,21 @@ const MobileCreateFab = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [alertsVisible, setAlertsVisible] = useState(false);
   const visible = actions.filter((action) => action && action.show !== false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const onAlertsVisibility = (event) => {
+      setAlertsVisible(Boolean(event?.detail?.visible));
+    };
+    setAlertsVisible(Boolean(window.__crmAlertsFabVisible));
+    window.addEventListener("crm:alerts-fab-visible", onAlertsVisibility);
+    return () =>
+      window.removeEventListener("crm:alerts-fab-visible", onAlertsVisibility);
   }, []);
 
   useEffect(() => {
@@ -44,9 +55,14 @@ const MobileCreateFab = ({
     setOpen((prev) => !prev);
   };
 
+  // Sit in the alerts slot when the bell is hidden; otherwise stack above it.
+  const positionClass = alertsVisible
+    ? "bottom-48 right-8"
+    : "bottom-28 right-8";
+
   return createPortal(
     <div
-      className={`fixed bottom-48 right-8 z-[80] md:hidden ${className}`}
+      className={`fixed ${positionClass} z-[80] md:hidden transition-[bottom] duration-200 ${className}`}
     >
       {open && (
         <button

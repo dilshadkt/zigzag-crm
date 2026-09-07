@@ -106,6 +106,16 @@ const GlobalNudges = () => {
     }
   }, [location.pathname]);
 
+  useEffect(() => {
+    const visible = nudges.length > 0;
+    window.__crmAlertsFabVisible = visible;
+    window.dispatchEvent(
+      new CustomEvent("crm:alerts-fab-visible", {
+        detail: { visible },
+      })
+    );
+  }, [nudges.length]);
+
   if (nudges.length === 0) return null;
 
   const dangerCount = nudges.filter(n => n.type === 'danger').length;
