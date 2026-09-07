@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { FiPlus, FiX } from "react-icons/fi";
 
 /**
- * Mobile-only speed dial. Hidden from md and up.
- * Pass actions with { id, label, icon, onClick, show? }.
+ * Mobile-only speed dial. Portaled to body so page overflow cannot hide it.
+ * Hidden from md and up. Pass actions with { id, label, icon, onClick, show? }.
  * One visible action: tap opens it. Multiple: tap expands the menu.
  */
 const MobileCreateFab = ({
@@ -12,7 +13,12 @@ const MobileCreateFab = ({
   className = "",
 }) => {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const visible = actions.filter((action) => action && action.show !== false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -23,7 +29,7 @@ const MobileCreateFab = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  if (!visible.length) return null;
+  if (!mounted || !visible.length) return null;
 
   const runAction = (action) => {
     setOpen(false);
@@ -38,20 +44,20 @@ const MobileCreateFab = ({
     setOpen((prev) => !prev);
   };
 
-  return (
+  return createPortal(
     <div
-      className={`fixed bottom-[90px] left-6 z-50 md:hidden ${className}`}
+      className={`fixed bottom-[90px] left-6 z-[80] md:hidden ${className}`}
     >
       {open && (
         <button
           type="button"
           aria-label="Close create menu"
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+          className="fixed inset-0 z-[79] bg-black/20 backdrop-blur-[1px]"
           onClick={() => setOpen(false)}
         />
       )}
 
-      <div className="relative z-50 flex flex-col-reverse items-start gap-3">
+      <div className="relative z-[80] flex flex-col-reverse items-start gap-3">
         <button
           type="button"
           onClick={handleMainClick}
@@ -79,7 +85,8 @@ const MobileCreateFab = ({
             </button>
           ))}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

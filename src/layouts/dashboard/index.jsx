@@ -6,6 +6,7 @@ import { useAttendanceManager } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import AttendanceModal from "../../components/header/components/AttendanceModal";
 import GlobalNudges from "../../components/shared/GlobalNudges";
+import GlobalCreateFab from "../../components/shared/GlobalCreateFab";
 
 const DashboardLayout = () => {
   const { user } = useAuth();
@@ -59,6 +60,8 @@ const DashboardLayout = () => {
 
       {/* Global Real-time Nudges */}
       <GlobalNudges />
+      {/* Global mobile create hub */}
+      {!isClient && <GlobalCreateFab />}
     </main>
   );
 };

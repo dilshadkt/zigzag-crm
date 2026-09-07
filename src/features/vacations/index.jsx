@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import ButtonToggle from "../../components/shared/buttons/buttonToggle";
 import Header from "../../components/shared/header";
-import MobileCreateFab from "../../components/shared/MobileCreateFab";
 import { IoArrowUpOutline } from "react-icons/io5";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { RiCalendarCheckLine } from "react-icons/ri";
@@ -475,18 +474,6 @@ const Vacations = () => {
       {showRequestModal && (
         <VacationRequestModal onClose={() => setShowRequestModal(false)} />
       )}
-      <MobileCreateFab
-        ariaLabel="Request leave"
-        actions={[
-          {
-            id: "leave",
-            label: "Request leave",
-            icon: <RiCalendarCheckLine size={18} />,
-            show: canOpenRequestModal,
-            onClick: () => setShowRequestModal(true),
-          },
-        ]}
-      />
     </section>
   );
 };
