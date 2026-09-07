@@ -251,21 +251,19 @@ const Calendar = () => {
 
   return (
     <section className="flex flex-col  h-full">
-      <div className="flex flex-col gap-2 mb-2 md:mb-2">
-        <div className="overflow-x-auto scrollbar-thin -mx-1 px-1 md:mx-0 md:px-0">
-          <EventFilters
-            eventFilters={eventFilters}
-            onToggleFilter={handleToggleEventFilter}
-            onTogglePublishPending={handleTogglePublishPending}
-            assignerFilter={assignerFilter}
-            onAssignerFilterChange={handleAssignerFilterChange}
-            projectFilter={projectFilter}
-            onProjectFilterChange={handleProjectFilterChange}
-            publishPendingOnly={publishPendingOnly}
-            calendarData={calendarData}
-            canEditTasks={canEditTasks}
-          />
-        </div>
+      <div className="flex flex-col gap-2 mb-2 relative z-20">
+        <EventFilters
+          eventFilters={eventFilters}
+          onToggleFilter={handleToggleEventFilter}
+          onTogglePublishPending={handleTogglePublishPending}
+          assignerFilter={assignerFilter}
+          onAssignerFilterChange={handleAssignerFilterChange}
+          projectFilter={projectFilter}
+          onProjectFilterChange={handleProjectFilterChange}
+          publishPendingOnly={publishPendingOnly}
+          calendarData={calendarData}
+          canEditTasks={canEditTasks}
+        />
       </div>
       <div
         className="w-full h-full  flex flex-col overflow-hidden

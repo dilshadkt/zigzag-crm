@@ -37,13 +37,17 @@ const EventFilters = ({
       calendarData.tasksData.tasks.forEach((task) => {
         if (task.assignedTo && Array.isArray(task.assignedTo)) {
           task.assignedTo.forEach((assignee) => {
-            if (assignee._id && assignee.name) {
-              uniqueAssigners.set(assignee._id, {
-                id: assignee._id,
-                name: assignee.name,
-                avatar: assignee?.avatar || "",
-              });
-            }
+            if (!assignee?._id) return;
+            const name =
+              assignee.name ||
+              `${assignee.firstName || ""} ${assignee.lastName || ""}`.trim() ||
+              assignee.email ||
+              "Unknown";
+            uniqueAssigners.set(assignee._id, {
+              id: assignee._id,
+              name,
+              avatar: assignee?.avatar || assignee?.profileImage || "",
+            });
           });
         }
       });
@@ -197,14 +201,17 @@ const EventFilters = ({
   };
 
   return (
-    <div className="flex items-center gap-2 ml-auto mr-4">
+    <div className="flex flex-wrap items-center gap-2 ml-auto mr-0 md:mr-4 relative z-30">
       {/* Assigner Filter Dropdown */}
       {canEditTasks && (
         <div className="relative" ref={assignerDropdownRef}>
           <button
+            type="button"
             onClick={() => setIsAssignerDropdownOpen(!isAssignerDropdownOpen)}
             className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
             title="Filter by Assigner"
+            aria-expanded={isAssignerDropdownOpen}
+            aria-haspopup="listbox"
           >
             <MdPerson className="text-sm" />
             <span className="max-w-32 truncate">
@@ -218,10 +225,14 @@ const EventFilters = ({
 
           {/* Assigner Dropdown Menu */}
           {isAssignerDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+            <div
+              className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-xl z-[200] max-h-60 overflow-y-auto"
+              role="listbox"
+            >
               <div className="py-1">
                 {/* All Assigners Option */}
                 <button
+                  type="button"
                   onClick={() => handleAssignerSelect(null)}
                   className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${!assignerFilter || assignerFilter.length === 0
                     ? "bg-blue-50 text-blue-700"
@@ -241,8 +252,10 @@ const EventFilters = ({
                 <div className="border-t border-gray-100 my-1"></div>
 
                 {/* Individual Assigners */}
-                {assigners.map((assigner) => (
+                {assigners.length > 0 ? (
+                  assigners.map((assigner) => (
                   <button
+                    type="button"
                     key={assigner.id}
                     onClick={() => handleAssignerSelect(assigner.id)}
                     className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${assignerFilter && assignerFilter.includes(assigner.id)
@@ -256,21 +269,26 @@ const EventFilters = ({
                       readOnly
                       className="w-3 h-3 rounded text-blue-600 focus:ring-blue-500"
                     />
-                    {assigner?.avatar === "/api/placeholder/32/32" ? (
-                      <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center text-[10px]">
-                        {assigner?.name?.charAt(0)}
-                      </div>
-                    ) : (
+                    {assigner?.avatar && assigner?.avatar !== "/api/placeholder/32/32" ? (
                       <img
                         src={assigner?.avatar}
-                        alt={assigner.name}
-                        className="w-5 h-5 rounded-full object-cover"
+                        alt=""
+                        className="w-5 h-5 rounded-full object-cover shrink-0"
                       />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-gray-800 text-white uppercase flex items-center justify-center text-[10px] shrink-0">
+                        {assigner?.name?.charAt(0)}
+                      </div>
                     )}
 
                     <span className="truncate">{assigner.name}</span>
                   </button>
-                ))}
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-xs text-gray-500">
+                    No assigners found
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -280,9 +298,12 @@ const EventFilters = ({
       {/* Project Filter Dropdown */}
       <div className="relative" ref={projectDropdownRef}>
         <button
+          type="button"
           onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
           className="flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
           title="Filter by Project"
+          aria-expanded={isProjectDropdownOpen}
+          aria-haspopup="listbox"
         >
           <MdFolder className="text-sm" />
           <span className="max-w-32 truncate">{getSelectedProjectName()}</span>
@@ -294,10 +315,14 @@ const EventFilters = ({
 
         {/* Project Dropdown Menu */}
         {isProjectDropdownOpen && (
-          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+          <div
+            className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-xl z-[200] max-h-60 overflow-y-auto"
+            role="listbox"
+          >
             <div className="py-1">
               {/* All Projects Option */}
               <button
+                type="button"
                 onClick={() => handleProjectSelect(null)}
                 className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${!projectFilter || projectFilter.length === 0
                   ? "bg-blue-50 text-blue-700"
@@ -320,6 +345,7 @@ const EventFilters = ({
               {projects.length > 0 ? (
                 projects.map((project) => (
                   <button
+                    type="button"
                     key={project.id}
                     onClick={() => handleProjectSelect(project.id)}
                     className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2 ${projectFilter && projectFilter.includes(project.id)
