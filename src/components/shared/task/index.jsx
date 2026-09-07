@@ -196,15 +196,20 @@ const Task = memo(({
   };
   const onReviewSubmittedAt = getOnReviewSubmittedAt();
   const dueDateLabel = formatDate(task?.dueDate);
+  const mainTaskDueDate = task?.parentTask?.dueDate;
+  const mainTaskDueDateLabel = formatDate(mainTaskDueDate);
   const submittedOnReviewLabel = onReviewSubmittedAt
     ? formatDate(onReviewSubmittedAt)
     : null;
   const isDueOverdue =
     task?.dueDate &&
-    !["completed", "client-approved"].includes(
+    !["completed", "approved", "client-approved"].includes(
       String(task?.status || "").toLowerCase()
     ) &&
     new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
+  const isMainDueOverdue =
+    mainTaskDueDate &&
+    new Date(mainTaskDueDate) < new Date(new Date().setHours(0, 0, 0, 0));
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData("text/plain", task._id);
@@ -273,6 +278,23 @@ const Task = memo(({
               </span>
               {dueDateLabel || "—"}
             </span>
+            {isSubtaskItem && (
+              <span
+                className={`inline-flex items-center gap-1 font-medium ${
+                  isMainDueOverdue ? "text-rose-600" : "text-gray-600"
+                }`}
+                title={
+                  mainTaskDueDate
+                    ? `Main task deadline: ${new Date(mainTaskDueDate).toLocaleString()}`
+                    : "No main task deadline"
+                }
+              >
+                <span className="text-gray-400 font-semibold uppercase tracking-wide text-[10px]">
+                  Main task
+                </span>
+                {mainTaskDueDateLabel || "—"}
+              </span>
+            )}
             <span
               className="inline-flex items-center gap-1 font-medium text-violet-700"
               title={
