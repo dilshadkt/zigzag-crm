@@ -32,7 +32,7 @@ const ActionButton = ({
       />
 
       <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-        <div className="flex gap-x-1.5 md:gap-x-2">
+        <div className="hidden md:flex gap-x-1.5 md:gap-x-2">
           {hasPermission("projects", "create") && (
             <PrimaryButton
               icon={<Plus size={18} />}

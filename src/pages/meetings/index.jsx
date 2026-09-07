@@ -1,26 +1,37 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { format } from "date-fns";
 import {
   FiCalendar,
   FiCheck,
   FiClock,
+  FiFolderPlus,
   FiPlus,
   FiUsers,
   FiVideo,
 } from "react-icons/fi";
+import { RiCalendarCheckLine } from "react-icons/ri";
+import { MdOutlineTaskAlt } from "react-icons/md";
 import Header from "../../components/shared/header";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
+import MobileCreateFab from "../../components/shared/MobileCreateFab";
 import ScheduleMeetingModal, {
   ReportAttendanceModal,
 } from "../../components/meetings/ScheduleMeetingModal";
 import MeetingTrackItems from "../../components/meetings/MeetingTrackItems";
 import MeetLinkActions from "../../components/meetings/MeetLinkActions";
+import AddProject from "../../components/projects/addProject";
+import AddTask from "../../components/projects/addTask";
+import VacationRequestModal from "../../features/vacations/components/VacationRequestModal";
 import {
   useAddMeetingActionItem,
+  useAddProject,
   useCancelMeeting,
+  useCompanyProjects,
   useConnectGoogleMeet,
   useCreateMeeting,
+  useCreateTaskFromBoard,
   useDeleteMeetingActionItem,
   useGenerateMeetingMeetLink,
   useGetAllEmployees,
@@ -32,6 +43,8 @@ import {
 } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
+import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
+import { uploadSingleFile } from "../../api/service";
 
 const personName = (person) =>
   `${person?.firstName || ""} ${person?.lastName || ""}`.trim() ||
@@ -71,16 +84,22 @@ const statusMeta = (meeting) => {
 };
 
 const Meetings = () => {
-  const { user } = useAuth();
-  const { canScheduleMeetings } = usePermissions();
+  const { user, companyId, isCompany } = useAuth();
+  const { canScheduleMeetings, hasPermission } = usePermissions();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState("upcoming");
   const [showSchedule, setShowSchedule] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(null);
   const [reportingMeeting, setReportingMeeting] = useState(null);
+  const [showModalProject, setShowModalProject] = useState(false);
+  const [showModalTask, setShowModalTask] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
+  const projectCompanyId = companyId || user?.company;
   const { data, isLoading } = useGetMeetings();
   const { data: employeesData } = useGetAllEmployees(true);
+  const { data: projectsData } = useCompanyProjects(projectCompanyId);
   const { data: googleStatus } = useGetGoogleMeetStatus();
   const createMeeting = useCreateMeeting();
   const updateMeeting = useUpdateMeeting();
@@ -91,9 +110,24 @@ const Meetings = () => {
   const deleteActionItem = useDeleteMeetingActionItem();
   const generateMeetLink = useGenerateMeetingMeetLink();
   const connectGoogle = useConnectGoogleMeet();
+  const addProject = useAddProject();
+  const createTask = useCreateTaskFromBoard((data) => {
+    setShowModalTask(false);
+    if (data?.data?.task?._id) {
+      const task = data.data.task;
+      if (task.project) {
+        navigate(`/projects/${task.project}/${task._id}`);
+      } else {
+        navigate(`/tasks/${task._id}`);
+      }
+    }
+  });
 
   const meetings = data?.meetings || [];
   const canSchedule = Boolean(data?.canSchedule) || canScheduleMeetings();
+  const canCreateProject = isCompany || hasPermission("projects", "create");
+  const canCreateTask = isCompany || hasPermission("tasks", "create");
+  const canRequestLeave = isCompany || hasPermission("vacations", "create");
   const employees = employeesData?.employees || [];
   const isAdmin = user?.role === "company-admin";
 
@@ -210,6 +244,40 @@ const Meetings = () => {
     );
   };
 
+  const handleAddProject = async (values, { resetForm }) => {
+    try {
+      const response = await addProject.mutateAsync(values);
+      setShowModalProject(false);
+      resetForm();
+      if (response?.project?._id) {
+        navigate(`/projects/${response.project._id}`);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not create project");
+    }
+  };
+
+  const handleAddTask = async (values, { resetForm }) => {
+    const updatedValues = cleanTaskData(values);
+    updatedValues.creator = user?._id;
+    updatedValues.attachments = await processAttachments(
+      values?.attachments,
+      uploadSingleFile
+    );
+
+    try {
+      await createTask.mutateAsync(updatedValues);
+      resetForm();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Could not create task");
+    }
+  };
+
+  const openScheduleMeeting = () => {
+    setEditingMeeting(null);
+    setShowSchedule(true);
+  };
+
   return (
     <section className="flex flex-col gap-5 pb-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -220,14 +288,13 @@ const Meetings = () => {
           </p>
         </div>
         {canSchedule && (
-          <PrimaryButton
-            title="Schedule meeting"
-            icon={<FiPlus className="h-4 w-4" />}
-            onclick={() => {
-              setEditingMeeting(null);
-              setShowSchedule(true);
-            }}
-          />
+          <div className="hidden md:block">
+            <PrimaryButton
+              title="Schedule meeting"
+              icon={<FiPlus className="h-4 w-4" />}
+              onclick={openScheduleMeeting}
+            />
+          </div>
         )}
       </div>
 
@@ -466,6 +533,65 @@ const Meetings = () => {
         isSaving={reportAttendance.isPending}
         onClose={() => setReportingMeeting(null)}
         onSubmit={handleReport}
+      />
+
+      {canCreateProject && (
+        <AddProject
+          isOpen={showModalProject}
+          setShowModalProject={setShowModalProject}
+          onSubmit={handleAddProject}
+        />
+      )}
+
+      {canCreateTask && (
+        <AddTask
+          isOpen={showModalTask}
+          setShowModalTask={setShowModalTask}
+          projects={projectsData || []}
+          onSubmit={handleAddTask}
+          teams={employees}
+          selectedMonth={format(new Date(), "yyyy-MM")}
+          isLoading={createTask.isPending}
+          showProjectSelection={true}
+        />
+      )}
+
+      {showRequestModal && canRequestLeave && (
+        <VacationRequestModal onClose={() => setShowRequestModal(false)} />
+      )}
+
+      <MobileCreateFab
+        ariaLabel="Create"
+        actions={[
+          {
+            id: "meeting",
+            label: "Schedule meeting",
+            icon: <FiVideo size={18} />,
+            show: canSchedule,
+            onClick: openScheduleMeeting,
+          },
+          {
+            id: "task",
+            label: "Create task",
+            icon: <MdOutlineTaskAlt size={18} />,
+            show: canCreateTask,
+            onClick: () => setShowModalTask(true),
+          },
+          {
+            id: "project",
+            label: "Create project",
+            icon: <FiFolderPlus size={18} />,
+            show: canCreateProject,
+            onClick: () => setShowModalProject(true),
+          },
+          {
+            id: "leave",
+            label: "Request leave",
+            icon: <RiCalendarCheckLine size={18} />,
+            show: canRequestLeave,
+            onClick: () => setShowRequestModal(true),
+          },
+        ]}
       />
     </section>
   );

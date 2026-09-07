@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { format } from "date-fns";
+import { FiFolderPlus, FiVideo } from "react-icons/fi";
+import { MdOutlineTaskAlt } from "react-icons/md";
+import { RiCalendarCheckLine } from "react-icons/ri";
 import {
   useAddProject,
   useCompanyProjects,
@@ -9,11 +13,18 @@ import {
   useProjectTasks,
   useGetEmployeeProjects,
   useCreateTask,
+  useCreateMeeting,
+  useGetAllEmployees,
+  useGetGoogleMeetStatus,
+  useConnectGoogleMeet,
 } from "../../api/hooks";
 import AddProject from "../../components/projects/addProject";
 import AddTask from "../../components/projects/addTask";
 import CurrentProject from "../../components/projects/currentProject";
 import ProjectDetails from "../../components/projects/projectDetails";
+import MobileCreateFab from "../../components/shared/MobileCreateFab";
+import ScheduleMeetingModal from "../../components/meetings/ScheduleMeetingModal";
+import VacationRequestModal from "../../features/vacations/components/VacationRequestModal";
 import { useAuth } from "../../hooks/useAuth";
 import { useProject } from "../../hooks/useProject";
 import { usePermissions } from "../../hooks/usePermissions";
@@ -27,9 +38,10 @@ import { uploadSingleFile } from "../../api/service";
 const Prjects = () => {
   const { companyId, user } = useAuth();
   const { activeProject: selectProject } = useProject();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isAdmin } = usePermissions();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isCompanyAdmin = isAdmin();
 
   // Month selection state - default to current month
   const [selectedMonth, setSelectedMonth] = useState(
@@ -90,6 +102,11 @@ const Prjects = () => {
     () => setShowModalTask(false),
     selectProject
   );
+  const createMeeting = useCreateMeeting();
+  const connectGoogle = useConnectGoogleMeet();
+  const { data: employeesData } = useGetAllEmployees(isCompanyAdmin);
+  const { data: googleStatus } = useGetGoogleMeetStatus();
+  const employees = employeesData?.employees || [];
 
   const handleAddProject = async (values, { resetForm }) => {
     try {
@@ -139,6 +156,34 @@ const Prjects = () => {
   const [showModalProject, setShowModalProject] = useState(false);
   const [showModalFilter, setShowModalFilter] = useState(false);
   const [showModalTask, setShowModalTask] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+
+  const handleSaveMeeting = (payload) => {
+    createMeeting.mutate(payload, {
+      onSuccess: (res) => {
+        toast.success("Meeting scheduled");
+        if (res?.meetLinkWarning) toast(res.meetLinkWarning);
+        setShowSchedule(false);
+      },
+      onError: (error) =>
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Could not save meeting"
+        ),
+    });
+  };
+
+  const handleConnectGoogle = () => {
+    connectGoogle.mutate("/projects", {
+      onSuccess: (res) => {
+        if (res?.url) window.location.href = res.url;
+      },
+      onError: (error) =>
+        toast.error(error?.message || "Could not start Google Calendar connect"),
+    });
+  };
 
   const projectsLoading = user?.role === "company-admin" ? isCompanyLoading : isEmployeeLoading;
   const hasNoProject = isSuccess && (!projects || projects.length === 0);
@@ -241,6 +286,59 @@ const Prjects = () => {
           onSubmit={handleAddProject}
         />
       )}
+
+      {isCompanyAdmin && (
+        <ScheduleMeetingModal
+          isOpen={showSchedule}
+          meeting={null}
+          employees={employees}
+          isSaving={createMeeting.isPending}
+          googleStatus={googleStatus}
+          isAdmin={isCompanyAdmin}
+          onConnectGoogle={handleConnectGoogle}
+          isConnectingGoogle={connectGoogle.isPending}
+          onClose={() => setShowSchedule(false)}
+          onSubmit={handleSaveMeeting}
+        />
+      )}
+
+      {showRequestModal && isCompanyAdmin && (
+        <VacationRequestModal onClose={() => setShowRequestModal(false)} />
+      )}
+
+      <MobileCreateFab
+        ariaLabel="Create"
+        actions={[
+          {
+            id: "project",
+            label: "Create project",
+            icon: <FiFolderPlus size={18} />,
+            show: hasPermission("projects", "create"),
+            onClick: () => setShowModalProject(true),
+          },
+          {
+            id: "task",
+            label: "Create task",
+            icon: <MdOutlineTaskAlt size={18} />,
+            show: hasPermission("tasks", "create") && Boolean(selectProject),
+            onClick: () => setShowModalTask(true),
+          },
+          {
+            id: "meeting",
+            label: "Create meeting",
+            icon: <FiVideo size={18} />,
+            show: isCompanyAdmin,
+            onClick: () => setShowSchedule(true),
+          },
+          {
+            id: "leave",
+            label: "Request leave",
+            icon: <RiCalendarCheckLine size={18} />,
+            show: isCompanyAdmin,
+            onClick: () => setShowRequestModal(true),
+          },
+        ]}
+      />
     </section>
   );
 };

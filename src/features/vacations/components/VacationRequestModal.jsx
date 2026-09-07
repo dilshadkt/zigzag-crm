@@ -222,12 +222,35 @@ const VacationRequestModal = ({ onClose }) => {
   const duration = Math.ceil(Math.abs(new Date(formData.endDate) - new Date(formData.startDate)) / (1000 * 60 * 60 * 24)) + 1;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all">
-      <div className="bg-white rounded-[32px] w-full max-w-3xl shadow-2xl shadow-slate-200/50 overflow-hidden animate-in fade-in zoom-in duration-200">
-        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row h-full">
-          {/* Left Column: Calendar (Slightly smaller) */}
-          <div className="flex-1 bg-slate-50/50 p-6 md:p-8 border-r border-slate-100">
-            <div className="flex justify-between items-center mb-6 px-1">
+    <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white w-full sm:max-w-3xl sm:rounded-[32px] rounded-t-[24px] shadow-2xl shadow-slate-200/50 overflow-hidden max-h-[100dvh] sm:max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="sm:hidden flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-100 shrink-0">
+          <div>
+            <h2 className="text-base font-bold text-slate-800 tracking-tight">Request Leave</h2>
+            <p className="text-[11px] text-slate-400 font-medium">
+              {targetOnProbation
+                ? "Probation: only unpaid leave is available."
+                : "Pick dates, type, and reason."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:text-slate-600"
+            aria-label="Close"
+          >
+            <RxCross2 size={18} />
+          </button>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
+          {/* Left Column: Calendar */}
+          <div className="flex-1 bg-slate-50/50 p-4 sm:p-6 md:p-8 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 md:shrink md:overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6 px-1">
               <button
                 type="button"
                 onClick={previousMonth}
@@ -245,9 +268,9 @@ const VacationRequestModal = ({ onClose }) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-7 text-center gap-y-1">
+            <div className="grid grid-cols-7 text-center gap-y-0.5 sm:gap-y-1">
               {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                <div key={i} className="text-[10px] font-bold text-slate-300 mb-2 tracking-widest">{day}</div>
+                <div key={i} className="text-[10px] font-bold text-slate-300 mb-1 sm:mb-2 tracking-widest">{day}</div>
               ))}
 
               {getDaysInMonth().map((day, index) => {
@@ -261,7 +284,7 @@ const VacationRequestModal = ({ onClose }) => {
                     key={index}
                     onClick={() => isCurrentMonth && selectDate(day)}
                     className={`
-                      h-10 w-full relative flex items-center justify-center text-xs font-bold cursor-pointer transition-all
+                      h-9 sm:h-10 w-full relative flex items-center justify-center text-xs font-bold cursor-pointer transition-all
                       ${!isCurrentMonth ? "text-slate-200 pointer-events-none" : "text-slate-600"}
                       ${inRange && !isStart && !isEnd ? "bg-indigo-50 text-indigo-600" : ""}
                       ${isStart ? "bg-indigo-600 text-white rounded-l-xl z-10 shadow-md shadow-indigo-100" : ""}
@@ -275,7 +298,7 @@ const VacationRequestModal = ({ onClose }) => {
               })}
             </div>
 
-            <div className="mt-8 bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
+            <div className="mt-4 sm:mt-8 bg-white p-3 sm:p-4 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm">
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Duration</span>
                 <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg inline-block mt-1">
@@ -285,23 +308,24 @@ const VacationRequestModal = ({ onClose }) => {
               <div className="text-right">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Dates</span>
                 <span className="block text-[11px] font-bold text-slate-700 mt-0.5">
-                  {format(new Date(formData.startDate), "MMM dd")} - {format(new Date(formData.endDate), "dd")}
+                  {format(new Date(formData.startDate), "MMM dd")} - {format(new Date(formData.endDate), "MMM dd")}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Fields (More compact) */}
-          <div className="w-full md:w-[320px] p-6 md:p-8 flex flex-col relative">
+          {/* Right Column: Fields */}
+          <div className="w-full md:w-[320px] p-4 sm:p-6 md:p-8 flex flex-col relative md:overflow-y-auto shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-all"
+              className="hidden sm:flex absolute top-6 right-6 text-slate-300 hover:text-slate-500 transition-all"
+              aria-label="Close"
             >
               <RxCross2 size={20} />
             </button>
 
-            <div className="mb-6">
+            <div className="mb-5 sm:mb-6 hidden sm:block">
               <h2 className="text-lg font-bold text-slate-800 tracking-tight">Request Leave</h2>
               <p className="text-[11px] text-slate-400 font-medium">
                 {targetOnProbation
@@ -310,10 +334,12 @@ const VacationRequestModal = ({ onClose }) => {
               </p>
             </div>
 
-            <div className="space-y-6 flex-1">
+            <div className="space-y-5 sm:space-y-6 flex-1">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Type</label>
-                <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                <div className={`grid gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100 ${
+                  targetOnProbation ? "grid-cols-1" : "grid-cols-2"
+                }`}>
                   {(targetOnProbation
                     ? [{ key: UNPAID_LEAVE_TYPE, label: "unpaid leave", balance: unpaidBalance }]
                     : [
@@ -326,14 +352,14 @@ const VacationRequestModal = ({ onClose }) => {
                       key={key}
                       type="button"
                       onClick={() => handleTypeChange(key)}
-                      className={`flex-1 py-2 px-1 rounded-lg text-[9px] font-bold transition-all capitalize flex flex-col items-center justify-center
+                      className={`py-2.5 px-2 rounded-lg text-[10px] sm:text-[9px] font-bold transition-all capitalize flex flex-col items-center justify-center min-h-[44px]
                         ${formData.type === key
                           ? "bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200/50"
                           : "text-slate-400 hover:text-slate-600"
                         }`}
                     >
                       <span>{label.replace("_", " ")}</span>
-                      <span className="text-[8px] font-medium text-slate-400 mt-0.5">
+                      <span className="text-[9px] sm:text-[8px] font-medium text-slate-400 mt-0.5">
                         ({balance} days)
                       </span>
                     </button>
@@ -348,7 +374,7 @@ const VacationRequestModal = ({ onClose }) => {
                   value={formData.reason}
                   onChange={handleChange}
                   placeholder="Explain your leave request..."
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none min-h-[90px] resize-none font-medium text-slate-600"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none min-h-[80px] sm:min-h-[90px] resize-none font-medium text-slate-600"
                 />
               </div>
 
@@ -378,15 +404,15 @@ const VacationRequestModal = ({ onClose }) => {
                   Don't have paid leave in probation. Unpaid leave can be requested.
                 </div>
               )}
+
+              {submitError && (
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 text-[10px] font-bold text-center">
+                  {submitError}
+                </div>
+              )}
             </div>
 
-            {submitError && (
-              <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 text-[10px] font-bold text-center">
-                {submitError}
-              </div>
-            )}
-
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8 hidden md:block">
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -396,6 +422,18 @@ const VacationRequestModal = ({ onClose }) => {
                 {isSubmitting ? "Submitting..." : "Submit Request"}
               </button>
             </div>
+          </div>
+          </div>
+
+          <div className="md:hidden shrink-0 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3.5 text-xs font-bold text-white bg-indigo-600 
+              rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100"
+            >
+              {isSubmitting ? "Submitting..." : "Submit Request"}
+            </button>
           </div>
         </form>
       </div>
