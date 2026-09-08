@@ -283,6 +283,7 @@ const SubtaskActionBar = ({
       toast.error(err.response?.data?.message || "Failed to save category details");
     }
   };
+  const isUpdating = updateMutation.isPending;
   const waitingForClient =
     status === "approved" && isClientApprovalRequired;
   const actionsDisabled = isUpdating || isLocked;
