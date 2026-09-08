@@ -12,6 +12,13 @@ import {
   FaPlus,
   FaSync,
 } from "react-icons/fa";
+import {
+  getActivityMessage,
+  getActivityUserName,
+  getActivityUserInitial,
+  formatActivityValue,
+  isNoOpActivity,
+} from "../../../utils/activityStream";
 
 const ActivityStream = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -81,38 +88,6 @@ const ActivityStream = () => {
         return "/icons/file.svg";
       default:
         return "/icons/clock.svg";
-    }
-  };
-
-  const getActivityMessage = (activity) => {
-    switch (activity.action) {
-      case "logged_time":
-        return `Logged ${activity.duration} minutes on "${activity.task.title}" task`;
-      case "task_change":
-        return activity.description || `Updated task "${activity.task.title}"`;
-      case "task_update":
-        const statusText =
-          {
-            todo: "To Do",
-            "in-progress": "In Progress",
-            completed: "Completed",
-          }[activity.task.status] || activity.task.status;
-        return `Updated "${activity.task.title}" status to ${statusText}`;
-      case "project_created":
-        return `Created new project "${activity.project.name}"`;
-      case "project_updated":
-        return `Updated project "${activity.project.name}" (${activity.project.progress || 0
-          }% complete)`;
-      case "subtask_change":
-        return (
-          activity.description ||
-          `Updated subtask "${activity.subTask?.title || "Unknown"}"`
-        );
-      case "file_attachment":
-        return `Added ${activity.attachments?.length || 1} file(s) to "${activity.task.title
-          }"`;
-      default:
-        return activity.description || "Performed an action";
     }
   };
 
@@ -308,7 +283,9 @@ const ActivityStream = () => {
     );
   }
 
-  const activities = activitiesData?.data || [];
+  const activities = (activitiesData?.data || []).filter(
+    (activity) => !isNoOpActivity(activity)
+  );
 
   return (
     <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-2xl md:rounded-3xl">
@@ -371,33 +348,42 @@ const ActivityStream = () => {
             </p>
           </div>
         ) : (
-          activities.map((activity, index) => (
+          activities.map((activity, index) => {
+            const userName = getActivityUserName(activity.user);
+            const userInitial = getActivityUserInitial(activity.user);
+            const showChangeValues =
+              (activity.action === "task_change" ||
+                activity.action === "subtask_change") &&
+              activity.changeType &&
+              activity.changeType !== "created" &&
+              activity.changeType !== "deleted";
+
+            return (
             <div key={activity.id || index} className="flex flex-col gap-y-3">
               <div className="flexStart gap-x-3">
                 <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                  {activity.user.profileImage ? (
+                  {activity.user?.profileImage ? (
                     <img
                       src={activity.user.profileImage}
-                      alt={`${activity.user.firstName} ${activity.user.lastName}`}
+                      alt={userName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="22" fill="%23E5E7EB"/><text x="22" y="28" text-anchor="middle" font-size="16" font-family="Arial" fill="%236B7280">${activity.user.firstName?.charAt(0) || "?"
-                          }</text></svg>`;
+                        e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="22" fill="%23E5E7EB"/><text x="22" y="28" text-anchor="middle" font-size="16" font-family="Arial" fill="%236B7280">${userInitial}</text></svg>`;
                       }}
                     />
                   ) : (
                     <span className="text-gray-600 font-medium text-lg">
-                      {activity.user.firstName?.charAt(0) || "?"}
+                      {userInitial}
                     </span>
                   )}
                 </div>
                 <div className="flex flex-col flex-1">
                   <h5 className="font-medium text-gray-800">
-                    {activity.user.firstName} {activity.user.lastName}
+                    {userName}
                   </h5>
                   <span className="text-xs text-[#91929E]">
-                    {activity.user.position || "Team Member"}
+                    {activity.user?.position || "Team Member"}
                   </span>
                   <span className="text-xs text-[#91929E] mt-1">
                     • {formatDateTime(activity.timestamp)}
@@ -423,6 +409,18 @@ const ActivityStream = () => {
                   <p className="text-[#0A1629] text-sm">
                     {getActivityMessage(activity)}
                   </p>
+
+                  {showChangeValues && (
+                    <p className="text-xs mt-1">
+                      <span className="text-red-600 line-through">
+                        {formatActivityValue(activity.oldValue, activity.changeType)}
+                      </span>
+                      <span className="mx-1.5 text-[#91929E]">→</span>
+                      <span className="text-green-700 font-medium">
+                        {formatActivityValue(activity.newValue, activity.changeType)}
+                      </span>
+                    </p>
+                  )}
 
                   {/* Project context */}
                   {activity.task?.project && (
@@ -486,7 +484,8 @@ const ActivityStream = () => {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

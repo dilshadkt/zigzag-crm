@@ -24,6 +24,13 @@ import {
   FaSearch,
   FaArrowLeft,
 } from "react-icons/fa";
+import {
+  getActivityMessage,
+  getActivityUserName,
+  getActivityUserInitial,
+  formatActivityValue,
+  isNoOpActivity,
+} from "../../utils/activityStream";
 
 const ActivityStreamPage = () => {
   const navigate = useNavigate();
@@ -118,40 +125,6 @@ const ActivityStreamPage = () => {
         return "/icons/file.svg";
       default:
         return "/icons/clock.svg";
-    }
-  };
-
-  const getActivityMessage = (activity) => {
-    switch (activity.action) {
-      case "logged_time":
-        return `Logged ${activity.duration} minutes on "${activity.task.title}" task`;
-      case "task_change":
-        return activity.description || `Updated task "${activity.task.title}"`;
-      case "task_update":
-        const statusText =
-          {
-            todo: "To Do",
-            "in-progress": "In Progress",
-            completed: "Completed",
-          }[activity.task.status] || activity.task.status;
-        return `Updated "${activity.task.title}" status to ${statusText}`;
-      case "project_created":
-        return `Created new project "${activity.project.name}"`;
-      case "project_updated":
-        return `Updated project "${activity.project.name}" (${
-          activity.project.progress || 0
-        }% complete)`;
-      case "subtask_change":
-        return (
-          activity.description ||
-          `Updated subtask "${activity.subTask?.title || "Unknown"}"`
-        );
-      case "file_attachment":
-        return `Added ${activity.attachments?.length || 1} file(s) to "${
-          activity.task.title
-        }"`;
-      default:
-        return activity.description || "Performed an action";
     }
   };
 
@@ -433,7 +406,9 @@ const ActivityStreamPage = () => {
     });
   };
 
-  const activities = activitiesData?.data || [];
+  const activities = (activitiesData?.data || []).filter(
+    (activity) => !isNoOpActivity(activity)
+  );
   const filteredByDate = filterActivitiesByDate(activities);
   const filteredByEmployee = filterActivitiesByEmployee(filteredByDate);
   const filteredByProject = filterActivitiesByProject(filteredByEmployee);
@@ -717,31 +692,31 @@ const ActivityStreamPage = () => {
                 >
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
-                      {activity.user.profileImage ? (
+                      {activity.user?.profileImage ? (
                         <img
                           src={activity.user.profileImage}
-                          alt={`${activity.user.firstName} ${activity.user.lastName}`}
+                          alt={getActivityUserName(activity.user)}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="16" fill="%23E5E7EB"/><text x="16" y="20" text-anchor="middle" font-size="12" font-family="Arial" fill="%236B7280">${
-                              activity.user.firstName?.charAt(0) || "?"
+                              getActivityUserInitial(activity.user)
                             }</text></svg>`;
                           }}
                         />
                       ) : (
                         <span className="text-gray-600 font-medium text-sm">
-                          {activity.user.firstName?.charAt(0) || "?"}
+                          {getActivityUserInitial(activity.user)}
                         </span>
                       )}
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <h5 className="font-medium text-sm text-gray-900 truncate">
-                          {activity.user.firstName} {activity.user.lastName}
+                          {getActivityUserName(activity.user)}
                         </h5>
                         <span className="text-xs text-gray-500 truncate">
-                          {activity.user.position || "Team Member"}
+                          {activity.user?.position || "Team Member"}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500">
@@ -825,17 +800,23 @@ const ActivityStreamPage = () => {
                           <div className="text-xs text-gray-600 mb-1.5">
                             <strong>Change Details:</strong>
                           </div>
-                          {activity.oldValue && activity.newValue && (
+                          {activity.oldValue != null || activity.newValue != null ? (
                             <div className="text-xs">
                               <span className="text-red-600 line-through">
-                                {activity.oldValue}
+                                {formatActivityValue(
+                                  activity.oldValue,
+                                  activity.changeType
+                                )}
                               </span>
                               <span className="mx-1.5">→</span>
                               <span className="text-green-600">
-                                {activity.newValue}
+                                {formatActivityValue(
+                                  activity.newValue,
+                                  activity.changeType
+                                )}
                               </span>
                             </div>
-                          )}
+                          ) : null}
                           {activity.description && (
                             <div className="text-xs text-gray-600 mt-1">
                               {activity.description}
