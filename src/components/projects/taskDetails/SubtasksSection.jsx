@@ -13,6 +13,8 @@ import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
 import { toast } from "react-hot-toast";
 import LinkPreview from "../../shared/LinkPreview";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
+import { getFilledCategoryFieldValues } from "../../../utils/categoryFields";
+import CategoryFieldValue from "../../shared/CategoryFieldValue";
 
 // Generate Google Drive embed URL for preview if possible
 const getDriveEmbedUrl = (url) => {
@@ -621,6 +623,29 @@ const SubtasksSection = ({
                   </div>
                 )}
 
+
+                {/* Values captured for the category's configured fields */}
+                {(() => {
+                  const categoryFields = getFilledCategoryFieldValues(subtask);
+                  if (categoryFields.length === 0) return null;
+                  return (
+                    <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50/30 p-3 space-y-2.5">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-blue-500 block">
+                        {subtask.taskCategory?.name || "Category"} details
+                      </span>
+                      {categoryFields.map((field) => {
+                        return (
+                          <div key={field.key}>
+                            <span className="text-[10px] font-bold uppercase text-gray-400 block mb-0.5">
+                              {field.label}
+                            </span>
+                            <CategoryFieldValue field={field} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Subtask Custom Fields */}
                 {subtask.customFields && subtask.customFields.filter(f => {

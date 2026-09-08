@@ -1,3 +1,6 @@
+import { getDescriptionCategoryFields } from "../../../utils/categoryFields";
+import CategoryFieldValue from "../../shared/CategoryFieldValue";
+
 const renderContent = (content) => {
   if (!content) return "";
   const decoded = content
@@ -26,6 +29,12 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
     (contentSubTask.copyOfDescription ||
       contentSubTask.description ||
       contentSubTask.ideas);
+
+  // Category fields an admin flagged as "show in main task description".
+  const descriptionCategoryFields = getDescriptionCategoryFields(
+    subTasks,
+    taskDetails
+  );
 
   const isWorkLinkRequired = (task) => {
     return (
@@ -144,6 +153,30 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
             </div>
           )}
         </>
+      )}
+
+      {/* Category fields pulled up from subtasks */}
+      {descriptionCategoryFields.length > 0 && (
+        <div className="mt-4 space-y-5">
+          {descriptionCategoryFields.map((field) => {
+            return (
+              <div key={`${field.subTaskId}-${field.key}`}>
+                <h5 className="text-xs font-semibold text-[#91929E] uppercase mb-2">
+                  {field.label}
+                  {field.subTaskTitle && (
+                    <span className="ml-2 normal-case font-medium text-[10px] text-gray-400">
+                      from {field.subTaskTitle}
+                    </span>
+                  )}
+                </h5>
+                <CategoryFieldValue
+                  field={field}
+                  className="text-gray-700 text-sm leading-relaxed"
+                />
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Dynamic Custom Fields */}

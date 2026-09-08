@@ -98,12 +98,17 @@ const TaskCategorySection = ({
                     <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
                       {category.name}
                     </div>
-                    {(category.points > 0 || category.price > 0 || category.time > 0 || category.department) && (
+                    {(category.points > 0 || category.price > 0 || category.time > 0 || category.department || category.fields?.length > 0) && (
                       <div className="text-[11px] text-gray-500 truncate leading-tight mt-0.5 flex gap-2">
                         {category.points > 0 && <span>Points: {category.points}</span>}
                         {category.price > 0 && <span>Price: {category.price}</span>}
                         {category.time > 0 && <span>Time: {category.time}m</span>}
                         {category.department && <span>Dept: {category.department.name || 'Unknown'}</span>}
+                        {category.fields?.length > 0 && (
+                          <span className="text-blue-500 font-semibold">
+                            {category.fields.length} field{category.fields.length > 1 ? "s" : ""}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

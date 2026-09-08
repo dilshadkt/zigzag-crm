@@ -24,6 +24,7 @@ export const useAddSubTaskForm = (defaultValue, onSubmit) => {
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
     requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],
+    categoryFieldValues: defaultValue?.categoryFieldValues || [],
     taskCategory:
       defaultValue?.taskCategory?._id || defaultValue?.taskCategory || "",
   };

@@ -3,7 +3,12 @@ import { useUpdateSubTaskById, useCreateReworkEvent } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
+import CategoryFieldsModal from "../../shared/CategoryFieldsModal";
 import { toast } from "react-hot-toast";
+import {
+  getSubTaskCategoryFields,
+  needsCategoryFieldsForReview,
+} from "../../../utils/categoryFields";
 
 const SubTaskStatusButton = ({
   subTask,
@@ -18,6 +23,7 @@ const SubTaskStatusButton = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
+  const [isCategoryFieldsModalOpen, setIsCategoryFieldsModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
   const [reworkSource, setReworkSource] = useState("internal");
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
@@ -197,6 +203,16 @@ const SubTaskStatusButton = ({
       }
     }
 
+    if (
+      (newStatus === "on-review" || newStatus === "completed") &&
+      needsCategoryFieldsForReview(subTask)
+    ) {
+      setPendingStatus(newStatus);
+      setIsCategoryFieldsModalOpen(true);
+      setIsOpen(false);
+      return;
+    }
+
     try {
       await updateSubTaskMutation.mutateAsync({
         status: newStatus,
@@ -235,17 +251,40 @@ const SubTaskStatusButton = ({
         updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
       }
 
-      await updateSubTaskMutation.mutateAsync({
-        status: pendingStatus,
-        customFields: updatedFields,
-      });
+      const shouldFillCategoryFields =
+        pendingStatus === "on-review" && needsCategoryFieldsForReview(subTask);
+
+      await updateSubTaskMutation.mutateAsync(
+        shouldFillCategoryFields
+          ? { customFields: updatedFields }
+          : { status: pendingStatus, customFields: updatedFields }
+      );
       
       setIsWorkLinkModalOpen(false);
+      if (shouldFillCategoryFields) {
+        setIsCategoryFieldsModalOpen(true);
+        return;
+      }
       setPendingStatus(null);
       toast.success("Work link submitted and status updated!");
     } catch (error) {
       console.error("Error updating subtask status with work link:", error);
       toast.error("Failed to update work link");
+    }
+  };
+
+  const handleCategoryFieldsSubmit = async (categoryFieldValues) => {
+    try {
+      await updateSubTaskMutation.mutateAsync({
+        status: pendingStatus || "on-review",
+        categoryFieldValues,
+      });
+      setIsCategoryFieldsModalOpen(false);
+      setPendingStatus(null);
+      toast.success("Details saved and status updated");
+    } catch (error) {
+      console.error("Error saving category fields:", error);
+      toast.error("Failed to save category details");
     }
   };
 
@@ -330,6 +369,14 @@ const SubTaskStatusButton = ({
         isLoading={updateSubTaskMutation.isLoading}
         initialValue={getCurrentLink(subTask)}
         history={subTask.workLinkHistory}
+      />
+      <CategoryFieldsModal
+        isOpen={isCategoryFieldsModalOpen}
+        onClose={() => setIsCategoryFieldsModalOpen(false)}
+        onSubmit={handleCategoryFieldsSubmit}
+        isLoading={updateSubTaskMutation.isLoading}
+        fields={getSubTaskCategoryFields(subTask)}
+        categoryName={subTask.taskCategory?.name}
       />
     </div>
   );

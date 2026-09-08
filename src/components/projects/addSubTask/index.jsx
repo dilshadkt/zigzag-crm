@@ -147,6 +147,7 @@ const AddSubTask = ({
     requiresWorkLink: initialValues?.requiresWorkLink || false,
     requiresCampaignReport: initialValues?.requiresCampaignReport || false,
     customFields: initialValues?.customFields || [],
+    categoryFieldValues: initialValues?.categoryFieldValues || [],
     taskCategory:
       initialValues?.taskCategory?._id || initialValues?.taskCategory || "",
   };

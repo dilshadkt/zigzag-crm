@@ -3,9 +3,14 @@ import { useUpdateSubTaskById, useCreateReworkEvent } from "../../../api/hooks";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
 import CampaignReportModal from "../../shared/campaignReportModal";
+import CategoryFieldsModal from "../../shared/CategoryFieldsModal";
 import { toast } from "react-hot-toast";
 import { FiPlay, FiPause, FiSend, FiCheck, FiRotateCcw, FiChevronRight, FiFileText } from "react-icons/fi";
 import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
+import {
+  getSubTaskCategoryFields,
+  needsCategoryFieldsForReview,
+} from "../../../utils/categoryFields";
 
 /**
  * SubtaskActionBar — replaces the status dropdown for assigned employees
@@ -36,6 +41,7 @@ const SubtaskActionBar = ({
   const [reworkSource, setReworkSource] = useState("internal");
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
+  const [isCategoryFieldsModalOpen, setIsCategoryFieldsModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
   const status = subtask.status?.toLowerCase() || "todo";
@@ -166,6 +172,11 @@ const SubtaskActionBar = ({
         return;
       }
     }
+    if (needsCategoryFieldsForReview(subtask)) {
+      setPendingAction("on-review");
+      setIsCategoryFieldsModalOpen(true);
+      return;
+    }
     changeStatus("on-review");
   };
 
@@ -218,6 +229,13 @@ const SubtaskActionBar = ({
         updatedFields.push({ label: "Work Link", value: workLink, type: "url" });
       }
 
+      if (needsCategoryFieldsForReview(subtask)) {
+        await updateMutation.mutateAsync({ customFields: updatedFields });
+        setIsWorkLinkModalOpen(false);
+        setIsCategoryFieldsModalOpen(true);
+        return;
+      }
+
       await updateMutation.mutateAsync({
         status: pendingAction || "on-review",
         customFields: updatedFields,
@@ -235,6 +253,10 @@ const SubtaskActionBar = ({
     try {
       const result = await submitCampaignReport.mutateAsync(payload);
       setIsCampaignReportModalOpen(false);
+      if (needsCategoryFieldsForReview(subtask)) {
+        setIsCategoryFieldsModalOpen(true);
+        return;
+      }
       if (pendingAction && !result?.sentToReview) {
         await changeStatus(pendingAction);
       }
@@ -247,7 +269,20 @@ const SubtaskActionBar = ({
     }
   };
 
-  const isUpdating = updateMutation.isLoading || updateMutation.isPending || reworkMutation.isPending;
+  const handleCategoryFieldsSubmit = async (categoryFieldValues) => {
+    try {
+      await updateMutation.mutateAsync({
+        status: pendingAction || "on-review",
+        categoryFieldValues,
+      });
+      setIsCategoryFieldsModalOpen(false);
+      setPendingAction(null);
+      toast.success("Details saved and sent for review");
+    } catch (err) {
+      console.error("Category fields submit error:", err);
+      toast.error(err.response?.data?.message || "Failed to save category details");
+    }
+  };
   const waitingForClient =
     status === "approved" && isClientApprovalRequired;
   const actionsDisabled = isUpdating || isLocked;
@@ -390,6 +425,14 @@ const SubtaskActionBar = ({
           onSubmit={handleCampaignReportSubmit}
           isLoading={submitCampaignReport.isPending || isUpdating}
           initialReport={subtask.campaignReport}
+        />
+        <CategoryFieldsModal
+          isOpen={isCategoryFieldsModalOpen}
+          onClose={() => setIsCategoryFieldsModalOpen(false)}
+          onSubmit={handleCategoryFieldsSubmit}
+          isLoading={isUpdating}
+          fields={getSubTaskCategoryFields(subtask)}
+          categoryName={subtask.taskCategory?.name}
         />
       </>
     );

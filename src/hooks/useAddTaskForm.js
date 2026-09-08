@@ -37,6 +37,7 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     campaign: defaultValue?.campaign?._id || defaultValue?.campaign || "",
     requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],
+    categoryFieldValues: defaultValue?.categoryFieldValues || [],
     subtasks: defaultValue?.subtasks || [],
   };
 

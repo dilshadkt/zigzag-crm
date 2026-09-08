@@ -8,8 +8,15 @@ import { useUpdateSubTaskById, useGetProjectSocialMedia } from "../../../api/hoo
 import { FiMoreVertical, FiFilePlus, FiEdit3, FiPaperclip, FiLink, FiPlusSquare, FiChevronDown, FiChevronUp, FiMic } from "react-icons/fi";
 import VoiceRecorder from "../VoiceRecorder";
 import LinkPreview from "../LinkPreview";
+import CategoryFieldInputs from "../CategoryFieldInputs";
 import { toast } from "react-hot-toast";
 import { isPublishRelatedSubtask } from "../../../utils/isPublishRelated";
+import {
+  getFilledCategoryFieldValues,
+  getSubTaskCategoryFields,
+  isCategoryFieldFilled,
+} from "../../../utils/categoryFields";
+import CategoryFieldValue from "../CategoryFieldValue";
 
 const renderContent = (content) => {
   if (!content) return "";
@@ -36,7 +43,11 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
   const [showContentModal, setShowContentModal] = useState(false);
   const [showURLModal, setShowURLModal] = useState(false);
   const [showCustomFieldsModal, setShowCustomFieldsModal] = useState(false);
+  const [showCategoryFieldsModal, setShowCategoryFieldsModal] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [categoryFieldValues, setCategoryFieldValues] = useState(() =>
+    getSubTaskCategoryFields(subTask)
+  );
   const [contentValues, setContentValues] = useState({
     copyOfDescription: subTask?.copyOfDescription || "",
     description: subTask?.description || "",
@@ -115,6 +126,9 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     subTask.title?.toLowerCase().includes("content") || 
     !!subTask.copyOfDescription || 
     !!subTask.ideas;
+  const hasCategoryFields = categoryFieldValues.length > 0;
+  const hasVoiceField = categoryFieldValues.some((field) => field.type === "voice");
+  const filledCategoryFields = getFilledCategoryFieldValues(subTask);
     
   const isPublishSubTask = isPublishRelatedSubtask(subTask);
 
@@ -129,6 +143,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     });
     setUrlValues(subTask?.publishUrls || {});
     setCustomFieldsValues(subTask?.customFields || []);
+    setCategoryFieldValues(getSubTaskCategoryFields(subTask));
 
     // Check if status changed to 'on-review' for a publish subtask
     // Skip this automation for Admins/Company owners
@@ -252,6 +267,29 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
     setCustomFieldsValues(newFields);
   };
 
+  const handleCategoryFieldChange = (key, value) => {
+    setCategoryFieldValues((prev) =>
+      prev.map((field) => (field.key === key ? { ...field, value } : field))
+    );
+  };
+
+  const handleSaveCategoryFields = async () => {
+    const missing = categoryFieldValues.find(
+      (field) => field.required && !isCategoryFieldFilled(field)
+    );
+    if (missing) {
+      toast.error(`${missing.label} is required`);
+      return;
+    }
+    try {
+      await updateSubTask.mutateAsync({ categoryFieldValues });
+      setShowCategoryFieldsModal(false);
+    } catch (error) {
+      console.error("Failed to update category fields:", error);
+      toast.error("Failed to save category fields");
+    }
+  };
+
 
   const getFileIcon = (type) => {
     switch (type) {
@@ -334,11 +372,15 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                     <FiPaperclip className="text-blue-500" />
                     <span>Add Attachment</span>
                   </button>
-                  {isContentSubTask && (
+                  {(hasCategoryFields || isContentSubTask) && (
                     <button
                       onClick={() => {
                         setShowMenu(false);
-                        setShowContentModal(true);
+                        if (hasCategoryFields) {
+                          setShowCategoryFieldsModal(true);
+                        } else {
+                          setShowContentModal(true);
+                        }
                       }}
                       className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
@@ -346,7 +388,7 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
                       <span>Add Contents</span>
                     </button>
                   )}
-                  {isContentSubTask && (
+                  {isContentSubTask && !hasVoiceField && (
                     <button
                       onClick={() => {
                         setShowMenu(false);
@@ -550,7 +592,8 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
         )}
 
         {/* Show More toggle for Content Subtasks */}
-        {isContentSubTask && (subTask.copyOfDescription || subTask.description || subTask.ideas) && (
+        {(filledCategoryFields.length > 0 ||
+          (isContentSubTask && (subTask.copyOfDescription || subTask.description || subTask.ideas))) && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="w-full mt-4 flex items-center justify-center gap-1.5 py-2 px-4 text-[10px] font-bold text-orange-600 uppercase tracking-widest bg-orange-50/50 hover:bg-orange-50 rounded-xl border border-orange-100/50 transition-all duration-200"
@@ -571,8 +614,34 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
 
         {/* Task Content Details (Always shown for Publish, Toggled for Content) */}
         {((isPublishSubTask && hasPublishUrls) || 
-          (isContentSubTask && isExpanded)) && (
+          ((isContentSubTask || filledCategoryFields.length > 0) && isExpanded)) && (
           <div className={`mt-4 p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100 space-y-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300`}>
+            {filledCategoryFields.length > 0 && (
+              <div className="space-y-4">
+                {filledCategoryFields.map((field) => (
+                  <div key={field.key} className="group/section">
+                    <div className="flex items-center justify-between mb-2">
+                      <h6 className="text-[10px] font-bold text-orange-600 uppercase tracking-wider flex items-center gap-1.5">
+                        {field.type === "voice" ? <FiMic className="w-3 h-3" /> : <FiEdit3 className="w-3 h-3" />}
+                        {field.label}
+                      </h6>
+                      {canEdit && (
+                        <button
+                          onClick={() => setShowCategoryFieldsModal(true)}
+                          className="opacity-0 group-hover/section:opacity-100 transition-opacity p-1 text-orange-500 hover:bg-orange-50 rounded-md"
+                          title="Edit Contents"
+                        >
+                          <FiPlusSquare className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-600 leading-relaxed bg-white/80 p-3 rounded-xl border border-gray-100/80">
+                      <CategoryFieldValue field={field} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Content Description */}
             {isContentSubTask && subTask.copyOfDescription && (
               <div className="group/section">
@@ -925,6 +994,39 @@ const SubTaskAttachments = ({ subTask, parentTaskId, projectData, canEdit = fals
             <PrimaryButton
               title={updateSubTask.isLoading ? "Saving..." : "Save URLs"}
               onclick={handleSaveURLs}
+              disable={updateSubTask.isLoading}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Category Fields Modal */}
+      <Modal
+        isOpen={showCategoryFieldsModal}
+        onClose={() => setShowCategoryFieldsModal(false)}
+        title="Add Contents"
+        size="lg"
+      >
+        <div className="space-y-4 py-2">
+          <p className="text-xs text-gray-500">
+            These fields come from this category in Settings → Master. Values
+            marked to show in the task description appear on the main task.
+          </p>
+          <CategoryFieldInputs
+            fields={categoryFieldValues}
+            onChange={handleCategoryFieldChange}
+            disabled={updateSubTask.isLoading}
+          />
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={() => setShowCategoryFieldsModal(false)}
+              className="px-6 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              Cancel
+            </button>
+            <PrimaryButton
+              title={updateSubTask.isLoading ? "Saving..." : "Save Fields"}
+              onclick={handleSaveCategoryFields}
               disable={updateSubTask.isLoading}
             />
           </div>

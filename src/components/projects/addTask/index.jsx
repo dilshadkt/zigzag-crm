@@ -276,6 +276,7 @@ const AddTask = ({
       campaign: initialValues.campaign?._id || initialValues.campaign || "",
       requiresCampaignReport: initialValues.requiresCampaignReport || false,
       customFields: initialValues.customFields || [],
+      categoryFieldValues: initialValues.categoryFieldValues || [],
       subtasks: initialValues.subtasks || [],
       attachments: initialValues.attachments || [],
       timeEstimate:

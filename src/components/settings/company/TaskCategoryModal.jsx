@@ -2,7 +2,8 @@ import React from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import ModalLayout from "../../shared/modal";
-import { FiX, FiCheck, FiInfo, FiTag } from "react-icons/fi";
+import { FiCheck, FiInfo, FiPlus, FiTrash2 } from "react-icons/fi";
+import { CATEGORY_FIELD_TYPES } from "../../../utils/categoryFields";
 
 const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = [] }) => {
   const isEditing = !!category;
@@ -15,6 +16,15 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     time: category?.time || 0,
     department: category?.department?._id || category?.department || "",
     isActive: category?.isActive !== undefined ? category.isActive : true,
+    fields: (category?.fields || []).map((field) => ({
+      key: field.key || "",
+      label: field.label || "",
+      type: field.type || "text",
+      placeholder: field.placeholder || "",
+      options: Array.isArray(field.options) ? field.options.join(", ") : "",
+      required: Boolean(field.required),
+      showInDescription: Boolean(field.showInDescription),
+    })),
   };
 
   const validationSchema = Yup.object().shape({
@@ -25,10 +35,30 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     time: Yup.number().min(0, "Must be 0 or more"),
     department: Yup.string().nullable(),
     isActive: Yup.boolean(),
+    fields: Yup.array().of(
+      Yup.object().shape({
+        label: Yup.string().trim().required("Field label is required"),
+      })
+    ),
   });
 
   const handleSubmit = (values, { setSubmitting }) => {
-    onSave(values);
+    onSave({
+      ...values,
+      fields: (values.fields || [])
+        .filter((field) => field.label?.trim())
+        .map((field) => ({
+          ...field,
+          label: field.label.trim(),
+          options:
+            field.type === "select"
+              ? String(field.options || "")
+                  .split(",")
+                  .map((option) => option.trim())
+                  .filter(Boolean)
+              : [],
+        })),
+    });
     setSubmitting(false);
   };
 
@@ -36,7 +66,7 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     <ModalLayout 
       isOpen={isOpen} 
       onClose={onClose} 
-      maxWidth="sm:max-w-xl"
+      maxWidth="sm:max-w-2xl"
       title={isEditing ? "Edit Category" : "New Category"}
     >
       <Formik
@@ -185,6 +215,147 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                     If inactive, this category will not appear in the dropdown during task creation.
                   </p>
                 </div>
+              </div>
+
+              {/* Category Fields */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-[13px] font-bold text-gray-700">
+                      Category Fields
+                    </h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                      Extra inputs every task/subtask in this category must fill,
+                      e.g. a Content category asking for the copy and the ideas list.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFieldValue("fields", [
+                        ...(values.fields || []),
+                        {
+                          key: "",
+                          label: "",
+                          type: "text",
+                          placeholder: "",
+                          options: "",
+                          required: false,
+                          showInDescription: false,
+                        },
+                      ])
+                    }
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-[12px] font-bold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                  >
+                    <FiPlus className="w-3.5 h-3.5" /> Add Field
+                  </button>
+                </div>
+
+                {values.fields?.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {values.fields.map((field, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-gray-100 bg-white p-3 space-y-3"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-tight text-gray-400 block">
+                              Field Label <span className="text-red-500">*</span>
+                            </label>
+                            <Field
+                              name={`fields.${index}.label`}
+                              type="text"
+                              placeholder="e.g., Content for Description"
+                              className={`w-full px-3 py-2 bg-gray-50 border ${
+                                errors.fields?.[index]?.label && touched.fields?.[index]?.label
+                                  ? "border-red-300"
+                                  : "border-gray-200 focus:border-blue-500 focus:bg-white"
+                              } rounded-lg text-[13px] text-gray-800 font-medium outline-none transition-all`}
+                            />
+                          </div>
+                          <div className="w-[150px] space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-tight text-gray-400 block">
+                              Type
+                            </label>
+                            <Field
+                              as="select"
+                              name={`fields.${index}.type`}
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white rounded-lg text-[13px] text-gray-800 font-medium outline-none transition-all"
+                            >
+                              {CATEGORY_FIELD_TYPES.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </Field>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFieldValue(
+                                "fields",
+                                values.fields.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="mt-[22px] w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                            title="Remove field"
+                          >
+                            <FiTrash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {field.type === "voice" && (
+                          <p className="text-[11px] text-gray-500">
+                            People can record or upload a voice note for this field
+                            when they add contents on the subtask.
+                          </p>
+                        )}
+
+                        {field.type === "select" && (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-tight text-gray-400 block">
+                              Options (comma separated)
+                            </label>
+                            <Field
+                              name={`fields.${index}.options`}
+                              type="text"
+                              placeholder="Reel, Carousel, Static"
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white rounded-lg text-[13px] text-gray-800 font-medium outline-none transition-all"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-4">
+                          <label className="inline-flex items-center gap-2 cursor-pointer">
+                            <Field
+                              type="checkbox"
+                              name={`fields.${index}.required`}
+                              className="w-3.5 h-3.5 rounded text-blue-600"
+                            />
+                            <span className="text-[12px] font-medium text-gray-600">
+                              Required
+                            </span>
+                          </label>
+                          <label className="inline-flex items-center gap-2 cursor-pointer">
+                            <Field
+                              type="checkbox"
+                              name={`fields.${index}.showInDescription`}
+                              className="w-3.5 h-3.5 rounded text-blue-600"
+                            />
+                            <span className="text-[12px] font-medium text-gray-600">
+                              Show in main task description
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-[12px] italic text-gray-400">
+                    No fields yet. Tasks in this category will use the standard form only.
+                  </p>
+                )}
               </div>
 
             </div>

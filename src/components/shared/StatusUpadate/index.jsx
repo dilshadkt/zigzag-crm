@@ -3,8 +3,13 @@ import { IoIosArrowDown } from "react-icons/io";
 import { useUpdateTaskById, useCreateReworkEvent, useGetSubTasksByParentTask } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../reworkReasonModal";
+import CategoryFieldsModal from "../CategoryFieldsModal";
 import { updateSubTaskById, getSubTasksByParentTask } from "../../../api/service";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  getSubTaskCategoryFields,
+  needsCategoryFieldsForReview,
+} from "../../../utils/categoryFields";
 
 // Status options for different user roles
 const employeeStatusOptions = [
@@ -87,6 +92,7 @@ const statusColors = {
 const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
+  const [isCategoryFieldsModalOpen, setIsCategoryFieldsModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
   const buttonRef = useRef(null);
   const { isCompany } = useAuth();
@@ -126,6 +132,13 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
       if (status === "re-work") {
         setPendingStatus(status);
         setIsReworkModalOpen(true);
+        setMenuOpen(false);
+        return;
+      }
+
+      if (status === "on-review" && needsCategoryFieldsForReview(taskDetails)) {
+        setPendingStatus(status);
+        setIsCategoryFieldsModalOpen(true);
         setMenuOpen(false);
         return;
       }
@@ -235,6 +248,18 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
     });
   };
 
+  const handleCategoryFieldsSubmit = (categoryFieldValues) => {
+    mutate(
+      { status: pendingStatus || "on-review", categoryFieldValues },
+      {
+        onSuccess: () => {
+          setIsCategoryFieldsModalOpen(false);
+          setPendingStatus(null);
+        },
+      }
+    );
+  };
+
   // Get color scheme based on current status
   const currentStatus = taskDetails?.status?.toLowerCase() || "todo";
   const colorScheme = statusColors[currentStatus] || statusColors["todo"];
@@ -301,6 +326,14 @@ const StatusButton = ({ taskDetails, disabled = false, showAllOptions = false })
         originSubTask={siblingSubtasks[0]}
         siblingSubtasks={siblingSubtasks}
         parentTaskId={taskDetails._id}
+      />
+      <CategoryFieldsModal
+        isOpen={isCategoryFieldsModalOpen}
+        onClose={() => setIsCategoryFieldsModalOpen(false)}
+        onSubmit={handleCategoryFieldsSubmit}
+        isLoading={isLoading}
+        fields={getSubTaskCategoryFields(taskDetails)}
+        categoryName={taskDetails.taskCategory?.name}
       />
     </div>
   );

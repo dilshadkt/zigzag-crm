@@ -60,9 +60,11 @@ const Description = ({
 
   return (
     <div className="flex flex-col gap-y-[7px]">
-      <label className="text-sm pl-[6px] font-bold text-[#7D8592]">
-        {title}
-      </label>
+      {title ? (
+        <label className="text-sm pl-[6px] font-bold text-[#7D8592]">
+          {title}
+        </label>
+      ) : null}
       <div
         className={clsx(
           "rounded-[14px] border-2 border-[#D8E0F0]/80 overflow-hidden bg-white focus-within:border-blue-400 transition-all",
