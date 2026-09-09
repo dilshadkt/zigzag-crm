@@ -15,5 +15,14 @@ export const formatAttendanceTime = (value) => {
   });
 };
 
+export const formatBreakMinutes = (minutes) => {
+  const total = Number(minutes) || 0;
+  if (total <= 0) return "0m";
+  const hours = Math.floor(total / 60);
+  const mins = Math.round(total % 60);
+  if (hours <= 0) return `${mins}m`;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+};
+
 export const hasPendingCorrection = (record) =>
   record?.correctionRequest?.status === "pending";

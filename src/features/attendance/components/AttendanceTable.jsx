@@ -12,11 +12,13 @@ import {
 import LocationModal from "../../../components/LocationModal";
 import Pagination from "./Pagination";
 import EditAttendanceModal from "./EditAttendanceModal";
+import { formatBreakMinutes } from "../utils";
+import { FiEdit2 } from "react-icons/fi";
 
 // Memoized table header component
-const TableHeader = React.memo(({ title, icon }) => {
+const TableHeader = React.memo(({ title, icon, className = "" }) => {
   return (
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+    <th className={`px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
       <div className="flex whitespace-nowrap items-center gap-2">
         {icon}
         {title}
@@ -176,12 +178,14 @@ const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
     return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
   }, [attendance.overtimeHours]);
 
+  const breakMinutes = attendance.breakTime || 0;
+
   return (
     <>
-      <tr className="hover:bg-gray-50 transition-colors">
+      <tr className="group hover:bg-gray-50 transition-colors">
         {/* Employee Info */}
-        <td className="px-6 py-4 whitespace-nowrap">
-          <div className="flex items-center">
+        <td className="sticky left-0 z-20 bg-white group-hover:bg-gray-50 px-3 py-4 whitespace-nowrap shadow-[2px_0_8px_-4px_rgba(15,23,42,0.18)]">
+          <div className="flex items-center gap-3">
             <div className="flex-shrink-0 h-10 w-10">
               <div className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
                 {employee?.profileImage && !imgError ? (
@@ -200,40 +204,60 @@ const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
                 )}
               </div>
             </div>
-            <div className="ml-4">
+            <div className="min-w-0">
               <div className="text-sm font-medium text-gray-900">
                 {employeeName}
               </div>
-              <div className="text-sm text-gray-500">{employee?.email}</div>
+              <div className="text-sm text-gray-500 truncate max-w-[160px]">{employee?.email}</div>
+              {canEditAttendance && (
+                <button
+                  type="button"
+                  onClick={() => onEdit?.(attendance)}
+                  className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#3F8CFF] hover:text-blue-700"
+                >
+                  <FiEdit2 className="h-3 w-3" />
+                  Edit
+                </button>
+              )}
             </div>
           </div>
         </td>
 
         {/* Clock In/Out Times */}
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="px-3 py-4 whitespace-nowrap">
           <div className="space-y-1 ">
             <TimeDisplay time={attendance.clockInTime} label="In" />
             <TimeDisplay time={attendance.clockOutTime} label="Out" />
           </div>
         </td>
 
+        {/* Break */}
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+          <div className="font-medium">{formatBreakMinutes(breakMinutes)}</div>
+          {(attendance.breaks || []).length > 0 && (
+            <div className="text-xs text-gray-500">
+              {attendance.breaks.length} break{attendance.breaks.length === 1 ? "" : "s"}
+            </div>
+          )}
+        </td>
+
         {/* Status */}
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="px-3 py-4 whitespace-nowrap">
           <StatusBadge status={attendance.status} />
         </td>
 
         {/* Total Hours */}
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
           {totalHours}
         </td>
 
         {/* Overtime */}
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
           {overtimeHours}
         </td>
 
         {/* Location */}
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className="px-3 py-4 whitespace-nowrap">
           {attendance.clockInLocation?.latitude &&
             attendance.clockInLocation?.longitude ? (
             <div className="flex items-center space-x-2">
@@ -296,20 +320,21 @@ const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
         </td>
 
         {/* Notes */}
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs">
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[140px]">
           <div className="truncate">
             {attendance.workDescription || attendance.adminNotes || "No notes"}
           </div>
         </td>
 
         {canEditAttendance && (
-          <td className="px-6 py-4 whitespace-nowrap text-right">
+          <td className="sticky right-0 z-20 bg-white group-hover:bg-gray-50 px-3 py-4 whitespace-nowrap text-right shadow-[-2px_0_8px_-4px_rgba(15,23,42,0.18)]">
             <button
               type="button"
               onClick={() => onEdit?.(attendance)}
-              className="text-sm font-medium text-[#3F8CFF] hover:text-blue-700"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-100"
             >
-              Edit times
+              <FiEdit2 className="h-3.5 w-3.5" />
+              Edit
             </button>
           </td>
         )}
@@ -459,6 +484,7 @@ const AttendanceTable = ({
     () => [
       {
         title: "Employee Name",
+        sticky: "left",
         icon: (
           <svg
             className="w-4 h-4"
@@ -477,6 +503,24 @@ const AttendanceTable = ({
       },
       {
         title: "Clock-in & Out",
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        ),
+      },
+      {
+        title: "Break",
         icon: (
           <svg
             className="w-4 h-4"
@@ -599,6 +643,7 @@ const AttendanceTable = ({
       ...tableHeaders,
       {
         title: "Actions",
+        sticky: "right",
         icon: (
           <svg
             className="w-4 h-4"
@@ -644,6 +689,13 @@ const AttendanceTable = ({
                   key={index}
                   title={header.title}
                   icon={header.icon}
+                  className={
+                    header.sticky === "left"
+                      ? "sticky left-0 top-0 z-30 bg-gray-50 shadow-[2px_0_8px_-4px_rgba(15,23,42,0.18)]"
+                      : header.sticky === "right"
+                        ? "sticky right-0 top-0 z-30 bg-gray-50 shadow-[-2px_0_8px_-4px_rgba(15,23,42,0.18)]"
+                        : ""
+                  }
                 />
               ))}
             </tr>
