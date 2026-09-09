@@ -8,6 +8,19 @@ const SkeletonItem = ({ className }) => (
     <div className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`} />
 );
 
+const toYmd = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+};
+
+const monthDateRange = (month, year) => {
+    const start = new Date(Number(year), Number(month) - 1, 1);
+    const end = new Date(Number(year), Number(month), 0);
+    return { start: toYmd(start), end: toYmd(end) };
+};
+
 const HRDashboardPage = () => {
     // State for filtering
     const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -17,6 +30,12 @@ const HRDashboardPage = () => {
     const [selectedYear, setSelectedYear] = useState(() => {
         return new Date().getFullYear().toString();
     });
+    const [filterMode, setFilterMode] = useState("month");
+    const [customStartDate, setCustomStartDate] = useState(() => {
+        const d = new Date();
+        return toYmd(new Date(d.getFullYear(), d.getMonth(), 1));
+    });
+    const [customEndDate, setCustomEndDate] = useState(() => toYmd(new Date()));
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
 
     const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
@@ -48,14 +67,25 @@ const HRDashboardPage = () => {
     const [isLoadingSingle, setIsLoadingSingle] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch all-staff report when month/year changes
+    const reportDateRange =
+        filterMode === "custom" && customStartDate && customEndDate
+            ? { startDate: customStartDate, endDate: customEndDate }
+            : null;
+
+    // Fetch all-staff report when month/year or custom range changes
     const fetchAllStaffReport = async (silent = false) => {
+        if (filterMode === "custom" && (!customStartDate || !customEndDate)) return;
         if (!silent) {
             setIsLoading(true);
             setError(null);
         }
         try {
-            const res = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, "");
+            const res = await attendanceApi.getStaffMonthlyReport(
+                selectedMonth,
+                selectedYear,
+                "",
+                reportDateRange
+            );
             if (res.success) {
                 setReportData(res.report);
                 setTodayHighlights(res.todayHighlights);
@@ -72,15 +102,21 @@ const HRDashboardPage = () => {
         }
     };
 
-    // Fetch single employee report when selectedEmployeeId or month/year changes
+    // Fetch single employee report when selectedEmployeeId or date filter changes
     const fetchSingleReport = async () => {
         if (!selectedEmployeeId) {
             setSingleEmployeeReport(null);
             return;
         }
+        if (filterMode === "custom" && (!customStartDate || !customEndDate)) return;
         setIsLoadingSingle(true);
         try {
-            const empRes = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, selectedEmployeeId);
+            const empRes = await attendanceApi.getStaffMonthlyReport(
+                selectedMonth,
+                selectedYear,
+                selectedEmployeeId,
+                reportDateRange
+            );
             if (empRes.success) {
                 setSingleEmployeeReport(empRes.report);
             } else {
@@ -95,11 +131,11 @@ const HRDashboardPage = () => {
 
     useEffect(() => {
         fetchAllStaffReport();
-    }, [selectedMonth, selectedYear]);
+    }, [selectedMonth, selectedYear, filterMode, customStartDate, customEndDate]);
 
     useEffect(() => {
         fetchSingleReport();
-    }, [selectedEmployeeId, selectedMonth, selectedYear]);
+    }, [selectedEmployeeId, selectedMonth, selectedYear, filterMode, customStartDate, customEndDate]);
 
     // Handle export to CSV
     const handleExport = () => {
@@ -117,7 +153,11 @@ const HRDashboardPage = () => {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Attendance_Report_${selectedYear}_${selectedMonth}.csv`);
+        const fileSuffix =
+            filterMode === "custom" && customStartDate && customEndDate
+                ? `${customStartDate}_to_${customEndDate}`
+                : `${selectedYear}_${selectedMonth}`;
+        link.setAttribute("download", `Attendance_Report_${fileSuffix}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -227,7 +267,7 @@ const HRDashboardPage = () => {
             <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800">HR Attendance & Leave Dashboard</h2>
-                    <p className="text-xs text-slate-500">Track and view Month-Based Staff Attendance metrics.</p>
+                    <p className="text-xs text-slate-500">Track and view staff attendance metrics by month or custom date range.</p>
                 </div>
                 <button
                     onClick={handleExport}
@@ -242,35 +282,103 @@ const HRDashboardPage = () => {
             {/* Filter and selector panel - compact, clean borders */}
             <div className="bg-white rounded-xl p-3 md:p-4 border border-slate-200/60 flex flex-wrap md:flex-nowrap gap-3 items-center justify-between">
                 <div className="flex flex-wrap items-center gap-3 w-full">
-                    {/* Year Selector */}
-                    <div className="flex flex-col gap-1 min-w-[100px]">
-                        <label className="text-xs font-semibold text-slate-500 tracking-wider">Year</label>
+                    {/* Period Selector */}
+                    <div className="flex flex-col gap-1 min-w-[120px]">
+                        <label className="text-xs font-semibold text-slate-500 tracking-wider">Period</label>
                         <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(e.target.value)}
+                            value={filterMode}
+                            onChange={(e) => {
+                                const mode = e.target.value;
+                                if (mode === "custom") {
+                                    const range = monthDateRange(selectedMonth, selectedYear);
+                                    setCustomStartDate(range.start);
+                                    setCustomEndDate(range.end);
+                                } else {
+                                    if (customStartDate) {
+                                        const from = new Date(`${customStartDate}T00:00:00`);
+                                        if (!Number.isNaN(from.getTime())) {
+                                            setSelectedYear(String(from.getFullYear()));
+                                            setSelectedMonth(String(from.getMonth() + 1).padStart(2, "0"));
+                                        }
+                                    }
+                                }
+                                setFilterMode(mode);
+                            }}
                             className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
                         >
-                            {[2024, 2025, 2026, 2027].map(yr => (
-                                <option key={yr} value={yr} className="text-slate-900 bg-white">{yr}</option>
-                            ))}
+                            <option value="month" className="text-slate-900 bg-white">Month</option>
+                            <option value="custom" className="text-slate-900 bg-white">Custom</option>
                         </select>
                     </div>
 
-                    {/* Month Selector */}
-                    <div className="flex flex-col gap-1 min-w-[120px]">
-                        <label className="text-xs font-semibold text-slate-500 tracking-wider">Month</label>
-                        <select
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
-                        >
-                            {Array.from({ length: 12 }, (_, i) => {
-                                const val = (i + 1).toString().padStart(2, "0");
-                                const label = new Date(2026, i).toLocaleString("default", { month: "long" });
-                                return <option key={val} value={val} className="text-slate-900 bg-white">{label}</option>;
-                            })}
-                        </select>
-                    </div>
+                    {filterMode === "custom" ? (
+                        <>
+                            <div className="flex flex-col gap-1 min-w-[140px]">
+                                <label className="text-xs font-semibold text-slate-500 tracking-wider">From</label>
+                                <input
+                                    type="date"
+                                    value={customStartDate}
+                                    max={customEndDate || undefined}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setCustomStartDate(value);
+                                        if (customEndDate && value > customEndDate) {
+                                            setCustomEndDate(value);
+                                        }
+                                    }}
+                                    className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1 min-w-[140px]">
+                                <label className="text-xs font-semibold text-slate-500 tracking-wider">To</label>
+                                <input
+                                    type="date"
+                                    value={customEndDate}
+                                    min={customStartDate || undefined}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setCustomEndDate(value);
+                                        if (customStartDate && value < customStartDate) {
+                                            setCustomStartDate(value);
+                                        }
+                                    }}
+                                    className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Year Selector */}
+                            <div className="flex flex-col gap-1 min-w-[100px]">
+                                <label className="text-xs font-semibold text-slate-500 tracking-wider">Year</label>
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(e.target.value)}
+                                    className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
+                                >
+                                    {[2024, 2025, 2026, 2027].map(yr => (
+                                        <option key={yr} value={yr} className="text-slate-900 bg-white">{yr}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Month Selector */}
+                            <div className="flex flex-col gap-1 min-w-[120px]">
+                                <label className="text-xs font-semibold text-slate-500 tracking-wider">Month</label>
+                                <select
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(e.target.value)}
+                                    className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
+                                >
+                                    {Array.from({ length: 12 }, (_, i) => {
+                                        const val = (i + 1).toString().padStart(2, "0");
+                                        const label = new Date(2026, i).toLocaleString("default", { month: "long" });
+                                        return <option key={val} value={val} className="text-slate-900 bg-white">{label}</option>;
+                                    })}
+                                </select>
+                            </div>
+                        </>
+                    )}
 
                     {/* Staff Autocomplete Filter */}
                     <div className="flex flex-col gap-1 min-w-[180px] flex-1 relative" ref={staffDropdownRef}>
@@ -495,7 +603,9 @@ const HRDashboardPage = () => {
                     <div className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
                             <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                            <h5 className="font-bold text-slate-700 text-xs">This Month's Overtime ({overtimeList.length} Staff)</h5>
+                            <h5 className="font-bold text-slate-700 text-xs">
+                                {filterMode === "custom" ? "Period Overtime" : "This Month's Overtime"} ({overtimeList.length} Staff)
+                            </h5>
                         </div>
                         <div className="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1.5 text-xs">
                             {overtimeList.length > 0 ? (
@@ -506,7 +616,9 @@ const HRDashboardPage = () => {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-slate-400 font-medium text-xs py-1">No overtime logged this month.</p>
+                                <p className="text-slate-400 font-medium text-xs py-1">
+                                    {filterMode === "custom" ? "No overtime logged in this period." : "No overtime logged this month."}
+                                </p>
                             )}
                         </div>
                     </div>

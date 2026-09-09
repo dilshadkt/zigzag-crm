@@ -38,10 +38,19 @@ export const attendanceApi = {
     return response.data;
   },
 
-  // Get staff monthly report
-  getStaffMonthlyReport: async (month, year, employeeId = "") => {
+  // Get staff monthly report (month/year or custom startDate/endDate)
+  getStaffMonthlyReport: async (month, year, employeeId = "", dateRange = null) => {
+    const params = new URLSearchParams();
+    if (dateRange?.startDate && dateRange?.endDate) {
+      params.append("startDate", dateRange.startDate);
+      params.append("endDate", dateRange.endDate);
+    } else {
+      params.append("month", month);
+      params.append("year", year);
+    }
+    if (employeeId) params.append("employeeId", employeeId);
     const response = await apiClient.get(
-      `/attendance/staff-monthly-report?month=${month}&year=${year}${employeeId ? `&employeeId=${employeeId}` : ""}`
+      `/attendance/staff-monthly-report?${params.toString()}`
     );
     return response.data;
   },
