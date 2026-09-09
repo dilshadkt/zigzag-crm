@@ -5,6 +5,7 @@ import {
   FiCalendar,
   FiCheck,
   FiClock,
+  FiMail,
   FiPlus,
   FiUsers,
   FiVideo,
@@ -381,6 +382,15 @@ const Meetings = () => {
                           <FiCheck className="h-3 w-3 text-emerald-500" />
                         )}
                         {personName(person)}
+                      </span>
+                    ))}
+                    {(meeting.guestEmails || []).map((email) => (
+                      <span
+                        key={email}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-2.5 py-1 text-xs font-medium text-[#3F8CFF]"
+                      >
+                        <FiMail className="h-3 w-3" />
+                        {email}
                       </span>
                     ))}
                     {meeting.status === "completed" && meeting.attendees?.length === 0 && (

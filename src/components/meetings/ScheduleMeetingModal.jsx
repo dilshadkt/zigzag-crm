@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { FiLink, FiPlus, FiUsers, FiVideo, FiX } from "react-icons/fi";
+import { FiLink, FiMail, FiPlus, FiUsers, FiVideo, FiX } from "react-icons/fi";
 import MultiSelect from "../shared/Field/multiSelect";
 import Modal from "../shared/modal";
 import PrimaryButton from "../shared/buttons/primaryButton";
@@ -27,6 +27,22 @@ const combineDateTime = (date, time) => {
   return new Date(`${date}T${time}`).toISOString();
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const parseGuestEmails = (value) => {
+  const unique = [];
+  const seen = new Set();
+  String(value || "")
+    .split(/[\s,;]+/)
+    .forEach((raw) => {
+      const email = raw.trim().toLowerCase();
+      if (!EMAIL_RE.test(email) || seen.has(email)) return;
+      seen.add(email);
+      unique.push(email);
+    });
+  return unique;
+};
+
 const ScheduleMeetingModal = ({
   isOpen,
   onClose,
@@ -48,6 +64,8 @@ const ScheduleMeetingModal = ({
   const [createMeetLink, setCreateMeetLink] = useState(true);
   const [showPasteLink, setShowPasteLink] = useState(false);
   const [invitees, setInvitees] = useState([]);
+  const [guestEmails, setGuestEmails] = useState([]);
+  const [guestEmailInput, setGuestEmailInput] = useState("");
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -62,6 +80,12 @@ const ScheduleMeetingModal = ({
     setInvitees(
       (meeting?.invitees || []).map((person) => person._id || person).filter(Boolean)
     );
+    setGuestEmails(
+      Array.isArray(meeting?.guestEmails)
+        ? meeting.guestEmails.map((email) => String(email).trim().toLowerCase()).filter(Boolean)
+        : []
+    );
+    setGuestEmailInput("");
   }, [isOpen, meeting]);
 
   const employeeOptions = useMemo(
@@ -77,6 +101,43 @@ const ScheduleMeetingModal = ({
     setInvitees(event.target.value || []);
   };
 
+  const addGuestEmails = (raw) => {
+    const next = parseGuestEmails(raw);
+    if (!next.length) {
+      if (String(raw || "").trim()) {
+        toast.error("Enter a valid email address");
+      }
+      return false;
+    }
+    setGuestEmails((prev) => {
+      const seen = new Set(prev);
+      const merged = [...prev];
+      next.forEach((email) => {
+        if (seen.has(email)) return;
+        seen.add(email);
+        merged.push(email);
+      });
+      return merged;
+    });
+    setGuestEmailInput("");
+    return true;
+  };
+
+  const removeGuestEmail = (email) => {
+    setGuestEmails((prev) => prev.filter((item) => item !== email));
+  };
+
+  const handleGuestEmailKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === ",") {
+      if (!guestEmailInput.trim()) return;
+      event.preventDefault();
+      addGuestEmails(guestEmailInput);
+    }
+    if (event.key === "Backspace" && !guestEmailInput && guestEmails.length) {
+      removeGuestEmail(guestEmails[guestEmails.length - 1]);
+    }
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!title.trim()) {
@@ -87,8 +148,19 @@ const ScheduleMeetingModal = ({
       toast.error("Set the meeting date and time");
       return;
     }
-    if (invitees.length === 0) {
-      toast.error("Select who should attend");
+
+    let emails = guestEmails;
+    if (guestEmailInput.trim()) {
+      const pending = parseGuestEmails(guestEmailInput);
+      if (!pending.length) {
+        toast.error("Enter a valid client email");
+        return;
+      }
+      emails = [...new Set([...guestEmails, ...pending])];
+    }
+
+    if (invitees.length === 0 && emails.length === 0) {
+      toast.error("Add at least one employee or client email");
       return;
     }
 
@@ -100,6 +172,7 @@ const ScheduleMeetingModal = ({
       meetLink: meetLink.trim(),
       createMeetLink,
       invitees,
+      guestEmails: emails,
     });
   };
 
@@ -257,6 +330,60 @@ const ScheduleMeetingModal = ({
           options={employeeOptions}
           placeholder="Select employees"
         />
+
+        <div>
+          <label className="mb-1.5 flex items-center gap-1.5 pl-1 text-sm font-bold text-[#7D8592]">
+            <FiMail className="h-3.5 w-3.5" />
+            Client / external emails
+          </label>
+          <div className="rounded-[14px] border-2 border-[#D8E0F0]/80 px-3 py-2 focus-within:border-blue-400">
+            {guestEmails.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {guestEmails.map((email) => (
+                  <span
+                    key={email}
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-[#3F8CFF]"
+                  >
+                    {email}
+                    <button
+                      type="button"
+                      onClick={() => removeGuestEmail(email)}
+                      className="rounded-full p-0.5 hover:bg-blue-100"
+                      aria-label={`Remove ${email}`}
+                    >
+                      <FiX className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                inputMode="email"
+                autoComplete="email"
+                value={guestEmailInput}
+                onChange={(event) => setGuestEmailInput(event.target.value)}
+                onKeyDown={handleGuestEmailKeyDown}
+                onBlur={() => {
+                  if (guestEmailInput.trim()) addGuestEmails(guestEmailInput);
+                }}
+                placeholder="client@company.com"
+                className="min-w-0 flex-1 bg-transparent py-1 text-sm text-gray-800 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => addGuestEmails(guestEmailInput)}
+                className="shrink-0 text-xs font-semibold text-[#3F8CFF] hover:underline"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+          <p className="mt-1 pl-1 text-[11px] text-[#7D8592]">
+            People outside the company. Press Enter or Add after each email.
+          </p>
+        </div>
 
         <div className="flex items-center justify-end gap-2 pt-2">
           <button
