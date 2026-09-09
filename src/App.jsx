@@ -7,11 +7,13 @@ import { validateSession } from "./api/service";
 import { loginSuccess, logout, setLoading } from "./store/slice/authSlice";
 import socketService from "./services/socketService";
 import { unlockNotificationSound, handleTaskStatusChanged } from "./services/realtimeNotificationHandler";
+import { showLeadBrowserNotification } from "./services/browserNotificationService";
 import AppRoutes from "./routes/AppRoutes";
 import { isPublicAppPath } from "./pages/public/publicSite";
 import { assetPath } from "./utils/assetPath";
 import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
 import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
+import BrowserNotificationPrompt from "./components/shared/BrowserNotificationPrompt";
 
 const isDesktop = typeof window !== "undefined" && window.desktop;
 const Router = isDesktop ? HashRouter : BrowserRouter;
@@ -76,9 +78,8 @@ function App() {
             socketService.joinRoom(`company_${user.company}`);
           }
 
-          // Global lead notification with sound
+          // Global lead notification with sound + desktop alert
           socketService.onNewLeadReceived((data) => {
-                // Play notification sound
                 try {
                     const audio = new Audio('/src/assets/audio/new-notification-017-352293.mp3');
                     audio.play();
@@ -95,7 +96,8 @@ function App() {
                     console.error("Failed to show toast notification:", e);
                 }
 
-                // Auto invalidate query cache and force refetch to refresh leads in real-time
+                showLeadBrowserNotification(data);
+
                 try {
                     queryClient.invalidateQueries({ queryKey: ["leads"] });
                     queryClient.invalidateQueries({ queryKey: ["leadStats"] });
@@ -160,6 +162,7 @@ function App() {
     <>
       <Router>
         <AppRoutes />
+        {!publicPath && user && <BrowserNotificationPrompt />}
       </Router>
 
       {!publicPath && <RealtimeAlertsProvider />}

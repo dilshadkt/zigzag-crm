@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, nativeTheme } = require("electron");
+const { app, BrowserWindow, shell, nativeTheme, session } = require("electron");
 const path = require("node:path");
 
 const isDev = !app.isPackaged;
@@ -43,7 +43,19 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  if (process.platform === "win32") {
+    app.setAppUserModelId("com.dooura.crm");
+  }
+
+  session.defaultSession.setPermissionRequestHandler(
+    (_webContents, permission, callback) => {
+      callback(permission === "notifications");
+    }
+  );
+
+  createWindow();
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

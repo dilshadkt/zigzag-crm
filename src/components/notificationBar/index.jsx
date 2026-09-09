@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PrimaryButton from "../shared/buttons/primaryButton";
 import {
   useGetNotifications,
@@ -7,12 +7,26 @@ import {
 } from "../../api/hooks";
 import { useNavigate } from "react-router-dom";
 import socketService from "../../services/socketService";
+import {
+  areBrowserNotificationsEnabled,
+  disableBrowserNotifications,
+  enableBrowserNotifications,
+  getBrowserNotificationPermission,
+  isBrowserNotificationSupported,
+} from "../../services/browserNotificationService";
 
 const NotificationBar = ({ setNotifyMenuOpen }) => {
   const navigate = useNavigate();
   const { data: notificationsData, isLoading, refetch } = useGetNotifications(10);
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
+  const [desktopPermission, setDesktopPermission] = useState(
+    getBrowserNotificationPermission()
+  );
+  const [desktopEnabled, setDesktopEnabled] = useState(
+    areBrowserNotificationsEnabled()
+  );
+  const [desktopBusy, setDesktopBusy] = useState(false);
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -142,6 +156,24 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
   const handleMarkAllAsRead = () => {
     if (unreadCount > 0) {
       markAllAsReadMutation.mutate();
+    }
+  };
+
+  const handleToggleDesktopAlerts = async () => {
+    if (!isBrowserNotificationSupported()) return;
+    setDesktopBusy(true);
+    try {
+      if (desktopPermission === "granted" && desktopEnabled) {
+        await disableBrowserNotifications();
+        setDesktopEnabled(false);
+        setDesktopPermission(getBrowserNotificationPermission());
+      } else {
+        const result = await enableBrowserNotifications();
+        setDesktopPermission(result.permission);
+        setDesktopEnabled(result.permission === "granted");
+      }
+    } finally {
+      setDesktopBusy(false);
     }
   };
 
@@ -319,8 +351,35 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
           )}
         </div>
 
-        {notifications.length > 0 && (
-          <div className="border-t border-[#E4E6E8] px-[26px] py-4">
+        <div className="border-t border-[#E4E6E8] px-[26px] py-4 space-y-3">
+          {isBrowserNotificationSupported() && (
+            <button
+              type="button"
+              onClick={handleToggleDesktopAlerts}
+              disabled={desktopBusy || desktopPermission === "denied"}
+              className="w-full flex items-center justify-between text-left text-sm text-gray-700"
+            >
+              <span>Desktop alerts for new leads</span>
+              <span
+                className={`text-xs font-medium ${
+                  desktopPermission === "granted" && desktopEnabled
+                    ? "text-green-600"
+                    : desktopPermission === "denied"
+                    ? "text-red-500"
+                    : "text-blue-600"
+                }`}
+              >
+                {desktopBusy
+                  ? "..."
+                  : desktopPermission === "granted" && desktopEnabled
+                  ? "On"
+                  : desktopPermission === "denied"
+                  ? "Blocked"
+                  : "Enable"}
+              </span>
+            </button>
+          )}
+          {notifications.length > 0 && (
             <button
               onClick={() => {
                 navigate("/notifications");
@@ -330,8 +389,8 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
             >
               View all notifications
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
