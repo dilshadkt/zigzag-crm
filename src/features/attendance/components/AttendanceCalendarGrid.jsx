@@ -5,6 +5,7 @@ const AttendanceCalendarGrid = ({
   calendarDays,
   getAttendanceForDate,
   isLoading,
+  onDayClick,
 }) => {
   // Day name headers for the calendar
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -36,6 +37,7 @@ const AttendanceCalendarGrid = ({
               getAttendanceForDate={getAttendanceForDate}
               isLoading={isLoading}
               weekIndex={weekIndex}
+              onDayClick={onDayClick}
             />
           );
         })}

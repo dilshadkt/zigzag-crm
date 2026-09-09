@@ -90,6 +90,27 @@ export const attendanceApi = {
     return response.data;
   },
 
+  requestCorrection: async (attendanceId, data) => {
+    const response = await apiClient.post(
+      `/attendance/${attendanceId}/correction-request`,
+      data
+    );
+    return response.data;
+  },
+
+  reviewCorrection: async (attendanceId, data) => {
+    const response = await apiClient.put(
+      `/attendance/${attendanceId}/correction-request`,
+      data
+    );
+    return response.data;
+  },
+
+  getPendingCorrections: async () => {
+    const response = await apiClient.get("/attendance/correction-requests");
+    return response.data;
+  },
+
   // Approve attendance
   approveAttendance: async (attendanceId) => {
     const response = await apiClient.put(`/attendance/${attendanceId}/approve`);

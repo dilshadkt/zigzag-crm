@@ -1,5 +1,6 @@
 import axios from "axios";
 import { isPublicAppPath } from "../pages/public/publicSite";
+import { isNetworkError, reportNetworkIssue } from "../utils/networkMonitor";
 
 const getBaseURL = () => {
   if (import.meta.env.DEV) {
@@ -58,6 +59,10 @@ apiClient.interceptors.response.use(
         window.location.href = targetPath;
       }
     };
+
+    if (isNetworkError(error)) {
+      reportNetworkIssue("api");
+    }
 
     if (
       error.response?.status === 401 ||

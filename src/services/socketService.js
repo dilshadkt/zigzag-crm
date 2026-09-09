@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { hintConnectionAlive, reportNetworkIssue } from "../utils/networkMonitor";
 
 class SocketService {
   constructor() {
@@ -31,11 +32,15 @@ class SocketService {
       this.joinedRooms.forEach((roomName) => {
         this.socket.emit("join_room", roomName);
       });
+      hintConnectionAlive();
     });
 
     this.socket.on("disconnect", (reason) => {
       console.log("❌ Disconnected from server:", reason);
       this.isConnected = false;
+      if (reason !== "io client disconnect") {
+        reportNetworkIssue("socket");
+      }
     });
 
     this.socket.on("connect_error", (error) => {
@@ -109,7 +114,7 @@ class SocketService {
       },
       transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
     });
 

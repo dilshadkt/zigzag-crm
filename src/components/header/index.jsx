@@ -28,10 +28,13 @@ import AttendanceModal from "./components/AttendanceModal";
 import MobileSidebar from "./components/MobileSidebar";
 import UserProfile from "./components/UserProfile";
 import NotificationBar from "../notificationBar";
+import AttendanceRequestsDrawer from "../../features/attendance/components/AttendanceRequestsDrawer";
+import { usePendingCorrectionRequests } from "../../features/attendance/hooks/useAttendanceMutations";
 
 const DashboardHeader = () => {
   // State management
   const [isNotifyMenuOpen, setNotifyMenuOpen] = useState(false);
+  const [isAttendanceRequestsOpen, setAttendanceRequestsOpen] = useState(false);
   const [isAttendanceMenuOpen, setAttendanceMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shiftElapsedTime, setShiftElapsedTime] = useState(0);
@@ -43,7 +46,7 @@ const DashboardHeader = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { userPosition } = useRouteAccess();
-  const { hasAdminDashboardAccess } = usePermissions();
+  const { hasPermission, hasAdminDashboardAccess } = usePermissions();
   const { isDepartmentHead } = useIsDepartmentHead(effectiveCompanyId, !!user);
 
   // Data fetching
@@ -88,6 +91,12 @@ const DashboardHeader = () => {
   // Check if user has admin dashboard access permission
   // IMPORTANT: Company admins should NOT see this option - only non-admin users with permission
   const isCompanyAdmin = user?.role === "company-admin";
+  const canReviewAttendanceRequests =
+    isCompanyAdmin || hasPermission("attendance", "edit");
+  const { data: correctionRequestsData, isLoading: correctionRequestsLoading } =
+    usePendingCorrectionRequests(canReviewAttendanceRequests);
+  const attendanceRequestCount = correctionRequestsData?.count || 0;
+  const attendanceRequests = correctionRequestsData?.requests || [];
   const showHeaderActions = isCompanyAdmin || isShiftActive;
   const canAccessAdminDashboard = !isCompanyAdmin && hasAdminDashboardAccess();
 
@@ -372,9 +381,12 @@ const DashboardHeader = () => {
           isClockingIn={isClockingIn}
           onAttendanceClick={handleAttendanceClick}
           onNotifyClick={() => setNotifyMenuOpen(true)}
+          onAttendanceRequestsClick={() => setAttendanceRequestsOpen(true)}
           unreadCount={unreadCount}
           stickyNotesCount={stickyNotesCount}
           upcomingMeetingCount={upcomingMeetingCount}
+          attendanceRequestCount={attendanceRequestCount}
+          showAttendanceRequests={canReviewAttendanceRequests}
           remainingTime={remainingTime}
           isRunning={isRunning}
           formatTime={formatTime}
@@ -400,6 +412,15 @@ const DashboardHeader = () => {
       {/* Notification Bar */}
       {isNotifyMenuOpen && (
         <NotificationBar setNotifyMenuOpen={setNotifyMenuOpen} />
+      )}
+
+      {canReviewAttendanceRequests && (
+        <AttendanceRequestsDrawer
+          isOpen={isAttendanceRequestsOpen}
+          onClose={() => setAttendanceRequestsOpen(false)}
+          requests={attendanceRequests}
+          isLoading={correctionRequestsLoading}
+        />
       )}
 
       {/* Attendance Modal */}

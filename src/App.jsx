@@ -14,6 +14,7 @@ import { assetPath } from "./utils/assetPath";
 import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
 import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
 import BrowserNotificationPrompt from "./components/shared/BrowserNotificationPrompt";
+import NetworkReconnectToast from "./components/shared/NetworkReconnectToast";
 
 const isDesktop = typeof window !== "undefined" && window.desktop;
 const Router = isDesktop ? HashRouter : BrowserRouter;
@@ -148,31 +149,31 @@ function App() {
 
   const publicPath =
     typeof window !== "undefined" && isPublicAppPath(window.location.pathname);
-
-  // Public legal pages must load with no login check.
-  if (!publicPath && (loading || !isAuthChecked)) {
-    return (
-      <div className="h-screen w-full flexCenter">
-        <img src={assetPath("icons/loading.svg")} alt="" />
-      </div>
-    );
-  }
+  const isBooting = !publicPath && (loading || !isAuthChecked);
 
   return (
     <>
-      <Router>
-        <AppRoutes />
-        {!publicPath && user && <BrowserNotificationPrompt />}
-      </Router>
+      {isBooting ? (
+        <div className="h-screen w-full flexCenter">
+          <img src={assetPath("icons/loading.svg")} alt="" />
+        </div>
+      ) : (
+        <>
+          <Router>
+            <AppRoutes />
+            {!publicPath && user && <BrowserNotificationPrompt />}
+          </Router>
 
-      {!publicPath && <RealtimeAlertsProvider />}
+          {!publicPath && <RealtimeAlertsProvider />}
 
-      {showFixProfileModal && (
-        <FixProfileImageModal
-          isOpen={showFixProfileModal}
-          onClose={() => setShowFixProfileModal(false)}
-          user={user}
-        />
+          {showFixProfileModal && (
+            <FixProfileImageModal
+              isOpen={showFixProfileModal}
+              onClose={() => setShowFixProfileModal(false)}
+              user={user}
+            />
+          )}
+        </>
       )}
 
       <Toaster
@@ -200,6 +201,8 @@ function App() {
           },
         }}
       />
+
+      <NetworkReconnectToast />
     </>
   );
 }

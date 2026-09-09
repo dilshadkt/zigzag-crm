@@ -12,6 +12,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useAttendanceCalendarData } from "../hooks/useAttendanceCalendarData";
 import AttendanceCalendarHeader from "./AttendanceCalendarHeader";
 import AttendanceCalendarGrid from "./AttendanceCalendarGrid";
+import AttendanceDayModal from "./AttendanceDayModal";
+import RequestCorrectionModal from "./RequestCorrectionModal";
 import {
   setCurrentDate as setCalendarCurrentDate,
   reloadCalendarState,
@@ -33,6 +35,8 @@ const AttendanceCalendar = () => {
 
   // Default to current month
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [selectedDayData, setSelectedDayData] = useState(null);
+  const [requestRecord, setRequestRecord] = useState(null);
 
   // Set current date to current month on initial load
   useEffect(() => {
@@ -43,7 +47,7 @@ const AttendanceCalendar = () => {
 
   // Fetch attendance data for the current month
   const { attendanceData, isLoading, getAttendanceForDate } =
-    useAttendanceCalendarData(currentDate, user?._id);
+    useAttendanceCalendarData(currentDate, user?._id || user?.id);
 
   const handlePrevMonth = () => {
     const newDate = subMonths(currentDate, 1);
@@ -79,6 +83,15 @@ const AttendanceCalendar = () => {
     })),
   ];
 
+  const handleDayClick = (fullDate, attendanceRecords) => {
+    if (!fullDate) return;
+    setSelectedDayData({
+      date: fullDate,
+      attendanceRecords,
+      formattedDate: format(fullDate, "EEEE, MMM d, yyyy"),
+    });
+  };
+
   return (
     <section className="flex flex-col h-full">
       <div
@@ -103,8 +116,29 @@ const AttendanceCalendar = () => {
           calendarDays={calendarDays}
           getAttendanceForDate={getAttendanceForDate}
           isLoading={isLoading}
+          onDayClick={handleDayClick}
         />
       </div>
+
+      <AttendanceDayModal
+        isOpen={Boolean(selectedDayData)}
+        selectedDayData={
+          selectedDayData
+            ? {
+                ...selectedDayData,
+                attendanceRecords: getAttendanceForDate(selectedDayData.date),
+              }
+            : null
+        }
+        onClose={() => setSelectedDayData(null)}
+        onRequestEdit={(record) => setRequestRecord(record)}
+      />
+
+      <RequestCorrectionModal
+        isOpen={Boolean(requestRecord)}
+        record={requestRecord}
+        onClose={() => setRequestRecord(null)}
+      />
     </section>
   );
 };

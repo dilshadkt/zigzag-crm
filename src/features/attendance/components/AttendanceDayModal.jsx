@@ -1,392 +1,212 @@
 import React from "react";
 import { format } from "date-fns";
-import { FiClock, FiLogIn, FiLogOut, FiMapPin, FiX } from "react-icons/fi";
-import { MdAccessTime, MdCheckCircle, MdError } from "react-icons/md";
+import { FiClock, FiLogIn, FiLogOut, FiMapPin } from "react-icons/fi";
+import Modal from "../../../components/shared/modal";
+import PrimaryButton from "../../../components/shared/buttons/primaryButton";
 
-const AttendanceDayModal = ({ isOpen, selectedDayData, onClose }) => {
+const formatTime = (dateString) => {
+  if (!dateString) return "—";
+  try {
+    return format(new Date(dateString), "h:mm a");
+  } catch {
+    return "—";
+  }
+};
+
+const statusStyles = {
+  "checked-in": "bg-emerald-50 text-emerald-700",
+  "checked-out": "bg-sky-50 text-sky-700",
+  break: "bg-amber-50 text-amber-700",
+  overtime: "bg-violet-50 text-violet-700",
+};
+
+const statusLabels = {
+  "checked-in": "Checked in",
+  "checked-out": "Checked out",
+  break: "On break",
+  overtime: "Overtime",
+};
+
+const correctionStyles = {
+  pending: "bg-amber-50 text-amber-700",
+  approved: "bg-emerald-50 text-emerald-700",
+  rejected: "bg-red-50 text-red-700",
+};
+
+const TimeTile = ({ label, time, icon: Icon, iconClass, expected, warning }) => (
+  <div className="rounded-2xl bg-[#F7F9FC] border border-[#E6EBF5] p-3">
+    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1.5">
+      <Icon className={`text-sm ${iconClass}`} />
+      {label}
+    </div>
+    <p className="text-[15px] font-semibold text-gray-900">{time}</p>
+    {expected && (
+      <p className="text-[11px] text-gray-400 mt-1">Expected {expected}</p>
+    )}
+    {warning && (
+      <p className="text-[11px] font-medium text-red-500 mt-1">{warning}</p>
+    )}
+  </div>
+);
+
+const AttendanceDayModal = ({
+  isOpen,
+  selectedDayData,
+  onClose,
+  onRequestEdit,
+}) => {
   if (!isOpen || !selectedDayData) return null;
 
-  const { date, attendanceRecords, formattedDate } = selectedDayData;
-
-  // Format time for display
-  const formatTime = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "h:mm:ss a");
-    } catch {
-      return "N/A";
-    }
-  };
-
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "MMM d, yyyy");
-    } catch {
-      return "N/A";
-    }
-  };
-
-  // Get status badge
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      "checked-in": {
-        label: "Checked In",
-        bg: "bg-green-100",
-        text: "text-green-700",
-        icon: MdCheckCircle,
-      },
-      "checked-out": {
-        label: "Checked Out",
-        bg: "bg-blue-100",
-        text: "text-blue-700",
-        icon: MdCheckCircle,
-      },
-      break: {
-        label: "On Break",
-        bg: "bg-yellow-100",
-        text: "text-yellow-700",
-        icon: MdAccessTime,
-      },
-      overtime: {
-        label: "Overtime",
-        bg: "bg-purple-100",
-        text: "text-purple-700",
-        icon: MdAccessTime,
-      },
-    };
-
-    const config = statusConfig[status] || {
-      label: status || "Unknown",
-      bg: "bg-gray-100",
-      text: "text-gray-700",
-      icon: MdError,
-    };
-
-    const Icon = config.icon;
-
-    return (
-      <span
-        className={`${config.bg} ${config.text} px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1`}
-      >
-        <Icon className="text-sm" />
-        {config.label}
-      </span>
-    );
-  };
-
-  // Get approval status badge
-  const getApprovalBadge = (approvalStatus) => {
-    const approvalConfig = {
-      approved: {
-        label: "Approved",
-        bg: "bg-green-100",
-        text: "text-green-700",
-      },
-      pending: {
-        label: "Pending",
-        bg: "bg-yellow-100",
-        text: "text-yellow-700",
-      },
-      rejected: {
-        label: "Rejected",
-        bg: "bg-red-100",
-        text: "text-red-700",
-      },
-      "auto-approved": {
-        label: "Auto Approved",
-        bg: "bg-blue-100",
-        text: "text-blue-700",
-      },
-    };
-
-    const config = approvalConfig[approvalStatus] || {
-      label: approvalStatus || "Unknown",
-      bg: "bg-gray-100",
-      text: "text-gray-700",
-    };
-
-    return (
-      <span
-        className={`${config.bg} ${config.text} px-2 py-1 rounded-full text-xs font-medium`}
-      >
-        {config.label}
-      </span>
-    );
-  };
+  const { attendanceRecords, formattedDate } = selectedDayData;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="sm:max-w-xl"
+      title={
+        <span className="block">
+          Attendance details
+          <span className="block text-sm font-normal text-gray-500 mt-0.5">
+            {formattedDate}
+          </span>
+        </span>
+      }
     >
-      <div
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Attendance Details
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">{formattedDate}</p>
+      {attendanceRecords.length === 0 ? (
+        <div className="py-10 text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-[#F7F9FC] flex items-center justify-center">
+            <FiClock className="text-gray-400 text-xl" />
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <FiX className="text-2xl" />
-          </button>
+          <p className="text-sm text-gray-500">No attendance for this day</p>
         </div>
+      ) : (
+        <div className="space-y-3">
+          {attendanceRecords.map((record, index) => {
+            const correctionStatus = record.correctionRequest?.status;
+            const showCorrection =
+              correctionStatus && correctionStatus !== "none";
 
-        {/* Content */}
-        <div className="p-6">
-          {attendanceRecords.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No attendance records for this day</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {attendanceRecords.map((record, index) => (
-                <div
-                  key={record._id || index}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  {/* Session Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-500">
-                        Session {index + 1}
+            return (
+              <div
+                key={record._id || index}
+                className="rounded-2xl border border-[#E6EBF5] p-4"
+              >
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold text-gray-400">
+                      Session {index + 1}
+                    </span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+                        statusStyles[record.status] || "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {statusLabels[record.status] || record.status}
+                    </span>
+                    {showCorrection && (
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+                          correctionStyles[correctionStatus] ||
+                          "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        Time change {correctionStatus}
                       </span>
-                      {getStatusBadge(record.status)}
-                      {getApprovalBadge(record.approvalStatus)}
-                    </div>
-                    {record.totalHours > 0 && (
-                      <div className="flex items-center gap-1 text-sm font-semibold text-purple-700">
-                        <FiClock className="text-base" />
-                        <span>{record.totalHours.toFixed(2)} hours</span>
-                      </div>
                     )}
                   </div>
-
-                  {/* Check-in Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <FiLogIn className="text-green-600" />
-                        <span className="font-medium text-gray-700">
-                          Check-in:
-                        </span>
-                        <span className="text-gray-900">
-                          {formatTime(record.clockInTime)}
-                        </span>
-                      </div>
-                      {record.isLate && (
-                        <div className="flex items-center gap-2 text-sm text-red-600">
-                          <MdError className="text-base" />
-                          <span>
-                            Late by {record.lateBy || 0} minutes
-                          </span>
-                        </div>
-                      )}
-                      {record.expectedClockIn && (
-                        <div className="text-xs text-gray-500 ml-6">
-                          Expected: {formatTime(record.expectedClockIn)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Check-out Details */}
-                    {record.clockOutTime && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <FiLogOut className="text-blue-600" />
-                          <span className="font-medium text-gray-700">
-                            Check-out:
-                          </span>
-                          <span className="text-gray-900">
-                            {formatTime(record.clockOutTime)}
-                          </span>
-                        </div>
-                        {record.isEarlyOut && (
-                          <div className="flex items-center gap-2 text-sm text-orange-600">
-                            <MdError className="text-base" />
-                            <span>
-                              Early by {record.earlyOutBy || 0} minutes
-                            </span>
-                          </div>
-                        )}
-                        {record.expectedClockOut && (
-                          <div className="text-xs text-gray-500 ml-6">
-                            Expected: {formatTime(record.expectedClockOut)}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Additional Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {/* Regular Hours */}
-                    {record.regularHours > 0 && (
-                      <div>
-                        <span className="text-gray-500">Regular Hours: </span>
-                        <span className="font-medium text-gray-900">
-                          {record.regularHours.toFixed(2)}h
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Overtime Hours */}
-                    {record.overtimeHours > 0 && (
-                      <div>
-                        <span className="text-gray-500">Overtime: </span>
-                        <span className="font-medium text-purple-700">
-                          {record.overtimeHours.toFixed(2)}h
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Break Time */}
-                    {record.breakTime > 0 && (
-                      <div>
-                        <span className="text-gray-500">Break Time: </span>
-                        <span className="font-medium text-gray-900">
-                          {record.breakTime} minutes
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Shift Type */}
-                    {record.shiftType && (
-                      <div>
-                        <span className="text-gray-500">Shift: </span>
-                        <span className="font-medium text-gray-900 capitalize">
-                          {record.shiftType}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Location Information */}
-                  {(record.clockInLocation?.address ||
-                    record.clockOutLocation?.address) && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="space-y-2 text-sm">
-                        {record.clockInLocation?.address && (
-                          <div className="flex items-start gap-2">
-                            <FiMapPin className="text-green-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <span className="text-gray-500">Check-in: </span>
-                              <span className="text-gray-900">
-                                {record.clockInLocation.address}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                        {record.clockOutLocation?.address && (
-                          <div className="flex items-start gap-2">
-                            <FiMapPin className="text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <span className="text-gray-500">Check-out: </span>
-                              <span className="text-gray-900">
-                                {record.clockOutLocation.address}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Work Description */}
-                  {record.workDescription && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="text-sm">
-                        <span className="text-gray-500 font-medium">
-                          Work Description:
-                        </span>
-                        <p className="text-gray-900 mt-1">
-                          {record.workDescription}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Admin Notes */}
-                  {record.adminNotes && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="text-sm">
-                        <span className="text-gray-500 font-medium">
-                          Admin Notes:
-                        </span>
-                        <p className="text-gray-900 mt-1">{record.adminNotes}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Breaks */}
-                  {record.breaks && record.breaks.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="text-sm">
-                        <span className="text-gray-500 font-medium mb-2 block">
-                          Breaks:
-                        </span>
-                        <div className="space-y-2">
-                          {record.breaks.map((breakItem, breakIndex) => (
-                            <div
-                              key={breakIndex}
-                              className="bg-gray-50 rounded p-2 text-xs"
-                            >
-                              <div>
-                                <span className="text-gray-500">Start: </span>
-                                <span className="text-gray-900">
-                                  {formatTime(breakItem.startTime)}
-                                </span>
-                              </div>
-                              {breakItem.endTime && (
-                                <div>
-                                  <span className="text-gray-500">End: </span>
-                                  <span className="text-gray-900">
-                                    {formatTime(breakItem.endTime)}
-                                  </span>
-                                </div>
-                              )}
-                              {breakItem.duration && (
-                                <div>
-                                  <span className="text-gray-500">
-                                    Duration:{" "}
-                                  </span>
-                                  <span className="text-gray-900">
-                                    {breakItem.duration} minutes
-                                  </span>
-                                </div>
-                              )}
-                              {breakItem.reason && (
-                                <div>
-                                  <span className="text-gray-500">Reason: </span>
-                                  <span className="text-gray-900">
-                                    {breakItem.reason}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                  {record.totalHours > 0 && (
+                    <span className="text-xs font-semibold text-[#3F8CFF] whitespace-nowrap">
+                      {record.totalHours.toFixed(1)}h
+                    </span>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <TimeTile
+                    label="Check-in"
+                    time={formatTime(record.clockInTime)}
+                    icon={FiLogIn}
+                    iconClass="text-emerald-500"
+                    expected={
+                      record.expectedClockIn
+                        ? formatTime(record.expectedClockIn)
+                        : null
+                    }
+                    warning={
+                      record.isLate
+                        ? `Late by ${record.lateBy || 0} min`
+                        : null
+                    }
+                  />
+                  <TimeTile
+                    label="Check-out"
+                    time={formatTime(record.clockOutTime)}
+                    icon={FiLogOut}
+                    iconClass="text-[#3F8CFF]"
+                    expected={
+                      record.expectedClockOut
+                        ? formatTime(record.expectedClockOut)
+                        : null
+                    }
+                    warning={
+                      record.isEarlyOut
+                        ? `Early by ${record.earlyOutBy || 0} min`
+                        : null
+                    }
+                  />
+                </div>
+
+                {(record.clockInLocation?.address ||
+                  record.clockOutLocation?.address) && (
+                  <div className="mt-3 flex items-start gap-2 text-xs text-gray-500">
+                    <FiMapPin className="mt-0.5 shrink-0 text-[#3F8CFF]" />
+                    <span>
+                      {record.clockInLocation?.address ||
+                        record.clockOutLocation?.address}
+                    </span>
+                  </div>
+                )}
+
+                {showCorrection && (
+                  <div className="mt-3 rounded-xl bg-[#F7F9FC] px-3 py-2.5 text-xs text-gray-600 space-y-1">
+                    {correctionStatus === "pending" && (
+                      <p>
+                        Requested {formatTime(record.correctionRequest.requestedClockInTime)}
+                        {record.correctionRequest.requestedClockOutTime
+                          ? ` – ${formatTime(record.correctionRequest.requestedClockOutTime)}`
+                          : ""}
+                      </p>
+                    )}
+                    {record.correctionRequest.reason && (
+                      <p>Reason: {record.correctionRequest.reason}</p>
+                    )}
+                    {record.correctionRequest.reviewNotes && (
+                      <p>Admin: {record.correctionRequest.reviewNotes}</p>
+                    )}
+                  </div>
+                )}
+
+                {onRequestEdit && (
+                  <div className="mt-3 flex justify-end">
+                    <PrimaryButton
+                      title={
+                        correctionStatus === "pending"
+                          ? "Update request"
+                          : "Request time change"
+                      }
+                      onclick={() => onRequestEdit(record)}
+                      className="text-white h-9 px-3.5"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 };
 
 export default AttendanceDayModal;
-

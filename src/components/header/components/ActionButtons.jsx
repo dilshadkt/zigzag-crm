@@ -5,6 +5,7 @@ import {
   IoTimeOutline,
   IoFingerPrintOutline,
   IoVideocamOutline,
+  IoCalendarOutline,
 } from "react-icons/io5";
 
 const ActionButtons = ({
@@ -14,9 +15,12 @@ const ActionButtons = ({
   isClockingIn,
   onAttendanceClick,
   onNotifyClick,
+  onAttendanceRequestsClick,
   unreadCount,
   stickyNotesCount,
   upcomingMeetingCount = 0,
+  attendanceRequestCount = 0,
+  showAttendanceRequests = false,
   remainingTime,
   isRunning,
   formatTime,
@@ -88,6 +92,22 @@ const ActionButtons = ({
           </span>
         )}
       </Link>
+
+      {showAttendanceRequests && (
+        <button
+          type="button"
+          onClick={onAttendanceRequestsClick}
+          className="flexCenter cursor-pointer w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] bg-white relative shrink-0"
+          title="Attendance time-change requests"
+        >
+          <IoCalendarOutline className="w-5 h-5 text-gray-600" />
+          {attendanceRequestCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+              {attendanceRequestCount > 9 ? "9+" : attendanceRequestCount}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Notifications */}
       <button

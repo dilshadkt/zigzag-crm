@@ -8,6 +8,7 @@ const AttendanceCalendarDay = ({
   getAttendanceForDate,
   isLoading,
   weekIndex = 0,
+  onDayClick,
 }) => {
   // Determine if a date is today
   const isToday = (date) => {
@@ -68,7 +69,9 @@ const AttendanceCalendarDay = ({
     <div
       className={`min-h-[60px] md:min-h-[150px] border group border-[#E6EBF5] relative p-1
         ${isToday(item.fullDate) ? "bg-blue-50" : ""}
+        ${item?.fullDate ? "cursor-pointer hover:bg-blue-50/70" : ""}
       `}
+      onClick={() => item?.fullDate && onDayClick?.(item.fullDate, attendanceRecords)}
     >
       {/* Date Number */}
       {item?.date && (
@@ -141,9 +144,16 @@ const AttendanceCalendarDay = ({
               )}
 
               {/* Status Badge */}
+              {/* Status Badge */}
               {attendanceRecords.some((r) => r.status === "checked-in") && (
                 <div className="text-[9px] bg-yellow-100 text-yellow-700 rounded-md px-1.5 py-0.5 text-center">
                   Active
+                </div>
+              )}
+
+              {attendanceRecords.some((r) => r.correctionRequest?.status === "pending") && (
+                <div className="text-[9px] bg-amber-100 text-amber-800 rounded-md px-1.5 py-0.5 text-center">
+                  Change requested
                 </div>
               )}
             </div>

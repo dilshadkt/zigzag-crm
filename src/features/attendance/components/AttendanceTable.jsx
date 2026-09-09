@@ -11,6 +11,7 @@ import {
 } from "../../../utils/locationUtils";
 import LocationModal from "../../../components/LocationModal";
 import Pagination from "./Pagination";
+import EditAttendanceModal from "./EditAttendanceModal";
 
 // Memoized table header component
 const TableHeader = React.memo(({ title, icon }) => {
@@ -115,7 +116,7 @@ const TimeDisplay = React.memo(({ time, label, className = "" }) => {
 });
 
 // Memoized employee row component
-const EmployeeRow = React.memo(({ attendance }) => {
+const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationDetails, setLocationDetails] = useState(null);
   const [imgError, setImgError] = useState(false);
@@ -300,6 +301,18 @@ const EmployeeRow = React.memo(({ attendance }) => {
             {attendance.workDescription || attendance.adminNotes || "No notes"}
           </div>
         </td>
+
+        {canEditAttendance && (
+          <td className="px-6 py-4 whitespace-nowrap text-right">
+            <button
+              type="button"
+              onClick={() => onEdit?.(attendance)}
+              className="text-sm font-medium text-[#3F8CFF] hover:text-blue-700"
+            >
+              Edit times
+            </button>
+          </td>
+        )}
       </tr>
 
       {/* Location Modal */}
@@ -397,7 +410,10 @@ const AttendanceTable = ({
   pagination,
   onPageChange,
   onDataChange,
+  canEditAttendance,
 }) => {
+  const [editingRecord, setEditingRecord] = useState(null);
+
   // Get attendance records from props
   const allAttendanceRecords = attendanceRecords || [];
 
@@ -577,6 +593,31 @@ const AttendanceTable = ({
     []
   );
 
+  const headers = useMemo(() => {
+    if (!canEditAttendance) return tableHeaders;
+    return [
+      ...tableHeaders,
+      {
+        title: "Actions",
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+        ),
+      },
+    ];
+  }, [tableHeaders, canEditAttendance]);
+
   // Show loading state
   if (isLoading) {
     return <LoadingState />;
@@ -598,7 +639,7 @@ const AttendanceTable = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
-              {tableHeaders.map((header, index) => (
+              {headers.map((header, index) => (
                 <TableHeader
                   key={index}
                   title={header.title}
@@ -612,6 +653,8 @@ const AttendanceTable = ({
               <EmployeeRow
                 key={attendance._id || index}
                 attendance={attendance}
+                canEditAttendance={canEditAttendance}
+                onEdit={setEditingRecord}
               />
             ))}
           </tbody>
@@ -629,6 +672,12 @@ const AttendanceTable = ({
           isLoading={isLoading}
         />
       )}
+
+      <EditAttendanceModal
+        isOpen={Boolean(editingRecord)}
+        record={editingRecord}
+        onClose={() => setEditingRecord(null)}
+      />
     </div>
   );
 };

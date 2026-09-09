@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { attendanceApi } from "../../features/attendance/api/attendanceApi";
 import { useEmpoyees } from "../../api/hooks";
 import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
+import PendingTimeChangeList from "../../features/attendance/components/PendingTimeChangeList";
 
 const SkeletonItem = ({ className }) => (
     <div className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`} />
@@ -48,22 +49,26 @@ const HRDashboardPage = () => {
     const [error, setError] = useState(null);
 
     // Fetch all-staff report when month/year changes
-    const fetchAllStaffReport = async () => {
-        setIsLoading(true);
-        setError(null);
+    const fetchAllStaffReport = async (silent = false) => {
+        if (!silent) {
+            setIsLoading(true);
+            setError(null);
+        }
         try {
             const res = await attendanceApi.getStaffMonthlyReport(selectedMonth, selectedYear, "");
             if (res.success) {
                 setReportData(res.report);
                 setTodayHighlights(res.todayHighlights);
-            } else {
+            } else if (!silent) {
                 setError(res.message || "Failed to fetch staff report");
             }
         } catch (err) {
             console.error("Failed to fetch staff monthly report:", err);
-            setError(err.response?.data?.message || err.message || "Error fetching report");
+            if (!silent) {
+                setError(err.response?.data?.message || err.message || "Error fetching report");
+            }
         } finally {
-            setIsLoading(false);
+            if (!silent) setIsLoading(false);
         }
     };
 
@@ -507,6 +512,13 @@ const HRDashboardPage = () => {
                     </div>
                 </div>
             )}
+
+            <PendingTimeChangeList
+                onReviewed={() => {
+                    fetchAllStaffReport(true);
+                    fetchSingleReport();
+                }}
+            />
 
             {/* Table with clean design */}
             {isLoading && !reportData ? (
