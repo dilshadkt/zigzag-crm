@@ -18,8 +18,9 @@ import {
   useGetUnreadMessageCount,
   useIsDepartmentHead,
 } from "../../api/hooks";
+import { useTicketCounts } from "../../features/tickets/hooks/useTickets";
 import { assetPath } from "../../utils/assetPath";
-const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings"];
+const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings", "tickets"];
 
 const Sidebar = () => {
   const { user, companyId } = useAuth();
@@ -53,6 +54,8 @@ const Sidebar = () => {
 
   // Fetch unread messages count
   const { data: unreadMessageCount = 0 } = useGetUnreadMessageCount();
+  const { data: ticketCounts } = useTicketCounts(!!user);
+  const issueCount = ticketCounts?.active || 0;
 
   // Check if user has admin dashboard access permission
   const isCompanyAdmin = user?.role === "company-admin";
@@ -292,6 +295,9 @@ const Sidebar = () => {
                 }
                 if (menuItem.routeKey === "messenger" && unreadMessageCount > 0) {
                   return unreadMessageCount;
+                }
+                if (menuItem.routeKey === "tickets" && issueCount > 0) {
+                  return issueCount;
                 }
                 return null;
               };

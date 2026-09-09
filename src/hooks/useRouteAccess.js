@@ -7,7 +7,12 @@ export const useRouteAccess = () => {
 
   const hasAccessToRoute = (route) => {
     // Dashboard, Board, and Settings are always accessible to everyone
-    if (route === "/" || route === "/board" || route.startsWith("/settings")) {
+    if (
+      route === "/" ||
+      route === "/board" ||
+      route === "/tickets" ||
+      route.startsWith("/settings")
+    ) {
       return true;
     }
 
@@ -31,6 +36,7 @@ export const useRouteAccess = () => {
         board: "/board",
         calender: "/calender",
         vacations: "/vacations",
+        tickets: "/tickets",
         employees: "/employees",
         messenger: "/messenger",
         leads: "/leads",

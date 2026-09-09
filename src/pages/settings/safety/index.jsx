@@ -119,6 +119,19 @@ const PERMISSION_CATEGORIES = {
       { key: "changeStatus", label: "Change Status", description: "Can change lead status" },
     ],
   },
+  tickets: {
+    label: "Issues & Complaints",
+    icon: <FiAlertCircle />,
+    permissions: [
+      { key: "create", label: "Raise Ticket", description: "Can raise issues and complaints" },
+      { key: "edit", label: "Edit Ticket", description: "Can edit ticket details" },
+      { key: "delete", label: "Delete Ticket", description: "Can delete tickets" },
+      { key: "view", label: "View Tickets", description: "Can view company tickets" },
+      { key: "viewAll", label: "View All Tickets", description: "Can view all tickets" },
+      { key: "assign", label: "Assign Ticket", description: "Can assign tickets to employees" },
+      { key: "changeStatus", label: "Change Status", description: "Can update ticket status" },
+    ],
+  },
   settings: {
     label: "Settings & Configuration",
     icon: <FiSettings />,
@@ -145,6 +158,7 @@ const PERMISSION_CATEGORIES = {
 const MODULES = [
   { id: "dashboard", type: "system", label: "Main Dashboard", icon: <FiActivity />, desc: "Central intelligence & overview", permissionKey: "dashboard" },
   { id: "projects", type: "route", label: "Client Hub", icon: <FiLayout />, desc: "Client & project management", permissionKey: "projects" },
+  { id: "tickets", type: "route", label: "Issues & Complaints", icon: <FiAlertCircle />, desc: "Raise and track client tickets", permissionKey: "tickets" },
   { id: "board", type: "route", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards", permissionKey: "tasks" },
   { id: "calendar", type: "route", label: "Timeline", icon: <FiCalendar />, desc: "Global scheduling system", permissionKey: null },
   { id: "vacations", type: "route", label: "Time Off", icon: <FiMap />, desc: "Leave & vacation management", permissionKey: "vacations" },
@@ -188,6 +202,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         meetings: {},
         attendance: {},
         leads: {},
+        tickets: {},
         settings: {},
         dashboard: {},
       };

@@ -9,6 +9,7 @@ import {
   useGetClientReviewTasks,
   useGetUnreadMessageCount,
 } from "../../../api/hooks";
+import { useTicketCounts } from "../../../features/tickets/hooks/useTickets";
 
 const MobileSidebar = ({
   isOpen,
@@ -39,6 +40,8 @@ const MobileSidebar = ({
     taskMonth: getCurrentMonth(),
   });
   const { data: unreadMessageCount = 0 } = useGetUnreadMessageCount();
+  const { data: ticketCounts } = useTicketCounts(!!user);
+  const issueCount = ticketCounts?.active || 0;
 
   const [openMenus, setOpenMenus] = useState(() => {
     const initialOpenMenus = {};
@@ -89,6 +92,9 @@ const MobileSidebar = ({
     }
     if (menuItem.routeKey === "messenger" && unreadMessageCount > 0) {
       return unreadMessageCount;
+    }
+    if (menuItem.routeKey === "tickets" && issueCount > 0) {
+      return issueCount;
     }
     return null;
   };

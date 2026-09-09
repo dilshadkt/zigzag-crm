@@ -21,6 +21,7 @@ const Dashboard = lazy(() => import("../pages/dashboard"));
 const Campaigns = lazy(() => import("../pages/campaigns"));
 const CampaignDetails = lazy(() => import("../pages/campaigns/CampaignDetails"));
 const Vacations = lazy(() => import("../features/vacations"));
+const Tickets = lazy(() => import("../features/tickets"));
 const Employees = lazy(() => import("../pages/employees"));
 const Messenger = lazy(() => import("../pages/messenger"));
 const InfoPortal = lazy(() => import("../pages/infoPortal"));
@@ -310,6 +311,7 @@ const AppRoutes = () => {
 
           <Route path="calender" element={<RouteAccess><Calendar /></RouteAccess>} />
           <Route path="vacations" element={<RouteAccess><Vacations /></RouteAccess>} />
+          <Route path="tickets" element={<RouteAccess><Tickets /></RouteAccess>} />
           <Route path="employees" element={<RouteAccess><Employees /></RouteAccess>} />
           <Route
             path="leads"

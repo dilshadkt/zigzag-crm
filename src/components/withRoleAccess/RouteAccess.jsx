@@ -73,6 +73,8 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
   if (
     currentPath === "/" ||
     currentPath === "/board" ||
+    currentPath === "/tickets" ||
+    currentPath.startsWith("/tickets/") ||
     currentPath === "/my-points" ||
     currentPath === "/meetings" ||
     currentPath.startsWith("/settings") ||
@@ -117,6 +119,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       calendar: "/calender",
       calender: "/calender",
       vacations: "/vacations",
+      tickets: "/tickets",
       employees: "/employees",
       messenger: "/messenger",
       "task-on-review": "/task-on-review",

@@ -8,6 +8,13 @@ const SkeletonItem = ({ className }) => (
     <div className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`} />
 );
 
+const PERIOD_OPTIONS = [
+    { value: "today", label: "Today" },
+    { value: "thisWeek", label: "This Week" },
+    { value: "thisMonth", label: "This Month" },
+    { value: "custom", label: "Custom" },
+];
+
 const toYmd = (date) => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -15,27 +22,43 @@ const toYmd = (date) => {
     return `${y}-${m}-${d}`;
 };
 
-const monthDateRange = (month, year) => {
-    const start = new Date(Number(year), Number(month) - 1, 1);
-    const end = new Date(Number(year), Number(month), 0);
-    return { start: toYmd(start), end: toYmd(end) };
+const formatDisplayDate = (ymd) => {
+    if (!ymd) return "";
+    const [y, m, d] = ymd.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
+const getPresetDateRange = (mode) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (mode === "today") {
+        const ymd = toYmd(today);
+        return { start: ymd, end: ymd };
+    }
+
+    if (mode === "thisWeek") {
+        const currentDay = today.getDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() + mondayOffset);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        return { start: toYmd(weekStart), end: toYmd(weekEnd) };
+    }
+
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return { start: toYmd(monthStart), end: toYmd(monthEnd) };
 };
 
 const HRDashboardPage = () => {
-    // State for filtering
-    const [selectedMonth, setSelectedMonth] = useState(() => {
-        const d = new Date();
-        return (d.getMonth() + 1).toString().padStart(2, "0");
-    });
-    const [selectedYear, setSelectedYear] = useState(() => {
-        return new Date().getFullYear().toString();
-    });
-    const [filterMode, setFilterMode] = useState("month");
-    const [customStartDate, setCustomStartDate] = useState(() => {
-        const d = new Date();
-        return toYmd(new Date(d.getFullYear(), d.getMonth(), 1));
-    });
-    const [customEndDate, setCustomEndDate] = useState(() => toYmd(new Date()));
+    // State for filtering — default to this month
+    const [filterMode, setFilterMode] = useState("thisMonth");
+    const [customStartDate, setCustomStartDate] = useState(() => getPresetDateRange("thisMonth").start);
+    const [customEndDate, setCustomEndDate] = useState(() => getPresetDateRange("thisMonth").end);
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
 
     const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
@@ -67,22 +90,34 @@ const HRDashboardPage = () => {
     const [isLoadingSingle, setIsLoadingSingle] = useState(false);
     const [error, setError] = useState(null);
 
-    const reportDateRange =
-        filterMode === "custom" && customStartDate && customEndDate
-            ? { startDate: customStartDate, endDate: customEndDate }
-            : null;
+    const reportDateRange = useMemo(() => {
+        if (filterMode === "custom") {
+            if (!customStartDate || !customEndDate) return null;
+            return { startDate: customStartDate, endDate: customEndDate };
+        }
+        const range = getPresetDateRange(filterMode);
+        return { startDate: range.start, endDate: range.end };
+    }, [filterMode, customStartDate, customEndDate]);
 
-    // Fetch all-staff report when month/year or custom range changes
+    const periodLabel = PERIOD_OPTIONS.find((opt) => opt.value === filterMode)?.label || "This Month";
+    const rangeDisplay =
+        reportDateRange?.startDate && reportDateRange?.endDate
+            ? reportDateRange.startDate === reportDateRange.endDate
+                ? formatDisplayDate(reportDateRange.startDate)
+                : `${formatDisplayDate(reportDateRange.startDate)} – ${formatDisplayDate(reportDateRange.endDate)}`
+            : "";
+
+    // Fetch all-staff report when the selected period changes
     const fetchAllStaffReport = async (silent = false) => {
-        if (filterMode === "custom" && (!customStartDate || !customEndDate)) return;
+        if (!reportDateRange) return;
         if (!silent) {
             setIsLoading(true);
             setError(null);
         }
         try {
             const res = await attendanceApi.getStaffMonthlyReport(
-                selectedMonth,
-                selectedYear,
+                "",
+                "",
                 "",
                 reportDateRange
             );
@@ -108,12 +143,12 @@ const HRDashboardPage = () => {
             setSingleEmployeeReport(null);
             return;
         }
-        if (filterMode === "custom" && (!customStartDate || !customEndDate)) return;
+        if (!reportDateRange) return;
         setIsLoadingSingle(true);
         try {
             const empRes = await attendanceApi.getStaffMonthlyReport(
-                selectedMonth,
-                selectedYear,
+                "",
+                "",
                 selectedEmployeeId,
                 reportDateRange
             );
@@ -131,11 +166,11 @@ const HRDashboardPage = () => {
 
     useEffect(() => {
         fetchAllStaffReport();
-    }, [selectedMonth, selectedYear, filterMode, customStartDate, customEndDate]);
+    }, [reportDateRange]);
 
     useEffect(() => {
         fetchSingleReport();
-    }, [selectedEmployeeId, selectedMonth, selectedYear, filterMode, customStartDate, customEndDate]);
+    }, [selectedEmployeeId, reportDateRange]);
 
     // Handle export to CSV
     const handleExport = () => {
@@ -154,9 +189,9 @@ const HRDashboardPage = () => {
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         const fileSuffix =
-            filterMode === "custom" && customStartDate && customEndDate
-                ? `${customStartDate}_to_${customEndDate}`
-                : `${selectedYear}_${selectedMonth}`;
+            reportDateRange?.startDate && reportDateRange?.endDate
+                ? `${reportDateRange.startDate}_to_${reportDateRange.endDate}`
+                : "report";
         link.setAttribute("download", `Attendance_Report_${fileSuffix}.csv`);
         document.body.appendChild(link);
         link.click();
@@ -267,7 +302,7 @@ const HRDashboardPage = () => {
             <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800">HR Attendance & Leave Dashboard</h2>
-                    <p className="text-xs text-slate-500">Track and view staff attendance metrics by month or custom date range.</p>
+                    <p className="text-xs text-slate-500">Track and view staff attendance metrics for today, this week, this month, or a custom date range.</p>
                 </div>
                 <button
                     onClick={handleExport}
@@ -283,39 +318,39 @@ const HRDashboardPage = () => {
             <div className="bg-white rounded-xl p-3 md:p-4 border border-slate-200/60 flex flex-wrap md:flex-nowrap gap-3 items-center justify-between">
                 <div className="flex flex-wrap items-center gap-3 w-full">
                     {/* Period Selector */}
-                    <div className="flex flex-col gap-1 min-w-[120px]">
-                        <label className="text-xs font-semibold text-slate-500 tracking-wider">Period</label>
+                    <div className="flex flex-col gap-1 min-w-[160px]">
+                        <label htmlFor="hr-period-filter" className="text-xs font-semibold text-slate-500 tracking-wider">Period</label>
                         <select
+                            id="hr-period-filter"
+                            aria-label="Select report period"
                             value={filterMode}
                             onChange={(e) => {
                                 const mode = e.target.value;
                                 if (mode === "custom") {
-                                    const range = monthDateRange(selectedMonth, selectedYear);
-                                    setCustomStartDate(range.start);
-                                    setCustomEndDate(range.end);
-                                } else {
-                                    if (customStartDate) {
-                                        const from = new Date(`${customStartDate}T00:00:00`);
-                                        if (!Number.isNaN(from.getTime())) {
-                                            setSelectedYear(String(from.getFullYear()));
-                                            setSelectedMonth(String(from.getMonth() + 1).padStart(2, "0"));
-                                        }
-                                    }
+                                    const current = reportDateRange
+                                        ? { start: reportDateRange.startDate, end: reportDateRange.endDate }
+                                        : getPresetDateRange("thisMonth");
+                                    setCustomStartDate(current.start);
+                                    setCustomEndDate(current.end);
                                 }
                                 setFilterMode(mode);
                             }}
-                            className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
+                            className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all cursor-pointer"
                         >
-                            <option value="month" className="text-slate-900 bg-white">Month</option>
-                            <option value="custom" className="text-slate-900 bg-white">Custom</option>
+                            {PERIOD_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value} className="text-slate-900 bg-white">
+                                    {opt.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
                     {filterMode === "custom" ? (
                         <>
                             <div className="flex flex-col gap-1 min-w-[140px]">
-                                <label className="text-xs font-semibold text-slate-500 tracking-wider">From</label>
+                                <label htmlFor="hr-custom-from" className="text-xs font-semibold text-slate-500 tracking-wider">From</label>
                                 <input
+                                    id="hr-custom-from"
                                     type="date"
                                     value={customStartDate}
                                     max={customEndDate || undefined}
@@ -330,8 +365,9 @@ const HRDashboardPage = () => {
                                 />
                             </div>
                             <div className="flex flex-col gap-1 min-w-[140px]">
-                                <label className="text-xs font-semibold text-slate-500 tracking-wider">To</label>
+                                <label htmlFor="hr-custom-to" className="text-xs font-semibold text-slate-500 tracking-wider">To</label>
                                 <input
+                                    id="hr-custom-to"
                                     type="date"
                                     value={customEndDate}
                                     min={customStartDate || undefined}
@@ -347,37 +383,14 @@ const HRDashboardPage = () => {
                             </div>
                         </>
                     ) : (
-                        <>
-                            {/* Year Selector */}
-                            <div className="flex flex-col gap-1 min-w-[100px]">
-                                <label className="text-xs font-semibold text-slate-500 tracking-wider">Year</label>
-                                <select
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(e.target.value)}
-                                    className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
-                                >
-                                    {[2024, 2025, 2026, 2027].map(yr => (
-                                        <option key={yr} value={yr} className="text-slate-900 bg-white">{yr}</option>
-                                    ))}
-                                </select>
+                        rangeDisplay && (
+                            <div className="flex flex-col gap-1 min-w-[140px]">
+                                <span className="text-xs font-semibold text-slate-500 tracking-wider">Dates</span>
+                                <span className="border border-slate-200 rounded-lg p-2 text-slate-600 bg-slate-50 text-xs font-medium whitespace-nowrap">
+                                    {rangeDisplay}
+                                </span>
                             </div>
-
-                            {/* Month Selector */}
-                            <div className="flex flex-col gap-1 min-w-[120px]">
-                                <label className="text-xs font-semibold text-slate-500 tracking-wider">Month</label>
-                                <select
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="border border-slate-200 rounded-lg p-2 text-slate-700 bg-slate-50 focus:bg-white outline-none focus:ring-1 focus:ring-slate-400 text-xs font-medium transition-all"
-                                >
-                                    {Array.from({ length: 12 }, (_, i) => {
-                                        const val = (i + 1).toString().padStart(2, "0");
-                                        const label = new Date(2026, i).toLocaleString("default", { month: "long" });
-                                        return <option key={val} value={val} className="text-slate-900 bg-white">{label}</option>;
-                                    })}
-                                </select>
-                            </div>
-                        </>
+                        )
                     )}
 
                     {/* Staff Autocomplete Filter */}
@@ -604,7 +617,13 @@ const HRDashboardPage = () => {
                         <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
                             <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
                             <h5 className="font-bold text-slate-700 text-xs">
-                                {filterMode === "custom" ? "Period Overtime" : "This Month's Overtime"} ({overtimeList.length} Staff)
+                                {filterMode === "today"
+                                    ? "Today's Overtime"
+                                    : filterMode === "thisWeek"
+                                        ? "This Week's Overtime"
+                                        : filterMode === "custom"
+                                            ? "Period Overtime"
+                                            : "This Month's Overtime"} ({overtimeList.length} Staff)
                             </h5>
                         </div>
                         <div className="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1.5 text-xs">
@@ -617,7 +636,13 @@ const HRDashboardPage = () => {
                                 ))
                             ) : (
                                 <p className="text-slate-400 font-medium text-xs py-1">
-                                    {filterMode === "custom" ? "No overtime logged in this period." : "No overtime logged this month."}
+                                    {filterMode === "today"
+                                        ? "No overtime logged today."
+                                        : filterMode === "thisWeek"
+                                            ? "No overtime logged this week."
+                                            : filterMode === "custom"
+                                                ? "No overtime logged in this period."
+                                                : "No overtime logged this month."}
                                 </p>
                             )}
                         </div>
@@ -657,7 +682,7 @@ const HRDashboardPage = () => {
             ) : !error && reportData && (
                 <div className={`bg-white min-h-[400px] flex flex-col overflow-y-auto h-full rounded-xl border border-slate-200/60 overflow-hidden ${isLoading ? "opacity-50 transition-opacity" : ""}`}>
                     <div className="p-3 border-b border-slate-200/60 flex items-center justify-between bg-slate-50/50">
-                        <h4 className="font-bold text-slate-700 text-sm">Monthly Report Details</h4>
+                        <h4 className="font-bold text-slate-700 text-sm">{periodLabel} Report Details</h4>
                         <span className="text-xs text-slate-400">Total {Array.isArray(reportData) ? reportData.length : 1} Staff</span>
                     </div>
 
@@ -700,7 +725,7 @@ const HRDashboardPage = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="7" className="py-6 text-center text-slate-400">No entries available for selected month.</td>
+                                        <td colSpan="7" className="py-6 text-center text-slate-400">No entries available for the selected period.</td>
                                     </tr>
                                 )}
                             </tbody>

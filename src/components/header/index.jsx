@@ -214,7 +214,8 @@ const DashboardHeader = () => {
     if (
       item.routeKey === "dashboard" ||
       item.routeKey === "board" ||
-      item.routeKey === "settings"
+      item.routeKey === "settings" ||
+      item.routeKey === "tickets"
     ) {
       return true;
     }

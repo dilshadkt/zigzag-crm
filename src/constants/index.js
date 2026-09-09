@@ -23,6 +23,7 @@ import {
   FiCheckCircle,
   FiTarget,
   FiInstagram,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { MdOutlineLeaderboard, MdPayments } from "react-icons/md";
 
@@ -78,6 +79,13 @@ export const SIDE_MENU = [
     icon: FiClipboard,
     path: "/projects",
     routeKey: "projects",
+  },
+  {
+    id: 16,
+    title: "Issues",
+    icon: FiAlertCircle,
+    path: "/tickets",
+    routeKey: "tickets",
   },
   {
     id: 3,
