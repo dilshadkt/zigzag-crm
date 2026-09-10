@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
     useGetLeadStats,
     useGetLeadStatuses,
@@ -32,6 +32,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     const [selectedDays, setSelectedDays] = useState(7);
     const [selectedProject, setSelectedProject] = useState(isClient ? clientProjectId : "all");
     const [selectedCampaign, setSelectedCampaign] = useState("all");
+    const [branchFilterState, setBranchFilterState] = useState("");
     const [showDatePicker, setShowDatePicker] = useState(false);
     const datePickerRef = useRef(null);
     const [dateRange, setDateRange] = useState([
@@ -74,6 +75,53 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     });
     const campaigns = campaignsData?.data || [];
 
+    // Prefer parent-provided branches (client portal); otherwise derive from selected project
+    const actualBranches = useMemo(() => {
+        let rawBranches = [];
+
+        if (branches && branches.length > 0) {
+            rawBranches = branches;
+        } else if (selectedProject && selectedProject !== "all" && projects.length > 0) {
+            const project = projects.find(
+                (p) => p._id === selectedProject || p.id === selectedProject
+            );
+            if (
+                Array.isArray(project?.customFields?.branchLogins) &&
+                project.customFields.branchLogins.length > 0
+            ) {
+                rawBranches = project.customFields.branchLogins;
+            } else if (Array.isArray(project?.customFields?.branches)) {
+                rawBranches = project.customFields.branches;
+            }
+        }
+
+        return (rawBranches || []).filter(
+            (b) => b && (typeof b === "string" ? b.trim() !== "" : true)
+        );
+    }, [branches, selectedProject, projects]);
+
+    const isPropDrivenBranches = Array.isArray(branches) && branches.length > 0;
+    const activeBranchFilter = branchFilter || branchFilterState;
+    const showBranchFilter =
+        actualBranches.length > 0 &&
+        (isPropDrivenBranches ? Boolean(onBranchFilterChange) : selectedProject !== "all");
+
+    const handleBranchFilterChange = (value) => {
+        if (onBranchFilterChange) {
+            onBranchFilterChange(value);
+        } else {
+            setBranchFilterState(value);
+        }
+    };
+
+    const clearBranchFilter = () => {
+        if (onBranchFilterChange) {
+            onBranchFilterChange("");
+        } else {
+            setBranchFilterState("");
+        }
+    };
+
     const { data: statsData, isLoading: statsLoading } = useGetLeadStats({
         days: ["custom", "today", "yesterday"].includes(selectedDays) ? "all" : selectedDays,
         timezoneOffset: new Date().getTimezoneOffset(),
@@ -83,13 +131,13 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
         }),
         project: selectedProject !== "all" ? selectedProject : undefined,
         campaign: selectedCampaign !== "all" ? selectedCampaign : undefined,
-        branch: branchFilter || undefined
+        branch: activeBranchFilter || undefined
     });
     const { data: statusData } = useGetLeadStatuses(selectedProject !== "all" ? selectedProject : null);
 
     const { data: clientTeamStatsData, isLoading: clientTeamStatsLoading } = useGetClientTeamStats(
         isClient ? selectedProject : null,
-        branchFilter
+        activeBranchFilter
     );
 
     const stats = statsData?.data;
@@ -171,6 +219,10 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
             queryParam += `&campaign=${encodeURIComponent(selectedCampaign)}`;
         }
 
+        if (activeBranchFilter) {
+            queryParam += `&branch=${encodeURIComponent(activeBranchFilter)}`;
+        }
+
         const targetPath = `/leads?${queryParam}`;
         if (onNavigateToLeads) {
             onNavigateToLeads(targetPath);
@@ -200,6 +252,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                                 onChange={(e) => {
                                     setSelectedProject(e.target.value);
                                     setSelectedCampaign("all");
+                                    clearBranchFilter();
                                 }}
                                 className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px]"
                             >
@@ -229,23 +282,27 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                         </select>
                     </div>
 
-                    {/* Branch Filter */}
-                    {branches && branches.length > 0 && onBranchFilterChange && (
-                        <div className="relative group flex-1 min-w-[150px]">
+                    {/* Branch Filter — shown when selected project has branches */}
+                    {showBranchFilter && (
+                        <div className="relative group">
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                <Building className="w-3.5 h-3.5" />
                             </div>
                             <select
-                                value={branchFilter || ""}
-                                onChange={(e) => onBranchFilterChange(e.target.value)}
-                                className="w-full pl-9 pr-8 py-2 bg-slate-50 hover:bg-slate-100 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none transition-all duration-300"
+                                value={activeBranchFilter || ""}
+                                onChange={(e) => handleBranchFilterChange(e.target.value)}
+                                className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px]"
                             >
                                 <option value="">All Branches</option>
-                                {branches.map((branch, idx) => (
-                                    <option key={branch._id || branch.id || idx} value={branch.name || branch.value || branch}>
-                                        {branch.name || branch.label || branch}
-                                    </option>
-                                ))}
+                                {actualBranches.map((branch, idx) => {
+                                    const value = typeof branch === "string" ? branch : (branch.name || branch.value || "");
+                                    const label = typeof branch === "string" ? branch : (branch.name || branch.label || value);
+                                    return (
+                                        <option key={branch._id || branch.id || value || idx} value={value}>
+                                            {label}
+                                        </option>
+                                    );
+                                })}
                             </select>
                         </div>
                     )}
@@ -333,11 +390,12 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                         )}
                     </div>
 
-                    {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
+                    {((!isClient && selectedProject !== "all") || selectedCampaign !== "all" || activeBranchFilter) && (
                         <button
                             onClick={() => {
                                 if (!isClient) setSelectedProject("all");
                                 setSelectedCampaign("all");
+                                clearBranchFilter();
                             }}
                             className="p-2 text-slate-400 hover:text-rose-500 bg-slate-50 rounded-xl transition-colors"
                             title="Clear Filters"
@@ -760,6 +818,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                                 isClient={isClient}
                                 selectedProject={selectedProject}
                                 selectedCampaign={selectedCampaign}
+                                selectedBranch={activeBranchFilter}
                             />
                         </div>
                     )}
@@ -778,6 +837,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                         isClient={isClient}
                         selectedProject={selectedProject}
                         selectedCampaign={selectedCampaign}
+                        selectedBranch={activeBranchFilter}
                     />
                 </div>
             )}
@@ -877,7 +937,21 @@ const LeadListItem = ({ lead, onClick, onCall, onMail, tag, tagColor, time }) =>
     );
 };
 
-const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, handleEmail, isClient, selectedProject, selectedCampaign }) => {
+const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, handleEmail, isClient, selectedProject, selectedCampaign, selectedBranch }) => {
+    const buildLeadsQuery = (extra = {}) => {
+        const params = new URLSearchParams();
+        Object.entries(extra).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "" && value !== "all") {
+                params.set(key, value);
+            }
+        });
+        if (selectedProject && selectedProject !== "all") params.set("project", selectedProject);
+        if (selectedCampaign && selectedCampaign !== "all") params.set("campaign", selectedCampaign);
+        if (selectedBranch) params.set("branch", selectedBranch);
+        const query = params.toString();
+        return query ? `/leads?${query}` : "/leads";
+    };
+
     return (
         <>
             {/* Hot Leads */}
@@ -909,7 +983,7 @@ const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, hand
                     )}
                 </div>
                 <button
-                    onClick={() => navigate(`/leads?minScore=${stats?.hotLeadThreshold || 70}`)}
+                    onClick={() => navigate(buildLeadsQuery({ minScore: stats?.hotLeadThreshold || 70 }))}
                     className="w-full py-2.5 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50"
                 >
                     View All High Score Leads
@@ -976,7 +1050,7 @@ const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, hand
                         Weak Leads (Re-engage)
                     </h3>
                     <button
-                        onClick={() => navigate('/leads')}
+                        onClick={() => navigate(buildLeadsQuery())}
                         className="text-[10px] text-[#3f8cff] font-bold hover:underline"
                     >
                         Bulk Follow-up
@@ -1002,7 +1076,7 @@ const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, hand
             </div>
 
             {/* Filtered Lead Results - New List Section */}
-            {((!isClient && selectedProject !== "all") || selectedCampaign !== "all") && (
+            {((!isClient && selectedProject !== "all") || selectedCampaign !== "all" || selectedBranch) && (
                 <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
                     <div className="p-4 border-b border-slate-50 bg-blue-50/10 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -1033,7 +1107,7 @@ const ActionableListsContent = ({ stats, navigate, onLeadClick, handleCall, hand
                         )}
                     </div>
                     <button
-                        onClick={() => navigate(`/leads?project=${selectedProject}&campaign=${selectedCampaign}`)}
+                        onClick={() => navigate(buildLeadsQuery())}
                         className="w-full py-3 text-[11px] font-bold text-[#3f8cff] hover:bg-slate-50 transition-colors border-t border-slate-50 flex items-center justify-center gap-2"
                     >
                         View Detailed Lead List
