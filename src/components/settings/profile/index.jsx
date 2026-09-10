@@ -606,7 +606,12 @@ rounded-3xl  flex flex-col "
                   placeholder="3"
                 />
               )}
-              <ProbationTrack employee={user} compact />
+              <ProbationTrack
+                employee={user}
+                employeeId={employeeId || user?._id}
+                compact
+                canEdit={canEditPositionDepartment && !isEmployeeOwnProfile}
+              />
               {canEditPositionDepartment && !isEmployeeOwnProfile && (
                 <div className="flex flex-col gap-2">
                   <button
@@ -629,7 +634,12 @@ rounded-3xl  flex flex-col "
           )}
           {!(values.isOnProbation || user?.isOnProbation) &&
             getProbationTrack(user)?.hasProbationHistory && (
-              <ProbationTrack employee={user} compact />
+              <ProbationTrack
+                employee={user}
+                employeeId={employeeId || user?._id}
+                compact
+                canEdit={canEditPositionDepartment && !isEmployeeOwnProfile}
+              />
             )}
         </div>
         <div className="flex flex-col gap-y-3 mt-7">

@@ -11,6 +11,7 @@ import {
   updatedProfile,
   extendEmployeeProbation,
   closeEmployeeProbation,
+  updateEmployeeProbationDates,
   updateProject,
   updateTaskById,
   updateTaskOrder,
@@ -423,6 +424,25 @@ export const useCloseEmployeeProbation = (employeeId) => {
   return useMutation({
     mutationKey: ["closeProbation", employeeId],
     mutationFn: (payload) => closeEmployeeProbation(employeeId, payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(["employee"]);
+      queryClient.invalidateQueries(["employees"]);
+      queryClient.invalidateQueries(["allEmployees"]);
+      queryClient.invalidateQueries(["myVacations"]);
+      queryClient.invalidateQueries(["employeeVacations"]);
+      if (data?.employee?._id) {
+        queryClient.setQueryData(["employee", data.employee._id], data);
+        queryClient.invalidateQueries(["employee", data.employee._id]);
+      }
+    },
+  });
+};
+
+export const useUpdateEmployeeProbationDates = (employeeId) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["updateProbationDates", employeeId],
+    mutationFn: (payload) => updateEmployeeProbationDates(employeeId, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries(["employee"]);
       queryClient.invalidateQueries(["employees"]);

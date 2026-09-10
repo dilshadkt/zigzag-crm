@@ -110,7 +110,11 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
     <div className="flex flex-col w-full h-full min-h-0 overflow-y-auto pr-1">
       {showProbationHistory && (
         <div className="mb-5 space-y-4">
-          <ProbationTrack employee={employeeRecord} />
+          <ProbationTrack
+            employee={employeeRecord}
+            employeeId={employeeId}
+            canEdit={canEdit}
+          />
           {onProbation && canEdit && (
             <div className="flex flex-wrap gap-2">
               <button

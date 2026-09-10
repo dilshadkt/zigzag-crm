@@ -240,7 +240,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
             />
             <RuleRow
               title="Request leave late"
-              detail="Leave asked on the same day or after it has already started. 1–6 days of notice is neutral."
+              detail="Leave asked on the same day or after it has already started. Sick leave is not penalized. 1–6 days of notice is neutral."
               value={settings.lateLeaveRequestPenaltyPoints}
               loss
             />

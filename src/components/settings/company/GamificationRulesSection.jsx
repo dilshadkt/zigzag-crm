@@ -231,7 +231,7 @@ const GamificationRulesSection = () => {
               <FiAlertCircle className="text-rose-500" /> Late Leave Penalty
             </label>
             <p className="text-xs text-gray-500 mb-1">
-              Deducted when approved leave is requested the same day or after it has already started. 1–6 days of notice is neutral.
+              Deducted when approved leave is requested the same day or after it has already started. Sick leave is not penalized. 1–6 days of notice is neutral.
             </p>
             <input
               type="number"

@@ -404,6 +404,14 @@ export const closeEmployeeProbation = async (employeeId, payload) => {
   return data;
 };
 
+export const updateEmployeeProbationDates = async (employeeId, payload) => {
+  const { data } = await apiClient.patch(
+    `/employee/${employeeId}/probation/dates`,
+    payload
+  );
+  return data;
+};
+
 export const createEmployee = async (employeeData) => {
   const { data } = await apiClient.post("/employee", employeeData);
   return data;
