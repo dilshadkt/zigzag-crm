@@ -716,7 +716,10 @@ const ActivityStreamPage = () => {
                           {getActivityUserName(activity.user)}
                         </h5>
                         <span className="text-xs text-gray-500 truncate">
-                          {activity.user?.position || "Team Member"}
+                          {activity.user?.position ||
+                            (activity.user?._id || activity.user?.id
+                              ? "Team Member"
+                              : "Project activity")}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500">

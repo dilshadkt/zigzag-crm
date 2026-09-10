@@ -19,6 +19,7 @@ import { loginSuccess } from "../../../store/slice/authSlice";
 import { toast } from "react-hot-toast";
 import ProbationTrack from "../../employee/ProbationTrack";
 import ExtendProbationModal from "../../employee/ExtendProbationModal";
+import CloseProbationModal from "../../employee/CloseProbationModal";
 import { DEFAULT_PROBATION_MONTHS } from "../../../utils/leaveEntitlement";
 
 const getDepartmentId = (department) => {
@@ -31,6 +32,7 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showExtendProbation, setShowExtendProbation] = useState(false);
+  const [showCloseProbation, setShowCloseProbation] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(user?.profileImage || "");
   const [imgError, setImgError] = useState(false);
@@ -596,13 +598,22 @@ rounded-3xl  flex flex-col "
               )}
               <ProbationTrack employee={user} compact />
               {canEditPositionDepartment && !isEmployeeOwnProfile && (
-                <button
-                  type="button"
-                  onClick={() => setShowExtendProbation(true)}
-                  className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-sm font-semibold"
-                >
-                  Extend probation
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCloseProbation(true)}
+                    className="w-full py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
+                  >
+                    Close probation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowExtendProbation(true)}
+                    className="w-full py-2 rounded-xl bg-amber-50 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-colors"
+                  >
+                    Extend probation
+                  </button>
+                </div>
               )}
             </>
           )}
@@ -698,6 +709,13 @@ rounded-3xl  flex flex-col "
           employee={user}
           employeeId={employeeId || user?._id}
           onClose={() => setShowExtendProbation(false)}
+        />
+      )}
+      {showCloseProbation && (
+        <CloseProbationModal
+          employee={user}
+          employeeId={employeeId || user?._id}
+          onClose={() => setShowCloseProbation(false)}
         />
       )}
     </div>

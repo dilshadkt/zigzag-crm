@@ -5,9 +5,12 @@ import { useAuth } from "../../hooks/useAuth";
 import Progress from "../shared/progress";
 import LeaveCard from "../shared/LeaveCard";
 import ProbationTrack from "./ProbationTrack";
+import ExtendProbationModal from "./ExtendProbationModal";
+import CloseProbationModal from "./CloseProbationModal";
 import {
   formatLeaveBalance,
   getLeaveLimits,
+  getProbationTrack,
   isOnProbation,
 } from "../../utils/leaveEntitlement";
 
@@ -21,6 +24,8 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
     sick_leave: "",
     remote_work: "",
   });
+  const [showExtendProbation, setShowExtendProbation] = useState(false);
+  const [showCloseProbation, setShowCloseProbation] = useState(false);
 
   const { data, isLoading } = useGetEmployeeVacations(
     employeeId,
@@ -34,6 +39,7 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
 
   const employeeRecord = employee || data?.employee || {};
   const onProbation = isOnProbation(employeeRecord);
+  const probationTrack = getProbationTrack(employeeRecord);
 
   if (isLoading) {
     return (
@@ -103,13 +109,34 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
       {onProbation ? (
         <div className="mb-5 space-y-4">
           <ProbationTrack employee={employeeRecord} />
+          {canEdit && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCloseProbation(true)}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
+              >
+                Close probation
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowExtendProbation(true)}
+                className="px-4 py-2.5 rounded-xl bg-amber-50 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-colors"
+              >
+                Extend probation
+              </button>
+            </div>
+          )}
           <div className="bg-white rounded-3xl p-6">
             <h3 className="text-base font-semibold text-gray-800 mb-1">
-              Don't have paid leave in probation
+              {probationTrack?.isExpired
+                ? "Probation period has ended"
+                : "Don't have paid leave in probation"}
             </h3>
             <p className="text-sm text-gray-500 mb-5">
-              Vacation, sick leave, and remote work are locked until probation
-              ends. Unpaid leave can still be requested.
+              {probationTrack?.isExpired
+                ? "Close probation to make this employee active and unlock paid leave, or extend the probation period."
+                : "Vacation, sick leave, and remote work are locked until probation ends. Unpaid leave can still be requested."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <LeaveBalanceCard
@@ -232,6 +259,21 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
           </div>
         )}
       </div>
+
+      {showExtendProbation && (
+        <ExtendProbationModal
+          employee={employeeRecord}
+          employeeId={employeeId}
+          onClose={() => setShowExtendProbation(false)}
+        />
+      )}
+      {showCloseProbation && (
+        <CloseProbationModal
+          employee={employeeRecord}
+          employeeId={employeeId}
+          onClose={() => setShowCloseProbation(false)}
+        />
+      )}
     </div>
   );
 };

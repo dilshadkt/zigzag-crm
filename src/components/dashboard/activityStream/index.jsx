@@ -383,7 +383,10 @@ const ActivityStream = () => {
                     {userName}
                   </h5>
                   <span className="text-xs text-[#91929E]">
-                    {activity.user?.position || "Team Member"}
+                    {activity.user?.position ||
+                      (activity.user?._id || activity.user?.id
+                        ? "Team Member"
+                        : "Project activity")}
                   </span>
                   <span className="text-xs text-[#91929E] mt-1">
                     • {formatDateTime(activity.timestamp)}

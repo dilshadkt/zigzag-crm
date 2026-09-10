@@ -12,16 +12,19 @@ const toDateKey = (value) => {
 };
 
 export const getActivityUserName = (user) => {
-  if (!user) return "Unknown user";
+  if (!user || typeof user !== "object") return "System update";
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
   if (name) return name;
   if (user.email) return user.email;
-  return "Unknown user";
+  // Empty user shell (deleted creator / missing populate) — not a real person
+  if (!user.id && !user._id) return "System update";
+  return "Former team member";
 };
 
 export const getActivityUserInitial = (user) => {
   const name = getActivityUserName(user);
-  return name === "Unknown user" ? "?" : name.charAt(0).toUpperCase();
+  if (name === "System update" || name === "Former team member") return "?";
+  return name.charAt(0).toUpperCase();
 };
 
 export const formatActivityDate = (value) => {
