@@ -12,6 +12,11 @@ const findPolicyQuota = (policy, id, nameIncludes, fallback) => {
   return item.yearlyQuota ?? fallback;
 };
 
+const findPolicyType = (policy, id, nameIncludes) =>
+  (policy || []).find(
+    (p) => p.id === id || p.name?.toLowerCase().includes(nameIncludes)
+  ) || null;
+
 const pickQuota = (customValue, fallback) => {
   if (customValue === null || customValue === undefined || customValue === "") {
     return fallback;
@@ -106,9 +111,111 @@ const diffDays = (later, earlier) => {
   );
 };
 
+const remainingMonthsInclusive = (fromDate) => 12 - fromDate.getMonth();
+
+const remainingQuartersInclusive = (fromDate) => {
+  const quarter = Math.floor(fromDate.getMonth() / 3) + 1;
+  return 5 - quarter;
+};
+
+const remainingHalvesInclusive = (fromDate) =>
+  fromDate.getMonth() < 6 ? 2 : 1;
+
+const roundHalf = (value) => Math.round(Number(value) * 2) / 2;
+
+export const prorateYearlyQuota = (yearlyQuota, distribution, fromDate) => {
+  const quota = Number(yearlyQuota);
+  if (!Number.isFinite(quota) || quota <= 0) return 0;
+  if (!fromDate) return roundHalf(quota);
+
+  const from = startOfDay(fromDate);
+  const dist = distribution || "none";
+  let amount = 0;
+
+  if (dist === "monthly") {
+    amount = (quota / 12) * remainingMonthsInclusive(from);
+  } else if (dist === "quarterly") {
+    amount = (quota / 4) * remainingQuartersInclusive(from);
+  } else if (dist === "half-yearly") {
+    amount = (quota / 2) * remainingHalvesInclusive(from);
+  } else {
+    const year = from.getFullYear();
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
+    const totalDays = diffDays(yearEnd, yearStart) + 1;
+    const remainingDays = Math.max(0, diffDays(yearEnd, from) + 1);
+    amount = quota * (remainingDays / totalDays);
+  }
+
+  return roundHalf(Math.max(0, amount));
+};
+
+export const calculateLeaveQuotasFromProbationEnd = (
+  policy = [],
+  fromDate = new Date()
+) => {
+  const casual = findPolicyType(policy, "casual", "casual");
+  const sick = findPolicyType(policy, "sick", "sick");
+  const unpaid = findPolicyType(policy, "unpaid", "unpaid");
+  const from = startOfDay(fromDate || new Date());
+
+  const vacation = prorateYearlyQuota(
+    casual?.yearlyQuota ?? 12,
+    casual?.distribution || "monthly",
+    from
+  );
+  const sickLeave = prorateYearlyQuota(
+    sick?.yearlyQuota ?? 8,
+    sick?.distribution || "quarterly",
+    from
+  );
+
+  const unpaidQuota = Number(unpaid?.yearlyQuota);
+  const unpaidLeave =
+    !Number.isFinite(unpaidQuota) || unpaidQuota <= 0
+      ? null
+      : prorateYearlyQuota(unpaidQuota, unpaid?.distribution || "none", from);
+
+  return {
+    vacation,
+    sick_leave: sickLeave,
+    remote_work: null,
+    unpaid_leave: unpaidLeave,
+    meta: {
+      fromDate: from.toISOString(),
+      year: from.getFullYear(),
+      breakdown: [
+        {
+          id: "casual",
+          name: casual?.name || "Casual Leave",
+          employeeKey: "vacation",
+          yearlyQuota: casual?.yearlyQuota ?? 12,
+          distribution: casual?.distribution || "monthly",
+          granted: vacation,
+        },
+        {
+          id: "sick",
+          name: sick?.name || "Sick Leave",
+          employeeKey: "sick_leave",
+          yearlyQuota: sick?.yearlyQuota ?? 8,
+          distribution: sick?.distribution || "quarterly",
+          granted: sickLeave,
+        },
+        {
+          id: "unpaid",
+          name: unpaid?.name || "Unpaid Leave",
+          employeeKey: "unpaid_leave",
+          yearlyQuota: unpaid?.yearlyQuota ?? 0,
+          distribution: unpaid?.distribution || "none",
+          granted: unpaidLeave,
+        },
+      ],
+    },
+  };
+};
+
 export const getProbationTrack = (employee) => {
   if (!employee) return null;
-  if (employee.probationTrack) return employee.probationTrack;
 
   const createdAt = employee.createdAt ? new Date(employee.createdAt) : null;
   const joiningDate = employee.joiningDate
@@ -124,20 +231,39 @@ export const getProbationTrack = (employee) => {
   const originalEndDate = startDate
     ? addMonths(startDate, originalPeriodMonths)
     : null;
-  const endDate = employee.probationEndDate
+  const scheduledEndDate = employee.probationEndDate
     ? new Date(employee.probationEndDate)
     : originalEndDate;
+  const closedAt = employee.probationClosedAt
+    ? new Date(employee.probationClosedAt)
+    : null;
+  const endDate = closedAt || scheduledEndDate;
   const today = startOfDay(new Date());
+  const hasProbationHistory = Boolean(
+    employee.isOnProbation ||
+      closedAt ||
+      employee.probationStartDate ||
+      employee.probationEndDate ||
+      (employee.probationExtensions || []).length
+  );
 
   return {
     isOnProbation: Boolean(employee.isOnProbation),
+    hasProbationHistory,
+    isCompleted:
+      Boolean(closedAt) || (!employee.isOnProbation && hasProbationHistory),
     createdAt,
     joiningDate,
     startDate,
     originalPeriodMonths,
     originalEndDate,
+    scheduledEndDate,
+    closedAt,
     endDate,
-    remainingDays: endDate ? diffDays(endDate, today) : null,
+    closeReason: employee.probationCloseReason || "",
+    remainingDays: scheduledEndDate
+      ? diffDays(scheduledEndDate, today)
+      : null,
     elapsedDays:
       startDate != null
         ? Math.max(0, diffDays(today, startOfDay(startDate)))
@@ -148,8 +274,8 @@ export const getProbationTrack = (employee) => {
         : null,
     isExpired: Boolean(
       employee.isOnProbation &&
-        endDate &&
-        today.getTime() > startOfDay(endDate).getTime()
+        scheduledEndDate &&
+        today.getTime() > startOfDay(scheduledEndDate).getTime()
     ),
     extensions: employee.probationExtensions || [],
   };

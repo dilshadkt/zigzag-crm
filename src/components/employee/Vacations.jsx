@@ -6,7 +6,7 @@ import Progress from "../shared/progress";
 import LeaveCard from "../shared/LeaveCard";
 import ProbationTrack from "./ProbationTrack";
 import ExtendProbationModal from "./ExtendProbationModal";
-import CloseProbationModal from "./CloseProbationModal";
+import EndProbationModal from "./EndProbationModal";
 import {
   formatLeaveBalance,
   getLeaveLimits,
@@ -25,7 +25,7 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
     remote_work: "",
   });
   const [showExtendProbation, setShowExtendProbation] = useState(false);
-  const [showCloseProbation, setShowCloseProbation] = useState(false);
+  const [showEndProbation, setShowEndProbation] = useState(false);
 
   const { data, isLoading } = useGetEmployeeVacations(
     employeeId,
@@ -40,6 +40,8 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
   const employeeRecord = employee || data?.employee || {};
   const onProbation = isOnProbation(employeeRecord);
   const probationTrack = getProbationTrack(employeeRecord);
+  const showProbationHistory =
+    onProbation || Boolean(probationTrack?.hasProbationHistory);
 
   if (isLoading) {
     return (
@@ -106,17 +108,17 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
 
   return (
     <div className="flex flex-col w-full h-full min-h-0 overflow-y-auto pr-1">
-      {onProbation ? (
+      {showProbationHistory && (
         <div className="mb-5 space-y-4">
           <ProbationTrack employee={employeeRecord} />
-          {canEdit && (
+          {onProbation && canEdit && (
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setShowCloseProbation(true)}
+                onClick={() => setShowEndProbation(true)}
                 className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
               >
-                Close probation
+                End probation
               </button>
               <button
                 type="button"
@@ -127,39 +129,43 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
               </button>
             </div>
           )}
-          <div className="bg-white rounded-3xl p-6">
-            <h3 className="text-base font-semibold text-gray-800 mb-1">
-              {probationTrack?.isExpired
-                ? "Probation period has ended"
-                : "Don't have paid leave in probation"}
-            </h3>
-            <p className="text-sm text-gray-500 mb-5">
-              {probationTrack?.isExpired
-                ? "Close probation to make this employee active and unlock paid leave, or extend the probation period."
-                : "Vacation, sick leave, and remote work are locked until probation ends. Unpaid leave can still be requested."}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <LeaveBalanceCard
-                title="Unpaid Leave"
-                remaining={remaining.unpaid_leave ?? "∞"}
-                limit={limits.unpaid_leave}
-                color="#64748B"
-                subtitle={
-                  limits.unpaid_leave == null
-                    ? "Available during probation"
-                    : formatLeaveBalance(remaining.unpaid_leave, limits.unpaid_leave)
-                }
-              />
-              <div className="p-6 rounded-3xl bg-slate-50 border border-dashed border-slate-200">
-                <h4 className="font-semibold text-gray-700">Paid leave</h4>
-                <p className="text-xs text-gray-400 mt-1">
-                  Vacation, sick leave, and remote work unlock after probation.
-                </p>
+          {onProbation && (
+            <div className="bg-white rounded-3xl p-6">
+              <h3 className="text-base font-semibold text-gray-800 mb-1">
+                {probationTrack?.isExpired
+                  ? "Probation period has ended"
+                  : "Don't have paid leave in probation"}
+              </h3>
+              <p className="text-sm text-gray-500 mb-5">
+                {probationTrack?.isExpired
+                  ? "End probation to make this employee active and recalculate leave from company policy, or extend the probation period."
+                  : "Vacation, sick leave, and remote work are locked until probation ends. Unpaid leave can still be requested."}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <LeaveBalanceCard
+                  title="Unpaid Leave"
+                  remaining={remaining.unpaid_leave ?? "∞"}
+                  limit={limits.unpaid_leave}
+                  color="#64748B"
+                  subtitle={
+                    limits.unpaid_leave == null
+                      ? "Available during probation"
+                      : formatLeaveBalance(remaining.unpaid_leave, limits.unpaid_leave)
+                  }
+                />
+                <div className="p-6 rounded-3xl bg-slate-50 border border-dashed border-slate-200">
+                  <h4 className="font-semibold text-gray-700">Paid leave</h4>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Vacation, sick leave, and remote work unlock after probation ends.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
-      ) : (
+      )}
+
+      {!onProbation && (
         <>
           {canEdit && (
             <div className="flex justify-end mb-3">
@@ -267,11 +273,11 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
           onClose={() => setShowExtendProbation(false)}
         />
       )}
-      {showCloseProbation && (
-        <CloseProbationModal
+      {showEndProbation && (
+        <EndProbationModal
           employee={employeeRecord}
           employeeId={employeeId}
-          onClose={() => setShowCloseProbation(false)}
+          onClose={() => setShowEndProbation(false)}
         />
       )}
     </div>

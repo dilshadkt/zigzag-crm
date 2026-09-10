@@ -398,7 +398,7 @@ export const extendEmployeeProbation = async (employeeId, payload) => {
 
 export const closeEmployeeProbation = async (employeeId, payload) => {
   const { data } = await apiClient.patch(
-    `/employee/${employeeId}/probation/close`,
+    `/employee/${employeeId}/probation/end`,
     payload
   );
   return data;
