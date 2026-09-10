@@ -7,6 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 import AttendanceModal from "../../components/header/components/AttendanceModal";
 import GlobalNudges from "../../components/shared/GlobalNudges";
 import GlobalCreateFab from "../../components/shared/GlobalCreateFab";
+import PageSuspense from "../../components/shared/PageSuspense";
 
 const DashboardLayout = () => {
   const { user } = useAuth();
@@ -23,7 +24,9 @@ const DashboardLayout = () => {
       <section className={`w-full gap-y-4 md:gap-y-3 h-full overflow-auto flex flex-col relative ${isClient ? 'p-0' : 'p-2 md:p-3'}`}>
         {!isClient && <DashboardHeader />}
         <div className={`px-1 w-full h-full overflow-auto ${isClient ? 'p-4' : ''}`}>
-          <Outlet />
+          <PageSuspense>
+            <Outlet />
+          </PageSuspense>
         </div>
       </section>
 

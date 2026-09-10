@@ -13,6 +13,7 @@ import ProjectTimeline from "../projectTimeline";
 import ProjectBoard from "./components/ProjectBoard";
 import ProjectList from "./components/ProjectList";
 import ActionButton from "./components/ActionButton";
+import ProjectDetailsShimmer from "./components/ProjectDetailsShimmer";
 
 const ProjectDetails = ({
   setShowModalFilter,
@@ -40,7 +41,6 @@ const ProjectDetails = ({
   const { hasPermission } = usePermissions();
 
   const hasNoTasks = activeProject?.tasks?.length === 0;
-  let projectName = activeProject?.name?.trim().split(" ")?.join("_");
 
   // Employee allowed statuses
   const employeeAllowedStatuses = [
@@ -116,7 +116,8 @@ const ProjectDetails = ({
 
   // Function to refresh project data
   const handleRefresh = () => {
-    queryClient.invalidateQueries(["project", projectName]);
+    queryClient.invalidateQueries({ queryKey: ["projectDetails", activeProject?._id] });
+    queryClient.invalidateQueries({ queryKey: ["projectTasks", activeProject?._id] });
   };
 
   const handleTaskUpdate = async (taskId, newStatus, newOrder = null) => {
@@ -127,8 +128,8 @@ const ProjectDetails = ({
       }
 
       await updateTaskById(taskId, updateData);
-      // Invalidate and refetch the project data to update the UI
-      queryClient.invalidateQueries(["project", projectName]);
+      queryClient.invalidateQueries({ queryKey: ["projectTasks", activeProject?._id] });
+      queryClient.invalidateQueries({ queryKey: ["projectDetails", activeProject?._id] });
     } catch (error) {
       console.error("Failed to update task:", error);
       // Provide feedback to the user
@@ -153,25 +154,15 @@ const ProjectDetails = ({
     }
 
     // Optimistically update the UI immediately with simplified logic
-    queryClient.setQueryData(["project", projectName], (oldData) => {
-      if (!oldData || !oldData.tasks) return oldData;
-
-      // Create a new tasks array with the updated task
-      const updatedTasks = oldData.tasks.map((task) => {
-        if (task._id === taskId) {
-          return {
-            ...task,
-            status: targetStatus,
-          };
-        }
-        return task;
-      });
-
-      return {
-        ...oldData,
-        tasks: updatedTasks,
-      };
-    });
+    queryClient.setQueriesData(
+      { queryKey: ["projectTasks", activeProject?._id] },
+      (oldData) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return oldData.map((task) =>
+          task._id === taskId ? { ...task, status: targetStatus } : task
+        );
+      }
+    );
 
     // Background API call
     try {
@@ -197,7 +188,8 @@ const ProjectDetails = ({
       console.error("Failed to update task:", error);
 
       // Revert optimistic update
-      queryClient.invalidateQueries(["project", projectName]);
+      queryClient.invalidateQueries({ queryKey: ["projectTasks", activeProject?._id] });
+      queryClient.invalidateQueries({ queryKey: ["projectDetails", activeProject?._id] });
       alert("Failed to update task. Please try again.");
     }
   };
@@ -257,12 +249,7 @@ const ProjectDetails = ({
 
       {/* Task Sections */}
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center min-h-[200px]">
-          <div className="flex flex-col items-center gap-3 text-gray-400">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm">Loading project…</span>
-          </div>
-        </div>
+        <ProjectDetailsShimmer />
       ) : hasNoProject ? (
         <NoTask>There are no Projects</NoTask>
       ) : !activeProject ? (

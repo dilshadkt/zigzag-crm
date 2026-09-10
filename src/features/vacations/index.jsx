@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import ButtonToggle from "../../components/shared/buttons/buttonToggle";
 import Header from "../../components/shared/header";
-import { IoArrowUpOutline } from "react-icons/io5";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { RiCalendarCheckLine } from "react-icons/ri";
 import {
@@ -12,7 +11,7 @@ import {
   eachDayOfInterval,
   addMonths,
   subMonths,
-  isSameDay,
+  parseISO,
 } from "date-fns";
 import {
   useGetCompanyVacations,
@@ -25,10 +24,19 @@ import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 import { isOnProbation } from "../../utils/leaveEntitlement";
 
-// Internal feature components
-import Spinner from "./components/Spinner";
 import VacationCard from "./components/VacationCard";
 import VacationRequestModal from "./components/VacationRequestModal";
+import {
+  VacationCardsShimmer,
+  VacationCalendarShimmer,
+} from "./components/VacationShimmer";
+
+const LEAVE_LABELS = {
+  vacation: "Vacation",
+  sick_leave: "Sick leave",
+  remote_work: "Work remotely",
+  unpaid_leave: "Unpaid leave",
+};
 
 const Vacations = () => {
   const { isCompany, user } = useAuth();
@@ -36,6 +44,7 @@ const Vacations = () => {
   const [stat, setStat] = useState("Vacations");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [selectedLeave, setSelectedLeave] = useState(null);
 
   const canViewVacations = isCompany || hasPermission("vacations", "view");
   const canCreateVacationRequest =
@@ -50,15 +59,17 @@ const Vacations = () => {
 
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
+  const isVacationsTab = stat === "Vacations";
+  const isCalendarTab = stat === "Calendar";
 
   const { data: companyVacationsData, isLoading: isLoadingEmployees } =
-    useGetCompanyVacations(null, null);
+    useGetCompanyVacations(month, year, canViewVacations && isVacationsTab);
 
   const { data: calendarData, isLoading: isLoadingCalendar } =
-    useGetVacationsCalendar(month, year);
+    useGetVacationsCalendar(month, year, canViewVacations && isCalendarTab);
 
   const { data: myVacationsData, isLoading: isLoadingMyVacations } =
-    useGetMyVacations();
+    useGetMyVacations(!canViewVacations);
 
   const updateVacationMutation = useUpdateVacationStatus();
   const updateVacationRequestMutation = useUpdateVacationRequest();
@@ -74,8 +85,32 @@ const Vacations = () => {
     });
   };
 
-  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const handleLeaveCellClick = (employeeData, date) => {
+    const targetDateStr = format(date, "yyyy-MM-dd");
+    const vacationOnDate = employeeData?.dates?.find(
+      (d) => d.date === targetDateStr
+    );
+    if (!vacationOnDate) {
+      setSelectedLeave(null);
+      return;
+    }
+
+    setSelectedLeave({
+      employeeName: employeeData.employee?.name,
+      date: targetDateStr,
+      type: vacationOnDate.type,
+      status: vacationOnDate.status,
+    });
+  };
+
+  const handlePrevMonth = () => {
+    setSelectedLeave(null);
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+  const handleNextMonth = () => {
+    setSelectedLeave(null);
+    setCurrentDate(addMonths(currentDate, 1));
+  };
   const firstDay = startOfMonth(currentDate);
   const lastDay = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: firstDay, end: lastDay });
@@ -184,12 +219,18 @@ const Vacations = () => {
     );
   }
 
+  const isTabLoading = canViewVacations
+    ? isVacationsTab
+      ? isLoadingEmployees
+      : isLoadingCalendar
+    : isLoadingMyVacations;
+
   const renderStat = () => {
-    if (isLoadingEmployees || isLoadingCalendar || isLoadingMyVacations) {
-      return (
-        <div className="w-full h-64 flex items-center justify-center">
-          <Spinner />
-        </div>
+    if (isTabLoading) {
+      return isVacationsTab ? (
+        <VacationCardsShimmer />
+      ) : (
+        <VacationCalendarShimmer />
       );
     }
 
@@ -331,13 +372,14 @@ const Vacations = () => {
                         <div
                           title={formattedDate(date)}
                           key={idx}
+                          onClick={() => handleLeaveCellClick(employee, date)}
                           style={{
                             borderColor: isModifiedOut ? "#E6EBF5" : bgColor,
                           }}
                           className={`min-w-[28px] overflow-hidden w-full h-10 rounded-[7px] 
                           ${!isApproved && `border-[1.55px]`}
                           ${isModifiedOut && "border-dashed border-gray-300"}
-                          flexCenter flex-col`}
+                          flexCenter flex-col cursor-pointer`}
                         >
                           <div
                             style={{
@@ -363,7 +405,31 @@ const Vacations = () => {
           <div className="min-h-[75px] w-full flexStart">
             <div className="min-w-[240px] h-full border-r border-[#E6EBF5]"></div>
             <div className="w-full h-full px-7 flexCenter">
-              <div className="w-full grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="w-full flex flex-col gap-3">
+                {selectedLeave && (
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-4 py-2">
+                    <div className="text-[12px] text-slate-600">
+                      <span className="font-semibold text-slate-800">
+                        {selectedLeave.employeeName}
+                      </span>
+                      {" · "}
+                      {format(parseISO(selectedLeave.date), "MMM dd, yyyy")}
+                      {" · "}
+                      {LEAVE_LABELS[selectedLeave.type] || selectedLeave.type}
+                      {" · "}
+                      <span className="capitalize">
+                        {selectedLeave.status.replace("_", " ")}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedLeave(null)}
+                      className="text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+                <div className="w-full grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="flex flex-col gap-y-1">
                   <span className="text-sm text-[#7D8592] font-medium">
                     Sick Leave
@@ -407,6 +473,7 @@ const Vacations = () => {
                     <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-slate-500 bg-slate-500/50"></div>
                     <span>Pending</span>
                   </div>
+                </div>
                 </div>
               </div>
             </div>

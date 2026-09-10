@@ -1,5 +1,18 @@
-import { isSameDay } from "date-fns";
+import { useMemo } from "react";
 import { useGetCalendarData } from "../api";
+
+const dateKey = (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+};
+
+const emptyDay = () => ({
+  projects: [],
+  tasks: [],
+  subtasks: [],
+  birthdays: [],
+});
 
 export const useCalendarDataOptimized = (
   currentDate,
@@ -10,92 +23,84 @@ export const useCalendarDataOptimized = (
 ) => {
   const { data: calendarData, isLoading } = useGetCalendarData(currentDate);
 
-  // Get items (projects, tasks, birthdays) for a specific date
+  const indexedDays = useMemo(() => {
+    const days = new Map();
+    const payload = calendarData?.data;
+    if (!payload) return days;
+
+    const ensure = (key) => {
+      if (!days.has(key)) days.set(key, emptyDay());
+      return days.get(key);
+    };
+
+    (payload.projects || []).forEach((project) => {
+      if (!project?.endDate) return;
+      ensure(dateKey(project.endDate)).projects.push(project);
+    });
+
+    (payload.tasks || []).forEach((task) => {
+      if (!task?.dueDate) return;
+      const bucket = ensure(dateKey(task.dueDate));
+      if (task.parentTask || task.itemType === "subtask") {
+        bucket.subtasks.push(task);
+      } else {
+        bucket.tasks.push(task);
+      }
+    });
+
+    (payload.birthdays || []).forEach((birthday) => {
+      const dob = birthday.dob ? new Date(birthday.dob) : null;
+      if (!dob || Number.isNaN(dob.getTime())) return;
+      const key = `${currentDate.getFullYear()}-${dob.getMonth() + 1}-${dob.getDate()}`;
+      ensure(key).birthdays.push(birthday);
+    });
+
+    return days;
+  }, [calendarData, currentDate]);
+
   const getItemsForDate = (date) => {
-    if (!date || !calendarData?.data) {
-      return { projects: [], tasks: [], subtasks: [], birthdays: [] };
-    }
-
-    // Ensure date is a proper Date object
+    if (!date) return emptyDay();
     const dateObj = date instanceof Date ? date : new Date(date);
+    const bucket = indexedDays.get(dateKey(dateObj)) || emptyDay();
 
-    const { projects, tasks, birthdays } = calendarData.data;
-
-    // Filter projects for this date
-    let projectsForDate =
-      !publishPendingOnly && eventFilters.projects && projects
-        ? projects.filter((project) =>
-          isSameDay(new Date(project.endDate), dateObj)
-        )
-        : [];
-
-    // Apply project filter to projects themselves if selected
-    if (projectFilter && projectFilter.length > 0) {
-      projectsForDate = projectsForDate.filter((project) =>
+    let projects =
+      !publishPendingOnly && eventFilters.projects ? [...bucket.projects] : [];
+    if (projectFilter?.length) {
+      projects = projects.filter((project) =>
         projectFilter.includes(project._id || project.id)
       );
     }
 
-    // Filter tasks for this date
-    let allTasks = [];
-    if (tasks) {
-      allTasks = tasks.filter((task) =>
-        isSameDay(new Date(task.dueDate), dateObj)
+    let allTasks = [...bucket.tasks, ...bucket.subtasks];
+    if (publishPendingOnly) {
+      allTasks = allTasks.filter((task) => task.isPublishPending === true);
+    }
+    if (assignerFilter?.length) {
+      allTasks = allTasks.filter((task) =>
+        (task.assignedTo || []).some((assignee) =>
+          assignerFilter.includes(assignee._id)
+        )
       );
-
-      // Apply publishPendingOnly filter
-      if (publishPendingOnly) {
-        allTasks = allTasks.filter(task => task.isPublishPending === true);
-      }
-
-      // Apply assigner filter if selected
-      if (assignerFilter && assignerFilter.length > 0) {
-        allTasks = allTasks.filter((task) => {
-          if (!task.assignedTo || !Array.isArray(task.assignedTo)) {
-            return false;
-          }
-          return task.assignedTo.some((assignee) =>
-            assignerFilter.includes(assignee._id)
-          );
-        });
-      }
-
-      // Apply project filter if selected
-      if (projectFilter && projectFilter.length > 0) {
-        allTasks = allTasks.filter((task) => {
-          if (!task.project || (!task.project._id && !task.project.id)) {
-            return false;
-          }
-          const taskId = task.project._id || task.project.id;
-          return projectFilter.includes(taskId);
-        });
-      }
+    }
+    if (projectFilter?.length) {
+      allTasks = allTasks.filter((task) => {
+        const projectId = task.project?._id || task.project?.id;
+        return projectId && projectFilter.includes(projectId);
+      });
     }
 
-    // Separate parent tasks and subtasks
-    const parentTasks = eventFilters.tasks || publishPendingOnly
-      ? allTasks.filter((task) => !task.parentTask)
-      : [];
-
-    const subtasks = (!publishPendingOnly && eventFilters.subtasks)
-      ? allTasks.filter((task) => task.parentTask)
-      : [];
-
-    // Filter birthdays for this date
-    const birthdaysForDate =
-      !publishPendingOnly && eventFilters.birthdays && birthdays
-        ? birthdays.filter((birthday) => {
-            const dobDate = new Date(birthday.dob);
-            return dobDate.getDate() === dateObj.getDate();
-          })
+    const tasks =
+      eventFilters.tasks || publishPendingOnly
+        ? allTasks.filter((task) => !task.parentTask && task.itemType !== "subtask")
         : [];
+    const subtasks =
+      !publishPendingOnly && eventFilters.subtasks
+        ? allTasks.filter((task) => task.parentTask || task.itemType === "subtask")
+        : [];
+    const birthdays =
+      !publishPendingOnly && eventFilters.birthdays ? [...bucket.birthdays] : [];
 
-    return {
-      projects: projectsForDate,
-      tasks: parentTasks,
-      subtasks,
-      birthdays: birthdaysForDate,
-    };
+    return { projects, tasks, subtasks, birthdays };
   };
 
   return {
@@ -110,6 +115,10 @@ export const useCalendarDataOptimized = (
       birthdaysData: calendarData?.data?.birthdays
         ? { birthdays: calendarData.data.birthdays }
         : null,
+      filterOptions: calendarData?.data?.filterOptions || {
+        assigners: [],
+        projects: [],
+      },
     },
     isLoading,
   };

@@ -91,23 +91,37 @@ const ProbationTrack = ({
     probationClosedAt: "",
   });
 
+  const joiningDateKey = toInputDate(track?.joiningDate);
+  const startDateKey = toInputDate(track?.startDate);
+  const scheduledEndDateKey = toInputDate(track?.scheduledEndDate);
+  const closedAtKey = toInputDate(track?.closedAt);
+  const endDateKey = toInputDate(track?.endDate);
+  const isCompleted = Boolean(track?.isCompleted);
+
   useEffect(() => {
-    if (!track) return;
-    setDraft({
-      joiningDate: toInputDate(track.joiningDate),
-      probationStartDate: toInputDate(track.startDate),
-      probationEndDate: toInputDate(track.scheduledEndDate || track.endDate),
-      probationClosedAt: toInputDate(
-        track.closedAt || (track.isCompleted ? track.endDate : null)
-      ),
-    });
+    if (isEditing) return;
+    const nextDraft = {
+      joiningDate: joiningDateKey,
+      probationStartDate: startDateKey,
+      probationEndDate: scheduledEndDateKey || endDateKey,
+      probationClosedAt: closedAtKey || (isCompleted ? endDateKey : ""),
+    };
+    setDraft((prev) =>
+      prev.joiningDate === nextDraft.joiningDate &&
+      prev.probationStartDate === nextDraft.probationStartDate &&
+      prev.probationEndDate === nextDraft.probationEndDate &&
+      prev.probationClosedAt === nextDraft.probationClosedAt
+        ? prev
+        : nextDraft
+    );
   }, [
-    track?.joiningDate,
-    track?.startDate,
-    track?.scheduledEndDate,
-    track?.closedAt,
-    track?.endDate,
-    track?.isCompleted,
+    isEditing,
+    joiningDateKey,
+    startDateKey,
+    scheduledEndDateKey,
+    closedAtKey,
+    endDateKey,
+    isCompleted,
     employee?._id,
   ]);
 

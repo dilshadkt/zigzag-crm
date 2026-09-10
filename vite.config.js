@@ -18,6 +18,21 @@ export default defineConfig({
     outDir: "dist",
     assetsDir: "assets",
     sourcemap: true,
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        // Split the heavy vendor libraries out of the single entry chunk so the
+        // first load downloads less and the parts that rarely change stay cached.
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          state: ["@reduxjs/toolkit", "react-redux", "@tanstack/react-query"],
+          charts: ["recharts"],
+          sheets: ["xlsx"],
+          motion: ["framer-motion"],
+          utils: ["date-fns", "lodash"],
+        },
+      },
+    },
   },
   resolve: {
     alias: {

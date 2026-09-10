@@ -1,9 +1,21 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import DropZone from "./DropZone";
 import { statusConfig } from "./StatusConfig";
+import { BoardCardShimmer, BoardColumnShimmer } from "./BoardSkeleton";
 
-const DroppableColumn = ({ id, title, children, onDrop, tasks }) => {
+const DroppableColumn = ({
+    id,
+    title,
+    children,
+    onDrop,
+    tasks,
+    emptyLabel,
+    hasMore = false,
+    isFetchingMore = false,
+    isLoading = false,
+    onLoadMore,
+}) => {
     const [isOver, setIsOver] = useState(false);
     const [draggedTask, setDraggedTask] = useState(null);
     const parentRef = useRef(null);
@@ -59,12 +71,36 @@ const DroppableColumn = ({ id, title, children, onDrop, tasks }) => {
     const rowVirtualizer = useVirtualizer({
         count: childrenArray.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 160, // Increased height to prevent overlap
+        estimateSize: () => 160,
         overscan: 5,
     });
 
     const virtualRows = rowVirtualizer.getVirtualItems();
     const totalSize = rowVirtualizer.getTotalSize();
+    const lastVirtualIndex = virtualRows[virtualRows.length - 1]?.index;
+
+    useEffect(() => {
+        if (
+            lastVirtualIndex == null ||
+            !hasMore ||
+            isFetchingMore ||
+            isLoading ||
+            !onLoadMore ||
+            childrenArray.length === 0
+        ) {
+            return;
+        }
+        if (lastVirtualIndex >= childrenArray.length - 4) {
+            onLoadMore();
+        }
+    }, [
+        lastVirtualIndex,
+        childrenArray.length,
+        hasMore,
+        isFetchingMore,
+        isLoading,
+        onLoadMore,
+    ]);
 
     const config = statusConfig[id];
 
@@ -91,52 +127,69 @@ const DroppableColumn = ({ id, title, children, onDrop, tasks }) => {
                 className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
                 data-droppable-id={id}
             >
-                <DropZone
-                    onDrop={onDrop}
-                    position={0}
-                    status={id}
-                    isVisible={isOver && draggedTask?.sourceStatus !== id}
-                />
+                {isLoading ? (
+                    <BoardColumnShimmer />
+                ) : (
+                    <>
+                        <DropZone
+                            onDrop={onDrop}
+                            position={0}
+                            status={id}
+                            isVisible={isOver && draggedTask?.sourceStatus !== id}
+                        />
 
-                <div
-                    style={{
-                        height: `${totalSize}px`,
-                        width: "100%",
-                        position: "relative",
-                    }}
-                >
-                    {virtualRows.map((virtualRow) => (
                         <div
-                            key={virtualRow.key}
-                            data-index={virtualRow.index}
-                            ref={rowVirtualizer.measureElement}
                             style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
+                                height: `${totalSize}px`,
                                 width: "100%",
-                                transform: `translateY(${virtualRow.start}px)`,
-                                paddingBottom: "8px", // gap-y-2 (8px)
+                                position: "relative",
                             }}
                         >
-                            {childrenArray[virtualRow.index]}
-                            <DropZone
-                                onDrop={onDrop}
-                                position={virtualRow.index + 1}
-                                status={id}
-                                isVisible={isOver}
-                            />
+                            {virtualRows.map((virtualRow) => (
+                                <div
+                                    key={virtualRow.key}
+                                    data-index={virtualRow.index}
+                                    ref={rowVirtualizer.measureElement}
+                                    style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        transform: `translateY(${virtualRow.start}px)`,
+                                        paddingBottom: "8px",
+                                    }}
+                                >
+                                    {childrenArray[virtualRow.index]}
+                                    <DropZone
+                                        onDrop={onDrop}
+                                        position={virtualRow.index + 1}
+                                        status={id}
+                                        isVisible={isOver}
+                                    />
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
 
-                {childrenArray.length === 0 && (
-                    <DropZone
-                        onDrop={onDrop}
-                        position={0}
-                        status={id}
-                        isVisible={isOver}
-                    />
+                        {childrenArray.length === 0 && (
+                            <>
+                                <div className="text-center text-gray-500 py-4 text-sm">
+                                    {emptyLabel || "No tasks"}
+                                </div>
+                                <DropZone
+                                    onDrop={onDrop}
+                                    position={0}
+                                    status={id}
+                                    isVisible={isOver}
+                                />
+                            </>
+                        )}
+
+                        {isFetchingMore && (
+                            <div className="pt-1 pb-3">
+                                <BoardCardShimmer />
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

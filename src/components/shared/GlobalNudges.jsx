@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { getNudges } from "../../api/service";
@@ -14,7 +14,6 @@ const GlobalNudges = () => {
   const [toastVisibleIds, setToastVisibleIds] = useState([]);
   const isInitialFetch = React.useRef(true);
   const seenReviewNudgeIds = React.useRef(new Set());
-  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -75,7 +74,10 @@ const GlobalNudges = () => {
 
   useEffect(() => {
     fetchNudges();
-    const interval = setInterval(fetchNudges, 60000);
+    // Every open tab was hitting /performance/nudges every 60s and again on
+    // every route change. That alone can saturate an M0 free cluster. Rely on
+    // sockets for immediacy; poll only as a backup.
+    const interval = setInterval(fetchNudges, 1000 * 60 * 3);
 
     const handleUpdate = () => {
       fetchNudges();
@@ -98,13 +100,6 @@ const GlobalNudges = () => {
       window.removeEventListener("taskUpdated", handleUpdate);
     };
   }, []);
-
-  useEffect(() => {
-    // Only fetch if it's not the initial load, since the empty array useEffect handles the initial one.
-    if (!isInitialFetch.current) {
-       fetchNudges();
-    }
-  }, [location.pathname]);
 
   useEffect(() => {
     const visible = nudges.length > 0;

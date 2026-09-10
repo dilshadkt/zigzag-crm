@@ -78,9 +78,19 @@ const CalendarDay = ({
       {item?.fullDate && (
         <div className="w-full flex flex-col gap-1 mt-6">
           {isLoading ? (
-            <div className="animate-pulse">
-              <div className="h-6 bg-gray-200 rounded-md mb-1"></div>
-              <div className="h-6 bg-gray-200 rounded-md"></div>
+            <div className="flex flex-col gap-1">
+              {[0, 1].map((index) => (
+                <div
+                  key={index}
+                  className="rounded-md px-2 py-1.5 border border-gray-100 bg-white"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%]" />
+                    <div className="h-3 flex-1 rounded bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%]" />
+                    <div className="h-2.5 w-10 rounded bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%]" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <CalendarDayContent

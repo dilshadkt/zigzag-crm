@@ -4,6 +4,7 @@ import { FaCheck, FaTimes, FaEdit } from "react-icons/fa";
 import { format } from "date-fns";
 import ApprovalMenu from "./ApprovalMenu";
 import ModifyDatesModal from "./ModifyDatesModal";
+import { useGetEmployeeVacations } from "../hooks/useVacations";
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -28,6 +29,20 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+const mapEmployeeVacations = (vacations = []) =>
+  vacations.map((vacation) => ({
+    id: vacation.id || vacation._id,
+    type: vacation.type,
+    status: vacation.status,
+    startDate: vacation.startDate,
+    endDate: vacation.endDate,
+    originalStartDate: vacation.originalStartDate,
+    originalEndDate: vacation.originalEndDate,
+    project: vacation.project
+      ? { id: vacation.project.id || vacation.project._id, name: vacation.project.name }
+      : null,
+  }));
+
 const VacationCard = ({
   item,
   updateStatus,
@@ -36,12 +51,25 @@ const VacationCard = ({
   onModifyRequest,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [expandedRequests, setExpandedRequests] = useState(true); // Default expanded for better visibility
+  const [showAllRequests, setShowAllRequests] = useState(false);
   const [modifyingRequest, setModifyingRequest] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
-  const pendingRequests = item.vacationRequests.filter((req) => req.status === "pending");
-  const otherRequests = item.vacationRequests.filter((req) => req.status !== "pending");
+  const employeeId = item.employee?.id || item.employee?._id;
+  const { data: extraData, isLoading: isLoadingExtra } = useGetEmployeeVacations(
+    showAllRequests ? employeeId : null
+  );
+
+  const vacationRequests = showAllRequests && extraData?.vacations
+    ? mapEmployeeVacations(extraData.vacations)
+    : item.vacationRequests || [];
+
+  const pendingRequests = vacationRequests.filter((req) => req.status === "pending");
+  const otherRequests = vacationRequests.filter((req) => req.status !== "pending");
+  const visibleRequests = showAllRequests
+    ? [...pendingRequests, ...otherRequests]
+    : [...pendingRequests, ...otherRequests.slice(0, 2)];
+  const hasMoreRequests = item.hasMoreRequests || otherRequests.length > 2;
 
   const handleApprove = async (requestId) => {
     setProcessingId(requestId);
@@ -138,10 +166,10 @@ const VacationCard = ({
       </div>
 
       {/* Requests Section */}
-      {(pendingRequests.length > 0 || otherRequests.length > 0) && (
+      {(pendingRequests.length > 0 || otherRequests.length > 0 || hasMoreRequests) && (
         <div className="p-3 border-t border-gray-50 bg-white">
           <div className="space-y-2">
-            {[...pendingRequests, ...otherRequests.slice(0, 2)].map((request) => (
+            {visibleRequests.map((request) => (
               <div
                 key={request.id}
                 className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
@@ -227,6 +255,18 @@ const VacationCard = ({
               </div>
             ))}
           </div>
+          {(hasMoreRequests || showAllRequests) && (
+            <button
+              onClick={() => setShowAllRequests((open) => !open)}
+              className="mt-2 w-full text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 py-1.5"
+            >
+              {isLoadingExtra
+                ? "Loading..."
+                : showAllRequests
+                ? "Show less"
+                : `Show all requests${item.requestCount ? ` (${item.requestCount})` : ""}`}
+            </button>
+          )}
         </div>
       )}
 

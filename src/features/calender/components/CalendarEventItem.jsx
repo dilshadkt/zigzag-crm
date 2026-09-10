@@ -187,7 +187,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
         <div className="absolute inset-0 flex z-0">
           {subtasksCount.list.map((st, idx) => {
             const isCompleted = ["completed", "approved", "client-approved"].includes(st.status);
-            const firstLetter = st.title ? st.title.charAt(0).toUpperCase() : "";
+            const firstLetter = st.letter || (st.title ? st.title.charAt(0).toUpperCase() : "");
             
             return (
               <div
@@ -333,10 +333,10 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
                     className="w-4 h-4 bg-gray-600 flexCenter text-[10px] uppercase
                      text-white font-semibold rounded-full"
                   >
-                    {assignee?.avatar === "/api/placeholder/32/32" ? (
-                      assignee?.name?.slice(0, 1)
+                    {assignee?.avatar ? (
+                      <img src={assignee.avatar} alt="" />
                     ) : (
-                      <img src={assignee?.avatar} alt="" />
+                      assignee?.name?.slice(0, 1) || assignee?.firstName?.slice(0, 1)
                     )}
                   </span>
                 ))}
@@ -531,10 +531,10 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
                     className="w-4 h-4 bg-green-600 flexCenter text-[10px] uppercase
                      text-white font-semibold rounded-full"
                   >
-                    {assignee?.avatar === "/api/placeholder/32/32" ? (
-                      assignee?.name?.slice(0, 1)
+                    {assignee?.avatar ? (
+                      <img src={assignee.avatar} alt="" />
                     ) : (
-                      <img src={assignee?.avatar} alt="" />
+                      assignee?.name?.slice(0, 1) || assignee?.firstName?.slice(0, 1)
                     )}
                   </span>
                 ))}

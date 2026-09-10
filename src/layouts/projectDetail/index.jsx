@@ -18,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 import MonthSelector from "../../components/shared/MonthSelector";
 import { getCurrentMonthKey } from "../../lib/dateUtils";
+import PageSuspense from "../../components/shared/PageSuspense";
 
 const ProjectDetailLayout = () => {
   // const { activeProject } = useProject();
@@ -122,14 +123,20 @@ const ProjectDetailLayout = () => {
           selectedMonth={selectedMonth}
         />
         {/* project overview page  */}
-        <Outlet
-          context={{
-            projectData: { ...projectData, tasks: tasksData || [] },
-            selectedMonth,
-            refetchTasks,
-            isLoading: projectLoading || tasksLoading,
-          }}
-        />
+        <PageSuspense
+          fallback={
+            <div className="md:col-span-4 h-full rounded-3xl bg-white animate-pulse" />
+          }
+        >
+          <Outlet
+            context={{
+              projectData: { ...projectData, tasks: tasksData || [] },
+              selectedMonth,
+              refetchTasks,
+              isLoading: projectLoading || tasksLoading,
+            }}
+          />
+        </PageSuspense>
         <AddTask
           isOpen={showModalTask}
           onSubmit={handleSubmit}

@@ -86,9 +86,11 @@ const Calendar = () => {
   const [selectedDateForScheduling, setSelectedDateForScheduling] =
     useState(null);
 
-  // Get projects and employees data for AddTask modal
-  const { data: projectsData } = useCompanyProjects(user?.company);
-  const { data: employeesData } = useGetAllEmployees();
+  // Get projects and employees data for AddTask modal only when it is open
+  const { data: projectsData } = useCompanyProjects(
+    showModalTask ? user?.company : null
+  );
+  const { data: employeesData } = useGetAllEmployees(showModalTask);
 
   const navigate = useNavigate();
   // Task creation hook

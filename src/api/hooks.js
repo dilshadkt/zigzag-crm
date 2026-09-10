@@ -191,13 +191,15 @@ export const useCustomers = () =>
     queryFn: () => apiClient.get("/customers").then((res) => res.data),
   });
 
-export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
+export const useCompanyProjects = (companyId, limit = 0, monthKey = null, options = {}) => {
+  const view = options.view || null;
   return useQuery({
-    queryKey: ["companyProjects", companyId, limit, monthKey],
+    queryKey: ["companyProjects", companyId, limit, monthKey, view],
     queryFn: () => {
       const params = new URLSearchParams();
       if (limit) params.append("limit", limit.toString());
       if (monthKey) params.append("monthKey", monthKey);
+      if (view) params.append("view", view);
       params.append("active", "true");
 
       const queryString = params.toString();
@@ -208,7 +210,7 @@ export const useCompanyProjects = (companyId, limit = 0, monthKey = null) => {
         )
         .then((res) => res.data?.projects);
     },
-    enabled: !!companyId,
+    enabled: options.enabled !== undefined ? !!companyId && options.enabled : !!companyId,
     staleTime: 5 * 60 * 1000, // 5 minutes fresh
     gcTime: 15 * 60 * 1000,  // 15 minutes cache
   });
@@ -244,38 +246,67 @@ export const useCompanyWorkDetailsByMonth = (companyId, monthKey = null) => {
   });
 };
 
-export const useProjectDetails = (projectId, monthKey = null) => {
+export const useProjectDetails = (projectId, monthKeyOrOptions = null) => {
+  const isOptions =
+    monthKeyOrOptions &&
+    typeof monthKeyOrOptions === "object" &&
+    !Array.isArray(monthKeyOrOptions);
+  const monthKey = isOptions
+    ? typeof monthKeyOrOptions.monthKey === "string"
+      ? monthKeyOrOptions.monthKey
+      : null
+    : monthKeyOrOptions;
+  const view = isOptions ? monthKeyOrOptions.view || null : null;
+  const enabledFromOptions = isOptions ? monthKeyOrOptions.enabled : undefined;
+
   return useQuery({
-    queryKey: ["projectDetails", projectId, monthKey],
+    queryKey: ["projectDetails", projectId, monthKey, view],
     queryFn: () => {
-      const url = monthKey
-        ? `/projects/${projectId}?monthKey=${monthKey}`
+      const params = new URLSearchParams();
+      if (monthKey) params.append("monthKey", monthKey);
+      if (view) params.append("view", view);
+      const queryString = params.toString();
+      const url = queryString
+        ? `/projects/${projectId}?${queryString}`
         : `/projects/${projectId}`;
       return apiClient.get(url).then((res) => res.data?.project || null);
     },
-    enabled: !!projectId,
+    enabled:
+      enabledFromOptions !== undefined
+        ? !!projectId && enabledFromOptions
+        : !!projectId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey?.[1] === projectId ? previousData : undefined,
   });
 };
 
 // New hook for fetching project tasks separately
-export const useProjectTasks = (projectId, monthKey = null) => {
+export const useProjectTasks = (projectId, monthKey = null, options = {}) => {
+  const view = options.view || null;
   return useQuery({
-    queryKey: ["projectTasks", projectId, monthKey],
+    queryKey: ["projectTasks", projectId, monthKey, view],
     queryFn: () => {
-      const url = monthKey
-        ? `/projects/${projectId}/tasks?monthKey=${monthKey}`
+      const params = new URLSearchParams();
+      if (monthKey) params.append("monthKey", monthKey);
+      if (view) params.append("view", view);
+      const queryString = params.toString();
+      const url = queryString
+        ? `/projects/${projectId}/tasks?${queryString}`
         : `/projects/${projectId}/tasks`;
       return apiClient
         .get(url)
-        .then((res) => [...res.data?.tasks, ...res.data?.subTasks] || []);
+        .then((res) => [...(res.data?.tasks || []), ...(res.data?.subTasks || [])]);
     },
-    enabled: !!projectId,
+    enabled:
+      options.enabled !== undefined ? !!projectId && options.enabled : !!projectId,
     staleTime: 1000 * 60 * 1, // 1 minute (Tasks change more frequently)
-    cacheTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey?.[1] === projectId ? previousData : undefined,
   });
 };
 
@@ -359,6 +390,8 @@ export const useCreateTaskFromBoard = (handleClose) => {
       } else {
         queryClient.invalidateQueries(["employeeTasks", user?._id]);
       }
+      queryClient.invalidateQueries({ queryKey: ["boardColumn"] });
+      queryClient.invalidateQueries({ queryKey: ["boardMeta"] });
       window.dispatchEvent(new Event('taskCreated'));
       handleClose(data);
       // toast.success('Task created successfully!');
@@ -554,12 +587,14 @@ export const useUpdateTaskOrder = (projectId) => {
   });
 };
 
-export const useGetEmployeeProjects = (employeeId, monthKey = null) => {
+export const useGetEmployeeProjects = (employeeId, monthKey = null, options = {}) => {
+  const view = options.view || null;
   return useQuery({
-    queryKey: ["employeeProjects", employeeId, monthKey],
+    queryKey: ["employeeProjects", employeeId, monthKey, view],
     queryFn: () => {
       const params = new URLSearchParams();
       if (monthKey) params.append("monthKey", monthKey);
+      if (view) params.append("view", view);
       params.append("active", "true");
 
       const queryString = params.toString();
@@ -876,11 +911,13 @@ export const useCreateVacationRequest = () => {
   });
 };
 
-export const useGetMyVacations = () => {
+export const useGetMyVacations = (enabled = true) => {
   return useQuery({
     queryKey: ["myVacations"],
     queryFn: () =>
       apiClient.get("/vacations/my-vacations").then((res) => res.data),
+    enabled,
+    staleTime: 15 * 1000,
   });
 };
 
@@ -1545,8 +1582,11 @@ export const useGetUnreadMessageCount = () => {
   return useQuery({
     queryKey: ["unreadMessageCount"],
     queryFn: () => getUnreadCount(),
-    refetchInterval: 1000 * 30, // Refetch every 30 seconds
-    refetchOnWindowFocus: true,
+    // Poll less often — sockets already push message updates; this is a safety net.
+    // On M0 (~100 ops/sec), a 30s poll from every open tab burns the shared budget.
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
     select: (data) => data?.count || 0,
   });
 };
@@ -1567,6 +1607,47 @@ export const useGetClientReviewTasks = (filters = {}) => {
       statistics: data?.statistics || {},
     }),
   });
+};
+
+// Badge counts for the sidebar menus. The three task endpoints return fully
+// populated task + subtask lists, which the sidebar was downloading on every
+// page just to read `.length`. Totals are computed server-side independently of
+// pagination, so asking for a single row gives the same numbers cheaply.
+export const useSidebarTaskCounts = (taskMonth, enabled = true) => {
+  const shared = {
+    enabled: enabled && !!taskMonth,
+    staleTime: 1000 * 60 * 2,
+    refetchInterval: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  };
+
+  const onReview = useQuery({
+    ...shared,
+    queryKey: ["sidebarTaskCounts", "onReview", taskMonth],
+    queryFn: () => getTasksOnReview({ taskMonth, limit: 1 }),
+    select: (data) => data?.pagination?.totalCount || 0,
+  });
+
+  const onPublish = useQuery({
+    ...shared,
+    queryKey: ["sidebarTaskCounts", "onPublish", taskMonth],
+    queryFn: () => getTasksOnPublish({ taskMonth, limit: 1 }),
+    select: (data) =>
+      data?.statistics?.publishPending ?? data?.pagination?.totalCount ?? 0,
+  });
+
+  const clientReview = useQuery({
+    ...shared,
+    queryKey: ["sidebarTaskCounts", "clientReview", taskMonth],
+    queryFn: () => getClientReviewTasks({ taskMonth, limit: 1 }),
+    select: (data) => data?.pagination?.totalCount || 0,
+  });
+
+  return {
+    tasksOnReview: onReview.data || 0,
+    tasksOnPublish: onPublish.data || 0,
+    clientReview: clientReview.data || 0,
+  };
 };
 
 export const useMarkSentToClient = () => {
@@ -1976,10 +2057,10 @@ export const useGetNotifications = (limit = 10) => {
         unreadCount: mockNotifications.filter((n) => !n.read).length,
       }));
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
     // Safety net: sockets can drop silently, so keep notifications self-healing.
-    refetchInterval: 1000 * 30,
+    refetchInterval: 1000 * 60 * 2,
   });
 };
 
@@ -1989,8 +2070,9 @@ export const useGetUnreadNotificationCount = () => {
     queryFn: () => {
       return getUnreadNotificationCount().catch(() => ({ count: 3 }));
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -3254,12 +3336,24 @@ export const useGetDepartmentDashboard = (companyId, enabled = true) => {
 };
 
 export const useIsDepartmentHead = (companyId, enabled = true) => {
-  const { data, isLoading, isError, isFetching } = useGetDepartmentDashboard(companyId, enabled);
+  // Uses the lightweight head-status endpoint: the full dashboard payload runs
+  // per-employee task aggregations and is far too expensive for the sidebar,
+  // header and route guards that only need the flag and member ids.
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["departmentHeadStatus", companyId],
+    queryFn: () =>
+      import("./service").then((m) => m.getDepartmentHeadStatus(companyId)),
+    enabled: !!companyId && enabled,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   return {
     isDepartmentHead: !!data?.isDepartmentHead,
     departments: data?.departments || [],
-    isLoading: isLoading || isFetching,
+    // Intentionally excludes isFetching so a background refresh never swaps a
+    // rendered page back to a loading state.
+    isLoading,
     isError,
   };
 };
@@ -3275,7 +3369,9 @@ export const useGetUpcomingMeetingCount = () => {
   return useQuery({
     queryKey: ["upcomingMeetingCount"],
     queryFn: () => import("./service").then((m) => m.getUpcomingMeetingCount()),
-    refetchInterval: 60 * 1000,
+    staleTime: 1000 * 60 * 2,
+    refetchInterval: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };
 

@@ -4,15 +4,15 @@ import { format } from "date-fns";
 
 // New consolidated calendar data hook
 export const useGetCalendarData = (date = new Date()) => {
-  // Ensure date is a proper Date object
   const dateObj = date instanceof Date ? date : new Date(date);
   const year = dateObj.getFullYear();
-  const month = dateObj.getMonth() + 1; // JavaScript months are 0-indexed
+  const month = dateObj.getMonth() + 1;
 
   return useQuery({
     queryKey: ["calendarData", format(dateObj, "yyyy-MM")],
     queryFn: () =>
       apiClient.get(`/calendar/data/${year}/${month}`).then((res) => res.data),
+    staleTime: 15 * 1000,
   });
 };
 

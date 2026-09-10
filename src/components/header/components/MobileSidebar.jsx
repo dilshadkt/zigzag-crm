@@ -4,9 +4,7 @@ import { IoLogOutOutline } from "react-icons/io5";
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from "react-icons/md";
 import logo from "../../../assets/icons/logo.svg";
 import {
-  useGetTasksOnReview,
-  useGetTasksOnPublish,
-  useGetClientReviewTasks,
+  useSidebarTaskCounts,
   useGetUnreadMessageCount,
 } from "../../../api/hooks";
 import { useTicketCounts } from "../../../features/tickets/hooks/useTickets";
@@ -29,16 +27,12 @@ const MobileSidebar = ({
     return `${year}-${month}`;
   };
 
-  // Fetch tasks and counts
-  const { data: tasksOnReviewData } = useGetTasksOnReview({
-    taskMonth: getCurrentMonth(),
-  });
-  const { data: tasksOnPublishData } = useGetTasksOnPublish({
-    taskMonth: getCurrentMonth(),
-  });
-  const { data: clientReviewData } = useGetClientReviewTasks({
-    taskMonth: getCurrentMonth(),
-  });
+  // Badge counts (totals only, no task payloads)
+  const {
+    tasksOnReview: tasksOnReviewCount,
+    tasksOnPublish: tasksOnPublishCount,
+    clientReview: clientReviewCount,
+  } = useSidebarTaskCounts(getCurrentMonth(), !!user);
   const { data: unreadMessageCount = 0 } = useGetUnreadMessageCount();
   const { data: ticketCounts } = useTicketCounts(!!user);
   const issueCount = ticketCounts?.active || 0;
@@ -66,29 +60,14 @@ const MobileSidebar = ({
   };
 
   const getTaskCount = (menuItem) => {
-    if (
-      menuItem.routeKey === "task-on-review" &&
-      tasksOnReviewData?.tasks?.length
-    ) {
-      return tasksOnReviewData.tasks.length;
+    if (menuItem.routeKey === "task-on-review") {
+      return tasksOnReviewCount || null;
     }
-    if (
-      menuItem.routeKey === "task-on-publish" &&
-      (tasksOnPublishData?.statistics?.publishPending ||
-        tasksOnPublishData?.tasks?.length)
-    ) {
-      return (
-        tasksOnPublishData.statistics?.publishPending ??
-        tasksOnPublishData.tasks.filter(
-          (task) => !task.parentTask && task.type !== "subtask"
-        ).length
-      );
+    if (menuItem.routeKey === "task-on-publish") {
+      return tasksOnPublishCount || null;
     }
-    if (
-      menuItem.routeKey === "client-review" &&
-      clientReviewData?.tasks?.length
-    ) {
-      return clientReviewData.tasks.length;
+    if (menuItem.routeKey === "client-review") {
+      return clientReviewCount || null;
     }
     if (menuItem.routeKey === "messenger" && unreadMessageCount > 0) {
       return unreadMessageCount;

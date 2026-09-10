@@ -6,6 +6,7 @@ import { useRouteAccess } from "../../hooks/useRouteAccess";
 import { usePermissions } from "../../hooks/usePermissions";
 import UserProfile from "../../components/settings/profile";
 import EmployeeSettings from "../../components/settings/employeeSettings";
+import PageSuspense from "../../components/shared/PageSuspense";
 
 const SettingsLayout = () => {
   const [selected, setSelected] = useState(SETTINGS[0].id);
@@ -136,7 +137,9 @@ const SettingsLayout = () => {
                   <EmployeeSettings />
                 </div>
               ) : (
-                <Outlet />
+                <PageSuspense>
+                  <Outlet />
+                </PageSuspense>
               )}
             </div>
           </div>

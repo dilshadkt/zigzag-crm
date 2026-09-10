@@ -37,9 +37,18 @@ const Prjects = () => {
 
   // Use different hooks based on user role
   const { data: companyProjects, isSuccess: isCompanySuccess, isLoading: isCompanyLoading } =
-    useCompanyProjects(user?.role === "company-admin" ? companyId : null, 0, selectedMonth);
+    useCompanyProjects(
+      user?.role === "company-admin" ? companyId : null,
+      0,
+      null,
+      { view: "list" }
+    );
   const { data: employeeProjects, isSuccess: isEmployeeSuccess, isLoading: isEmployeeLoading } =
-    useGetEmployeeProjects(user?.role !== "company-admin" ? user?._id : null, selectedMonth);
+    useGetEmployeeProjects(
+      user?.role !== "company-admin" ? user?._id : null,
+      null,
+      { view: "list" }
+    );
 
   // Combine the results based on user role
   const projects =
@@ -51,10 +60,14 @@ const Prjects = () => {
 
   // Use separate hooks for project details and tasks
   const { data: activeProject, isLoading: projectLoading } =
-    useProjectDetails(selectProject, selectedMonth);
+    useProjectDetails(selectProject, {
+      monthKey: selectedMonth,
+      view: "lite",
+    });
   const { data: projectTasks, isLoading: tasksLoading } = useProjectTasks(
     selectProject,
-    selectedMonth
+    selectedMonth,
+    { view: "card" }
   );
   // Add computed progress to tasks based on subtasks
   const enhancedTasks = (projectTasks || []).map(task => {

@@ -17,18 +17,23 @@ export const useGetEmployeeVacations = (employeeId, month, year) => {
   });
 };
 
-export const useGetCompanyVacations = (month, year) => {
+export const useGetCompanyVacations = (month, year, enabled = true) => {
   return useQuery({
     queryKey: ["companyVacations", month, year],
     queryFn: () => getCompanyVacations(month, year),
+    enabled,
+    staleTime: 15 * 1000,
+    placeholderData: (previousData) => previousData,
   });
 };
 
-export const useGetVacationsCalendar = (month, year) => {
+export const useGetVacationsCalendar = (month, year, enabled = true) => {
   return useQuery({
     queryKey: ["vacationsCalendar", month, year],
     queryFn: () => getVacationsCalendar(month, year),
-    enabled: !!month && !!year,
+    enabled: enabled && !!month && !!year,
+    staleTime: 15 * 1000,
+    placeholderData: (previousData) => previousData,
   });
 };
 

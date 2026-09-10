@@ -17,8 +17,9 @@ export const useTicketCounts = (enabled = true) => {
     queryKey: ["tickets", "counts"],
     queryFn: () => ticketApi.getTicketCounts(),
     enabled,
-    staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
+    staleTime: 1000 * 60 * 2,
+    refetchInterval: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };
 

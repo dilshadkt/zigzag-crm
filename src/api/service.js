@@ -1458,3 +1458,10 @@ export const getDepartmentDashboard = async (companyId) => {
   const response = await apiClient.get(`/companies/${companyId}/departments/dashboard`);
   return response.data.data;
 };
+
+export const getDepartmentHeadStatus = async (companyId) => {
+  const response = await apiClient.get(
+    `/companies/${companyId}/departments/head-status`
+  );
+  return response.data.data;
+};

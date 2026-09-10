@@ -12,9 +12,7 @@ import {
   MdKeyboardArrowRight,
 } from "react-icons/md";
 import {
-  useGetTasksOnReview,
-  useGetTasksOnPublish,
-  useGetClientReviewTasks,
+  useSidebarTaskCounts,
   useGetUnreadMessageCount,
   useIsDepartmentHead,
 } from "../../api/hooks";
@@ -37,20 +35,12 @@ const Sidebar = () => {
     return `${year}-${month}`;
   };
 
-  // Fetch tasks on review count
-  const { data: tasksOnReviewData } = useGetTasksOnReview({
-    taskMonth: getCurrentMonth(),
-  });
-
-  // Fetch tasks on publish count
-  const { data: tasksOnPublishData } = useGetTasksOnPublish({
-    taskMonth: getCurrentMonth(),
-  });
-
-  // Fetch client review tasks count
-  const { data: clientReviewData } = useGetClientReviewTasks({
-    taskMonth: getCurrentMonth(),
-  });
+  // Badge counts (totals only, no task payloads)
+  const {
+    tasksOnReview: tasksOnReviewCount,
+    tasksOnPublish: tasksOnPublishCount,
+    clientReview: clientReviewCount,
+  } = useSidebarTaskCounts(getCurrentMonth(), !!user);
 
   // Fetch unread messages count
   const { data: unreadMessageCount = 0 } = useGetUnreadMessageCount();
@@ -269,29 +259,14 @@ const Sidebar = () => {
 
               // Get count for "Task on Review", "Task on Publish", and "Client Review" menu items
               const getTaskCount = (menuItem) => {
-                if (
-                  menuItem.routeKey === "task-on-review" &&
-                  tasksOnReviewData?.tasks?.length
-                ) {
-                  return tasksOnReviewData.tasks.length;
+                if (menuItem.routeKey === "task-on-review") {
+                  return tasksOnReviewCount || null;
                 }
-                if (
-                  menuItem.routeKey === "task-on-publish" &&
-                  (tasksOnPublishData?.statistics?.publishPending ||
-                    tasksOnPublishData?.tasks?.length)
-                ) {
-                  return (
-                    tasksOnPublishData.statistics?.publishPending ??
-                    tasksOnPublishData.tasks.filter(
-                      (task) => !task.parentTask && task.type !== "subtask"
-                    ).length
-                  );
+                if (menuItem.routeKey === "task-on-publish") {
+                  return tasksOnPublishCount || null;
                 }
-                if (
-                  menuItem.routeKey === "client-review" &&
-                  clientReviewData?.tasks?.length
-                ) {
-                  return clientReviewData.tasks.length;
+                if (menuItem.routeKey === "client-review") {
+                  return clientReviewCount || null;
                 }
                 if (menuItem.routeKey === "messenger" && unreadMessageCount > 0) {
                   return unreadMessageCount;

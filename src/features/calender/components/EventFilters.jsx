@@ -29,8 +29,22 @@ const EventFilters = ({
   const projectDropdownRef = useRef(null);
   const { user } = useAuth();
   const isEmployee = user?.role === "employee";
-  // Extract unique assigners from tasks data
+  // Extract unique assigners from calendar filter options, falling back to loaded events
   useEffect(() => {
+    if (calendarData?.filterOptions?.assigners?.length) {
+      setAssigners(
+        calendarData.filterOptions.assigners.map((assignee) => ({
+          id: assignee._id,
+          name:
+            assignee.name ||
+            `${assignee.firstName || ""} ${assignee.lastName || ""}`.trim() ||
+            "Unknown",
+          avatar: assignee.avatar || assignee.profileImage || "",
+        }))
+      );
+      return;
+    }
+
     if (calendarData?.tasksData?.tasks) {
       const uniqueAssigners = new Map();
 
@@ -54,10 +68,21 @@ const EventFilters = ({
 
       setAssigners(Array.from(uniqueAssigners.values()));
     }
-  }, [calendarData?.tasksData?.tasks]);
+  }, [calendarData?.filterOptions?.assigners, calendarData?.tasksData?.tasks]);
 
-  // Extract unique projects from tasks data
+  // Extract unique projects from calendar filter options, falling back to loaded events
   useEffect(() => {
+    if (calendarData?.filterOptions?.projects?.length) {
+      setProjects(
+        calendarData.filterOptions.projects.map((project) => ({
+          id: project.id || project._id,
+          name: project.name,
+          color: "#3B82F6",
+        }))
+      );
+      return;
+    }
+
     const uniqueProjects = new Map();
 
     // Extract projects from tasks data
@@ -127,6 +152,7 @@ const EventFilters = ({
 
     setProjects(Array.from(uniqueProjects.values()));
   }, [
+    calendarData?.filterOptions?.projects,
     calendarData?.tasksData?.tasks,
     calendarData?.projectsData?.projects,
     calendarData?.tasksData,
