@@ -83,7 +83,7 @@ const ShimmerBox = ({ className = "" }) => (
 );
 
 const MeetingCardShimmer = () => (
-  <div className="rounded-3xl bg-white p-5">
+  <div className="rounded-3xl bg-white p-4">
     <div className="flex items-start justify-between gap-3">
       <div className="flex-1 space-y-3">
         <ShimmerBox className="h-5 w-20 rounded-full" />
@@ -248,11 +248,11 @@ const Meetings = () => {
   };
 
   return (
-    <section className="flex flex-col gap-5 pb-8">
+    <section className="flex flex-col gap-3 pb-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Header>Meetings</Header>
-          <p className="mt-1 text-sm text-[#7D8592]">
+          <p className="mt-1 text-xs text-[#7D8592]">
             See scheduled meetings, join with the Meet link, and report who attended so they earn points.
           </p>
         </div>
@@ -267,7 +267,7 @@ const Meetings = () => {
 
       {canSchedule && googleStatus && !googleStatus.connected && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-[#F4F9FD] px-4 py-3">
-          <p className="text-sm text-[#7D8592]">
+          <p className="text-xs text-[#7D8592]">
             Connect Google Calendar to create Meet links automatically when you schedule.
           </p>
           {isAdmin ? (
@@ -294,7 +294,7 @@ const Meetings = () => {
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
               tab === item.id
                 ? "bg-[#3F8CFF] text-white"
                 : "bg-white text-[#7D8592]"
@@ -306,7 +306,7 @@ const Meetings = () => {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           <MeetingCardShimmer />
           <MeetingCardShimmer />
           <MeetingCardShimmer />
@@ -317,17 +317,17 @@ const Meetings = () => {
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#3F8CFF]">
             <FiVideo className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-gray-800">
+          <h3 className="text-sm font-semibold text-gray-800">
             {tab === "upcoming" ? "No upcoming meetings" : "No past meetings yet"}
           </h3>
-          <p className="mt-1 max-w-sm text-sm text-[#7D8592]">
+          <p className="mt-1 max-w-sm text-xs text-[#7D8592]">
             {canSchedule
               ? "Schedule a meeting, add the Google Meet link, and choose who should attend."
               : "When a meeting is scheduled for you, it will show up here."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {visible.map((meeting) => {
             const meta = statusMeta(meeting);
             const { dateLabel, timeLabel } = formatRange(meeting.startAt, meeting.endAt);
@@ -349,49 +349,49 @@ const Meetings = () => {
                     setSelectedMeetingId(meeting._id);
                   }
                 }}
-                className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white p-5 pl-8 text-left shadow-sm transition-shadow hover:shadow-md"
+                className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white p-4 pl-7 text-left"
               >
-                <div className="absolute bottom-5 left-3 top-5 w-1 rounded-full bg-[#3F8CFF]" />
+                <div className="absolute bottom-4 left-3 top-4 w-1 rounded-full bg-[#3F8CFF]" />
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${meta.className}`}>
+                    <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${meta.className}`}>
                         {meta.label}
                       </span>
                       {meeting.pointsPerAttendee > 0 && meeting.status === "completed" && (
-                        <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600">
+                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-bold text-indigo-600">
                           +{meeting.pointsPerAttendee} pts
                         </span>
                       )}
                     </div>
-                    <h3 className="truncate text-[15px] font-semibold text-[#0A1629]">
+                    <h3 className="truncate text-sm font-semibold text-[#0A1629]">
                       {meeting.title}
                     </h3>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#F4F9FD] text-[#3F8CFF]">
-                      <FiVideo className="h-5 w-5" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-[#F4F9FD] text-[#3F8CFF]">
+                      <FiVideo className="h-4 w-4" />
                     </div>
-                    <FiChevronRight className="h-5 w-5 text-gray-300 transition-colors group-hover:text-[#3F8CFF]" />
+                    <FiChevronRight className="h-4 w-4 text-gray-300 transition-colors group-hover:text-[#3F8CFF]" />
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#7D8592]">
-                  <span className="inline-flex items-center gap-1.5">
-                    <FiCalendar className="h-4 w-4" /> {dateLabel}
+                <div className="mt-2 flex flex-wrap gap-2.5 text-xs text-[#7D8592]">
+                  <span className="inline-flex items-center gap-1">
+                    <FiCalendar className="h-3.5 w-3.5" /> {dateLabel}
                   </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <FiClock className="h-4 w-4" /> {timeLabel}
+                  <span className="inline-flex items-center gap-1">
+                    <FiClock className="h-3.5 w-3.5" /> {timeLabel}
                   </span>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
                     <div className="flex items-center">
                       {people.slice(0, 3).map((person, index) => (
                         <div
                           key={person._id || index}
-                          className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#E6EDF5] text-[10px] font-bold text-[#3F8CFF]"
+                          className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#E6EDF5] text-[9px] font-bold text-[#3F8CFF]"
                           style={{ marginLeft: index > 0 ? "-8px" : 0, zIndex: 10 - index }}
                           title={personName(person)}
                         >
@@ -408,15 +408,15 @@ const Meetings = () => {
                       ))}
                       {people.length > 3 && (
                         <div
-                          className="flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-white bg-gray-600 px-1 text-[9px] font-bold text-white"
+                          className="flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-gray-600 px-1 text-[8px] font-bold text-white"
                           style={{ marginLeft: "-8px" }}
                         >
                           +{people.length - 3}
                         </div>
                       )}
                     </div>
-                    <span className="inline-flex items-center gap-1 text-xs text-[#7D8592]">
-                      <FiUsers className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[#7D8592]">
+                      <FiUsers className="h-3 w-3" />
                       {people.length} {meeting.status === "completed" ? "attended" : "invited"}
                       {trackedCount > 0 ? ` · ${trackedCount} tracked` : ""}
                     </span>
@@ -427,7 +427,7 @@ const Meetings = () => {
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#3F8CFF] px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#3F8CFF] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-600"
                     >
                       Join <FiExternalLink className="h-3.5 w-3.5" />
                     </a>

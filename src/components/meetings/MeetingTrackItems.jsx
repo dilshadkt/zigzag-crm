@@ -164,7 +164,7 @@ const MeetingTrackItems = ({
                 </button>
                 <div className="min-w-0 flex-1">
                   <p
-                    className={`text-sm font-medium ${
+                    className={`text-xs font-medium ${
                       done ? "text-gray-400 line-through" : "text-gray-800"
                     }`}
                   >

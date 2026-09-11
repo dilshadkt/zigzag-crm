@@ -78,7 +78,7 @@ const MeetLinkActions = ({ meeting, showJoin = true }) => {
           href={link}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#3F8CFF] px-3 py-2 text-xs font-semibold text-white hover:bg-blue-600"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#3F8CFF] px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-600"
         >
           Join Google Meet <FiExternalLink className="h-3.5 w-3.5" />
         </a>
@@ -86,7 +86,7 @@ const MeetLinkActions = ({ meeting, showJoin = true }) => {
       <button
         type="button"
         onClick={handleCopy}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F4F9FD] px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50"
+        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F4F9FD] px-2.5 py-1.5 text-[11px] font-semibold text-gray-700 hover:bg-blue-50"
       >
         {copied ? <FiCheck className="h-3.5 w-3.5 text-emerald-500" /> : <FiCopy className="h-3.5 w-3.5" />}
         {copied ? "Copied" : "Copy"}
@@ -94,7 +94,7 @@ const MeetLinkActions = ({ meeting, showJoin = true }) => {
       <button
         type="button"
         onClick={() => shareMeetingLink(meeting)}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F4F9FD] px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50"
+        className="inline-flex items-center gap-1.5 rounded-xl bg-[#F4F9FD] px-2.5 py-1.5 text-[11px] font-semibold text-gray-700 hover:bg-blue-50"
       >
         <FiShare2 className="h-3.5 w-3.5" />
         Share
