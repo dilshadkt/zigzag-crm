@@ -341,14 +341,16 @@ export const useEmpoyees = (page = null, filters = null, search = "") => {
 };
 
 // Hook to get all employees (for tasks without projects)
-export const useGetAllEmployees = (enabled = true) => {
+export const useGetAllEmployees = (enabled = true, options = {}) => {
+  const view = options.view || null;
   return useQuery({
-    queryKey: ["allEmployees"],
+    queryKey: ["allEmployees", view],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: "1",
         limit: "1000", // Large limit to get all employees
       });
+      if (view) params.append("view", view);
 
       const response = await apiClient.get(`/employee?${params.toString()}`);
       return response.data;

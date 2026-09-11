@@ -6,7 +6,7 @@ import { FaReply, FaExclamationTriangle, FaUserCircle, FaMicrophone } from "reac
 const TodayReworkTasks = () => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
     const { data, isLoading } = useTodayTasks(selectedEmployeeId);
-    const { data: employeesData } = useGetAllEmployees();
+    const { data: employeesData } = useGetAllEmployees(true, { view: "select" });
 
     const employees = employeesData?.employees || [];
     const reworkTasks = data?.reworkTasks || [];

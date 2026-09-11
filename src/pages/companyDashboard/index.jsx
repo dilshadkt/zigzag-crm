@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { useCompanyProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import ProjectCard from "../../components/shared/projectCard";
+import ProjectCard, { ProjectCardShimmer } from "../../components/shared/projectCard";
 import { useNavigate } from "react-router-dom";
 import DashboardCampaigns from "../../components/dashboard/campaigns";
 import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
@@ -81,7 +81,8 @@ const CompanyDashboard = () => {
   } = useCompanyProjects(
     companyId,
     0, // 0 means no limit - show all projects
-    taskMonth
+    taskMonth,
+    { view: "cards" }
   );
 
   // Debug: Log projects data to help troubleshoot
@@ -225,12 +226,10 @@ const CompanyDashboard = () => {
           {/* Project list section */}
           <div className="flex flex-col h-full gap-y-2 md:gap-y-3 mt-3">
             {isLoadingProjects ? (
-              <div className="flex items-center justify-center h-full min-h-[120px]">
-                <div className="animate-pulse w-full">
-                  <div className="h-20 bg-gray-200 rounded-xl mb-3"></div>
-                  <div className="h-20 bg-gray-200 rounded-xl mb-3"></div>
-                  <div className="h-20 bg-gray-200 rounded-xl"></div>
-                </div>
+              <div className="flex flex-col h-full gap-y-2 md:gap-y-3">
+                <ProjectCardShimmer />
+                <ProjectCardShimmer />
+                <ProjectCardShimmer />
               </div>
             ) : projects.length > 0 ? (
               projects.slice(0, 3).map((project) => (
@@ -281,7 +280,7 @@ const CompanyDashboard = () => {
       </div>
 
       {/* Daily Checklist Drawer */}
-      {canViewDailyChecklist && <DailyChecklistDrawer projects={projects} />}
+      {canViewDailyChecklist && <DailyChecklistDrawer />}
     </section>
   );
 };

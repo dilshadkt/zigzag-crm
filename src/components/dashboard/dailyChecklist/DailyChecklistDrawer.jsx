@@ -5,6 +5,7 @@ import { format, addDays, subDays, isToday } from "date-fns";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
+import { useCompanyProjects, useGetEmployeeProjects } from "../../../api/hooks";
 
 const CircularProgress = ({ value, onClick }) => {
     const radius = 24;
@@ -160,9 +161,38 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completed
     );
 };
 
-const DailyChecklistDrawer = ({ projects = [] }) => {
-    const { user } = useAuth();
+const DailyChecklistDrawer = ({ projects: projectsProp = [] }) => {
+    const { user, companyId } = useAuth();
     const { hasPermission } = usePermissions();
+    const isCompanyAdmin = user?.role === "company-admin";
+    const hasInlineChecklist = projectsProp.some((project) =>
+        Array.isArray(project?.dailyChecklist)
+    );
+    const shouldFetchChecklist = !hasInlineChecklist;
+
+    const { data: companyChecklistProjects } = useCompanyProjects(
+        companyId,
+        0,
+        null,
+        {
+            view: "checklist",
+            enabled: shouldFetchChecklist && isCompanyAdmin,
+        }
+    );
+    const { data: employeeChecklistData } = useGetEmployeeProjects(
+        user?._id || null,
+        null,
+        {
+            view: "checklist",
+            enabled: shouldFetchChecklist && !isCompanyAdmin && !!user?._id,
+        }
+    );
+
+    const projects = hasInlineChecklist
+        ? projectsProp
+        : isCompanyAdmin
+            ? (Array.isArray(companyChecklistProjects) ? companyChecklistProjects : [])
+            : (employeeChecklistData?.projects || []);
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [optimisticUpdates, setOptimisticUpdates] = useState({});

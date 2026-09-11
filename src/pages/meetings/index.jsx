@@ -3,9 +3,9 @@ import { toast } from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import {
   FiCalendar,
-  FiCheck,
+  FiChevronRight,
   FiClock,
-  FiMail,
+  FiExternalLink,
   FiPlus,
   FiUsers,
   FiVideo,
@@ -15,8 +15,7 @@ import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import ScheduleMeetingModal, {
   ReportAttendanceModal,
 } from "../../components/meetings/ScheduleMeetingModal";
-import MeetingTrackItems from "../../components/meetings/MeetingTrackItems";
-import MeetLinkActions from "../../components/meetings/MeetLinkActions";
+import MeetingDetailsModal from "../../components/meetings/MeetingDetailsModal";
 import {
   useAddMeetingActionItem,
   useCancelMeeting,
@@ -71,6 +70,36 @@ const statusMeta = (meeting) => {
   return { label: "Scheduled", className: "bg-blue-50 text-blue-700" };
 };
 
+const personInitials = (person) => {
+  const first = person?.firstName?.[0] || person?.name?.[0] || "";
+  const last = person?.lastName?.[0] || "";
+  return (first + last).toUpperCase() || "?";
+};
+
+const ShimmerBox = ({ className = "" }) => (
+  <div
+    className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`}
+  />
+);
+
+const MeetingCardShimmer = () => (
+  <div className="rounded-3xl bg-white p-5">
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex-1 space-y-3">
+        <ShimmerBox className="h-5 w-20 rounded-full" />
+        <ShimmerBox className="h-5 w-3/4" />
+        <ShimmerBox className="h-4 w-1/2" />
+      </div>
+      <ShimmerBox className="h-10 w-10 rounded-[14px]" />
+    </div>
+    <div className="mt-4 flex items-center gap-2">
+      <ShimmerBox className="h-7 w-7 rounded-full" />
+      <ShimmerBox className="h-7 w-7 rounded-full" />
+      <ShimmerBox className="h-4 w-24" />
+    </div>
+  </div>
+);
+
 const Meetings = () => {
   const { user } = useAuth();
   const { canScheduleMeetings } = usePermissions();
@@ -79,6 +108,7 @@ const Meetings = () => {
   const [showSchedule, setShowSchedule] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(null);
   const [reportingMeeting, setReportingMeeting] = useState(null);
+  const [selectedMeetingId, setSelectedMeetingId] = useState(null);
 
   const { data, isLoading } = useGetMeetings();
   const { data: employeesData } = useGetAllEmployees(true);
@@ -97,6 +127,7 @@ const Meetings = () => {
   const canSchedule = Boolean(data?.canSchedule) || canScheduleMeetings();
   const employees = employeesData?.employees || [];
   const isAdmin = user?.role === "company-admin";
+  const selectedMeeting = meetings.find((meeting) => meeting._id === selectedMeetingId) || null;
 
   useEffect(() => {
     const result = searchParams.get("googleMeet");
@@ -226,13 +257,11 @@ const Meetings = () => {
           </p>
         </div>
         {canSchedule && (
-          <div className="hidden md:block">
-            <PrimaryButton
-              title="Schedule meeting"
-              icon={<FiPlus className="h-4 w-4" />}
-              onclick={openScheduleMeeting}
-            />
-          </div>
+          <PrimaryButton
+            title="Schedule meeting"
+            icon={<FiPlus className="h-4 w-4" />}
+            onclick={openScheduleMeeting}
+          />
         )}
       </div>
 
@@ -277,8 +306,11 @@ const Meetings = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex h-48 items-center justify-center rounded-3xl bg-white">
-          <img src="/icons/loading.svg" alt="" className="w-14" />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <MeetingCardShimmer />
+          <MeetingCardShimmer />
+          <MeetingCardShimmer />
+          <MeetingCardShimmer />
         </div>
       ) : visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
@@ -299,16 +331,25 @@ const Meetings = () => {
           {visible.map((meeting) => {
             const meta = statusMeta(meeting);
             const { dateLabel, timeLabel } = formatRange(meeting.startAt, meeting.endAt);
-            const manage = canManage(meeting);
-            const canReport =
-              manage &&
-              meeting.status === "scheduled" &&
-              (new Date() >= new Date(meeting.startAt) || user?.role === "company-admin");
+            const people =
+              meeting.status === "completed"
+                ? meeting.attendees || []
+                : meeting.invitees || [];
+            const trackedCount = meeting.actionItems?.length || 0;
 
             return (
               <article
                 key={meeting._id}
-                className="relative overflow-hidden rounded-3xl bg-white p-5 pl-8 shadow-sm"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedMeetingId(meeting._id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedMeetingId(meeting._id);
+                  }
+                }}
+                className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white p-5 pl-8 text-left shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="absolute bottom-5 left-3 top-5 w-1 rounded-full bg-[#3F8CFF]" />
                 <div className="flex items-start justify-between gap-3">
@@ -323,17 +364,19 @@ const Meetings = () => {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-[15px] font-semibold text-[#0A1629]">{meeting.title}</h3>
-                    {meeting.description ? (
-                      <p className="mt-1 line-clamp-2 text-sm text-[#7D8592]">{meeting.description}</p>
-                    ) : null}
+                    <h3 className="truncate text-[15px] font-semibold text-[#0A1629]">
+                      {meeting.title}
+                    </h3>
                   </div>
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#F4F9FD] text-[#3F8CFF]">
-                    <FiVideo className="h-5 w-5" />
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#F4F9FD] text-[#3F8CFF]">
+                      <FiVideo className="h-5 w-5" />
+                    </div>
+                    <FiChevronRight className="h-5 w-5 text-gray-300 transition-colors group-hover:text-[#3F8CFF]" />
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-3 text-sm text-[#7D8592]">
+                <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#7D8592]">
                   <span className="inline-flex items-center gap-1.5">
                     <FiCalendar className="h-4 w-4" /> {dateLabel}
                   </span>
@@ -342,121 +385,106 @@ const Meetings = () => {
                   </span>
                 </div>
 
-                {meeting.meetLink ? (
-                  <MeetLinkActions meeting={meeting} />
-                ) : manage && meeting.status !== "cancelled" ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      generateMeetLink.mutate(meeting._id, {
-                        onSuccess: (res) => {
-                          if (res?.meeting?.meetLink) toast.success("Meet link created");
-                          else if (res?.meetLinkWarning) toast(res.meetLinkWarning);
-                          else toast.error("Could not create a Meet link");
-                        },
-                        onError: (error) =>
-                          toast.error(error?.message || "Could not create a Meet link"),
-                      })
-                    }
-                    disabled={generateMeetLink.isPending}
-                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#3F8CFF] hover:underline disabled:opacity-50"
-                  >
-                    Create Meet link
-                  </button>
-                ) : (
-                  <p className="mt-3 text-xs text-gray-400">No Meet link added.</p>
-                )}
-
-                <div className="mt-4">
-                  <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">
-                    <FiUsers className="h-3.5 w-3.5" />
-                    {meeting.status === "completed" ? "Attended" : "Invited"}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {(meeting.status === "completed" ? meeting.attendees : meeting.invitees).map((person) => (
-                      <span
-                        key={person._id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#F4F9FD] px-2.5 py-1 text-xs font-medium text-gray-700"
-                      >
-                        {meeting.status === "completed" && (
-                          <FiCheck className="h-3 w-3 text-emerald-500" />
-                        )}
-                        {personName(person)}
-                      </span>
-                    ))}
-                    {(meeting.guestEmails || []).map((email) => (
-                      <span
-                        key={email}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-2.5 py-1 text-xs font-medium text-[#3F8CFF]"
-                      >
-                        <FiMail className="h-3 w-3" />
-                        {email}
-                      </span>
-                    ))}
-                    {meeting.status === "completed" && meeting.attendees?.length === 0 && (
-                      <span className="text-xs text-gray-400">Nobody was marked present.</span>
-                    )}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex items-center">
+                      {people.slice(0, 3).map((person, index) => (
+                        <div
+                          key={person._id || index}
+                          className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#E6EDF5] text-[10px] font-bold text-[#3F8CFF]"
+                          style={{ marginLeft: index > 0 ? "-8px" : 0, zIndex: 10 - index }}
+                          title={personName(person)}
+                        >
+                          {person.profileImage ? (
+                            <img
+                              src={person.profileImage}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            personInitials(person)
+                          )}
+                        </div>
+                      ))}
+                      {people.length > 3 && (
+                        <div
+                          className="flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-white bg-gray-600 px-1 text-[9px] font-bold text-white"
+                          style={{ marginLeft: "-8px" }}
+                        >
+                          +{people.length - 3}
+                        </div>
+                      )}
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-xs text-[#7D8592]">
+                      <FiUsers className="h-3.5 w-3.5" />
+                      {people.length} {meeting.status === "completed" ? "attended" : "invited"}
+                      {trackedCount > 0 ? ` · ${trackedCount} tracked` : ""}
+                    </span>
                   </div>
+                  {meeting.meetLink && meeting.status === "scheduled" && (
+                    <a
+                      href={meeting.meetLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#3F8CFF] px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
+                    >
+                      Join <FiExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
                 </div>
-
-                <MeetingTrackItems
-                  meeting={meeting}
-                  employees={employees}
-                  canAdd={meeting.status !== "cancelled"}
-                  currentUserId={user?._id || user?.id}
-                  isSaving={
-                    addActionItem.isPending ||
-                    updateActionItem.isPending ||
-                    deleteActionItem.isPending
-                  }
-                  onAdd={(data) => handleAddItem(meeting, data)}
-                  onToggle={(item, status) => handleToggleItem(meeting, item, status)}
-                  onDelete={(item) => handleDeleteItem(meeting, item)}
-                />
-
-                {manage && meeting.status === "scheduled" && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {canReport && (
-                      <button
-                        type="button"
-                        onClick={() => setReportingMeeting(meeting)}
-                        className="rounded-xl bg-[#3F8CFF] px-3 py-2 text-xs font-semibold text-white hover:bg-blue-600"
-                      >
-                        Report attendance
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingMeeting(meeting);
-                        setShowSchedule(true);
-                      }}
-                      className="rounded-xl bg-[#F4F9FD] px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm("Cancel this meeting?")) {
-                          cancelMeeting.mutate(meeting._id, {
-                            onSuccess: () => toast.success("Meeting cancelled"),
-                            onError: (error) =>
-                              toast.error(error?.response?.data?.message || "Could not cancel"),
-                          });
-                        }
-                      }}
-                      className="rounded-xl bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-red-50 hover:text-red-600"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
               </article>
             );
           })}
         </div>
       )}
+
+      <MeetingDetailsModal
+        isOpen={Boolean(selectedMeeting)}
+        meeting={selectedMeeting}
+        employees={employees}
+        currentUserId={user?._id || user?.id}
+        canManage={selectedMeeting ? canManage(selectedMeeting) : false}
+        canReport={
+          Boolean(selectedMeeting) &&
+          canManage(selectedMeeting) &&
+          selectedMeeting.status === "scheduled" &&
+          (new Date() >= new Date(selectedMeeting.startAt) || user?.role === "company-admin")
+        }
+        isSavingItems={
+          addActionItem.isPending ||
+          updateActionItem.isPending ||
+          deleteActionItem.isPending
+        }
+        isGeneratingLink={generateMeetLink.isPending}
+        onClose={() => setSelectedMeetingId(null)}
+        onEdit={() => {
+          setEditingMeeting(selectedMeeting);
+          setSelectedMeetingId(null);
+          setShowSchedule(true);
+        }}
+        onCancel={() => {
+          if (!selectedMeeting) return;
+          if (window.confirm("Cancel this meeting?")) {
+            cancelMeeting.mutate(selectedMeeting._id, {
+              onSuccess: () => {
+                toast.success("Meeting cancelled");
+                setSelectedMeetingId(null);
+              },
+              onError: (error) =>
+                toast.error(error?.response?.data?.message || "Could not cancel"),
+            });
+          }
+        }}
+        onReport={() => {
+          setReportingMeeting(selectedMeeting);
+          setSelectedMeetingId(null);
+        }}
+        onAddItem={handleAddItem}
+        onToggleItem={handleToggleItem}
+        onDeleteItem={handleDeleteItem}
+        onGenerateLink={(meetingId, options) => generateMeetLink.mutate(meetingId, options)}
+      />
 
       <ScheduleMeetingModal
         isOpen={showSchedule}

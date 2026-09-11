@@ -8,7 +8,7 @@ import WorkLoad from "../../components/dashboard/workload";
 import PendingWork from "../../components/dashboard/workload/events";
 import NearestEvents from "../../components/dashboard/nearestEvents";
 // import EmployeeWorkDetails from "../../components/dashboard/employeeWorkDetails";
-import { useCompanyProjects, useGetEmployeeProjects } from "../../api/hooks";
+import { useGetEmployeeProjects } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 import EmployeeProgressStats from "../../components/dashboard/employeeProgressStats";
@@ -66,14 +66,14 @@ const Dashboard = () => {
     .toString()
     .padStart(2, "0")}`;
 
-  const { data: employeeProjectsData } = useGetEmployeeProjects(
+  const { data: employeeProjectsData, isLoading: isLoadingProjects } = useGetEmployeeProjects(
     user?._id ? user._id : null,
-    taskMonth
+    taskMonth,
+    { view: "cards" }
   );
 
   const activeEmployeeProjects = employeeProjectsData?.projects?.filter(p => p.status !== "paused") || [];
 
-  const projectsForChecklist = activeEmployeeProjects;
   const projects = activeEmployeeProjects;
 
   // Navigation functions for month selection
@@ -184,6 +184,7 @@ const Dashboard = () => {
       <DashboardProjects
         isEmployee={true}
         projects={projects}
+        isLoading={isLoadingProjects}
         user={user}
         isCompanyAdmin={false}
         canViewCampaignDetails={canViewCampaignDetails}
@@ -211,11 +212,7 @@ const Dashboard = () => {
       </div>
 
       {/* Daily Checklist Drawer - Passing projectsForChecklist to ensure all projects are considered, not just the sliced ones */}
-      {canViewDailyChecklist && (
-        <DailyChecklistDrawer projects={projectsForChecklist}
-
-        />
-      )}
+      {canViewDailyChecklist && <DailyChecklistDrawer />}
     </section>
   );
 };

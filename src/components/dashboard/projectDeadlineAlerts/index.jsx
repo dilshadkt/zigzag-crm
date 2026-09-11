@@ -154,8 +154,10 @@ const AlertCard = ({ alert, project }) => {
 const ProjectDeadlineAlerts = () => {
   const { companyId } = useAuth();
   
-  // Fetch ALL projects specifically for deadline alerts (ignoring taskMonth filters)
-  const { data: allProjectsData } = useCompanyProjects(companyId, 0, null);
+  // Slim deadline fields only — not the full project payload
+  const { data: allProjectsData } = useCompanyProjects(companyId, 0, null, {
+    view: "deadlines",
+  });
   const activeProjects = Array.isArray(allProjectsData) ? allProjectsData : [];
 
   const { data: notificationsData } = useGetNotifications(50);

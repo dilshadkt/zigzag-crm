@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
-import ProjectCard from "../../shared/projectCard";
+import ProjectCard, { ProjectCardShimmer } from "../../shared/projectCard";
 import DashboardCampaigns from "../campaigns";
 import ActivityStream from "../activityStream";
 import NearestEvents from "../nearestEvents";
@@ -9,6 +9,7 @@ import NearestEvents from "../nearestEvents";
 const DashboardProjects = ({
   isEmployee,
   projects,
+  isLoading = false,
   user,
   isCompanyAdmin,
   canViewCampaignDetails,
@@ -39,8 +40,14 @@ const DashboardProjects = ({
         </div>
         {/* project list section  */}
         <div className=" flex flex-col h-full gap-y-2 md:gap-y-3 mt-3">
-          {projects?.length > 0 ? (
-            projects.slice(0, 3).map((project, index) => (
+          {isLoading ? (
+            <>
+              <ProjectCardShimmer />
+              <ProjectCardShimmer />
+              <ProjectCardShimmer />
+            </>
+          ) : projects?.length > 0 ? (
+            projects.slice(0, 3).map((project) => (
               <ProjectCard
                 key={project?._id}
                 project={project}

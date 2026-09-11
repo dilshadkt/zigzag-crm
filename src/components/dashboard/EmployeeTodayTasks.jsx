@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 const EmployeeTodayTasks = () => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
     const { data, isLoading } = useTodayTasks(selectedEmployeeId);
-    const { data: employeesData } = useGetAllEmployees();
+    const { data: employeesData } = useGetAllEmployees(true, { view: "select" });
 
     const employees = employeesData?.employees || [];
 

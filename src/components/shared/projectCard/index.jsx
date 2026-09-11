@@ -256,6 +256,51 @@ const WorkDetailsTooltip = ({ project, monthKey, position = "top" }) => {
   );
 };
 
+const ShimmerBox = ({ className = "" }) => (
+  <div
+    className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`}
+  />
+);
+
+export const ProjectCardShimmer = () => (
+  <div className="bg-white rounded-3xl grid gap-y-4 md:gap-y-0 md:grid-cols-2">
+    <div className="p-4 py-5 h-full flex gap-y-4 flex-col md:border-r border-[#E4E6E8]/60">
+      <div className="flex items-center gap-x-3.5">
+        <ShimmerBox className="w-12 h-12 rounded-2xl shrink-0" />
+        <div className="flex flex-col gap-y-2 flex-1 min-w-0">
+          <ShimmerBox className="h-3 w-16" />
+          <ShimmerBox className="h-4 w-3/4" />
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <ShimmerBox className="h-3 w-32" />
+        <ShimmerBox className="h-3 w-12" />
+      </div>
+    </div>
+    <div className="px-8 py-5 flex flex-col gap-y-3 justify-center">
+      <ShimmerBox className="h-4 w-24" />
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col gap-y-2">
+          <ShimmerBox className="h-3 w-16" />
+          <ShimmerBox className="h-6 w-10" />
+        </div>
+        <div className="flex flex-col gap-y-2">
+          <ShimmerBox className="h-3 w-16" />
+          <ShimmerBox className="h-6 w-10" />
+        </div>
+        <div className="flex flex-col gap-y-2">
+          <ShimmerBox className="h-3 w-16" />
+          <div className="flex -space-x-2">
+            <ShimmerBox className="h-7 w-7 rounded-full" />
+            <ShimmerBox className="h-7 w-7 rounded-full" />
+            <ShimmerBox className="h-7 w-7 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const ProjectCard = ({ project, onClick, viewMore = false }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [showProgressTooltip, setShowProgressTooltip] = useState(false);
