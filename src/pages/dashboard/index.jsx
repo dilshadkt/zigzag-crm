@@ -15,6 +15,7 @@ import EmployeeProgressStats from "../../components/dashboard/employeeProgressSt
 import CompanyProgressStats from "../../components/dashboard/companyProgressStats";
 import DashboardProjects from "../../components/dashboard/dashboardProjects";
 import CompletionTrendChart from "../../components/dashboard/performanceChart";
+import ActionRequiredBanner from "../../components/dashboard/ActionRequiredBanner";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(() =>
@@ -163,6 +164,8 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      <ActionRequiredBanner />
 
       {/* Progress Stats Section - Show different components based on user role and permissions */}
       <div className="w-full mt-3">

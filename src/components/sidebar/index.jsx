@@ -25,7 +25,7 @@ const Sidebar = () => {
   const effectiveCompanyId = companyId || user?.company;
   const { userPosition } = useRouteAccess();
   const { hasAdminDashboardAccess, hasPermission } = usePermissions();
-  const { isDepartmentHead } = useIsDepartmentHead(effectiveCompanyId, !!user);
+  const { isDepartmentHead, totalActionRequiredCount } = useIsDepartmentHead(effectiveCompanyId, !!user);
 
   // Get current month in YYYY-MM format for tasks on review
   const getCurrentMonth = () => {
@@ -144,8 +144,8 @@ const Sidebar = () => {
 
         // My Company related management
         if (
-          hasPermission("settings", "manageCompany") || 
-          hasPermission("settings", "managePositions") || 
+          hasPermission("settings", "manageCompany") ||
+          hasPermission("settings", "managePositions") ||
           hasPermission("settings", "manageTaskFlows")
         ) {
           settingsChildren.push({
@@ -178,8 +178,8 @@ const Sidebar = () => {
       }
 
       // Return a collapsible settings menu
-      return { 
-        ...item, 
+      return {
+        ...item,
         children: settingsChildren,
         path: undefined // Remove direct path so it only toggles
       };
@@ -246,7 +246,7 @@ const Sidebar = () => {
   };
   return (
     <section
-      className=" flex-col min-w-[220px] hidden lg:flex  my-3 ml-3 justify-between
+      className=" flex-col min-w-[240px] hidden lg:flex  my-3 ml-3 justify-between
      rounded-[24px] gap-y-10 bg-white p-3"
     >
       <div className="flex flex-col  overflow-y-auto scrollbar-hide">
@@ -273,6 +273,9 @@ const Sidebar = () => {
                 }
                 if (menuItem.routeKey === "tickets" && issueCount > 0) {
                   return issueCount;
+                }
+                if (menuItem.routeKey === "department-dashboard" && totalActionRequiredCount > 0) {
+                  return totalActionRequiredCount;
                 }
                 return null;
               };

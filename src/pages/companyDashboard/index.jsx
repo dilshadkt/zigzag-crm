@@ -22,6 +22,7 @@ import EmployeesTodayStatus from "../../components/dashboard/EmployeesTodayStatu
 import DashboardRanking from "../../components/dashboard/DashboardRanking";
 import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
 import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
+import ActionRequiredBanner from "../../components/dashboard/ActionRequiredBanner";
 
 const CompanyDashboard = () => {
   const { companyId, user } = useAuth();
@@ -186,6 +187,8 @@ const CompanyDashboard = () => {
           </button>
         </div>
       </div>
+
+      <ActionRequiredBanner />
 
       {/* Company Progress Stats Section */}
       <div className="w-full mt-3">

@@ -128,6 +128,14 @@ export const useGetTaskFlows = (companyId) => {
   });
 };
 
+export const useGetDepartmentConflicts = (companyId, departmentId) => {
+  return useQuery({
+    queryKey: ["departmentConflicts", companyId, departmentId],
+    queryFn: () => apiClient.get(`/companies/${companyId}/departments/${departmentId}/conflicts`).then(res => res.data),
+    enabled: !!companyId && !!departmentId,
+  });
+};
+
 export const useCreateTaskFlow = (companyId, onSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -3352,7 +3360,9 @@ export const useIsDepartmentHead = (companyId, enabled = true) => {
 
   return {
     isDepartmentHead: !!data?.isDepartmentHead,
+    canAccessDepartmentDashboard: !!data?.canAccessDepartmentDashboard,
     departments: data?.departments || [],
+    totalActionRequiredCount: data?.totalActionRequiredCount || 0,
     // Intentionally excludes isFetching so a background refresh never swaps a
     // rendered page back to a loading state.
     isLoading,

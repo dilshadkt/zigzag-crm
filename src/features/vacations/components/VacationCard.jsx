@@ -4,6 +4,7 @@ import { FaCheck, FaTimes, FaEdit } from "react-icons/fa";
 import { format } from "date-fns";
 import ApprovalMenu from "./ApprovalMenu";
 import ModifyDatesModal from "./ModifyDatesModal";
+import OverlappingTasks from "./OverlappingTasks";
 import { useGetEmployeeVacations } from "../hooks/useVacations";
 
 const StatusBadge = ({ status }) => {
@@ -172,7 +173,7 @@ const VacationCard = ({
             {visibleRequests.map((request) => (
               <div
                 key={request.id}
-                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                className={`flex items-start justify-between p-3 rounded-xl border transition-all ${
                   request.status === "pending" 
                     ? "bg-amber-50/30 border-amber-100 shadow-sm" 
                     : "bg-white border-gray-100"
@@ -203,9 +204,12 @@ const VacationCard = ({
                       </span>
                     )}
                   </div>
+                  
+                  {/* Overlapping Tasks integration */}
+                  <OverlappingTasks vacationId={request.id} />
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 self-start">
                   {request.status === "pending" && canApproveVacations ? (
                     <div className="flex items-center gap-1">
                       <button

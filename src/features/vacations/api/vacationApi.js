@@ -43,3 +43,11 @@ export const createVacationRequestApi = (data) => {
 export const checkAvailabilityApi = (checks) => {
   return apiClient.post("/vacations/check-availability", { checks }).then((res) => res.data);
 };
+
+export const getOverlappingTasksApi = (vacationId) => {
+  return apiClient.get(`/vacations/${vacationId}/overlapping-tasks`).then((res) => res.data);
+};
+
+export const notifyReporterApi = ({ vacationId, taskId }) => {
+  return apiClient.post(`/vacations/${vacationId}/notify-reporter`, { taskId }).then((res) => res.data);
+};

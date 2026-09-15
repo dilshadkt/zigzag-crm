@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiUsers, FiAlertCircle, FiGrid } from "react-icons/fi";
-import { useGetDepartmentDashboard } from "../../api/hooks";
+import { useGetDepartmentDashboard, useGetDepartmentConflicts } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import Header from "../../components/shared/header";
 import DepartmentEmployeeCard from "../../components/dashboard/DepartmentEmployeeCard";
+import DepartmentConflictCard from "../../components/dashboard/DepartmentConflictCard";
 
 const DepartmentDashboard = () => {
   const navigate = useNavigate();
@@ -12,7 +13,8 @@ const DepartmentDashboard = () => {
   const effectiveCompanyId = companyId || user?.company;
   const { data, isLoading, error } = useGetDepartmentDashboard(effectiveCompanyId);
   const departments = data?.departments || [];
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState(searchParams.get("department") || "");
   const isCompanyAdmin = user?.role === "company-admin";
 
   const activeDepartmentId = useMemo(() => {
@@ -34,6 +36,9 @@ const DepartmentDashboard = () => {
     (total, dept) => total + dept.employeeCount,
     0
   );
+
+  const { data: conflictsData } = useGetDepartmentConflicts(effectiveCompanyId, activeDepartmentId);
+  const conflicts = conflictsData?.data || [];
 
   if (isLoading) {
     return (
@@ -85,7 +90,7 @@ const DepartmentDashboard = () => {
             >
               {departments.map((department) => (
                 <option key={department._id} value={department._id}>
-                  {department.name} ({department.employeeCount})
+                  {department.name} ({department.employeeCount}){department.actionRequiredCount > 0 ? ` - ${department.actionRequiredCount} Action Req.` : ""}
                 </option>
               ))}
             </select>
@@ -116,14 +121,24 @@ const DepartmentDashboard = () => {
               key={department._id}
               type="button"
               onClick={() => setSelectedDepartmentId(department._id)}
-              className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all border ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all border ${
                 activeDepartmentId === department._id
                   ? "bg-[#3F8CFF] text-white border-[#3F8CFF]"
                   : "bg-white text-gray-600 border-gray-200 hover:border-blue-200 hover:text-[#3F8CFF]"
               }`}
             >
-              {department.name}
-              <span className="ml-1.5 opacity-80">({department.employeeCount})</span>
+              <span>
+                {department.name} <span className="opacity-80">({department.employeeCount})</span>
+              </span>
+              {department.actionRequiredCount > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                  activeDepartmentId === department._id
+                    ? "bg-white text-red-500"
+                    : "bg-red-100 text-red-600"
+                }`}>
+                  {department.actionRequiredCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -151,6 +166,17 @@ const DepartmentDashboard = () => {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
+          {conflicts.length > 0 && (
+            <div className="mb-4 flex flex-col gap-2">
+              <h4 className="text-[12px] font-bold text-red-600 uppercase tracking-wider mb-1 px-1 flex items-center gap-1">
+                <FiAlertCircle /> Action Required: Leave Conflicts
+              </h4>
+              {conflicts.map(conflict => (
+                <DepartmentConflictCard key={conflict._id} conflict={conflict} />
+              ))}
+            </div>
+          )}
+
           {activeDepartment?.employees?.length ? (
             <div className="flex flex-col gap-2">
               {activeDepartment.employees.map((employee) => (

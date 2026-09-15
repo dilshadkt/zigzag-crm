@@ -7,6 +7,8 @@ import {
   updateVacationRequestApi,
   createVacationRequestApi,
   checkAvailabilityApi,
+  getOverlappingTasksApi,
+  notifyReporterApi,
 } from "../api/vacationApi";
 
 export const useGetEmployeeVacations = (employeeId, month, year) => {
@@ -82,5 +84,19 @@ export const useCreateVacationRequest = () => {
 export const useCheckAvailability = () => {
   return useMutation({
     mutationFn: (checks) => checkAvailabilityApi(checks),
+  });
+};
+
+export const useGetOverlappingTasks = (vacationId) => {
+  return useQuery({
+    queryKey: ["overlappingTasks", vacationId],
+    queryFn: () => getOverlappingTasksApi(vacationId),
+    enabled: !!vacationId,
+  });
+};
+
+export const useNotifyReporter = () => {
+  return useMutation({
+    mutationFn: ({ vacationId, taskId }) => notifyReporterApi({ vacationId, taskId }),
   });
 };
