@@ -138,18 +138,20 @@ const Vacations = () => {
 
     const isApproved = vacationOnDate.status === "approved";
     const isModifiedOut = vacationOnDate.status === "modified_out";
+    const isHalfDay = vacationOnDate.isHalfDay;
+    const halfDayType = vacationOnDate.halfDayType;
 
     if (vacationOnDate.type === "remote_work") {
-      return ["#6D5DD3", isApproved, isModifiedOut];
+      return ["#6D5DD3", isApproved, isModifiedOut, isHalfDay, halfDayType];
     } else if (vacationOnDate.type === "sick_leave") {
-      return ["#F65160", isApproved, isModifiedOut];
+      return ["#F65160", isApproved, isModifiedOut, isHalfDay, halfDayType];
     } else if (vacationOnDate.type === "vacation") {
-      return ["#15C0E6", isApproved, isModifiedOut];
+      return ["#15C0E6", isApproved, isModifiedOut, isHalfDay, halfDayType];
     } else if (vacationOnDate.type === "unpaid_leave") {
-      return ["#64748B", isApproved, isModifiedOut];
+      return ["#64748B", isApproved, isModifiedOut, isHalfDay, halfDayType];
     }
 
-    return ["#F4F9FD", true, false];
+    return ["#F4F9FD", true, false, false, null];
   };
 
   let displayedEmployees = companyVacationsData?.employees;
@@ -366,8 +368,22 @@ const Vacations = () => {
                   </div>
                   <div className="w-full h-[52px] border-b border-[#E6EBF5] gap-x-1 grid grid-cols-31 flexStart px-1">
                     {daysInMonth.map((date, idx) => {
-                      const [bgColor, isApproved, isModifiedOut] =
+                      const [bgColor, isApproved, isModifiedOut, isHalfDay, halfDayType] =
                         generateBgColor(employee, date);
+                        
+                      let bgStyle = {
+                        background: bgColor,
+                        opacity: isModifiedOut ? 0.05 : isApproved ? 1 : 0.2,
+                      };
+                      
+                      if (isHalfDay && halfDayType) {
+                        if (halfDayType === "first_half") {
+                          bgStyle.background = `linear-gradient(to right, ${bgColor} 50%, transparent 50%)`;
+                        } else if (halfDayType === "second_half") {
+                          bgStyle.background = `linear-gradient(to right, transparent 50%, ${bgColor} 50%)`;
+                        }
+                      }
+
                       return (
                         <div
                           title={formattedDate(date)}
@@ -382,10 +398,7 @@ const Vacations = () => {
                           flexCenter flex-col cursor-pointer`}
                         >
                           <div
-                            style={{
-                              background: bgColor,
-                              opacity: isModifiedOut ? 0.05 : isApproved ? 1 : 0.2,
-                            }}
+                            style={bgStyle}
                             className="w-full h-full rounded-[5px]"
                           ></div>
                         </div>
