@@ -32,7 +32,7 @@ import {
 } from "./components/VacationShimmer";
 
 const LEAVE_LABELS = {
-  vacation: "Vacation",
+  vacation: "Casual Leave",
   sick_leave: "Sick leave",
   remote_work: "Work remotely",
   unpaid_leave: "Unpaid leave",
@@ -41,7 +41,7 @@ const LEAVE_LABELS = {
 const Vacations = () => {
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
-  const [stat, setStat] = useState("Vacations");
+  const [stat, setStat] = useState("Casual Leaves");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
@@ -59,7 +59,7 @@ const Vacations = () => {
 
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
-  const isVacationsTab = stat === "Vacations";
+  const isVacationsTab = stat === "Casual Leaves";
   const isCalendarTab = stat === "Calendar";
 
   const { data: companyVacationsData, isLoading: isLoadingEmployees } =
@@ -282,7 +282,7 @@ const Vacations = () => {
       );
     }
 
-    if (stat === "Vacations") {
+    if (stat === "Casual Leaves") {
       return (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mt-3 pb-6">
           {displayedEmployees?.map((item, index) => (
@@ -300,8 +300,8 @@ const Vacations = () => {
             <div className="col-span-full bg-white h-64 flexCenter rounded-3xl p-6 text-center text-gray-400 border border-dashed border-gray-200">
               <div className="flex flex-col items-center gap-2">
                 <RiCalendarCheckLine size={48} className="text-gray-200" />
-                <p className="font-medium">No vacation data available</p>
-                <p className="text-sm">Add vacation requests to see them here.</p>
+                <p className="font-medium">No casual leave data available</p>
+                <p className="text-sm">Add casual leave requests to see them here.</p>
               </div>
             </div>
           )}
@@ -467,7 +467,7 @@ const Vacations = () => {
                 </div>
                 <div className="flex flex-col gap-y-1">
                   <span className="text-sm text-[#7D8592] font-medium">
-                    Vacation
+                    Casual Leave
                   </span>
                   <div className="flexStart gap-x-2">
                     <div className="w-[10px] h-[10px] rounded-full bg-[#15C0E6]"></div>
@@ -501,7 +501,7 @@ const Vacations = () => {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-2">
         {/* Left: Title */}
         <div className="flex items-center">
-          <Header>Vacations</Header>
+          <Header>Casual Leaves</Header>
         </div>
 
         {/* Center: Tab Switch */}
@@ -509,7 +509,7 @@ const Vacations = () => {
           <ButtonToggle
             setValue={setStat}
             value={stat}
-            values={["Vacations", "Calendar"]}
+            values={["Casual Leaves", "Calendar"]}
           />
         </div>
         

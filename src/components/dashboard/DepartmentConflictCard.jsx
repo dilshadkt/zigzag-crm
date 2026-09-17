@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { RiCalendarEventLine, RiErrorWarningLine } from "react-icons/ri";
 import { RxCross2 } from "react-icons/rx";
 import { useAuth } from "../../hooks/useAuth";
-import { useUpdateTaskById, useGetAllEmployees } from "../../api/hooks";
+import { useUpdateSubTaskById, useGetAllEmployees } from "../../api/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import SearchableSelect from "../pages/campaigns/SearchableSelect";
 
@@ -11,7 +11,7 @@ const DepartmentConflictCard = ({ conflict }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { _id, title, assignedTo, project, conflictVacationId, startDate, dueDate } = conflict;
+  const { _id, title, assignedTo, project, conflictVacationId, startDate, dueDate, parentTask } = conflict;
   const employee = assignedTo?.[0];
 
   const [newStartDate, setNewStartDate] = useState("");
@@ -24,10 +24,13 @@ const DepartmentConflictCard = ({ conflict }) => {
   const hasNoReporters = !project?.reporters || project.reporters.length === 0;
   const isReporter = hasNoReporters || project?.reporters?.some(r => r === user?._id || r?._id === user?._id);
 
-  const updateTask = useUpdateTaskById(_id, () => {
+  const parentTaskId = typeof parentTask === 'object' ? parentTask?._id : parentTask;
+  const updateTask = useUpdateSubTaskById(_id, parentTaskId);
+  
+  const handleSuccess = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries(["departmentConflicts"]);
-  });
+  };
 
   const handleUpdateDate = (e) => {
     e.preventDefault();
@@ -36,12 +39,15 @@ const DepartmentConflictCard = ({ conflict }) => {
     const payload = {
       dueDate: newDueDate,
       isReportedConflict: false,
+      conflictVacationId: null,
     };
     
     if (newStartDate) payload.startDate = newStartDate;
     if (newAssignee) payload.assignedTo = [newAssignee];
     
-    updateTask.mutate(payload);
+    updateTask.mutate(payload, {
+      onSuccess: handleSuccess,
+    });
   };
 
   return (
@@ -58,7 +64,7 @@ const DepartmentConflictCard = ({ conflict }) => {
           
           <div>
             <h4 className="text-[13px] font-bold text-gray-800 flex items-center gap-1.5 line-clamp-1">
-              <RiErrorWarningLine className="text-red-500" /> {title}
+              <RiErrorWarningLine className="text-red-500" /> {parentTask?.title ? `${parentTask.title} - ${title}` : title}
             </h4>
             <p className="text-[11px] text-gray-600 mt-0.5">
               Assigned to <span className="font-semibold">{employee?.firstName} {employee?.lastName}</span>

@@ -364,7 +364,7 @@ const VacationRequestModal = ({ onClose }) => {
                   {(targetOnProbation
                     ? [{ key: UNPAID_LEAVE_TYPE, label: "unpaid leave", balance: unpaidBalance }]
                     : [
-                    { key: "vacation", label: "vacation", balance: vacationBalance },
+                    { key: "vacation", label: "casual leave", balance: vacationBalance },
                     { key: "sick_leave", label: "sick leave", balance: sickBalance },
                     { key: "remote_work", label: "remote work", balance: remoteBalance },
                     { key: UNPAID_LEAVE_TYPE, label: "unpaid leave", balance: unpaidBalance },

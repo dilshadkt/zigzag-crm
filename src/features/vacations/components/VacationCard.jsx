@@ -128,7 +128,7 @@ const VacationCard = ({
             <div className="flex items-center gap-3 mt-0.5 flex-wrap">
               <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                Vac: <span className="text-gray-600">{item?.vacations?.vacation || 0}d</span>
+                Cas: <span className="text-gray-600">{item?.vacations?.vacation || 0}d</span>
               </span>
               <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />

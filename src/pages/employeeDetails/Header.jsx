@@ -25,7 +25,7 @@ export const EmployeeHeader = ({
             "Projects",
             "Teams",
             "Today's Tasks",
-            "Vacations",
+            "Casual Leaves",
           ].map((item, index) => (
             <button
               key={index}

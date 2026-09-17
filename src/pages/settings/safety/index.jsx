@@ -80,13 +80,13 @@ const PERMISSION_CATEGORIES = {
     ],
   },
   vacations: {
-    label: "Vacation Management",
+    label: "Casual Leave Management",
     icon: <FiMap />,
     permissions: [
-      { key: "approve", label: "Approve Vacation", description: "Can approve vacation requests" },
-      { key: "reject", label: "Reject Vacation", description: "Can reject vacation requests" },
-      { key: "view", label: "View Vacations", description: "Can view all vacation requests" },
-      { key: "create", label: "Create Vacation", description: "Can create vacation requests" },
+      { key: "approve", label: "Approve Casual Leave", description: "Can approve casual leave requests" },
+      { key: "reject", label: "Reject Casual Leave", description: "Can reject casual leave requests" },
+      { key: "view", label: "View Casual Leaves", description: "Can view all casual leave requests" },
+      { key: "create", label: "Create Casual Leave", description: "Can create casual leave requests" },
     ],
   },
   meetings: {
@@ -161,7 +161,7 @@ const MODULES = [
   { id: "tickets", type: "route", label: "Issues & Complaints", icon: <FiAlertCircle />, desc: "Raise and track client tickets", permissionKey: "tickets" },
   { id: "board", type: "route", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards", permissionKey: "tasks" },
   { id: "calendar", type: "route", label: "Timeline", icon: <FiCalendar />, desc: "Global scheduling system", permissionKey: null },
-  { id: "vacations", type: "route", label: "Time Off", icon: <FiMap />, desc: "Leave & vacation management", permissionKey: "vacations" },
+  { id: "vacations", type: "route", label: "Time Off", icon: <FiMap />, desc: "Leave & casual leave management", permissionKey: "vacations" },
   { id: "employees", type: "route", label: "Team Directory", icon: <FiUsers />, desc: "Workforce data management", permissionKey: "employees" },
   { id: "messenger", type: "route", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub", permissionKey: null },
   { id: "leads", type: "route", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking", permissionKey: "leads" },

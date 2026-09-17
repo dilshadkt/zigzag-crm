@@ -32,7 +32,7 @@ const EmployeeDetails = () => {
   const [activePage, setActivePage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    const validTabs = ["Overview", "Performance", "Projects", "Teams", "Today's Tasks", "Vacations"];
+    const validTabs = ["Overview", "Performance", "Projects", "Teams", "Today's Tasks", "Casual Leaves"];
     if (tab && validTabs.includes(tab)) return tab;
     return isAdmin() || canEdit ? "Overview" : "Projects";
   });
@@ -189,7 +189,7 @@ const EmployeeDetails = () => {
                 selectedMonth={selectedMonth}
               />
             )}
-            {activePage === "Vacations" && (
+            {activePage === "Casual Leaves" && (
               <Vacations
                 employeeId={employeeId}
                 employee={employee}
