@@ -8,6 +8,8 @@ import React, {
 import { IoSearchOutline } from "react-icons/io5";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiOutlineFilter } from "react-icons/hi";
+import { RiFileList2Line } from "react-icons/ri";
+import { exportAttendanceWithLoading } from "../../../utils/excelExport";
 
 // Custom hook for debounced search
 const useDebounce = (value, delay) => {
@@ -96,9 +98,15 @@ const AttendanceFilter = ({
   onSearchChange,
   onFilterChange,
   onCustomDateChange,
+  attendanceData,
+  onExportSuccess,
+  onExportError,
+  canCreateAttendance,
+  onAddAttendance,
 }) => {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const filterDropdownRef = useRef(null);
 
   // Debounce search term to prevent excessive API calls
@@ -152,6 +160,29 @@ const AttendanceFilter = ({
     },
     [onFilterChange]
   );
+
+  const handleExportReport = useCallback(async () => {
+    if (!attendanceData || attendanceData.length === 0) {
+      onExportError?.("No attendance data available to export");
+      return;
+    }
+
+    try {
+      const exportDate = new Date().toISOString().split("T")[0];
+      await exportAttendanceWithLoading(
+        attendanceData,
+        exportDate,
+        setIsExporting
+      );
+      onExportSuccess?.("Attendance report exported successfully!");
+    } catch (error) {
+      onExportError?.(error.message || "Failed to export attendance report");
+    }
+  }, [attendanceData, onExportSuccess, onExportError]);
+
+  const isExportDisabled = useMemo(() => {
+    return !attendanceData || attendanceData.length === 0 || isExporting;
+  }, [attendanceData, isExporting]);
 
   // Memoized filter options
   const filterOptions = useMemo(
@@ -274,9 +305,49 @@ const AttendanceFilter = ({
         )}
       </div>
 
-      {/* View Controls */}
-      <div className="flex items-center gap-3">
-        <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+      {/* View Controls & Actions */}
+      <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-3 lg:mt-0">
+        <button
+          onClick={handleExportReport}
+          disabled={isExportDisabled}
+          className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm cursor-pointer font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isExporting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              Exporting...
+            </>
+          ) : (
+            <>
+              <RiFileList2Line />
+              Export
+            </>
+          )}
+        </button>
+
+        {canCreateAttendance && (
+          <button
+            onClick={onAddAttendance}
+            className="flex items-center gap-2 bg-[#3f8cff] text-sm font-semibold cursor-pointer text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            Manual Attendance
+          </button>
+        )}
+
+        <div className="flex border border-gray-300 rounded-lg overflow-hidden ml-auto lg:ml-2">
           <button className="p-2 bg-blue-500 text-white transition-colors">
             <svg
               className="w-4 h-4"

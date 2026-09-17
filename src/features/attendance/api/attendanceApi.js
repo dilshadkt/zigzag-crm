@@ -131,4 +131,9 @@ export const attendanceApi = {
     const response = await apiClient.delete(`/attendance/${attendanceId}`);
     return response.data;
   },
+
+  createAttendance: async (data) => {
+    const response = await apiClient.post("/attendance", data);
+    return response.data;
+  },
 };

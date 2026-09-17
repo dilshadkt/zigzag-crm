@@ -5,6 +5,7 @@ import SummaryCards from "./components/SummaryCards";
 import AttendanceFilter, { getDateRanges } from "./components/AttendanceFilter";
 import AttendanceTable from "./components/AttendanceTable";
 import AttendanceCalendar from "./components/AttendanceCalendar";
+import AddAttendanceDrawer from "./components/AddAttendanceDrawer";
 import {
   useAttendanceData,
   useAttendanceDataRange,
@@ -58,6 +59,8 @@ const useAttendanceState = () => {
     []
   );
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
   return {
     searchTerm,
     selectedFilter,
@@ -66,6 +69,8 @@ const useAttendanceState = () => {
     currentPage,
     pageLimit,
     attendanceData,
+    isAddModalOpen,
+    setIsAddModalOpen,
     ...handlers,
   };
 };
@@ -132,6 +137,8 @@ const Attendance = () => {
     currentPage,
     pageLimit,
     attendanceData,
+    isAddModalOpen,
+    setIsAddModalOpen,
     handleSearchChange,
     handleFilterChange,
     handleCustomDateChange,
@@ -260,6 +267,11 @@ const Attendance = () => {
           onSearchChange={handleSearchChange}
           onFilterChange={handleFilterChange}
           onCustomDateChange={handleCustomDateChange}
+          attendanceData={attendanceRecords}
+          onExportSuccess={handleExportSuccess}
+          onExportError={handleExportError}
+          canCreateAttendance={canCreateAttendance}
+          onAddAttendance={() => setIsAddModalOpen(true)}
         />
 
         <AttendanceTable
@@ -274,6 +286,13 @@ const Attendance = () => {
           canApproveAttendance={canApproveAttendance}
           canDeleteAttendance={canDeleteAttendance}
         />
+        
+        {canCreateAttendance && (
+          <AddAttendanceDrawer 
+            isOpen={isAddModalOpen} 
+            onClose={() => setIsAddModalOpen(false)} 
+          />
+        )}
       </div>
     </div>
   );

@@ -99,15 +99,7 @@ const AttendanceHeader = ({
         </span>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2 md:gap-3">
-        <ExportButton
-          isExporting={isExporting}
-          onExport={handleExportReport}
-          disabled={isExportDisabled}
-        />
-        <AddAttendanceButton onClick={handleAddAttendance} />
-      </div>
+      {/* Action Buttons removed and moved to AttendanceFilter */}
     </div>
   );
 };
