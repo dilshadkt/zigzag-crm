@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { attendanceApi } from "../../features/attendance/api/attendanceApi";
-import { useEmpoyees } from "../../api/hooks";
+import { useGetAllEmployees } from "../../api/hooks";
 import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
 import PendingTimeChangeList from "../../features/attendance/components/PendingTimeChangeList";
 
@@ -78,8 +78,8 @@ const HRDashboardPage = () => {
         };
     }, []);
 
-    // Fetch employees for staff dropdown
-    const { data: employeesData } = useEmpoyees(1, null);
+    // Fetch all employees for staff dropdown
+    const { data: employeesData } = useGetAllEmployees(true, { view: "select" });
     const employeesList = employeesData?.employees || [];
 
     // State for report data
