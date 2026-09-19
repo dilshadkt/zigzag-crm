@@ -187,7 +187,7 @@ const Vacations = () => {
       const vEnd = new Date(vacation.endDate);
       const eStart = new Date(Math.max(vStart.getTime(), startOfMonth(currentDate).getTime()));
       const eEnd = new Date(Math.min(vEnd.getTime(), endOfMonth(currentDate).getTime()));
-      
+
       const curr = new Date(eStart);
       while (curr <= eEnd) {
         myDates.push({
@@ -370,12 +370,12 @@ const Vacations = () => {
                     {daysInMonth.map((date, idx) => {
                       const [bgColor, isApproved, isModifiedOut, isHalfDay, halfDayType] =
                         generateBgColor(employee, date);
-                        
+
                       let bgStyle = {
                         background: bgColor,
                         opacity: isModifiedOut ? 0.05 : isApproved ? 1 : 0.2,
                       };
-                      
+
                       if (isHalfDay && halfDayType) {
                         if (halfDayType === "first_half") {
                           bgStyle.background = `linear-gradient(to right, ${bgColor} 50%, transparent 50%)`;
@@ -443,50 +443,50 @@ const Vacations = () => {
                   </div>
                 )}
                 <div className="w-full grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="flex flex-col gap-y-1">
-                  <span className="text-sm text-[#7D8592] font-medium">
-                    Sick Leave
-                  </span>
-                  <div className="flexStart gap-x-2">
-                    <div className="w-[10px] h-[10px] rounded-full bg-red-400"></div>
-                    <span>Approved</span>
-                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-red-400 bg-red-400/50"></div>
-                    <span>Pending</span>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#7D8592] font-medium">
+                      Sick Leave
+                    </span>
+                    <div className="flexStart gap-x-2">
+                      <div className="w-[10px] h-[10px] rounded-full bg-red-400"></div>
+                      <span>Approved</span>
+                      <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-red-400 bg-red-400/50"></div>
+                      <span>Pending</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-y-1">
-                  <span className="text-sm text-[#7D8592] font-medium">
-                    Work remotely
-                  </span>
-                  <div className="flexStart gap-x-2">
-                    <div className="w-[10px] h-[10px] rounded-full bg-[#6D5DD3]"></div>
-                    <span>Approved</span>
-                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#6D5DD3] bg-[#6D5DD3]/50"></div>
-                    <span>Pending</span>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#7D8592] font-medium">
+                      Work remotely
+                    </span>
+                    <div className="flexStart gap-x-2">
+                      <div className="w-[10px] h-[10px] rounded-full bg-[#6D5DD3]"></div>
+                      <span>Approved</span>
+                      <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#6D5DD3] bg-[#6D5DD3]/50"></div>
+                      <span>Pending</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-y-1">
-                  <span className="text-sm text-[#7D8592] font-medium">
-                    Casual Leave
-                  </span>
-                  <div className="flexStart gap-x-2">
-                    <div className="w-[10px] h-[10px] rounded-full bg-[#15C0E6]"></div>
-                    <span>Approved</span>
-                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#15C0E6] bg-[#15C0E6]/50"></div>
-                    <span>Pending</span>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#7D8592] font-medium">
+                      Casual Leave
+                    </span>
+                    <div className="flexStart gap-x-2">
+                      <div className="w-[10px] h-[10px] rounded-full bg-[#15C0E6]"></div>
+                      <span>Approved</span>
+                      <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-[#15C0E6] bg-[#15C0E6]/50"></div>
+                      <span>Pending</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-y-1">
-                  <span className="text-sm text-[#7D8592] font-medium">
-                    Unpaid Leave
-                  </span>
-                  <div className="flexStart gap-x-2">
-                    <div className="w-[10px] h-[10px] rounded-full bg-slate-500"></div>
-                    <span>Approved</span>
-                    <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-slate-500 bg-slate-500/50"></div>
-                    <span>Pending</span>
+                  <div className="flex flex-col gap-y-1">
+                    <span className="text-sm text-[#7D8592] font-medium">
+                      Unpaid Leave
+                    </span>
+                    <div className="flexStart gap-x-2">
+                      <div className="w-[10px] h-[10px] rounded-full bg-slate-500"></div>
+                      <span>Approved</span>
+                      <div className="w-[10px] ml-5 h-[10px] rounded-full border-2 border-slate-500 bg-slate-500/50"></div>
+                      <span>Pending</span>
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             </div>
@@ -501,7 +501,7 @@ const Vacations = () => {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-2">
         {/* Left: Title */}
         <div className="flex items-center">
-          <Header>Casual Leaves</Header>
+          <Header>Leave Reports</Header>
         </div>
 
         {/* Center: Tab Switch */}
@@ -512,11 +512,11 @@ const Vacations = () => {
             values={["Casual Leaves", "Calendar"]}
           />
         </div>
-        
+
         {/* Right: Date Section + Add Button */}
         <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border border-gray-100 shadow-sm">
-            <button 
+            <button
               onClick={handlePrevMonth}
               className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-slate-50 hover:text-indigo-600 transition-all"
             >
@@ -525,7 +525,7 @@ const Vacations = () => {
             <span className="text-[11px] font-bold text-slate-600 min-w-[100px] text-center uppercase tracking-wide">
               {format(currentDate, "MMMM yyyy")}
             </span>
-            <button 
+            <button
               onClick={handleNextMonth}
               className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-slate-50 hover:text-indigo-600 transition-all"
             >

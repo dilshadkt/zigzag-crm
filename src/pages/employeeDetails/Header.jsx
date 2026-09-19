@@ -30,11 +30,10 @@ export const EmployeeHeader = ({
             <button
               key={index}
               onClick={() => setActivePage(item)}
-              className={`${
-                activePage === item
+              className={`${activePage === item
                   ? `bg-[#3F8CFF] text-white`
                   : `bg-[#E6EDF5] text-[#0A1629]`
-              } text-xs sm:text-sm py-2 px-3 sm:px-6 md:px-8
+                } text-xs sm:text-sm py-2 px-3 sm:px-6 md:px-8
                   cursor-pointer flex gap-x-1 rounded-full font-medium relative whitespace-nowrap shrink-0`}
             >
               {item}
@@ -54,16 +53,16 @@ export const EmployeeHeader = ({
         {(activePage === "Overview" ||
           activePage === "Performance" ||
           activePage === "Today's Tasks") && (
-          <label className="flex flex-col text-xs font-medium text-gray-600">
-            <span className="sr-only">Select month</span>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(event) => setSelectedMonth(event.target.value)}
-              className="mt-1 rounded-lg border border-transparent bg-[#E6EDF5] px-3 py-2 text-sm text-[#0A1629] focus:border-[#3F8CFF] focus:bg-white focus:outline-none"
-            />
-          </label>
-        )}
+            <label className="flex flex-col text-xs font-medium text-gray-600">
+              <span className="sr-only">Select month</span>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+                className="mt-1 rounded-lg border border-transparent bg-[#E6EDF5] px-3 py-2 text-sm text-[#0A1629] focus:border-[#3F8CFF] focus:bg-white focus:outline-none"
+              />
+            </label>
+          )}
         {activePage === "Projects" && projectOptions?.length > 0 && (
           <Dropdown
             options={projectOptions}

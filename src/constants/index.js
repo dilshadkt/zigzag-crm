@@ -103,7 +103,7 @@ export const SIDE_MENU = [
   },
   {
     id: 5,
-    title: "Vacations",
+    title: "Leave Reports",
     icon: BiSolidPlane,
     path: "/vacations",
     routeKey: "vacations",
