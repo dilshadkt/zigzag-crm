@@ -3497,3 +3497,14 @@ export const useGenerateMeetingMeetLink = () => {
     onSuccess: () => invalidateMeetings(queryClient),
   });
 };
+
+export const useUpdateTelegramSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ companyId, enabled, time }) =>
+      apiClient.put(`/companies/${companyId}/telegram-settings`, { enabled, time }).then((res) => res.data),
+    onSuccess: (_, { companyId }) => {
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+};

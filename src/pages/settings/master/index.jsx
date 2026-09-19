@@ -31,6 +31,9 @@ import DepartmentModal from "../../../components/settings/company/DepartmentModa
 // Gamification imports
 import GamificationRulesSection from "../../../components/settings/company/GamificationRulesSection";
 
+// Telegram imports
+import TelegramReportSection from "../../../components/settings/company/TelegramReportSection";
+
 import { useAuth } from "../../../hooks/useAuth";
 import {
   useGetTaskCategories,
@@ -57,6 +60,8 @@ import {
   useSaveWorkSchedule,
   useGetLeavePolicy,
   useSaveLeavePolicy,
+  useGetCompany,
+  useUpdateTelegramSettings
 } from "../../../api/hooks";
 
 // ─── Section Header ───────────────────────────────────────────────────────────
@@ -70,6 +75,16 @@ const SectionHeader = ({ title, description }) => (
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const Master = () => {
   const { companyId } = useAuth();
+
+  // ── Company Settings (for Telegram) ─────────────────────────────────────────
+  const { data: companyData, isLoading: companyLoading, error: companyError } = useGetCompany(companyId);
+  const updateTelegramSettings = useUpdateTelegramSettings();
+
+  const handleSaveTelegramConfig = (data) => {
+    updateTelegramSettings.mutate({ companyId, ...data }, {
+      onSuccess: () => toast.success("Telegram report settings saved successfully")
+    });
+  };
 
   // ── Project Fields ──────────────────────────────────────────────────────────
   const [showFieldModal, setShowFieldModal] = useState(false);
@@ -254,6 +269,24 @@ const Master = () => {
           error={scheduleError}
           onSave={(data) => saveWorkSchedule.mutate(data)}
           isSaving={saveWorkSchedule.isPending}
+        />
+      </div>
+
+      {/* ── Divider ── */}
+      <div className="border-t border-gray-100" />
+
+      {/* ── Telegram Daily Reports ── */}
+      <div className="flex flex-col">
+        <SectionHeader
+          title="Telegram Daily Reports"
+          description="Configure automated daily summary reports sent to your Telegram bot."
+        />
+        <TelegramReportSection
+          config={companyData?.company?.telegramReportConfig}
+          isLoading={companyLoading}
+          error={companyError}
+          onSave={handleSaveTelegramConfig}
+          isSaving={updateTelegramSettings.isPending}
         />
       </div>
 
