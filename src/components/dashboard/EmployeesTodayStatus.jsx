@@ -6,6 +6,7 @@ import Modal from "../shared/modal";
 const EmployeesTodayStatus = () => {
   const { data, isLoading } = useEmployeesTodayStatus();
   const [selectedEmp, setSelectedEmp] = useState(null);
+  const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
   const employees = data?.data || [];
 
   const workingEmployees = employees.filter(emp => emp.pendingCount > 0);
@@ -69,7 +70,10 @@ const EmployeesTodayStatus = () => {
       </div>
 
       {inactiveEmployees.length > 0 && (
-        <div className="mt-4 px-4 flex items-center gap-2 text-[11px] text-gray-400">
+        <div 
+          onClick={() => setIsInactiveModalOpen(true)}
+          className="mt-4 px-4 flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer hover:text-blue-500 transition-colors w-fit"
+        >
           <FaExclamationCircle />
           <span>{inactiveEmployees.length} employees have no tasks assigned for today</span>
         </div>
@@ -83,6 +87,32 @@ const EmployeesTodayStatus = () => {
         emp={selectedEmp} 
       />
     )}
+
+    <Modal 
+      isOpen={isInactiveModalOpen} 
+      onClose={() => setIsInactiveModalOpen(false)} 
+      title="Unassigned Employees" 
+      maxWidth="sm:max-w-md"
+    >
+      <div className="p-2">
+        <p className="text-sm text-gray-500 mb-4">The following employees have no subtasks assigned for today:</p>
+        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+          {inactiveEmployees.map(emp => (
+            <div key={emp._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <Avatar user={emp} size="w-10 h-10" />
+              <div>
+                <div className="font-medium text-gray-700 text-sm">
+                  {emp.firstName} {emp.lastName}
+                </div>
+                <div className="text-xs text-gray-500 font-normal capitalize">
+                  {emp.position?.replace("-", " ") || "Employee"}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Modal>
     </>
   );
 };
@@ -194,8 +224,8 @@ const EmployeeTasksModal = ({ isOpen, onClose, emp }) => {
   const completedTasks = data?.completedTasks || [];
   const completedSubTasks = data?.completedSubTasks || [];
 
-  const pendingList = [...tasks, ...subTasks, ...reworkTasks, ...reworkSubTasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-  const completedList = [...completedTasks, ...completedSubTasks].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+  const pendingList = [...subTasks, ...reworkSubTasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+  const completedList = [...completedSubTasks].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
   const handleTaskClick = (task) => {
     onClose();

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTodayTasks } from "../../api/hooks/dashboard";
 import { useGetAllEmployees } from "../../api/hooks";
 import { FaTasks, FaCheckCircle, FaUserCircle } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const EmployeeTodayTasks = () => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
@@ -16,8 +16,8 @@ const EmployeeTodayTasks = () => {
     const completedTasks = data?.completedTasks || [];
     const completedSubTasks = data?.completedSubTasks || [];
 
-    const activeItems = [...tasks, ...subTasks];
-    const completedItems = [...completedTasks, ...completedSubTasks];
+    const activeItems = [...subTasks];
+    const completedItems = [...completedSubTasks];
 
     return (
         <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-4 border border-gray-100 min-h-[360px] md:min-h-[420px] md:h-[470px] flex flex-col">
@@ -141,12 +141,29 @@ const Avatar = ({ user, size = "w-7 h-7", fontSize = "text-[10px]" }) => {
 };
 
 const TaskItem = ({ item, status }) => {
+    const navigate = useNavigate();
     const isSubTask = !!item.parentTask;
     const project = item.project;
     const assignedTo = item.assignedTo?.[0]; // Primary assigned person
 
+    const handleTaskClick = () => {
+        if (item.parentTask && item.parentTask._id) {
+            if (item.project) {
+                navigate(`/projects/${item.project._id || item.project}/${item.parentTask._id || item.parentTask}`);
+            } else {
+                navigate(`/tasks/${item.parentTask._id || item.parentTask}`);
+            }
+        } else {
+            if (item.project) {
+                navigate(`/projects/${item.project._id || item.project}/${item._id}`);
+            } else {
+                navigate(`/tasks/${item._id}`);
+            }
+        }
+    };
+
     return (
-        <div className="bg-white p-3 rounded-xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md cursor-default group">
+        <div onClick={handleTaskClick} className="bg-white p-3 rounded-xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md cursor-pointer group">
             <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
