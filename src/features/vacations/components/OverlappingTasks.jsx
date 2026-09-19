@@ -159,8 +159,8 @@ const OverlappingTasks = ({ vacationId, showHeading = true }) => {
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <span className={`text-[12px] font-bold line-clamp-2 ${isNotified ? 'text-slate-500 line-through' : 'text-gray-800'}`} title={task.title}>
-                          {task.title}
+                        <span className={`text-[12px] font-bold line-clamp-2 ${isNotified ? 'text-slate-500 line-through' : 'text-gray-800'}`} title={task.parentTask?.title ? `${task.parentTask.title} - ${task.title}` : task.title}>
+                          {task.parentTask?.title ? `${task.parentTask.title} - ${task.title}` : task.title}
                         </span>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] font-medium text-gray-500">
                           <span className={`font-bold px-1.5 py-0.5 rounded ${isNotified ? 'bg-slate-200 text-slate-500' : 'text-red-500 bg-red-50'}`}>
