@@ -22,7 +22,8 @@ const DepartmentConflictCard = ({ conflict }) => {
   const employeesList = employeesData?.employees || (Array.isArray(employeesData) ? employeesData : []);
 
   const hasNoReporters = !project?.reporters || project.reporters.length === 0;
-  const isReporter = hasNoReporters || project?.reporters?.some(r => r === user?._id || r?._id === user?._id);
+  const isCompanyAdmin = user?.role === "company-admin";
+  const isReporter = hasNoReporters || project?.reporters?.some(r => r === user?._id || r?._id === user?._id) || isCompanyAdmin;
 
   const parentTaskId = typeof parentTask === 'object' ? parentTask?._id : parentTask;
   const updateTask = useUpdateSubTaskById(_id, parentTaskId);
@@ -103,7 +104,7 @@ const DepartmentConflictCard = ({ conflict }) => {
             </button>
           ) : (
             <span className="text-[10px] text-gray-400 italic">
-              Only reporters can change date
+              Only reporters or admins can change date
             </span>
           )}
         </div>
