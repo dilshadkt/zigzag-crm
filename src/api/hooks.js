@@ -14,6 +14,7 @@ import {
   updateEmployeeProbationDates,
   updateProject,
   updateTaskById,
+  moveTaskToProject,
   updateTaskOrder,
   deleteProject,
   pauseProject,
@@ -532,6 +533,22 @@ export const useUpdateTaskById = (taskId, handleClose) => {
     },
   });
 };
+
+export const useMoveTask = (taskId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["moveTask", taskId],
+    mutationFn: (moveData) => moveTaskToProject(taskId, moveData),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(["getTaskById", taskId]);
+      queryClient.invalidateQueries(["subTasksByParentTask", taskId]);
+      queryClient.invalidateQueries(["companyProjects"]);
+      queryClient.invalidateQueries(["tasksByProject"]);
+      if (onSuccess) onSuccess(data);
+    },
+  });
+};
+
 export const useAddEmployee = (handleClose) => {
   return useMutation({
     mutationKey: ["addEmployee"],

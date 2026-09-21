@@ -12,7 +12,8 @@ import {
     FiUser,
     FiTrash2,
     FiPaperclip,
-    FiUserPlus
+    FiUserPlus,
+    FiArrowRight
 } from "react-icons/fi";
 
 const ActivityTimeline = ({ activities }) => {
@@ -62,6 +63,8 @@ const ActivityTimeline = ({ activities }) => {
                 return <FiEdit3 className={`${iconClass} text-sky-600`} />;
             case "attachments_change":
                 return <FiPaperclip className={`${iconClass} text-pink-600`} />;
+            case "task_moved":
+                return <FiArrowRight className={`${iconClass} text-violet-600`} />;
             case "deleted":
                 return <FiTrash2 className={`${iconClass} text-gray-600`} />;
             default:
@@ -81,6 +84,7 @@ const ActivityTimeline = ({ activities }) => {
             case "due_date_change": return { bg: "bg-orange-100", border: "border-orange-200", dot: "bg-orange-500" };
             case "assignment_change": return { bg: "bg-cyan-100", border: "border-cyan-200", dot: "bg-cyan-500" };
             case "attachments_change": return { bg: "bg-pink-100", border: "border-pink-200", dot: "bg-pink-500" };
+            case "task_moved": return { bg: "bg-violet-100", border: "border-violet-200", dot: "bg-violet-500" };
             default: return { bg: "bg-slate-100", border: "border-slate-200", dot: "bg-slate-400" };
         }
     };
@@ -102,16 +106,16 @@ const ActivityTimeline = ({ activities }) => {
     return (
         <div className="relative px-2 py-4">
             {/* Central Line */}
-            <div className="absolute left-[27px] top-6 bottom-6 w-0.5 bg-slate-100 hidden sm:block"></div>
+            <div className="absolute left-[27px] top-[36px] bottom-[36px] w-0.5 bg-slate-100 hidden sm:block z-0"></div>
 
-            <div className="space-y-8">
+            <div className="space-y-6">
                 {reversedActivities.map((activity, index) => {
                     const colors = getColorConfig(activity.changeType, activity.newValue);
                     return (
                         <div key={index} className="relative flex flex-col sm:flex-row gap-4 group">
                             {/* Timeline Marker (Mobile/Desktop) */}
                             <div className="flex items-center sm:block shrink-0 z-10">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border p-3 transition-all group-hover:scale-110 group-hover:shadow-md ${colors.bg} ${colors.border}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm border transition-all ${colors.bg} ${colors.border}`}>
                                     {getIcon(activity.changeType, activity.newValue)}
                                 </div>
                                 {/* Visual Connector for mobile */}
@@ -119,15 +123,14 @@ const ActivityTimeline = ({ activities }) => {
                             </div>
 
                             {/* Content Card */}
-                            <div className="flex-1 bg-white rounded-[24px] border border-slate-100 p-5 shadow-sm transition-all hover:shadow-lg hover:border-slate-200 relative overflow-hidden group/card">
+                            <div className="flex-1 bg-white rounded-xl border border-slate-200 p-4 shadow-sm relative overflow-hidden group/card hover:border-blue-300 transition-colors">
                                 {/* Subtle Progress Bar Decor */}
-                                <div className={`absolute top-0 left-0 w-1.5 h-full ${colors.dot} opacity-20 group-hover/card:opacity-40 transition-opacity`}></div>
+                                <div className={`absolute top-0 left-0 w-1 h-full ${colors.dot} opacity-30 group-hover/card:opacity-60 transition-opacity`}></div>
 
-                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                                    <div className="flex flex-col gap-1">
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+                                    <div className="flex flex-col gap-0.5">
                                         <div className="flex items-center gap-2">
-                                            <span className={`w-2 h-2 rounded-full ${colors.dot}`}></span>
-                                            <h4 className="text-[15px] font-bold text-slate-800 capitalize tracking-tight leading-none">
+                                            <h4 className="text-[13px] font-bold text-slate-700 capitalize tracking-tight leading-none">
                                                 {activity.changeType?.replace("_", " ")}
                                             </h4>
                                         </div>
@@ -137,33 +140,33 @@ const ActivityTimeline = ({ activities }) => {
                                         </time>
                                     </div>
 
-                                    <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/50">
-                                        <div className="w-7 h-7 rounded-lg overflow-hidden bg-white border border-slate-100 flex items-center justify-center shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-md overflow-hidden bg-white border border-slate-200 flex items-center justify-center shrink-0">
                                             {activity.performedBy?.profileImage ? (
                                                 <img src={activity.performedBy.profileImage} alt="" className="w-full h-full object-cover" />
                                             ) : (
-                                                <FiUser className="w-3.5 h-3.5 text-slate-400" />
+                                                <FiUser className="w-3 h-3 text-slate-400" />
                                             )}
                                         </div>
                                         <div className="flex flex-col leading-tight">
-                                            <span className="text-xs font-bold text-slate-700">
+                                            <span className="text-[11px] font-bold text-slate-600">
                                                 {activity.performedBy?.firstName} {activity.performedBy?.lastName}
                                             </span>
-                                            <span className="text-[10px] text-zinc-400 capitalize">
+                                            <span className="text-[9px] text-slate-400 capitalize">
                                                 {activity.performedBy?.position || "Member"}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 mb-4 group-hover/card:bg-white transition-colors">
-                                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-3">
+                                    <p className="text-[12.5px] text-slate-600 leading-relaxed font-medium">
                                         {activity.description}
                                     </p>
                                 </div>
 
                                 <div className="flex items-center justify-end">
-                                    <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-1 rounded-lg border border-slate-100 uppercase tracking-widest">
+                                    <span className="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-lg border border-slate-100 uppercase tracking-widest">
                                         {getTimeAgo(activity.createdAt)}
                                     </span>
                                 </div>

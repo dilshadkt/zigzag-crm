@@ -307,6 +307,11 @@ export const updateTaskById = async (taskId, updatedData) => {
   return data;
 };
 
+export const moveTaskToProject = async (taskId, moveData) => {
+  const { data } = await apiClient.put(`/tasks/${taskId}/move`, moveData);
+  return data;
+};
+
 export const getTasksOnReview = async (filters = {}) => {
   try {
     const params = new URLSearchParams();

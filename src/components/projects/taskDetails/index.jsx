@@ -14,6 +14,7 @@ import {
   useUpdateSubTaskById,
   useUpdateTaskById,
   useIsDepartmentHead,
+  useMoveTask,
 } from "../../../api/hooks";
 import { useSubmitTaskCampaignReport } from "../../../api/campaignDetails";
 import { useRealtimeSubtaskSync } from "../../../hooks/useRealtimeSubtaskSync";
@@ -22,8 +23,10 @@ import TaskDescription from "./TaskDescription";
 import SubtasksSection from "./SubtasksSection";
 import TaskAttachments from "./TaskAttachments";
 import ActivityTimeline from "./ActivityTimeline";
-import { FiActivity, FiClock, FiTarget, FiFlag, FiLink, FiFileText } from "react-icons/fi";
+import MoveTaskModal from "../MoveTaskModal";
+import { FiActivity, FiClock, FiTarget, FiFlag, FiLink, FiFileText, FiExternalLink } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress }) => {
   const { isCompany, user, companyId } = useAuth();
@@ -39,10 +42,22 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
+  const [isMoveTaskModalOpen, setIsMoveTaskModalOpen] = useState(false);
   const isAdmin = user?.role === "company-admin";
+  const navigate = useNavigate();
 
   const updateTaskMutation = useUpdateTaskById(taskDetails?._id);
   const submitCampaignReport = useSubmitTaskCampaignReport(taskDetails?._id);
+  
+  const { mutateAsync: moveTaskMutation, isPending: isMovingTask } = 
+    useMoveTask(taskDetails?._id, (data) => {
+      setIsMoveTaskModalOpen(false);
+      toast.success("Task moved successfully");
+      const newProjectId = data?.task?.project?._id || data?.task?.project;
+      if (newProjectId) {
+        navigate(`/projects/${newProjectId}/${taskDetails._id}`);
+      }
+    });
 
   const isWorkLinkRequired = (task) => {
     return task?.requiresWorkLink ||
@@ -109,6 +124,13 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
     }
   };
 
+  const handleMoveTaskSubmit = async (moveData) => {
+    try {
+      await moveTaskMutation(moveData);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to move task");
+    }
+  };
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -176,6 +198,11 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
 
   // Check permissions for subtask management
   const canManageSubtasks = isCompany || isAdmin || hasPermission("tasks", "create") || isCreatorOfTask || (taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id);
+
+  // Check permissions for moving task
+  const canMoveTask = 
+    canEditTask && 
+    (isCompany || isAdmin || taskDetails?.project?.reporters?.some(r => (r._id || r) === user?._id) || (taskDetails?.project?.manager?._id || taskDetails?.project?.manager) === user?._id);
 
   // Fetch subtasks for this task
   const { data: subTasks = [], isLoading: subTasksLoading } =
@@ -285,6 +312,15 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
                 title="Add Subtask"
                 onclick={handleAddSubTask}
               />
+            )}
+            {canMoveTask && (
+              <button
+                onClick={() => setIsMoveTaskModalOpen(true)}
+                className="px-4 py-2 text-[13px] font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl shadow-sm transition-colors flex items-center gap-2"
+              >
+                <FiExternalLink className="w-4 h-4 text-gray-500" />
+                Move Task
+              </button>
             )}
             {canEditTask && (
               <PrimaryButton
@@ -591,6 +627,15 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
           typeof taskDetails?.campaign === "object" ? taskDetails.campaign : null
         }
       />
+      {canMoveTask && (
+        <MoveTaskModal
+          isOpen={isMoveTaskModalOpen}
+          onClose={() => setIsMoveTaskModalOpen(false)}
+          taskDetails={taskDetails}
+          onMove={handleMoveTaskSubmit}
+          isLoading={isMovingTask}
+        />
+      )}
     </>
   );
 };
