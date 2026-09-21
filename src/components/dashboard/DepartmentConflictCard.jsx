@@ -6,8 +6,10 @@ import { useAuth } from "../../hooks/useAuth";
 import { useUpdateSubTaskById, useGetAllEmployees } from "../../api/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import SearchableSelect from "../pages/campaigns/SearchableSelect";
+import { useNavigate } from "react-router-dom";
 
 const DepartmentConflictCard = ({ conflict }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,9 +53,31 @@ const DepartmentConflictCard = ({ conflict }) => {
     });
   };
 
+  const handleTaskClick = () => {
+    const projectId = project?._id || project;
+    const parentId = typeof parentTask === 'object' ? parentTask?._id : parentTask;
+    
+    if (parentId) {
+      if (projectId) {
+        navigate(`/projects/${projectId}/${parentId}`);
+      } else {
+        navigate(`/tasks/${parentId}`);
+      }
+    } else {
+      if (projectId) {
+        navigate(`/projects/${projectId}/${_id}`);
+      } else {
+        navigate(`/tasks/${_id}`);
+      }
+    }
+  };
+
   return (
     <>
-      <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-start justify-between">
+      <div 
+        onClick={handleTaskClick}
+        className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex flex-col sm:flex-row gap-3 items-start justify-between cursor-pointer hover:border-red-300 transition-colors hover:shadow-sm"
+      >
         <div className="flex gap-3">
           <div className="w-10 h-10 rounded-full bg-white border border-red-100 flex items-center justify-center shrink-0 shadow-sm overflow-hidden text-red-500 font-bold">
             {employee?.profileImage ? (
@@ -72,6 +96,11 @@ const DepartmentConflictCard = ({ conflict }) => {
             </p>
             
             <div className="flex flex-wrap gap-2 mt-2 text-[10px] font-medium">
+              {startDate && (
+                <span className="bg-white border border-red-100 text-red-600 px-2 py-1 rounded shadow-sm">
+                  Task Start: {format(new Date(startDate), "MMM dd, yyyy")}
+                </span>
+              )}
               <span className="bg-white border border-red-100 text-red-600 px-2 py-1 rounded shadow-sm">
                 Task Due: {dueDate ? format(new Date(dueDate), "MMM dd, yyyy") : "No date"}
               </span>
@@ -92,7 +121,8 @@ const DepartmentConflictCard = ({ conflict }) => {
         <div className="shrink-0 mt-2 sm:mt-0">
           {isReporter ? (
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setNewStartDate(startDate ? format(new Date(startDate), "yyyy-MM-dd") : "");
                 setNewDueDate(dueDate ? format(new Date(dueDate), "yyyy-MM-dd") : "");
                 setNewAssignee(employee?._id || "");
