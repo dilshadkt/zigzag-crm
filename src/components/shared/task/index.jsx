@@ -144,12 +144,12 @@ const Task = memo(({
     ? "bg-teal-50 border-teal-200"
     : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50/60";
   const cardTone = isSentToClient
-    ? "bg-teal-50 ring-2 ring-teal-300 border-l-4 border-teal-500"
+    ? "bg-teal-50 ring-2 ring-teal-300 border-l-[3px] border-teal-500"
     : isSubtaskItem
-      ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500"
+      ? "bg-white border border-slate-200 border-l-[3px] border-l-blue-400"
       : isExtraTask
-        ? "bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500"
-        : "bg-white";
+        ? "bg-white border border-slate-200 border-l-[3px] border-l-purple-500"
+        : "bg-white border border-slate-100";
   const hasReporters = !!(
     task?.project?.reporters &&
     task.project.reporters.length > 0 &&
@@ -380,12 +380,7 @@ const Task = memo(({
         className={`p-4 cursor-grab rounded-lg shadow-sm hover:shadow-md 
           transition-shadow relative ${cardTone}`}
       >
-        {/* Subtask Badge */}
-        {task?.itemType === "subtask" && (
-          <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
-            <span className="text-xs">📋</span>
-          </div>
-        )}
+        {/* Floating Badges removed for cleaner UI */}
 
         {/* Extra Task Badge */}
         {isExtraTask && (
@@ -409,20 +404,27 @@ const Task = memo(({
             <div className="flex flex-col gap-1">
               <h4
                 className={`font-medium line-clamp-2 ${task?.itemType === "subtask"
-                  ? "text-blue-800"
+                  ? "text-slate-800"
                   : isExtraTask
-                    ? "text-purple-800"
-                    : "text-gray-800"
+                    ? "text-slate-800"
+                    : "text-slate-800"
                   }`}
               >
                 {task?.title}
               </h4>
               {task?.itemType === "subtask" ? (
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-blue-600">📋 Subtask</span>
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-blue-100/50">
+                      Subtask
+                    </span>
+                  </div>
                   {task?.parentTask && (
-                    <span className="text-xs text-blue-500">
-                      Parent: {task.parentTask.title}
+                    <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      <span className="truncate max-w-[190px]" title={task.parentTask.title}>{task.parentTask.title}</span>
                     </span>
                   )}
                 </div>
