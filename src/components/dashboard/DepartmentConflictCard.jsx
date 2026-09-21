@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import SearchableSelect from "../pages/campaigns/SearchableSelect";
 import { useNavigate } from "react-router-dom";
 
-const DepartmentConflictCard = ({ conflict }) => {
+const DepartmentConflictCard = ({ conflict, isDepartmentHead }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -25,7 +25,8 @@ const DepartmentConflictCard = ({ conflict }) => {
 
   const hasNoReporters = !project?.reporters || project.reporters.length === 0;
   const isCompanyAdmin = user?.role === "company-admin";
-  const isReporter = hasNoReporters || project?.reporters?.some(r => r === user?._id || r?._id === user?._id) || isCompanyAdmin;
+  const hasCloseConflicts = user?.positionDetails?.permissions?.departmentDashboard?.closeConflicts;
+  const isReporter = hasNoReporters || project?.reporters?.some(r => r === user?._id || r?._id === user?._id) || isCompanyAdmin || isDepartmentHead || hasCloseConflicts;
 
   const parentTaskId = typeof parentTask === 'object' ? parentTask?._id : parentTask;
   const updateTask = useUpdateSubTaskById(_id, parentTaskId);
@@ -33,6 +34,18 @@ const DepartmentConflictCard = ({ conflict }) => {
   const handleSuccess = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries(["departmentConflicts"]);
+  };
+
+  const handleIgnoreConflict = (e) => {
+    e.stopPropagation();
+    const payload = {
+      isReportedConflict: false,
+      conflictVacationId: null,
+    };
+    
+    updateTask.mutate(payload, {
+      onSuccess: handleSuccess,
+    });
   };
 
   const handleUpdateDate = (e) => {
@@ -118,20 +131,29 @@ const DepartmentConflictCard = ({ conflict }) => {
           </div>
         </div>
 
-        <div className="shrink-0 mt-2 sm:mt-0">
+        <div className="shrink-0 mt-2 sm:mt-0 flex gap-2 items-center">
           {isReporter ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setNewStartDate(startDate ? format(new Date(startDate), "yyyy-MM-dd") : "");
-                setNewDueDate(dueDate ? format(new Date(dueDate), "yyyy-MM-dd") : "");
-                setNewAssignee(employee?._id || "");
-                setIsModalOpen(true);
-              }}
-              className="px-3 py-1.5 text-[11px] font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg shadow-sm transition-colors"
-            >
-              Modify Task
-            </button>
+            <>
+              <button
+                onClick={handleIgnoreConflict}
+                className="px-3 py-1.5 text-[11px] font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg shadow-sm transition-colors"
+                disabled={updateTask.isLoading}
+              >
+                Ignore Conflict
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setNewStartDate(startDate ? format(new Date(startDate), "yyyy-MM-dd") : "");
+                  setNewDueDate(dueDate ? format(new Date(dueDate), "yyyy-MM-dd") : "");
+                  setNewAssignee(employee?._id || "");
+                  setIsModalOpen(true);
+                }}
+                className="px-3 py-1.5 text-[11px] font-bold bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg shadow-sm transition-colors"
+              >
+                Modify Task
+              </button>
+            </>
           ) : (
             <span className="text-[10px] text-gray-400 italic">
               Only reporters or admins can change date

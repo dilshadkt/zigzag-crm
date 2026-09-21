@@ -42,6 +42,8 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     return <Navigate to={fallbackPath} replace />;
   }
 
+  const allowedRoutes = user.positionDetails.allowedRoutes || [];
+
   if (
     currentPath === "/department-dashboard" ||
     currentPath.startsWith("/department-dashboard/team-tasks")
@@ -50,7 +52,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       return <LoadingSpinner />;
     }
 
-    if (isDepartmentHead || user.role === "company-admin") {
+    if (isDepartmentHead || user.role === "company-admin" || allowedRoutes.includes("department-dashboard")) {
       return children;
     }
 
@@ -66,7 +68,6 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     return <Navigate to={fallbackPath} replace />;
   }
 
-  const allowedRoutes = user.positionDetails.allowedRoutes || [];
   const canAccessAdminDashboard = hasAdminDashboardAccess();
 
   // Dashboard, Board, Settings, My Points, and Company Dashboard (if has permission) are always accessible

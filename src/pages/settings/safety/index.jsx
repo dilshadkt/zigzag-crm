@@ -153,10 +153,19 @@ const PERMISSION_CATEGORIES = {
       { key: "viewCampaignDetails", label: "View Campaign Details", description: "Can view campaign details and analytics on dashboard" },
     ],
   },
+  departmentDashboard: {
+    label: "Department Dashboard",
+    icon: <FiUsers />,
+    permissions: [
+      { key: "viewAll", label: "View All Departments", description: "Can view all department dashboards across the company" },
+      { key: "closeConflicts", label: "Close Conflicts", description: "Can resolve and close department leave conflicts" },
+    ],
+  },
 };
 
 const MODULES = [
   { id: "dashboard", type: "system", label: "Main Dashboard", icon: <FiActivity />, desc: "Central intelligence & overview", permissionKey: "dashboard" },
+  { id: "department-dashboard", type: "route", label: "Department Dashboard", icon: <FiUsers />, desc: "Department overview & conflicts", permissionKey: "departmentDashboard" },
   { id: "projects", type: "route", label: "Client Hub", icon: <FiLayout />, desc: "Client & project management", permissionKey: "projects" },
   { id: "tickets", type: "route", label: "Issues & Complaints", icon: <FiAlertCircle />, desc: "Raise and track client tickets", permissionKey: "tickets" },
   { id: "board", type: "route", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards", permissionKey: "tasks" },
@@ -205,6 +214,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         tickets: {},
         settings: {},
         dashboard: {},
+        departmentDashboard: {},
       };
 
       const mergedPermissions = { ...defaultPermissions };

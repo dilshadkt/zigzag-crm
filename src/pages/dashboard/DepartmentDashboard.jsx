@@ -13,6 +13,7 @@ const DepartmentDashboard = () => {
   const effectiveCompanyId = companyId || user?.company;
   const { data, isLoading, error } = useGetDepartmentDashboard(effectiveCompanyId);
   const departments = data?.departments || [];
+  const isDepartmentHead = data?.isDepartmentHead || false;
   const [searchParams] = useSearchParams();
   const [selectedDepartmentId, setSelectedDepartmentId] = useState(searchParams.get("department") || "");
   const isCompanyAdmin = user?.role === "company-admin";
@@ -172,7 +173,7 @@ const DepartmentDashboard = () => {
                 <FiAlertCircle /> Action Required: Leave Conflicts
               </h4>
               {conflicts.map(conflict => (
-                <DepartmentConflictCard key={conflict._id} conflict={conflict} />
+                <DepartmentConflictCard key={conflict._id} conflict={conflict} isDepartmentHead={isDepartmentHead} />
               ))}
             </div>
           )}
