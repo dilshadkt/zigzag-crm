@@ -113,7 +113,7 @@ const columnRenderers = {
     );
   },
 
-  name: (lead) => {
+  name: (lead, projectsList = []) => {
     const source = lead.source?.toLowerCase();
     const platform = lead.customFields?.platform?.toLowerCase() || lead.platform?.toLowerCase();
     
@@ -121,6 +121,9 @@ const columnRenderers = {
     const isWhatsApp = !isInstagram && (!!lead.whatsappContactId || source === "whatsapp" || platform === "whatsapp");
     const isFacebook = !isWhatsApp && !isInstagram && (!!lead.facebookLeadId || source === "facebook" || platform === "facebook" || (source && source.includes("facebook")));
     
+    const projectId = typeof lead.project === 'object' ? (lead.project?._id || lead.project?.id) : lead.project;
+    const projectObj = projectsList?.find(p => (p._id || p.id) === projectId) || (typeof lead.project === 'object' ? lead.project : null);
+
     return (
       <div className="flex flex-col">
         <div className="flex items-center gap-1.5">
@@ -152,15 +155,20 @@ const columnRenderers = {
             <span className="text-[11px] text-slate-300">•</span>
           )}
           {lead.project && (
-            <span className="text-[11px] text-[#3f8cff] font-semibold tracking-wide">
-              {typeof lead.project === 'object' ? lead.project.name : 'Project'}
-            </span>
+            <div className="flex items-center gap-1">
+              {projectObj?.thumbImg && (
+                <img src={projectObj.thumbImg} alt="" className="w-3.5 h-3.5 rounded-full bg-gray-50 border border-gray-200 p-[1px] object-contain shrink-0" />
+              )}
+              <span className="text-[11px] text-[#3f8cff] font-semibold tracking-wide">
+                {projectObj ? projectObj.name : (typeof lead.project === 'object' ? lead.project.name : 'Project')}
+              </span>
+            </div>
           )}
         </div>
       </div>
     );
   },
-  "contact.name": (lead) => {
+  "contact.name": (lead, projectsList = []) => {
     const source = lead.source?.toLowerCase();
     const platform = lead.customFields?.platform?.toLowerCase() || lead.platform?.toLowerCase();
     
@@ -168,6 +176,9 @@ const columnRenderers = {
     const isWhatsApp = !isInstagram && (!!lead.whatsappContactId || source === "whatsapp" || platform === "whatsapp");
     const isFacebook = !isWhatsApp && !isInstagram && (!!lead.facebookLeadId || source === "facebook" || platform === "facebook" || (source && source.includes("facebook")));
     
+    const projectId = typeof lead.project === 'object' ? (lead.project?._id || lead.project?.id) : lead.project;
+    const projectObj = projectsList?.find(p => (p._id || p.id) === projectId) || (typeof lead.project === 'object' ? lead.project : null);
+
     return (
       <div className="flex flex-col">
         <div className="flex items-center gap-1.5">
@@ -199,9 +210,14 @@ const columnRenderers = {
             <span className="text-[11px] text-slate-300">•</span>
           )}
           {lead.project && (
-            <span className="text-[11px] text-[#3f8cff] font-semibold tracking-wide">
-              {typeof lead.project === 'object' ? lead.project.name : 'Project'}
-            </span>
+            <div className="flex items-center gap-1">
+              {projectObj?.thumbImg && (
+                <img src={projectObj.thumbImg} alt="" className="w-3.5 h-3.5 rounded-full bg-gray-50 border border-gray-200 p-[1px] object-contain shrink-0" />
+              )}
+              <span className="text-[11px] text-[#3f8cff] font-semibold tracking-wide">
+                {projectObj ? projectObj.name : (typeof lead.project === 'object' ? lead.project.name : 'Project')}
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -267,11 +283,23 @@ const columnRenderers = {
       {lead.branch || lead.customFields?.branch || "—"}
     </div>
   ),
-  project: (lead) => (
-    <div className="text-[13px] font-medium text-[#3f8cff]">
-      {lead.project && typeof lead.project === 'object' ? lead.project.name : (lead.project || "—")}
-    </div>
-  ),
+  project: (lead, projectsList = []) => {
+    const projectId = typeof lead.project === 'object' ? (lead.project?._id || lead.project?.id) : lead.project;
+    const projectObj = projectsList?.find(p => (p._id || p.id) === projectId) || (typeof lead.project === 'object' ? lead.project : null);
+    
+    return (
+      <div className="flex items-center gap-2 text-[13px] font-medium text-[#3f8cff]">
+        {projectObj?.thumbImg && (
+          <img 
+            src={projectObj.thumbImg} 
+            alt="" 
+            className="w-6 h-6 rounded-full bg-gray-50 border border-gray-200 p-0.5 object-contain shrink-0" 
+          />
+        )}
+        <span>{projectObj ? projectObj.name : (lead.project || "—")}</span>
+      </div>
+    );
+  },
   source: (lead, onSourceChange) => {
     const sources = ["Manual", "Website", "Import", "Facebook", "WhatsApp", "Instagram", "Other"];
     
@@ -439,6 +467,9 @@ const LeadRow = memo(({
       }
       if (column.key === "score") {
         return renderer(lead, thresholds);
+      }
+      if (column.key === "project" || column.key === "name" || column.key === "contact.name") {
+        return renderer(lead, projects);
       }
       return renderer(lead);
     }

@@ -39,6 +39,7 @@ const EditProject = () => {
           onSubmit={handleEditProject}
           initialValues={{
             name: currentProject?.name || "",
+            thumbImg: currentProject?.thumbImg || null,
             taskGroup: currentProject?.taskGroup || "",
             startDate: currentProject?.startDate || "",
             endDate: currentProject?.endDate || "",

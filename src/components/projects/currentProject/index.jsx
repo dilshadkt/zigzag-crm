@@ -12,17 +12,39 @@ const CurrentProject = ({
 }) => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
+  const listRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (listRef.current) {
+      const savedScroll = sessionStorage.getItem("projectsListScrollPos");
+      if (savedScroll) {
+        listRef.current.scrollTop = parseInt(savedScroll, 10);
+      }
+    }
+  }, [projects]);
+
+  const handleScroll = (e) => {
+    sessionStorage.setItem("projectsListScrollPos", e.target.scrollTop);
+  };
 
   const filteredProjects = useMemo(() => {
     if (!projects) return [];
+    
+    const sortedProjects = [...projects].sort((a, b) => {
+      if (a._id === selectProject) return -1;
+      if (b._id === selectProject) return 1;
+      return 0;
+    });
+
     const query = searchTerm.trim().toLowerCase();
-    if (!query) return projects;
-    return projects.filter((project) => {
+    if (!query) return sortedProjects;
+    
+    return sortedProjects.filter((project) => {
       const name = project?.name?.toLowerCase() || "";
       const code = project?._id?.toLowerCase() || "";
       return name.includes(query) || code.includes(query);
     });
-  }, [projects, searchTerm]);
+  }, [projects, searchTerm, selectProject]);
 
   const handleSelect = (projectId) => {
     dispatch(setActiveProject(projectId));
@@ -51,8 +73,10 @@ const CurrentProject = ({
       </div>
       {/* projects  */}
       <div
+        ref={listRef}
+        onScroll={handleScroll}
         className="flex flex-col flex-1 my-2 md:pl-2
-    gap-y-2 overflow-y-auto min-h-0"
+    gap-y-2 overflow-y-auto min-h-0 custom-scrollbar"
       >
         {filteredProjects?.map((project, index) => (
           <div
@@ -68,12 +92,23 @@ const CurrentProject = ({
             project?.status === "paused" ? "opacity-50" : ""
           }`}
           >
-            <span className="text-xs uppercase text-[#91929E]">
-              {project?._id?.slice(0, 9)}
-            </span>
-            <h4 className="font-medium text-gray-800 text-[13px] leading-snug">
-              {project?.name}
-            </h4>
+            <div className="flex justify-between items-start gap-2">
+              <div className="flex flex-col gap-y-1">
+                <span className="text-xs uppercase text-[#91929E]">
+                  {project?._id?.slice(0, 9)}
+                </span>
+                <h4 className="font-medium text-gray-800 text-[13px] leading-snug">
+                  {project?.name}
+                </h4>
+              </div>
+              {project?.thumbImg && (
+                <img
+                  src={project.thumbImg}
+                  alt=""
+                  className="w-8 h-8 rounded-full shrink-0 bg-gray-50 border border-gray-200 p-1 object-contain"
+                />
+              )}
+            </div>
             <div className="flex items-center justify-between gap-2">
               <Link
                 to={`/projects/${project?._id}`}

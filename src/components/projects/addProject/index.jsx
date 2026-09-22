@@ -277,6 +277,7 @@ const AddProject = ({
                     Pick an avatar or upload a jpg/png.
                   </p>
                   <ThumbImage
+                    initialImage={values.thumbImg}
                     onSelect={(thmbImg) => setFieldValue("thumbImg", thmbImg)}
                   />
                 </div>

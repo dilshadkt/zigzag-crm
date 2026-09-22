@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { uploadSingleFile } from "../../../api/service";
 
-const ThumbImage = ({ onSelect }) => {
-  const [thumImg, setThumImg] = useState(0);
-  const [uploadedImage, setUploadedImage] = useState(null);
+const ThumbImage = ({ onSelect, initialImage }) => {
+  const [uploadedImage, setUploadedImage] = useState(initialImage ? { preview: initialImage } : null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Set default image on component mount
+  // Sync with initialImage if it changes from outside
   useEffect(() => {
-    // Select the first thumbnail by default
-    handleThumbnailClick(0);
-  }, []);
+    if (initialImage) {
+      setUploadedImage({ preview: initialImage });
+    }
+  }, [initialImage]);
 
   // Handle image selection from local device
   const handleFileChange = async (e) => {
@@ -26,7 +26,6 @@ const ThumbImage = ({ onSelect }) => {
         if (response.success) {
           const imageUrl = response.fileUrl;
           setUploadedImage({ file, preview: imageUrl });
-          setThumImg(-1);
           if (onSelect) {
             onSelect(imageUrl);
           }
@@ -38,7 +37,6 @@ const ThumbImage = ({ onSelect }) => {
         // Fallback to local preview if upload fails
         const imageUrl = URL.createObjectURL(file);
         setUploadedImage({ file, preview: imageUrl });
-        setThumImg(-1);
         if (onSelect) {
           onSelect(imageUrl);
         }
@@ -48,66 +46,45 @@ const ThumbImage = ({ onSelect }) => {
     }
   };
 
-  // Handle image selection from predefined thumbnails
-  const handleThumbnailClick = (index) => {
-    setThumImg(index);
-    const imageUrl = `/image/projects/icon${index + 1}.png`;
-    
-    if (onSelect) {
-      onSelect(imageUrl);
-    }
-  };
-
   return (
-    <div className="flex flex-col border h-fit max-h-[340px] px-7 py-6 border-[#CED5E0]/70 rounded-3xl">
+    <div className="flex flex-col border h-fit px-7 py-6 border-[#CED5E0]/70 rounded-3xl">
       <h4 className="font-bold">Select image</h4>
-      <p className="text-[#0A1629]/70 my-2">
-        Select or upload an avatar for the project (available formats: jpg, png)
+      <p className="text-[#0A1629]/70 my-2 text-sm">
+        Upload an avatar for the project (available formats: jpg, png)
       </p>
-      <div className="grid gap-6 mt-2 grid-cols-4">
-        {/* Predefined thumbnails */}
-        {new Array(7).fill(" ").map((item, index) => (
-          <div
-            onClick={() => handleThumbnailClick(index)}
-            key={index}
-            className={`${
-              thumImg === index &&
-              `border-dashed border-2 p-[1px] border-blue-400`
-            } w-full h-[53px] bg-[#F4F9FD] rounded-[10px] flexCenter flex flex-col overflow-hidden gap-y-2 cursor-pointer`}
-          >
-            <img
-              src={`/image/projects/icon${index + 1}.png`}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+      
+      {/* Upload image from local device */}
+      <div
+        onClick={() => !isUploading && fileInputRef.current.click()}
+        className={`w-full h-[150px] mt-4 bg-[#F4F9FD] rounded-[10px] flex items-center justify-center flex-col overflow-hidden gap-y-2 cursor-pointer relative border-dashed border-2 border-blue-200 hover:border-blue-400 transition-colors group`}
+      >
+        {isUploading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
-        ))}
-
-        {/* Upload image from local device */}
-        <div
-          onClick={() => !isUploading && fileInputRef.current.click()}
-          className={`${
-            thumImg === -1 && `border-dashed border-2 p-[1px] border-blue-400`
-          } w-full h-[53px] bg-[#F4F9FD] rounded-[10px] flexCenter flex flex-col overflow-hidden gap-y-2 cursor-pointer relative`}
-        >
-          {isUploading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-            </div>
-          ) : uploadedImage ? (
+        ) : uploadedImage ? (
+          <>
             <img
               src={uploadedImage.preview}
               alt="Uploaded"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
             />
-          ) : (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+               <span className="bg-white/80 text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+                 Change Image
+               </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center opacity-50 group-hover:opacity-100 transition-opacity">
             <img
               src={`/image/projects/upload.png`}
               alt="Upload"
-              className="w-full h-full object-cover"
+              className="w-12 h-12 object-contain mb-2"
             />
-          )}
-        </div>
+            <span className="text-sm font-semibold">Click to upload</span>
+          </div>
+        )}
       </div>
 
       {/* Hidden file input */}
@@ -116,7 +93,7 @@ const ThumbImage = ({ onSelect }) => {
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
-        accept="image/*"
+        accept="image/jpeg, image/png, image/jpg"
       />
     </div>
   );

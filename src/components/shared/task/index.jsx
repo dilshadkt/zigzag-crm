@@ -241,8 +241,17 @@ const Task = memo(({
     return (
       <div
         onClick={() => handleClick()}
-        className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 px-4 py-3 rounded-2xl border cursor-pointer transition-colors ${compactCardTone}`}
+        className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 px-4 py-3 rounded-2xl border cursor-pointer transition-colors ${compactCardTone}`}
       >
+        {task?.project?.thumbImg && (
+          <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center">
+            <img 
+              src={task.project.thumbImg} 
+              alt="Project" 
+              className="w-full h-full object-contain p-1" 
+            />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
             <h4 className="font-medium text-[#0A1629] truncate">
