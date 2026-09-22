@@ -16,16 +16,45 @@ export const EmployeeHeader = ({
   const tasksBadgeCount = todaySubTasksCount;
 
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="overflow-x-auto scrollbar-thin -mx-1 px-1">
-        <div className="flex bg-[#E6EDF5] rounded-full p-1 w-max min-w-full sm:min-w-0">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between min-w-0">
+      {/* Mobile Select Box */}
+      <div className="md:hidden w-full relative">
+        <select
+          value={activePage}
+          onChange={(e) => setActivePage(e.target.value)}
+          className="w-full bg-[#E6EDF5] text-[#0A1629] font-medium text-sm rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#3F8CFF] border-none appearance-none"
+        >
           {[
             ...(isAdmin ? ["Overview"] : []),
             "Performance",
             "Projects",
             "Teams",
             "Today's Tasks",
-            "Casual Leaves",
+            "Leave",
+          ].map((item, index) => (
+            <option key={index} value={item}>
+              {item} {item === "Today's Tasks" && tasksBadgeCount > 0 ? `(${tasksBadgeCount})` : ""}
+            </option>
+          ))}
+        </select>
+        {/* Dropdown arrow icon */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Desktop Tabs */}
+      <div className="hidden md:block overflow-x-auto scrollbar-thin -mx-1 px-1 min-w-0">
+        <div className="flex bg-[#E6EDF5] rounded-full p-1 w-max min-w-full">
+          {[
+            ...(isAdmin ? ["Overview"] : []),
+            "Performance",
+            "Projects",
+            "Teams",
+            "Today's Tasks",
+            "Leave",
           ].map((item, index) => (
             <button
               key={index}

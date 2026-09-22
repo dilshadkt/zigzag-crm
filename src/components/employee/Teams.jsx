@@ -14,7 +14,7 @@ const Teams = ({ teams }) => {
   }
 
   return (
-    <div className="w-full h-fit grid grid-cols-4 gap-3 mt-3">
+    <div className="w-full h-fit grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mt-3">
       {teams.map((team) => {
         const fullName =
           team?.firstName || team?.lastName

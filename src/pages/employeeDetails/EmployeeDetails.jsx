@@ -32,7 +32,7 @@ const EmployeeDetails = () => {
   const [activePage, setActivePage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    const validTabs = ["Overview", "Performance", "Projects", "Teams", "Today's Tasks", "Casual Leaves"];
+    const validTabs = ["Overview", "Performance", "Projects", "Teams", "Today's Tasks", "Leave"];
     if (tab && validTabs.includes(tab)) return tab;
     return isAdmin() || canEdit ? "Overview" : "Projects";
   });
@@ -125,42 +125,64 @@ const EmployeeDetails = () => {
   return (
     <section className="flex flex-col h-full gap-y-3">
       <Header>Employee's Profile</Header>
-      <div className="w-full h-full overflow-hidden gap-x-5 flex">
-        <UserProfile
-          user={{
-            ...employee,
-            firstName: employee.firstName,
-            lastName: employee.lastName,
-            email: employee.email,
-            profileImage: employee.profileImage,
-            phoneNumber: employee.phoneNumber,
-            position: employee.position,
-            department: employee.department,
-            level: employee.level,
-            gender: employee.gender,
-            dob: employee.dob,
-            company: employee.company,
-            location: employee.location,
-            progressValue: employee.progressValue,
-            skype: employee.skype,
-          }}
-          disableEdit={!canEdit && !isOwnProfile}
-          canDelete={canDelete}
-          employeeId={employeeId}
+
+      {/* Mobile Header (Tabs/Select) */}
+      <div className="block lg:hidden min-w-0">
+        <EmployeeHeader
+          isAdmin={isAdmin() || canEdit}
+          activePage={activePage}
+          setActivePage={setActivePage}
+          subTasksCount={subTasksCount}
+          todaySubTasksCount={todaySubTasksCount}
+          selectedMonth={selectedMonth}
+          setSelectedMonth={setSelectedMonth}
+          projectOptions={projectOptions}
+          selectedProject={selectedProject}
+          setSelectedProject={setSelectedProject}
         />
-        <div className="flex-1 min-h-0 flex flex-col gap-y-5">
-          <EmployeeHeader
-            isAdmin={isAdmin() || canEdit}
-            activePage={activePage}
-            setActivePage={setActivePage}
-            subTasksCount={subTasksCount}
-            todaySubTasksCount={todaySubTasksCount}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-            projectOptions={projectOptions}
-            selectedProject={selectedProject}
-            setSelectedProject={setSelectedProject}
+      </div>
+
+      <div className="w-full h-full overflow-y-auto lg:overflow-hidden gap-5 flex flex-col lg:flex-row">
+        {activePage === "Overview" && (
+          <UserProfile
+            user={{
+              ...employee,
+              firstName: employee.firstName,
+              lastName: employee.lastName,
+              email: employee.email,
+              profileImage: employee.profileImage,
+              phoneNumber: employee.phoneNumber,
+              position: employee.position,
+              department: employee.department,
+              level: employee.level,
+              gender: employee.gender,
+              dob: employee.dob,
+              company: employee.company,
+              location: employee.location,
+              progressValue: employee.progressValue,
+              skype: employee.skype,
+            }}
+            disableEdit={!canEdit && !isOwnProfile}
+            canDelete={canDelete}
+            employeeId={employeeId}
           />
+        )}
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-y-5">
+          {/* Desktop Header */}
+          <div className="hidden lg:block min-w-0">
+            <EmployeeHeader
+              isAdmin={isAdmin() || canEdit}
+              activePage={activePage}
+              setActivePage={setActivePage}
+              subTasksCount={subTasksCount}
+              todaySubTasksCount={todaySubTasksCount}
+              selectedMonth={selectedMonth}
+              setSelectedMonth={setSelectedMonth}
+              projectOptions={projectOptions}
+              selectedProject={selectedProject}
+              setSelectedProject={setSelectedProject}
+            />
+          </div>
           <div className="w-full flex-1 min-h-0 overflow-y-auto">
             {(activePage === "Overview" && (isAdmin() || canEdit)) && (
               <Overview
@@ -189,7 +211,7 @@ const EmployeeDetails = () => {
                 selectedMonth={selectedMonth}
               />
             )}
-            {activePage === "Casual Leaves" && (
+            {activePage === "Leave" && (
               <Vacations
                 employeeId={employeeId}
                 employee={employee}

@@ -3,9 +3,15 @@ import Header from "@/components/shared/header"
 export const Loading = () => {
     return <section className="flex flex-col h-full gap-y-3">
         <Header>Employee's Profile</Header>
-        <div className="w-full h-full overflow-hidden gap-x-5 flex">
+
+        {/* Mobile Header Skeleton (Select) */}
+        <div className="block lg:hidden min-w-0">
+            <div className="h-[46px] w-full bg-gray-200 rounded-xl animate-pulse" />
+        </div>
+
+        <div className="w-full h-full overflow-y-auto lg:overflow-hidden gap-5 flex flex-col lg:flex-row">
             {/* User Profile Skeleton */}
-            <div className="w-full md:w-[250px] bg-white rounded-3xl p-5 flex flex-col gap-6 animate-pulse">
+            <div className="w-full lg:w-[280px] shrink-0 bg-white rounded-3xl p-5 flex flex-col gap-6 animate-pulse">
                 <div className="flex flex-col border-b border-gray-100 pb-5 gap-3">
                     <div className="flex justify-between items-start">
                         <div className="h-[54px] w-[54px] rounded-full bg-gray-200" />
@@ -28,9 +34,10 @@ export const Loading = () => {
             </div>
 
             {/* Right Content Skeleton */}
-            <div className="flex-1 flex flex-col gap-y-5">
+            <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-y-5">
                 <div className="flex justify-between items-center">
-                    <div className="flex bg-[#E6EDF5] rounded-full p-1 gap-1">
+                    {/* Desktop skeleton for tabs */}
+                    <div className="hidden lg:flex bg-[#E6EDF5] rounded-full p-1 gap-1 overflow-hidden">
                         {[1, 2, 3, 4].map((i) => (
                             <div key={i} className="h-9 w-24 bg-gray-200 rounded-full animate-pulse" />
                         ))}

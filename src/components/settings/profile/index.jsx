@@ -353,9 +353,9 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
 
   return (
     <div
-      className=" w-full md:w-[250px] bg-white md:overflow-hidden
-       pb-4 h-fit md:h-full text-[#0A1629]
-rounded-3xl  flex flex-col "
+      className="w-full lg:w-[280px] shrink-0 bg-white lg:overflow-hidden
+       pb-4 h-fit lg:h-full text-[#0A1629]
+rounded-3xl flex flex-col"
     >
       <div className="flex flex-col border-b border-[#E4E6E8] p-5">
         <div className="flex justify-between">

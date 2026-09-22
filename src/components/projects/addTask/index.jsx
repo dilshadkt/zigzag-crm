@@ -18,7 +18,7 @@ import {
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
-import { FiAlertTriangle, FiCheck, FiClock, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiAlertTriangle, FiCheck, FiClock, FiPlus, FiTrash2, FiArrowUp, FiArrowDown } from "react-icons/fi";
 import Modal from "../../shared/modal";
 import {
   computeFlowDatesWithSchedule,
@@ -811,6 +811,16 @@ const AddTask = ({
       requiresCampaignReport: false
     };
     setFieldValue("subtasks", [...(values.subtasks || []), newSubtask]);
+  };
+
+  const moveSubtask = (index, direction) => {
+    const updated = [...(values.subtasks || [])];
+    if (direction === 'up' && index > 0) {
+      [updated[index], updated[index - 1]] = [updated[index - 1], updated[index]];
+    } else if (direction === 'down' && index < updated.length - 1) {
+      [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+    }
+    setFieldValue("subtasks", updated);
   };
 
   const removeSubtask = (index) => {
@@ -1775,13 +1785,34 @@ const AddTask = ({
                                 {step.taskName || "New subtask"}
                               </span>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => removeSubtask(index)}
-                              className="p-1.5 text-gray-300 transition-all hover:text-red-500"
-                            >
-                              <FiTrash2 className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={index === 0}
+                                onClick={() => moveSubtask(index, 'up')}
+                                className="p-1 text-gray-300 transition-all hover:text-blue-500 disabled:opacity-30"
+                                title="Move up"
+                              >
+                                <FiArrowUp className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={index === values.subtasks.length - 1}
+                                onClick={() => moveSubtask(index, 'down')}
+                                className="p-1 text-gray-300 transition-all hover:text-blue-500 disabled:opacity-30"
+                                title="Move down"
+                              >
+                                <FiArrowDown className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeSubtask(index)}
+                                className="p-1 text-gray-300 transition-all hover:text-red-500 ml-1"
+                                title="Remove subtask"
+                              >
+                                <FiTrash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="mt-3">

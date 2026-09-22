@@ -96,7 +96,25 @@ const TaskOverView = () => {
         setShowModalTask={setShowModalTask}
         selectedProject={selectProject}
         teams={taskDetails?.teams}
-        initialValues={taskDetails}
+        initialValues={{
+          ...taskDetails,
+          startDate: taskDetails?.startDate ? new Date(taskDetails.startDate).toISOString().split("T")[0] : "",
+          dueDate: taskDetails?.dueDate ? new Date(taskDetails.dueDate).toISOString().split("T")[0] : "",
+          subtasks: subTasks.map((st) => ({
+            ...st,
+            taskName: st.title || st.taskName,
+            assignee:
+              typeof st.assignedTo?.[0] === "object"
+                ? st.assignedTo[0]?._id
+                : st.assignedTo?.[0] || st.assignee,
+            startDate: st.startDate
+              ? new Date(st.startDate).toISOString().split("T")[0]
+              : "",
+            dueDate: st.dueDate
+              ? new Date(st.dueDate).toISOString().split("T")[0]
+              : "",
+          })),
+        }}
         selectedMonth={taskDetails?.taskMonth}
         showProjectSelection={false}
       />
