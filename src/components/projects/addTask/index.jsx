@@ -143,26 +143,46 @@ const ConflictDetails = ({ conflicts, title, emptyText }) => {
       ) : null}
       {conflicts.map((conflict, idx) => {
         const items = conflict.conflictingDates || [];
+        const isOverloaded = conflict.isOverloaded;
         return (
           <div
             key={`${conflict.employeeId || idx}-${conflict.label || "main"}`}
-            className="flex items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-white px-3 py-2.5 shadow-sm"
+            className={`flex flex-col gap-2 rounded-2xl border ${isOverloaded ? 'border-red-200 bg-red-50' : 'border-amber-100 bg-white'} px-3 py-2.5 shadow-sm`}
           >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-gray-800">
-                {getConflictSummary(conflict.employeeName, items)}
-              </p>
-              <p className="text-[11px] text-gray-500">
-                {conflict.employeeName}
-              </p>
+            <div className="flex items-center justify-between gap-3 min-w-0">
+              <div className="min-w-0">
+                <p className={`truncate text-sm font-semibold ${isOverloaded ? 'text-red-800' : 'text-gray-800'}`}>
+                  {getConflictSummary(conflict.employeeName, items)}
+                </p>
+                <p className={`text-[11px] ${isOverloaded ? 'text-red-600' : 'text-gray-500'}`}>
+                  {conflict.employeeName}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenConflict(conflict)}
+                className={`flex-shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold ${isOverloaded ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+              >
+                View more
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setOpenConflict(conflict)}
-              className="flex-shrink-0 rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 hover:bg-amber-100"
-            >
-              View more
-            </button>
+            {isOverloaded ? (
+              <div className="text-[11px] font-medium text-red-700 bg-red-100/50 rounded-lg px-2 py-1.5 flex items-start gap-1.5">
+                <FiAlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <span>
+                  This assignment exceeds the daily task limit ({conflict.dailyTaskLimit}). 
+                  Currently has {conflict.maxTasksInOneDay} task(s) on a single day.
+                </span>
+              </div>
+            ) : (
+              <div className="text-[11px] font-medium text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5 flex items-start gap-1.5 border border-gray-100">
+                <FiCheck className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-green-500" />
+                <span>
+                  Workload is under the daily limit ({conflict.dailyTaskLimit}). 
+                  Currently has {conflict.maxTasksInOneDay} task(s) on a single day.
+                </span>
+              </div>
+            )}
           </div>
         );
       })}
@@ -1969,8 +1989,8 @@ const AddTask = ({
             <PrimaryButton
               type="submit"
               title="Save Task"
-              loading={isLoading}
-              disable={(!isFormEnabled && !isOtherProjectSelected) || isLoading}
+              loading={isLoading || availabilityMutation.isPending}
+              disable={(!isFormEnabled && !isOtherProjectSelected) || isLoading || availabilityMutation.isPending}
             />
           </footer>
         </form>
