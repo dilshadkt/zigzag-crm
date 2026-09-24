@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Progress from "../../../shared/progress";
 
-const EmployeeCard = ({ employee, index }) => {
+const EmployeeCard = ({ employee, index, positions }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
 
@@ -11,9 +11,25 @@ const EmployeeCard = ({ employee, index }) => {
   };
 
   const progressValue =
-    typeof employee?.progressValue === "number"
-      ? employee.progressValue
-      : employee?.progress_value || 0;
+    typeof employee?.today_progress_value === "number"
+      ? employee.today_progress_value
+      : employee?.todayProgressValue || 0;
+
+  const todayTasks = 
+    typeof employee?.today_task_count === "number"
+      ? employee.today_task_count
+      : employee?.todayTaskCount || 0;
+
+  const positionObj = positions?.find(p => p.name === employee.position);
+  const dailyLimit = positionObj?.dailyTaskLimit || 10;
+  const isOverloaded = todayTasks > dailyLimit;
+  
+  let bgColorClass = "bg-[#F4F9FD]"; // Default
+  if (todayTasks > dailyLimit) {
+    bgColorClass = "bg-red-50";
+  } else if (todayTasks > (dailyLimit / 2)) {
+    bgColorClass = "bg-orange-50";
+  }
 
   const employeeName =
     employee.name ||
@@ -35,9 +51,21 @@ const EmployeeCard = ({ employee, index }) => {
     <div
       onClick={handleClick}
       key={employee._id || index}
-      className="flex flex-col items-center rounded-2xl md:rounded-3xl bg-[#F4F9FD] p-3 md:p-4 py-4 
-             h-fit cursor-pointer min-w-0"
+      className={`flex flex-col items-center rounded-2xl md:rounded-3xl ${bgColorClass} p-3 md:p-4 py-4 
+             h-full cursor-pointer min-w-0 relative transition-all duration-200 justify-between ${
+               isOverloaded 
+                 ? "border-2 border-red-400 shadow-sm shadow-red-100" 
+                 : "border-2 border-transparent hover:border-gray-200"
+             }`}
     >
+      {isOverloaded && (
+        <div 
+          className="absolute -top-2 -right-2 md:-right-1 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md z-10 flex items-center gap-1 animate-pulse"
+          title={`${todayTasks} tasks scheduled for today`}
+        >
+          <span className="animate-bounce inline-block">⚠️</span> {todayTasks}
+        </div>
+      )}
       <div className="relative">
         <Progress
           size={69}
@@ -68,6 +96,11 @@ const EmployeeCard = ({ employee, index }) => {
         </span>
         <div className="text-[#7D8592] border-2 text-xs border-[#7D8592]/60 rounded-lg px-2 mt-2">
           {employee.level || "Middle"}
+        </div>
+        <div className="mt-2 flex items-center justify-center text-xs font-semibold bg-white/60 px-2 py-1 rounded-md w-full">
+          <span className={`${todayTasks > dailyLimit ? 'text-red-600' : todayTasks > (dailyLimit / 2) ? 'text-orange-600' : 'text-blue-600'}`}>
+            {todayTasks} {todayTasks === 1 ? 'Task' : 'Tasks'} Today
+          </span>
         </div>
       </div>
     </div>

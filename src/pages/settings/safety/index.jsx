@@ -195,6 +195,7 @@ const MODULES = [
 const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
   const [permissions, setPermissions] = useState(role.permissions || {});
   const [allowedRoutes, setAllowedRoutes] = useState(role.allowedRoutes || []);
+  const [dailyTaskLimit, setDailyTaskLimit] = useState(role.dailyTaskLimit || 10);
   const [activeModule, setActiveModule] = useState(MODULES[0]);
 
   const { mutate: updatePermissions, isLoading: isSaving } =
@@ -291,11 +292,12 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         positionId: role._id,
         permissions: permissions,
         allowedRoutes: allowedRoutes,
+        dailyTaskLimit: Number(dailyTaskLimit),
       },
       {
         onSuccess: () => {
           toast.success(`Access policy updated for ${role.name}`);
-          onUpdate({ ...role, permissions, allowedRoutes });
+          onUpdate({ ...role, permissions, allowedRoutes, dailyTaskLimit: Number(dailyTaskLimit) });
           onClose();
         },
         onError: (error) => {
@@ -506,7 +508,21 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-sm shadow-gray-200/40">
+              <div className="flex flex-col">
+                <h3 className="text-[14px] font-bold text-gray-800 tracking-tight">Daily Task Limit</h3>
+                <p className="text-[11px] text-gray-500 font-medium">Maximum recommended tasks per day for this role</p>
+              </div>
+              <input
+                type="number"
+                min="1"
+                value={dailyTaskLimit}
+                onChange={(e) => setDailyTaskLimit(e.target.value)}
+                disabled={isAdminRole}
+                className="w-24 text-center border border-gray-200 rounded-lg py-1.5 text-[13px] font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-400 outline-none"
+              />
+            </div>
             {renderModuleScopes()}
           </div>
 

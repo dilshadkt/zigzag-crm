@@ -1,12 +1,16 @@
 import React from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { useEmpoyees } from "../../../api/hooks";
+import { useEmpoyees, useGetPositions } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 import EmployeeCard from "./card/EmployeeCard";
 
 const WorkLoad = () => {
+  const { companyId } = useAuth();
   const { data, isLoading } = useEmpoyees(1);
+  const { data: positionsData } = useGetPositions(companyId);
   const employees = data?.employees?.slice(0, 8) || [];
+  const positions = positionsData?.positions || [];
 
   return (
     <div className="px-3 md:px-4 bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
@@ -39,7 +43,7 @@ const WorkLoad = () => {
       ) : employees.length > 0 ? (
         <div className="w-full h-full grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-3">
           {employees.map((employee, index) => (
-            <EmployeeCard key={employee._id || index} employee={employee} index={index} />
+            <EmployeeCard key={employee._id || index} employee={employee} index={index} positions={positions} />
           ))}
         </div>
       ) : (
