@@ -50,7 +50,7 @@ const GlobalCreateFab = () => {
   const { data: projectsData } = useCompanyProjects(
     canCreateTask || canCreateProject ? projectCompanyId : null
   );
-  const { data: employeesData } = useGetAllEmployees(needEmployees);
+  const { data: employeesData } = useGetAllEmployees(needEmployees, { view: "select" });
   const { data: googleStatus } = useGetGoogleMeetStatus();
   const employees = employeesData?.employees || [];
 

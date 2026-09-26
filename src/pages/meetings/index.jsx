@@ -111,7 +111,7 @@ const Meetings = () => {
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
 
   const { data, isLoading } = useGetMeetings();
-  const { data: employeesData } = useGetAllEmployees(true);
+  const { data: employeesData } = useGetAllEmployees(true, { view: "select" });
   const { data: googleStatus } = useGetGoogleMeetStatus();
   const createMeeting = useCreateMeeting();
   const updateMeeting = useUpdateMeeting();
