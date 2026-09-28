@@ -50,12 +50,12 @@ const Tickets = () => {
 
   return (
     <section className="flex flex-col rounded-2xl overflow-hidden h-full bg-white select-none">
-      <div className="p-4 md:p-5 border-b border-slate-100 flex flex-wrap items-center gap-3 justify-between">
+      <div className="p-4 md:p-5 border-b border-slate-100 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-800">
+          <h2 className="text-base md:text-lg font-bold text-slate-800">
             {isAssigneeView ? "My Issues" : "Issues & Complaints"}
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 hidden md:block mt-0.5">
             {isAssigneeView
               ? "Issues assigned to you. Add notes and close them when done."
               : "Raise tickets against clients, assign owners, and track progress."}
@@ -66,16 +66,16 @@ const Tickets = () => {
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 h-10 px-3.5 rounded-xl bg-[#3F8CFF] text-white text-sm font-semibold hover:bg-blue-600"
+            className="flex items-center justify-center gap-2 h-9 w-9 md:w-auto md:h-10 md:px-3.5 rounded-xl bg-[#3F8CFF] text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
           >
-            <FiPlus className="w-4 h-4" />
-            Raise ticket
+            <FiPlus className="w-5 h-5 md:w-4 md:h-4" />
+            <span className="hidden md:inline">Raise ticket</span>
           </button>
         )}
       </div>
 
-      <div className="px-4 md:px-5 py-3 border-b border-slate-100 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[200px] flex-1">
+      <div className="px-4 md:px-5 py-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+        <div className="relative min-w-[140px] flex-1">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input
             value={search}
@@ -128,6 +128,7 @@ const Tickets = () => {
         canAssign={canAssign}
         canChangeStatus={canChangeStatus}
         isAssigneeView={isAssigneeView}
+        isAdmin={user?.role === "company-admin" || isCompany}
       />
     </section>
   );

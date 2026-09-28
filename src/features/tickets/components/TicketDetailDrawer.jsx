@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
-import { FiX } from "react-icons/fi";
+import { FiX, FiTrash2 } from "react-icons/fi";
 import { useGetAllEmployees } from "../../../api/hooks";
 import {
   useAddTicketComment,
   useAssignTicket,
   useUpdateTicketStatus,
+  useDeleteTicket,
 } from "../hooks/useTickets";
 import {
   PRIORITY_OPTIONS,
@@ -24,11 +25,13 @@ const TicketDetailDrawer = ({
   canAssign,
   canChangeStatus,
   isAssigneeView,
+  isAdmin,
 }) => {
   const { data: employeesData } = useGetAllEmployees(!!ticket && canAssign);
   const assignMutation = useAssignTicket();
   const statusMutation = useUpdateTicketStatus();
   const commentMutation = useAddTicketComment();
+  const deleteMutation = useDeleteTicket();
   const [note, setNote] = useState("");
 
   if (!ticket) return null;
@@ -73,6 +76,17 @@ const TicketDetailDrawer = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this ticket?")) return;
+    try {
+      await deleteMutation.mutateAsync(ticket._id);
+      toast.success("Ticket deleted");
+      onClose();
+    } catch (error) {
+      toast.error(error?.message || "Failed to delete ticket");
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-[80] backdrop-blur-sm" onClick={onClose} />
@@ -87,9 +101,22 @@ const TicketDetailDrawer = ({
               {ticket.project?.name || "Client"} · raised by {personName(ticket.createdBy)}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-50">
-            <FiX className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {isAdmin && (
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={handleDelete}
+                className="p-2 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                title="Delete ticket"
+              >
+                <FiTrash2 className="w-5 h-5" />
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-50">
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">

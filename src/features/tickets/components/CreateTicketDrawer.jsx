@@ -5,6 +5,7 @@ import { useCompanyProjects, useGetAllEmployees } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import { useCreateTicket } from "../hooks/useTickets";
 import { PRIORITY_OPTIONS, TYPE_OPTIONS, personName } from "../utils";
+import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
 
 const emptyForm = {
   project: "",
@@ -17,7 +18,7 @@ const emptyForm = {
 
 const CreateTicketDrawer = ({ isOpen, onClose }) => {
   const { companyId, user } = useAuth();
-  const { data: projects } = useCompanyProjects(companyId || user?.company, 0);
+  const { data: projects } = useCompanyProjects(companyId || user?.company, 0, null, { view: "all_list" });
   const { data: employeesData } = useGetAllEmployees(isOpen);
   const createTicket = useCreateTicket();
   const [form, setForm] = useState(emptyForm);
@@ -90,18 +91,13 @@ const CreateTicketDrawer = ({ isOpen, onClose }) => {
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">Client</label>
-              <select
+              <SearchableSelect
+                name="project"
                 value={form.project}
                 onChange={(e) => setForm((prev) => ({ ...prev, project: e.target.value }))}
-                className="w-full border border-slate-200 rounded-xl p-2.5 text-sm text-slate-800 bg-slate-50 outline-none"
-              >
-                <option value="">Select client</option>
-                {projectOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                options={projectOptions}
+                placeholder="Select client"
+              />
             </div>
 
             <div>
