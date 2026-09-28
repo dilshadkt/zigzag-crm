@@ -141,9 +141,18 @@ const Tasks = ({ employeeId, subTasks = [], isLoading, selectedMonth }) => {
                 key={subTask._id}
                 onClick={() => handleTaskClick(subTask)}
                 className="p-4 bg-white hover:bg-gray-50 cursor-pointer
-                rounded-xl border border-gray-200 transition-colors"
+                rounded-xl border border-gray-200 transition-colors flex gap-4"
               >
-                <div className="flex items-center justify-between">
+                {subTask.project?.thumbImg && (
+                  <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center mt-1">
+                    <img 
+                      src={subTask.project.thumbImg} 
+                      alt="Project" 
+                      className="w-full h-full object-contain p-1" 
+                    />
+                  </div>
+                )}
+                <div className="flex items-center justify-between flex-1 min-w-0">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900 truncate">
