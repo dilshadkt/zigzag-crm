@@ -79,6 +79,15 @@ const AttendanceDayModal = ({
             <FiClock className="text-gray-400 text-xl" />
           </div>
           <p className="text-sm text-gray-500">No attendance for this day</p>
+          {onRequestEdit && (
+            <div className="mt-5 flex justify-center">
+              <PrimaryButton
+                title="Request time change"
+                onclick={() => onRequestEdit({ _id: "new", clockInTime: selectedDayData.date, date: selectedDayData.date, correctionRequest: { status: "none" } })}
+                className="text-white h-9 px-4 text-xs font-semibold"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

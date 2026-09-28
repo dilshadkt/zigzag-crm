@@ -87,82 +87,103 @@ const AttendanceCalendarDay = ({
 
       {/* Attendance Details */}
       {item?.fullDate && (
-        <div className="w-[88%] flex flex-col gap-1 pr-1 mt-6 md:mt-1">
-          {isLoading ? (
-            <div className="animate-pulse">
-              <div className="h-6 bg-gray-200 rounded-md mb-1"></div>
-              <div className="h-6 bg-gray-200 rounded-md"></div>
-            </div>
-          ) : hasAttendance ? (
-            <div className="flex flex-col gap-1">
-              {/* Check-in Time */}
-              {firstCheckIn?.clockInTime && (
-                <div className="text-[10px] md:text-xs bg-green-50 text-green-700 border border-green-200 rounded-md px-1.5 py-1 flex items-center gap-1">
-                  <FiLogIn className="text-xs" />
-                  <span className="truncate">
-                    In: {formatTime(firstCheckIn.clockInTime)}
-                  </span>
-                  {isLate && (
-                    <span className="text-[9px] bg-red-100 text-red-700 px-1 rounded">
-                      Late
+        <>
+          <div className="hidden md:flex w-[88%] flex-col gap-1 pr-1 mt-1">
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 rounded-md mb-1"></div>
+                <div className="h-6 bg-gray-200 rounded-md"></div>
+              </div>
+            ) : hasAttendance ? (
+              <div className="flex flex-col gap-1">
+                {/* Check-in Time */}
+                {firstCheckIn?.clockInTime && (
+                  <div className="text-[10px] md:text-xs bg-green-50 text-green-700 border border-green-200 rounded-md px-1.5 py-1 flex items-center gap-1">
+                    <FiLogIn className="text-xs" />
+                    <span className="truncate">
+                      In: {formatTime(firstCheckIn.clockInTime)}
                     </span>
-                  )}
-                </div>
-              )}
+                    {isLate && (
+                      <span className="text-[9px] bg-red-100 text-red-700 px-1 rounded">
+                        Late
+                      </span>
+                    )}
+                  </div>
+                )}
 
-              {/* Check-out Time */}
-              {lastCheckOut?.clockOutTime && (
-                <div className="text-[10px] md:text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-1.5 py-1 flex items-center gap-1">
-                  <FiLogOut className="text-xs" />
-                  <span className="truncate">
-                    Out: {formatTime(lastCheckOut.clockOutTime)}
-                  </span>
-                  {isEarlyOut && (
-                    <span className="text-[9px] bg-orange-100 text-orange-700 px-1 rounded">
-                      Early
+                {/* Check-out Time */}
+                {lastCheckOut?.clockOutTime && (
+                  <div className="text-[10px] md:text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-1.5 py-1 flex items-center gap-1">
+                    <FiLogOut className="text-xs" />
+                    <span className="truncate">
+                      Out: {formatTime(lastCheckOut.clockOutTime)}
                     </span>
-                  )}
-                </div>
-              )}
+                    {isEarlyOut && (
+                      <span className="text-[9px] bg-orange-100 text-orange-700 px-1 rounded">
+                        Early
+                      </span>
+                    )}
+                  </div>
+                )}
 
-              {/* Total Hours */}
-              {totalHours > 0 && (
-                <div className="text-[10px] md:text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-md px-1.5 py-1 flex items-center gap-1">
-                  <FiClock className="text-xs" />
-                  <span className="truncate">
-                    {totalHours.toFixed(1)}h
-                  </span>
-                </div>
-              )}
+                {/* Total Hours */}
+                {totalHours > 0 && (
+                  <div className="text-[10px] md:text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-md px-1.5 py-1 flex items-center gap-1">
+                    <FiClock className="text-xs" />
+                    <span className="truncate">
+                      {totalHours.toFixed(1)}h
+                    </span>
+                  </div>
+                )}
 
-              {/* Multiple Records Indicator */}
-              {attendanceRecords.length > 1 && (
-                <div className="text-[9px] bg-gray-100 text-gray-600 rounded-md px-1.5 py-0.5 text-center">
-                  {attendanceRecords.length} session
-                  {attendanceRecords.length > 1 ? "s" : ""}
-                </div>
-              )}
+                {/* Multiple Records Indicator */}
+                {attendanceRecords.length > 1 && (
+                  <div className="text-[9px] bg-gray-100 text-gray-600 rounded-md px-1.5 py-0.5 text-center">
+                    {attendanceRecords.length} session
+                    {attendanceRecords.length > 1 ? "s" : ""}
+                  </div>
+                )}
 
-              {/* Status Badge */}
-              {/* Status Badge */}
-              {attendanceRecords.some((r) => r.status === "checked-in") && (
-                <div className="text-[9px] bg-yellow-100 text-yellow-700 rounded-md px-1.5 py-0.5 text-center">
-                  Active
-                </div>
-              )}
+                {/* Status Badge */}
+                {attendanceRecords.some((r) => r.status === "checked-in") && (
+                  <div className="text-[9px] bg-yellow-100 text-yellow-700 rounded-md px-1.5 py-0.5 text-center">
+                    Active
+                  </div>
+                )}
 
-              {attendanceRecords.some((r) => r.correctionRequest?.status === "pending") && (
-                <div className="text-[9px] bg-amber-100 text-amber-800 rounded-md px-1.5 py-0.5 text-center">
-                  Change requested
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-[10px] text-gray-400 italic mt-2">
-              No attendance
-            </div>
-          )}
-        </div>
+                {attendanceRecords.some((r) => r.correctionRequest?.status === "pending") && (
+                  <div className="text-[9px] bg-amber-100 text-amber-800 rounded-md px-1.5 py-0.5 text-center">
+                    Change requested
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-[10px] text-gray-400 italic mt-2">
+                No attendance
+              </div>
+            )}
+          </div>
+          
+          <div className="flex md:hidden flex-col items-center justify-center mt-5 gap-0.5 w-full">
+            {isLoading ? (
+               <div className="w-1.5 h-1.5 rounded-full bg-gray-200 animate-pulse"></div>
+            ) : hasAttendance ? (
+               <div className="flex flex-col items-center gap-0.5 w-full">
+                 <div className={`w-1.5 h-1.5 rounded-full ${isLate ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+                 {totalHours > 0 && (
+                   <span className="text-[8px] font-medium text-gray-500 truncate w-full text-center tracking-tighter">
+                     {totalHours.toFixed(1)}h
+                   </span>
+                 )}
+                 {attendanceRecords.some((r) => r.correctionRequest?.status === "pending") && (
+                   <span className="text-[8px] text-amber-500">⏳</span>
+                 )}
+               </div>
+            ) : (
+               <span className="text-[9px] font-medium text-gray-300">—</span>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

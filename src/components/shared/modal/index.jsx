@@ -36,7 +36,7 @@ const Modal = ({ isOpen, onClose, setIsOpen, title, children, maxWidth = "sm:max
         <div
           className={`relative transform rounded-3xl bg-white px-4 pb-4 pt-5 text-left 
           shadow-[0_20px_50px_rgba(0,0,0,0.2)] transition-all
-           duration-300 ease-in-out sm:my-8 sm:w-full ${maxWidth} 
+           duration-300 ease-in-out sm:my-8 w-full sm:w-full ${maxWidth} 
            sm:p-6 scale-100 flex flex-col max-h-[90vh]`}
           role="dialog"
           aria-modal="true"

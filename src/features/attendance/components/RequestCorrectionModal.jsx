@@ -74,12 +74,14 @@ const RequestCorrectionModal = ({ isOpen, record, onClose }) => {
       maxWidth="sm:max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-600">
-          Current times: {formatAttendanceTime(record.clockInTime)} in
-          {record.clockOutTime
-            ? ` · ${formatAttendanceTime(record.clockOutTime)} out`
-            : " · no check-out yet"}
-        </p>
+        {record._id !== "new" && (
+          <p className="text-sm text-gray-600">
+            Current times: {formatAttendanceTime(record.clockInTime)} in
+            {record.clockOutTime
+              ? ` · ${formatAttendanceTime(record.clockOutTime)} out`
+              : " · no check-out yet"}
+          </p>
+        )}
 
         {pending && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
