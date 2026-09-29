@@ -97,13 +97,61 @@ const NearestEvents = ({ selectedDate }) => {
   const getEventIcon = (event) => {
     switch (event.type) {
       case "project":
-        return <FaProjectDiagram className="text-xl text-[#3F8CFF]" />;
+        return event.data?.thumbImg ? (
+          <div className="relative w-6 h-6 flex-shrink-0">
+            <div className="absolute inset-0 flex items-center justify-center bg-blue-50 rounded">
+              <FaProjectDiagram className="text-lg text-[#3F8CFF]" />
+            </div>
+            <img 
+              src={event.data.thumbImg} 
+              alt={event.title} 
+              className="w-full h-full rounded object-cover absolute inset-0 z-10 bg-white" 
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        ) : (
+          <FaProjectDiagram className="text-lg text-[#3F8CFF] flex-shrink-0" />
+        );
       case "task":
-        return <FaTasks className="text-xl text-[#FFBD21]" />;
+        return event.data?.project?.thumbImg ? (
+          <div className="relative w-6 h-6 flex-shrink-0">
+            <div className="absolute inset-0 flex items-center justify-center bg-amber-50 rounded">
+              <FaTasks className="text-lg text-[#FFBD21]" />
+            </div>
+            <img 
+              src={event.data.project.thumbImg} 
+              alt={event.projectName} 
+              className="w-full h-full rounded object-cover absolute inset-0 z-10 bg-white" 
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        ) : (
+          <FaTasks className="text-lg text-[#FFBD21] flex-shrink-0" />
+        );
       case "birthday":
-        return <FaGift className="text-xl text-[#FF6B9D]" />;
+        return event.data?.profileImage ? (
+          <div className="relative w-6 h-6 flex-shrink-0">
+            <div className="absolute inset-0 flex items-center justify-center bg-pink-50 rounded-full">
+              <FaGift className="text-lg text-[#FF6B9D]" />
+            </div>
+            <img 
+              src={event.data.profileImage} 
+              alt={event.title} 
+              className="w-full h-full rounded-full object-cover absolute inset-0 z-10 bg-white" 
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        ) : (
+          <FaGift className="text-lg text-[#FF6B9D] flex-shrink-0" />
+        );
       default:
-        return <IoArrowUpOutline className="text-xl text-[#FFBD21]" />;
+        return <IoArrowUpOutline className="text-lg text-[#FFBD21] flex-shrink-0" />;
     }
   };
 
@@ -140,12 +188,12 @@ const NearestEvents = ({ selectedDate }) => {
     return (
       <div className="flex min-h-[320px] md:h-[470px] w-full flex-col bg-white py-4 md:py-5 px-3 md:px-4 rounded-2xl md:rounded-3xl">
         <div className="flexBetween">
-          <h4 className="font-semibold text-lg text-gray-800">
+          <h4 className="font-semibold text-sm md:text-base text-gray-800">
             Nearest Events
           </h4>
           <Link
             to={"/calender"}
-            className="text-[#3F8CFF] text-sm cursor-pointer flexStart gap-x-2"
+            className="text-[#3F8CFF] text-xs cursor-pointer flexStart gap-x-2"
           >
             <span>View all</span>
             <MdOutlineKeyboardArrowRight />
@@ -166,10 +214,10 @@ const NearestEvents = ({ selectedDate }) => {
   return (
     <div className="flex min-h-[320px] md:h-[470px] flex-col bg-white py-4 md:py-5 px-3 md:px-4 rounded-2xl md:rounded-3xl">
       <div className="flexBetween">
-        <h4 className="font-semibold text-base md:text-lg text-gray-800">Nearest Events</h4>
+        <h4 className="font-semibold text-sm md:text-base text-gray-800">Nearest Events</h4>
         <Link
           to={"/calender"}
-          className="text-[#3F8CFF] text-sm cursor-pointer flexStart gap-x-2"
+          className="text-[#3F8CFF] text-xs cursor-pointer flexStart gap-x-2"
         >
           <span>View all</span>
           <MdOutlineKeyboardArrowRight />
@@ -178,8 +226,8 @@ const NearestEvents = ({ selectedDate }) => {
       <div className="w-full h-full overflow-y-auto mt-3 gap-y-6 flex flex-col pt-2">
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <div className="text-4xl mb-2">📅</div>
-            <p className="text-sm">No upcoming events this month</p>
+            <div className="text-3xl mb-2">📅</div>
+            <p className="text-xs">No upcoming events this month</p>
           </div>
         ) : (
           events.map((event, index) => (
@@ -195,35 +243,35 @@ const NearestEvents = ({ selectedDate }) => {
               }}
             >
               <div className="flexBetween w-full">
-                <p className="w-[80%] font-medium text-gray-800 truncate">
+                <p className="w-[80%] font-medium text-sm text-gray-800 truncate">
                   {event.title}
                 </p>
                 {getEventIcon(event)}
               </div>
               <div className="flexBetween w-full">
                 <div className="flex flex-col w-[80%]">
-                  <p className="text-xs text-[#91929E]">
+                  <p className="text-[11px] text-[#91929E]">
                     {getDateText(event.date)} | {getTimeText(event.date)}
                   </p>
-                  <p className="text-xs text-[#91929E] mt-1">
+                  <p className="text-[11px] text-[#91929E] mt-1">
                     {getEventSubtitle(event)}
                   </p>
                 </div>
                 {event.type === "project" && (
-                  <div className="h-8 bg-[#F4F9FD] px-3 gap-x-1 text-[#7D8592] flexStart rounded-lg">
-                    <span className="text-xs">{event.progress}%</span>
+                  <div className="h-7 bg-[#F4F9FD] px-2 gap-x-1 text-[#7D8592] flexStart rounded-lg">
+                    <span className="text-[10px]">{event.progress}%</span>
                   </div>
                 )}
                 {event.type === "task" && (
-                  <div className="h-8 bg-[#F4F9FD] px-3 gap-x-1 text-[#7D8592] flexStart rounded-lg">
-                    <img src="/icons/clock.svg" alt="" />
-                    <span className="text-xs">Due</span>
+                  <div className="h-7 bg-[#F4F9FD] px-2 gap-x-1 text-[#7D8592] flexStart rounded-lg">
+                    <img src="/icons/clock.svg" alt="" className="w-3" />
+                    <span className="text-[10px]">Due</span>
                   </div>
                 )}
                 {event.type === "birthday" && (
-                  <div className="h-8 bg-[#FFF0F5] px-3 gap-x-1 text-[#FF6B9D] flexStart rounded-lg">
-                    <FaGift className="text-xs" />
-                    <span className="text-xs">🎉</span>
+                  <div className="h-7 bg-[#FFF0F5] px-2 gap-x-1 text-[#FF6B9D] flexStart rounded-lg">
+                    <FaGift className="text-[10px]" />
+                    <span className="text-[10px]">🎉</span>
                   </div>
                 )}
               </div>

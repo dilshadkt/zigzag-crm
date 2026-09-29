@@ -266,7 +266,7 @@ export const ProjectCardShimmer = () => (
   <div className="bg-white rounded-3xl grid gap-y-4 md:gap-y-0 md:grid-cols-2">
     <div className="p-4 py-5 h-full flex gap-y-4 flex-col md:border-r border-[#E4E6E8]/60">
       <div className="flex items-center gap-x-3.5">
-        <ShimmerBox className="w-12 h-12 rounded-2xl shrink-0" />
+        <ShimmerBox className="w-10 h-10 rounded-2xl shrink-0" />
         <div className="flex flex-col gap-y-2 flex-1 min-w-0">
           <ShimmerBox className="h-3 w-16" />
           <ShimmerBox className="h-4 w-3/4" />
@@ -291,9 +291,9 @@ export const ProjectCardShimmer = () => (
         <div className="flex flex-col gap-y-2">
           <ShimmerBox className="h-3 w-16" />
           <div className="flex -space-x-2">
-            <ShimmerBox className="h-7 w-7 rounded-full" />
-            <ShimmerBox className="h-7 w-7 rounded-full" />
-            <ShimmerBox className="h-7 w-7 rounded-full" />
+            <ShimmerBox className="h-6 w-6 rounded-full" />
+            <ShimmerBox className="h-6 w-6 rounded-full" />
+            <ShimmerBox className="h-6 w-6 rounded-full" />
           </div>
         </div>
       </div>
@@ -335,7 +335,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
        relative border-[#E4E6E8]/60 "
         >
           <div className="flexStart  gap-x-3.5">
-            <div className="w-12 h-12 rounded-2xl overflow-hidden">
+            <div className="w-10 h-10 rounded-2xl overflow-hidden">
               <img
                 src={project?.thumbImg}
                 alt=""
@@ -343,32 +343,32 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="flex flex-col h-full">
-              <span className="text-xs uppercase text-[#91929E]">
+            <div className="flex flex-col h-full justify-center">
+              <span className="text-[11px] uppercase text-[#91929E]">
                 {project?._id?.slice(0, 8)}
               </span>
-              <h4 className=" font-medium text-gray-800">{project?.name}</h4>
+              <h4 className="font-medium text-sm text-gray-800">{project?.name}</h4>
             </div>
           </div>
           <div className="flexBetween">
             <div className="flexStart gap-x-4">
               <div className="flexStart gap-x-2">
-                <img src="/icons/calender2.svg" alt="" loading="lazy" className="w-5" />
-                <span className="text-xs text-[#7D8592]">
+                <img src="/icons/calender2.svg" alt="" loading="lazy" className="w-4" />
+                <span className="text-[11px] text-[#7D8592]">
                   Created {formatDate(project?.createdAt)}
                 </span>
               </div>
               {viewMore && (
                 <div className="flexStart gap-x-2">
-                  <img src="/icons/calender2.svg" alt="" loading="lazy" className="w-5" />
-                  <span className="text-xs text-[#7D8592]">
+                  <img src="/icons/calender2.svg" alt="" loading="lazy" className="w-4" />
+                  <span className="text-[11px] text-[#7D8592]">
                     Ended {formatDate(project?.endDate)}
                   </span>
                 </div>
               )}
             </div>
-            <div className="flexEnd text-[#FFBD21] text-xs gap-x-2 pr-2">
-              <IoArrowUpOutline className="text-lg" />
+            <div className="flexEnd text-[#FFBD21] text-[11px] gap-x-1.5 pr-2">
+              <IoArrowUpOutline className="text-base" />
               <span>{project?.priority}</span>
             </div>
           </div>
@@ -398,12 +398,12 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
               onMouseLeave={() => setShowProgressTooltip(false)}
             >
               <Progress
-                size={48}
+                size={40}
                 strokeWidth={3}
                 currentValue={project?.progress}
               />
               <span
-                className="text-xs absolute top-1/2 left-1/2 -translate-x-1/2
+                className="text-[11px] absolute top-1/2 left-1/2 -translate-x-1/2
                -translate-y-1/2 text-gray-500 font-semibold"
               >
                 {project?.progress}%
@@ -419,27 +419,27 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
           </div>
         </div>
         <div className="px-8  py-5   flex flex-col  gap-y-3 justify-center items-center">
-          <h5 className="font-medium w-full">Project Data</h5>
+          <h5 className="font-medium text-sm w-full">Project Data</h5>
           <div className="w-full grid grid-cols-3 ">
             <div className="flex flex-col gap-y-2">
-              <span className="text-[#91929E]/90 text-sm">All Tasks</span>
-              <span className="font-semibold text-gray-800 text-lg">
+              <span className="text-[#91929E]/90 text-xs">All Tasks</span>
+              <span className="font-semibold text-gray-800 text-base">
                 {project?.monthTasks !== undefined
                   ? project.monthTasks
                   : project?.tasks?.length || 0}
               </span>
             </div>
             <div className="flex flex-col gap-y-2">
-              <span className="text-[#91929E]/90 text-sm">Active tasks</span>
-              <span className="font-semibold text-gray-800 text-lg">
+              <span className="text-[#91929E]/90 text-xs">Active tasks</span>
+              <span className="font-semibold text-gray-800 text-base">
                 {project?.monthActiveTasks !== undefined
                   ? project.monthActiveTasks
                   : project?.tasks?.length || 0}
               </span>
             </div>
             <div className="flex flex-col    gap-y-2">
-              <span className="text-[#91929E]/90 text-sm">Assignees</span>
-              <div className="font-semibold flex items-center text-gray-800 text-lg relative">
+              <span className="text-[#91929E]/90 text-xs">Assignees</span>
+              <div className="font-semibold flex items-center text-gray-800 text-base relative">
                 {project?.teams?.slice(0, 5).map((team, index) => (
                   <div
                     key={index}
@@ -455,7 +455,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                     }}
                   >
                     <div
-                      className={`w-7 h-7 rounded-full overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out ${hoveredIndex === index ? "scale-125" : "scale-100"
+                      className={`w-6 h-6 rounded-full overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out ${hoveredIndex === index ? "scale-125" : "scale-100"
                         }`}
                     >
                       {!failedImages.has(index) && team?.profileImage ? (
@@ -467,13 +467,13 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                           onError={() => handleImageError(index)}
                         />
                       ) : (
-                        <div className="w-full h-full rounded-full bg-gray-200 flexCenter text-gray-800 font-semibold text-xs">
+                        <div className="w-full h-full rounded-full bg-gray-200 flexCenter text-gray-800 font-semibold text-[10px]">
                           {getFirstLetter(team)}
                         </div>
                       )}
                     </div>
                     {hoveredIndex === index && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap pointer-events-none z-50">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded whitespace-nowrap pointer-events-none z-50">
                         {getTeamMemberName(team)}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1">
                           <div className="border-4 border-transparent border-t-gray-900"></div>
@@ -488,7 +488,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
                       marginLeft: "-8px",
                       zIndex: 100,
                     }}
-                    className={`min-w-7 min-h-7  flex text-[8px]
+                    className={`min-w-6 min-h-6  flex text-[8px]
                       text-white items-center justify-center rounded-full
                       bg-gray-600  overflow-hidden border-2 border-white relative transition-transform duration-200 ease-in-out `}
                   >

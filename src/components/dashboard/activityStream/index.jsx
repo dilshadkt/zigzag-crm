@@ -145,7 +145,7 @@ const ActivityStream = () => {
     switch (activity.action) {
       case "logged_time":
         return (
-          <div className="bg-white px-2 py-1 rounded-md text-xs text-[#7D8592] border">
+          <div className="bg-white px-2 py-1 rounded-md text-[10px] text-[#7D8592] border">
             ⏱️ {activity.duration} min
           </div>
         );
@@ -163,7 +163,7 @@ const ActivityStream = () => {
           "text-gray-600 border-gray-200";
         return (
           <div
-            className={`bg-white px-2 py-1 rounded-md text-xs border ${changeColorClass}`}
+            className={`bg-white px-2 py-1 rounded-md text-[10px] border ${changeColorClass}`}
           >
             {activity.changeType === "created" && "🆕"}
             {activity.changeType === "deleted" && "🗑️"}
@@ -176,19 +176,19 @@ const ActivityStream = () => {
         );
       case "project_created":
         return (
-          <div className="bg-white px-2 py-1 rounded-md text-xs text-purple-600 border border-purple-200">
+          <div className="bg-white px-2 py-1 rounded-md text-[10px] text-purple-600 border border-purple-200">
             🆕 New Project
           </div>
         );
       case "project_updated":
         return (
-          <div className="bg-white px-2 py-1 rounded-md text-xs text-indigo-600 border border-indigo-200">
+          <div className="bg-white px-2 py-1 rounded-md text-[10px] text-indigo-600 border border-indigo-200">
             📊 {activity.project.progress || 0}%
           </div>
         );
       case "file_attachment":
         return (
-          <div className="bg-white px-2 py-1 rounded-md text-xs text-orange-600 border border-orange-200">
+          <div className="bg-white px-2 py-1 rounded-md text-[10px] text-orange-600 border border-orange-200">
             {activity.attachments?.length || 1} files
           </div>
         );
@@ -202,7 +202,7 @@ const ActivityStream = () => {
           statusColors[activity.task.status] || "text-gray-600 border-gray-200";
         return (
           <div
-            className={`bg-white px-2 py-1 rounded-md text-xs border ${colorClass}`}
+            className={`bg-white px-2 py-1 rounded-md text-[10px] border ${colorClass}`}
           >
             🔄 {activity.task.status}
           </div>
@@ -225,7 +225,7 @@ const ActivityStream = () => {
           "text-gray-600 border-gray-200";
         return (
           <div
-            className={`bg-white px-2 py-1 rounded-md text-xs border ${subTaskChangeColorClass}`}
+            className={`bg-white px-2 py-1 rounded-md text-[10px] border ${subTaskChangeColorClass}`}
           >
             {activity.changeType === "created" && "🆕"}
             {activity.changeType === "deleted" && "🗑️"}
@@ -264,8 +264,8 @@ const ActivityStream = () => {
   if (isLoading) {
     return (
       <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-2xl md:rounded-3xl">
-        <h4 className="font-semibold text-base md:text-lg text-gray-800">Activity Stream</h4>
-        <div className="flex h-full gap-y-6 overflow-y-auto flex-col mt-4">
+        <h4 className="font-semibold text-sm md:text-base text-gray-800">Activity Stream</h4>
+        <div className="flex h-full gap-y-6 overflow-y-auto overflow-x-hidden flex-col mt-4">
           {[1, 2, 3].map((_, index) => (
             <div key={index} className="animate-pulse">
               <div className="flex gap-x-3 mb-3">
@@ -291,7 +291,7 @@ const ActivityStream = () => {
     <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-2xl md:rounded-3xl">
       <div className="flex justify-between items-start mb-4 gap-2">
         <div className="flex flex-col min-w-0">
-          <h4 className="font-semibold text-base md:text-lg text-gray-800">
+          <h4 className="font-semibold text-sm md:text-base text-gray-800">
             Activity Stream
           </h4>
           <div
@@ -326,7 +326,7 @@ const ActivityStream = () => {
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="text-[11px] bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {filterOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -338,12 +338,12 @@ const ActivityStream = () => {
         </div>
       </div>
 
-      <div className="flex h-full gap-y-6 overflow-y-auto flex-col">
+      <div className="flex h-full gap-y-6 overflow-y-auto overflow-x-hidden flex-col">
         {activities.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <div className="text-4xl mb-2">📊</div>
-            <p className="text-sm text-center">No recent activities</p>
-            <p className="text-xs text-center mt-1">
+            <div className="text-3xl mb-2">📊</div>
+            <p className="text-xs text-center">No recent activities</p>
+            <p className="text-[10px] text-center mt-1">
               Activities will appear here when team members work on projects
             </p>
           </div>
@@ -361,7 +361,7 @@ const ActivityStream = () => {
             return (
             <div key={activity.id || index} className="flex flex-col gap-y-3">
               <div className="flexStart gap-x-3">
-                <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                   {activity.user?.profileImage ? (
                     <img
                       src={activity.user.profileImage}
@@ -373,25 +373,25 @@ const ActivityStream = () => {
                       }}
                     />
                   ) : (
-                    <span className="text-gray-600 font-medium text-lg">
+                    <span className="text-gray-600 font-medium text-base">
                       {userInitial}
                     </span>
                   )}
                 </div>
                 <div className="flex flex-col flex-1">
-                  <h5 className="font-medium text-gray-800">
+                  <h5 className="font-medium text-sm text-gray-800">
                     {userName}
                   </h5>
-                  <span className="text-xs text-[#91929E]">
+                  <span className="text-[11px] text-[#91929E]">
                     {activity.user?.position ||
                       (activity.user?._id || activity.user?.id
                         ? "Team Member"
                         : "Project activity")}
                   </span>
-                  <span className="text-xs text-[#91929E] mt-1">
+                  <span className="text-[11px] text-[#91929E] mt-0.5">
                     • {formatDateTime(activity.timestamp)}
                     {"   "}
-                    <span className="text-gray-400 bg-slate-50 rounded-xl px-2 py-0.5">
+                    <span className="text-gray-400 bg-slate-50 rounded-xl px-2 py-0.5 text-[10px]">
                       {formatTimeAgo(activity.timestamp)}
                     </span>
                   </span>
@@ -409,12 +409,12 @@ const ActivityStream = () => {
                   className="w-5 flex-shrink-0"
                 />
                 <div className="flex flex-col flex-1">
-                  <p className="text-[#0A1629] text-sm">
+                  <p className="text-[#0A1629] text-xs">
                     {getActivityMessage(activity)}
                   </p>
 
                   {showChangeValues && (
-                    <p className="text-xs mt-1">
+                    <p className="text-[11px] mt-1">
                       <span className="text-red-600 line-through">
                         {formatActivityValue(activity.oldValue, activity.changeType)}
                       </span>
@@ -427,7 +427,7 @@ const ActivityStream = () => {
 
                   {/* Project context */}
                   {activity.task?.project && (
-                    <p className="text-xs text-[#91929E] mt-1">
+                    <p className="text-[11px] text-[#91929E] mt-1">
                       Project: {activity.task.project.name}
                     </p>
                   )}
@@ -435,7 +435,7 @@ const ActivityStream = () => {
                   {/* Subtask context */}
                   {activity.action === "subtask_change" &&
                     activity.parentTask && (
-                      <p className="text-xs text-[#91929E] mt-1">
+                      <p className="text-[11px] text-[#91929E] mt-1">
                         Parent Task: {activity.parentTask.title} • Project:{" "}
                         {activity.project?.name}
                       </p>
@@ -443,7 +443,7 @@ const ActivityStream = () => {
 
                   {/* Project details for project activities */}
                   {activity.project && !activity.parentTask && (
-                    <p className="text-xs text-[#91929E] mt-1">
+                    <p className="text-[11px] text-[#91929E] mt-1">
                       Priority: {activity.project.priority} • Status:{" "}
                       {activity.project.status}
                     </p>
@@ -452,7 +452,7 @@ const ActivityStream = () => {
                   {/* Time log description */}
                   {activity.action === "logged_time" &&
                     activity.description && (
-                      <p className="text-xs text-[#91929E] mt-1 italic">
+                      <p className="text-[11px] text-[#91929E] mt-1 italic">
                         "{activity.description}"
                       </p>
                     )}
@@ -460,19 +460,19 @@ const ActivityStream = () => {
                   {/* File attachment details */}
                   {activity.action === "file_attachment" &&
                     activity.attachments && (
-                      <div className="mt-2">
-                        <p className="text-xs text-[#91929E] mb-1">Files:</p>
+                      <div className="mt-1.5">
+                        <p className="text-[11px] text-[#91929E] mb-1">Files:</p>
                         <div className="flex flex-wrap gap-1">
                           {activity.attachments.slice(0, 3).map((file, idx) => (
                             <span
                               key={idx}
-                              className="text-xs bg-white px-2 py-1 rounded border"
+                              className="text-[10px] bg-white px-2 py-0.5 rounded border"
                             >
                               {file.title || `File ${idx + 1}`}
                             </span>
                           ))}
                           {activity.attachments.length > 3 && (
-                            <span className="text-xs text-[#91929E]">
+                            <span className="text-[10px] text-[#91929E]">
                               +{activity.attachments.length - 3} more
                             </span>
                           )}
@@ -494,7 +494,7 @@ const ActivityStream = () => {
 
       {activities.length > 0 && (
         <button
-          className="absolute text-sm text-[#3F8CFF] bottom-3 cursor-pointer left-0 right-0 mx-auto hover:underline"
+          className="absolute text-xs text-[#3F8CFF] bottom-3 cursor-pointer left-0 right-0 mx-auto hover:underline"
           onClick={() => navigate("/activity-stream")}
         >
           View more ({activitiesData?.total || activities.length} total)

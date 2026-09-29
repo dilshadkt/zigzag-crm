@@ -201,21 +201,21 @@ const CompanyDashboard = () => {
         <CompletionTrendChart userId={null} />
       </div>
 
-      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6 mt-5">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-3  mt-3">
         {/* Workload section */}
         <div className="lg:col-span-2 min-w-0">
           <WorkLoad />
         </div>
 
         {/* Pending work / Nearest event */}
-        <div className="lg:col-span-1 min-w-0">
+        <div className="lg:col-span-1  min-w-0">
           <PendingWork taskMonth={taskMonth} />
         </div>
       </div>
 
       {/* Projects Section */}
-      <div className="w-full grid gap-y-5 md:gap-x-6 mt-5 grid-cols-1 lg:grid-cols-7">
-        <div className="px-1 md:px-4 md:h-[470px] pb-3 pt-3 md:pt-5 flex flex-col rounded-3xl col-span-1 lg:col-span-5 min-w-0">
+      <div className="w-full grid gap-y-5 grid-cols-1 lg:grid-cols-9">
+        <div className="px-1 md:px-4 md:h-[470px] pb-3 pt-3 md:pt-5 flex flex-col rounded-3xl col-span-1 lg:col-span-6 min-w-0">
           <div className="flex items-center justify-between w-full gap-2">
             <h4 className="font-semibold text-base md:text-lg text-gray-800">Projects</h4>
             <Link
@@ -256,7 +256,7 @@ const CompanyDashboard = () => {
           <DashboardCampaigns />
         </div>
         {/* Sidebar: Activity stream and nearest events */}
-        <div className="flex flex-col gap-5 lg:col-span-2 min-w-0">
+        <div className="flex flex-col gap-5 lg:col-span-3 min-w-0">
           <ActivityStream />
           <NearestEvents selectedDate={selectedDate} />
         </div>
@@ -273,11 +273,10 @@ const CompanyDashboard = () => {
       </div>
 
       <div className="w-full grid grid-cols-1 lg:grid-cols-7 gap-3 md:gap-4 mt-5 pb-5">
-        <div className="lg:col-span-5 min-w-0">
+        <div className="lg:col-span-5 min-w-0 flex flex-col gap-4 md:gap-6">
           <EmployeeTodayTasks />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6 min-w-0">
-          <PendingWork taskMonth={taskMonth} />
           <TodayReworkTasks />
         </div>
       </div>

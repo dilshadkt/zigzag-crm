@@ -45,14 +45,19 @@ export const useGetCompletionTrend = (userId = null, days = 14) => {
     gcTime: 15 * 60 * 1000,
   });
 };
-export const useTodayTasks = (userId = null) => {
+export const useTodayTasks = (userId = null, date = null) => {
   return useQuery({
-    queryKey: ["todayTasks", userId],
+    queryKey: ["todayTasks", userId, date],
     queryFn: async () => {
-      const url = userId
-        ? `/dashboard/today-tasks?userId=${userId}`
-        : "/dashboard/today-tasks";
-      const response = await apiClient.get(url);
+      const params = new URLSearchParams();
+      if (userId) params.append("userId", userId);
+      if (date) {
+        // format date to ISO string or just passing the date object as string
+        const dateStr = date instanceof Date ? date.toISOString() : date;
+        params.append("date", dateStr);
+      }
+      
+      const response = await apiClient.get(`/dashboard/today-tasks?${params.toString()}`);
       return response.data;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes

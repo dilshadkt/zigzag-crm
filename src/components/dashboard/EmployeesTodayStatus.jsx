@@ -17,7 +17,7 @@ const EmployeesTodayStatus = () => {
     <>
     <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-gray-100 flex flex-col min-h-0 md:min-h-[420px] md:h-[550px]">
       <div className="mb-3">
-        <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="text-sm md:text-base font-bold text-gray-800 flex items-center gap-2">
           Team Daily Status
         </h3>
         {/* <p className="text-xs text-gray-500 line-clamp-1">Finished vs still working</p> */}
@@ -27,8 +27,8 @@ const EmployeesTodayStatus = () => {
         {/* Working / Pending Column */}
         <div className="flex flex-col bg-slate-50 rounded-2xl p-3 md:p-4 border border-slate-100 overflow-hidden min-h-[220px] md:min-h-0">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-xs text-slate-700 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <h4 className="font-bold text-[11px] text-slate-700 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
               Working ({workingEmployees.length})
             </h4>
           </div>
@@ -49,7 +49,7 @@ const EmployeesTodayStatus = () => {
         {/* Finished / Completed Column */}
         <div className="flex flex-col bg-emerald-50 rounded-2xl p-3 md:p-4 border border-emerald-100 overflow-hidden min-h-[220px] md:min-h-0">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-xs text-emerald-700 flex items-center gap-2">
+            <h4 className="font-bold text-[11px] text-emerald-700 flex items-center gap-2">
               <FaCheckCircle className="text-emerald-500" />
               Done ({finishedEmployees.length})
             </h4>
@@ -72,7 +72,7 @@ const EmployeesTodayStatus = () => {
       {inactiveEmployees.length > 0 && (
         <div 
           onClick={() => setIsInactiveModalOpen(true)}
-          className="mt-4 px-4 flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer hover:text-blue-500 transition-colors w-fit"
+          className="mt-4 px-4 flex items-center gap-2 text-[10px] text-gray-400 cursor-pointer hover:text-blue-500 transition-colors w-fit"
         >
           <FaExclamationCircle />
           <span>{inactiveEmployees.length} employees have no tasks assigned for today</span>
@@ -118,20 +118,20 @@ const EmployeesTodayStatus = () => {
 };
 
 const EmployeeCard = ({ emp, status, onViewTasks }) => (
-  <div className="bg-white p-3 md:p-4 rounded-2xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md group min-w-0">
+  <div className="bg-white p-3 rounded-2xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md group min-w-0">
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
-        <Avatar user={emp} size="w-10 h-10 md:w-11 md:h-11" />
+        <Avatar user={emp} size="w-8 h-8 md:w-9 md:h-9" />
         <div className="min-w-0">
-          <h5 className="font-bold text-gray-800 text-sm group-hover:text-blue-600 transition-colors truncate">
+          <h5 className="font-bold text-gray-800 text-xs group-hover:text-blue-600 transition-colors truncate">
             {emp.firstName} {emp.lastName}
           </h5>
-          <div className="flex items-center gap-2 md:gap-3 mt-1 flex-wrap">
-            <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-bold">
-              <FaCheckCircle className="text-[10px]" /> {emp.completedCount} Done
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
+              <FaCheckCircle className="text-[9px]" /> {emp.completedCount} Done
             </span>
-            <span className={`flex items-center gap-1 text-[11px] font-bold ${emp.pendingCount > 0 ? 'text-amber-600' : 'text-slate-400'}`}>
-              <FaClock className="text-[10px]" /> {emp.pendingCount} Left
+            <span className={`flex items-center gap-1 text-[10px] font-bold ${emp.pendingCount > 0 ? 'text-amber-600' : 'text-slate-400'}`}>
+              <FaClock className="text-[9px]" /> {emp.pendingCount} Left
             </span>
           </div>
         </div>
@@ -139,11 +139,11 @@ const EmployeeCard = ({ emp, status, onViewTasks }) => (
 
       <div className="flex flex-col items-end gap-1 shrink-0">
         {status === 'finished' ? (
-          <span className="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2 py-1 rounded-lg uppercase tracking-wider">
+          <span className="text-[9px] bg-emerald-100 text-emerald-700 font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
             Done
           </span>
         ) : (
-          <div className="w-12 md:w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-10 md:w-14 h-1 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full"
               style={{ width: `${Math.min(100, (emp.completedCount / ((emp.completedCount + emp.pendingCount) || 1)) * 100)}%` }}
@@ -152,10 +152,10 @@ const EmployeeCard = ({ emp, status, onViewTasks }) => (
         )}
         <button 
           onClick={onViewTasks}
-          className="mt-1 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-blue-500 transition-colors tooltip tooltip-left"
+          className="mt-1 p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-blue-500 transition-colors tooltip tooltip-left"
           data-tip="View Tasks"
         >
-          <FaListUl className="text-xs" />
+          <FaListUl className="text-[10px]" />
         </button>
       </div>
     </div>

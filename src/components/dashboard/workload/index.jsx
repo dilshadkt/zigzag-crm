@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
+import { FaSort, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useEmpoyees, useGetPositions } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
@@ -9,21 +10,50 @@ const WorkLoad = () => {
   const { companyId } = useAuth();
   const { data, isLoading } = useEmpoyees(1);
   const { data: positionsData } = useGetPositions(companyId);
-  const employees = data?.employees?.slice(0, 8) || [];
+  const [sortDirection, setSortDirection] = useState('none'); // 'none', 'desc', 'asc'
+
+  let employees = data?.employees || [];
+  
+  if (sortDirection !== 'none') {
+    employees = [...employees].sort((a, b) => {
+      const aTasks = typeof a?.today_task_count === "number" ? a.today_task_count : (a?.todayTaskCount || 0);
+      const bTasks = typeof b?.today_task_count === "number" ? b.today_task_count : (b?.todayTaskCount || 0);
+      return sortDirection === 'desc' ? bTasks - aTasks : aTasks - bTasks;
+    });
+  }
+
+  employees = employees.slice(0, 8);
   const positions = positionsData?.positions || [];
+
+  const handleSortClick = () => {
+    if (sortDirection === 'none') setSortDirection('desc');
+    else if (sortDirection === 'desc') setSortDirection('asc');
+    else setSortDirection('none');
+  };
 
   return (
     <div className="px-3 md:px-4 bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
       <div className="flexBetween">
         <h4 className="font-semibold text-base md:text-lg text-gray-800">Workload</h4>
         {employees.length > 0 && (
-          <Link
-            to={"/workload"}
-            className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-2"
-          >
-            <span>View all</span>
-            <MdOutlineKeyboardArrowRight />
-          </Link>
+          <div className="flex items-center gap-x-2">
+            <button 
+              onClick={handleSortClick}
+              className={`text-sm flex items-center gap-1 p-1.5 rounded-md transition-colors ${sortDirection !== 'none' ? 'bg-blue-50 text-[#3F8CFF]' : 'text-gray-400 hover:bg-gray-50'}`}
+              title="Sort by task count"
+            >
+              {sortDirection === 'none' && <FaSort className="text-sm" />}
+              {sortDirection === 'desc' && <FaSortAmountDown className="text-sm" />}
+              {sortDirection === 'asc' && <FaSortAmountUp className="text-sm" />}
+            </button>
+            <Link
+              to={"/workload"}
+              className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-1"
+            >
+              <span>View all</span>
+              <MdOutlineKeyboardArrowRight />
+            </Link>
+          </div>
         )}
       </div>
 
