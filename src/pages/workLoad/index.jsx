@@ -952,7 +952,7 @@ const EmployeeCalendar = ({ employee, onDayClick }) => {
 
 // ─── Main WorkLoad Page ─────────────────────────────────────────────
 const WorkLoad = () => {
-  const { data, isLoading } = useGetAllEmployees();
+  const { data, isLoading } = useGetAllEmployees(true, { view: "workload" });
   const employees = data?.employees || [];
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);

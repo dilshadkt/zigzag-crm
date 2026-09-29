@@ -320,9 +320,9 @@ export const useProjectTasks = (projectId, monthKey = null, options = {}) => {
 };
 
 //empoyee
-export const useEmpoyees = (page = null, filters = null, search = "") => {
+export const useEmpoyees = (page = null, filters = null, search = "", view = null) => {
   return useQuery({
-    queryKey: ["employees", page, filters, search],
+    queryKey: ["employees", page, filters, search, view],
     queryFn: async () => {
       const params = new URLSearchParams();
 
@@ -340,6 +340,10 @@ export const useEmpoyees = (page = null, filters = null, search = "") => {
 
       if (search) {
         params.append("search", search);
+      }
+
+      if (view) {
+        params.append("view", view);
       }
 
       const response = await apiClient.get(`/employee?${params.toString()}`);

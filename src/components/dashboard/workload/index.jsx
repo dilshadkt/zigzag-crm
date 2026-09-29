@@ -8,7 +8,7 @@ import EmployeeCard from "./card/EmployeeCard";
 
 const WorkLoad = () => {
   const { companyId } = useAuth();
-  const { data, isLoading } = useEmpoyees(1);
+  const { data, isLoading } = useEmpoyees(1, null, "", "workload");
   const { data: positionsData } = useGetPositions(companyId);
   const [sortDirection, setSortDirection] = useState('none'); // 'none', 'desc', 'asc'
 
