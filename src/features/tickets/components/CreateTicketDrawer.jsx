@@ -19,7 +19,7 @@ const emptyForm = {
 const CreateTicketDrawer = ({ isOpen, onClose }) => {
   const { companyId, user } = useAuth();
   const { data: projects } = useCompanyProjects(companyId || user?.company, 0, null, { view: "all_list" });
-  const { data: employeesData } = useGetAllEmployees(isOpen);
+  const { data: employeesData } = useGetAllEmployees(isOpen, { view: 'select' });
   const createTicket = useCreateTicket();
   const [form, setForm] = useState(emptyForm);
 
@@ -154,17 +154,13 @@ const CreateTicketDrawer = ({ isOpen, onClose }) => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">Assign to</label>
-              <select
+              <SearchableSelect
+                name="assignedTo"
                 value={form.assignedTo}
                 onChange={(e) => setForm((prev) => ({ ...prev, assignedTo: e.target.value }))}
-                className="w-full border border-slate-200 rounded-xl p-2.5 text-sm text-slate-800 bg-slate-50 outline-none"
-              >
-                {employeeOptions.map((option) => (
-                  <option key={option.value || "none"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                options={employeeOptions}
+                placeholder="Unassigned"
+              />
             </div>
           </div>
 

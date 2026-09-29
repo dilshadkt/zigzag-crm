@@ -18,6 +18,7 @@ import {
   statusStyles,
   typeStyles,
 } from "../utils";
+import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
 
 const TicketDetailDrawer = ({
   ticket,
@@ -27,12 +28,25 @@ const TicketDetailDrawer = ({
   isAssigneeView,
   isAdmin,
 }) => {
-  const { data: employeesData } = useGetAllEmployees(!!ticket && canAssign);
+  const { data: employeesData } = useGetAllEmployees(!!ticket && canAssign, { view: 'select' });
   const assignMutation = useAssignTicket();
   const statusMutation = useUpdateTicketStatus();
   const commentMutation = useAddTicketComment();
   const deleteMutation = useDeleteTicket();
   const [note, setNote] = useState("");
+
+  const employeeOptions = React.useMemo(() => {
+    const opts = [{ value: "", label: "Unassigned" }];
+    if (employeesData?.employees) {
+      opts.push(
+        ...employeesData.employees.map((emp) => ({
+          value: emp._id,
+          label: personName(emp),
+        }))
+      );
+    }
+    return opts;
+  }, [employeesData]);
 
   if (!ticket) return null;
 
@@ -171,19 +185,14 @@ const TicketDetailDrawer = ({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5">Assigned to</label>
-                <select
+                <SearchableSelect
+                  name="assignedTo"
                   value={ticket.assignedTo?._id || ""}
                   disabled={!canAssign || assignMutation.isPending}
                   onChange={(e) => handleAssign(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-sm text-slate-800 bg-slate-50 outline-none disabled:opacity-50"
-                >
-                  <option value="">Unassigned</option>
-                  {employees.map((employee) => (
-                    <option key={employee._id} value={employee._id}>
-                      {personName(employee)}
-                    </option>
-                  ))}
-                </select>
+                  options={employeeOptions}
+                  placeholder="Unassigned"
+                />
               </div>
             </div>
           )}
