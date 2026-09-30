@@ -445,7 +445,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
 
   return (
     <div className="col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
-      <div className="flex justify-between items-center mb-3 border-b border-gray-100 flex-shrink-0 gap-4">
+      <div className="flex justify-between  items-center  border-b border-gray-100 flex-shrink-0 gap-4">
         <div className="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide pb-1 flex-1">
           {availableTabs.map((tab) => (
             <button
@@ -583,24 +583,24 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
       )}
 
       {activeTab === "reports" && (
-        <ReportsTab 
-          currentProject={currentProject} 
+        <ReportsTab
+          currentProject={currentProject}
           onBranchClick={(branchName) => {
             setSelectedBranchId(branchName === "Unassigned" ? "" : branchName);
             setActiveTab("lead");
           }}
           onCategoryClick={(branchName, filterType, filterValue) => {
             setSelectedBranchId(branchName === "Unassigned" ? "" : branchName);
-            
+
             const url = new URL(window.location);
             url.searchParams.delete('scoreCategory');
             url.searchParams.delete('statusCategory');
             url.searchParams.delete('followUpCount');
-            
+
             if (filterType) {
               url.searchParams.set(filterType, filterValue);
             }
-            
+
             window.history.pushState({}, '', url);
             setActiveTab("lead");
           }}

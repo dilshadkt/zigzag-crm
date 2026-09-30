@@ -88,14 +88,14 @@ const Leaderboard = lazy(() => import("../pages/Leaderboard"));
 const Integration = lazy(() => import("../pages/settings/Integration"));
 const SocialSettings = lazy(() => import("../pages/settings/SocialSettings"));
 
-import { 
-  ClientOverviewPage, 
-  ClientStatsDashboardPage, 
-  ClientLeadsPage, 
-  ClientFollowUpsPage, 
-  ClientCampaignsPage, 
-  ClientInsightsPage, 
-  ClientSchedulePage, 
+import {
+  ClientOverviewPage,
+  ClientStatsDashboardPage,
+  ClientLeadsPage,
+  ClientFollowUpsPage,
+  ClientCampaignsPage,
+  ClientInsightsPage,
+  ClientSchedulePage,
   ClientSalesTeamPage,
   ClientLeadDetailsPage,
   ClientLeadReportsPage
@@ -566,7 +566,7 @@ const AppRoutes = () => {
           <Route element={<AuthLayout />}>
             <Route path="login" element={<PortalSignIn />} />
           </Route>
-          
+
           <Route element={<ClientDashboard />}>
             <Route path="dashboard" element={<ClientStatsDashboardPage />} />
             <Route path="overview" element={<ClientOverviewPage />} />
@@ -578,7 +578,7 @@ const AppRoutes = () => {
             <Route path="insights" element={<ClientInsightsPage />} />
             <Route path="schedule" element={<ClientSchedulePage />} />
             <Route path="sales-team" element={<ClientSalesTeamPage />} />
-            
+
             {/* Default redirect */}
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
