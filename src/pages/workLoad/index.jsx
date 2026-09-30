@@ -65,7 +65,6 @@ const WorkloadAnalyzerModal = ({
   onConfirmMove,
   workloadData,
 }) => {
-  const { data, isLoading } = useTodayTasks(employee?._id, date);
   const [selectedTask, setSelectedTask] = useState(null);
   const [analysisData, setAnalysisData] = useState(null);
   const [analyzingTask, setAnalyzingTask] = useState(false);
@@ -76,14 +75,26 @@ const WorkloadAnalyzerModal = ({
   const [moving, setMoving] = useState(false);
   const [preAnalyzedScores, setPreAnalyzedScores] = useState({});
 
-  const subTasks = data?.subTasks || [];
-  const reworkSubTasks = data?.reworkSubTasks || [];
-  const completedSubTasks = data?.completedSubTasks || [];
+  const isLoading = !workloadData;
+  const dateStr = date ? format(date, "yyyy-MM-dd") : null;
 
-  const pendingList = [...subTasks, ...reworkSubTasks].sort(
-    (a, b) => new Date(a.dueDate) - new Date(b.dueDate)
-  );
-  const completedList = [...completedSubTasks];
+  const pendingList = (workloadData?.subTasks || [])
+    .filter(
+      (st) =>
+        st.status !== "completed" &&
+        st.status !== "approved" &&
+        st.dueDate &&
+        format(new Date(st.dueDate), "yyyy-MM-dd") === dateStr
+    )
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+  const completedList = (workloadData?.subTasks || [])
+    .filter(
+      (st) =>
+        ["completed", "approved"].includes(st.status) &&
+        st.dueDate &&
+        format(new Date(st.dueDate), "yyyy-MM-dd") === dateStr
+    );
 
   useEffect(() => {
     const fetchScores = async () => {
@@ -116,7 +127,7 @@ const WorkloadAnalyzerModal = ({
       }
     };
     fetchScores();
-  }, [isOpen, data]);
+  }, [isOpen, workloadData]);
 
   useEffect(() => {
     setAnalysisData(null);
@@ -913,7 +924,20 @@ const EmployeeCalendar = ({ employee, onDayClick }) => {
 
       <div className="flex-1 overflow-y-auto pr-1 pb-1 scrollbar-thin scrollbar-thumb-slate-200">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2">
-          {days.map((date, i) => {
+          {isLoading ? (
+            Array.from({ length: 30 }).map((_, i) => (
+              <div key={i} className="flex flex-col p-2 rounded-xl border border-gray-100 bg-slate-50 min-h-[75px] animate-pulse">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="h-3 w-10 bg-slate-200 rounded"></div>
+                  <div className="h-3 w-8 bg-slate-200 rounded-full"></div>
+                </div>
+                <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-white/50 rounded-lg">
+                  <div className="h-5 w-5 bg-slate-200 rounded-md"></div>
+                  <div className="h-2.5 w-8 bg-slate-200 rounded"></div>
+                </div>
+              </div>
+            ))
+          ) : days.map((date, i) => {
             const workloadCount = getWorkloadForDate(date);
             const isTodayCell = isSameDay(date, today);
             let bgColor = "bg-slate-50";
