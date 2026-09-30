@@ -16,6 +16,7 @@ const Tickets = () => {
   const [type, setType] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [ticketToEdit, setTicketToEdit] = useState(null);
 
   const canManage =
     isCompany ||
@@ -119,12 +120,23 @@ const Tickets = () => {
         />
       </div>
 
-      {canCreate && !isAssigneeView && (
-        <CreateTicketDrawer isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
-      )}
+      {(canCreate && !isAssigneeView) || ticketToEdit ? (
+        <CreateTicketDrawer
+          isOpen={isCreateOpen || !!ticketToEdit}
+          onClose={() => {
+            setIsCreateOpen(false);
+            setTicketToEdit(null);
+          }}
+          ticketToEdit={ticketToEdit}
+        />
+      ) : null}
       <TicketDetailDrawer
         ticket={selected}
         onClose={() => setSelectedTicket(null)}
+        onEdit={() => {
+          setTicketToEdit(selected);
+          setSelectedTicket(null);
+        }}
         canAssign={canAssign}
         canChangeStatus={canChangeStatus}
         isAssigneeView={isAssigneeView}

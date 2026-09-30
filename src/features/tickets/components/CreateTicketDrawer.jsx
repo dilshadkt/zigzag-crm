@@ -3,29 +3,50 @@ import { FiX } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { useCompanyProjects, useGetAllEmployees } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
-import { useCreateTicket } from "../hooks/useTickets";
+import { useCreateTicket, useUpdateTicket } from "../hooks/useTickets";
 import { PRIORITY_OPTIONS, TYPE_OPTIONS, personName } from "../utils";
 import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
+import FileAndLinkUpload from "../../../components/shared/fileUpload";
+import { processAttachments } from "../../../lib/attachmentUtils";
+import { uploadSingleFile } from "../../../api/service";
 
 const emptyForm = {
   project: "",
   title: "",
   description: "",
+  notes: "",
   type: "issue",
   priority: "medium",
   assignedTo: "",
+  attachments: [],
 };
 
-const CreateTicketDrawer = ({ isOpen, onClose }) => {
+const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
   const { companyId, user } = useAuth();
   const { data: projects } = useCompanyProjects(companyId || user?.company, 0, null, { view: "all_list" });
   const { data: employeesData } = useGetAllEmployees(isOpen, { view: 'select' });
   const createTicket = useCreateTicket();
+  const updateTicket = useUpdateTicket();
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (isOpen) setForm(emptyForm);
-  }, [isOpen]);
+    if (isOpen) {
+      if (ticketToEdit) {
+        setForm({
+          project: ticketToEdit.project?._id || ticketToEdit.project || "",
+          title: ticketToEdit.title || "",
+          description: ticketToEdit.description || "",
+          notes: ticketToEdit.notes || "",
+          type: ticketToEdit.type || "issue",
+          priority: ticketToEdit.priority || "medium",
+          assignedTo: ticketToEdit.assignedTo?._id || ticketToEdit.assignedTo || "",
+          attachments: ticketToEdit.attachments || [],
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    }
+  }, [isOpen, ticketToEdit]);
 
   const projectOptions = useMemo(
     () =>
@@ -53,19 +74,35 @@ const CreateTicketDrawer = ({ isOpen, onClose }) => {
       toast.error("Client and title are required");
       return;
     }
+    const toastId = toast.loading(ticketToEdit ? "Updating ticket..." : "Raising ticket...");
     try {
-      await createTicket.mutateAsync({
+      let processedAttachments = form.attachments || [];
+      const newAttachments = processedAttachments.filter(a => a.preview?.startsWith("blob:"));
+      if (newAttachments.length > 0) {
+        processedAttachments = await processAttachments(form.attachments, uploadSingleFile);
+      }
+
+      const payload = {
         project: form.project,
         title: form.title.trim(),
         description: form.description.trim(),
+        notes: form.notes?.trim() || "",
         type: form.type,
         priority: form.priority,
         assignedTo: form.assignedTo || null,
-      });
-      toast.success("Ticket raised");
+        attachments: processedAttachments,
+      };
+
+      if (ticketToEdit) {
+        await updateTicket.mutateAsync({ ticketId: ticketToEdit._id, data: payload });
+        toast.success("Ticket updated", { id: toastId });
+      } else {
+        await createTicket.mutateAsync(payload);
+        toast.success("Ticket raised", { id: toastId });
+      }
       onClose();
     } catch (error) {
-      toast.error(error?.message || "Failed to raise ticket");
+      toast.error(error?.message || `Failed to ${ticketToEdit ? 'update' : 'raise'} ticket`, { id: toastId });
     }
   };
 
@@ -73,14 +110,14 @@ const CreateTicketDrawer = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-[80] backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[90] shadow-2xl">
+      <div className="fixed inset-0 bg-black/40 z-[90] backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[100] shadow-2xl">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="p-5 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-[17px] font-bold text-slate-900">Raise a ticket</h2>
+              <h2 className="text-[17px] font-bold text-slate-900">{ticketToEdit ? "Edit ticket" : "Raise a ticket"}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Log an issue or complaint against a client
+                {ticketToEdit ? "Update ticket details" : "Log an issue or complaint against a client"}
               </p>
             </div>
             <button type="button" onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-50">
@@ -113,11 +150,31 @@ const CreateTicketDrawer = ({ isOpen, onClose }) => {
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">Description</label>
               <textarea
-                rows={4}
+                rows={3}
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                 className="w-full border border-slate-200 rounded-xl p-2.5 text-sm text-slate-800 bg-slate-50 outline-none focus:bg-white focus:ring-1 focus:ring-slate-400 resize-none"
                 placeholder="What happened, and what needs to be done?"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Notes</label>
+              <textarea
+                rows={2}
+                value={form.notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                className="w-full border border-slate-200 rounded-xl p-2.5 text-sm text-slate-800 bg-slate-50 outline-none focus:bg-white focus:ring-1 focus:ring-slate-400 resize-none"
+                placeholder="Additional notes"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Attachments</label>
+              <FileAndLinkUpload
+                initialFiles={form.attachments.filter(f => f.type !== "link")}
+                initialLinks={form.attachments.filter(f => f.type === "link")}
+                onChange={(attachments) => setForm(prev => ({ ...prev, attachments }))}
               />
             </div>
 
@@ -167,10 +224,10 @@ const CreateTicketDrawer = ({ isOpen, onClose }) => {
           <div className="p-5 border-t border-slate-100">
             <button
               type="submit"
-              disabled={createTicket.isPending}
+              disabled={createTicket.isPending || updateTicket.isPending}
               className="w-full h-10 rounded-xl bg-[#3F8CFF] text-white text-sm font-semibold hover:bg-blue-600 disabled:opacity-50"
             >
-              {createTicket.isPending ? "Raising..." : "Raise ticket"}
+              {createTicket.isPending || updateTicket.isPending ? "Saving..." : ticketToEdit ? "Save changes" : "Raise ticket"}
             </button>
           </div>
         </form>

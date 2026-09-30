@@ -19,6 +19,7 @@ import {
   typeStyles,
 } from "../utils";
 import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
+import FileAndLinkUpload from "../../../components/shared/fileUpload";
 
 const TicketDetailDrawer = ({
   ticket,
@@ -27,6 +28,7 @@ const TicketDetailDrawer = ({
   canChangeStatus,
   isAssigneeView,
   isAdmin,
+  onEdit,
 }) => {
   const { data: employeesData } = useGetAllEmployees(!!ticket && canAssign, { view: 'select' });
   const assignMutation = useAssignTicket();
@@ -116,6 +118,18 @@ const TicketDetailDrawer = ({
             </p>
           </div>
           <div className="flex items-center gap-1">
+            {!isClosed && onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="p-2 rounded-xl text-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                title="Edit ticket"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            )}
             {isAdmin && (
               <button
                 type="button"
@@ -148,6 +162,23 @@ const TicketDetailDrawer = ({
             </div>
             {ticket.description && (
               <p className="text-sm text-slate-600 whitespace-pre-wrap">{ticket.description}</p>
+            )}
+            {ticket.notes && (
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="text-xs font-bold text-slate-700 mb-1">Additional Notes</h4>
+                <p className="text-sm text-slate-600 whitespace-pre-wrap">{ticket.notes}</p>
+              </div>
+            )}
+            {ticket.attachments?.length > 0 && (
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="text-xs font-bold text-slate-700 mb-2">Attachments</h4>
+                <FileAndLinkUpload
+                  disable={true}
+                  fileClassName={"grid grid-cols-3 gap-3"}
+                  initialFiles={ticket.attachments.filter((file) => file.type !== "link")}
+                  initialLinks={ticket.attachments.filter((file) => file.type === "link")}
+                />
+              </div>
             )}
           </div>
 
