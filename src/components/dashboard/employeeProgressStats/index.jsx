@@ -136,6 +136,8 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const reworkTasks = statistics.rework || 0;
   const overdueTasks = statistics.overdue || 0;
   const todayTasks = statistics.today || 0;
+  const todaySubTasks = statistics.todaySubTasks || 0;
+  const todayMainTasks = statistics.todayMainTasks || 0;
   const upcoming3DaysTasks = statistics.upcoming3Days || 0;
   const unscheduledTasks = statistics.unscheduled || 0;
   const assignedProjects = statistics.assignedProjects || 0;
@@ -338,7 +340,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       {
         id: "todays-tasks",
         title: "Today's Tasks",
-        value: todayTasks,
+        value: todaySubTasks,
         subtitle: "Due today",
         icon: FiClock,
         color: "bg-indigo-500",
@@ -371,6 +373,8 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       statistics.totalReworked,
       overdueTasks,
       todayTasks,
+      todaySubTasks,
+      todayMainTasks,
       upcoming3DaysTasks,
       handleStatsClick,
       handleOverdueTasksClick,

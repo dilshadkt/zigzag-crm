@@ -1,36 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetEmployeeSubTasksToday } from "../api/hooks";
 import { useAuth } from "../hooks/useAuth";
+import { useTaskFilters } from "../hooks/useTaskFilters";
 import Header from "../components/shared/header";
-import {
-  FiClock,
-  FiUser,
-  FiCalendar,
-  FiSearch,
-  FiFilter,
-  FiX,
-  FiChevronDown,
-  FiChevronUp,
-  FiArrowLeft,
-  FiFolder,
-} from "react-icons/fi";
-
-const renderContent = (content) => {
-  if (!content) return "";
-  const decoded = content
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-
-  const isHtml = /<[a-z/][\s\S]*?>/i.test(decoded);
-  if (isHtml) {
-    return <span className="rich-text-content inline-block" dangerouslySetInnerHTML={{ __html: decoded }} />;
-  }
-  return <span className="whitespace-pre-wrap">{content}</span>;
-};
+import { FiSearch, FiArrowLeft } from "react-icons/fi";
+import LoadingState from "./companyTasks/LoadingState";
+import TaskQuickFilters from "../components/tasks/TaskQuickFilters";
+import TaskList from "../components/tasks/TaskList";
 
 const TodayTasks = () => {
   const navigate = useNavigate();
@@ -39,34 +16,27 @@ const TodayTasks = () => {
     user?._id ? user._id : null
   );
 
-  const [filteredItems, setFilteredItems] = useState([]);
+  const {
+    superFilters,
+    handleFilterChange,
+    handleMultiSelectFilter,
+  } = useTaskFilters("employee_today_tasks_filters");
 
-  // Filter states
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    search: "",
-    status: [],
-    priority: [],
-    project: [],
-    sortBy: "priority", // Default sort by priority for today's tasks
-    sortOrder: "desc",
-  });
+
 
   // Get unique filter options from subtasks
   const combinedItems = useMemo(() => {
     if (!todayData) return [];
-    const tasks = todayData.tasks || [];
-    const subTasks = todayData.subTasks || [];
-    // Tag items to distinguish for UI logic
+    const subTasks = [...(todayData.subTasks || []), ...(todayData.reworkSubTasks || [])];
+    // Filter out on-review subtasks exactly like we do in CompanyTasks/useTaskData
+    const validSubTasks = subTasks.filter(st => st.status !== 'on-review');
     return [
-      ...tasks.map((t) => ({ ...t, __type: "task" })),
-      ...subTasks.map((s) => ({ ...s, __type: "subtask" })),
+      ...validSubTasks.map((s) => ({ ...s, __type: "subtask" })),
     ];
   }, [todayData]);
 
   const getFilterOptions = () => {
     if (!combinedItems.length) return { projects: [] };
-
     const projects = [];
     const projectIds = new Set();
 
@@ -80,454 +50,111 @@ const TodayTasks = () => {
     return { projects };
   };
 
-  useEffect(() => {
-    if (combinedItems.length) {
-      let filtered = [...combinedItems];
-
-      // Apply search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter(
-          (item) =>
-            item.title.toLowerCase().includes(searchLower) ||
-            item.description?.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Apply status filter
-      if (filters.status.length > 0) {
-        filtered = filtered.filter((item) =>
-          filters.status.includes(item.status)
-        );
-      }
-
-      // Apply priority filter
-      if (filters.priority.length > 0) {
-        filtered = filtered.filter((item) =>
-          filters.priority.includes(item.priority)
-        );
-      }
-
-      // Apply project filter
-      if (filters.project.length > 0) {
-        filtered = filtered.filter(
-          (item) => item.project && filters.project.includes(item.project._id)
-        );
-      }
-
-      // Apply sorting
-      filtered.sort((a, b) => {
-        let aValue, bValue;
-
-        switch (filters.sortBy) {
-          case "title":
-            aValue = a.title.toLowerCase();
-            bValue = b.title.toLowerCase();
-            break;
-          case "priority": {
-            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-            aValue = priorityOrder[a.priority] || 0;
-            bValue = priorityOrder[b.priority] || 0;
-            break;
-          }
-          case "status": {
-            const statusOrder = { todo: 1, "in-progress": 2, completed: 3 };
-            aValue = statusOrder[a.status] || 0;
-            bValue = statusOrder[b.status] || 0;
-            break;
-          }
-          case "createdAt":
-            aValue = new Date(a.createdAt);
-            bValue = new Date(b.createdAt);
-            break;
-          default: // dueDate (though mostly same for today)
-            aValue = new Date(a.dueDate);
-            bValue = new Date(b.dueDate);
-        }
-
-        if (filters.sortOrder === "desc") {
-          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-        } else {
-          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        }
-      });
-
-      setFilteredItems(filtered);
-    } else {
-      setFilteredItems([]);
-    }
-  }, [combinedItems, filters]);
-
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const handleMultiSelectFilter = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: prev[key].includes(value)
-        ? prev[key].filter((item) => item !== value)
-        : [...prev[key], value],
-    }));
-  };
-
-  const clearAllFilters = () => {
-    setFilters({
-      search: "",
-      status: [],
-      priority: [],
-      project: [],
-      sortBy: "priority",
-      sortOrder: "desc",
-    });
-  };
-
-  const hasActiveFilters = () => {
-    return (
-      filters.search ||
-      filters.status.length > 0 ||
-      filters.priority.length > 0 ||
-      filters.project.length > 0
-    );
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "High":
-        return "text-red-600 bg-red-50 border-red-200";
-      case "Medium":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      case "Low":
-        return "text-green-600 bg-green-50 border-green-200";
-      default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "completed":
-        return "text-green-600 bg-green-50 border-green-200";
-      case "in-progress":
-        return "text-blue-600 bg-blue-50 border-blue-200";
-      case "todo":
-        return "text-orange-600 bg-orange-50 border-orange-200";
-      default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const handleSubTaskClick = (subTask) => {
-    navigate(
-      `/projects/${subTask.project._id}/${subTask.parentTask._id}?subTaskId=${subTask._id}`
-    );
-  };
-
   const { projects } = getFilterOptions();
 
+  const filteredItems = useMemo(() => {
+    let filtered = combinedItems;
+
+    if (superFilters.search) {
+      filtered = filtered.filter(
+        (item) =>
+          item.title?.toLowerCase().includes(superFilters.search.toLowerCase()) ||
+          item.description?.toLowerCase().includes(superFilters.search.toLowerCase())
+      );
+    }
+
+    if (superFilters.status && superFilters.status.length > 0) {
+      filtered = filtered.filter((item) =>
+        superFilters.status.includes(item.status)
+      );
+    }
+
+    if (superFilters.priority && superFilters.priority.length > 0) {
+      filtered = filtered.filter((item) =>
+        superFilters.priority.includes(item.priority)
+      );
+    }
+
+    if (superFilters.project && superFilters.project.length > 0) {
+      filtered = filtered.filter(
+        (item) => item.project && superFilters.project.includes(item.project._id)
+      );
+    }
+
+    // Sort logic
+    filtered.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      const aVal = priorityOrder[a.priority?.toLowerCase()] || 0;
+      const bVal = priorityOrder[b.priority?.toLowerCase()] || 0;
+      return superFilters.sortOrder === "desc" ? aVal - bVal : bVal - aVal;
+    });
+
+    return filtered;
+  }, [combinedItems, superFilters]);
+
   if (isLoading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded mb-4 w-1/4"></div>
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingState title="Today's Tasks" />;
   }
 
   return (
-    <div className=" flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-50/50">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors shrink-0 bg-white shadow-sm"
             aria-label="Go back"
           >
             <FiArrowLeft className="w-5 h-5" />
           </button>
           <div className="min-w-0">
-            <Header>Today's Tasks</Header>
-            <p className="text-sm text-gray-500 ">
-              {filteredItems.length} task
-              {filteredItems.length !== 1 ? "s" : ""} due today
-            </p>
+            <Header>Today's Tasks - ({filteredItems.length})</Header>
+
           </div>
-        </div>
-        {/* Search and Filters */}
-        <div className="w-full sm:w-auto sm:min-w-[280px] md:min-w-[360px]">
-          <div className="flex gap-2 md:gap-3 mb-2">
-            {/* Search */}
-            <div className="flex-1 relative min-w-0">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                aria-label="Search today's tasks"
-                value={filters.search}
-                onChange={(e) => handleFilterChange("search", e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-3 md:px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors shrink-0 ${
-                hasActiveFilters()
-                  ? "border-blue-500 bg-blue-50 text-blue-600"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-              aria-label="Toggle filters"
-            >
-              <FiFilter className="w-4 h-4" />
-              <span className="hidden sm:inline">Filters</span>
-              {hasActiveFilters() && (
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              )}
-              {showFilters ? (
-                <FiChevronUp className="w-4 h-4" />
-              ) : (
-                <FiChevronDown className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-
-          {/* Advanced Filters */}
-          {showFilters && (
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Status Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <div className="space-y-2">
-                    {["todo", "in-progress", "completed"].map((status) => (
-                      <label key={status} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.status.includes(status)}
-                          onChange={() =>
-                            handleMultiSelectFilter("status", status)
-                          }
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="ml-2 text-sm capitalize">
-                          {status}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Priority Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority
-                  </label>
-                  <div className="space-y-2">
-                    {["High", "Medium", "Low"].map((priority) => (
-                      <label key={priority} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.priority.includes(priority)}
-                          onChange={() =>
-                            handleMultiSelectFilter("priority", priority)
-                          }
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="ml-2 text-sm">{priority}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Project Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project
-                  </label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {projects.map((project) => (
-                      <label key={project._id} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={filters.project.includes(project._id)}
-                          onChange={() =>
-                            handleMultiSelectFilter("project", project._id)
-                          }
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="ml-2 text-sm truncate">
-                          {project.name}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sort Options */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sort By
-                  </label>
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) =>
-                      handleFilterChange("sortBy", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="priority">Priority</option>
-                    <option value="dueDate">Due Date</option>
-                    <option value="status">Status</option>
-                    <option value="title">Title</option>
-                  </select>
-                  <button
-                    onClick={() =>
-                      handleFilterChange(
-                        "sortOrder",
-                        filters.sortOrder === "asc" ? "desc" : "asc"
-                      )
-                    }
-                    className="mt-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                  >
-                    {filters.sortOrder === "asc"
-                      ? "↑ Ascending"
-                      : "↓ Descending"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Clear Filters */}
-              {hasActiveFilters() && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={clearAllFilters}
-                    className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                  >
-                    <FiX className="w-4 h-4" />
-                    Clear all filters
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Tasks/Subtasks List */}
-      <div className="flex-1 overflow-y-auto">
-        {filteredItems.length > 0 ? (
-          <div className="space-y-2">
-            {filteredItems.map((item) => (
-              <div
-                key={item._id}
-                onClick={() =>
-                  item.__type === "subtask" && handleSubTaskClick(item)
-                }
-                className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {item.title}
-                    </h3>
-                    {item.description && (
-                      <div className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {renderContent(item.description)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {/* Type Badge */}
-                    <span className="px-2 py-1 text-xs font-medium rounded-full border text-gray-600 bg-gray-50 border-gray-200">
-                      {item.__type === "subtask" ? "Subtask" : "Task"}
-                    </span>
-                    {/* Priority Badge */}
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(
-                        item.priority
-                      )}`}
-                    >
-                      {item.priority}
-                    </span>
-                    {/* Status Badge */}
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                        item.status
-                      )}`}
-                    >
-                      {item.status}
-                    </span>
-                  </div>
+      {/* Main Content */}
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 flex flex-col">
+          <div className="flex flex-col flex-1 min-h-0 bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-3 md:p-4 border-b border-gray-100 space-y-3">
+              {/* Search and Filters */}
+              <div className="flex flex-col md:flex-row gap-2">
+                <div className="flex-1 relative min-w-0">
+                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={superFilters.search}
+                    onChange={(e) => handleFilterChange("search", e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-gray-50/50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                  />
                 </div>
-
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center gap-4">
-                    {/* Project */}
-                    {item.project && (
-                      <div className="flex items-center gap-1">
-                        <FiFolder className="w-4 h-4" />
-                        <span>{item.project.name}</span>
-                      </div>
-                    )}
-                    {/* Parent Task */}
-                    {item.__type === "subtask" && item.parentTask && (
-                      <div className="flex items-center gap-1">
-                        <FiUser className="w-4 h-4" />
-                        <span>Task: {item.parentTask.title}</span>
-                      </div>
-                    )}
-                    {/* Due Date */}
-                    {item.dueDate && (
-                      <div className="flex items-center gap-1">
-                        <FiCalendar className="w-4 h-4" />
-                        <span>{formatDate(item.dueDate)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Time Estimate */}
-                  {item.timeEstimate && (
-                    <div className="flex items-center gap-1">
-                      <FiClock className="w-4 h-4" />
-                      <span>{item.timeEstimate}h</span>
-                    </div>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <TaskQuickFilters
+                    superFilters={superFilters}
+                    onFilterChange={handleFilterChange}
+                    onMultiSelectFilter={handleMultiSelectFilter}
+                    projects={projects}
+                    users={[]}
+                    hideTypeToggles={true}
+                    hideAssignees={true}
+                    className="flex-wrap"
+                  />
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-gray-50/30 p-2 md:p-4">
+              <TaskList
+                tasks={filteredItems}
+                filter="today"
+              />
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">📅</div>
-            <h3 className="text-lg font-medium text-gray-500 mb-2">
-              No tasks due today
-            </h3>
-            <p className="text-gray-500 text-sm">
-              You're all caught up! Check back tomorrow for new tasks.
-            </p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

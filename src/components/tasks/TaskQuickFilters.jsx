@@ -21,6 +21,8 @@ const TaskQuickFilters = ({
   subtaskCount,
   extraFilters = null,
   nowrap = false,
+  hideAssignees = false,
+  hideTypeToggles = false,
   className = "",
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -108,57 +110,63 @@ const TaskQuickFilters = ({
 
   return (
     <div className={`flex items-center gap-2 ${extraFilters || nowrap ? "flex-nowrap" : "flex-wrap"} ${className}`}>
-      {/* Tasks Toggle Button */}
-      <button
-        onClick={onToggleTasks}
-        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 border ${
-          showTasks
-            ? "bg-blue-100 text-blue-700 border-blue-200"
-            : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
-        }`}
-        title="Toggle Tasks"
-      >
-        <MdTask className="text-sm" />
-        Tasks
-        {typeof taskCount === "number" && (
-          <span
-            className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-              showTasks ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+      {/* Type Toggles */}
+      {!hideTypeToggles && (
+        <>
+          {/* Tasks Toggle Button */}
+          <button
+            onClick={onToggleTasks}
+            className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 border ${
+              showTasks
+                ? "bg-blue-100 text-blue-700 border-blue-200"
+                : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
             }`}
+            title="Toggle Tasks"
           >
-            {taskCount}
-          </span>
-        )}
-      </button>
+            <MdTask className="text-sm" />
+            Tasks
+            {typeof taskCount === "number" && (
+              <span
+                className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  showTasks ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {taskCount}
+              </span>
+            )}
+          </button>
 
-      {/* Subtasks Toggle Button */}
-      <button
-        onClick={onToggleSubtasks}
-        className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 border ${
-          showSubtasks
-            ? "bg-green-100 text-green-700 border-green-200"
-            : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
-        }`}
-        title="Toggle Subtasks"
-      >
-        <MdSubdirectoryArrowRight className="text-sm" />
-        Subtasks
-        {typeof subtaskCount === "number" && (
-          <span
-            className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-              showSubtasks ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+          {/* Subtasks Toggle Button */}
+          <button
+            onClick={onToggleSubtasks}
+            className={`flex items-center cursor-pointer gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 border ${
+              showSubtasks
+                ? "bg-green-100 text-green-700 border-green-200"
+                : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
             }`}
+            title="Toggle Subtasks"
           >
-            {subtaskCount}
-          </span>
-        )}
-      </button>
+            <MdSubdirectoryArrowRight className="text-sm" />
+            Subtasks
+            {typeof subtaskCount === "number" && (
+              <span
+                className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  showSubtasks ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {subtaskCount}
+              </span>
+            )}
+          </button>
 
-      {/* Divider */}
-      <div className="w-px h-6 bg-gray-300"></div>
+          {/* Divider */}
+          <div className="w-px h-6 bg-gray-300"></div>
+        </>
+      )}
 
       {/* Assignee Filter Dropdown */}
-      <div className="relative" ref={userDropdownRef}>
+      {!hideAssignees && (
+        <div className="relative" ref={userDropdownRef}>
         <button
           onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
           className={`flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border ${
@@ -246,6 +254,7 @@ const TaskQuickFilters = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Project Filter Dropdown */}
       <div className="relative" ref={projectDropdownRef}>
