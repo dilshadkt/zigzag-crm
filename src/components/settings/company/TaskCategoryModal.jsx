@@ -15,6 +15,7 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     price: category?.price || 0,
     time: category?.time || 0,
     department: category?.department?._id || category?.department || "",
+    mapsToQuota: category?.mapsToQuota || "",
     isActive: category?.isActive !== undefined ? category.isActive : true,
     fields: (category?.fields || []).map((field) => ({
       key: field.key || "",
@@ -34,6 +35,7 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     price: Yup.number().min(0, "Must be 0 or more"),
     time: Yup.number().min(0, "Must be 0 or more"),
     department: Yup.string().nullable(),
+    mapsToQuota: Yup.string().nullable(),
     isActive: Yup.boolean(),
     fields: Yup.array().of(
       Yup.object().shape({
@@ -170,8 +172,8 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                   />
                 </div>
               </div>
-              {/* Department */}
-              <div className="grid grid-cols-1 gap-4">
+              {/* Department & Maps to Quota */}
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[13px] font-bold text-gray-700 block">
                     Department
@@ -191,6 +193,23 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                         {dept.name}
                       </option>
                     ))}
+                  </Field>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-gray-700 block">
+                    Maps to Core Quota (Optional)
+                  </label>
+                  <Field
+                    as="select"
+                    name="mapsToQuota"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-xl text-[13px] text-gray-800 transition-all font-medium outline-none"
+                  >
+                    <option value="">Does not consume core quota</option>
+                    <option value="reels">Reels</option>
+                    <option value="poster">Posters</option>
+                    <option value="motionPoster">Motion Posters</option>
+                    <option value="shooting">Shooting</option>
+                    <option value="motionGraphics">Motion Graphics</option>
                   </Field>
                 </div>
               </div>

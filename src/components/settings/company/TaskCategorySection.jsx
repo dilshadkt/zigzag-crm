@@ -57,9 +57,32 @@ const TaskCategorySection = ({
     );
   }
 
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  const filteredCategories = React.useMemo(() => {
+    if (!searchTerm) return categories;
+    return categories.filter((c) =>
+      c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.department?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col font-sans">
-      <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
+      <div className="px-5 py-3 border-b border-gray-50 bg-white flex justify-between items-center">
+        <div className="grid grid-cols-12 gap-4 w-full">
+          <div className="col-span-12 sm:col-span-8 pr-4">
+            <input
+              type="text"
+              placeholder="Search categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="px-5 py-2 border-b border-gray-50 bg-gray-50/50">
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-8 pl-1">
             <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">
@@ -79,81 +102,97 @@ const TaskCategorySection = ({
         </div>
       </div>
 
-      <div className="divide-y divide-gray-50">
-        {categories.map((category) => (
-          <div
-            key={category._id}
-            className="px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group bg-white border-b border-gray-50 last:border-b-0"
-          >
-            <div className="grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-8">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm"
-                    style={{ backgroundColor: `${category.color}20`, color: category.color }}
-                  >
-                    <FiTag className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex flex-col">
-                    <div className="text-[13px] font-bold text-gray-800 truncate leading-tight">
-                      {category.name}
+      <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto custom-scrollbar">
+        {filteredCategories.length > 0 ? (
+          filteredCategories.map((category) => (
+            <div
+              key={category._id}
+              className="px-4 py-3 hover:bg-gray-50/50 transition-all duration-200 group bg-white border-b border-gray-50 last:border-b-0"
+            >
+              <div className="grid grid-cols-12 gap-4 items-center">
+                <div className="col-span-8">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{ backgroundColor: `${category.color}20`, color: category.color }}
+                    >
+                      <FiTag className="w-4 h-4" />
                     </div>
-                    {(category.points > 0 || category.price > 0 || category.time > 0 || category.department || category.fields?.length > 0) && (
-                      <div className="text-[11px] text-gray-500 truncate leading-tight mt-0.5 flex gap-2">
-                        {category.points > 0 && <span>Points: {category.points}</span>}
-                        {category.price > 0 && <span>Price: {category.price}</span>}
-                        {category.time > 0 && <span>Time: {category.time}m</span>}
-                        {category.department && <span>Dept: {category.department.name || 'Unknown'}</span>}
-                        {category.fields?.length > 0 && (
-                          <span className="text-blue-500 font-semibold">
-                            {category.fields.length} field{category.fields.length > 1 ? "s" : ""}
+                    <div className="min-w-0 flex flex-col">
+                      <div className="text-[13px] font-bold text-gray-800 truncate leading-tight flex items-center gap-2">
+                        {category.name}
+                        {category.mapsToQuota && (
+                          <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-tight">
+                            Maps to: {category.mapsToQuota}
                           </span>
                         )}
                       </div>
-                    )}
+                      {(category.points > 0 || category.price > 0 || category.time > 0 || category.department || category.fields?.length > 0) && (
+                        <div className="text-[11px] text-gray-500 truncate leading-tight mt-0.5 flex gap-2">
+                          {category.points > 0 && <span>Points: {category.points}</span>}
+                          {category.price > 0 && <span>Price: {category.price}</span>}
+                          {category.time > 0 && <span>Time: {category.time}m</span>}
+                          {category.department && <span>Dept: {category.department.name || 'Unknown'}</span>}
+                          {category.fields?.length > 0 && (
+                            <span className="text-blue-500 font-semibold">
+                              {category.fields.length} field{category.fields.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${
+                      category.isActive
+                        ? "bg-green-50 text-green-600 border-green-100"
+                        : "bg-gray-50 text-gray-400 border-gray-100"
+                    }`}
+                  >
+                    {category.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+
+                <div className="col-span-2 text-right">
+                  <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity pr-1 font-sans">
+                    <button
+                      onClick={() => onEdit(category)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-100 transition-all cursor-pointer"
+                      title="Edit Category"
+                    >
+                      <FiEdit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(category)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all cursor-pointer"
+                      title="Remove Category"
+                    >
+                      <FiTrash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div className="col-span-2">
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-tight border ${
-                    category.isActive
-                      ? "bg-green-50 text-green-600 border-green-100"
-                      : "bg-gray-50 text-gray-400 border-gray-100"
-                  }`}
-                >
-                  {category.isActive ? "Active" : "Inactive"}
-                </span>
-              </div>
-
-              <div className="col-span-2 text-right">
-                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity pr-1 font-sans">
-                  <button
-                    onClick={() => onEdit(category)}
-                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-100 transition-all cursor-pointer"
-                    title="Edit Category"
-                  >
-                    <FiEdit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDelete(category)}
-                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition-all cursor-pointer"
-                    title="Remove Category"
-                  >
-                    <FiTrash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
             </div>
+          ))
+        ) : (
+          <div className="px-5 py-8 text-center">
+            <p className="text-[13px] text-gray-500 font-medium">No categories found matching "{searchTerm}"</p>
           </div>
-        ))}
+        )}
       </div>
 
-      <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/20">
+      <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/20 flex justify-between items-center">
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
           Total Categories: {categories.length}
         </p>
+        {searchTerm && (
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
+            Showing: {filteredCategories.length}
+          </p>
+        )}
       </div>
     </div>
   );

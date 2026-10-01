@@ -27,6 +27,7 @@ const ProjectDetailLayout = () => {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
   const { taskId } = useParams();
   const { data: projectData, isLoading: projectLoading } = useProjectDetails(projectId, {
+    monthKey: selectedMonth,
     enabled: !!projectId,
   });
   const { data: tasksData, refetch: refetchTasks, isLoading: tasksLoading } = useProjectTasks(

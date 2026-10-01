@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useGetTaskCategories } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import { FiEdit3, FiSearch, FiChevronDown } from "react-icons/fi";
 import {
   addCategoryToWorkDetails,
   collectMonthlyExtraWork,
@@ -9,9 +10,81 @@ import {
   matchStandardWorkType,
   removeWorkItem,
   updateWorkItemField,
+  swapCategoryInWorkDetails
 } from "./workTypeMapping";
 
 const categoryId = (value) => String(value?._id || value || "");
+
+const SearchableCategorySelect = ({ options, value, onChange, placeholder = "Select category..." }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const wrapperRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchTerm) return options;
+    return options.filter(opt => opt.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [options, searchTerm]);
+
+  const selectedOption = options.find(opt => categoryId(opt) === value);
+
+  return (
+    <div className="relative w-full" ref={wrapperRef}>
+      <div 
+        className="flex items-center justify-between w-full p-2 border border-gray-200 rounded bg-white text-sm cursor-pointer"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className={selectedOption ? "text-gray-800" : "text-gray-400"}>
+          {selectedOption ? selectedOption.name : placeholder}
+        </span>
+        <FiChevronDown className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </div>
+      
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+            <FiSearch className="text-gray-400 w-3.5 h-3.5" />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search..."
+              className="w-full bg-transparent border-none focus:outline-none text-sm placeholder:text-gray-400"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+          <div className="max-h-[200px] overflow-y-auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(opt => (
+                <div
+                  key={opt._id}
+                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ${value === opt._id ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}`}
+                  onClick={() => {
+                    onChange(opt._id);
+                    setIsOpen(false);
+                    setSearchTerm("");
+                  }}
+                >
+                  {opt.name} {opt.points > 0 ? `(${opt.points} pts)` : ""}
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-3 text-sm text-gray-500 text-center italic">No matches found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CategoryQuotaSection = ({
   workDetails,
@@ -23,6 +96,7 @@ const CategoryQuotaSection = ({
   const { data: categories = [], isLoading } = useGetTaskCategories(effectiveCompanyId);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [editingItemKey, setEditingItemKey] = useState(null);
   const [count, setCount] = useState(0);
   const [total, setTotal] = useState(0);
 
@@ -81,7 +155,8 @@ const CategoryQuotaSection = ({
           count: Number(count) || 0,
           total: Number(total) || 0,
         },
-        isEditMode
+        isEditMode,
+        categories
       )
     );
     setSelectedCategoryId("");
@@ -105,76 +180,140 @@ const CategoryQuotaSection = ({
       </p>
 
       <div className="grid grid-cols-2 gap-4">
-        {items.map((item) => (
-          <div
-            key={`${item.kind}-${item.key || item.otherIndex}-${item.name}`}
-            className="border p-3 rounded-lg border-gray-200 bg-white shadow-sm relative"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0 pr-2">
-                <h6 className="font-medium text-sm truncate">{item.name}</h6>
-                {Number(item.extra) > 0 && (
-                  <span className="shrink-0 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                    +{item.extra} extra
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {isEditMode && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500">Total:</span>
-                    <input
-                      name={`${item.kind}-${item.key || item.otherIndex}-total`}
-                      type="number"
-                      value={item.total || 0}
-                      onChange={(e) =>
-                        emit(
-                          updateWorkItemField(
-                            workDetails,
-                            item,
-                            "total",
-                            parseInt(e.target.value, 10) || 0,
-                            isEditMode
+        {items.map((item) => {
+          const itemKey = `${item.kind}-${item.key || item.otherIndex}-${item.name}`;
+          const isEditing = editingItemKey === itemKey;
+
+          return (
+            <div
+              key={itemKey}
+              className="border p-3 rounded-lg border-gray-200 bg-white shadow-sm relative group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0 pr-2 flex-1">
+                  {isEditing ? (
+                    <div className="w-full relative z-10 flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <SearchableCategorySelect
+                          options={categories} // Show all active categories for swapping
+                          value={item.taskCategory}
+                          onChange={(val) => {
+                            const selectedCat = categories.find(c => categoryId(c) === val);
+                            if (selectedCat) {
+                              emit(swapCategoryInWorkDetails(workDetails, item, selectedCat));
+                            }
+                            setEditingItemKey(null);
+                          }}
+                        />
+                      </div>
+                      <button 
+                        onClick={() => setEditingItemKey(null)}
+                        className="text-gray-400 hover:text-gray-600 px-1"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <h6 className="font-medium text-sm truncate">{item.name}</h6>
+                      <button
+                        onClick={() => setEditingItemKey(itemKey)}
+                        className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        title="Change Category"
+                      >
+                        <FiEdit3 className="w-3.5 h-3.5" />
+                      </button>
+                      {Number(item.extra) > 0 && (
+                        <div className="shrink-0 flex items-center gap-1 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                          {isEditMode ? (
+                            <>
+                              <span className="text-[10px] font-semibold text-amber-700">Extra:</span>
+                              <input
+                                type="number"
+                                value={item.extra || 0}
+                                onChange={(e) =>
+                                  emit(
+                                    updateWorkItemField(
+                                      workDetails,
+                                      item,
+                                      "extra",
+                                      parseInt(e.target.value, 10) || 0,
+                                      isEditMode
+                                    )
+                                  )
+                                }
+                                className="w-10 px-1 text-[10px] font-bold text-amber-900 border border-amber-200 rounded text-center focus:outline-none focus:border-amber-400"
+                              />
+                            </>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-amber-700">
+                              +{item.extra} extra
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                {!isEditing && (
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {isEditMode && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500">Total:</span>
+                        <input
+                          name={`${item.kind}-${item.key || item.otherIndex}-total`}
+                          type="number"
+                          value={item.total || 0}
+                          onChange={(e) =>
+                            emit(
+                              updateWorkItemField(
+                                workDetails,
+                                item,
+                                "total",
+                                parseInt(e.target.value, 10) || 0,
+                                isEditMode
+                              )
+                            )
+                          }
+                          placeholder="Total"
+                          className="w-20 px-2 py-1 border rounded border-gray-200 text-gray-600"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500">Balance:</span>
+                      <input
+                        name={`${item.kind}-${item.key || item.otherIndex}-count`}
+                        type="number"
+                        value={item.count || 0}
+                        onChange={(e) =>
+                          emit(
+                            updateWorkItemField(
+                              workDetails,
+                              item,
+                              "count",
+                              parseInt(e.target.value, 10) || 0,
+                              isEditMode
+                            )
                           )
-                        )
-                      }
-                      placeholder="Total"
-                      className="w-20 px-2 py-1 border rounded border-gray-200 text-gray-600"
-                    />
+                        }
+                        placeholder="Balance"
+                        className="w-20 px-2 py-1 border rounded border-gray-200 text-gray-600"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => emit(removeWorkItem(workDetails, item))}
+                      className="cursor-pointer text-red-500 p-1 text-sm"
+                    >
+                      ✕
+                    </button>
                   </div>
                 )}
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-500">Balance:</span>
-                  <input
-                    name={`${item.kind}-${item.key || item.otherIndex}-count`}
-                    type="number"
-                    value={item.count || 0}
-                    onChange={(e) =>
-                      emit(
-                        updateWorkItemField(
-                          workDetails,
-                          item,
-                          "count",
-                          parseInt(e.target.value, 10) || 0,
-                          isEditMode
-                        )
-                      )
-                    }
-                    placeholder="Balance"
-                    className="w-20 px-2 py-1 border rounded border-gray-200 text-gray-600"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => emit(removeWorkItem(workDetails, item))}
-                  className="cursor-pointer text-red-500 p-1 text-sm"
-                >
-                  ✕
-                </button>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {extraOnlyItems.length > 0 && (
@@ -182,14 +321,49 @@ const CategoryQuotaSection = ({
           <h6 className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">
             Extra work this month
           </h6>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {extraOnlyItems.map((item) => (
-              <span
+              <div
                 key={item.name}
-                className="text-[11px] font-semibold text-amber-800 bg-white border border-amber-200 px-2 py-1 rounded-lg"
+                className="flex items-center gap-1.5 bg-white border border-amber-200 px-2 py-1 rounded-lg"
               >
-                {item.name}: +{item.extra}
-              </span>
+                <span className="text-[11px] font-semibold text-amber-800">
+                  {item.name}:
+                </span>
+                {isEditMode ? (
+                  <input
+                    type="number"
+                    value={item.extra || 0}
+                    onChange={(e) =>
+                      emit(
+                        updateWorkItemField(
+                          workDetails,
+                          item,
+                          "extra",
+                          parseInt(e.target.value, 10) || 0,
+                          isEditMode
+                        )
+                      )
+                    }
+                    className="w-12 px-1 text-[11px] font-bold text-amber-900 border border-amber-200 rounded text-center focus:outline-none focus:border-amber-400"
+                  />
+                ) : (
+                  <span className="text-[11px] font-bold text-amber-900">
+                    +{item.extra}
+                  </span>
+                )}
+                {isEditMode && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      emit(updateWorkItemField(workDetails, item, "extra", 0, isEditMode))
+                    }
+                    className="ml-1 text-amber-500 hover:text-amber-700"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -208,19 +382,11 @@ const CategoryQuotaSection = ({
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <select
+              <SearchableCategorySelect
+                options={availableCategories}
                 value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="p-2 border border-gray-200 rounded bg-white text-sm"
-              >
-                <option value="">Select category</option>
-                {availableCategories.map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                    {category.points > 0 ? ` (${category.points} pts)` : ""}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedCategoryId(val)}
+              />
               <div className="flex gap-2">
                 {isEditMode && (
                   <input

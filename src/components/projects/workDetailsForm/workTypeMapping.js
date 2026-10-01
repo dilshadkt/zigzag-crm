@@ -16,7 +16,15 @@ export const STANDARD_WORK_TYPES = [
 
 const normalizeName = (name) => String(name || "").trim().toLowerCase();
 
-export const matchStandardWorkType = (name) => {
+export const matchStandardWorkType = (nameOrCategory) => {
+  if (!nameOrCategory) return null;
+  
+  // If it's a category object with mapsToQuota, use that immediately
+  if (typeof nameOrCategory === 'object' && nameOrCategory.mapsToQuota) {
+    return nameOrCategory.mapsToQuota;
+  }
+  
+  const name = typeof nameOrCategory === 'object' ? nameOrCategory.name : nameOrCategory;
   const normalized = normalizeName(name);
   if (!normalized) return null;
   const match = STANDARD_WORK_TYPES.find(
@@ -54,13 +62,14 @@ export const collectMonthlyExtraWork = (workDetails) => {
     if (extra > 0) extras.push({ name: label, extra, kind: "standard", key });
   });
 
-  (workDetails?.other || []).forEach((item) => {
+  (workDetails?.other || []).forEach((item, otherIndex) => {
     const extra = Number(item?.extra) || 0;
     if (extra > 0) {
       extras.push({
         name: item.name,
         extra,
         kind: "other",
+        otherIndex
       });
     }
   });
@@ -86,7 +95,7 @@ export const resolveTaskCategoryId = ({
 
   if (standardKey) {
     const matched = (categories || []).find(
-      (category) => matchStandardWorkType(category.name) === standardKey
+      (category) => matchStandardWorkType(category) === standardKey
     );
     return matched?._id ? String(matched._id) : "";
   }
@@ -109,7 +118,7 @@ export const getSelectedWorkItems = (workDetails, categories = []) => {
     const slot = workDetails?.[key];
     if (!hasQuota(slot)) return;
     const matchedCategory = (categories || []).find(
-      (category) => matchStandardWorkType(category.name) === key
+      (category) => matchStandardWorkType(category) === key
     );
     items.push({
       kind: "standard",
@@ -138,14 +147,20 @@ export const getSelectedWorkItems = (workDetails, categories = []) => {
   return items;
 };
 
-export const addCategoryToWorkDetails = (workDetails, payload, isEditMode = false) => {
+export const addCategoryToWorkDetails = (workDetails, payload, isEditMode = false, categories = []) => {
   const next = {
     ...(workDetails || {}),
     other: [...(workDetails?.other || [])],
   };
   const count = Number(payload.count) || 0;
   const total = isEditMode ? Number(payload.total) || count : count;
-  const standardKey = matchStandardWorkType(payload.name);
+  
+  // Try to find the full category object if we only have the ID/name
+  const categoryObj = payload.taskCategory ? 
+    categories.find(c => String(c._id) === String(payload.taskCategory)) : 
+    payload;
+
+  const standardKey = matchStandardWorkType(categoryObj || payload.name);
 
   if (standardKey) {
     next[standardKey] = {
@@ -239,5 +254,59 @@ export const updateWorkItemField = (
   if (!isEditMode && field === "count") {
     next.other[item.otherIndex].total = numericValue;
   }
+  return next;
+};
+
+export const swapCategoryInWorkDetails = (workDetails, oldItem, newCategory) => {
+  let next = {
+    ...(workDetails || {}),
+    other: [...(workDetails?.other || [])],
+  };
+
+  // We are swapping the old item for the new category, but keeping count/total/completed
+  const count = oldItem.count || 0;
+  const total = oldItem.total || 0;
+  const completed = oldItem.completed || 0;
+  const extra = oldItem.extra || 0;
+
+  // First, remove the old item completely
+  next = removeWorkItem(next, oldItem);
+
+  // Then add the new item with the old item's stats
+  const standardKey = matchStandardWorkType(newCategory);
+  
+  if (standardKey) {
+    next[standardKey] = {
+      ...(next[standardKey] || {}),
+      count: (next[standardKey]?.count || 0) + count,
+      total: (next[standardKey]?.total || 0) + total,
+      completed: (next[standardKey]?.completed || 0) + completed,
+      extra: (next[standardKey]?.extra || 0) + extra,
+    };
+    return next;
+  }
+
+  // If it's custom, add to other
+  const existingOtherIndex = next.other.findIndex(
+    (i) => String(i.name || "").trim().toLowerCase() === String(newCategory.name || "").trim().toLowerCase()
+  );
+
+  if (existingOtherIndex >= 0) {
+    next.other[existingOtherIndex].count += count;
+    next.other[existingOtherIndex].total += total;
+    next.other[existingOtherIndex].completed += completed;
+    next.other[existingOtherIndex].extra += extra;
+  } else {
+    next.other.push({
+      name: newCategory.name,
+      taskCategory: newCategory._id || null,
+      count,
+      total,
+      completed,
+      extra,
+      description: "",
+    });
+  }
+
   return next;
 };

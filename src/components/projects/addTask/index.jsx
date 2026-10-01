@@ -966,10 +966,15 @@ const AddTask = ({
 
     const options = [];
 
+    // Show all work types that have total > 0 (not just count > 0)
+    // This ensures categories still appear even when quota is fully consumed
     getSelectedWorkItems(workDetails, taskCategories).forEach((item) => {
-      if (Number(item.count) > 0) {
+      if (Number(item.total) > 0) {
+        const remaining = Number(item.count) || 0;
         options.push({
-          label: `${item.name} (${item.count} remaining)`,
+          label: remaining > 0
+            ? `${item.name} (${remaining} remaining)`
+            : `${item.name} (0 remaining)`,
           value: item.kind === "standard" ? item.key : item.name,
         });
       }

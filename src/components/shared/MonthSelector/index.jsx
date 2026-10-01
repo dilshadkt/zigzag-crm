@@ -33,22 +33,11 @@ const MonthSelector = ({
   // Set default month on component mount
   useEffect(() => {
     if (!selectedMonth) {
-      // If we have available months, select the first one
-      if (availableMonths.length > 0) {
-        onMonthChange(availableMonths[0]);
-      } else {
-        // Fallback to current month if no work details
-        const currentMonthKey = format(new Date(), "yyyy-MM");
-        onMonthChange(currentMonthKey);
-      }
-    } else if (
-      availableMonths.length > 0 &&
-      !availableMonths.includes(selectedMonth)
-    ) {
-      // If selected month is not available, automatically select the first available month
-      onMonthChange(availableMonths[0]);
+      // If no month is selected, default to current month
+      const currentMonthKey = format(new Date(), "yyyy-MM");
+      onMonthChange(currentMonthKey);
     }
-  }, [selectedMonth, onMonthChange, availableMonths]);
+  }, [selectedMonth, onMonthChange]);
 
   // Click outside handler
   useEffect(() => {
@@ -65,31 +54,27 @@ const MonthSelector = ({
     };
   }, [isOpen]);
 
-  // Generate months list based on available months or fallback to default range
+  // Generate months list based on default range + any available months
   const getMonthsList = () => {
-    if (availableMonths.length > 0) {
-      // Use only available months from workDetails
-      return availableMonths
-        .map((monthStr) => {
-          const [year, month] = monthStr.split("-");
-          return new Date(parseInt(year), parseInt(month) - 1, 1);
-        })
-        .sort((a, b) => a - b); // Sort chronologically
-    } else {
-      // Fallback to default range when no project is selected
-      const months = [];
-      const now = new Date();
-      // Show a range around now
-      for (let i = -6; i <= 6; i++) {
-        const date = new Date(
-          now.getFullYear(),
-          now.getMonth() + i,
-          1
-        );
-        months.push(date);
-      }
-      return months;
+    const monthsSet = new Set();
+    const now = new Date();
+    
+    // Always include a range around the current date
+    for (let i = -6; i <= 6; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      monthsSet.add(format(date, "yyyy-MM"));
     }
+    
+    // Also include all available months
+    availableMonths.forEach(m => monthsSet.add(m));
+    
+    // Convert to Date objects and sort
+    return Array.from(monthsSet)
+      .map(monthStr => {
+        const [year, month] = monthStr.split("-");
+        return new Date(parseInt(year), parseInt(month) - 1, 1);
+      })
+      .sort((a, b) => a - b);
   };
 
   const months = getMonthsList();
@@ -102,53 +87,27 @@ const MonthSelector = ({
 
   const goToPreviousMonth = (e) => {
     e.stopPropagation();
-    if (availableMonths.length > 0) {
-      const currentIndex = availableMonths.indexOf(selectedMonth);
-      if (currentIndex > 0) {
-        onMonthChange(availableMonths[currentIndex - 1]);
-      }
-    } else {
-      const newDate = subMonths(currentDate, 1);
-      const monthKey = format(newDate, "yyyy-MM");
-      onMonthChange(monthKey);
-    }
+    const newDate = subMonths(currentDate, 1);
+    const monthKey = format(newDate, "yyyy-MM");
+    onMonthChange(monthKey);
   };
 
   const goToNextMonth = (e) => {
     e.stopPropagation();
-    if (availableMonths.length > 0) {
-      const currentIndex = availableMonths.indexOf(selectedMonth);
-      if (currentIndex < availableMonths.length - 1) {
-        onMonthChange(availableMonths[currentIndex + 1]);
-      }
-    } else {
-      const newDate = addMonths(currentDate, 1);
-      const monthKey = format(newDate, "yyyy-MM");
-      onMonthChange(monthKey);
-    }
+    const newDate = addMonths(currentDate, 1);
+    const monthKey = format(newDate, "yyyy-MM");
+    onMonthChange(monthKey);
   };
 
   const goToCurrentMonth = () => {
     const currentMonthKey = format(new Date(), "yyyy-MM");
-    if (
-      availableMonths.length === 0 ||
-      availableMonths.includes(currentMonthKey)
-    ) {
-      onMonthChange(currentMonthKey);
-      setIsOpen(false);
-    }
+    onMonthChange(currentMonthKey);
+    setIsOpen(false);
   };
 
   // Check if navigation buttons should be disabled
-  const canGoPrevious =
-    availableMonths.length > 0
-      ? availableMonths.indexOf(selectedMonth) > 0
-      : true;
-
-  const canGoNext =
-    availableMonths.length > 0
-      ? availableMonths.indexOf(selectedMonth) < availableMonths.length - 1
-      : true;
+  const canGoPrevious = true;
+  const canGoNext = true;
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -213,21 +172,23 @@ const MonthSelector = ({
               const monthKey = format(month, "yyyy-MM");
               const isSelected = selectedMonth === monthKey;
               const isCurrentMonth = monthKey === format(new Date(), "yyyy-MM");
-              const isAvailable =
-                availableMonths.length === 0 ||
-                availableMonths.includes(monthKey);
+              const hasData = availableMonths.includes(monthKey);
 
               return (
                 <button
                   key={index}
                   onClick={() => handleMonthSelect(month)}
-                  disabled={!isAvailable}
                   className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${isSelected 
                     ? "bg-blue-50 text-blue-700 font-bold" 
-                    : isAvailable ? "hover:bg-gray-50 text-gray-700" : "text-gray-300 cursor-not-allowed"
+                    : "hover:bg-gray-50 text-gray-700"
                   }`}
                 >
-                  <span>{format(month, "MMMM yyyy")}</span>
+                  <span className="flex items-center gap-2">
+                    {format(month, "MMMM yyyy")}
+                    {hasData && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400" title="Has Work Details"></span>
+                    )}
+                  </span>
                   {isCurrentMonth && !isSelected && (
                     <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase font-bold tracking-tighter">Current</span>
                   )}

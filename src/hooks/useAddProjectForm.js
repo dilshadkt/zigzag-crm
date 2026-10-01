@@ -59,9 +59,10 @@ export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) =>
         return new Date(value) instanceof Date && !isNaN(new Date(value));
       }),
     endDate: Yup.string()
-      .required("Due date is required")
+      .nullable()
+      .notRequired()
       .test('is-valid-date', 'Invalid end date', value => {
-        if (!value) return false;
+        if (!value) return true; // optional
         return new Date(value) instanceof Date && !isNaN(new Date(value));
       })
       .test('is-after-start', 'End date must be after start date', function (value) {
