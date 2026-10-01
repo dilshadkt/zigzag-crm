@@ -464,27 +464,6 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         <h4 className="font-semibold text-base md:text-lg text-gray-800">
           My Task Progress
         </h4>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="text-xl md:text-2xl font-bold text-blue-600">
-              {completionRate}%
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="mb-4 md:mb-6">
-        <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>Task Completion Progress</span>
-          <span>{completionRate}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${Math.min(completionRate, 100)}%` }}
-          ></div>
-        </div>
       </div>
 
       {/* Task Statistics Grid */}

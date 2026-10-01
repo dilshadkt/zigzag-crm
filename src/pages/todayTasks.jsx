@@ -93,13 +93,74 @@ const TodayTasks = () => {
   }, [combinedItems, superFilters]);
 
   if (isLoading) {
-    return <LoadingState title="Today's Tasks" />;
+    return (
+      <div className="flex flex-col h-full bg-gray-50/50">
+        {/* Header Skeleton */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors shrink-0 bg-white shadow-sm"
+              aria-label="Go back"
+            >
+              <FiArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="min-w-0">
+              <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Search and Filters Skeleton */}
+          <div className="flex flex-col md:flex-row gap-2 items-center w-full sm:w-auto">
+            <div className="h-10 w-full md:w-48 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="flex gap-2 w-full md:w-auto">
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Task List Skeleton */}
+        <div className="flex-1 min-h-0 relative">
+          <div className="absolute inset-0 flex flex-col">
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-2 md:p-0">
+                <div className="flex flex-col gap-y-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="p-4 bg-white rounded-lg border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 animate-pulse"
+                    >
+                      <div className="flex-1 w-full space-y-3">
+                        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                        <div className="flex gap-3 mt-2">
+                          <div className="h-5 w-16 bg-gray-100 rounded-full"></div>
+                          <div className="h-5 w-20 bg-gray-100 rounded-full"></div>
+                        </div>
+                        <div className="flex gap-4 mt-3">
+                          <div className="h-4 w-24 bg-gray-100 rounded"></div>
+                          <div className="h-4 w-24 bg-gray-100 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex items-center justify-end gap-2 mt-3 sm:mt-0 w-full sm:w-auto">
+                        <div className="h-6 w-20 bg-gray-100 rounded"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col h-full bg-gray-50/50">
       {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={() => navigate(-1)}
@@ -110,7 +171,32 @@ const TodayTasks = () => {
           </button>
           <div className="min-w-0">
             <Header>Today's Tasks - ({filteredItems.length})</Header>
+          </div>
+        </div>
 
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-2 items-center w-full sm:w-auto">
+          <div className="relative w-full md:w-auto min-w-[200px]">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={superFilters.search}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+            />
+          </div>
+          <div className="flex-shrink-0 w-full md:w-auto">
+            <TaskQuickFilters
+              superFilters={superFilters}
+              onFilterChange={handleFilterChange}
+              onMultiSelectFilter={handleMultiSelectFilter}
+              projects={projects}
+              users={[]}
+              hideTypeToggles={true}
+              hideAssignees={true}
+              className="flex-nowrap"
+            />
           </div>
         </div>
       </div>
@@ -118,36 +204,8 @@ const TodayTasks = () => {
       {/* Main Content */}
       <div className="flex-1 min-h-0 relative">
         <div className="absolute inset-0 flex flex-col">
-          <div className="flex flex-col flex-1 min-h-0 bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-3 md:p-4 border-b border-gray-100 space-y-3">
-              {/* Search and Filters */}
-              <div className="flex flex-col md:flex-row gap-2">
-                <div className="flex-1 relative min-w-0">
-                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search tasks..."
-                    value={superFilters.search}
-                    onChange={(e) => handleFilterChange("search", e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-gray-50/50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <TaskQuickFilters
-                    superFilters={superFilters}
-                    onFilterChange={handleFilterChange}
-                    onMultiSelectFilter={handleMultiSelectFilter}
-                    projects={projects}
-                    users={[]}
-                    hideTypeToggles={true}
-                    hideAssignees={true}
-                    className="flex-wrap"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto bg-gray-50/30 p-2 md:p-4">
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-2 md:p-0">
               <TaskList
                 tasks={filteredItems}
                 filter="today"

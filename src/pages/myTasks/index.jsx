@@ -5,8 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import Header from "../../components/shared/header";
 import Navigator from "../../components/shared/navigator";
 import TaskList from "../../components/tasks/TaskList";
-import MyTasksHeader from "./MyTasksHeader";
-import MyTasksFiltersPanel from "./MyTasksFiltersPanel";
+import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
 import {
   FiClock,
   FiAlertCircle,
@@ -111,8 +110,7 @@ const MyTasks = () => {
   useEffect(() => {
     if (employeeTasksData?.tasks) {
       let filtered = [
-        ...employeeTasksData.tasks,
-        ...employeeTasksData.subTasks,
+        ...(employeeTasksData.subTasks || []),
       ];
 
       // Apply URL-based filter first
@@ -648,283 +646,192 @@ const MyTasks = () => {
 
   if (isLoading) {
     return (
-      <section className="flex flex-col">
-        <div className="flexBetween">
-          <Header>My Tasks</Header>
+      <div className="flex flex-col h-full bg-gray-50/50">
+        {/* Header Skeleton */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors shrink-0 bg-white shadow-sm"
+              aria-label="Go back"
+            >
+              <FiArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="min-w-0">
+              <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Search and Filters Skeleton */}
+          <div className="flex flex-col md:flex-row gap-2 items-center w-full sm:w-auto">
+            <div className="h-10 w-full md:w-48 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="flex gap-2 w-full md:w-auto">
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center justify-center h-64">
-          <img src="/icons/loading.svg" alt="Loading..." className="w-8 h-8" />
+
+        {/* Task List Skeleton */}
+        <div className="flex-1 min-h-0 relative">
+          <div className="absolute inset-0 flex flex-col">
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-2 md:p-0">
+                <div className="flex flex-col gap-y-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className="p-4 bg-white rounded-lg border border-gray-100 flex flex-col sm:flex-row sm:items-center gap-4 animate-pulse"
+                    >
+                      <div className="flex-1 w-full space-y-3">
+                        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                        <div className="flex gap-3 mt-2">
+                          <div className="h-5 w-16 bg-gray-100 rounded-full"></div>
+                          <div className="h-5 w-20 bg-gray-100 rounded-full"></div>
+                        </div>
+                        <div className="flex gap-4 mt-3">
+                          <div className="h-4 w-24 bg-gray-100 rounded"></div>
+                          <div className="h-4 w-24 bg-gray-100 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex items-center justify-end gap-2 mt-3 sm:mt-0 w-full sm:w-auto">
+                        <div className="h-6 w-20 bg-gray-100 rounded"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="flex flex-col">
-      <MyTasksHeader
-        title={getFilterTitle()}
-        filterColorClass={getFilterColor()}
-        FilterIcon={FilterIcon}
-        taskCount={filteredTasks.length}
-        filters={filters}
-        onSearchChange={(value) => handleFilterChange("search", value)}
-        showFilters={showFilters}
-        toggleFilters={() => setShowFilters(!showFilters)}
-        hasActiveFilters={hasActiveFilters}
-        activeFilterCount={
-          filters.status.length +
-          filters.priority.length +
-          filters.project.length +
-          (filters.dateRange.start ? 1 : 0) +
-          (filters.dateRange.end ? 1 : 0)
-        }
-        onClearAllFilters={clearAllFilters}
-        onBack={() => navigate("/")}
-      />
-
-      {/* Navigator */}
-
-      <MyTasksFiltersPanel
-        showFilters={showFilters}
-        filters={filters}
-        filterOptions={filterOptions}
-        hasActiveFilters={hasActiveFilters}
-        clearAllFilters={clearAllFilters}
-        handleMultiSelectFilter={handleMultiSelectFilter}
-        handleFilterChange={handleFilterChange}
-      />
-
-      {/* Tasks List */}
-      <div className=" ">
-        {filteredTasks.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">
-              {filter === "completed" ? "🎉" : "📋"}
-            </div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              {getEmptyStateMessage().title}
-            </h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              {getEmptyStateMessage().message}
-            </p>
-            {hasActiveFilters() && (
-              <button
-                onClick={clearAllFilters}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
+    <div className="flex flex-col h-full bg-gray-50/50">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors shrink-0 bg-white shadow-sm"
+            aria-label="Go back"
+          >
+            <FiArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="min-w-0">
+            <Header>{getFilterTitle()} - ({filteredTasks.length})</Header>
           </div>
-        ) : shouldGroupOverdue ? (
-          <div className="space-y-6">
-            {overdueTaskGroups.map((group) => (
-              <div key={group.key}>
-                <div className="mb-3 pb-2 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {group.label}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {group.tasks.length}{" "}
-                    {group.tasks.length === 1 ? "task" : "tasks"}
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-2 items-center w-full sm:w-auto">
+          <div className="relative w-full md:w-auto min-w-[200px]">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={filters.search}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+            />
+          </div>
+          <div className="flex-shrink-0 w-full md:w-auto">
+            <TaskQuickFilters
+              superFilters={filters}
+              onFilterChange={handleFilterChange}
+              onMultiSelectFilter={handleMultiSelectFilter}
+              projects={filterOptions.projects}
+              users={[]}
+              hideTypeToggles={true}
+              hideAssignees={true}
+              className="flex-nowrap"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 flex flex-col">
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-2 md:p-0">
+              {filteredTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-6xl mb-4">
+                    {filter === "completed" ? "🎉" : "📋"}
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                    {getEmptyStateMessage().title}
+                  </h3>
+                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                    {getEmptyStateMessage().message}
                   </p>
+                  {hasActiveFilters() && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
+              ) : shouldGroupOverdue ? (
+                <div className="space-y-6">
+                  {overdueTaskGroups.map((group) => (
+                    <div key={group.key}>
+                      <div className="mb-3 pb-2 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {group.label}
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                          {group.tasks.length}{" "}
+                          {group.tasks.length === 1 ? "task" : "tasks"}
+                        </p>
+                      </div>
+                      <TaskList
+                        tasks={group.tasks}
+                        filter={filter}
+                        showSubtasks={true}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : shouldGroupCompleted ? (
+                <div className="space-y-6">
+                  {completedTaskGroups.map((group, index) => (
+                    <div key={`completed-group-${index}`}>
+                      <div className="mb-3 pb-2 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          {formatGroupLabel(group.label, group.tasks.length)}
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                          {group.tasks.length}{" "}
+                          {group.tasks.length === 1 ? "task" : "tasks"}
+                        </p>
+                      </div>
+                      <TaskList
+                        tasks={group.tasks}
+                        filter={filter}
+                        showSubtasks={true}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
                 <TaskList
-                  tasks={group.tasks}
+                  tasks={filteredTasks}
                   filter={filter}
                   showSubtasks={true}
                 />
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        ) : shouldGroupCompleted ? (
-          <div className="space-y-6">
-            {completedTaskGroups.map((group, index) => (
-              <div key={`completed-group-${index}`}>
-                <div className="mb-3 pb-2 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {formatGroupLabel(group.label, group.tasks.length)}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {group.tasks.length}{" "}
-                    {group.tasks.length === 1 ? "task" : "tasks"}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-y-2">
-                  {group.tasks.map((task) => {
-                    const isOverdue =
-                      new Date(task.dueDate) < new Date() &&
-                      task.status !== "completed";
-                    const daysOverdue = isOverdue ? getDaysOverdue(task.dueDate) : 0;
-
-                    return (
-                      <div
-                        key={task._id}
-                        onClick={() => handleTaskClick(task)}
-                        className="p-4 bg-white rounded-lg hover:bg-gray-50 cursor-pointer 
-                        transition-colors border border-gray-100"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-900 truncate">
-                                {task.title}
-                              </h3>
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
-                                    task.priority
-                                  )}`}
-                                >
-                                  {task.priority}
-                                </span>
-                                <span
-                                  className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                                    task.status
-                                  )}`}
-                                >
-                                  {task.status.replace("-", " ")}
-                                </span>
-                              </div>
-                            </div>
-
-                             {task.description && (
-                               <div className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                 {renderContent(task.description)}
-                               </div>
-                             )}
-
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              {task.project && (
-                                <div className="flex items-center gap-1">
-                                  <FiFlag className="w-4 h-4" />
-                                  <span>{task.project.name}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <FiCheckCircle className="w-4 h-4 text-green-600" />
-                                <span>Completed</span>
-                              </div>
-                              {task.totalActualTime > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <FiClock className="w-4 h-4" />
-                                  <span>{formatTime(task.totalActualTime)}</span>
-                                </div>
-                              )}
-                              {task.performance > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <FiTarget className="w-4 h-4" />
-                                  <span>Perf: {task.performance}%</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className=" flex flex-col gap-y-2">
-            {filteredTasks.map((task) => {
-              const isOverdue =
-                new Date(task.dueDate) < new Date() &&
-                task.status !== "completed";
-              const daysOverdue = isOverdue ? getDaysOverdue(task.dueDate) : 0;
-
-              return (
-                <div
-                  key={task._id}
-                  onClick={() => handleTaskClick(task)}
-                  className="p-4 bg-white rounded-lg hover:bg-gray-50 cursor-pointer 
-                  transition-colors border border-gray-100"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {task.title}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
-                              task.priority
-                            )}`}
-                          >
-                            {task.priority}
-                          </span>
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              task.status
-                            )}`}
-                          >
-                            {task.status.replace("-", " ")}
-                          </span>
-                        </div>
-                      </div>
-
-                       {task.description && (
-                         <div className="text-gray-600 text-sm mb-3 line-clamp-2">
-                           {renderContent(task.description)}
-                         </div>
-                       )}
-
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        {task.project && (
-                          <div className="flex items-center gap-1">
-                            <FiFlag className="w-4 h-4" />
-                            <span>{task.project.name}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <FiCalendar className="w-4 h-4" />
-                          <span>Due {formatDate(task.dueDate)}</span>
-                          {isOverdue && (
-                            <span className="text-red-600 font-medium">
-                              ({daysOverdue} day{daysOverdue > 1 ? "s" : ""}{" "}
-                              overdue)
-                            </span>
-                          )}
-                        </div>
-                        {task.totalActualTime > 0 && (
-                          <div className="flex items-center gap-1">
-                            <FiClock className="w-4 h-4" />
-                            <span>{formatTime(task.totalActualTime)}</span>
-                          </div>
-                        )}
-                        {task.performance > 0 && (
-                          <div className="flex items-center gap-1 text-xs">
-                            <FiTarget className="w-4 h-4" />
-                            <span className={`font-semibold ${task.performance >= 100
-                              ? "text-green-600"
-                              : task.performance >= 70
-                                ? "text-yellow-600"
-                                : "text-red-600"
-                              }`}>Perf: {task.performance}%</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {isOverdue && (
-                        <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded">
-                          <FiAlertCircle className="w-4 h-4" />
-                          <span className="text-xs font-medium">Overdue</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        </div>
       </div>
-    </section>
+    </div>
   );
 };
 

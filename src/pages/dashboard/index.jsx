@@ -172,10 +172,6 @@ const Dashboard = () => {
         <EmployeeProgressStats taskMonth={taskMonth} />
       </div>
 
-      <div className="w-full mt-5">
-        <CompletionTrendChart userId={user?._id} />
-      </div>
-
       <div className="w-full grid grid-cols-1 gap-2 md:gap-6 mt-4">
         <div className="min-w-0">
           <Suspense fallback={<div>Loading Employee Work Details...</div>}>
@@ -195,21 +191,14 @@ const Dashboard = () => {
       />
 
       {/* Team Insights Section */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 mt-5">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 mt-5 pb-5">
         <div className="lg:col-span-6 xl:col-span-4 min-w-0">
           <DashboardRanking />
         </div>
         <div className="lg:col-span-6 xl:col-span-4 min-w-0">
           <NearestEvents selectedDate={selectedDate} />
         </div>
-      </div>
-
-      <div className="w-full grid grid-cols-1 lg:grid-cols-7 gap-3 md:gap-4 mt-5 pb-5">
-        <div className="lg:col-span-5 min-w-0">
-          <EmployeeTodayTasks />
-        </div>
-        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6 min-w-0">
-          <NearestEvents selectedDate={selectedDate} />
+        <div className="lg:col-span-6 xl:col-span-4 min-w-0 flex flex-col gap-4 md:gap-6">
           <TodayReworkTasks />
         </div>
       </div>
