@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   FiAlertCircle,
   FiCalendar,
@@ -7,6 +7,8 @@ import {
   FiEye,
   FiCheckCircle,
   FiSend,
+  FiChevronDown,
+  FiList,
 } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -74,6 +76,23 @@ const ClientReview = () => {
 
   const [superFilters, setSuperFilters] = useState({ assignedTo: [], project: [] });
   const [sentFilter, setSentFilter] = useState("all");
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+    if (isSortDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSortDropdownOpen]);
+
   const markSentMutation = useMarkSentToClient();
 
   const handleSuperFilterChange = (type, value) => {
@@ -344,9 +363,13 @@ const ClientReview = () => {
             aValue = new Date(a.createdAt);
             bValue = new Date(b.createdAt);
             break;
+          case "updatedAt":
+            aValue = new Date(a.updatedAt || a.createdAt);
+            bValue = new Date(b.updatedAt || b.createdAt);
+            break;
           default: // dueDate
-            aValue = new Date(a.dueDate);
-            bValue = new Date(b.dueDate);
+            aValue = new Date(a.dueDate || 0);
+            bValue = new Date(b.dueDate || 0);
         }
 
         if (filters.sortOrder === "desc") {
@@ -554,7 +577,7 @@ const ClientReview = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2 shrink-0 self-end sm:self-auto">
+              <div className="flex gap-2 shrink-0 self-end sm:self-auto items-center">
                 <PrimaryButton
                   icon={"/icons/refresh.svg"}
                   className={"bg-white hover:bg-gray-50 transition-colors"}
@@ -630,6 +653,58 @@ const ClientReview = () => {
                         </span>
                       </button>
                     ))}
+                    
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-gray-300"></div>
+                    
+                    {/* Sort Dropdown */}
+                    <div className="relative" ref={sortDropdownRef}>
+                      <button
+                        onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                        className={`flex items-center cursor-pointer gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border bg-white text-gray-700 border-gray-200 hover:bg-gray-50`}
+                        title="Sort Tasks"
+                      >
+                        <FiList className="text-sm" />
+                        <span className="truncate">
+                          {filters.sortBy === "dueDate" && "Sort by Due Date"}
+                          {filters.sortBy === "updatedAt" && filters.sortOrder === "desc" && "Sort by Review Time (Newest)"}
+                          {filters.sortBy === "updatedAt" && filters.sortOrder === "asc" && "Sort by Review Time (Oldest)"}
+                        </span>
+                        <FiChevronDown
+                          className={`text-xs transition-transform duration-200 ${
+                            isSortDropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {isSortDropdownOpen && (
+                        <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1">
+                          {[
+                            { value: "dueDate-asc", label: "Sort by Due Date" },
+                            { value: "updatedAt-desc", label: "Sort by Review Time (Newest)" },
+                            { value: "updatedAt-asc", label: "Sort by Review Time (Oldest)" },
+                          ].map((option) => {
+                            const isSelected = `${filters.sortBy}-${filters.sortOrder}` === option.value;
+                            return (
+                              <button
+                                key={option.value}
+                                onClick={() => {
+                                  const [sortBy, sortOrder] = option.value.split('-');
+                                  setFilters((prev) => ({ ...prev, sortBy, sortOrder }));
+                                  setIsSortDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition-colors duration-150 flex items-center justify-between ${
+                                  isSelected ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                                }`}
+                              >
+                                <span>{option.label}</span>
+                                {isSelected && <FiCheckCircle className="text-blue-600 w-3 h-3" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </>
                 }
               />

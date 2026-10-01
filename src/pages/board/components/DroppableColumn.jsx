@@ -106,7 +106,7 @@ const DroppableColumn = ({
 
     return (
         <div
-            className={`flex-shrink-0 w-80  pt-3 px-1  rounded-lg  transition-all duration-200 ease-out
+            className={`flex flex-col flex-shrink-0 w-80 pt-3 px-1 rounded-lg transition-all duration-200 ease-out
                   ${isOver
                     ? "bg-blue-50 border-2 border-blue-300"
                     : "bg-gray-50 border-2 border-transparent"
@@ -117,14 +117,14 @@ const DroppableColumn = ({
             data-droppable-id={id}
         >
             <div
-                className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 ${config?.color || "bg-gray-200 text-gray-800"
+                className={`font-medium text-sm text-center sticky top-0 z-50 py-2 px-4 rounded-lg mb-4 flex-shrink-0 ${config?.color || "bg-gray-200 text-gray-800"
                     }`}
             >
                 {title}
             </div>
             <div
                 ref={parentRef}
-                className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2"
+                className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 px-2 pb-10"
                 data-droppable-id={id}
             >
                 {isLoading ? (
