@@ -448,7 +448,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       <div className="px-3 md:px-4 w-full bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
               <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
             ))}
@@ -473,7 +473,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={cardOrder || []} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-2 flex-1">
             {orderedStats.map((stat) => (
               <SortableStatsCard
                 key={stat.id}
