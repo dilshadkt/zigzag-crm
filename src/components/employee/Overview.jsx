@@ -18,13 +18,14 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
   console.log(statistics)
 
   // Use statistics from API if available, otherwise default to 0
-  const totalSubTasks = statistics?.total || 0;
+  const onReviewSubTasks = statistics?.onReview || 0;
+  // Exclude onReview tasks from the total count to match the list view behavior
+  const totalSubTasks = Math.max(0, (statistics?.total || 0) - onReviewSubTasks);
   const completedSubTasks = statistics?.completed || 0;
   const inProgressSubTasks = statistics?.inProgress || 0;
   const pendingSubTasks = statistics?.pending || 0;
   const overdueSubTasks = statistics?.overdue || 0;
   const todaySubTasks = statistics?.today || 0;
-  const onReviewSubTasks = statistics?.onReview || 0;
   const reworkSubTasks = statistics?.rework || 0;
   const totalReworked = statistics?.totalReworked || 0;
   const upcoming3DaysSubTasks = statistics?.upcoming3Days || 0;

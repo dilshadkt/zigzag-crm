@@ -126,11 +126,12 @@ const EmployeeProgressStats = ({ taskMonth }) => {
 
   // Get statistics from API
   const statistics = userStatsData?.statistics || {};
-  const totalTasks = statistics.total || 0;
+  const onReviewTasks = statistics.onReview || 0;
+  // Exclude onReview tasks from the total count to match the list view behavior
+  const totalTasks = Math.max(0, (statistics.total || 0) - onReviewTasks);
   const completedTasks = statistics.completed || 0;
   const inProgressTasks = statistics.inProgress || 0;
   const pendingTasks = statistics.pending || 0;
-  const onReviewTasks = statistics.onReview || 0;
   const approvedTasks = statistics.approved || 0;
   const clientApprovedTasks = statistics.clientApproved || 0;
   const reworkTasks = statistics.rework || 0;
