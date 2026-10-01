@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import TaskCard from "./TaskCard";
+import { useNavigate } from "react-router-dom";
+import Task from "../shared/task";
 import EmptyState from "./EmptyState";
 
 const TaskList = ({
@@ -11,6 +12,7 @@ const TaskList = ({
   showTasks = true,
 }) => {
   const parentRef = useRef(null);
+  const navigate = useNavigate();
 
   const visibleTasks = tasks.filter((task) => {
     const isSubTask = task?.parentTask || task?.isSubTask;
@@ -22,7 +24,7 @@ const TaskList = ({
   const rowVirtualizer = useVirtualizer({
     count: visibleTasks.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 180, // Increased estimate size for more complex TaskCard
+    estimateSize: () => 100, // Reduced estimate size for compact Task
     overscan: 10,
   });
 
@@ -33,6 +35,20 @@ const TaskList = ({
   const containerClassName = scrollable
     ? "h-full flex flex-col overflow-y-auto"
     : "flex flex-col";
+
+  const handleTaskClick = (task) => {
+    if (task.type === "subtask" || task.itemType === "subtask" || task.parentTask) {
+      if (task.parentTask?._id) {
+        navigate(`/projects/${task.project?._id || task.project}/${task.parentTask._id}`);
+      } else if (task.project?._id) {
+        navigate(`/projects/${task.project._id}/${task._id}`);
+      }
+    } else if (task.project?._id) {
+      navigate(`/projects/${task.project._id}/${task._id}`);
+    } else {
+      navigate(`/tasks/${task._id}`);
+    }
+  };
 
   return (
     <div
@@ -59,10 +75,14 @@ const TaskList = ({
                 left: 0,
                 width: "100%",
                 transform: `translateY(${virtualRow.start}px)`,
-                paddingBottom: "16px", // Increased padding for better separation in list view
+                paddingBottom: "8px", // Reduced padding
               }}
             >
-              <TaskCard task={task} filter={filter} />
+              <Task 
+                task={task} 
+                onClick={handleTaskClick} 
+                compact={true}
+              />
             </div>
           );
         })}

@@ -348,8 +348,8 @@ const CompanyProgressStats = ({ taskMonth }) => {
       {
         id: "todays-tasks",
         title: "Today's Tasks",
-        value: companyStatsCheck?.statistics?.today || 0,
-        subtitle: "Due today",
+        value: companyStatsCheck?.statistics?.todaySubTasks || 0,
+        subtitle: `${companyStatsCheck?.statistics?.todayMainTasks || 0} main tasks`,
         icon: FiCheckCircle,
         color: "bg-indigo-500",
         borderColor: "hover:border-indigo-500",

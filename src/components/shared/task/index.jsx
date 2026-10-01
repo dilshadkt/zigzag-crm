@@ -118,6 +118,29 @@ const SentToClientAction = ({
   );
 };
 
+const getStatusStyles = (status) => {
+  switch (String(status || "").toLowerCase()) {
+    case "todo":
+    case "pending":
+      return "bg-gray-100 text-gray-600";
+    case "in-progress":
+      return "bg-blue-50 text-blue-600";
+    case "on-review":
+      return "bg-violet-50 text-violet-600";
+    case "re-work":
+      return "bg-rose-50 text-rose-600";
+    case "completed":
+    case "approved":
+    case "client-approved":
+      return "bg-[#E0F9F2] text-[#00D097]";
+    case "on-hold":
+    case "paused":
+      return "bg-amber-50 text-amber-600";
+    default:
+      return "bg-gray-100 text-gray-600";
+  }
+};
+
 const Task = memo(({
   task,
   onClick,
@@ -243,13 +266,21 @@ const Task = memo(({
         onClick={() => handleClick()}
         className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 px-4 py-3 rounded-2xl border cursor-pointer transition-colors ${compactCardTone}`}
       >
-        {task?.project?.thumbImg && (
-          <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center">
-            <img 
-              src={task.project.thumbImg} 
-              alt="Project" 
-              className="w-full h-full object-contain p-1" 
-            />
+        {(task?.project?.thumbImg || task?.project?.name || task?.project?.displayName) && (
+          <div className="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400">
+            {task.project?.thumbImg ? (
+              <img 
+                src={task.project.thumbImg} 
+                alt="Project" 
+                className="w-full h-full object-contain p-1" 
+              />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full bg-blue-50/50">
+                <span className="text-lg sm:text-xl font-bold text-blue-300">
+                  {(task.project?.name || task.project?.displayName || "?").charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -304,19 +335,21 @@ const Task = memo(({
                 {mainTaskDueDateLabel || "—"}
               </span>
             )}
-            <span
-              className="inline-flex items-center gap-1 font-medium text-violet-700"
-              title={
-                onReviewSubmittedAt
-                  ? new Date(onReviewSubmittedAt).toLocaleString()
-                  : "Not submitted for review yet"
-              }
-            >
-              <span className="text-violet-400 font-semibold uppercase tracking-wide text-[10px]">
-                On review
+            {task?.status === "on-review" && (
+              <span
+                className="inline-flex items-center gap-1 font-medium text-violet-700"
+                title={
+                  onReviewSubmittedAt
+                    ? new Date(onReviewSubmittedAt).toLocaleString()
+                    : "Not submitted for review yet"
+                }
+              >
+                <span className="text-violet-400 font-semibold uppercase tracking-wide text-[10px]">
+                  On review
+                </span>
+                {submittedOnReviewLabel || "—"}
               </span>
-              {submittedOnReviewLabel || "—"}
-            </span>
+            )}
           </div>
         </div>
 
@@ -348,7 +381,7 @@ const Task = memo(({
             <span className="text-xs font-medium">{task?.priority}</span>
           </div>
 
-          <span className="hidden md:inline-flex shrink-0 rounded-lg bg-[#E0F9F2] px-2.5 py-1 text-[11px] font-medium capitalize text-[#00D097]">
+          <span className={`hidden md:inline-flex shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-medium capitalize ${getStatusStyles(task?.status)}`}>
             {task?.status}
           </span>
 
@@ -627,7 +660,7 @@ const Task = memo(({
           <h4 className={`text-sm font-medium truncate ${isDueOverdue ? "text-rose-600" : ""}`}>
             {formatDate(task?.dueDate) || "—"}
           </h4>
-          {submittedOnReviewLabel && (
+          {submittedOnReviewLabel && task?.status === "on-review" && (
             <span
               className="text-[11px] text-violet-600 font-medium"
               title={
@@ -689,8 +722,7 @@ const Task = memo(({
           </div>
         </div>
         <span
-          className="bg-[#E0F9F2] text-[#00D097] 
-flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg"
+          className={`flexCenter capitalize text-xs font-medium py-[7px] px-[15px] rounded-lg ${getStatusStyles(task?.status)}`}
         >
           {task?.status}
         </span>

@@ -141,78 +141,111 @@ const CompanyTasks = ({ filter: propFilter }) => {
   }
 
   return (
-    <div className="">
-      <CompanyTasksHeader
-        title={filterTitle}
-        taskCount={visibleTaskCount}
-        users={users}
-        projects={projects}
-        superFilters={superFilters}
-        handleFilterChange={handleFilterChange}
-        handleMultiSelectFilter={handleMultiSelectFilter}
-        clearAllFilters={clearAllFilters}
-        hasActiveFilters={hasActiveFilters}
-      />
+    <div className="flex flex-col h-full min-h-0 bg-gray-50">
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 px-1 md:px-0">
+          <div className="">
+            <CompanyTasksHeader
+              title={filterTitle}
+              taskCount={visibleTaskCount}
+              users={users}
+              projects={projects}
+              superFilters={superFilters}
+              handleFilterChange={handleFilterChange}
+              handleMultiSelectFilter={handleMultiSelectFilter}
+              clearAllFilters={clearAllFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
 
-      {/* Quick Filters Bar */}
-      <div className="mb-6 pb-4 border-b border-gray-200">
-        <TaskQuickFilters
-          superFilters={superFilters}
-          onFilterChange={handleFilterChange}
-          onMultiSelectFilter={handleMultiSelectFilter}
-          users={users}
-          projects={projects}
-          showTasks={showTasks}
-          showSubtasks={showSubtasks}
-          onToggleTasks={() => setShowTasks((prev) => !prev)}
-          onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-        />
+            {/* Search and Quick Filters */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-2">
+              {/* Search */}
+              <div className="flex-1">
+                <label className="w-full text-sm text-[#91929E]">
+                  <span className="sr-only">Search tasks</span>
+                  <div className="flex items-center gap-2 rounded-full bg-white border border-[#E4E6E8] md:border-gray-200 px-3 py-2.5">
+                    <img
+                      src="/icons/search.svg"
+                      alt=""
+                      className="h-4 w-4 shrink-0"
+                    />
+                    <input
+                      type="text"
+                      value={superFilters.search || ""}
+                      onChange={(e) => handleFilterChange("search", e.target.value)}
+                      placeholder="Search by title, project, or assignee"
+                      className="w-full bg-transparent text-sm text-[#0A1629] placeholder:text-[#91929E] focus:outline-none"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              {/* Quick Filters */}
+              <div className="flex-1 min-w-0">
+                <TaskQuickFilters
+                  superFilters={superFilters}
+                  onFilterChange={handleFilterChange}
+                  onMultiSelectFilter={handleMultiSelectFilter}
+                  users={users}
+                  projects={projects}
+                  showTasks={showTasks}
+                  showSubtasks={showSubtasks}
+                  onToggleTasks={() => setShowTasks((prev) => !prev)}
+                  onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+                  className="flex-wrap"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col h-full pb-5 gap-y-2 rounded-xl overflow-hidden overflow-y-auto">
+              {shouldGroupOverdue ? (
+                <div className="space-y-6">
+                  {overdueTaskGroups.map((group) => (
+                    <TaskGroup
+                      key={group.key}
+                      group={group}
+                      showSubtasks={showSubtasks}
+                      showTasks={showTasks}
+                      filter={filter}
+                    />
+                  ))}
+                </div>
+              ) : shouldGroupCompleted ? (
+                <div className="space-y-6">
+                  {completedTaskGroups.map((group) => (
+                    <TaskGroup
+                      key={group.key}
+                      group={group}
+                      showSubtasks={showSubtasks}
+                      showTasks={showTasks}
+                      filter={filter}
+                    />
+                  ))}
+                </div>
+              ) : shouldGroupOnHold ? (
+                <div className="space-y-6">
+                  {onHoldTaskGroups.map((group) => (
+                    <TaskGroup
+                      key={group.key}
+                      group={group}
+                      showSubtasks={showSubtasks}
+                      showTasks={showTasks}
+                      filter={filter}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <TaskList
+                  tasks={filteredTasks}
+                  showSubtasks={showSubtasks}
+                  showTasks={showTasks}
+                  filter={filter}
+                />
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-
-      {shouldGroupOverdue ? (
-        <div className="space-y-6">
-          {overdueTaskGroups.map((group) => (
-            <TaskGroup
-              key={group.key}
-              group={group}
-              showSubtasks={showSubtasks}
-              showTasks={showTasks}
-              filter={filter}
-            />
-          ))}
-        </div>
-      ) : shouldGroupCompleted ? (
-        <div className="space-y-6">
-          {completedTaskGroups.map((group) => (
-            <TaskGroup
-              key={group.key}
-              group={group}
-              showSubtasks={showSubtasks}
-              showTasks={showTasks}
-              filter={filter}
-            />
-          ))}
-        </div>
-      ) : shouldGroupOnHold ? (
-        <div className="space-y-6">
-          {onHoldTaskGroups.map((group) => (
-            <TaskGroup
-              key={group.key}
-              group={group}
-              showSubtasks={showSubtasks}
-              showTasks={showTasks}
-              filter={filter}
-            />
-          ))}
-        </div>
-      ) : (
-        <TaskList
-          tasks={filteredTasks}
-          showSubtasks={showSubtasks}
-          showTasks={showTasks}
-          filter={filter}
-        />
-      )}
     </div>
   );
 };

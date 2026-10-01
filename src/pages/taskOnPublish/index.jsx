@@ -15,6 +15,7 @@ import FilterMenu from "../../components/projects/FilterMenu";
 import { assetPath } from "../../utils/assetPath";
 import MoveToCampaignModal from "../../components/tasks/MoveToCampaignModal";
 import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
+import LoadingState from "../companyTasks/LoadingState";
 
 const isSubTaskItem = (task) =>
   Boolean(task?.parentTask || task?.isSubTask || task?.type === "subtask");
@@ -358,11 +359,7 @@ const TaskOnPublish = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-screen w-full flexCenter">
-        <img src={assetPath("icons/loading.svg")} alt="" />
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (

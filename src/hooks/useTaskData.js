@@ -6,12 +6,24 @@ export const useTaskData = (allTasksData, todayTasksData, filter) => {
   const isTodayFilter = filter === "today";
 
   useEffect(() => {
+    let rawItems = [];
+
     if (isTodayFilter) {
-      setFilteredTasks(todayTasksData?.filteredItems || []);
-      return;
+      rawItems = todayTasksData?.filteredItems || [];
+    } else {
+      rawItems = allTasksData?.filteredItems || [];
     }
 
-    setFilteredTasks(allTasksData?.filteredItems || []);
+    // Filter out subtasks that are on-review
+    const itemsWithoutOnReviewSubtasks = rawItems.filter((item) => {
+      const isSubTask = Boolean(item.parentTask || item.isSubTask);
+      if (isSubTask && item.status === "on-review") {
+        return false;
+      }
+      return true;
+    });
+
+    setFilteredTasks(itemsWithoutOnReviewSubtasks);
   }, [allTasksData, todayTasksData, isTodayFilter]);
 
   const getFilterOptions = () => {

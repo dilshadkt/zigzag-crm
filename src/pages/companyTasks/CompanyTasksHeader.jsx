@@ -14,26 +14,25 @@ const CompanyTasksHeader = ({
     hasActiveFilters,
 }) => {
     return (
-        <div className="sticky top-0 z-50 bg-[#f4f9fd]">
-            <div className="flex sticky top-0 items-start justify-between">
-                <div className="flex items-center sticky top-0 gap-x-2">
-                    <Navigator />
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        {title}
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">{taskCount} tasks</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                <Navigator />
+                <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-medium text-gray-800 leading-snug">
+                        {title} - ({taskCount})
+                    </h3>
                 </div>
-                <div className="flex items-center gap-x-2 relative">
-                    <SuperFilterPanel
-                        users={users}
-                        projects={projects}
-                        superFilters={superFilters}
-                        handleFilterChange={handleFilterChange}
-                        handleMultiSelectFilter={handleMultiSelectFilter}
-                        clearAllFilters={clearAllFilters}
-                        hasActiveFilters={hasActiveFilters}
-                    />
-                </div>
+            </div>
+            <div className="flex gap-2 shrink-0 self-end sm:self-auto">
+                <SuperFilterPanel
+                    users={users}
+                    projects={projects}
+                    superFilters={superFilters}
+                    handleFilterChange={handleFilterChange}
+                    handleMultiSelectFilter={handleMultiSelectFilter}
+                    clearAllFilters={clearAllFilters}
+                    hasActiveFilters={hasActiveFilters}
+                />
             </div>
         </div>
     );

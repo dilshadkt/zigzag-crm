@@ -11,7 +11,7 @@ import Task from "../../components/shared/task";
 import FilterMenu from "../../components/projects/FilterMenu";
 import { assetPath } from "../../utils/assetPath";
 import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
-
+import LoadingState from "../companyTasks/LoadingState";
 const TaskOnReview = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -444,11 +444,7 @@ const TaskOnReview = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-screen w-full flexCenter">
-        <img src={assetPath("icons/loading.svg")} alt="" />
-      </div>
-    );
+    return <LoadingState title={getFilterTitle()} />;
   }
 
   return (
@@ -503,10 +499,10 @@ const TaskOnReview = () => {
                   {(selectedTask.type === "subtask" ||
                     selectedTask.itemType === "subtask" ||
                     selectedTask.parentTask) && (
-                    <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700">
-                      Subtask
-                    </span>
-                  )}
+                      <span className="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700">
+                        Subtask
+                      </span>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 text-sm">
@@ -576,22 +572,14 @@ const TaskOnReview = () => {
           ) : (
             <div className="">
               {/* Header */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6">
-                <div className="flex items-start gap-2 md:gap-3 min-w-0">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
                   <Navigator />
                   <div className="min-w-0">
                     <h3 className="text-base md:text-lg font-medium text-gray-800 leading-snug">
-                      {getFilterTitle()}
+                      {getFilterTitle()} - ({tasksOnReviewData.statistics.total})
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      {filteredTasks.length} item
-                      {filteredTasks.length !== 1 ? "s" : ""} on review
-                      {tasksOnReviewData?.statistics && (
-                        <span className="ml-2">
-                          ({tasksOnReviewData.statistics.total} total)
-                        </span>
-                      )}
-                    </p>
+
                   </div>
                 </div>
 
@@ -609,48 +597,52 @@ const TaskOnReview = () => {
                 </div>
               </div>
 
-              {/* Search */}
-              <div className="mb-3 md:mb-4">
-                <label className="w-full text-sm text-[#91929E]">
-                  <span className="sr-only">Search tasks</span>
-                  <div className="flex items-center gap-2 rounded-full bg-white border border-[#E4E6E8] md:border-gray-200 px-3 py-2.5">
-                    <img
-                      src="/icons/search.svg"
-                      alt=""
-                      className="h-4 w-4 shrink-0"
-                    />
-                    <input
-                      type="text"
-                      value={filters.search}
-                      onChange={(e) =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          search: e.target.value,
-                        }))
-                      }
-                      placeholder="Search by title, project, or assignee"
-                      className="w-full bg-transparent text-sm text-[#0A1629] placeholder:text-[#91929E] focus:outline-none"
-                    />
-                  </div>
-                </label>
-              </div>
+              {/* Search and Quick Filters */}
+              <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-2">
+                {/* Search */}
+                <div className="flex-1">
+                  <label className="w-full text-sm text-[#91929E]">
+                    <span className="sr-only">Search tasks</span>
+                    <div className="flex items-center gap-2 rounded-full bg-white border border-[#E4E6E8] md:border-gray-200 px-3 py-2.5">
+                      <img
+                        src="/icons/search.svg"
+                        alt=""
+                        className="h-4 w-4 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={filters.search}
+                        onChange={(e) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            search: e.target.value,
+                          }))
+                        }
+                        placeholder="Search by title, project, or assignee"
+                        className="w-full bg-transparent text-sm text-[#0A1629] placeholder:text-[#91929E] focus:outline-none"
+                      />
+                    </div>
+                  </label>
+                </div>
 
-              {/* Quick Filters */}
-              <div className="mb-4 md:mb-6">
-                <TaskQuickFilters
-                  superFilters={superFilters}
-                  onFilterChange={handleSuperFilterChange}
-                  onMultiSelectFilter={handleMultiSelectFilter}
-                  users={getFilterOptions(tasksOnReviewData?.tasks || []).users}
-                  projects={
-                    getFilterOptions(tasksOnReviewData?.tasks || []).projects
-                  }
-                  showTasks={showTasks}
-                  showSubtasks={showSubtasks}
-                  onToggleTasks={() => setShowTasks((prev) => !prev)}
-                  onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-                  className="flex-wrap"
-                />
+                {/* Quick Filters */}
+                <div className="shrink-0 overflow-x-auto">
+                  <TaskQuickFilters
+                    superFilters={superFilters}
+                    onFilterChange={handleSuperFilterChange}
+                    onMultiSelectFilter={handleMultiSelectFilter}
+                    users={getFilterOptions(tasksOnReviewData?.tasks || []).users}
+                    projects={
+                      getFilterOptions(tasksOnReviewData?.tasks || []).projects
+                    }
+                    showTasks={showTasks}
+                    showSubtasks={showSubtasks}
+                    onToggleTasks={() => setShowTasks((prev) => !prev)}
+                    onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
+                    className="flex-nowrap"
+                    nowrap={true}
+                  />
+                </div>
               </div>
 
               {/* Tasks List */}
