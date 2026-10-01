@@ -112,27 +112,6 @@ const Overview = ({ employeeId, selectedMonth, isLoading, statistics }) => {
           <h4 className="font-semibold text-lg text-gray-800">Task Progress</h4>
           <span className="text-xs text-gray-500">{monthLabel}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="text-2xl font-bold text-blue-600">
-            {completionRate}%
-          </div>
-          <div className="text-xs text-gray-500">Task Completion</div>
-        </div>
-      </div>
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>Subtask Completion Rate</span>
-          <span>
-            {completedSubTasks} of {totalSubTasks} tasks completed
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${completionRate}%` }}
-          ></div>
-        </div>
       </div>
       {/* Subtask Statistics */}
       <div className="grid grid-cols-3 gap-4 flex-1">
