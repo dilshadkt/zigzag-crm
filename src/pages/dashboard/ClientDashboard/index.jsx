@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import logo from "../../../assets/icons/logo.svg";
 import { useAuth } from "../../../hooks/useAuth";
-import { useDispatch } from "react-redux";
-import { logout } from "../../../store/slice/authSlice";
+import { signOutOfApp } from "../../../pwa/closeGuard";
 import { useGetLeads } from "../../../features/leads/api";
 import { useProjectDetails } from "../../../api/hooks";
 
@@ -17,8 +16,6 @@ const ClientDashboard = () => {
   const pathParts = location.pathname.split("/").filter(Boolean);
   const activeTab = pathParts[pathParts.length - 1] || "dashboard";
   
-  const dispatch = useDispatch();
-
   const projectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
   const { data: currentProject, isLoading: projectLoading } = useProjectDetails(projectId);
   const branchLogins = currentProject?.customFields?.branchLogins || (typeof user?.project === "object" ? user.project.customFields?.branchLogins : null) || [];
@@ -60,9 +57,7 @@ const ClientDashboard = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
-    localStorage.removeItem("token");
-    window.location.href = "/portal/login";
+    signOutOfApp("/portal/login");
   };
 
   return (

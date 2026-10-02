@@ -1,0 +1,24 @@
+{
+  "name": "Zigzag CRM",
+  "short_name": "Zigzag",
+  "description": "Workplace CRM for teams. Leads, projects, and attendance.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F4F9FD",
+  "theme_color": "#2155A3",
+  "icons": [
+    {
+      "src": "/icons/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

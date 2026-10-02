@@ -14,6 +14,9 @@ import { assetPath } from "./utils/assetPath";
 import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal";
 import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
 import BrowserNotificationPrompt from "./components/shared/BrowserNotificationPrompt";
+import PwaInstallBanner from "./components/shared/PwaInstallBanner";
+import AppCloseGuard from "./components/shared/AppCloseGuard";
+import { allowAppClose } from "./pwa/closeGuard";
 import NetworkReconnectToast from "./components/shared/NetworkReconnectToast";
 
 const isDesktop = typeof window !== "undefined" && window.desktop;
@@ -109,6 +112,7 @@ function App() {
             });
         }
       } catch (error) {
+        allowAppClose();
         dispatch(logout());
         // Disconnect socket on logout
         socketService.disconnect();
@@ -120,6 +124,10 @@ function App() {
     };
     checkAuth();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthChecked && !user) allowAppClose();
+  }, [isAuthChecked, user]);
 
   // Real-time task status updates (toast/sound/bell live in GlobalNudges)
   useEffect(() => {
@@ -161,6 +169,8 @@ function App() {
         <>
           <Router>
             <AppRoutes />
+            {!publicPath && user && <AppCloseGuard />}
+            {!publicPath && user && <PwaInstallBanner />}
             {!publicPath && user && <BrowserNotificationPrompt />}
           </Router>
 

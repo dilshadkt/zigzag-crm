@@ -5,6 +5,7 @@ import SummaryCards from "./components/SummaryCards";
 import AttendanceFilter, { getDateRanges } from "./components/AttendanceFilter";
 import AttendanceTable from "./components/AttendanceTable";
 import AttendanceCalendar from "./components/AttendanceCalendar";
+import AttendanceReport from "./components/AttendanceReport";
 import AddAttendanceDrawer from "./components/AddAttendanceDrawer";
 import {
   useAttendanceData,
@@ -60,6 +61,7 @@ const useAttendanceState = () => {
   );
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [employeeTab, setEmployeeTab] = useState("calendar");
 
   return {
     searchTerm,
@@ -71,6 +73,8 @@ const useAttendanceState = () => {
     attendanceData,
     isAddModalOpen,
     setIsAddModalOpen,
+    employeeTab,
+    setEmployeeTab,
     ...handlers,
   };
 };
@@ -139,6 +143,8 @@ const Attendance = () => {
     attendanceData,
     isAddModalOpen,
     setIsAddModalOpen,
+    employeeTab,
+    setEmployeeTab,
     handleSearchChange,
     handleFilterChange,
     handleCustomDateChange,
@@ -228,12 +234,28 @@ const Attendance = () => {
   if (!hasManagementPermissions) {
     // View-only users see calendar view
     return (
-      <div className="h-full flex overflow-hidden flex-col ">
-        <div className="h-full flex flex-col">
-          {/* Attendance Calendar */}
-          <div className="flex-1 min-h-0">
-            <AttendanceCalendar />
-          </div>
+      <div className="h-full flex overflow-hidden flex-col">
+        <div className="flex gap-2 px-3 pt-3 pb-2 shrink-0">
+          {[
+            { id: "report", label: "Report" },
+            { id: "calendar", label: "Calendar" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setEmployeeTab(tab.id)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                employeeTab === tab.id
+                  ? "bg-white text-[#3F8CFF] shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1 min-h-0">
+          {employeeTab === "report" ? <AttendanceReport /> : <AttendanceCalendar />}
         </div>
       </div>
     );

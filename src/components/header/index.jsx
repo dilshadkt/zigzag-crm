@@ -25,11 +25,13 @@ import SearchBar from "./components/SearchBar";
 import AttendanceStatus from "./components/AttendanceStatus";
 import ActionButtons from "./components/ActionButtons";
 import AttendanceModal from "./components/AttendanceModal";
+import BreakModal from "./components/BreakModal";
 import MobileSidebar from "./components/MobileSidebar";
 import UserProfile from "./components/UserProfile";
 import NotificationBar from "../notificationBar";
 import AttendanceRequestsDrawer from "../../features/attendance/components/AttendanceRequestsDrawer";
 import { usePendingCorrectionRequests } from "../../features/attendance/hooks/useAttendanceMutations";
+import { signOutOfApp } from "../../pwa/closeGuard";
 
 const DashboardHeader = () => {
   // State management
@@ -74,6 +76,7 @@ const DashboardHeader = () => {
     isEndingBreak,
     clockInError,
     clockOutError,
+    endBreakError,
     isEndShiftBlocked,
     pendingTasksWithoutReasonCount,
   } = useAttendanceManager();
@@ -321,7 +324,7 @@ const DashboardHeader = () => {
   };
 
   const handleLogout = () => {
-    navigate("/auth/signin");
+    signOutOfApp("/auth/signin");
   };
 
   const endShift = async () => {
@@ -364,13 +367,12 @@ const DashboardHeader = () => {
           isShiftActive={isShiftActive}
           isOnBreak={isOnBreak}
           shiftElapsedTime={shiftElapsedTime}
+          breaks={currentStatus?.breaks}
           isClockingOut={isClockingOut}
           clockOutError={clockOutError}
           onEndShift={endShift}
           onStartBreak={handleStartBreak}
-          onEndBreak={handleEndBreak}
           isStartingBreak={isStartingBreak}
-          isEndingBreak={isEndingBreak}
           isEndShiftBlocked={isEndShiftBlocked}
           pendingTasksWithoutReasonCount={pendingTasksWithoutReasonCount}
         />
@@ -433,6 +435,14 @@ const DashboardHeader = () => {
         isProcessingAttendance={false}
         clockInError={clockInError}
         onClockIn={handleClockIn}
+      />
+
+      <BreakModal
+        isOpen={isOnBreak}
+        breaks={currentStatus?.breaks}
+        isEndingBreak={isEndingBreak}
+        endBreakError={endBreakError}
+        onEndBreak={handleEndBreak}
       />
 
       {/* Mobile Sidebar */}

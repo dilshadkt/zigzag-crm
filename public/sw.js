@@ -6,12 +6,15 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Required for the browser to offer "Install app". Requests still go to the network.
+self.addEventListener("fetch", () => {});
+
 const showLeadNotification = (data = {}) => {
   const title = data.title || "New lead";
   const options = {
     body: data.body || "A new lead just arrived",
-    icon: "/image/logo.svg",
-    badge: "/image/logo.svg",
+    icon: "/icons/pwa-192.png",
+    badge: "/icons/pwa-192.png",
     tag: data.tag || (data.leadId ? `lead-${data.leadId}` : "new-lead"),
     renotify: true,
     requireInteraction: true,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IoFingerPrintOutline } from "react-icons/io5";
 import { getUserLocation, getDeviceInfo } from "../../../utils/locationUtils";
+import { signOutOfApp } from "../../../pwa/closeGuard";
 
 const AttendanceModal = ({
   isOpen,
@@ -221,7 +222,7 @@ const AttendanceModal = ({
           <button
             type="button"
             onClick={() => {
-              window.location.href = "/auth/signin";
+              signOutOfApp("/auth/signin");
             }}
             className="w-full rounded-xl border border-red-100 bg-red-50 py-2.5 text-sm font-medium text-red-600"
           >

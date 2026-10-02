@@ -158,7 +158,7 @@ export const showLeadBrowserNotification = async (data = {}) => {
 
   const notification = new Notification(payload.title, {
     body: payload.body,
-    icon: "/image/logo.svg",
+    icon: "/icons/pwa-192.png",
     tag: payload.tag,
     renotify: true,
     requireInteraction: true,

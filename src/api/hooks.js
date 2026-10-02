@@ -2318,6 +2318,13 @@ export const useClockOut = () => {
     },
     retryDelay: 1000,
     onSuccess: () => {
+      queryClient.setQueryData(["attendanceStatus"], (current) => {
+        const prev = current || {};
+        const attendance = prev.attendance
+          ? { ...prev.attendance, status: "checked-out" }
+          : { status: "checked-out" };
+        return { ...prev, success: true, status: "checked-out", attendance };
+      });
       queryClient.invalidateQueries(["attendanceStatus"]);
       queryClient.invalidateQueries(["employeeAttendanceHistory"]);
       queryClient.invalidateQueries(["dailyAttendanceReport"]);

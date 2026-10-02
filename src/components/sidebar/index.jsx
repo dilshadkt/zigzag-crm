@@ -16,6 +16,7 @@ import {
 } from "../../api/hooks";
 import { useTicketCounts } from "../../features/tickets/hooks/useTickets";
 import SupportSection from "./SupportSection";
+import { signOutOfApp } from "../../pwa/closeGuard";
 import SidebarMenuItem from "./SidebarMenuItem";
 
 const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings", "tickets"];
@@ -241,7 +242,7 @@ const Sidebar = () => {
   };
 
   const handleLogout = () => {
-    navigate("/auth/signin");
+    signOutOfApp("/auth/signin");
   };
   return (
     <section

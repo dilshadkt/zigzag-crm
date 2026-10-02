@@ -2,7 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/clipboard.png" />
+    <link rel="icon" type="image/png" href="/icons/pwa-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#2155A3" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Zigzag CRM" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Meta tags for CRM project -->
@@ -53,6 +59,33 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var key = "crm_block_app_close";
+        try {
+          var auth = JSON.parse(localStorage.getItem("authState") || "null");
+          if (auth && auth.isAuthenticated && sessionStorage.getItem(key) !== "0") {
+            localStorage.setItem(key, "1");
+            sessionStorage.setItem(key, "1");
+          }
+        } catch (e) {}
+
+        var guard = function (event) {
+          var block = false;
+          try {
+            block =
+              sessionStorage.getItem(key) !== "0" &&
+              (sessionStorage.getItem(key) === "1" || localStorage.getItem(key) === "1");
+          } catch (e) {}
+          if (!block) return;
+          event.preventDefault();
+          event.returnValue = "Check out or log out before closing Zigzag CRM.";
+          return event.returnValue;
+        };
+        window.addEventListener("beforeunload", guard);
+        window.onbeforeunload = guard;
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
