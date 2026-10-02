@@ -18,13 +18,11 @@ const Tickets = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [ticketToEdit, setTicketToEdit] = useState(null);
 
-  const canManage =
-    isCompany ||
-    hasPermission("tickets", "view") ||
-    hasPermission("tickets", "viewAll");
+  const canSeeAll = isCompany || hasPermission("tickets", "viewAll");
   const canCreate = isCompany || hasPermission("tickets", "create");
   const canAssign = isCompany || hasPermission("tickets", "assign");
-  const isAssigneeView = !canManage;
+  const canMention = canSeeAll || canAssign || hasPermission("tickets", "edit");
+  const isAssigneeView = !canSeeAll;
   const canChangeStatus =
     isCompany ||
     hasPermission("tickets", "changeStatus") ||
@@ -58,8 +56,8 @@ const Tickets = () => {
           </h2>
           <p className="text-xs text-slate-500 hidden md:block mt-0.5">
             {isAssigneeView
-              ? "Issues assigned to you. Add notes and close them when done."
-              : "Raise tickets against clients, assign owners, and track progress."}
+              ? "Issues assigned to you, and issues that mention you."
+              : "Raise tickets against clients, assign owners, and mention people who should see them."}
             {openCount ? ` ${openCount} open.` : ""}
           </p>
         </div>
@@ -138,6 +136,7 @@ const Tickets = () => {
           setSelectedTicket(null);
         }}
         canAssign={canAssign}
+        canMention={canMention}
         canChangeStatus={canChangeStatus}
         isAssigneeView={isAssigneeView}
         isAdmin={user?.role === "company-admin" || isCompany}

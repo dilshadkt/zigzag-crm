@@ -36,6 +36,12 @@ export const ticketApi = {
     });
     return response.data;
   },
+  updateMentions: async (ticketId, mentions) => {
+    const response = await apiClient.patch(`/tickets/${ticketId}/mentions`, {
+      mentions,
+    });
+    return response.data;
+  },
   updateTicketStatus: async (ticketId, status) => {
     const response = await apiClient.patch(`/tickets/${ticketId}/status`, {
       status,

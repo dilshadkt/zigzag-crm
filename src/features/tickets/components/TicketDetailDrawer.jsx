@@ -6,6 +6,7 @@ import { useGetAllEmployees } from "../../../api/hooks";
 import {
   useAddTicketComment,
   useAssignTicket,
+  useUpdateTicketMentions,
   useUpdateTicketStatus,
   useDeleteTicket,
 } from "../hooks/useTickets";
@@ -21,18 +22,21 @@ import {
 import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
 import FileAndLinkUpload from "../../../components/shared/fileUpload";
 import PersonBadge from "./PersonBadge";
+import MentionPicker from "./MentionPicker";
 
 const TicketDetailDrawer = ({
   ticket,
   onClose,
   canAssign,
+  canMention,
   canChangeStatus,
   isAssigneeView,
   isAdmin,
   onEdit,
 }) => {
-  const { data: employeesData } = useGetAllEmployees(!!ticket && canAssign, { view: 'select' });
+  const { data: employeesData } = useGetAllEmployees(!!ticket && (canAssign || canMention), { view: 'select' });
   const assignMutation = useAssignTicket();
+  const mentionMutation = useUpdateTicketMentions();
   const statusMutation = useUpdateTicketStatus();
   const commentMutation = useAddTicketComment();
   const deleteMutation = useDeleteTicket();
@@ -55,7 +59,17 @@ const TicketDetailDrawer = ({
 
   const employees = employeesData?.employees || [];
   const isClosed = ticket.status === "closed" || ticket.status === "resolved";
-  const canClose = (canChangeStatus || isAssigneeView) && !isClosed;
+  const canClose = canChangeStatus && !isClosed;
+  const mentionIds = (ticket.mentions || []).map((person) => person._id || person);
+
+  const handleMentions = async (mentions) => {
+    try {
+      await mentionMutation.mutateAsync({ ticketId: ticket._id, mentions });
+      toast.success(mentions.length ? "Mentions updated" : "Mentions cleared");
+    } catch (error) {
+      toast.error(error?.message || "Failed to update mentions");
+    }
+  };
 
   const handleAssign = async (assignedTo) => {
     try {
@@ -184,6 +198,26 @@ const TicketDetailDrawer = ({
             )}
           </div>
 
+          <div className="bg-white rounded-2xl border border-slate-100 p-4">
+            <h3 className="mb-2 text-xs font-bold text-slate-700">Mentioned</h3>
+            {canMention ? (
+              <MentionPicker
+                employees={employees}
+                value={mentionIds}
+                onChange={handleMentions}
+                disabled={mentionMutation.isPending}
+              />
+            ) : (ticket.mentions || []).length === 0 ? (
+              <p className="text-xs text-slate-400">No one mentioned</p>
+            ) : (
+              <div className="space-y-2">
+                {ticket.mentions.map((person) => (
+                  <PersonBadge key={person._id || person} person={person} size="h-7 w-7" />
+                ))}
+              </div>
+            )}
+          </div>
+
           {isAssigneeView ? (
             <div className="bg-white rounded-2xl border border-slate-100 p-4">
               {canClose ? (
@@ -196,7 +230,9 @@ const TicketDetailDrawer = ({
                   Close issue
                 </button>
               ) : (
-                <p className="text-xs text-center text-slate-400 font-medium">This issue is closed.</p>
+                <p className="text-xs text-center text-slate-400 font-medium">
+                  {isClosed ? "This issue is closed." : "You were mentioned on this issue."}
+                </p>
               )}
             </div>
           ) : (

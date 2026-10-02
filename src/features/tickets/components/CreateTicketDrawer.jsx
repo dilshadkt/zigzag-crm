@@ -5,6 +5,7 @@ import { useCompanyProjects, useGetAllEmployees } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import { useCreateTicket, useUpdateTicket } from "../hooks/useTickets";
 import { PRIORITY_OPTIONS, TYPE_OPTIONS, personName } from "../utils";
+import MentionPicker from "./MentionPicker";
 import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
 import FileAndLinkUpload from "../../../components/shared/fileUpload";
 import { processAttachments } from "../../../lib/attachmentUtils";
@@ -18,6 +19,7 @@ const emptyForm = {
   type: "issue",
   priority: "medium",
   assignedTo: "",
+  mentions: [],
   attachments: [],
 };
 
@@ -40,6 +42,7 @@ const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
           type: ticketToEdit.type || "issue",
           priority: ticketToEdit.priority || "medium",
           assignedTo: ticketToEdit.assignedTo?._id || ticketToEdit.assignedTo || "",
+          mentions: (ticketToEdit.mentions || []).map((person) => person._id || person),
           attachments: ticketToEdit.attachments || [],
         });
       } else {
@@ -90,6 +93,7 @@ const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
         type: form.type,
         priority: form.priority,
         assignedTo: form.assignedTo || null,
+        mentions: form.mentions,
         attachments: processedAttachments,
       };
 
@@ -217,6 +221,15 @@ const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
                 onChange={(e) => setForm((prev) => ({ ...prev, assignedTo: e.target.value }))}
                 options={employeeOptions}
                 placeholder="Unassigned"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Mention</label>
+              <MentionPicker
+                employees={employeesData?.employees || []}
+                value={form.mentions}
+                onChange={(mentions) => setForm((prev) => ({ ...prev, mentions }))}
               />
             </div>
           </div>

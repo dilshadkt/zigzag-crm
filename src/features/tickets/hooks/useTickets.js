@@ -47,6 +47,14 @@ export const useUpdateTicket = () => {
   });
 };
 
+export const useUpdateTicketMentions = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ticketId, mentions }) => ticketApi.updateMentions(ticketId, mentions),
+    onSuccess: () => invalidateTickets(queryClient),
+  });
+};
+
 export const useAssignTicket = () => {
   const queryClient = useQueryClient();
   return useMutation({

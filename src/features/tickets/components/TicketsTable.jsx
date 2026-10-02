@@ -24,11 +24,11 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-slate-400">
         <p className="text-sm font-medium">
-          {isAssigneeView ? "No issues assigned to you" : "No tickets yet"}
+          {isAssigneeView ? "No issues for you" : "No tickets yet"}
         </p>
         <p className="text-xs mt-1">
           {isAssigneeView
-            ? "When someone assigns you an issue, it will show up here."
+            ? "Issues assigned to you, or that mention you, will show up here."
             : "Raise an issue or complaint against a client to get started."}
         </p>
       </div>
@@ -49,6 +49,11 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
               <div>
                 <p className="font-bold text-slate-800 text-sm">{ticket.title}</p>
                 <p className="text-slate-400 text-[10px] tracking-wider mt-0.5">{ticket.ticketNumber}</p>
+                {(ticket.mentions || []).length > 0 && (
+                  <p className="mt-1 text-[10px] font-medium text-blue-600">
+                    Mentions {ticket.mentions.map((person) => personName(person)).join(", ")}
+                  </p>
+                )}
               </div>
               <span className={`shrink-0 px-2 py-1 text-[10px] font-bold rounded-lg border ${statusStyles[ticket.status]}`}>
                 {formatStatus(ticket.status)}
@@ -115,6 +120,11 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
               <td className="py-3 px-4">
                 <p className="font-bold text-slate-800">{ticket.title}</p>
                 <p className="text-slate-400 mt-0.5">{ticket.ticketNumber}</p>
+                {(ticket.mentions || []).length > 0 && (
+                  <p className="mt-1 text-[11px] font-medium text-blue-600">
+                    Mentions {ticket.mentions.map((person) => personName(person)).join(", ")}
+                  </p>
+                )}
               </td>
               <td className="py-3 px-4">
                 <PersonBadge person={ticket.createdBy} />
