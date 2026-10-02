@@ -77,6 +77,7 @@ const CompanyDashboard = lazy(() => import("../pages/companyDashboard"));
 const LeadsPage = lazy(() => import("../pages/leads"));
 const LeadDetailsPage = lazy(() => import("../pages/leads/LeadDetails"));
 const LeadSettingsPage = lazy(() => import("../pages/leads/LeadSettings"));
+const TelecallerDesk = lazy(() => import("../features/telecaller"));
 const Billing = lazy(() => import("../pages/settings/billing"));
 const LeadDashboard = lazy(() => import("../pages/dashboard/LeadDashboard"));
 const EmployeeDashboard = lazy(() => import("../pages/dashboard/EmployeeDashboard"));
@@ -321,6 +322,42 @@ const AppRoutes = () => {
               </RouteAccess>
             }
           />
+          <Route
+            path="my-calls"
+            element={
+              <RouteAccess>
+                <TelecallerDesk view="today" />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="my-calls/overdue"
+            element={
+              <RouteAccess>
+                <TelecallerDesk view="overdue" />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="my-calls/upcoming"
+            element={
+              <RouteAccess>
+                <TelecallerDesk view="upcoming" />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="my-calls/leads"
+            element={
+              <RouteAccess>
+                <TelecallerDesk view="leads" />
+              </RouteAccess>
+            }
+          />
+          <Route path="leads/my-desk" element={<Navigate to="/my-calls" replace />} />
+          <Route path="leads/my-desk/overdue" element={<Navigate to="/my-calls/overdue" replace />} />
+          <Route path="leads/my-desk/upcoming" element={<Navigate to="/my-calls/upcoming" replace />} />
+          <Route path="leads/my-desk/leads" element={<Navigate to="/my-calls/leads" replace />} />
           <Route
             path="leads/:leadId"
             element={

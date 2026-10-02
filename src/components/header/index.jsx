@@ -62,6 +62,7 @@ const DashboardHeader = () => {
   // Attendance management
   const {
     currentStatus,
+    todayRecords,
     isShiftActive,
     isOnBreak,
     shiftStartTime,
@@ -213,6 +214,10 @@ const DashboardHeader = () => {
       return true;
     }
 
+    if (item.title === "My Calls" && user?.role === "client") {
+      return false;
+    }
+
     // Dashboard, Board, and Settings are always accessible to everyone
     if (
       item.routeKey === "dashboard" ||
@@ -249,14 +254,15 @@ const DashboardHeader = () => {
   }, [isRunning, remainingTime, dispatch]);
 
   useEffect(() => {
-    let interval;
-    if (isShiftActive && shiftStartTime) {
-      interval = setInterval(() => {
-        const now = new Date();
-        const elapsed = Math.floor((now - shiftStartTime) / 1000);
-        setShiftElapsedTime(elapsed);
-      }, 1000);
+    if (!isShiftActive || !shiftStartTime) {
+      setShiftElapsedTime(0);
+      return undefined;
     }
+    const tick = () => {
+      setShiftElapsedTime(Math.max(0, Math.floor((Date.now() - shiftStartTime.getTime()) / 1000)));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [isShiftActive, shiftStartTime]);
 
@@ -368,6 +374,7 @@ const DashboardHeader = () => {
           isOnBreak={isOnBreak}
           shiftElapsedTime={shiftElapsedTime}
           breaks={currentStatus?.breaks}
+          todayRecords={todayRecords}
           isClockingOut={isClockingOut}
           clockOutError={clockOutError}
           onEndShift={endShift}

@@ -21,6 +21,11 @@ export const useRouteAccess = () => {
     }
 
     const allowedRoutes = user.positionDetails.allowedRoutes;
+    const isLeadDetail =
+      /^\/leads\/(?!settings(?:\/|$)|my-desk(?:\/|$))[^/]+$/.test(route);
+    if (isLeadDetail && allowedRoutes.includes("my-calls")) {
+      return true;
+    }
     return allowedRoutes.some((allowedRoute) => {
       // Handle exact matches and wildcard routes
       if (allowedRoute === "*" || allowedRoute === "/") return true;
@@ -40,6 +45,7 @@ export const useRouteAccess = () => {
         employees: "/employees",
         messenger: "/messenger",
         leads: "/leads",
+        "my-calls": "/my-calls",
         "task-on-review": "/task-on-review",
         settings: "/settings",
         "lead-dashboard": "/lead-dashboard",

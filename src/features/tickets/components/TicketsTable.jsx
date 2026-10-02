@@ -7,6 +7,7 @@ import {
   statusStyles,
   typeStyles,
 } from "../utils";
+import PersonBadge from "./PersonBadge";
 
 const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
   if (isLoading) {
@@ -69,7 +70,11 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
             </div>
             
             <div className="mt-4 pt-3 border-t border-slate-50 flex flex-wrap items-center justify-between text-xs gap-3">
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
+                 <span className="text-[10px] font-semibold text-slate-400 mb-0.5">Created by</span>
+                 <PersonBadge person={ticket.createdBy} />
+              </div>
+              <div className="flex flex-col items-end text-right">
                  <span className="text-[10px] font-semibold text-slate-400 mb-0.5">Client</span>
                  <span className="font-semibold text-slate-700">{ticket.project?.name || "—"}</span>
               </div>
@@ -89,6 +94,7 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
         <thead>
           <tr className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
             <th className="py-2.5 px-4 text-xs font-bold text-slate-500">Ticket</th>
+            <th className="py-2.5 px-4 text-xs font-bold text-slate-500">Created by</th>
             <th className="py-2.5 px-4 text-xs font-bold text-slate-500">Client</th>
             <th className="py-2.5 px-4 text-xs font-bold text-slate-500">Type</th>
             <th className="py-2.5 px-4 text-xs font-bold text-slate-500">Priority</th>
@@ -109,6 +115,9 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
               <td className="py-3 px-4">
                 <p className="font-bold text-slate-800">{ticket.title}</p>
                 <p className="text-slate-400 mt-0.5">{ticket.ticketNumber}</p>
+              </td>
+              <td className="py-3 px-4">
+                <PersonBadge person={ticket.createdBy} />
               </td>
               <td className="py-3 px-4 font-semibold">{ticket.project?.name || "—"}</td>
               <td className="py-3 px-4">

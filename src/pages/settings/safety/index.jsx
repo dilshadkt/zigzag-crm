@@ -26,7 +26,8 @@ import {
   FiFileText,
   FiChevronRight,
   FiPlus,
-  FiVideo
+  FiVideo,
+  FiPhone
 } from "react-icons/fi";
 import { MdSecurity, MdHistory, MdDevices, MdEdit } from "react-icons/md";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -174,6 +175,7 @@ const MODULES = [
   { id: "employees", type: "route", label: "Team Directory", icon: <FiUsers />, desc: "Workforce data management", permissionKey: "employees" },
   { id: "messenger", type: "route", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub", permissionKey: null },
   { id: "leads", type: "route", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking", permissionKey: "leads" },
+  { id: "my-calls", type: "route", label: "My Calls", icon: <FiPhone />, desc: "Telecaller desk for assigned leads and follow-ups", permissionKey: null },
   { id: "lead-dashboard", type: "route", label: "Lead Dashboard", icon: <FiBarChart2 />, desc: "Sales & performance analytics hub", permissionKey: null },
   { id: "leaderboard", type: "route", label: "Leaderboard", icon: <FiBarChart2 />, desc: "Performance ranking & stats", permissionKey: null },
   { id: "hr-dashboard", type: "route", label: "HR Dashboard", icon: <FiUsers />, desc: "Workforce & attendance analytics", permissionKey: null },

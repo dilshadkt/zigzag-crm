@@ -59,33 +59,6 @@
 
   <body>
     <div id="root"></div>
-    <script>
-      (function () {
-        var key = "crm_block_app_close";
-        try {
-          var auth = JSON.parse(localStorage.getItem("authState") || "null");
-          if (auth && auth.isAuthenticated && sessionStorage.getItem(key) !== "0") {
-            localStorage.setItem(key, "1");
-            sessionStorage.setItem(key, "1");
-          }
-        } catch (e) {}
-
-        var guard = function (event) {
-          var block = false;
-          try {
-            block =
-              sessionStorage.getItem(key) !== "0" &&
-              (sessionStorage.getItem(key) === "1" || localStorage.getItem(key) === "1");
-          } catch (e) {}
-          if (!block) return;
-          event.preventDefault();
-          event.returnValue = "Check out or log out before closing Zigzag CRM.";
-          return event.returnValue;
-        };
-        window.addEventListener("beforeunload", guard);
-        window.onbeforeunload = guard;
-      })();
-    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

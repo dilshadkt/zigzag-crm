@@ -20,6 +20,7 @@ import {
 } from "../utils";
 import SearchableSelect from "../../../components/pages/campaigns/SearchableSelect";
 import FileAndLinkUpload from "../../../components/shared/fileUpload";
+import PersonBadge from "./PersonBadge";
 
 const TicketDetailDrawer = ({
   ticket,
@@ -113,9 +114,10 @@ const TicketDetailDrawer = ({
               {ticket.ticketNumber}
             </p>
             <h2 className="text-[17px] font-bold text-slate-900 mt-1">{ticket.title}</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              {ticket.project?.name || "Client"} · raised by {personName(ticket.createdBy)}
-            </p>
+            <div className="mt-2">
+              <PersonBadge person={ticket.createdBy} size="h-8 w-8" />
+              <p className="mt-1 text-xs text-slate-500">{ticket.project?.name || "Client"}</p>
+            </div>
           </div>
           <div className="flex items-center gap-1">
             {!isClosed && onEdit && (

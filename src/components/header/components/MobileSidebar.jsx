@@ -99,9 +99,12 @@ const MobileSidebar = ({
            overflow-y-auto gap-y-1 mt-5 text-[#7D8592]">
             {filteredSidebar.length > 0 ? (
               filteredSidebar.map((item, index) => {
-                const hasChildren = item.children && item.children.length > 0;
+                const isMyCalls = item.routeKey === "my-calls";
+                const hasChildren = !isMyCalls && item.children && item.children.length > 0;
                 const isOpenMenu = openMenus[item.title];
-                const isActive = pathname === item.path || (hasChildren && item.children.some(child => pathname === child.path));
+                const isActive = isMyCalls
+                  ? pathname.startsWith("/my-calls")
+                  : pathname === item.path || (hasChildren && item.children.some(child => pathname === child.path));
                 const taskCount = getTaskCount(item);
 
                 return (

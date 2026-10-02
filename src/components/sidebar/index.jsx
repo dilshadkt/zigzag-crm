@@ -197,6 +197,10 @@ const Sidebar = () => {
     }
 
     // Certain routes are always accessible to everyone
+    if (item.title === "My Calls" && user?.role === "client") {
+      return false;
+    }
+
     if (ALWAYS_ACCESSIBLE_ROUTES.includes(item.routeKey)) {
       return true;
     }

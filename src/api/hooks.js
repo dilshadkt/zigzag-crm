@@ -2279,6 +2279,26 @@ export const useBulkDeleteStickyNotes = () => {
 
 ////////////  ATTENDANCE HOOKS ⚠️⚠️⚠️⚠️⚠️ ////////////////////
 
+const mergeTodayAttendance = (current, attendance) => {
+  const today = Array.isArray(current?.today) ? [...current.today] : [];
+  if (!attendance?._id) return today;
+  const index = today.findIndex((item) => String(item._id) === String(attendance._id));
+  if (index >= 0) today[index] = { ...today[index], ...attendance };
+  else today.push(attendance);
+  return today;
+};
+
+const cacheAttendanceStatus = (queryClient, attendance) => {
+  if (!attendance) return;
+  queryClient.setQueryData(["attendanceStatus"], (current) => ({
+    ...(current || {}),
+    success: true,
+    attendance,
+    status: attendance.status,
+    today: mergeTodayAttendance(current, attendance),
+  }));
+};
+
 // Clock in - Start attendance
 export const useClockIn = () => {
   const queryClient = useQueryClient();
@@ -2294,9 +2314,11 @@ export const useClockIn = () => {
       return failureCount < 1;
     },
     retryDelay: 1000,
-    onSuccess: () => {
+    onSuccess: (result) => {
+      cacheAttendanceStatus(queryClient, result?.attendance);
       queryClient.invalidateQueries(["attendanceStatus"]);
       queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["employeeAttendance"]);
       queryClient.invalidateQueries(["dailyAttendanceReport"]);
     },
   });
@@ -2317,16 +2339,27 @@ export const useClockOut = () => {
       return failureCount < 1;
     },
     retryDelay: 1000,
-    onSuccess: () => {
-      queryClient.setQueryData(["attendanceStatus"], (current) => {
-        const prev = current || {};
-        const attendance = prev.attendance
-          ? { ...prev.attendance, status: "checked-out" }
-          : { status: "checked-out" };
-        return { ...prev, success: true, status: "checked-out", attendance };
-      });
+    onSuccess: (result) => {
+      const attendance = result?.attendance;
+      if (attendance) cacheAttendanceStatus(queryClient, attendance);
+      else {
+        queryClient.setQueryData(["attendanceStatus"], (current) => {
+          const prev = current || {};
+          const next = prev.attendance
+            ? { ...prev.attendance, status: "checked-out" }
+            : { status: "checked-out" };
+          return {
+            ...prev,
+            success: true,
+            status: "checked-out",
+            attendance: next,
+            today: mergeTodayAttendance(prev, next),
+          };
+        });
+      }
       queryClient.invalidateQueries(["attendanceStatus"]);
       queryClient.invalidateQueries(["employeeAttendanceHistory"]);
+      queryClient.invalidateQueries(["employeeAttendance"]);
       queryClient.invalidateQueries(["dailyAttendanceReport"]);
     },
   });
@@ -2347,8 +2380,10 @@ export const useStartBreak = () => {
       return failureCount < 1;
     },
     retryDelay: 1000,
-    onSuccess: () => {
+    onSuccess: (result) => {
+      cacheAttendanceStatus(queryClient, result?.attendance);
       queryClient.invalidateQueries(["attendanceStatus"]);
+      queryClient.invalidateQueries(["employeeAttendance"]);
     },
   });
 };
@@ -2368,21 +2403,26 @@ export const useEndBreak = () => {
       return failureCount < 1;
     },
     retryDelay: 1000,
-    onSuccess: () => {
+    onSuccess: (result) => {
+      cacheAttendanceStatus(queryClient, result?.attendance);
       queryClient.invalidateQueries(["attendanceStatus"]);
+      queryClient.invalidateQueries(["employeeAttendance"]);
     },
   });
 };
 
 // Get current attendance status
 export const useGetCurrentAttendanceStatus = () => {
+  const hasToken =
+    typeof window !== "undefined" && Boolean(localStorage.getItem("token"));
   return useQuery({
     queryKey: ["attendanceStatus"],
     queryFn: () => getCurrentAttendanceStatus(),
-    staleTime: 1000 * 60 * 1, // 1 minute
-    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
-    refetchOnWindowFocus: false, // Disable refetch on window focus to prevent multiple calls on scroll
-    refetchOnMount: false, // Only refetch if data is stale
+    enabled: hasToken,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    refetchInterval: 1000 * 60 * 2,
   });
 };
 
@@ -2695,6 +2735,7 @@ export const useAttendanceManager = () => {
   return {
     // Status data
     currentStatus: currentStatus?.attendance,
+    todayRecords: currentStatus?.today || [],
     isShiftActive,
     isOnBreak,
     shiftStartTime,

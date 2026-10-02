@@ -64,12 +64,8 @@ export const signIn = async (data) => {
 };
 
 export const validateSession = async () => {
-  try {
-    const response = await apiClient.post("/auth/me");
-    return { success: true, user: response.data.user };
-  } catch (error) {
-    throw new Error("User not found");
-  }
+  const response = await apiClient.post("/auth/me");
+  return { success: true, user: response.data.user };
 };
 
 export const forgetPassword = async (data) => {

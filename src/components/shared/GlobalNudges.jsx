@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { getNudges } from "../../api/service";
@@ -15,6 +15,11 @@ const GlobalNudges = () => {
   const isInitialFetch = React.useRef(true);
   const seenReviewNudgeIds = React.useRef(new Set());
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const onCallsDesk = pathname.startsWith("/my-calls");
+  const fabLift = onCallsDesk
+    ? "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] lg:bottom-28"
+    : "bottom-28";
   const queryClient = useQueryClient();
 
   const applyReviewNudgesToTaskCache = (nextNudges) => {
@@ -152,7 +157,7 @@ const GlobalNudges = () => {
   return (
     <>
       {/* Toast Notifications */}
-      <div className="fixed bottom-28 right-28 z-[9999] flex flex-col gap-3 max-w-sm pointer-events-none">
+      <div className={`fixed ${fabLift} right-4 z-[9999] flex max-w-sm flex-col gap-3 pointer-events-none lg:right-28`}>
         <AnimatePresence>
           {toastVisibleNudges.map((nudge) => (
             <motion.div
@@ -202,7 +207,7 @@ const GlobalNudges = () => {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-28 right-8 z-[50] group transition-transform hover:scale-105"
+        className={`fixed ${fabLift} right-4 z-[50] group transition-transform hover:scale-105 lg:right-8`}
         title="Performance Alerts"
       >
         <div className={`relative flex items-center justify-center w-16 h-16 ${bubbleColor} rounded-full shadow-lg border-2 border-white ring-4 ${ringColor}`}>

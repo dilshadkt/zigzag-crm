@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocation } from "react-router-dom";
 import { FiPlus, FiX } from "react-icons/fi";
 
 /**
@@ -12,6 +13,7 @@ const MobileCreateFab = ({
   ariaLabel = "Create",
   className = "",
 }) => {
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [alertsVisible, setAlertsVisible] = useState(false);
@@ -56,9 +58,14 @@ const MobileCreateFab = ({
   };
 
   // Sit in the alerts slot when the bell is hidden; otherwise stack above it.
-  const positionClass = alertsVisible
-    ? "bottom-48 right-8"
-    : "bottom-28 right-8";
+  const onCallsDesk = pathname.startsWith("/my-calls");
+  const positionClass = onCallsDesk
+    ? alertsVisible
+      ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))] right-4"
+      : "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] right-4"
+    : alertsVisible
+      ? "bottom-48 right-8"
+      : "bottom-28 right-8";
 
   return createPortal(
     <div

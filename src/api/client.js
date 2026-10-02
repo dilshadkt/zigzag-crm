@@ -64,14 +64,26 @@ apiClient.interceptors.response.use(
       reportNetworkIssue("api");
     }
 
-    if (
-      error.response?.status === 401 ||
-      error.response?.data?.message === "Invalid token"
-    ) {
+    if (error.response?.status === 401) {
+      const header =
+        error.config?.headers?.Authorization ||
+        error.config?.headers?.authorization ||
+        "";
+      const usedToken = String(header).replace(/^Bearer\s+/i, "");
+      let currentToken = null;
       try {
-        localStorage.removeItem("token");
+        currentToken = localStorage.getItem("token");
       } catch (e) { }
-      redirectToSignIn();
+      // A request that started before login, or with an older token, must not
+      // wipe the session that just signed in.
+      const staleSession = !usedToken || (currentToken && usedToken !== currentToken);
+      if (!staleSession) {
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("authState");
+        } catch (e) { }
+        redirectToSignIn();
+      }
     }
     return Promise.reject(error?.response?.data || error?.message || "Something went wrong");
   }

@@ -24,6 +24,7 @@ import {
   FiTarget,
   FiInstagram,
   FiAlertCircle,
+  FiPhone,
 } from "react-icons/fi";
 import { MdOutlineLeaderboard, MdPayments } from "react-icons/md";
 
@@ -128,6 +129,19 @@ export const SIDE_MENU = [
     icon: MdOutlineLeaderboard,
     path: "/leads",
     routeKey: "leads",
+  },
+  {
+    id: 18,
+    title: "My Calls",
+    icon: FiPhone,
+    path: "/my-calls",
+    routeKey: "my-calls",
+    children: [
+      { id: 181, title: "Today", path: "/my-calls", routeKey: "my-calls" },
+      { id: 182, title: "Overdue", path: "/my-calls/overdue", routeKey: "my-calls" },
+      { id: 183, title: "Upcoming", path: "/my-calls/upcoming", routeKey: "my-calls" },
+      { id: 184, title: "My leads", path: "/my-calls/leads", routeKey: "my-calls" },
+    ],
   },
   {
     id: 15,

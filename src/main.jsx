@@ -7,10 +7,8 @@ import store from "./store/store.js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isNetworkError } from "./utils/networkMonitor";
 import { initPwa } from "./pwa/install";
-import { installCloseGuard } from "./pwa/closeGuard";
 
 initPwa();
-installCloseGuard();
 
 const queryClient = new QueryClient({
   defaultOptions: {

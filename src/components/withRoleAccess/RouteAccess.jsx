@@ -103,6 +103,12 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     }
   }
 
+  const isLeadDetail =
+    /^\/leads\/(?!settings(?:\/|$)|my-desk(?:\/|$))[^/]+$/.test(currentPath);
+  if (isLeadDetail && allowedRoutes.includes("my-calls")) {
+    return children;
+  }
+
   // Check if user has access to current route
   const hasRouteAccess = allowedRoutes.some((route) => {
     // Handle exact matches and wildcard routes
@@ -125,6 +131,7 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       messenger: "/messenger",
       "task-on-review": "/task-on-review",
       leads: "/leads",
+      "my-calls": "/my-calls",
       settings: "/settings",
       "lead-dashboard": "/lead-dashboard",
       "employee-dashboard": "/employee-dashboard",

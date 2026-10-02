@@ -48,6 +48,11 @@ export const getLeadStats = async (params = {}) => {
   return response.data;
 };
 
+export const getMyLeadDesk = async (params = {}) => {
+  const response = await apiClient.get("/leads/my-desk", { params });
+  return response.data;
+};
+
 export const getLeadById = async (leadId) => {
   const response = await apiClient.get(`/leads/${leadId}`);
   return response.data;
@@ -284,6 +289,13 @@ export const useGetLeadStats = (params = {}) => {
   });
 };
 
+export const useGetMyLeadDesk = (params = {}) => {
+  return useQuery({
+    queryKey: ["telecallerDesk", params],
+    queryFn: () => getMyLeadDesk(params),
+  });
+};
+
 export const useGetLeadById = (leadId) => {
   return useQuery({
     queryKey: ["lead", leadId],
@@ -383,6 +395,7 @@ export const useLogLeadInteraction = () => {
       queryClient.invalidateQueries(["leadActivities", leadId]);
       queryClient.invalidateQueries(["lead", leadId]);
       queryClient.invalidateQueries(["leadNotes", leadId]);
+      queryClient.invalidateQueries({ queryKey: ["telecallerDesk"] });
     },
   });
 };

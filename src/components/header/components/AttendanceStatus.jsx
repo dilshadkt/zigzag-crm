@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoFingerPrintOutline } from "react-icons/io5";
 import EndShiftModal from "./EndShiftModal";
+import { formatBreakMinutes } from "../../../features/attendance/utils";
 
 const breakSecondsAt = (breaks, now) =>
   (breaks || []).reduce((total, item) => {
@@ -12,13 +13,28 @@ const breakSecondsAt = (breaks, now) =>
     return total + Math.floor((end - start) / 1000);
   }, 0);
 
-const formatHours = (seconds) => {
-  const safe = Math.max(0, seconds);
-  const hours = safe / 3600;
-  if (safe > 0 && hours < 0.1) {
-    return `${Math.max(1, Math.round(safe / 60))}m`;
+const spanMinutes = (start, end) => {
+  if (!start || !end) return 0;
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return 0;
+  return Math.round(ms / 60000);
+};
+
+const isOpenStatus = (status) =>
+  status === "checked-in" || status === "break" || status === "overtime";
+
+const breakMinutesFor = (record, now) =>
+  (record?.breaks || []).reduce((total, item) => {
+    if (!item?.startTime) return total;
+    return total + spanMinutes(item.startTime, item.endTime || now);
+  }, 0);
+
+const workMinutesFor = (record, now) => {
+  const end = record?.clockOutTime || (isOpenStatus(record?.status) ? now : null);
+  if (!record?.clockInTime || !end) {
+    return record?.totalHours ? Math.round(Number(record.totalHours) * 60) : 0;
   }
-  return `${hours.toFixed(1)}h`;
+  return Math.max(0, spanMinutes(record.clockInTime, end) - breakMinutesFor(record, now));
 };
 
 const AttendanceStatus = ({
@@ -26,6 +42,7 @@ const AttendanceStatus = ({
   isOnBreak,
   shiftElapsedTime,
   breaks,
+  todayRecords = [],
   isClockingOut,
   clockOutError,
   onEndShift,
@@ -37,13 +54,24 @@ const AttendanceStatus = ({
   const [now, setNow] = useState(() => Date.now());
   const menuRef = useRef(null);
   const hasOpenBreak = (breaks || []).some((item) => item?.startTime && !item.endTime);
-  const breakSeconds = breakSecondsAt(breaks, now);
+  const sessions = todayRecords.length
+    ? todayRecords
+    : [{ breaks, status: isOnBreak ? "break" : "checked-in", clockOutTime: null, clockInTime: null }];
+  const usingDayTotal = todayRecords.length > 0;
+  const breakMinutes = usingDayTotal
+    ? sessions.reduce((sum, record) => sum + breakMinutesFor(record, now), 0)
+    : Math.round(breakSecondsAt(breaks, now) / 60);
+  const workMinutes = usingDayTotal
+    ? sessions.reduce((sum, record) => sum + workMinutesFor(record, now), 0)
+    : Math.max(0, Math.round(shiftElapsedTime / 60) - breakMinutes);
+  const workLabel = formatBreakMinutes(workMinutes);
+  const breakLabel = formatBreakMinutes(breakMinutes);
 
   useEffect(() => {
-    if (!hasOpenBreak) return undefined;
+    if (!isShiftActive) return undefined;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [hasOpenBreak]);
+  }, [isShiftActive]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -69,11 +97,7 @@ const AttendanceStatus = ({
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
           className="flex items-center gap-2 h-11 sm:h-12 rounded-[14px] bg-white px-2.5 sm:px-3 border border-transparent hover:border-gray-100 transition-colors"
-          title={
-            breakSeconds > 0
-              ? `Checked in ${formatHours(shiftElapsedTime)}, break ${formatHours(breakSeconds)}`
-              : `Checked in ${formatHours(shiftElapsedTime)}`
-          }
+          title={`Today · work ${workLabel}, break ${breakLabel}`}
           aria-expanded={menuOpen}
           aria-label="Shift access"
         >
@@ -89,21 +113,19 @@ const AttendanceStatus = ({
           </span>
           <span className="flex flex-col items-start leading-none">
             <span className="text-xs font-semibold tabular-nums text-gray-800">
-              {formatHours(shiftElapsedTime)}
+              {workLabel}
+              <span className="ml-1 text-[10px] font-medium text-gray-400">work</span>
             </span>
-            {breakSeconds > 0 && (
-              <span className="mt-0.5 text-[10px] font-medium tabular-nums text-amber-600">
-                {formatHours(breakSeconds)} break
-              </span>
-            )}
+            <span className={`mt-0.5 text-[10px] font-medium tabular-nums ${breakMinutes > 0 ? "text-amber-600" : "text-gray-400"}`}>
+              {breakLabel} break
+            </span>
           </span>
         </button>
 
         {menuOpen && (
           <div className="absolute right-0 top-[calc(100%+6px)] z-[1100] w-48 rounded-2xl border border-gray-100 bg-white p-1.5 shadow-xl">
             <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-              {isOnBreak ? "On break" : "Checked in"} · {formatHours(shiftElapsedTime)}
-              {breakSeconds > 0 ? ` · break ${formatHours(breakSeconds)}` : ""}
+              {isOnBreak ? "On break" : "Checked in"} · today {workLabel} work · {breakLabel} break
             </p>
             {isOnBreak ? null : (
               <button

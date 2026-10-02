@@ -15,8 +15,6 @@ import FixProfileImageModal from "./components/shared/modal/FixProfileImageModal
 import RealtimeAlertsProvider from "./components/shared/RealtimeAlertsProvider";
 import BrowserNotificationPrompt from "./components/shared/BrowserNotificationPrompt";
 import PwaInstallBanner from "./components/shared/PwaInstallBanner";
-import AppCloseGuard from "./components/shared/AppCloseGuard";
-import { allowAppClose } from "./pwa/closeGuard";
 import NetworkReconnectToast from "./components/shared/NetworkReconnectToast";
 
 const isDesktop = typeof window !== "undefined" && window.desktop;
@@ -37,8 +35,8 @@ function App() {
         path.startsWith("/auth/") ||
         path.includes("/portal/login");
       const token = localStorage.getItem("token");
-      
-      if (isPublicPage || !token) {
+
+      if (!token) {
         dispatch(setLoading(false));
         setIsAuthChecked(true);
         return;
@@ -55,6 +53,16 @@ function App() {
             companyId: user?.company,
           })
         );
+
+        // A saved token on the public site or sign-in page means the last login
+        // already worked. Open the app so the check-in state is visible.
+        if (
+          user?.role !== "client" &&
+          (path === "/home" || path.startsWith("/auth/signin"))
+        ) {
+          window.location.replace("/");
+          return;
+        }
 
         // Check if profile image is accessible (don't block the main app load)
         if (user?.profileImage && typeof user.profileImage === "string" && user.profileImage.startsWith("http")) {
@@ -112,10 +120,12 @@ function App() {
             });
         }
       } catch (error) {
-        allowAppClose();
-        dispatch(logout());
-        // Disconnect socket on logout
-        socketService.disconnect();
+        const message = typeof error === "string" ? error : error?.message || "";
+        const authFailed = /token|denied|unauthorized|expired|user not found/i.test(message);
+        if (authFailed) {
+          dispatch(logout());
+          socketService.disconnect();
+        }
       } finally {
         dispatch(setLoading(false)); // Set loading to false
 
@@ -124,10 +134,6 @@ function App() {
     };
     checkAuth();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (isAuthChecked && !user) allowAppClose();
-  }, [isAuthChecked, user]);
 
   // Real-time task status updates (toast/sound/bell live in GlobalNudges)
   useEffect(() => {
@@ -169,7 +175,6 @@ function App() {
         <>
           <Router>
             <AppRoutes />
-            {!publicPath && user && <AppCloseGuard />}
             {!publicPath && user && <PwaInstallBanner />}
             {!publicPath && user && <BrowserNotificationPrompt />}
           </Router>
