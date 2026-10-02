@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { useGetTaskCategories } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
-import { FiEdit3, FiSearch, FiChevronDown } from "react-icons/fi";
+import { FiEdit3, FiSearch, FiChevronDown, FiTrash2 } from "react-icons/fi";
 import {
   addCategoryToWorkDetails,
   collectMonthlyExtraWork,
@@ -14,6 +14,22 @@ import {
 } from "./workTypeMapping";
 
 const categoryId = (value) => String(value?._id || value || "");
+
+const numberValue = (value) => (value === "" ? "" : value ?? 0);
+
+const CountField = ({ label, name, value, onChange }) => (
+  <label className="flex w-[92px] flex-col gap-1">
+    <span className="text-[11px] font-medium text-gray-500">{label}</span>
+    <input
+      name={name}
+      type="number"
+      min="0"
+      value={numberValue(value)}
+      onChange={onChange}
+      className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-800 focus:border-blue-400 focus:outline-none"
+    />
+  </label>
+);
 
 const SearchableCategorySelect = ({ options, value, onChange, placeholder = "Select category..." }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -118,7 +134,7 @@ const CategoryQuotaSection = ({
 
     return (categories || []).filter((category) => {
       if (category.isActive === false) return false;
-      const standardKey = matchStandardWorkType(category.name);
+      const standardKey = matchStandardWorkType(category);
       if (standardKey && usedKeys.has(standardKey)) return false;
       if (usedNames.has(String(category.name || "").trim().toLowerCase())) return false;
       if (usedIds.has(categoryId(category))) return false;
@@ -127,15 +143,18 @@ const CategoryQuotaSection = ({
   }, [categories, items]);
 
   const extraOnlyItems = useMemo(() => {
+    const quotaStandardKeys = new Set(
+      items.filter((item) => item.kind === "standard").map((item) => item.key)
+    );
     const quotaOtherNames = new Set(
       items
         .filter((item) => item.kind === "other")
         .map((item) => String(item.name || "").trim().toLowerCase())
     );
-    return collectMonthlyExtraWork(workDetails).filter(
-      (item) =>
-        item.kind === "other" &&
-        !quotaOtherNames.has(String(item.name || "").trim().toLowerCase())
+    return collectMonthlyExtraWork(workDetails).filter((item) =>
+      item.kind === "standard"
+        ? !quotaStandardKeys.has(item.key)
+        : !quotaOtherNames.has(String(item.name || "").trim().toLowerCase())
     );
   }, [items, workDetails]);
 
@@ -165,152 +184,139 @@ const CategoryQuotaSection = ({
     setShowAdd(false);
   };
 
+  const setField = (item, field) => (event) => {
+    emit(
+      updateWorkItemField(
+        workDetails,
+        item,
+        field,
+        event.target.value === "" ? "" : parseInt(event.target.value, 10),
+        isEditMode
+      )
+    );
+  };
+
   return (
-    <div className="mt-2">
-      <div className="flex justify-between items-center mb-1">
-        <h6 className="font-medium text-sm">Work types</h6>
+    <div className="mt-1">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h6 className="text-sm font-semibold text-gray-900">Work types</h6>
+          <p className="text-[11px] text-gray-500">
+            {isEditMode
+              ? "Monthly total is the package. Remaining is what is still left this month."
+              : "Add the work this project includes each month."}
+          </p>
+        </div>
         <PrimaryButton
           title="Add Category"
-          onclick={() => setShowAdd(true)}
+          onclick={() => setShowAdd((open) => !open)}
           className="text-white px-3 py-1.5 text-sm"
         />
       </div>
-      <p className="text-[11px] text-gray-400 mb-3">
-        Pick from Settings → Master. Existing Reels / Poster numbers stay on this project.
-      </p>
 
-      <div className="grid grid-cols-2 gap-4">
+      {items.length === 0 && !showAdd && (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-[#F8FAFC] px-4 py-8 text-center">
+          <p className="text-sm font-medium text-gray-700">No work types yet</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Add a category from Settings → Master to set this month’s quota.
+          </p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
         {items.map((item) => {
           const itemKey = `${item.kind}-${item.key || item.otherIndex}-${item.name}`;
           const isEditing = editingItemKey === itemKey;
+          const total = Number(item.total);
+          const remaining = Number(item.count);
+          const used =
+            Number.isFinite(total) && Number.isFinite(remaining)
+              ? Math.max(0, total - remaining)
+              : null;
 
           return (
             <div
               key={itemKey}
-              className="border p-3 rounded-lg border-gray-200 bg-white shadow-sm relative group"
+              className="rounded-xl border border-gray-200 bg-white px-3 py-3"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 min-w-0 pr-2 flex-1">
-                  {isEditing ? (
-                    <div className="w-full relative z-10 flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <SearchableCategorySelect
-                          options={categories} // Show all active categories for swapping
-                          value={item.taskCategory}
-                          onChange={(val) => {
-                            const selectedCat = categories.find(c => categoryId(c) === val);
-                            if (selectedCat) {
-                              emit(swapCategoryInWorkDetails(workDetails, item, selectedCat));
-                            }
-                            setEditingItemKey(null);
-                          }}
-                        />
-                      </div>
-                      <button 
-                        onClick={() => setEditingItemKey(null)}
-                        className="text-gray-400 hover:text-gray-600 px-1"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <h6 className="font-medium text-sm truncate">{item.name}</h6>
-                      <button
-                        onClick={() => setEditingItemKey(itemKey)}
-                        className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                        title="Change Category"
-                      >
-                        <FiEdit3 className="w-3.5 h-3.5" />
-                      </button>
-                      {Number(item.extra) > 0 && (
-                        <div className="shrink-0 flex items-center gap-1 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                          {isEditMode ? (
-                            <>
-                              <span className="text-[10px] font-semibold text-amber-700">Extra:</span>
-                              <input
-                                type="number"
-                                value={item.extra || 0}
-                                onChange={(e) =>
-                                  emit(
-                                    updateWorkItemField(
-                                      workDetails,
-                                      item,
-                                      "extra",
-                                      parseInt(e.target.value, 10) || 0,
-                                      isEditMode
-                                    )
-                                  )
-                                }
-                                className="w-10 px-1 text-[10px] font-bold text-amber-900 border border-amber-200 rounded text-center focus:outline-none focus:border-amber-400"
-                              />
-                            </>
-                          ) : (
-                            <span className="text-[10px] font-semibold text-amber-700">
-                              +{item.extra} extra
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                {!isEditing && (
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {isEditMode && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-500">Total:</span>
-                        <input
-                          name={`${item.kind}-${item.key || item.otherIndex}-total`}
-                          type="number"
-                          value={item.total || 0}
-                          onChange={(e) =>
-                            emit(
-                              updateWorkItemField(
-                                workDetails,
-                                item,
-                                "total",
-                                parseInt(e.target.value, 10) || 0,
-                                isEditMode
-                              )
-                            )
-                          }
-                          placeholder="Total"
-                          className="w-20 px-2 py-1 border rounded border-gray-200 text-gray-600"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">Balance:</span>
-                      <input
-                        name={`${item.kind}-${item.key || item.otherIndex}-count`}
-                        type="number"
-                        value={item.count || 0}
-                        onChange={(e) =>
-                          emit(
-                            updateWorkItemField(
-                              workDetails,
-                              item,
-                              "count",
-                              parseInt(e.target.value, 10) || 0,
-                              isEditMode
-                            )
-                          )
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <SearchableCategorySelect
+                      options={categories}
+                      value={item.taskCategory}
+                      onChange={(val) => {
+                        const selectedCat = categories.find((c) => categoryId(c) === val);
+                        if (selectedCat) {
+                          emit(swapCategoryInWorkDetails(workDetails, item, selectedCat));
                         }
-                        placeholder="Balance"
-                        className="w-20 px-2 py-1 border rounded border-gray-200 text-gray-600"
-                      />
+                        setEditingItemKey(null);
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingItemKey(null)}
+                    className="text-xs font-medium text-gray-500 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <h6 className="text-sm font-semibold text-gray-900">{item.name}</h6>
+                      <button
+                        type="button"
+                        onClick={() => setEditingItemKey(itemKey)}
+                        className="text-gray-400 hover:text-blue-600"
+                        title="Change category"
+                      >
+                        <FiEdit3 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
+                    {isEditMode && used !== null && (
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {used} used this month
+                        {Number(item.extra) > 0 ? ` · ${item.extra} extra` : ""}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-end gap-2">
+                    {isEditMode && (
+                      <CountField
+                        label="Monthly total"
+                        name={`${item.kind}-${item.key || item.otherIndex}-total`}
+                        value={item.total}
+                        onChange={setField(item, "total")}
+                      />
+                    )}
+                    <CountField
+                      label={isEditMode ? "Remaining" : "Count"}
+                      name={`${item.kind}-${item.key || item.otherIndex}-count`}
+                      value={item.count}
+                      onChange={setField(item, "count")}
+                    />
+                    {isEditMode && (
+                      <CountField
+                        label="Extra"
+                        name={`${item.kind}-${item.key || item.otherIndex}-extra`}
+                        value={item.extra}
+                        onChange={setField(item, "extra")}
+                      />
+                    )}
                     <button
                       type="button"
                       onClick={() => emit(removeWorkItem(workDetails, item))}
-                      className="cursor-pointer text-red-500 p-1 text-sm"
+                      className="mb-0.5 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                      title="Remove"
                     >
-                      ✕
+                      <FiTrash2 className="h-4 w-4" />
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -333,14 +339,14 @@ const CategoryQuotaSection = ({
                 {isEditMode ? (
                   <input
                     type="number"
-                    value={item.extra || 0}
+                    value={item.extra === "" ? "" : item.extra ?? 0}
                     onChange={(e) =>
                       emit(
                         updateWorkItemField(
                           workDetails,
                           item,
                           "extra",
-                          parseInt(e.target.value, 10) || 0,
+                          e.target.value === "" ? "" : parseInt(e.target.value, 10),
                           isEditMode
                         )
                       )
@@ -381,30 +387,29 @@ const CategoryQuotaSection = ({
                 : "All available categories are already on this project."}
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <SearchableCategorySelect
-                options={availableCategories}
-                value={selectedCategoryId}
-                onChange={(val) => setSelectedCategoryId(val)}
-              />
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div>
+                <span className="mb-1 block text-[11px] font-medium text-gray-500">Category</span>
+                <SearchableCategorySelect
+                  options={availableCategories}
+                  value={selectedCategoryId}
+                  onChange={(val) => setSelectedCategoryId(val)}
+                />
+              </div>
               <div className="flex gap-2">
                 {isEditMode && (
-                  <input
+                  <CountField
+                    label="Monthly total"
                     name="new-category-total"
-                    type="number"
                     value={total}
-                    onChange={(e) => setTotal(parseInt(e.target.value, 10) || 0)}
-                    placeholder="Total items"
-                    className="px-2 py-1 border border-gray-200 rounded w-full"
+                    onChange={(e) => setTotal(e.target.value === "" ? "" : parseInt(e.target.value, 10))}
                   />
                 )}
-                <input
+                <CountField
+                  label={isEditMode ? "Remaining" : "Count"}
                   name="new-category-count"
-                  type="number"
                   value={count}
-                  onChange={(e) => setCount(parseInt(e.target.value, 10) || 0)}
-                  placeholder="Number of items"
-                  className="px-2 py-1 border border-gray-200 rounded w-full"
+                  onChange={(e) => setCount(e.target.value === "" ? "" : parseInt(e.target.value, 10))}
                 />
               </div>
             </div>

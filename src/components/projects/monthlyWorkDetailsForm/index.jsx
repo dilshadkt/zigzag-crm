@@ -63,7 +63,7 @@ const MonthlyWorkDetailsForm = ({
         shooting: copySlot(template?.shooting),
         motionGraphics: copySlot(template?.motionGraphics),
         other: Array.isArray(template?.other)
-          ? template.other.map((item) => ({
+          ? template.other.filter((item) => Number(item.total) > 0).map((item) => ({
               name: item.name,
               taskCategory: item.taskCategory || null,
               count: item.total || 0,
@@ -134,74 +134,13 @@ const MonthlyWorkDetailsForm = ({
     setFieldValue("workDetails", updatedWorkDetails);
   };
 
-  const handleSyncFromPrevious = () => {
-    const sorted = values.workDetails
-      .filter((wd) => wd.month && wd.month < selectedMonth)
-      .sort((a, b) => (a.month > b.month ? -1 : 1));
-    const prevMonth = sorted.length > 0 ? sorted[0] : null;
-    
-    if (!prevMonth) {
-      alert("No previous month found to sync from.");
-      return;
-    }
-
-    if (window.confirm("This will copy quota limits (totals) from the previous month. Existing extra work counts will be preserved. Proceed?")) {
-      const updatedWorkDetails = [...values.workDetails];
-      const monthIndex = updatedWorkDetails.findIndex(
-        (details) => details.month === selectedMonth
-      );
-      if (monthIndex === -1) return;
-
-      const current = updatedWorkDetails[monthIndex];
-      const nextDetails = { ...current };
-
-      const syncSlot = (key) => {
-        const prevTotal = prevMonth[key]?.total || 0;
-        nextDetails[key] = {
-          ...(current[key] || {}),
-          total: prevTotal,
-          count: prevTotal, // Reset balance to new total
-        };
-      };
-
-      syncSlot("reels");
-      syncSlot("poster");
-      syncSlot("motionPoster");
-      syncSlot("shooting");
-      syncSlot("motionGraphics");
-
-      // Sync other array
-      const nextOther = [...(current.other || [])];
-      (prevMonth.other || []).forEach(prevItem => {
-        const prevTotal = prevItem.total || 0;
-        const existingIdx = nextOther.findIndex(i => String(i.name || "").toLowerCase() === String(prevItem.name || "").toLowerCase());
-        
-        if (existingIdx >= 0) {
-          nextOther[existingIdx] = {
-            ...nextOther[existingIdx],
-            total: prevTotal,
-            count: prevTotal,
-          };
-        } else if (prevTotal > 0) {
-          nextOther.push({
-            name: prevItem.name,
-            taskCategory: prevItem.taskCategory || null,
-            total: prevTotal,
-            count: prevTotal,
-            completed: 0,
-            extra: 0,
-            description: prevItem.description || "",
-          });
-        }
-      });
-      nextDetails.other = nextOther;
-      
-      updatedWorkDetails[monthIndex] = nextDetails;
-      setFieldValue("workDetails", updatedWorkDetails);
-    }
-  };
-
   const parsed = parseMonthKey(selectedMonth);
+  const previousMonth = (values.workDetails || [])
+    .filter((wd) => wd.month && wd.month < selectedMonth)
+    .sort((a, b) => (a.month > b.month ? -1 : 1))[0];
+  const previousMonthName = previousMonth
+    ? parseMonthKey(previousMonth.month).name
+    : null;
 
   if (!currentMonthDetails) {
     return <div>Loading...</div>;
@@ -209,72 +148,35 @@ const MonthlyWorkDetailsForm = ({
 
   return (
     <div className="flex flex-col gap-y-4">
-      {/* Month Navigator (prev / current / next) */}
-      <div className="flex items-center justify-between gap-4 mb-2">
-        <button
-          type="button"
-          onClick={() => navigateMonth(-1)}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Prev
-        </button>
-
-        <h5 className="text-base font-semibold text-gray-800">
-          {parsed.name}
-        </h5>
-
-        <button
-          type="button"
-          onClick={() => navigateMonth(1)}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          Next
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {/* Current Month Header */}
-      <div className="bg-blue-50 p-3 rounded-lg flex items-center justify-between">
-        <h5 className="font-semibold text-blue-800">
-          Work Details for {parsed.name}
-        </h5>
-        {isEditMode && values.workDetails.filter((wd) => wd.month && wd.month < selectedMonth).length > 0 && (
+      <div className="rounded-xl border border-gray-100 bg-[#F7F9FC] px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={handleSyncFromPrevious}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            onClick={() => navigateMonth(-1)}
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-white hover:text-gray-900"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Sync from Previous Month
+            Prev
           </button>
-        )}
+          <h5 className="text-sm font-semibold text-gray-900">{parsed.name}</h5>
+          <button
+            type="button"
+            onClick={() => navigateMonth(1)}
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 hover:bg-white hover:text-gray-900"
+          >
+            Next
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+        <p className="mt-1 text-center text-[11px] text-gray-500">
+          {previousMonthName
+            ? `Starts from ${previousMonthName}. Change the numbers only if this month is different.`
+            : "Set the monthly package for this project."}
+        </p>
       </div>
 
       <CategoryQuotaSection

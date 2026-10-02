@@ -23,6 +23,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
+import { cleanWorkDetailsForSubmit } from "../projects/workDetailsForm/workTypeMapping";
 
 /**
  * App-wide mobile create hub (same idea as GlobalNudges).
@@ -73,7 +74,10 @@ const GlobalCreateFab = () => {
 
   const handleAddProject = async (values, { resetForm }) => {
     try {
-      const response = await addProject.mutateAsync(values);
+      const response = await addProject.mutateAsync({
+        ...values,
+        workDetails: cleanWorkDetailsForSubmit(values?.workDetails),
+      });
       setShowModalProject(false);
       resetForm();
       if (response?.project?._id) {

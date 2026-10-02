@@ -33,8 +33,15 @@ export const matchStandardWorkType = (nameOrCategory) => {
   return match?.key || null;
 };
 
+// An empty string means the user is mid-edit; keep the card visible until blur/submit.
 export const hasQuota = (slot) =>
-  Boolean(slot) && [slot.count, slot.total].some((value) => Number(value) > 0);
+  Boolean(slot) &&
+  [slot.count, slot.total].some((value) => value === "" || Number(value) > 0);
+
+const toCount = (value) => {
+  const num = parseInt(value, 10);
+  return Number.isFinite(num) && num > 0 ? num : 0;
+};
 
 export const extraWorkTypeValueFromName = (name) =>
   matchStandardWorkType(name) || String(name || "").trim();
@@ -117,17 +124,19 @@ export const getSelectedWorkItems = (workDetails, categories = []) => {
   STANDARD_WORK_TYPES.forEach(({ key, label }) => {
     const slot = workDetails?.[key];
     if (!hasQuota(slot)) return;
-    const matchedCategory = (categories || []).find(
-      (category) => matchStandardWorkType(category) === key
-    );
+    const matchedCategory =
+      (categories || []).find((category) => category.mapsToQuota === key) ||
+      (categories || []).find(
+        (category) => matchStandardWorkType(category) === key
+      );
     items.push({
       kind: "standard",
       key,
       name: matchedCategory?.name || label,
       taskCategory: matchedCategory?._id || null,
-      count: slot.count || 0,
-      total: slot.total || 0,
-      extra: slot.extra || 0,
+      count: slot.count ?? 0,
+      total: slot.total ?? 0,
+      extra: slot.extra ?? 0,
     });
   });
 
@@ -138,9 +147,9 @@ export const getSelectedWorkItems = (workDetails, categories = []) => {
       otherIndex,
       name: item.name,
       taskCategory: item.taskCategory || null,
-      count: item.count || 0,
-      total: item.total || 0,
-      extra: item.extra || 0,
+      count: item.count ?? 0,
+      total: item.total ?? 0,
+      extra: item.extra ?? 0,
     });
   });
 
@@ -233,7 +242,7 @@ export const updateWorkItemField = (
     ...(workDetails || {}),
     other: [...(workDetails?.other || [])],
   };
-  const numericValue = Number(value) || 0;
+  const numericValue = value === "" ? "" : toCount(value);
 
   if (item.kind === "standard") {
     next[item.key] = {
@@ -310,3 +319,44 @@ export const swapCategoryInWorkDetails = (workDetails, oldItem, newCategory) => 
 
   return next;
 };
+
+const SLOT_NUMBER_FIELDS = ["count", "total", "completed", "extra"];
+
+const cleanSlot = (slot) => {
+  const next = { ...slot };
+  SLOT_NUMBER_FIELDS.forEach((field) => {
+    next[field] = toCount(slot?.[field]);
+  });
+  return next;
+};
+
+const isEmptySlot = (slot) =>
+  SLOT_NUMBER_FIELDS.every((field) => slot[field] === 0) && !slot.description;
+
+const cleanMonthWorkDetails = (monthDetails) => {
+  if (!monthDetails || typeof monthDetails !== "object") return monthDetails;
+  const next = { ...monthDetails };
+
+  STANDARD_WORK_TYPES.forEach(({ key }) => {
+    if (!next[key]) return;
+    const slot = cleanSlot(next[key]);
+    if (isEmptySlot(slot)) delete next[key];
+    else next[key] = slot;
+  });
+
+  next.other = (monthDetails.other || [])
+    .map(cleanSlot)
+    .filter((item) => item.name && !isEmptySlot(item));
+
+  return next;
+};
+
+/**
+ * Normalises half-typed inputs ("" → 0) and drops unused zero-only slots so the
+ * request only carries work types the project actually has. Unused standard
+ * slots are re-created with zero defaults by the backend schema.
+ */
+export const cleanWorkDetailsForSubmit = (workDetails) =>
+  Array.isArray(workDetails)
+    ? workDetails.map(cleanMonthWorkDetails)
+    : cleanMonthWorkDetails(workDetails);

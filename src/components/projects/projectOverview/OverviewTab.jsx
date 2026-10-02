@@ -1,6 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { FaInstagram, FaFacebook, FaYoutube, FaLinkedin, FaTwitter, FaGlobe } from "react-icons/fa";
-import { collectMonthlyExtraWork } from "../workDetailsForm/workTypeMapping";
+import { useGetTaskCategories } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
+import {
+  collectMonthlyExtraWork,
+  getSelectedWorkItems,
+} from "../workDetailsForm/workTypeMapping";
 
 const SocialIcon = ({ platform }) => {
   const iconClass = "text-xl";
@@ -28,6 +33,143 @@ const getSocialUrl = (platform, handle) => {
   }
 };
 
+const monthLabel = (monthKey) => {
+  if (!monthKey) return "This month";
+  const date = new Date(`${monthKey}-01T00:00:00`);
+  if (Number.isNaN(date.getTime())) return monthKey;
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+};
+
+const MonthWorkStatus = ({ currentProject, selectedMonth }) => {
+  const { companyId, user } = useAuth();
+  const { data: categories = [] } = useGetTaskCategories(companyId || user?.company);
+
+  const monthKey =
+    selectedMonth ||
+    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+
+  const monthDetails = (currentProject?.workDetails || []).find(
+    (details) => details.month === monthKey
+  );
+
+  const status = useMemo(() => {
+    const items = getSelectedWorkItems(monthDetails, categories).map((item) => {
+      const total = Number(item.total) || 0;
+      const remaining = Number(item.count) || 0;
+      return {
+        ...item,
+        total,
+        remaining,
+        done: Math.max(0, total - remaining),
+        extra: Number(item.extra) || 0,
+      };
+    });
+    const listed = new Set(
+      items.map((item) =>
+        item.kind === "standard" ? `standard:${item.key}` : `other:${String(item.name).toLowerCase()}`
+      )
+    );
+    const extraOnly = collectMonthlyExtraWork(monthDetails).filter((item) => {
+      const id =
+        item.kind === "standard"
+          ? `standard:${item.key}`
+          : `other:${String(item.name).toLowerCase()}`;
+      return !listed.has(id);
+    });
+    const done = items.reduce((sum, item) => sum + item.done, 0);
+    const total = items.reduce((sum, item) => sum + item.total, 0);
+    const extra =
+      items.reduce((sum, item) => sum + item.extra, 0) +
+      extraOnly.reduce((sum, item) => sum + (Number(item.extra) || 0), 0);
+    return { items, extraOnly, done, total, extra };
+  }, [monthDetails, categories]);
+
+  const percent = status.total > 0 ? Math.round((status.done / status.total) * 100) : 0;
+
+  return (
+    <section className="rounded-2xl border border-gray-100 bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Work status
+          </p>
+          <h3 className="mt-0.5 text-base font-semibold text-gray-900">
+            {monthLabel(monthKey)}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {status.total > 0
+              ? `${status.done} of ${status.total} done · ${status.total - status.done} remaining`
+              : "No monthly package set for this month."}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <div className="min-w-[88px] rounded-xl bg-blue-50 px-3 py-2 text-center">
+            <div className="text-lg font-bold text-blue-700">{percent}%</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Done</div>
+          </div>
+          <div className="min-w-[88px] rounded-xl bg-amber-50 px-3 py-2 text-center">
+            <div className="text-lg font-bold text-amber-700">{status.extra}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-600">Extra</div>
+          </div>
+        </div>
+      </div>
+
+      {status.total > 0 && (
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100">
+          <div
+            className={`h-full rounded-full ${percent >= 100 ? "bg-emerald-500" : "bg-blue-600"}`}
+            style={{ width: `${Math.min(100, percent)}%` }}
+          />
+        </div>
+      )}
+
+      {status.items.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+          {status.items.map((item) => {
+            const itemPercent = item.total > 0 ? Math.round((item.done / item.total) * 100) : 0;
+            return (
+              <div
+                key={`${item.kind}-${item.key || item.name}`}
+                className="rounded-xl border border-gray-100 bg-[#F8FAFC] px-3 py-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-gray-800">{item.name}</p>
+                  <p className="shrink-0 text-sm font-bold tabular-nums text-gray-900">
+                    {item.done}/{item.total}
+                  </p>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className={`h-full rounded-full ${itemPercent >= 100 ? "bg-emerald-500" : "bg-blue-500"}`}
+                    style={{ width: `${Math.min(100, itemPercent)}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-gray-500">
+                  {item.remaining} remaining
+                  {item.extra > 0 ? ` · ${item.extra} extra` : ""}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {status.extraOnly.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {status.extraOnly.map((item) => (
+            <span
+              key={`${item.kind}-${item.key || item.name}`}
+              className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800"
+            >
+              {item.name}: +{item.extra} extra
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
 export const OverviewTab = ({ currentProject, selectedMonth }) => {
   const managedSocials = Object.entries(currentProject?.socialMedia || {})
     .filter(([k, v]) => k !== 'other' && k !== '_id' && k !== '__v' && v?.manage);
@@ -40,6 +182,8 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col gap-6 pr-4 pb-24 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+      <MonthWorkStatus currentProject={currentProject} selectedMonth={selectedMonth} />
+
       {/* Section 1: Stats Summary (Top) - COMPACT */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-4 rounded-xl text-white shadow-sm">

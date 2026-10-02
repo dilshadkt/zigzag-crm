@@ -1272,7 +1272,7 @@ const AddTask = ({
                           : taskGroupOptions
                       }
                       defaultValue="Select work type"
-                      disabled={isEdit || isLoadingProjectDetails}
+                      disabled={isLoadingProjectDetails}
                     />
                     {isExtraTaskSelected && (
                       <div className="space-y-1.5">

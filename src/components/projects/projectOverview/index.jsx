@@ -15,7 +15,6 @@ import { toast } from "react-hot-toast";
 
 import { OverviewTab } from "./OverviewTab";
 import { KanbanTab } from "./KanbanTab";
-import { ListTab } from "./ListTab";
 import { CampaignTab } from "./CampaignTab";
 import { SettingsTab } from "./SettingsTab";
 import InsightsTab from "./InsightsTab";
@@ -73,19 +72,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
-  const [activeTab, setActiveTab] = useState(() => {
-    if (projectId) {
-      const saved = localStorage.getItem(`activeTab_${projectId}`);
-      if (saved) return saved;
-    }
-    return "overview";
-  });
-
-  useEffect(() => {
-    if (activeTab && projectId) {
-      localStorage.setItem(`activeTab_${projectId}`, activeTab);
-    }
-  }, [activeTab, projectId]);
+  const [activeTab, setActiveTab] = useState("kanban");
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const isBoardView = activeTab === "kanban";
   const [showSubtasks, setShowSubtasks] = useState(true);
@@ -99,7 +86,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
     return [
       { id: "overview", label: "Overview", visible: hasPermission("tasks", "viewOverview") },
       { id: "kanban", label: "Task Kanban", visible: true },
-      { id: "list", label: "Task List", visible: true },
       { id: "lead", label: "Lead", visible: hasPermission("tasks", "viewLead") },
       { id: "reports", label: "Lead Reports", visible: hasPermission("tasks", "viewLead") },
       { id: "campaign", label: "Campaign", visible: hasPermission("tasks", "viewCampaign") },
@@ -287,10 +273,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         enhancedTasks.filter((task) => task?.status === "completed")
       ) || [],
   };
-
-  const activeTasks = tasksByStatus.todo;
-  const progressTasks = tasksByStatus["in-progress"];
-  const completedTasks = tasksByStatus.completed;
 
   const handleNavigateToTask = (task) => {
     if (task?.itemType === "subtask" && task?.parentTask) {
@@ -509,7 +491,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
         <OverviewTab currentProject={currentProject} selectedMonth={selectedMonth} />
       )}
 
-      {(activeTab === "kanban" || activeTab === "list") && !hasWorkDetailsForCurrentMonth() && currentProject?.workDetails && (
+      {activeTab === "kanban" && !hasWorkDetailsForCurrentMonth() && currentProject?.workDetails && (
         <div className="mt-4 p-6 bg-blue-50 border border-blue-200 rounded-lg animate-in fade-in zoom-in duration-300">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
@@ -546,17 +528,6 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           canUserDragTask={canUserDragTask}
           handleNavigateToTask={handleNavigateToTask}
           currentProject={currentProject}
-        />
-      )}
-
-      {activeTab === "list" && (
-        <ListTab
-          tasksByStatus={tasksByStatus}
-          activeTasks={activeTasks}
-          progressTasks={progressTasks}
-          completedTasks={completedTasks}
-          handleNavigateToTask={handleNavigateToTask}
-          isBoardView={isBoardView}
         />
       )}
 

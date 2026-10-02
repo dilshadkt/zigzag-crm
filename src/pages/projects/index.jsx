@@ -22,6 +22,7 @@ import FilterMenu from "../../components/projects/FilterMenu";
 import ProjectsShimmer from "../../components/projects/ProjectsShimmer";
 import { processAttachments, cleanTaskData } from "../../lib/attachmentUtils";
 import { uploadSingleFile } from "../../api/service";
+import { cleanWorkDetailsForSubmit } from "../../components/projects/workDetailsForm/workTypeMapping";
 
 const Prjects = () => {
   const { companyId, user } = useAuth();
@@ -105,7 +106,10 @@ const Prjects = () => {
 
   const handleAddProject = async (values, { resetForm }) => {
     try {
-      const response = await addProject.mutateAsync(values);
+      const response = await addProject.mutateAsync({
+        ...values,
+        workDetails: cleanWorkDetailsForSubmit(values?.workDetails),
+      });
       setShowModalProject(false);
       resetForm();
       if (response?.project?._id) {

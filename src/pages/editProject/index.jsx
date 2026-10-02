@@ -4,6 +4,7 @@ import { useProjectDetails } from "../../api/hooks";
 import AddProject from "../../components/projects/addProject";
 import { useUpdateProject } from "../../api/hooks";
 import Navigator from "../../components/shared/navigator";
+import { cleanWorkDetailsForSubmit } from "../../components/projects/workDetailsForm/workTypeMapping";
 
 const EditProject = () => {
   const { projectId } = useParams();
@@ -18,12 +19,48 @@ const EditProject = () => {
         ...values,
         teams: values?.teams?.map((team) => team?._id) || [],
         reporters: values?.reporters?.map((reporter) => reporter?._id) || [],
+        workDetails: cleanWorkDetailsForSubmit(values?.workDetails),
       };
       await mutateAsync(updatedValues);
     } catch (error) {
       console.error("Error submitting form:", error);
     }
   };
+
+  const initialValues = React.useMemo(() => ({
+    name: currentProject?.name || "",
+    thumbImg: currentProject?.thumbImg || null,
+    taskGroup: currentProject?.taskGroup || "",
+    startDate: currentProject?.startDate || "",
+    endDate: currentProject?.endDate || "",
+    priority: currentProject?.priority || "",
+    assignee: currentProject?.teams || "",
+    description: currentProject?.description || "",
+    attachments: currentProject?.attachments,
+    teams: currentProject?.teams.map((team) => ({
+      _id: team._id,
+      name: team.firstName,
+      position: team.position,
+      email: team.email,
+    })),
+    reporters: currentProject?.reporters?.map((reporter) => ({
+      _id: reporter._id,
+      name: reporter.firstName,
+      position: reporter.position,
+      email: reporter.email,
+    })) || [],
+    workDetails: currentProject?.workDetails || [],
+    socialMedia: currentProject?.socialMedia || {
+      instagram: { manage: false, handle: "", notes: "" },
+      facebook: { manage: false, handle: "", notes: "" },
+      youtube: { manage: false, handle: "", notes: "" },
+      linkedin: { manage: false, handle: "", notes: "" },
+      twitter: { manage: false, handle: "", notes: "" },
+      other: [],
+    },
+    dailyChecklist: currentProject?.dailyChecklist || [],
+    customFields: currentProject?.customFields || {},
+  }), [currentProject?.updatedAt, currentProject?._id]);
 
   if (!currentProject) {
     return null;
@@ -37,47 +74,7 @@ const EditProject = () => {
           setShowModalProject={() => navigate(`/projects/${projectId}`, { replace: true })}
           isEditMode={true}
           onSubmit={handleEditProject}
-          initialValues={{
-            name: currentProject?.name || "",
-            thumbImg: currentProject?.thumbImg || null,
-            taskGroup: currentProject?.taskGroup || "",
-            startDate: currentProject?.startDate || "",
-            endDate: currentProject?.endDate || "",
-            priority: currentProject?.priority || "",
-            assignee: currentProject?.teams || "",
-            description: currentProject?.description || "",
-            attachments: currentProject?.attachments,
-            teams: currentProject?.teams.map((team) => ({
-              _id: team._id,
-              name: team.firstName,
-              position: team.position,
-              email: team.email,
-            })),
-            reporters: currentProject?.reporters?.map((reporter) => ({
-              _id: reporter._id,
-              name: reporter.firstName,
-              position: reporter.position,
-              email: reporter.email,
-            })) || [],
-            workDetails: currentProject?.workDetails || {
-              reels: { count: 0, completed: 0 },
-              poster: { count: 0, completed: 0 },
-              motionPoster: { count: 0, completed: 0 },
-              shooting: { count: 0, completed: 0 },
-              motionGraphics: { count: 0, completed: 0 },
-              other: [],
-            },
-            socialMedia: currentProject?.socialMedia || {
-              instagram: { manage: false, handle: "", notes: "" },
-              facebook: { manage: false, handle: "", notes: "" },
-              youtube: { manage: false, handle: "", notes: "" },
-              linkedin: { manage: false, handle: "", notes: "" },
-              twitter: { manage: false, handle: "", notes: "" },
-              other: [],
-            },
-            dailyChecklist: currentProject?.dailyChecklist || [],
-            customFields: currentProject?.customFields || {},
-          }}
+          initialValues={initialValues}
         />
       </div>
     </div>
