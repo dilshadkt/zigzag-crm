@@ -626,7 +626,7 @@ const TaskOnReview = () => {
                 </div>
 
                 {/* Quick Filters */}
-                <div className="shrink-0 overflow-x-auto">
+                <div className="shrink-0">
                   <TaskQuickFilters
                     superFilters={superFilters}
                     onFilterChange={handleSuperFilterChange}
@@ -639,8 +639,7 @@ const TaskOnReview = () => {
                     showSubtasks={showSubtasks}
                     onToggleTasks={() => setShowTasks((prev) => !prev)}
                     onToggleSubtasks={() => setShowSubtasks((prev) => !prev)}
-                    className="flex-nowrap"
-                    nowrap={true}
+                    className="md:flex-nowrap"
                   />
                 </div>
               </div>
