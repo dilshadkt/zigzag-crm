@@ -227,12 +227,10 @@ const SubtasksSection = ({
 
   // Determine if subtask should be visible to current user
   const getSubTaskVisibility = (subtask) => {
-    const isAssignedToSubTask = subtask.assignedTo?.some(
-      (assignedUser) => (assignedUser._id || assignedUser) === user?._id
-    );
-
-    // Show if user is assigned to subtask, has view/create permission, is assigned to parent task, or is admin or project reviewer
-    return isAssignedToSubTask || canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer || isDepartmentReviewerFor(subtask);
+    // Everyone who can open the task sees all its subtasks. Ones they are not
+    // assigned to and cannot review render read-only (see the action bar and
+    // attachment props below). The API already limits what each user receives.
+    return true;
   };
 
   // Get subtask styling classes based on assignment and admin status
@@ -249,11 +247,8 @@ const SubtasksSection = ({
 
     if (isAssignedToSubTask) {
       return "bg-blue-50/50 border-2 border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300";
-    } else if (canManageSubtasks || isAdmin || hasPermission("tasks", "view") || isProjectReviewer || isDepartmentReviewerFor(subtask)) {
-      return "bg-gray-50 hover:bg-gray-100";
-    } else {
-      return "hidden";
     }
+    return "bg-gray-50 hover:bg-gray-100";
   };
 
   return (
@@ -491,7 +486,20 @@ const SubtasksSection = ({
                         Needs client
                       </span>
                     )}
-                    {isWorkLinkRequired(subtask) && (
+                    {isWorkLinkRequired(subtask) && !(isAssignedToSubTask || canManageSubtasks || isCompany || isAdmin || isProjectReviewer || isDepartmentReviewerFor(subtask)) ? (
+                      getCurrentLink(subtask) ? (
+                        <a
+                          href={getCurrentLink(subtask)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-1.5 py-0.5 text-[10px] font-semibold rounded-md flex items-center gap-1 border bg-green-50 text-green-600 border-green-200 hover:bg-green-100 transition-colors"
+                          title="Open work link"
+                        >
+                          <FiLink className="w-2.5 h-2.5" />
+                          Link
+                        </a>
+                      ) : null
+                    ) : isWorkLinkRequired(subtask) && (
                       <button
                         onClick={() => {
                           setWorkLinkSubTask(subtask);
