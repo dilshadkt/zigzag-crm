@@ -12,8 +12,19 @@ const PERIOD_OPTIONS = [
     { value: "today", label: "Today" },
     { value: "thisWeek", label: "This Week" },
     { value: "thisMonth", label: "This Month" },
+    { value: "lastMonth", label: "Previous Month" },
     { value: "custom", label: "Custom" },
 ];
+
+const LEAVE_TYPE_LABELS = {
+    vacation: "Vacation",
+    sick_leave: "Sick Leave",
+    remote_work: "Remote Work",
+    unpaid_leave: "Unpaid Leave",
+};
+
+const leaveTypeLabel = (type) =>
+    LEAVE_TYPE_LABELS[type] || (type ? type.replace(/_/g, " ") : "Leave");
 
 const toYmd = (date) => {
     const y = date.getFullYear();
@@ -49,6 +60,12 @@ const getPresetDateRange = (mode) => {
         return { start: toYmd(weekStart), end: toYmd(weekEnd) };
     }
 
+    if (mode === "lastMonth") {
+        const prevStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const prevEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        return { start: toYmd(prevStart), end: toYmd(prevEnd) };
+    }
+
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     return { start: toYmd(monthStart), end: toYmd(monthEnd) };
@@ -60,6 +77,11 @@ const HRDashboardPage = () => {
     const [customStartDate, setCustomStartDate] = useState(() => getPresetDateRange("thisMonth").start);
     const [customEndDate, setCustomEndDate] = useState(() => getPresetDateRange("thisMonth").end);
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+    const [showLeaveDates, setShowLeaveDates] = useState(false);
+
+    useEffect(() => {
+        setShowLeaveDates(false);
+    }, [selectedEmployeeId]);
 
     const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
     const [staffSearch, setStaffSearch] = useState("");
@@ -261,6 +283,9 @@ const HRDashboardPage = () => {
                     breakTime: Number(log.breakTime || 0),
                     isLate: log.isLate,
                     lateBy: log.lateBy || 0,
+                    isEarlyOut: !!log.isEarlyOut,
+                    earlyOutBy: log.earlyOutBy || 0,
+                    overtimeHours: Number(log.overtimeHours || 0),
                     isActive: !log.clockOutTime
                 };
             } else {
@@ -284,7 +309,12 @@ const HRDashboardPage = () => {
                 // Sum hours and breaks
                 current.totalHours += Number(log.totalHours || 0);
                 current.breakTime += Number(log.breakTime || 0);
-                
+                current.overtimeHours += Number(log.overtimeHours || 0);
+                if (log.isEarlyOut) {
+                    current.isEarlyOut = true;
+                    current.earlyOutBy = Math.max(current.earlyOutBy, log.earlyOutBy || 0);
+                }
+
                 // Late logic
                 if (log.isLate && (!current.clockInTime || new Date(log.clockInTime) === new Date(current.clockInTime))) {
                     current.isLate = true;
@@ -295,6 +325,77 @@ const HRDashboardPage = () => {
         
         return Object.values(groups).sort((a, b) => new Date(a.originalDate) - new Date(b.originalDate));
     }, [singleEmployeeReport]);
+
+    // One row per calendar day for the selected member: worked, leave, weekly
+    // off, holiday, absent or upcoming.
+    const dayRows = useMemo(() => {
+        if (!singleEmployeeReport) return [];
+        const logByYmd = {};
+        groupedDailyLogs.forEach((log) => {
+            logByYmd[toYmd(new Date(log.originalDate))] = log;
+        });
+        const leaveByYmd = {};
+        (singleEmployeeReport.leaves || []).forEach((leave) => {
+            leave.dates.forEach((d) => {
+                leaveByYmd[d.date] = leave;
+            });
+        });
+        const todayYmd = toYmd(new Date());
+
+        const calendarDays = singleEmployeeReport.calendarDays;
+        if (!calendarDays) {
+            return groupedDailyLogs.map((log) => {
+                const ymd = toYmd(new Date(log.originalDate));
+                return {
+                    date: ymd,
+                    dayName: new Date(log.originalDate).toLocaleDateString("en-US", { weekday: "long" }),
+                    status: "present",
+                    log,
+                };
+            });
+        }
+
+        return calendarDays.map((day) => {
+            const log = logByYmd[day.date];
+            const leave = leaveByYmd[day.date];
+            let status;
+            if (log) status = "present";
+            else if (leave) status = "leave";
+            else if (day.isHoliday) status = "holiday";
+            else if (day.isWeeklyOff) status = "weeklyOff";
+            else if (day.date > todayYmd) status = "upcoming";
+            else status = "absent";
+            return { ...day, status, log, leave };
+        });
+    }, [singleEmployeeReport, groupedDailyLogs]);
+
+    const memberDetails = useMemo(() => {
+        const logs = dayRows.filter((r) => r.log).map((r) => ({ ...r.log, date: r.date, dayName: r.dayName }));
+        return {
+            lateDays: logs.filter((l) => l.isLate),
+            earlyDays: logs.filter((l) => l.isEarlyOut),
+            overtimeDays: logs.filter((l) => l.overtimeHours > 0),
+            absentDays: dayRows.filter((r) => r.status === "absent"),
+        };
+    }, [dayRows]);
+
+    const leaveDateList = useMemo(
+        () => (singleEmployeeReport?.leaves || []).flatMap((leave) =>
+            leave.dates.map((d) => ({ ...d, type: leave.type, reason: leave.reason }))
+        ),
+        [singleEmployeeReport]
+    );
+
+    const DAY_STATUS_STYLES = {
+        present: { label: "Present", badge: "bg-emerald-50 text-emerald-600 border-emerald-100", row: "" },
+        leave: { label: "On Leave", badge: "bg-red-50 text-red-600 border-red-100", row: "bg-red-50/30" },
+        holiday: { label: "Holiday", badge: "bg-purple-50 text-purple-600 border-purple-100", row: "bg-purple-50/40" },
+        weeklyOff: { label: "Office Off Day", badge: "bg-slate-100 text-slate-600 border-slate-200", row: "bg-slate-100/70" },
+        absent: { label: "Absent", badge: "bg-orange-50 text-orange-600 border-orange-100", row: "bg-orange-50/30" },
+        upcoming: { label: "Upcoming", badge: "bg-slate-50 text-slate-400 border-slate-100", row: "" },
+    };
+
+    const formatShortDate = (ymd) => formatDisplayDate(ymd);
 
     return (
         <div className="flex flex-col gap-4 h-full   overflow-y-auto p-2 md:p-4">
@@ -501,12 +602,18 @@ const HRDashboardPage = () => {
                     </div>
 
                     {/* Card 2 */}
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/60 flex flex-col gap-1 transition-all">
+                    <div
+                        onClick={selectedEmployeeId ? () => setShowLeaveDates((prev) => !prev) : undefined}
+                        className={`bg-white rounded-xl p-4 border flex flex-col gap-1 transition-all ${selectedEmployeeId ? "cursor-pointer hover:border-red-200" : ""} ${showLeaveDates ? "border-red-300" : "border-slate-200/60"}`}
+                    >
                         <div className="w-9 h-9 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-base">
                             <FiAlertCircle />
                         </div>
                         <span className="text-xs font-medium text-slate-400 tracking-wider mt-1">Leave Days</span>
                         <h3 className="text-xl font-bold text-slate-800">{totals.leaveDays}</h3>
+                        {selectedEmployeeId && totals.leaveDays > 0 && (
+                            <span className="text-[10px] font-medium text-red-500">{showLeaveDates ? "Hide dates" : "Click to view dates"}</span>
+                        )}
                     </div>
 
                     {/* Card 3 */}
@@ -538,8 +645,69 @@ const HRDashboardPage = () => {
                 </div>
             )}
 
+            {/* Leave dates for the selected member, opened from the Leave Days card */}
+            {selectedEmployeeId && showLeaveDates && !error && (
+                <div className="bg-white rounded-xl p-3 border border-red-200/70 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                        <h5 className="font-bold text-slate-700 text-xs">Leave Days ({leaveDateList.length})</h5>
+                    </div>
+                    {isLoadingSingle ? (
+                        <SkeletonItem className="h-10 w-full rounded-lg" />
+                    ) : leaveDateList.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
+                            {leaveDateList.map((l) => (
+                                <div key={l.date} className="flex justify-between items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100/60">
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-bold text-slate-800">{formatShortDate(l.date)}</span>
+                                        <span className="text-slate-400">{l.dayName}{l.reason ? ` · ${l.reason}` : ""}</span>
+                                    </div>
+                                    <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100 shrink-0">{l.type?.replace("_", " ")}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 font-medium text-xs py-1">No leave in this period.</p>
+                    )}
+                </div>
+            )}
+
+            {/* Member details: replaces the company-wide "today" panels when one staff member is selected */}
+            {selectedEmployeeId && !error && (
+                <div className={`grid grid-cols-1 md:grid-cols-4 gap-3 ${isLoadingSingle ? "opacity-50 transition-opacity" : ""}`}>
+                    {[
+                        { title: "Late Arrivals", dot: "bg-amber-400", badge: "bg-amber-50 text-amber-600 border-amber-100", rows: memberDetails.lateDays, empty: "No late arrivals in this period.", text: (l) => `Late by ${l.lateBy}m` },
+                        { title: "Early Checkouts", dot: "bg-blue-400", badge: "bg-blue-50 text-blue-600 border-blue-100", rows: memberDetails.earlyDays, empty: "No early checkouts in this period.", text: (l) => `Left early ${l.earlyOutBy}m` },
+                        { title: "Overtime Days", dot: "bg-indigo-500", badge: "bg-indigo-50 text-indigo-600 border-indigo-100", rows: memberDetails.overtimeDays, empty: "No overtime in this period.", text: (l) => `${l.overtimeHours.toFixed(2)} hrs` },
+                        { title: "Absent Days", dot: "bg-orange-400", badge: "bg-orange-50 text-orange-600 border-orange-100", rows: memberDetails.absentDays, empty: "No absent days in this period.", text: () => "Absent" },
+                    ].map((card) => (
+                        <div key={card.title} className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
+                            <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
+                                <div className={`w-2.5 h-2.5 rounded-full ${card.dot}`} />
+                                <h5 className="font-bold text-slate-700 text-xs">{card.title} ({card.rows.length})</h5>
+                            </div>
+                            <div className="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1.5 text-xs">
+                                {card.rows.length > 0 ? (
+                                    card.rows.map((r) => (
+                                        <div key={r.date} className="flex justify-between items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100/60">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-800">{formatShortDate(r.date)}</span>
+                                                <span className="text-slate-400">{r.dayName}</span>
+                                            </div>
+                                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-md border ${card.badge}`}>{card.text(r)}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-slate-400 font-medium text-xs py-1">{card.empty}</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* COMBINED HIGHLIGHTS SECTION: 4-Column Grid with fixed height and scrollable panels */}
-            {isLoading && !reportData ? (
+            {selectedEmployeeId ? null : isLoading && !reportData ? (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     {[1, 2, 3, 4].map(i => (
                         <div key={i} className="bg-white rounded-xl p-3 border border-slate-200/60 h-72 flex flex-col gap-2">
@@ -623,7 +791,9 @@ const HRDashboardPage = () => {
                                         ? "This Week's Overtime"
                                         : filterMode === "custom"
                                             ? "Period Overtime"
-                                            : "This Month's Overtime"} ({overtimeList.length} Staff)
+                                            : filterMode === "lastMonth"
+                                                ? "Previous Month's Overtime"
+                                                : "This Month's Overtime"} ({overtimeList.length} Staff)
                             </h5>
                         </div>
                         <div className="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1.5 text-xs">
@@ -642,7 +812,9 @@ const HRDashboardPage = () => {
                                             ? "No overtime logged this week."
                                             : filterMode === "custom"
                                                 ? "No overtime logged in this period."
-                                                : "No overtime logged this month."}
+                                                : filterMode === "lastMonth"
+                                                    ? "No overtime logged last month."
+                                                    : "No overtime logged this month."}
                                 </p>
                             )}
                         </div>
@@ -650,12 +822,14 @@ const HRDashboardPage = () => {
                 </div>
             )}
 
-            <PendingTimeChangeList
-                onReviewed={() => {
-                    fetchAllStaffReport(true);
-                    fetchSingleReport();
-                }}
-            />
+            {!selectedEmployeeId && (
+                <PendingTimeChangeList
+                    onReviewed={() => {
+                        fetchAllStaffReport(true);
+                        fetchSingleReport();
+                    }}
+                />
+            )}
 
             {/* Table with clean design */}
             {isLoading && !reportData ? (
@@ -752,12 +926,14 @@ const HRDashboardPage = () => {
                                         </div>
                                     ))}
                                 </div>
-                            ) : singleEmployeeReport && singleEmployeeReport.dailyLogs?.length > 0 ? (
+                            ) : singleEmployeeReport && dayRows.length > 0 ? (
                                 <div className="overflow-x-auto rounded-lg border border-slate-200/60 bg-white">
                                     <table className="w-full text-left border-collapse text-xs">
                                         <thead>
                                             <tr className="bg-slate-50">
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Day</th>
+                                                <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Clock In</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Clock Out</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Total Working Hrs</th>
@@ -766,28 +942,57 @@ const HRDashboardPage = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {groupedDailyLogs.map((log, lidx) => (
-                                                <tr key={lidx} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="py-2 px-3 font-medium text-slate-800">
-                                                        {log.date}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-slate-600">
-                                                        {log.clockInTime ? new Date(log.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-slate-600">
-                                                        {log.isActive ? "Active / Working" : (log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A")}
-                                                    </td>
-                                                    <td className="py-2 px-3 font-bold text-slate-700">{Number(log.totalHours || 0).toFixed(2)} hrs</td>
-                                                    <td className="py-2 px-3 text-slate-500">{log.breakTime || 0} mins</td>
-                                                    <td className="py-2 px-3">
-                                                        {log.isLate ? (
-                                                            <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100">Late by {log.lateBy}m</span>
+                                            {dayRows.map((row) => {
+                                                const style = DAY_STATUS_STYLES[row.status];
+                                                const log = row.log;
+                                                const isOffDay = row.isOffDay;
+                                                const statusLabel =
+                                                    row.status === "holiday" ? (row.holidayName || "Holiday") : style.label;
+                                                return (
+                                                    <tr key={row.date} className={`hover:bg-slate-50/50 transition-colors ${style.row}`}>
+                                                        <td className="py-2 px-3 font-medium text-slate-800 whitespace-nowrap">{formatShortDate(row.date)}</td>
+                                                        <td className={`py-2 px-3 font-medium whitespace-nowrap ${isOffDay ? "text-purple-600" : "text-slate-600"}`}>{row.dayName}</td>
+                                                        <td className="py-2 px-3 whitespace-nowrap">
+                                                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${style.badge}`}>{statusLabel}</span>
+                                                            {log && isOffDay && (
+                                                                <span className="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-slate-100 text-slate-600 border-slate-200">
+                                                                    {row.isHoliday ? "Holiday" : "Off day"}
+                                                                </span>
+                                                            )}
+                                                            {row.status === "leave" && row.leave?.type && (
+                                                                <span className="ml-1 text-slate-400">{row.leave.type.replace("_", " ")}</span>
+                                                            )}
+                                                        </td>
+                                                        {log ? (
+                                                            <>
+                                                                <td className="py-2 px-3 text-slate-600">
+                                                                    {log.clockInTime ? new Date(log.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
+                                                                </td>
+                                                                <td className="py-2 px-3 text-slate-600">
+                                                                    {log.isActive ? "Active / Working" : (log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A")}
+                                                                </td>
+                                                                <td className="py-2 px-3 font-bold text-slate-700">{Number(log.totalHours || 0).toFixed(2)} hrs</td>
+                                                                <td className="py-2 px-3 text-slate-500">{log.breakTime || 0} mins</td>
+                                                                <td className="py-2 px-3">
+                                                                    {log.isLate ? (
+                                                                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100">Late by {log.lateBy}m</span>
+                                                                    ) : (
+                                                                        <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">On time</span>
+                                                                    )}
+                                                                </td>
+                                                            </>
                                                         ) : (
-                                                            <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">On time</span>
+                                                            <td colSpan="5" className="py-2 px-3 text-slate-400">
+                                                                {row.status === "weeklyOff" && "Office off day (weekly off)"}
+                                                                {row.status === "holiday" && `Company holiday${row.holidayName ? ` - ${row.holidayName}` : ""}`}
+                                                                {row.status === "leave" && (row.leave?.reason || "On approved leave")}
+                                                                {row.status === "absent" && "No attendance recorded"}
+                                                                {row.status === "upcoming" && "-"}
+                                                            </td>
                                                         )}
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

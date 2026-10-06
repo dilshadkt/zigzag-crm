@@ -63,28 +63,28 @@ const PublicLanding = () => {
 
   return (
     <PublicSiteLayout wide>
-      <section className="overflow-hidden rounded-[32px] bg-[#3F8CFF] px-6 py-12 text-white sm:px-12 sm:py-16">
+      <section className="overflow-hidden rounded-3xl bg-[#3F8CFF] px-5 py-10 text-white sm:rounded-[32px] sm:px-12 sm:py-16">
         <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/80">
           {COMPANY_NAME}
         </p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight sm:text-5xl">
+        <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-5xl">
           {APP_NAME}
         </h1>
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-white/90">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed sm:text-lg text-white/90">
           Zigzag CRM is the workplace CRM for agencies and growing teams. Run
           leads, projects, campaigns, attendance, and Google Meet meetings from
           one product your whole company can actually use.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
             to="/auth/signin"
-            className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#3F8CFF] hover:bg-blue-50"
+            className="rounded-xl bg-white px-5 py-3 text-center text-sm font-semibold text-[#3F8CFF] hover:bg-blue-50"
           >
             Sign in to Zigzag CRM
           </Link>
           <Link
             to="/auth/register"
-            className="rounded-xl border border-white/40 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
+            className="rounded-xl border border-white/40 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-white/10"
           >
             Create a company account
           </Link>
