@@ -17,9 +17,9 @@ const PERIOD_OPTIONS = [
 ];
 
 const LEAVE_TYPE_LABELS = {
-    vacation: "Vacation",
+    vacation: "Casual Leave",
     sick_leave: "Sick Leave",
-    remote_work: "Remote Work",
+    remote_work: "Work Remotely",
     unpaid_leave: "Unpaid Leave",
 };
 
@@ -662,7 +662,7 @@ const HRDashboardPage = () => {
                                         <span className="font-bold text-slate-800">{formatShortDate(l.date)}</span>
                                         <span className="text-slate-400">{l.dayName}{l.reason ? ` · ${l.reason}` : ""}</span>
                                     </div>
-                                    <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100 shrink-0">{l.type?.replace("_", " ")}</span>
+                                    <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100 shrink-0">{leaveTypeLabel(l.type)}</span>
                                 </div>
                             ))}
                         </div>
@@ -731,7 +731,7 @@ const HRDashboardPage = () => {
                                 todayHighlights.leaves.map((l, i) => (
                                     <div key={i} className="flex justify-between bg-slate-50 p-2 rounded-lg border border-slate-100/60">
                                         <span className="font-bold text-slate-800 truncate max-w-[120px]">{l.employeeName}</span>
-                                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100 truncate">{l.type}</span>
+                                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100 truncate">{leaveTypeLabel(l.type)}</span>
                                     </div>
                                 ))
                             ) : (
@@ -960,7 +960,7 @@ const HRDashboardPage = () => {
                                                                 </span>
                                                             )}
                                                             {row.status === "leave" && row.leave?.type && (
-                                                                <span className="ml-1 text-slate-400">{row.leave.type.replace("_", " ")}</span>
+                                                                <span className="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-white text-red-500 border-red-100">{leaveTypeLabel(row.leave.type)}</span>
                                                             )}
                                                         </td>
                                                         {log ? (
@@ -985,7 +985,7 @@ const HRDashboardPage = () => {
                                                             <td colSpan="5" className="py-2 px-3 text-slate-400">
                                                                 {row.status === "weeklyOff" && "Office off day (weekly off)"}
                                                                 {row.status === "holiday" && `Company holiday${row.holidayName ? ` - ${row.holidayName}` : ""}`}
-                                                                {row.status === "leave" && (row.leave?.reason || "On approved leave")}
+                                                                {row.status === "leave" && (row.leave?.reason || `Approved ${leaveTypeLabel(row.leave?.type).toLowerCase()}`)}
                                                                 {row.status === "absent" && "No attendance recorded"}
                                                                 {row.status === "upcoming" && "-"}
                                                             </td>
