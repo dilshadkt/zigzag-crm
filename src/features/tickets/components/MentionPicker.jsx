@@ -70,9 +70,14 @@ const MentionPicker = ({ employees = [], value = [], onChange, disabled = false 
                     key={person._id}
                     type="button"
                     onClick={() => add(person._id)}
-                    className="block w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="flex items-center justify-between w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    {personName(person)}
+                    <span>{personName(person)}</span>
+                    {person.role === "company-admin" && (
+                      <span className="ml-2 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold bg-violet-100 text-violet-600">
+                        Admin
+                      </span>
+                    )}
                   </button>
                 ))
               )}
