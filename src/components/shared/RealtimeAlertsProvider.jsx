@@ -143,11 +143,7 @@ const RealtimeAlertsProvider = () => {
         return;
       }
 
-      if (notification?.type !== "task_assigned") {
-        refetchNotificationQueries();
-        queryClient.invalidateQueries({ queryKey: ["unreadNotificationCount"] });
-        return;
-      }
+      // task_assigned (and any other types) all get sound + toast + OS notification
       const entityId =
         notification?.data?.subTaskId ||
         notification?.task?._id ||
@@ -157,6 +153,13 @@ const RealtimeAlertsProvider = () => {
         message: getSocketMessage(notification),
         entityId: entityId ? String(entityId) : null,
         notificationId: notification?._id,
+      });
+
+      showBrowserNotification({
+        title: notification?.title || "ZigZag CRM",
+        body: getSocketMessage(notification),
+        url: "/",
+        tag: `notif-${notification?._id || Date.now()}`,
       });
     };
 
