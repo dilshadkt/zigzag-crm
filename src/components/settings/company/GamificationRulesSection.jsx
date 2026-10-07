@@ -327,10 +327,10 @@ const GamificationRulesSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
-                <FiClock className="text-indigo-500" /> Review Time Limit (Hours)
+                <FiClock className="text-indigo-500" /> Review Time Limit (Working Hours)
               </label>
               <p className="text-xs text-gray-500 mb-1">
-                Hours after the employee first submits for review. First on-time review earns the bonus; a slow later re-review can still take the delay penalty.
+                Office hours after the employee submits for review; each resubmission restarts the clock. Time after the shift ends, weekly offs and holidays are not counted, so work submitted at closing time is due the next working morning. First on-time review earns the bonus; a slow later re-review can still take the delay penalty.
               </p>
               <input
                 type="number"

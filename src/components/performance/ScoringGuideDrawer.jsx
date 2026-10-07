@@ -265,7 +265,7 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
           >
             <RuleRow
               title="Review on time"
-              detail={`Finish the first review within ${settings.coordinatorReviewTimeLimit} hours. Later re-reviews do not pay this again.`}
+              detail={`Finish the first review within ${settings.coordinatorReviewTimeLimit} working hours. Only office hours on working days count. Later re-reviews do not pay this again.`}
               value={settings.coordinatorReviewBonusPoints}
             />
             <RuleRow
