@@ -75,10 +75,9 @@ const SortableStatsCard = ({ stat, onClick }) => {
       >
         {stat.value}
       </div>
-      <p className="text-[11px] md:text-sm font-medium text-gray-700 mb-0.5 md:mb-1 line-clamp-2 leading-tight">
+      <p className="text-[11px] md:text-sm font-medium text-gray-700 leading-tight line-clamp-2">
         {stat.title}
       </p>
-      <p className="hidden sm:block text-xs text-gray-500 line-clamp-1">{stat.subtitle}</p>
       {/* Hover indicator */}
       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <span className="text-xs text-gray-400">→</span>
@@ -502,28 +501,13 @@ const CompanyProgressStats = ({ taskMonth }) => {
     return (
       <div className="px-3 md:px-4 w-full bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
         <div className="animate-pulse">
-          {/* Header shimmer (title + completion) */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
-            <div className="h-6 w-32 bg-gray-200 rounded" />
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-12 bg-gray-200 rounded" />
-              <div className="h-4 w-20 bg-gray-100 rounded" />
-            </div>
+          {/* Header shimmer */}
+          <div className="mb-3">
+            <div className="h-6 w-40 bg-gray-200 rounded" />
           </div>
 
-          {/* Progress bar shimmer */}
-          <div className="mb-6">
-            <div className="flex justify-between text-xs text-gray-500 mb-2">
-              <div className="h-3 w-32 bg-gray-100 rounded" />
-              <div className="h-3 w-10 bg-gray-100 rounded" />
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-gray-300 h-2 rounded-full w-1/2" />
-            </div>
-          </div>
-
-          {/* Stats grid shimmer, matching the real grid layout */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
+          {/* Stats grid shimmer */}
+          <div className="grid grid-cols-3 lg:grid-cols-7 gap-2">
             {placeholders.map((_, i) => (
               <div
                 key={i}
@@ -531,7 +515,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
               >
                 <div className="w-8 h-8 bg-gray-200 rounded-lg mb-3" />
                 <div className="h-4 w-10 bg-gray-200 rounded mb-2" />
-                <div className="h-3 w-20 bg-gray-100 rounded" />
+                <div className="h-3 w-14 bg-gray-100 rounded" />
               </div>
             ))}
           </div>
@@ -542,40 +526,10 @@ const CompanyProgressStats = ({ taskMonth }) => {
 
   return (
     <div className="px-3 md:px-4 w-full bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+      <div className="mb-3">
         <h4 className="font-semibold text-base md:text-lg text-gray-800">
           Company Overview
         </h4>
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="text-xl md:text-2xl font-bold text-blue-600">
-              {companyStatsCheck?.statistics?.completionRate || 0}%
-            </div>
-            <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">Total<br />Done</div>
-          </div>
-          <div className="h-8 w-px bg-gray-100 mx-1"></div>
-          <div className="flex items-center gap-2">
-            <div className="text-xl md:text-2xl font-bold text-teal-600">
-              {companyStatsCheck?.statistics?.onTimeCompletionRate || 0}%
-            </div>
-            <div className="text-[10px] text-gray-400 leading-tight uppercase font-semibold">On-Time<br />Rate</div>
-          </div>
-        </div>
-      </div>
-      {/* Overall Progress Bar */}
-      <div className="mb-4 md:mb-6">
-        <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>Task Completion Progress</span>
-          <span>{companyStatsCheck?.statistics?.completionRate || 0}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-            style={{
-              width: `${companyStatsCheck?.statistics?.completionRate || 0}%`,
-            }}
-          ></div>
-        </div>
       </div>
       {/* Company Statistics Grid */}
       <DndContext
@@ -584,7 +538,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={cardOrder || []} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 flex-1">
+          <div className="grid grid-cols-3 lg:grid-cols-7 gap-2 flex-1">
             {orderedStats.map((stat) => (
               <SortableStatsCard
                 key={stat.id}

@@ -122,6 +122,7 @@ const ProjectDetailLayout = () => {
           currentProject={projectData}
           isLoading={projectLoading}
           selectedMonth={selectedMonth}
+          className={taskId ? 'hidden md:block' : ''}
         />
         {/* project overview page  */}
         <PageSuspense

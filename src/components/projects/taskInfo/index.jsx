@@ -109,8 +109,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
 
   return (
     <div
-      className="col-span-1 bg-white rounded-3xl px-2 
-    overflow-y-auto justify-between py-5 flex flex-col"
+      className="col-span-1 bg-white rounded-3xl px-2 overflow-y-auto justify-between py-3 md:py-5 flex flex-col"
     >
       <div>
         <div className="gap-y-3 flex flex-col mx-3">
@@ -194,7 +193,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
           </div>
         </div>
 
-        <div className="rounded-2xl mt-5 p-4 bg-[#F4F9FD] flex flex-col">
+        <div className="rounded-2xl mt-5 p-4 bg-[#F4F9FD] hidden md:flex flex-col">
           <h4 className="font-medium">Time tracking</h4>
           {isLoading ? (
             <div className="text-sm text-gray-500">Loading time data...</div>
@@ -271,7 +270,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
           </div>
         </div>
       </div>
-      <div className="flexStart px-3 gap-x-2">
+      <div className="hidden md:flex flexStart px-3 gap-x-2">
         <img src={assetPath("icons/calender2.svg")} alt="" className="w-4" />
         <span className="text-sm text-[#7D8592]">
           Created {formatDate(taskDetails?.createdAt)}

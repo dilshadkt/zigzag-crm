@@ -65,15 +65,15 @@ const TaskDetailPage = () => {
   // loading shimmer
   if (isLoading) {
     return (
-      <section className="col-span-4 overflow-hidden grid grid-cols-4">
-        <div className="col-span-3 bg-white rounded-3xl mr-5 flex flex-col"></div>
-        <div className="col-span-1 bg-white rounded-3xl px-2 justify-between py-5 flex flex-col"></div>
+      <section className="col-span-4 overflow-hidden grid grid-cols-1 md:grid-cols-4 gap-y-3 md:gap-y-0">
+        <div className="col-span-1 md:col-span-3 bg-white rounded-3xl md:mr-5 flex flex-col min-h-[120px]"></div>
+        <div className="hidden md:flex col-span-1 bg-white rounded-3xl px-2 justify-between py-5 flex-col"></div>
       </section>
     );
   }
 
   return (
-    <section className="col-span-4 h-full grid grid-cols-4">
+    <section className="col-span-4 h-full overflow-y-auto md:overflow-hidden grid grid-cols-1 md:grid-cols-4 gap-y-3 md:gap-y-0">
       <TaskDetails
         setShowModalTask={setShowModalTask}
         taskDetails={taskDetails}

@@ -50,7 +50,7 @@ const getSocialUrl = (platform, handle) => {
   }
 };
 
-const SelectedProject = ({ currentProject, isLoading, selectedMonth }) => {
+const SelectedProject = ({ currentProject, isLoading, selectedMonth, className = "" }) => {
   const navigate = useNavigate();
   const { isCompany, companyId, user } = useAuth();
   const { hasPermission } = usePermissions();
@@ -133,8 +133,7 @@ const SelectedProject = ({ currentProject, isLoading, selectedMonth }) => {
 
   return (
     <div
-      className="col-span-1  bg-white md:overflow-y-auto text-[#0A1629]
-rounded-3xl  flex flex-col  p-4"
+      className={`col-span-1 bg-white md:overflow-y-auto text-[#0A1629] rounded-3xl flex flex-col p-4 ${className}`}
     >
       <div className="flex flex-col overflow-y-auto">
         <div className="flexBetween">
