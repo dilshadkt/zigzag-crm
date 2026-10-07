@@ -73,6 +73,7 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
     status: statusFilter,
     projectId: selectedProjectId || projectId, // Pass projectId filter
     facebookAdAccountId: fbStatus?.accountId, // Explicitly pass for query key/filtering
+    leads: "ids", // table doesn't show lead details; skip populating them
   });
   const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
 
