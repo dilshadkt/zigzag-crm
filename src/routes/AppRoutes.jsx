@@ -55,6 +55,7 @@ const ProjectsAnalytics = lazy(() => import("../pages/projectAnalytics"));
 const ProjectAnalyticsDetails = lazy(() => import("../pages/ProjectAnalyticsDetails"));
 const Company = lazy(() => import("../pages/settings/company"));
 const Master = lazy(() => import("../pages/settings/master"));
+const Rules = lazy(() => import("../pages/settings/rules"));
 const Notification = lazy(() => import("../pages/settings/notification"));
 const Safety = lazy(() => import("../pages/settings/safety"));
 const NotificationsPage = lazy(() => import("../pages/notifications"));
@@ -554,6 +555,14 @@ const AppRoutes = () => {
               element={
                 <RouteAccess>
                   <Master />
+                </RouteAccess>
+              }
+            />
+            <Route
+              path="rules"
+              element={
+                <RouteAccess>
+                  <Rules />
                 </RouteAccess>
               }
             />

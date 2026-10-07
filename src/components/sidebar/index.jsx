@@ -175,6 +175,12 @@ const Sidebar = () => {
             path: "/settings/master",
             routeKey: "settings",
           });
+          settingsChildren.push({
+            id: 1207,
+            title: "Rules",
+            path: "/settings/rules",
+            routeKey: "settings",
+          });
         }
       }
 

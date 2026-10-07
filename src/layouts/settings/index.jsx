@@ -54,7 +54,7 @@ const SettingsLayout = () => {
       }
 
       // 4. Master: Available if they have manageMaster
-      if (setting.path === "master") {
+      if (setting.path === "master" || setting.path === "rules") {
         return hasPermission("settings", "manageMaster");
       }
 

@@ -28,9 +28,6 @@ import DepartmentHeader from "../../../components/settings/company/DepartmentHea
 import DepartmentSection from "../../../components/settings/company/DepartmentSection";
 import DepartmentModal from "../../../components/settings/company/DepartmentModal";
 
-// Gamification imports
-import GamificationRulesSection from "../../../components/settings/company/GamificationRulesSection";
-
 // Telegram imports
 import TelegramReportSection from "../../../components/settings/company/TelegramReportSection";
 
@@ -288,18 +285,6 @@ const Master = () => {
           onSave={handleSaveTelegramConfig}
           isSaving={updateTelegramSettings.isPending}
         />
-      </div>
-
-      {/* ── Divider ── */}
-      <div className="border-t border-gray-100" />
-
-      {/* ── Gamification Rules ── */}
-      <div className="flex flex-col">
-        <SectionHeader
-          title="Gamification & Performance"
-          description="Configure how points are awarded or deducted for employee performance."
-        />
-        <GamificationRulesSection />
       </div>
 
       {/* ── Divider ── */}
