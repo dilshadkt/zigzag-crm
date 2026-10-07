@@ -123,22 +123,6 @@ export const disableBrowserNotifications = async () => {
   }
 };
 
-const postToServiceWorker = async (payload) => {
-  try {
-    if (!("serviceWorker" in navigator)) return false;
-    const registration =
-      (await navigator.serviceWorker.getRegistration()) ||
-      (await registerNotificationWorker());
-    if (registration?.active) {
-      registration.active.postMessage(payload);
-      return true;
-    }
-  } catch {
-    // fallthrough to Notification API
-  }
-  return false;
-};
-
 export const showBrowserNotification = async ({ title, body, url, tag, icon } = {}) => {
   if (!isBrowserNotificationSupported()) return;
   if (Notification.permission !== "granted") return;
@@ -147,36 +131,44 @@ export const showBrowserNotification = async ({ title, body, url, tag, icon } = 
   const resolvedUrl = url || "/";
   const resolvedTag = tag || `notif-${Date.now()}`;
   const resolvedIcon = icon || "/icons/pwa-192.png";
+  const resolvedTitle = title || "ZigZag CRM";
+  const resolvedBody = body || "";
 
-  const payload = {
-    type: "SHOW_NOTIFICATION",
-    title: title || "ZigZag CRM",
-    body: body || "",
-    url: resolvedUrl,
-    tag: resolvedTag,
+  const options = {
+    body: resolvedBody,
     icon: resolvedIcon,
+    badge: "/icons/pwa-192.png",
+    tag: resolvedTag,
+    renotify: true,
+    data: { url: resolvedUrl },
+    vibrate: [200, 100, 200],
   };
 
-  const sent = await postToServiceWorker(payload);
-  if (sent) return;
+  // Preferred: use the SW registration — this shows a persistent OS tray
+  // notification with system sound, works even when the tab is not focused.
+  if ("serviceWorker" in navigator) {
+    try {
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("SW timeout")), 2000)),
+      ]);
+      await registration.showNotification(resolvedTitle, options);
+      return;
+    } catch {
+      // fallthrough to Notification API
+    }
+  }
 
-  // Fallback: direct Notification API (doesn't play sound in all browsers)
+  // Fallback: direct Notification API
   try {
-    const n = new Notification(payload.title, {
-      body: payload.body,
-      icon: resolvedIcon,
-      badge: "/icons/pwa-192.png",
-      tag: resolvedTag,
-      renotify: true,
-      data: { url: resolvedUrl },
-    });
+    const n = new Notification(resolvedTitle, options);
     n.onclick = () => {
       window.focus();
       window.location.assign(resolvedUrl);
       n.close();
     };
   } catch {
-    // Ignore — permission may have changed
+    // Ignore
   }
 };
 

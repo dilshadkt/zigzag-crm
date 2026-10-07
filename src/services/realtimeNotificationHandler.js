@@ -1,14 +1,34 @@
-let audioContext = null;
+import notificationMp3 from "../assets/audio/new-notification-017-352293.mp3";
 
+let audioContext = null;
+let audioBuffer = null;
+
+// Pre-load the MP3 so it plays instantly with no delay
+const preloadAudio = async () => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!audioContext) audioContext = new AudioCtx();
+
+    if (audioBuffer) return;
+    const response = await fetch(notificationMp3);
+    const arrayBuffer = await response.arrayBuffer();
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  } catch {
+    // Non-fatal
+  }
+};
+
+// Call on any user gesture so the AudioContext is allowed to play
 export const unlockNotificationSound = () => {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
-    if (!audioContext) {
-      audioContext = new AudioCtx();
-    }
+    if (!audioContext) audioContext = new AudioCtx();
     if (audioContext.state === "suspended") {
-      audioContext.resume().catch(() => {});
+      audioContext.resume().then(() => preloadAudio()).catch(() => {});
+    } else {
+      preloadAudio();
     }
   } catch {
     // Ignore
@@ -16,10 +36,34 @@ export const unlockNotificationSound = () => {
 };
 
 export const playNotificationSound = () => {
+  // Primary: play pre-loaded MP3 via AudioContext (works even when tab is not focused)
   try {
-    unlockNotificationSound();
-    if (!audioContext) return;
+    if (audioContext && audioBuffer && audioContext.state === "running") {
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      source.start(0);
+      return;
+    }
+  } catch {
+    // fallthrough
+  }
 
+  // Secondary: plain Audio element (simpler, requires no prior unlock)
+  try {
+    const audio = new Audio(notificationMp3);
+    audio.volume = 0.7;
+    audio.play().catch(() => {
+      // Browser blocked autoplay — AudioContext path will retry after next gesture
+    });
+    return;
+  } catch {
+    // fallthrough
+  }
+
+  // Last resort: oscillator beep (same as before)
+  try {
+    if (!audioContext) return;
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
     osc.type = "sine";
@@ -31,7 +75,7 @@ export const playNotificationSound = () => {
     osc.start();
     osc.stop(audioContext.currentTime + 0.25);
   } catch {
-    // Ignore audio playback errors
+    // Ignore
   }
 };
 
