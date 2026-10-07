@@ -1,7 +1,8 @@
 // src/api/hooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import apiClient from "./client";
+import socketService from "../services/socketService";
 import {
   addProject,
   createEmployee,
@@ -2413,15 +2414,30 @@ export const useEndBreak = () => {
 
 // Get current attendance status
 export const useGetCurrentAttendanceStatus = () => {
+  const queryClient = useQueryClient();
   const hasToken =
     typeof window !== "undefined" && Boolean(localStorage.getItem("token"));
+
+  // Break / end shift done on another device (e.g. the mobile PWA) arrives
+  // over the socket, so refetch instead of waiting for a page refresh.
+  useEffect(() => {
+    const handleAttendanceUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ["attendanceStatus"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeAttendance"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeAttendanceHistory"] });
+    };
+    socketService.onAttendanceUpdated(handleAttendanceUpdated);
+    return () => socketService.offAttendanceUpdated(handleAttendanceUpdated);
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["attendanceStatus"],
     queryFn: () => getCurrentAttendanceStatus(),
     enabled: hasToken,
     staleTime: 0,
     refetchOnMount: "always",
-    refetchOnWindowFocus: false,
+    // Catches changes missed while the tab/PWA was in the background.
+    refetchOnWindowFocus: true,
     refetchInterval: 1000 * 60 * 2,
   });
 };

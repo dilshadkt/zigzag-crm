@@ -10,6 +10,7 @@ class SocketService {
     this.notificationHandlers = new Set();
     this.taskStatusHandlers = new Set();
     this.subtaskAssignedHandlers = new Set();
+    this.attendanceHandlers = new Set();
   }
 
   _dispatchToHandlers(handlers, data) {
@@ -71,6 +72,11 @@ class SocketService {
     this.socket.on("subtask_assigned", (data) => {
       console.log("📌 Subtask assigned via socket:", data);
       this._dispatchToHandlers(this.subtaskAssignedHandlers, data);
+    });
+
+    // Fired when this user's attendance changes from any device (web or PWA).
+    this.socket.on("attendance_updated", (data) => {
+      this._dispatchToHandlers(this.attendanceHandlers, data);
     });
 
     this.socket.on("points_awarded", (data) => {
@@ -283,6 +289,14 @@ class SocketService {
 
   offSubtaskAssigned(callback) {
     this.subtaskAssignedHandlers.delete(callback);
+  }
+
+  onAttendanceUpdated(callback) {
+    this.attendanceHandlers.add(callback);
+  }
+
+  offAttendanceUpdated(callback) {
+    this.attendanceHandlers.delete(callback);
   }
 
   // Listen for new messages
