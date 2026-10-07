@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
-import { FiX, FiTrash2 } from "react-icons/fi";
+import { FiX, FiTrash2, FiBell } from "react-icons/fi";
 import { useGetAllEmployees } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
 import {
   useAddTicketComment,
   useAssignTicket,
   useUpdateTicketMentions,
   useUpdateTicketStatus,
   useDeleteTicket,
+  useNudgeTicket,
 } from "../hooks/useTickets";
 import {
   PRIORITY_OPTIONS,
@@ -34,12 +36,14 @@ const TicketDetailDrawer = ({
   isAdmin,
   onEdit,
 }) => {
+  const { user } = useAuth();
   const { data: employeesData } = useGetAllEmployees(!!ticket && (canAssign || canMention), { view: 'select' });
   const assignMutation = useAssignTicket();
   const mentionMutation = useUpdateTicketMentions();
   const statusMutation = useUpdateTicketStatus();
   const commentMutation = useAddTicketComment();
   const deleteMutation = useDeleteTicket();
+  const nudgeMutation = useNudgeTicket();
   const [note, setNote] = useState("");
 
   const employeeOptions = React.useMemo(() => {
@@ -59,6 +63,9 @@ const TicketDetailDrawer = ({
 
   const employees = employeesData?.employees || [];
   const isClosed = ticket.status === "closed" || ticket.status === "resolved";
+  const createdById = ticket.createdBy?._id || ticket.createdBy;
+  const isCreator = String(createdById) === String(user?._id || user?.id);
+  const canNudge = isCreator && !!ticket.assignedTo && !isClosed;
   const canClose = canChangeStatus && !isClosed;
   const mentionIds = (ticket.mentions || []).map((person) => person._id || person);
 
@@ -107,6 +114,15 @@ const TicketDetailDrawer = ({
     }
   };
 
+  const handleNudge = async () => {
+    try {
+      await nudgeMutation.mutateAsync(ticket._id);
+      toast.success("Reminder sent to assignee");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to send reminder");
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this ticket?")) return;
     try {
@@ -134,6 +150,22 @@ const TicketDetailDrawer = ({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {canNudge && (
+              <button
+                type="button"
+                onClick={handleNudge}
+                disabled={nudgeMutation.isPending}
+                title="Remind assignee"
+                className="p-2 rounded-xl text-amber-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 relative"
+              >
+                <FiBell className="w-5 h-5" />
+                {nudgeMutation.isPending && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  </span>
+                )}
+              </button>
+            )}
             {!isClosed && onEdit && (
               <button
                 type="button"

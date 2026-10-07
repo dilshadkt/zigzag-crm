@@ -82,6 +82,12 @@ export const useAddTicketComment = () => {
   });
 };
 
+export const useNudgeTicket = () => {
+  return useMutation({
+    mutationFn: (ticketId) => ticketApi.nudgeTicket(ticketId),
+  });
+};
+
 export const useDeleteTicket = () => {
   const queryClient = useQueryClient();
   return useMutation({

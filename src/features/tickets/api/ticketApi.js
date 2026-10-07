@@ -54,6 +54,10 @@ export const ticketApi = {
     });
     return response.data;
   },
+  nudgeTicket: async (ticketId) => {
+    const response = await apiClient.post(`/tickets/${ticketId}/nudge`);
+    return response.data;
+  },
   deleteTicket: async (ticketId) => {
     const response = await apiClient.delete(`/tickets/${ticketId}`);
     return response.data;
