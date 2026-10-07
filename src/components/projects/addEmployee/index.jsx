@@ -24,7 +24,7 @@ const AddEmployee = ({
     []
   );
 
-  const { data: employeesData, isLoading } = useEmpoyees(1, 100, debouncedSearchTerm);
+  const { data: employeesData, isLoading } = useEmpoyees(1, 100, debouncedSearchTerm, "select");
   const employeesList = employeesData?.employees || [];
 
   // Filter employees based on search term
@@ -107,14 +107,16 @@ const AddEmployee = ({
                           {employee?.position}
                         </span>
                       </div>
-                      <div className="flex items-center mt-1">
-                        <span className="text-xs text-gray-500">
-                          {employee?.email}
-                        </span>
-                        <span className="text-xs rounded-lg ml-3 bg-blue-100 text-blue-800 px-2">
-                          {employee?.level || 'No Level'}
-                        </span>
-                      </div>
+                      {(employee?.email || employee?.level) && (
+                        <div className="flex items-center mt-1">
+                          <span className="text-xs text-gray-500">
+                            {employee?.email}
+                          </span>
+                          <span className="text-xs rounded-lg ml-3 bg-blue-100 text-blue-800 px-2">
+                            {employee?.level || 'No Level'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
