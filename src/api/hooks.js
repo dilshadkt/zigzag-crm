@@ -1460,10 +1460,12 @@ export const useGetAllCompanyTasks = (companyId, taskMonth, options = {}) => {
       }
       appendSuperFiltersToParams(params, superFilters);
 
+      // /company/filtered returns only filteredItems + stats, not the raw
+      // tasks/subTasks arrays that duplicate the same documents.
       const queryString = params.toString();
       const url = queryString
-        ? `/tasks/company/all?${queryString}`
-        : "/tasks/company/all";
+        ? `/tasks/company/filtered?${queryString}`
+        : "/tasks/company/filtered";
 
       return apiClient.get(url).then((res) => {
         const responseData = res.data || {};
@@ -1500,21 +1502,9 @@ export const useExternalTasks = (companyId, enabled = true) => {
     queryKey: ["externalTasks", companyId],
     queryFn: async () => {
       try {
-        // Fetch all company tasks and filter for external ones (project: null)
-        const response = await apiClient.get("/tasks/company/all");
-        const responseData = response.data || {};
-        const allTasks = responseData.tasks || [];
-
-        // Filter tasks where project is null, undefined, or empty
-        // Handle both cases: project as null or project as populated object that is null
-        const externalTasks = allTasks.filter((task) => {
-          // Check if project is null, undefined, or if it's an object with null _id
-          return !task.project ||
-            task.project === null ||
-            (typeof task.project === 'object' && !task.project._id);
-        });
-
-        return externalTasks;
+        // Server returns only project-less tasks as { _id, title }
+        const response = await apiClient.get("/tasks/company/external");
+        return response.data?.tasks || [];
       } catch (error) {
         // If endpoint requires admin access and user doesn't have it, return empty array
         console.warn("Failed to fetch external tasks:", error);
