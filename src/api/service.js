@@ -237,6 +237,7 @@ export const createTaskFromBoard = async (taskData) => {
   // api formated data for board view
   const data = {
     title: taskData?.title,
+    task_description: taskData?.task_description,
     description: taskData?.description,
     copyOfDescription: taskData?.copyOfDescription,
     attachments: taskData?.attachments,
