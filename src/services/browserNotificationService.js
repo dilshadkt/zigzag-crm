@@ -123,55 +123,74 @@ export const disableBrowserNotifications = async () => {
   }
 };
 
-export const showLeadBrowserNotification = async (data = {}) => {
+const postToServiceWorker = async (payload) => {
+  try {
+    if (!("serviceWorker" in navigator)) return false;
+    const registration =
+      (await navigator.serviceWorker.getRegistration()) ||
+      (await registerNotificationWorker());
+    if (registration?.active) {
+      registration.active.postMessage(payload);
+      return true;
+    }
+  } catch {
+    // fallthrough to Notification API
+  }
+  return false;
+};
+
+export const showBrowserNotification = async ({ title, body, url, tag, icon } = {}) => {
   if (!isBrowserNotificationSupported()) return;
   if (Notification.permission !== "granted") return;
   if (!areBrowserNotificationsEnabled()) return;
 
+  const resolvedUrl = url || "/";
+  const resolvedTag = tag || `notif-${Date.now()}`;
+  const resolvedIcon = icon || "/icons/pwa-192.png";
+
+  const payload = {
+    type: "SHOW_NOTIFICATION",
+    title: title || "ZigZag CRM",
+    body: body || "",
+    url: resolvedUrl,
+    tag: resolvedTag,
+    icon: resolvedIcon,
+  };
+
+  const sent = await postToServiceWorker(payload);
+  if (sent) return;
+
+  // Fallback: direct Notification API (doesn't play sound in all browsers)
+  try {
+    const n = new Notification(payload.title, {
+      body: payload.body,
+      icon: resolvedIcon,
+      badge: "/icons/pwa-192.png",
+      tag: resolvedTag,
+      renotify: true,
+      data: { url: resolvedUrl },
+    });
+    n.onclick = () => {
+      window.focus();
+      window.location.assign(resolvedUrl);
+      n.close();
+    };
+  } catch {
+    // Ignore — permission may have changed
+  }
+};
+
+export const showLeadBrowserNotification = async (data = {}) => {
   const leadName = data.leadName || "Someone";
   const campaignName = data.campaignName || "a campaign";
   const leadId = data.leadId || "";
   const url = data.url || (leadId ? `/leads/${leadId}` : "/leads");
-  const payload = {
-    type: "SHOW_LEAD_NOTIFICATION",
+  await showBrowserNotification({
     title: "New lead",
     body: `${leadName} interested in ${campaignName}`,
-    leadId,
     url,
     tag: leadId ? `lead-${leadId}` : "new-lead",
-  };
-
-  try {
-    if ("serviceWorker" in navigator) {
-      const registration =
-        (await navigator.serviceWorker.getRegistration()) ||
-        (await registerNotificationWorker());
-      if (registration) {
-        const ready = await navigator.serviceWorker.ready;
-        ready.active?.postMessage(payload);
-        return;
-      }
-    }
-  } catch (error) {
-    console.error("Service worker notification failed:", error);
-  }
-
-  const notification = new Notification(payload.title, {
-    body: payload.body,
-    icon: "/icons/pwa-192.png",
-    tag: payload.tag,
-    renotify: true,
-    requireInteraction: true,
-    data: { url },
   });
-
-  notification.onclick = () => {
-    window.focus();
-    if (url) {
-      window.location.assign(url);
-    }
-    notification.close();
-  };
 };
 
 export const listenForNotificationClicks = (navigate) => {
@@ -179,7 +198,10 @@ export const listenForNotificationClicks = (navigate) => {
 
   const handleMessage = (event) => {
     const payload = event.data || {};
-    if (payload.type !== "LEAD_NOTIFICATION_CLICK" || !payload.url) return;
+    const isKnownClick =
+      payload.type === "NOTIFICATION_CLICK" ||
+      payload.type === "LEAD_NOTIFICATION_CLICK";
+    if (!isKnownClick || !payload.url) return;
     window.focus();
     if (typeof navigate === "function") {
       navigate(payload.url);

@@ -7,6 +7,7 @@ import {
   playNotificationSound,
   unlockNotificationSound,
 } from "../../services/realtimeNotificationHandler";
+import { showBrowserNotification } from "../../services/browserNotificationService";
 
 const TOAST_DURATION_MS = 4000;
 const FRESH_WINDOW_MS = 2 * 60 * 1000;
@@ -121,7 +122,27 @@ const RealtimeAlertsProvider = () => {
       window.setTimeout(refetchNotificationQueries, 2500);
     };
 
+    const TICKET_TYPES = new Set(["ticket_assigned", "ticket_mentioned", "ticket_comment"]);
+
     const handleNewNotification = (notification) => {
+      if (TICKET_TYPES.has(notification?.type)) {
+        const msg = notification?.message || notification?.title || "New ticket notification";
+        fireInstantAlert({
+          message: msg,
+          entityId: notification?.data?.ticketId ? String(notification.data.ticketId) : null,
+          notificationId: notification?._id,
+        });
+        // Show OS-level notification (like WhatsApp) even if the tab is active
+        showBrowserNotification({
+          title: notification?.title || "ZigZag CRM",
+          body: msg,
+          url: "/tickets",
+          tag: `ticket-${notification?.data?.ticketId || Date.now()}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
+        return;
+      }
+
       if (notification?.type !== "task_assigned") {
         refetchNotificationQueries();
         queryClient.invalidateQueries({ queryKey: ["unreadNotificationCount"] });

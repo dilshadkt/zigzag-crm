@@ -77,6 +77,10 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         return "/icons/project.svg";
       case "comment":
         return "/icons/comment.svg";
+      case "ticket_assigned":
+      case "ticket_mentioned":
+      case "ticket_comment":
+        return "/icons/alert.svg";
       case "meeting":
         return "/icons/alert.svg";
       default:
@@ -99,6 +103,12 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         return "bg-yellow-100 text-yellow-600";
       case "comment":
         return "bg-indigo-100 text-indigo-600";
+      case "ticket_assigned":
+        return "bg-orange-100 text-orange-600";
+      case "ticket_mentioned":
+        return "bg-violet-100 text-violet-600";
+      case "ticket_comment":
+        return "bg-teal-100 text-teal-600";
       case "meeting":
         return "bg-blue-100 text-blue-600";
       default:
@@ -142,6 +152,11 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         if (notification.data?.projectId) {
           navigate(`/projects/${notification.data.projectId}/edit`);
         }
+        break;
+      case "ticket_assigned":
+      case "ticket_mentioned":
+      case "ticket_comment":
+        navigate("/tickets");
         break;
       case "meeting":
         navigate("/meetings");

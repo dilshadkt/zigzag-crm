@@ -63,8 +63,8 @@ const BrowserNotificationPrompt = () => {
             Enable desktop notifications
           </p>
           <p className="mt-1 text-xs text-gray-500">
-            Get an alert on your computer when a new lead arrives, even if this
-            tab is in the background.
+            Get notified when a ticket is assigned to you, someone mentions you,
+            or a new lead arrives — even if this tab is in the background.
           </p>
           <div className="mt-3 flex items-center gap-2">
             <button
