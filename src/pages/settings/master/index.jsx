@@ -58,7 +58,11 @@ import {
   useGetLeavePolicy,
   useSaveLeavePolicy,
   useGetCompany,
-  useUpdateTelegramSettings
+  useUpdateTelegramSettings,
+  useRegisterTelegramWebhook,
+  useRemoveTelegramWebhook,
+  useGetTelegramSubscribers,
+  useRemoveTelegramSubscriber,
 } from "../../../api/hooks";
 
 // ─── Section Header ───────────────────────────────────────────────────────────
@@ -76,10 +80,34 @@ const Master = () => {
   // ── Company Settings (for Telegram) ─────────────────────────────────────────
   const { data: companyData, isLoading: companyLoading, error: companyError } = useGetCompany(companyId);
   const updateTelegramSettings = useUpdateTelegramSettings();
+  const registerWebhook = useRegisterTelegramWebhook();
+  const removeWebhook = useRemoveTelegramWebhook();
+  const { data: telegramSubscribers, isLoading: subscribersLoading } = useGetTelegramSubscribers(companyId);
+  const removeSubscriber = useRemoveTelegramSubscriber();
 
   const handleSaveTelegramConfig = (data) => {
     updateTelegramSettings.mutate({ companyId, ...data }, {
       onSuccess: () => toast.success("Telegram report settings saved successfully")
+    });
+  };
+
+  const handleRegisterWebhook = () => {
+    registerWebhook.mutate({ companyId }, {
+      onSuccess: (data) => toast.success(`Webhook registered: ${data.webhookUrl}`),
+      onError: (err) => toast.error(err?.response?.data?.message || "Failed to register webhook"),
+    });
+  };
+
+  const handleRemoveWebhook = () => {
+    removeWebhook.mutate({ companyId }, {
+      onSuccess: () => toast.success("Webhook removed"),
+      onError: (err) => toast.error(err?.response?.data?.message || "Failed to remove webhook"),
+    });
+  };
+
+  const handleRemoveSubscriber = (chatId) => {
+    removeSubscriber.mutate({ companyId, chatId }, {
+      onSuccess: () => toast.success("Subscriber removed"),
     });
   };
 
@@ -284,6 +312,13 @@ const Master = () => {
           error={companyError}
           onSave={handleSaveTelegramConfig}
           isSaving={updateTelegramSettings.isPending}
+          subscribers={telegramSubscribers || []}
+          subscribersLoading={subscribersLoading}
+          onRegisterWebhook={handleRegisterWebhook}
+          onRemoveWebhook={handleRemoveWebhook}
+          isRegisteringWebhook={registerWebhook.isPending}
+          isRemovingWebhook={removeWebhook.isPending}
+          onRemoveSubscriber={handleRemoveSubscriber}
         />
       </div>
 

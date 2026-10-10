@@ -3577,10 +3577,40 @@ export const useGenerateMeetingMeetLink = () => {
 export const useUpdateTelegramSettings = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ companyId, enabled, time }) =>
-      apiClient.put(`/companies/${companyId}/telegram-settings`, { enabled, time }).then((res) => res.data),
+    mutationFn: ({ companyId, enabled, time, botToken, recipients }) =>
+      apiClient.put(`/companies/${companyId}/telegram-settings`, { enabled, time, botToken, recipients }).then((res) => res.data),
     onSuccess: (_, { companyId }) => {
       queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+};
+
+export const useRegisterTelegramWebhook = () =>
+  useMutation({
+    mutationFn: ({ companyId }) =>
+      apiClient.post(`/telegram/${companyId}/register-webhook`).then((res) => res.data),
+  });
+
+export const useRemoveTelegramWebhook = () =>
+  useMutation({
+    mutationFn: ({ companyId }) =>
+      apiClient.post(`/telegram/${companyId}/remove-webhook`).then((res) => res.data),
+  });
+
+export const useGetTelegramSubscribers = (companyId) =>
+  useQuery({
+    queryKey: ["telegram-subscribers", companyId],
+    queryFn: () => apiClient.get(`/telegram/${companyId}/subscribers`).then((res) => res.data.subscribers),
+    enabled: !!companyId,
+  });
+
+export const useRemoveTelegramSubscriber = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ companyId, chatId }) =>
+      apiClient.delete(`/telegram/${companyId}/subscribers/${chatId}`).then((res) => res.data),
+    onSuccess: (_, { companyId }) => {
+      queryClient.invalidateQueries({ queryKey: ["telegram-subscribers", companyId] });
     },
   });
 };

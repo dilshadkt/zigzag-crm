@@ -312,7 +312,16 @@ const SelectedProject = ({ currentProject, isLoading, selectedMonth, className =
 
             {/* Streamlined Sidebar: Removed Custom Fields, Social Media, and Work Progress as they are now in the Overview tab */}
 
-            {canPauseProject && (
+            {canPauseProject && currentProject?.status === "completed" && (
+              <div
+                className="w-full h-10 mt-4 rounded-xl flexCenter gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium"
+                title="Completed projects can't be paused. Change the status from Edit Project to reopen it."
+              >
+                <FaCheckCircle className="w-3.5 h-3.5" />
+                Project Completed
+              </div>
+            )}
+            {canPauseProject && currentProject?.status !== "completed" && (
               <PrimaryButton
                 title={
                   pauseProject.isLoading || resumeProject.isLoading

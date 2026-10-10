@@ -210,6 +210,7 @@ const DailyChecklistDrawer = ({ projects: projectsProp = [] }) => {
         projects.forEach((project) => {
             // Only show active projects
             if (project.active === false) return;
+            if (["paused", "completed", "on-hold"].includes(project.status)) return;
 
             // Only consider active tasks from definitions that are assigned to the current user
             const definitions = project.dailyChecklist?.filter(t => {

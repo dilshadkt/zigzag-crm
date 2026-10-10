@@ -194,16 +194,21 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
 
   return (
     <div
-      className="fixed left-0 font-normal right-0 bottom-0 flexEnd py-4 px-5 top-0 m-auto bg-[#2155A3]/20
-     z-[1000] backdrop-blur-sm"
+      className="fixed inset-0 font-normal z-[1000] bg-[#2155A3]/20 backdrop-blur-sm flex items-end sm:items-stretch sm:justify-end"
+      onClick={(e) => { if (e.target === e.currentTarget) setNotifyMenuOpen(false); }}
     >
-      <div className="w-[420px] flex flex-col bg-white rounded-3xl overflow-hidden h-full">
-        <div className="h-[85px] border-b border-[#E4E6E8] px-[26px] w-full flexCenter">
+      <div className="w-full sm:w-[420px] flex flex-col bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[90vh] sm:h-full">
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+        </div>
+
+        <div className="py-3 sm:h-[85px] sm:py-0 border-b border-[#E4E6E8] px-4 sm:px-[26px] w-full flex items-center">
           <div className="flexBetween w-full">
-            <div className="flex items-center gap-x-3">
-              <h3 className="font-medium text-lg">Notifications</h3>
+            <div className="flex items-center gap-x-2.5">
+              <h3 className="font-semibold text-base sm:text-lg">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 font-medium">
+                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-medium">
                   {unreadCount} new
                 </span>
               )}
@@ -212,7 +217,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium"
                   disabled={markAllAsReadMutation.isLoading}
                 >
                   Mark all read
@@ -227,7 +232,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
           </div>
         </div>
 
-        <div className="h-full flex flex-col overflow-y-auto mb-5">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -237,13 +242,13 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
               <div
                 key={notification._id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`flex px-[26px] border-[#E4E6E8] gap-x-3 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
+                className={`flex px-4 sm:px-[26px] border-[#E4E6E8] gap-x-2.5 sm:gap-x-3 py-3 sm:py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
                   !notification.read ? "bg-blue-50" : ""
                 }`}
               >
-                <div className="relative">
+                <div className="relative shrink-0">
                   <div
-                    className={`w-[50px] h-[50px] rounded-full overflow-hidden flex items-center justify-center ${getNotificationColor(
+                    className={`w-10 h-10 sm:w-[50px] sm:h-[50px] rounded-full overflow-hidden flex items-center justify-center ${getNotificationColor(
                       notification.type
                     )}`}
                   >
@@ -276,72 +281,54 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-y-1 flex-1">
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-900">
+                <div className="flex flex-col gap-y-0.5 flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-sm font-semibold text-gray-900 line-clamp-1">
                       {notification.title}
                     </span>
-                    <span className="text-xs text-[#7D8592] whitespace-nowrap ml-2">
+                    <span className="text-[11px] text-[#7D8592] whitespace-nowrap shrink-0">
                       {formatTimeAgo(notification.createdAt)}
                     </span>
                   </div>
 
-                  <p className="text-sm text-[#7D8592] line-clamp-2">
+                  <p className="text-xs sm:text-sm text-[#7D8592] line-clamp-2">
                     {notification.message}
                   </p>
 
-                  {/* Additional context based on notification type */}
-                  {notification.type === "task_assigned" &&
-                    notification.data?.projectName && (
-                      <div className="flex items-center gap-x-2 mt-1">
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                          {notification.data.projectName}
-                        </span>
-                      </div>
-                    )}
-
-                  {(notification.type === "deadline_reminder" || notification.type === "project_deadline_reminder") && (
-                    <div className="flex items-center gap-x-2 mt-1">
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                        ⏰ Urgent
+                  {/* Contextual tags */}
+                  {notification.type === "task_assigned" && notification.data?.projectName && (
+                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                        {notification.data.projectName}
                       </span>
                     </div>
                   )}
-
-                  {notification.type === "task_updated" &&
-                    notification.data?.reviewRequired && (
-                      <div className="flex items-center gap-x-2 mt-1">
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                          👀 Needs Review
-                        </span>
-                        {notification.data?.isSubTask && (
-                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                            Subtask
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                  {notification.type === "task_updated" &&
-                    notification.data?.approved && (
-                      <div className="flex items-center gap-x-2 mt-1">
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                          ✅ Approved
-                        </span>
-                        {notification.data?.isSubTask && (
-                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                            Subtask
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                  {notification.type === "message" &&
-                    notification.data?.messagePreview && (
-                      <div className="text-xs text-gray-600 italic mt-1 truncate">
-                        "{notification.data.messagePreview}"
-                      </div>
-                    )}
+                  {(notification.type === "deadline_reminder" || notification.type === "project_deadline_reminder") && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">⏰ Urgent</span>
+                    </div>
+                  )}
+                  {notification.type === "task_updated" && notification.data?.reviewRequired && (
+                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">👀 Needs Review</span>
+                      {notification.data?.isSubTask && (
+                        <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full">Subtask</span>
+                      )}
+                    </div>
+                  )}
+                  {notification.type === "task_updated" && notification.data?.approved && (
+                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">✅ Approved</span>
+                      {notification.data?.isSubTask && (
+                        <span className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full">Subtask</span>
+                      )}
+                    </div>
+                  )}
+                  {notification.type === "message" && notification.data?.messagePreview && (
+                    <div className="text-[10px] text-gray-500 italic mt-1 truncate">
+                      "{notification.data.messagePreview}"
+                    </div>
+                  )}
                 </div>
               </div>
             ))
@@ -366,7 +353,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
           )}
         </div>
 
-        <div className="border-t border-[#E4E6E8] px-[26px] py-4 space-y-3">
+        <div className="border-t border-[#E4E6E8] px-4 sm:px-[26px] py-3 sm:py-4 space-y-2.5">
           {isBrowserNotificationSupported() && (
             <button
               type="button"
