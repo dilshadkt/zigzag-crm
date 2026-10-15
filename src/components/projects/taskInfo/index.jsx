@@ -14,6 +14,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { assetPath } from "../../../utils/assetPath";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
+import RescheduleBadge from "../dateChangeReasonModal/RescheduleBadge";
 import "./taskInfo.css";
 
 const TaskUserAvatar = ({ user, size = "w-8 h-8", fontSize = "text-[10px]" }) => {
@@ -248,6 +249,11 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
                   {formatDate(taskDetails?.dueDate)}
                 </span>
               </div>
+              {taskDetails?.rescheduleCount > 0 && (
+                <span className="text-xs font-semibold text-red-600">
+                  Rescheduled: +{taskDetails.rescheduleCount}
+                </span>
+              )}
               {/* Original Due Date (if different from current) */}
               {taskDetails?.originalDueDate &&
                 taskDetails.originalDueDate !== taskDetails?.dueDate && (
@@ -389,6 +395,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
                     key={index}
                     className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
                   >
+                    <RescheduleBadge change={change} />
                     <div className="text-gray-800 mb-2 leading-relaxed font-medium">
                       {change?.reason || "No reason provided"}
                     </div>

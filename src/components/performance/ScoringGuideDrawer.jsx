@@ -36,6 +36,7 @@ const DEFAULTS = {
   lateArrivalGraceMinutes: 10,
   internalReviewRejectionPenalty: 10,
   clientRejectionPenalty: 15,
+  rescheduleStaffDelayPenalty: 10,
   campaignKpiBonusEnabled: false,
   campaignCtrTarget: 1,
   campaignCprMax: 0,
@@ -254,6 +255,12 @@ const ScoringGuideDrawer = ({ isOpen, onClose, performance }) => {
               title="Client rejection attributed to you"
               detail="The client sent work back and you were named as the cause. Downstream subtasks that also have to change are not charged extra."
               value={settings.clientRejectionPenalty}
+              loss
+            />
+            <RuleRow
+              title="Due date moved because of a delay"
+              detail="You moved a due date because you lost time, or a colleague named you as the cause of their delay. Client delays and management priority changes cost nothing."
+              value={settings.rescheduleStaffDelayPenalty}
               loss
             />
           </Section>

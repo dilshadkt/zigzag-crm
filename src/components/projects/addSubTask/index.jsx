@@ -12,8 +12,14 @@ import CategoryPicker, {
 } from "../../shared/Field/categoryPicker";
 import { useAddSubTaskForm } from "../../../hooks/useAddSubTaskForm";
 import Modal from "../../shared/modal";
-import { useGetProjectSocialMedia, useGetTaskCategories } from "../../../api/hooks";
+import DateChangeReasonModal from "../dateChangeReasonModal";
+import {
+  useGetProjectSocialMedia,
+  useGetTaskCategories,
+  useGetSubTasksByParentTask,
+} from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import { canWaiveReschedulePenalty } from "../../../utils/rescheduleReasons";
 import { isPublishRelatedName } from "../../../utils/isPublishRelated";
 
 const socialPlatforms = [
@@ -249,7 +255,30 @@ const AddSubTask = ({
   const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
     useState(false);
   const [pendingNewDueDate, setPendingNewDueDate] = useState(null);
-  const [dateChangeReason, setDateChangeReason] = useState("");
+
+  // Only an admin or the project coordinator may pick a reason that waives the
+  // assignee's penalty; the API enforces the same rule.
+  const canWaivePenalty = canWaiveReschedulePenalty(user, projectData);
+
+  // For an Internal Dependency the likeliest culprit is whoever owns the step
+  // just before this one, so offer them first.
+  const { data: siblingSubTasks = [] } = useGetSubTasksByParentTask(
+    isEdit ? parentTaskId : null
+  );
+  const suggestedFaultUserId = useMemo(() => {
+    const currentOrder = Number(initialValues?.order);
+    if (!Number.isFinite(currentOrder)) return "";
+    const previous = (siblingSubTasks || [])
+      .filter(
+        (st) =>
+          String(st._id) !== String(initialValues?._id) &&
+          Number.isFinite(Number(st.order)) &&
+          Number(st.order) < currentOrder
+      )
+      .sort((a, b) => Number(b.order) - Number(a.order))[0];
+    const assignee = previous?.assignedTo?.[0];
+    return assignee?._id || assignee || "";
+  }, [siblingSubTasks, initialValues?.order, initialValues?._id]);
 
   const handleDueDateChange = (e) => {
     const newDate = e.target.value;
@@ -283,22 +312,18 @@ const AddSubTask = ({
     }
   };
 
-  const handleDateChangeReasonSubmit = () => {
-    if (!dateChangeReason.trim()) {
-      alert("Please provide a reason for changing the due date.");
-      return;
-    }
+  const handleDateChangeReasonSubmit = ({ reasonType, reason, faultUser }) => {
     setFieldValue("dueDate", pendingNewDueDate);
-    setFieldValue("dueDateChangeReason", dateChangeReason.trim());
+    setFieldValue("dueDateChangeReason", reason);
+    setFieldValue("dueDateReasonType", reasonType);
+    setFieldValue("dueDateFaultUser", faultUser || "");
     setShowDateChangeReasonModal(false);
     setPendingNewDueDate(null);
-    setDateChangeReason("");
   };
 
   const handleDateChangeReasonCancel = () => {
     setShowDateChangeReasonModal(false);
     setPendingNewDueDate(null);
-    setDateChangeReason("");
   };
 
   const handleMissingCategoryGoBack = () => {
@@ -673,66 +698,18 @@ const AddSubTask = ({
         )}
       </div>
 
-      <Modal
+      <DateChangeReasonModal
         isOpen={showDateChangeReasonModal}
         onClose={handleDateChangeReasonCancel}
-        title="Reason for Date Change"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            You are changing the due date from{" "}
-            <span className="font-semibold">
-              {initialValues?.dueDate
-                ? new Date(initialValues.dueDate).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "N/A"}
-            </span>{" "}
-            to{" "}
-            <span className="font-semibold">
-              {pendingNewDueDate
-                ? new Date(pendingNewDueDate).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "N/A"}
-            </span>
-            . Please provide a reason for this change.
-          </p>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Reason <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={dateChangeReason}
-              onChange={(e) => setDateChangeReason(e.target.value)}
-              placeholder="Enter the reason for changing the due date..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              rows={4}
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleDateChangeReasonCancel}
-              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleDateChangeReasonSubmit}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Confirm Change
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleDateChangeReasonSubmit}
+        oldDate={initialValues?.dueDate}
+        newDate={pendingNewDueDate}
+        canWaivePenalty={canWaivePenalty}
+        teams={teams}
+        assigneeIds={initialValues?.assignedTo || []}
+        suggestedFaultUserId={suggestedFaultUserId}
+        itemLabel="subtask"
+      />
 
       <Modal
         isOpen={showMissingCategoryModal}

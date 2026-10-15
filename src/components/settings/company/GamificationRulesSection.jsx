@@ -34,6 +34,7 @@ const GamificationRulesSection = () => {
     lateArrivalGraceMinutes: 10,
     internalReviewRejectionPenalty: 10,
     clientRejectionPenalty: 15,
+    rescheduleStaffDelayPenalty: 10,
     campaignKpiBonusEnabled: false,
     campaignCtrTarget: 1,
     campaignCprMax: 0,
@@ -435,6 +436,22 @@ const GamificationRulesSection = () => {
                 value={settings.clientRejectionPenalty !== undefined ? settings.clientRejectionPenalty : 15}
                 onChange={handleChange}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm w-full transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+                <FiXCircle className="text-amber-500" /> Due Date Moved — Staff / Dependency Delay
+              </label>
+              <p className="text-xs text-gray-500 mb-1">
+                Points deducted when a due date is moved because of a staff delay (from the assignee), or an internal dependency (from the colleague who caused it). Client delays and management priority shifts are never penalised.
+              </p>
+              <input
+                type="number"
+                name="rescheduleStaffDelayPenalty"
+                value={settings.rescheduleStaffDelayPenalty !== undefined ? settings.rescheduleStaffDelayPenalty : 10}
+                onChange={handleChange}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm w-full transition-all"
               />
             </div>
           </div>

@@ -15,6 +15,7 @@ import LinkPreview from "../../shared/LinkPreview";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 import { getFilledCategoryFieldValues } from "../../../utils/categoryFields";
 import CategoryFieldValue from "../../shared/CategoryFieldValue";
+import RescheduleBadge from "../dateChangeReasonModal/RescheduleBadge";
 
 // Generate Google Drive embed URL for preview if possible
 const getDriveEmbedUrl = (url) => {
@@ -753,6 +754,11 @@ const SubtasksSection = ({
                         ? new Date(subtask.dueDate).toLocaleDateString()
                         : "No date"}
                     </span>
+                    {subtask?.rescheduleCount > 0 && (
+                      <span className="text-[11px] font-semibold text-red-600">
+                        Rescheduled: +{subtask.rescheduleCount}
+                      </span>
+                    )}
                     {(subtask?.dueDateHistory?.length > 0 || subtask?.reworkHistory?.length > 0) && (
                       <div className="flex items-center gap-1">
                         {subtask?.dueDateHistory?.length > 0 && (
@@ -885,6 +891,7 @@ const SubtasksSection = ({
                   key={index}
                   className="pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
                 >
+                  <RescheduleBadge change={change} />
                   <div className="text-gray-800 mb-2 leading-relaxed font-medium">
                     {change?.reason || "No reason provided"}
                   </div>
