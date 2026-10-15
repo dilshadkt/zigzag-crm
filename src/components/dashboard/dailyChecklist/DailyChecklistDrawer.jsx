@@ -1,14 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateDailyChecklistStatus } from "../../../api/service";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { updateDailyChecklistStatus, getDailyChecklistSummary } from "../../../api/service";
 import { format, addDays, subDays, isToday } from "date-fns";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
-import { useAuth } from "../../../hooks/useAuth";
-import { usePermissions } from "../../../hooks/usePermissions";
-import { useCompanyProjects, useGetEmployeeProjects } from "../../../api/hooks";
+import { FiCheck } from "react-icons/fi";
 
-const CircularProgress = ({ value, onClick }) => {
-    const radius = 24;
+const CircularProgress = ({ value, onClick, loading }) => {
+    const radius = 22;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (value / 100) * circumference;
 
@@ -16,41 +14,40 @@ const CircularProgress = ({ value, onClick }) => {
         <button
             onClick={onClick}
             className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-[50] group transition-transform hover:scale-105"
-            title="Daily Tasks Progress"
+            aria-label="Daily checklist"
         >
-            <div className="relative flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg border border-blue-100">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 64 64">
-                    {/* Background circle */}
-                    <circle
-                        cx="32"
-                        cy="32"
-                        r={radius}
-                        stroke="#E5E7EB"
-                        strokeWidth="5"
-                        fill="none"
-                    />
-                    {/* Progress circle */}
-                    <circle
-                        cx="32"
-                        cy="32"
-                        r={radius}
-                        stroke={value === 100 ? "#10B981" : "#3B82F6"}
-                        strokeWidth="5"
-                        fill="none"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        className="transition-all duration-500 ease-out"
-                    />
+            <div className="relative flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md border border-gray-200">
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r={radius} stroke="#E5E7EB" strokeWidth="2.5" fill="none" />
+                    {!loading && (
+                        <circle
+                            cx="24"
+                            cy="24"
+                            r={radius}
+                            stroke="#111827"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-500 ease-out"
+                        />
+                    )}
+                    {loading && (
+                        <circle
+                            cx="24"
+                            cy="24"
+                            r={radius}
+                            stroke="#111827"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeDasharray={`${circumference * 0.25} ${circumference}`}
+                            strokeLinecap="round"
+                            className="origin-center animate-spin"
+                        />
+                    )}
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <span className={`text-xs font-bold ${value === 100 ? "text-green-600" : "text-blue-600"}`}>
-                        {Math.round(value)}%
-                    </span>
-                </div>
-            </div>
-            <div className="absolute -top-10 items-center justify-center w-full hidden group-hover:flex">
-                <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded">Daily Tasks</span>
+                <FiCheck className="relative w-[18px] h-[18px] text-gray-900" strokeWidth={2} />
             </div>
         </button>
     );
@@ -161,135 +158,84 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completed
     );
 };
 
-const DailyChecklistDrawer = ({ projects: projectsProp = [] }) => {
-    const { user, companyId } = useAuth();
-    const { hasPermission } = usePermissions();
-    const isCompanyAdmin = user?.role === "company-admin";
-    const hasInlineChecklist = projectsProp.some((project) =>
-        Array.isArray(project?.dailyChecklist)
-    );
-    const shouldFetchChecklist = !hasInlineChecklist;
+const DrawerSkeleton = () => (
+    <div className="space-y-4" aria-busy="true" aria-label="Loading checklist">
+        {[3, 2, 3].map((rows, i) => (
+            <div key={i} className="bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden animate-pulse">
+                <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-gray-200" />
+                    <div className="h-3 w-32 rounded bg-gray-200" />
+                </div>
+                <div className="p-2 space-y-1">
+                    {Array.from({ length: rows }).map((_, r) => (
+                        <div key={r} className="flex items-start gap-3 p-2">
+                            <div className="h-5 w-5 rounded-md bg-gray-200" />
+                            <div className="flex-1 space-y-1.5">
+                                <div className="h-3 w-3/4 rounded bg-gray-200" />
+                                <div className="h-2 w-1/3 rounded bg-gray-100" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        ))}
+    </div>
+);
 
-    const { data: companyChecklistProjects } = useCompanyProjects(
-        companyId,
-        0,
-        null,
-        {
-            view: "checklist",
-            enabled: shouldFetchChecklist && isCompanyAdmin,
-        }
-    );
-    const { data: employeeChecklistData } = useGetEmployeeProjects(
-        user?._id || null,
-        null,
-        {
-            view: "checklist",
-            enabled: shouldFetchChecklist && !isCompanyAdmin && !!user?._id,
-        }
-    );
-
-    const projects = hasInlineChecklist
-        ? projectsProp
-        : isCompanyAdmin
-            ? (Array.isArray(companyChecklistProjects) ? companyChecklistProjects : [])
-            : (employeeChecklistData?.projects || []);
+const DailyChecklistDrawer = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [optimisticUpdates, setOptimisticUpdates] = useState({});
     const queryClient = useQueryClient();
 
-    // Derived date string for API and Keys
     const currentDate = format(selectedDate, "yyyy-MM-dd");
+    const queryKey = ["dailyChecklistSummary", currentDate];
 
-    const todayTasks = useMemo(() => {
-        let allTasks = [];
-        let completedCount = 0;
+    const { data, isLoading, isError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => getDailyChecklistSummary(currentDate),
+        staleTime: 30 * 1000,
+        refetchOnWindowFocus: false,
+    });
 
-        const currentUserId = user?._id || user?.id;
+    const allTasks = useMemo(() => data?.tasks || [], [data]);
+    const completedCount = allTasks.filter((t) => t.completed).length;
+    const progress = allTasks.length > 0 ? (completedCount / allTasks.length) * 100 : 0;
 
-        projects.forEach((project) => {
-            // Only show active projects
-            if (project.active === false) return;
-            if (["paused", "completed", "on-hold"].includes(project.status)) return;
-
-            // Only consider active tasks from definitions that are assigned to the current user
-            const definitions = project.dailyChecklist?.filter(t => {
-                if (!t.active) return false;
-                
-                const assignedId = t.assignedTo?._id || t.assignedTo;
-                const isAssignedToMe = assignedId && assignedId.toString() === currentUserId?.toString();
-                
-                // Employees should ONLY see their own tasks in this personal drawer
-                if (user?.role === "employee") {
-                    return isAssignedToMe;
-                }
-                
-                // Admins or those with explicit permission can see all
-                if (user?.role === "company-admin") return true;
-                if (hasPermission("dashboard", "viewAllChecklistData")) return true;
-                
-                return isAssignedToMe;
-            }) || [];
-
-            if (definitions.length > 0) {
-                const historyForToday = project.dailyChecklistHistory?.find(h => h.date === currentDate);
-
-                definitions.forEach(def => {
-                    // Include date in the key to separate updates for different days
-                    const key = `${currentDate}-${project._id}-${def.title}`;
-
-                    // Determine completion status: Check optimistic state first, then history
-                    let isCompleted;
-                    let completedBy = null;
-                    let completedAt = null;
-
-                    const historyTask = historyForToday?.tasks?.find(t => t.title === def.title);
-
-                    if (Object.prototype.hasOwnProperty.call(optimisticUpdates, key)) {
-                        isCompleted = optimisticUpdates[key];
-                        // If optimistically marking as completed, we won't have completedBy/At yet
-                        completedBy = isCompleted ? historyTask?.completedBy : null;
-                        completedAt = isCompleted ? historyTask?.completedAt : null;
-                    } else {
-                        isCompleted = historyTask?.completed || false;
-                        completedBy = historyTask?.completedBy || null;
-                        completedAt = historyTask?.completedAt || null;
-                    }
-
-                    if (isCompleted) completedCount++;
-                    allTasks.push({
-                        project,
-                        definition: def,
-                        isCompleted,
-                        completedBy,
-                        completedAt
-                    });
-                });
-            }
-        });
-
-        return { allTasks, completedCount, total: allTasks.length };
-    }, [projects, currentDate, optimisticUpdates, user]);
-
-    const progress = todayTasks.total > 0
-        ? (todayTasks.completedCount / todayTasks.total) * 100
-        : 0;
     const mutation = useMutation({
         mutationFn: ({ projectId, taskTitle, completed }) =>
             updateDailyChecklistStatus(projectId, { date: currentDate, taskTitle, completed }),
-        onSuccess: () => {
-            // Invalidate queries to refresh the projects list and thus the progress
-            queryClient.invalidateQueries(["employeeProjects"]);
-            queryClient.invalidateQueries(["companyProjects"]);
-        }
+        onMutate: async ({ projectId, taskTitle, completed }) => {
+            await queryClient.cancelQueries({ queryKey });
+            const previous = queryClient.getQueryData(queryKey);
+            queryClient.setQueryData(queryKey, (old) =>
+                old
+                    ? {
+                        ...old,
+                        tasks: old.tasks.map((t) =>
+                            t.projectId === projectId && t.title === taskTitle
+                                ? {
+                                    ...t,
+                                    completed,
+                                    completedAt: completed ? new Date().toISOString() : null,
+                                    completedBy: completed ? t.completedBy : null,
+                                }
+                                : t
+                        ),
+                    }
+                    : old
+            );
+            return { previous };
+        },
+        onError: (_err, _vars, ctx) => {
+            if (ctx?.previous) queryClient.setQueryData(queryKey, ctx.previous);
+        },
+        onSettled: () => {
+            // Refresh to pick up who completed it / the exact time.
+            queryClient.invalidateQueries({ queryKey });
+        },
     });
 
     const handleTaskToggle = (projectId, taskTitle, completed) => {
-        const key = `${currentDate}-${projectId}-${taskTitle}`;
-        // Update optimistic state immediately
-        setOptimisticUpdates(prev => ({ ...prev, [key]: completed }));
-
-        // Trigger API call
         mutation.mutate({ projectId, taskTitle, completed });
     };
 
@@ -299,20 +245,20 @@ const DailyChecklistDrawer = ({ projects: projectsProp = [] }) => {
     // Group tasks by project for display
     const tasksByProject = useMemo(() => {
         const groups = {};
-        todayTasks.allTasks.forEach(item => {
-            if (!groups[item.project._id]) {
-                groups[item.project._id] = {
-                    project: item.project,
-                    tasks: [] // Now storing item object which includes isCompleted
+        allTasks.forEach(item => {
+            if (!groups[item.projectId]) {
+                groups[item.projectId] = {
+                    project: { _id: item.projectId, name: item.projectName, emoji: item.emoji },
+                    tasks: [],
                 };
             }
-            groups[item.project._id].tasks.push(item);
+            groups[item.projectId].tasks.push(item);
         });
         return Object.values(groups);
-    }, [todayTasks.allTasks]);
+    }, [allTasks]);
     return (
         <>
-            <CircularProgress value={progress} onClick={() => setIsOpen(true)} />
+            <CircularProgress value={progress} loading={isLoading} onClick={() => setIsOpen(true)} />
 
             {/* Backdrop */}
             {isOpen && (
@@ -370,7 +316,19 @@ const DailyChecklistDrawer = ({ projects: projectsProp = [] }) => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {tasksByProject.length === 0 ? (
+                        {isLoading ? (
+                            <DrawerSkeleton />
+                        ) : isError ? (
+                            <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+                                <p>Could not load the checklist.</p>
+                                <button
+                                    onClick={() => refetch()}
+                                    className="mt-3 text-xs font-medium text-blue-600 hover:underline"
+                                >
+                                    Try again
+                                </button>
+                            </div>
+                        ) : tasksByProject.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-48 text-gray-400">
                                 <p>No daily tasks defined.</p>
                                 <p className="text-xs mt-2">Tasks added in Project Settings will appear here.</p>
@@ -389,8 +347,8 @@ const DailyChecklistDrawer = ({ projects: projectsProp = [] }) => {
                                             <TaskItem
                                                 key={`${project._id}-${idx}`}
                                                 project={project}
-                                                task={item.definition}
-                                                isCompleted={item.isCompleted}
+                                                task={item}
+                                                isCompleted={item.completed}
                                                 completedBy={item.completedBy}
                                                 completedAt={item.completedAt}
                                                 onToggle={handleTaskToggle}

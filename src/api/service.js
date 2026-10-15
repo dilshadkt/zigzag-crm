@@ -1467,3 +1467,10 @@ export const getDepartmentHeadStatus = async (companyId) => {
   );
   return response.data.data;
 };
+
+export const getDailyChecklistSummary = async (date) => {
+  const response = await apiClient.get("/projects/daily-checklist/summary", {
+    params: { date },
+  });
+  return response.data;
+};

@@ -18,8 +18,8 @@ const GlobalNudges = () => {
   const { pathname } = useLocation();
   const onCallsDesk = pathname.startsWith("/my-calls");
   const fabLift = onCallsDesk
-    ? "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] lg:bottom-28"
-    : "bottom-28";
+    ? "bottom-[calc(7.75rem+env(safe-area-inset-bottom))] md:bottom-[5.75rem]"
+    : "bottom-[4.75rem] md:bottom-[5.75rem]";
   const queryClient = useQueryClient();
 
   const applyReviewNudgesToTaskCache = (nextNudges) => {
@@ -118,13 +118,6 @@ const GlobalNudges = () => {
 
   if (nudges.length === 0) return null;
 
-  const dangerCount = nudges.filter(n => n.type === 'danger').length;
-  const warningCount = nudges.filter(n => n.type === 'warning').length;
-  const successCount = nudges.filter(n => n.type === 'success').length;
-
-  // Determine priority color for the bubble
-  const bubbleColor = dangerCount > 0 ? "bg-red-500" : warningCount > 0 ? "bg-amber-500" : "bg-green-500";
-  const ringColor = dangerCount > 0 ? "ring-red-200" : warningCount > 0 ? "ring-amber-200" : "ring-green-200";
 
   const handleDismissToast = (id, e) => {
     if (e) e.stopPropagation();
@@ -157,7 +150,7 @@ const GlobalNudges = () => {
   return (
     <>
       {/* Toast Notifications */}
-      <div className={`fixed ${fabLift} right-4 z-[9999] flex max-w-sm flex-col gap-3 pointer-events-none lg:right-28`}>
+      <div className="fixed bottom-36 right-4 z-[9999] flex max-w-sm flex-col gap-3 pointer-events-none md:bottom-40 md:right-8">
         <AnimatePresence>
           {toastVisibleNudges.map((nudge) => (
             <motion.div
@@ -207,26 +200,18 @@ const GlobalNudges = () => {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed ${fabLift} right-4 z-[50] group transition-transform hover:scale-105 lg:right-8`}
-        title="Performance Alerts"
+        className={`fixed ${fabLift} right-4 z-[50] group transition-transform hover:scale-105 md:right-8`}
+        aria-label="Action alerts"
       >
-        <div className={`relative flex items-center justify-center w-16 h-16 ${bubbleColor} rounded-full shadow-lg border-2 border-white ring-4 ${ringColor}`}>
-          <FiBell className="w-6 h-6 text-white" />
-          
-          {/* Pulse effect if danger exists */}
-          {dangerCount > 0 && (
-            <span className="absolute w-full h-full rounded-full bg-red-400 opacity-75 animate-ping" />
-          )}
+        <div className="relative flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md border border-gray-200">
+          <FiBell className="w-5 h-5 text-gray-900" />
 
           {/* Badge count */}
-          <div className="absolute -top-2 -right-2 bg-white text-gray-800 text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md">
-            {nudges.length}
-          </div>
-        </div>
-        <div className="absolute -top-10 right-0 items-center justify-center w-max hidden group-hover:flex">
-          <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg">
-            Action Alerts
-          </span>
+          {nudges.length > 0 && (
+            <div className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-gray-900 text-white text-[10px] font-semibold leading-none rounded-full flex items-center justify-center border-2 border-white">
+              {nudges.length > 99 ? "99+" : nudges.length}
+            </div>
+          )}
         </div>
       </button>
 
