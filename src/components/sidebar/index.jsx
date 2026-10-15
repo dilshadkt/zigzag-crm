@@ -14,6 +14,7 @@ import {
   useGetUnreadMessageCount,
   useIsDepartmentHead,
 } from "../../api/hooks";
+import { useIsReporter } from "../../api/hooks/dashboard";
 import { useTicketCounts } from "../../features/tickets/hooks/useTickets";
 import SupportSection from "./SupportSection";
 import { signOutOfApp } from "../../pwa/closeGuard";
@@ -28,6 +29,7 @@ const Sidebar = () => {
   const { userPosition } = useRouteAccess();
   const { hasAdminDashboardAccess, hasPermission } = usePermissions();
   const { isDepartmentHead, totalActionRequiredCount } = useIsDepartmentHead(effectiveCompanyId, !!user);
+  const { isReporter } = useIsReporter(!!user && user.role === "employee");
 
   // Get current month in YYYY-MM format for tasks on review
   const getCurrentMonth = () => {
@@ -98,6 +100,15 @@ const Sidebar = () => {
           children.push(child);
         }
       });
+
+      if (isReporter || isCompanyAdmin) {
+        children.push({
+          id: 108,
+          title: "Reporter Dashboard",
+          path: "/reporter-dashboard",
+          routeKey: "reporter-dashboard",
+        });
+      }
 
       if (isDepartmentHead || isCompanyAdmin) {
         children.push({

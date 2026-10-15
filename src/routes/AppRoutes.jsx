@@ -81,6 +81,7 @@ const LeadSettingsPage = lazy(() => import("../pages/leads/LeadSettings"));
 const TelecallerDesk = lazy(() => import("../features/telecaller"));
 const Billing = lazy(() => import("../pages/settings/billing"));
 const LeadDashboard = lazy(() => import("../pages/dashboard/LeadDashboard"));
+const ReporterDashboard = lazy(() => import("../pages/dashboard/ReporterDashboard"));
 const EmployeeDashboard = lazy(() => import("../pages/dashboard/EmployeeDashboard"));
 const CostDashboard = lazy(() => import("../pages/dashboard/CostDashboard"));
 const HRDashboard = lazy(() => import("../pages/dashboard/HRDashboard"));
@@ -186,6 +187,14 @@ const AppRoutes = () => {
             element={
               <RouteAccess>
                 <LeadDashboard />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="reporter-dashboard"
+            element={
+              <RouteAccess>
+                <ReporterDashboard />
               </RouteAccess>
             }
           />

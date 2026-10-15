@@ -63,6 +63,13 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
     return children;
   }
 
+  // Reporters are a per-project assignment, not a position permission. The API
+  // only ever returns data for projects the user reports on, and the page shows
+  // an empty state for everyone else, so no position route is required.
+  if (currentPath === "/reporter-dashboard") {
+    return children;
+  }
+
   // If position is inactive, deny access
   if (!user.positionDetails.isActive) {
     return <Navigate to={fallbackPath} replace />;

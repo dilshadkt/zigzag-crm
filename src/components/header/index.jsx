@@ -16,6 +16,7 @@ import { MdDashboard } from "react-icons/md";
 import logo from "../../assets/icons/logo.svg";
 import { SIDE_MENU } from "../../constants";
 import { getMyPerformance } from "../../api/service";
+import { useIsReporter } from "../../api/hooks/dashboard";
 import socketService from "../../services/socketService";
 import { toast } from "react-hot-toast";
 import { Zap } from "lucide-react";
@@ -50,6 +51,7 @@ const DashboardHeader = () => {
   const { userPosition } = useRouteAccess();
   const { hasPermission, hasAdminDashboardAccess } = usePermissions();
   const { isDepartmentHead } = useIsDepartmentHead(effectiveCompanyId, !!user);
+  const { isReporter } = useIsReporter(!!user && user.role === "employee");
 
   // Data fetching
   const { data: unreadData } = useGetUnreadNotificationCount();
@@ -203,6 +205,23 @@ const DashboardHeader = () => {
     }
   }
 
+  // Reporters get their own dashboard entry (a per-project assignment, so it
+  // is not tied to the position's allowed routes)
+  if (isReporter || isCompanyAdmin) {
+    const dashboardIndex = sidebarMenuItems.findIndex(
+      (item) => item.routeKey === "dashboard"
+    );
+    if (dashboardIndex !== -1) {
+      sidebarMenuItems.splice(dashboardIndex + 1, 0, {
+        id: 14,
+        title: "Reporter Dashboard",
+        icon: MdDashboard,
+        path: "/reporter-dashboard",
+        routeKey: "reporter-dashboard",
+      });
+    }
+  }
+
   // Filter sidebar menu based on user permissions
   const filteredSidebar = sidebarMenuItems.filter((item) => {
     // Company admins have full access to all menu items EXCEPT Company Dashboard
@@ -225,6 +244,10 @@ const DashboardHeader = () => {
       item.routeKey === "settings" ||
       item.routeKey === "tickets"
     ) {
+      return true;
+    }
+
+    if (item.routeKey === "reporter-dashboard") {
       return true;
     }
 

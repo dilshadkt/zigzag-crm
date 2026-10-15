@@ -87,3 +87,42 @@ export const useEmployeesTodayStatus = () => {
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
+
+// Lightweight flag used by the sidebar to decide whether to show the
+// Reporter Dashboard entry.
+export const useIsReporter = (enabled = true) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["reporterStatus"],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/reporter-status");
+      return response.data;
+    },
+    enabled,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    isReporter: !!data?.isReporter,
+    isAdmin: !!data?.isAdmin,
+    isLoading,
+  };
+};
+
+// reporterId is only honoured for admins; omitted means "all reporters".
+export const useGetReporterDashboard = (reporterId = null, enabled = true) => {
+  return useQuery({
+    queryKey: ["reporterDashboard", reporterId],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/reporter", {
+        params: reporterId ? { reporterId } : undefined,
+      });
+      return response.data;
+    },
+    enabled,
+    staleTime: 30 * 1000,
+    placeholderData: (prev) => prev,
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+};
