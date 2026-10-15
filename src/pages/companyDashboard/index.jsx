@@ -207,9 +207,9 @@ const CompanyDashboard = () => {
           <WorkLoad />
         </div>
 
-        {/* Pending work / Nearest event */}
-        <div className="lg:col-span-1  min-w-0">
-          <PendingWork taskMonth={taskMonth} />
+        {/* AI Assistant */}
+        <div className="lg:col-span-1 min-w-0">
+          <AIAssistant />
         </div>
       </div>
 
@@ -283,7 +283,7 @@ const CompanyDashboard = () => {
 
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 pb-5">
         <div className="lg:col-span-6 xl:col-span-4 min-w-0">
-          <AIAssistant />
+          <PendingWork taskMonth={taskMonth} />
         </div>
       </div>
 

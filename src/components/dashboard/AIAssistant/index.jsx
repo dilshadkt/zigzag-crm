@@ -198,7 +198,7 @@ const useVisualizer = (status) => {
 
 const Bar = ({ mv }) => {
   const smooth = useSpring(mv, { stiffness: 260, damping: 22 });
-  const height = useTransform(smooth, [0, 1], [4, 40]);
+  const height = useTransform(smooth, [0, 1], [4, 32]);
   return (
     <motion.span
       style={{ height }}
@@ -209,8 +209,8 @@ const Bar = ({ mv }) => {
 
 const Waveform = ({ bars, status }) => (
   <div
-    className="h-10 flex items-center justify-center gap-1 transition-opacity duration-300"
-    style={{ opacity: status === "idle" ? 0.35 : 1 }}
+    className="h-8 flex items-center justify-center gap-1 transition-opacity duration-300"
+    style={{ opacity: status === "idle" ? 0.3 : 1 }}
     aria-hidden="true"
   >
     {bars.map((mv, i) => (
@@ -234,7 +234,7 @@ const Orb = ({ status, level, onClick, label }) => {
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="relative w-[136px] h-[136px] rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6FD66B] focus-visible:ring-offset-4"
+      className="relative w-[112px] h-[112px] rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6FD66B] focus-visible:ring-offset-4"
     >
       {/* soft glow */}
       <motion.span
@@ -322,7 +322,7 @@ const Popover = ({ children, className = "" }) => (
 const MenuItem = ({ children, active, onClick }) => (
   <button
     type="button"
-    className={`w-full text-left px-3 py-2 hover:bg-[#F1F8F3] flex items-center justify-between gap-2 ${
+    className={`w-full text-left px-3 py-2 hover:bg-[#F1F8F3] flex items-center justify-between gap-2 text-[#0B3B2E] ${
       active ? "font-semibold" : ""
     }`}
     onClick={onClick}
@@ -577,20 +577,40 @@ const AIAssistant = () => {
     (isEmpty ? `${firstName ? `Hi ${firstName}, w` : "W"}hat can I help with?` : "Anything else?");
 
   // Switched off for the company: everyone except the admin (who can turn it back on) sees nothing
-  if (assistantOff && !canManage) return null;
+  // (and nothing until we know: employees must never see it flash up before the status arrives)
+  if (!aiStatus || (assistantOff && !canManage)) return null;
 
   return (
     <div
       ref={rootRef}
-      className="bg-white rounded-[24px] p-4 md:p-5 flex flex-col min-h-[460px] md:h-[500px] relative overflow-hidden"
+      className="bg-white rounded-[24px] p-4 flex flex-col min-h-[500px] h-full relative overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-base text-[#0B3B2E]">AI Assistant</h3>
+      <div className="flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="w-8 h-8 rounded-xl bg-[#F1FAF3] border border-[#CFEFD3] flex items-center justify-center text-[#2FAE5A] shrink-0">
+            <HiOutlineSparkles size={16} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm leading-tight text-[#0B3B2E]">AI Assistant</h3>
+            <p className="text-[10px] leading-tight text-gray-400 flex items-center gap-1 mt-0.5">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  assistantOff
+                    ? "bg-gray-400"
+                    : status === "idle"
+                      ? "bg-[#2FAE5A]"
+                      : "bg-[#6FD66B] animate-pulse"
+                }`}
+              />
+              {assistantOff ? "Off" : status === "idle" ? "Ready" : STATUS_TITLE[status]}
+            </p>
+          </div>
+        </div>
         <div className="relative">
           <button
             onClick={() => toggleMenu("options")}
-            className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-[#0B3B2E] hover:bg-gray-50"
+            className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-[#0B3B2E] hover:bg-gray-50 transition-colors"
             aria-label="Assistant options"
           >
             <FiMoreVertical size={14} />
@@ -650,6 +670,16 @@ const AIAssistant = () => {
                     >
                       Allow actions
                     </MenuItem>
+                    <MenuItem
+                      active={aiStatus?.audience === "everyone"}
+                      onClick={() =>
+                        setCompanySetting({
+                          audience: aiStatus?.audience === "everyone" ? "admins" : "everyone",
+                        })
+                      }
+                    >
+                      Open to all employees
+                    </MenuItem>
                     {usage && (
                       <p className="px-3 py-2 text-[10px] text-gray-400 leading-snug">
                         Last 30 days: {usage.requests} requests · ${Number(usage.costUsd).toFixed(3)}
@@ -664,11 +694,11 @@ const AIAssistant = () => {
       </div>
 
       {/* Stage */}
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-center gap-2 px-2">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-center gap-2 py-3 relative z-10">
         <Orb status={status} level={level} onClick={onOrbClick} label={orbLabel} />
         <Waveform bars={bars} status={status} />
 
-        <div className="min-h-[56px] flex flex-col items-center gap-1 max-w-[320px]">
+        <div className="min-h-[48px] flex flex-col items-center gap-1 max-w-[300px]">
           <AnimatePresence mode="wait">
             <motion.h4
               key={stageTitle}
@@ -706,7 +736,7 @@ const AIAssistant = () => {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="max-h-24 overflow-y-auto text-[13px] leading-snug text-[#0B3B2E] bg-[#F4F8F5] rounded-2xl px-3.5 py-2.5 max-w-[340px] whitespace-pre-wrap"
+              className="max-h-24 overflow-y-auto text-[13px] leading-snug text-[#0B3B2E] bg-[#F4F8F5] rounded-2xl px-3.5 py-2.5 max-w-full text-left whitespace-pre-wrap"
             >
               {lastReply}
             </motion.p>
@@ -714,7 +744,7 @@ const AIAssistant = () => {
         </AnimatePresence>
 
         {isEmpty && !assistantOff && (
-          <div className="flex flex-wrap justify-center gap-1.5 max-w-[340px] mt-1">
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-full mt-1">
             {suggestions.map((s) => (
               <button
                 key={s}
@@ -738,7 +768,7 @@ const AIAssistant = () => {
             exit={{ opacity: 0, y: 8 }}
             role="alertdialog"
             aria-label="Confirm action"
-            className="mb-2 rounded-2xl border border-[#CFEFD3] bg-[#F1FAF3] px-3 py-2.5"
+            className="mb-2 relative z-10 rounded-2xl border border-[#CFEFD3] bg-[#F1FAF3] px-3 py-2.5"
           >
             <p className="text-[10px] uppercase tracking-wide text-[#2FAE5A] font-semibold">
               Please confirm
@@ -769,7 +799,7 @@ const AIAssistant = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mb-2 rounded-2xl bg-emerald-50 text-emerald-800 px-3 py-2 flex items-center gap-2 text-xs"
+            className="mb-2 relative z-10 rounded-2xl bg-emerald-50 text-emerald-800 px-3 py-2 flex items-center gap-2 text-xs"
           >
             <FiCheck size={14} className="shrink-0" />
             <span>{actionResult.message}</span>
@@ -791,17 +821,17 @@ const AIAssistant = () => {
       </AnimatePresence>
 
       {/* Composer */}
-      <form onSubmit={submit} className="bg-[#F5F8F6] rounded-2xl p-3 flex flex-col gap-2.5">
-        <div className="flex items-center gap-2">
-          <HiOutlineSparkles className="text-[#5E7A6C] shrink-0" size={14} />
-          <input
-            value={status === "listening" ? transcript : input}
-            onChange={(e) => setInput(e.target.value)}
-            readOnly={status === "listening"}
-            placeholder={status === "listening" ? "Listening…" : "Ask anything..."}
-            className="flex-1 bg-transparent text-sm text-[#0B3B2E] placeholder:text-gray-400 outline-none min-w-0"
-          />
-        </div>
+      <form
+        onSubmit={submit}
+        className="relative z-10 bg-[#F5F8F6] border border-transparent rounded-2xl p-3 flex flex-col gap-2.5 focus-within:border-[#6FD66B]/60 transition-colors"
+      >
+        <input
+          value={status === "listening" ? transcript : input}
+          onChange={(e) => setInput(e.target.value)}
+          readOnly={status === "listening"}
+          placeholder={status === "listening" ? "Listening…" : "Ask anything..."}
+          className="w-full bg-transparent text-sm text-[#0B3B2E] placeholder:text-gray-400 outline-none min-w-0"
+        />
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
@@ -810,7 +840,7 @@ const AIAssistant = () => {
               <button
                 type="button"
                 onClick={() => toggleMenu("language")}
-                className="text-[10px] text-[#3C5A4D] bg-white border border-[#E3EEE7] rounded-full px-2.5 py-1.5 flex items-center gap-1 hover:bg-[#F1F8F3] whitespace-nowrap"
+                className="text-[10px] text-[#3C5A4D] bg-white border border-[#E3EEE7] rounded-full px-2.5 py-1.5 flex items-center gap-1 hover:bg-[#F1F8F3] whitespace-nowrap transition-colors"
               >
                 <FiGlobe size={10} />
                 {languageChip}
@@ -838,9 +868,13 @@ const AIAssistant = () => {
               <button
                 type="button"
                 onClick={() => toggleMenu("model")}
-                className="text-[10px] text-[#3C5A4D] bg-white border border-[#E3EEE7] rounded-full px-2.5 py-1.5 flex items-center gap-1 hover:bg-[#F1F8F3] max-w-full"
+                className="text-[10px] text-[#3C5A4D] bg-white border border-[#E3EEE7] rounded-full px-2.5 py-1.5 flex items-center gap-1 hover:bg-[#F1F8F3] max-w-full transition-colors"
               >
-                <span className="truncate">{currentModelLabel}</span>
+                {model ? (
+                  <span className="truncate">{currentModelLabel}</span>
+                ) : (
+                  <HiOutlineSparkles size={11} aria-label="Choose model" />
+                )}
                 <FiChevronDown size={10} className="shrink-0" />
               </button>
               <AnimatePresence>
@@ -868,10 +902,10 @@ const AIAssistant = () => {
               disabled={busy || !sttSupported}
               title={sttSupported ? "Speak" : "Voice input not supported in this browser"}
               aria-label={status === "listening" ? "Stop listening" : "Start voice input"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center bg-white border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                 status === "listening"
-                  ? "border-[#2FAE5A] text-white !bg-[#2FAE5A] animate-pulse"
-                  : "border-[#E3EEE7] text-[#0B3B2E] hover:bg-[#F1F8F3]"
+                  ? "border-[#2FAE5A] text-white bg-[#2FAE5A] animate-pulse"
+                  : "border-[#E3EEE7] bg-white text-[#0B3B2E] hover:bg-[#F1F8F3]"
               }`}
             >
               {status === "listening" ? <FiSquare size={14} /> : <FiMic size={16} />}
@@ -879,7 +913,7 @@ const AIAssistant = () => {
             <button
               type="submit"
               disabled={!input.trim() || busy || status === "listening"}
-              className="h-10 px-4 rounded-full bg-gradient-to-r from-[#B5F07A] to-[#6FD66B] text-[#0B3B2E] text-sm font-semibold flex items-center gap-1.5 shadow-sm hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-9 px-4 rounded-full bg-gradient-to-r from-[#B5F07A] to-[#6FD66B] text-[#0B3B2E] text-sm font-semibold flex items-center gap-1.5 shadow-sm hover:brightness-95 transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <FiArrowUp size={14} />
               Send
