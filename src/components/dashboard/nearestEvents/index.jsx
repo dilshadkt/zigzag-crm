@@ -94,78 +94,29 @@ const NearestEvents = ({ selectedDate }) => {
     return format(date, "h:mm a");
   };
 
-  const getEventIcon = (event) => {
-    switch (event.type) {
-      case "project":
-        return event.data?.thumbImg ? (
-          <div className="relative w-6 h-6 flex-shrink-0">
-            <div className="absolute inset-0 flex items-center justify-center bg-blue-50 rounded">
-              <FaProjectDiagram className="text-lg text-[#3F8CFF]" />
-            </div>
-            <img 
-              src={event.data.thumbImg} 
-              alt={event.title} 
-              className="w-full h-full rounded object-cover absolute inset-0 z-10 bg-white" 
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-        ) : (
-          <FaProjectDiagram className="text-lg text-[#3F8CFF] flex-shrink-0" />
-        );
-      case "task":
-        return event.data?.project?.thumbImg ? (
-          <div className="relative w-6 h-6 flex-shrink-0">
-            <div className="absolute inset-0 flex items-center justify-center bg-amber-50 rounded">
-              <FaTasks className="text-lg text-[#FFBD21]" />
-            </div>
-            <img 
-              src={event.data.project.thumbImg} 
-              alt={event.projectName} 
-              className="w-full h-full rounded object-cover absolute inset-0 z-10 bg-white" 
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-        ) : (
-          <FaTasks className="text-lg text-[#FFBD21] flex-shrink-0" />
-        );
-      case "birthday":
-        return event.data?.profileImage ? (
-          <div className="relative w-6 h-6 flex-shrink-0">
-            <div className="absolute inset-0 flex items-center justify-center bg-pink-50 rounded-full">
-              <FaGift className="text-lg text-[#FF6B9D]" />
-            </div>
-            <img 
-              src={event.data.profileImage} 
-              alt={event.title} 
-              className="w-full h-full rounded-full object-cover absolute inset-0 z-10 bg-white" 
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
-        ) : (
-          <FaGift className="text-lg text-[#FF6B9D] flex-shrink-0" />
-        );
-      default:
-        return <IoArrowUpOutline className="text-lg text-[#FFBD21] flex-shrink-0" />;
-    }
-  };
+  const getEventAvatar = (event) => {
+    const config = {
+      project: { Icon: FaProjectDiagram, color: "#3F8CFF", bg: "bg-blue-50", img: event.data?.thumbImg },
+      task: { Icon: FaTasks, color: "#FFBD21", bg: "bg-amber-50", img: event.data?.project?.thumbImg },
+      birthday: { Icon: FaGift, color: "#FF6B9D", bg: "bg-pink-50", img: event.data?.profileImage },
+    }[event.type] || { Icon: IoArrowUpOutline, color: "#FFBD21", bg: "bg-amber-50", img: null };
+    const { Icon, color, bg, img } = config;
 
-  const getEventColor = (event) => {
-    switch (event.type) {
-      case "project":
-        return "#3F8CFF";
-      case "task":
-        return "#FFBD21";
-      case "birthday":
-        return "#FF6B9D";
-      default:
-        return "#3F8CFF";
-    }
+    return (
+      <div className={`relative w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${bg}`}>
+        <Icon className="text-base" style={{ color }} />
+        {img && (
+          <img
+            src={img}
+            alt={event.title}
+            className="absolute inset-0 w-full h-full rounded-full object-cover bg-white z-10"
+            onError={(e) => {
+              e.target.style.display = "none";
+            }}
+          />
+        )}
+      </div>
+    );
   };
 
   const getEventSubtitle = (event) => {
@@ -223,7 +174,7 @@ const NearestEvents = ({ selectedDate }) => {
           <MdOutlineKeyboardArrowRight />
         </Link>
       </div>
-      <div className="w-full h-full overflow-y-auto mt-3 gap-y-6 flex flex-col pt-2">
+      <div className="w-full h-full overflow-y-auto mt-4 gap-y-2.5 flex flex-col pr-1">
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <div className="text-3xl mb-2">📅</div>
@@ -233,7 +184,7 @@ const NearestEvents = ({ selectedDate }) => {
           events.map((event, index) => (
             <div
               key={`${event.type}-${event.id}-${index}`}
-              className="flex relative justify-between h-auto pl-3 flex-col gap-y-2 w-full cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors"
+              className="flex items-center gap-3 w-full cursor-pointer rounded-2xl bg-[#F4F6F8] hover:bg-[#EBEFF3] px-3 py-3 transition-colors"
               onClick={() => {
                 if (event.type === "project") {
                   window.location.href = `/projects-analytics/${event.id}`;
@@ -242,43 +193,23 @@ const NearestEvents = ({ selectedDate }) => {
                 }
               }}
             >
-              <div className="flexBetween w-full">
-                <p className="w-[80%] font-medium text-sm text-gray-800 truncate">
+              {getEventAvatar(event)}
+              <div className="flex flex-col min-w-0 flex-1">
+                <p className="font-semibold text-sm text-[#0A1629] truncate">
                   {event.title}
                 </p>
-                {getEventIcon(event)}
+                <p className="text-xs text-[#7D8592] mt-0.5 truncate capitalize">
+                  {getEventSubtitle(event)}
+                </p>
               </div>
-              <div className="flexBetween w-full">
-                <div className="flex flex-col w-[80%]">
-                  <p className="text-[11px] text-[#91929E]">
-                    {getDateText(event.date)} | {getTimeText(event.date)}
-                  </p>
-                  <p className="text-[11px] text-[#91929E] mt-1">
-                    {getEventSubtitle(event)}
-                  </p>
-                </div>
-                {event.type === "project" && (
-                  <div className="h-7 bg-[#F4F9FD] px-2 gap-x-1 text-[#7D8592] flexStart rounded-lg">
-                    <span className="text-[10px]">{event.progress}%</span>
-                  </div>
-                )}
-                {event.type === "task" && (
-                  <div className="h-7 bg-[#F4F9FD] px-2 gap-x-1 text-[#7D8592] flexStart rounded-lg">
-                    <img src="/icons/clock.svg" alt="" className="w-3" />
-                    <span className="text-[10px]">Due</span>
-                  </div>
-                )}
-                {event.type === "birthday" && (
-                  <div className="h-7 bg-[#FFF0F5] px-2 gap-x-1 text-[#FF6B9D] flexStart rounded-lg">
-                    <FaGift className="text-[10px]" />
-                    <span className="text-[10px]">🎉</span>
-                  </div>
-                )}
+              <div className="flex flex-col items-end shrink-0">
+                <p className="text-sm font-semibold text-[#0A1629]">
+                  {getDateText(event.date)}
+                </p>
+                <p className="text-xs text-[#7D8592] mt-0.5">
+                  {getTimeText(event.date)}
+                </p>
               </div>
-              <div
-                className="w-1 rounded-full h-full absolute left-0"
-                style={{ backgroundColor: getEventColor(event) }}
-              ></div>
             </div>
           ))
         )}

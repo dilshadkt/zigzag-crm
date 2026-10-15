@@ -24,6 +24,7 @@ import DashboardRanking from "../../components/dashboard/DashboardRanking";
 import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
 import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
 import ActionRequiredBanner from "../../components/dashboard/ActionRequiredBanner";
+import AIAssistant from "../../components/dashboard/AIAssistant";
 
 const CompanyDashboard = () => {
   const { companyId, user } = useAuth();
@@ -277,6 +278,12 @@ const CompanyDashboard = () => {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-4 md:gap-6 min-w-0">
           <TodayReworkTasks />
+        </div>
+      </div>
+
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 pb-5">
+        <div className="lg:col-span-6 xl:col-span-4 min-w-0">
+          <AIAssistant />
         </div>
       </div>
 

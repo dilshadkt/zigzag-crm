@@ -17,6 +17,7 @@ import CompanyProgressStats from "../../components/dashboard/companyProgressStat
 import DashboardProjects from "../../components/dashboard/dashboardProjects";
 import CompletionTrendChart from "../../components/dashboard/performanceChart";
 import ActionRequiredBanner from "../../components/dashboard/ActionRequiredBanner";
+import AIAssistant from "../../components/dashboard/AIAssistant";
 
 // Lazy load the EmployeeWorkDetails component
 const EmployeeWorkDetails = lazy(
@@ -209,6 +210,9 @@ const Dashboard = () => {
         </div>
         <div className="lg:col-span-6 xl:col-span-4 min-w-0 flex flex-col gap-4 md:gap-6">
           <TodayReworkTasks />
+        </div>
+        <div className="lg:col-span-6 xl:col-span-4 min-w-0">
+          <AIAssistant />
         </div>
       </div>
 
