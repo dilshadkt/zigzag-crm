@@ -1,4 +1,5 @@
-import React, { lazy, Suspense, useState } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Header from "../../components/shared/header";
 import {
   MdOutlineKeyboardArrowLeft,
@@ -18,8 +19,8 @@ import CompletionTrendChart from "../../components/dashboard/performanceChart";
 import ActionRequiredBanner from "../../components/dashboard/ActionRequiredBanner";
 
 // Lazy load the EmployeeWorkDetails component
-const EmployeeWorkDetails = lazy(() =>
-  import("../../components/dashboard/employeeWorkDetails")
+const EmployeeWorkDetails = lazy(
+  () => import("../../components/dashboard/employeeWorkDetails"),
 );
 
 import DailyChecklistDrawer from "../../components/dashboard/dailyChecklist/DailyChecklistDrawer";
@@ -47,10 +48,15 @@ const Dashboard = () => {
   const isCompanyAdmin = false;
 
   // Check if user has permission to view daily checklist
-  const canViewDailyChecklist = hasPermission("dashboard", "viewDailyChecklist") || hasPermission("dashboard", "viewAllChecklistData");
+  const canViewDailyChecklist =
+    hasPermission("dashboard", "viewDailyChecklist") ||
+    hasPermission("dashboard", "viewAllChecklistData");
 
   // Check if user has permission to view campaign details
-  const canViewCampaignDetails = hasPermission("dashboard", "viewCampaignDetails");
+  const canViewCampaignDetails = hasPermission(
+    "dashboard",
+    "viewCampaignDetails",
+  );
 
   // Check if user has viewAll tasks permission
   const canViewAllTasks = hasPermission("tasks", "viewAll");
@@ -60,6 +66,11 @@ const Dashboard = () => {
     return new Date();
   });
 
+  const [headerSlot, setHeaderSlot] = useState(null);
+  useEffect(() => {
+    setHeaderSlot(document.getElementById("header-date-slot"));
+  }, []);
+
   // Calculate taskMonth in YYYY-MM format
   const taskMonth = `${selectedDate.getFullYear()}-${(
     selectedDate.getMonth() + 1
@@ -67,13 +78,13 @@ const Dashboard = () => {
     .toString()
     .padStart(2, "0")}`;
 
-  const { data: employeeProjectsData, isLoading: isLoadingProjects } = useGetEmployeeProjects(
-    user?._id ? user._id : null,
-    taskMonth,
-    { view: "cards" }
-  );
+  const { data: employeeProjectsData, isLoading: isLoadingProjects } =
+    useGetEmployeeProjects(user?._id ? user._id : null, taskMonth, {
+      view: "cards",
+    });
 
-  const activeEmployeeProjects = employeeProjectsData?.projects?.filter(p => p.status !== "paused") || [];
+  const activeEmployeeProjects =
+    employeeProjectsData?.projects?.filter((p) => p.status !== "paused") || [];
 
   const projects = activeEmployeeProjects;
 
@@ -98,12 +109,12 @@ const Dashboard = () => {
   const startOfMonth = new Date(
     selectedDate.getFullYear(),
     selectedDate.getMonth(),
-    1
+    1,
   );
   const endOfMonth = new Date(
     selectedDate.getFullYear(),
     selectedDate.getMonth() + 1,
-    0
+    0,
   );
 
   // Display only the month name and year
@@ -117,33 +128,27 @@ const Dashboard = () => {
     selectedDate.getMonth() === new Date().getMonth() &&
     selectedDate.getFullYear() === new Date().getFullYear();
 
-  return (
-    <section className="flex flex-col gap-1 pb-4">
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <span className="text-sm md:text-base text-[#7D8592]">
-            Welcome back,
-            <span className="font-semibold text-gray-800 ml-2">
-              {user?.firstName} !
-            </span>
-          </span>
-        </div>
+  const monthFilter = (
         <div
-          className="h-9 md:h-11 flex items-center justify-center text-sm gap-x-1.5 md:gap-x-2 text-[#0A1629] px-2.5 md:px-5
-         rounded-xl md:rounded-[14px] w-full sm:w-fit bg-[#E6EDF5] shrink-0"
+          className="h-11 sm:h-12 flex items-center justify-center gap-x-1 sm:gap-x-2 text-gray-700 px-2 sm:px-3 rounded-[14px] bg-white shrink-0"
         >
           <button
             onClick={goToPreviousMonth}
-            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
             title="Previous month"
           >
             <MdOutlineKeyboardArrowLeft className="w-4 h-4" />
           </button>
-          <img src="/icons/calender.svg" alt="" loading="lazy" className="w-4 md:w-5 shrink-0" />
+          <img
+            src="/icons/calender.svg"
+            alt=""
+            loading="lazy"
+            className="w-4 shrink-0 opacity-70"
+          />
           <span
-            className={`text-xs whitespace-nowrap md:text-base 
-              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
+            className={`text-xs whitespace-nowrap sm:text-sm font-medium 
+              cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${
+                !isCurrentMonth ? "text-blue-600 font-medium" : ""
               }`}
             onClick={resetToCurrentMonth}
             title={
@@ -157,18 +162,22 @@ const Dashboard = () => {
           </span>
           <button
             onClick={goToNextMonth}
-            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
             title="Next month"
           >
             <MdOutlineKeyboardArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
+  );
+
+  return (
+    <section className="flex flex-col gap-1 pb-4">
+      {headerSlot && createPortal(monthFilter, headerSlot)}
 
       <ActionRequiredBanner />
 
       {/* Progress Stats Section - Show different components based on user role and permissions */}
-      <div className="w-full mt-3">
+      <div className="w-full ">
         <EmployeeProgressStats taskMonth={taskMonth} />
       </div>
 

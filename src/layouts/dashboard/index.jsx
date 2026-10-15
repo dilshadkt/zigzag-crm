@@ -13,7 +13,7 @@ const DashboardLayout = () => {
   const { user } = useAuth();
   const attendance = useAttendanceManager();
   const [isAttendanceDismissed, setIsAttendanceDismissed] = useState(false);
-  
+
   const isCompanyAdmin = user?.role === "company-admin";
   const isClient = user?.role === "client";
   const showContent = isCompanyAdmin || isClient || attendance.isShiftActive;
@@ -21,9 +21,13 @@ const DashboardLayout = () => {
   return (
     <main className="bg-[#F4F9FD] h-screen overflow-hidden flex relative">
       {!isClient && <Sidebar />}
-      <section className={`w-full gap-y-4 md:gap-y-3 h-full overflow-auto flex flex-col relative ${isClient ? 'p-0' : 'p-2 md:p-3'}`}>
+      <section
+        className={`w-full gap-y-4 md:gap-y-3 h-full overflow-auto flex flex-col relative ${isClient ? "p-0" : "p-2 md:p-3"}`}
+      >
         {!isClient && <DashboardHeader />}
-        <div className={`px-1 w-full h-full overflow-auto ${isClient ? 'p-4' : ''}`}>
+        <div
+          className={`px-1 w-full h-full overflow-auto scrollbar-hover ${isClient ? "p-4" : ""}`}
+        >
           <PageSuspense>
             <Outlet />
           </PageSuspense>
@@ -56,7 +60,9 @@ const DashboardLayout = () => {
         <div className="fixed inset-0 z-[9999] flexCenter bg-white/60 backdrop-blur-sm">
           <div className="flexCenter flex-col gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="text-gray-500 font-medium italic">Verifying attendance integrity...</p>
+            <p className="text-gray-500 font-medium italic">
+              Verifying attendance integrity...
+            </p>
           </div>
         </div>
       )}

@@ -3,11 +3,12 @@ import { TbLogout } from "react-icons/tb";
 import { assetPath } from "../../utils/assetPath";
 import PrimaryButton from "../shared/buttons/primaryButton";
 
-const SupportSection = ({ handleLogout }) => {
+const SupportSection = ({ handleLogout, collapsed = false }) => {
   const [isMenuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="flex flex-col ">
+      {!collapsed && (
       <div className="h-[95px] mt-3 justify-center  w-full flex items-end bg-[#F4F9FD] relative rounded-[24px] p-4">
         <button
           onClick={() => setMenuOpen(true)}
@@ -25,13 +26,13 @@ const SupportSection = ({ handleLogout }) => {
           className="absolute w-22 -top-10"
         />
       </div>
+      )}
       <button
         onClick={handleLogout}
-        className="text-[#7D8592] mt-2 px-2 py-[10px] rounded-[10px]  
-  flexStart gap-x-3.5 hover:text-[#3F8CFF] text-sm"
+        className={`text-[#7D8592] mt-2 rounded-[10px] flexStart hover:text-[#3F8CFF] text-sm ${collapsed ? "w-full h-12 !justify-center" : "px-2 py-[10px] gap-x-3.5"}`}
       >
-        <TbLogout className="text-lg" />
-        <span>Logout</span>
+        <TbLogout className="text-lg shrink-0" />
+        {!collapsed && <span>Logout</span>}
       </button>
       {/* support section  */}
       {isMenuOpen && (

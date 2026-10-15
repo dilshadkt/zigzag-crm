@@ -11,6 +11,7 @@ const SidebarMenuItem = ({
   onNavigate,
   pathname,
   getTaskCount,
+  collapsed = false,
 }) => {
   return (
     <li className="flex flex-col gap-y-1">
@@ -22,23 +23,27 @@ const SidebarMenuItem = ({
             onNavigate(item.path);
           }
         }}
-        className={` relative cursor-pointer px-2 py-[10px] flexStart
-gap-x-3.5 rounded-[10px] hover:bg-[#ECF3FF] group ${isActive ? `bg-[#ECF3FF] text-[#3F8CFF]` : ""
+        className={` relative cursor-pointer flexStart rounded-[10px] hover:bg-[#ECF3FF] group ${collapsed ? "w-full h-12 !justify-center" : "px-2 py-[10px] gap-x-3.5"} ${isActive ? `bg-[#ECF3FF] text-[#3F8CFF]` : ""
           }`}
       >
-        <item.icon className="text-lg group-hover:text-[#3F8CFF]" />
+        <item.icon className="text-lg shrink-0 group-hover:text-[#3F8CFF]" />
+        {collapsed && taskCount !== null && taskCount > 0 && (
+          <span className="absolute top-1.5 left-6 w-2 h-2 rounded-full bg-red-500" />
+        )}
+        {!collapsed && (
         <span
           className="group-hover:text-[#3F8CFF] group-hover:translate-x-1
-transition-all duration-300 text-sm flex-1"
+transition-all duration-300 text-sm flex-1 whitespace-nowrap"
         >
           {item.title}
         </span>
-        {taskCount !== null && taskCount > 0 && (
+        )}
+        {!collapsed && taskCount !== null && taskCount > 0 && (
           <span className="bg-red-500 text-white text-xs px-1 py-0.5 rounded-full min-w-[20px] text-center">
             {taskCount}
           </span>
         )}
-        {hasChildren && (
+        {!collapsed && hasChildren && (
           <div className="text-gray-400">
             {isOpen ? (
               <MdKeyboardArrowDown className="text-xl" />
@@ -50,7 +55,7 @@ transition-all duration-300 text-sm flex-1"
       </div>
 
       {/* Render Sub-items */}
-      {hasChildren && isOpen && (
+      {!collapsed && hasChildren && isOpen && (
         <ul className="flex flex-col gap-y-1   border-[#F4F9FD]">
           {item.children.map((child, childIdx) => {
             const childTaskCount = getTaskCount(child);

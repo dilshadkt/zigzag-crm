@@ -252,4 +252,39 @@ body {
 }
 .rich-text-content, .prose-editor {
   word-break: break-word;
-}
+}
+
+/* Scrollbar space is always reserved (no layout shift); the bar itself is
+   transparent until the area is hovered. Kept outside @layer so it beats the
+   global scrollbar rules above. */
+.scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+}
+
+.scrollbar-hover::-webkit-scrollbar {
+  display: block;
+  width: 5px;
+}
+
+.scrollbar-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 0;
+}
+
+.scrollbar-hover:hover {
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+@keyframes dash-run {
+  to { stroke-dashoffset: -100; }
+}

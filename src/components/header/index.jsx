@@ -367,6 +367,9 @@ const DashboardHeader = () => {
         <SearchBar accessiblePages={filteredSidebar} />
       </div>
 
+      {/* Page-provided header controls (e.g. dashboard month filter) */}
+      <div id="header-date-slot" className="shrink-0 empty:hidden" />
+
       {/* Right: attendance + actions + profile */}
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
         <AttendanceStatus
@@ -405,13 +408,12 @@ const DashboardHeader = () => {
         {!isCompanyAdmin && (
           <div
             onClick={() => navigate(`/my-points`)}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
+            className="hidden md:flex items-center gap-1.5 px-3 h-12 bg-white rounded-[14px] hover:bg-gray-50 transition-colors cursor-pointer"
             title="Your Current Score"
           >
-            <Zap className="w-4 h-4 text-blue-500 fill-blue-500" />
-            <span className="text-sm font-black text-blue-700">
-              {currentScore}{" "}
-              <span className="text-[10px] font-bold text-blue-400 uppercase">Pts</span>
+            <Zap className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-semibold text-gray-700">
+              {currentScore}
             </span>
           </div>
         )}

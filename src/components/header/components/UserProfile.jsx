@@ -3,23 +3,18 @@ import { Link } from "react-router-dom";
 
 const UserProfile = ({ user }) => {
   return (
-    <div className="h-11 sm:h-12 rounded-[14px] gap-x-2 px-1.5 sm:px-3 w-fit bg-white flexCenter shrink-0">
-      <div className="w-[28px] sm:w-[30px] aspect-square rounded-full overflow-hidden bg-white">
-        <img
-          src={user?.profileImage}
-          alt=""
-          loading="lazy"
-          className="w-full h-full object-cover scale-90"
-        />
-      </div>
-      <Link
-        to={"/settings"}
-        className="hidden lg:flexStart gap-x-3.5 cursor-pointer"
-      >
-        <span className="text-sm font-medium">{user?.firstName}</span>
-        <img src="/icons/arrowDown.svg" alt="" loading="lazy" className="w-5" />
-      </Link>
-    </div>
+    <Link
+      to={"/settings"}
+      title={user?.firstName || "Profile"}
+      className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] overflow-hidden bg-white shrink-0 relative block"
+    >
+      <img
+        src={user?.profileImage}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+    </Link>
   );
 };
 

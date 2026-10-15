@@ -2,18 +2,22 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import {
-  FiTrendingUp,
-  FiUsers,
-  FiFolderPlus,
-  FiTarget,
+  FiFolder,
+  FiLayers,
+  FiLoader,
+  FiEye,
+  FiUserCheck,
+  FiSend,
+  FiRefreshCw,
+  FiRepeat,
   FiCheckCircle,
-  FiClock,
-  FiAlertCircle,
-  FiBarChart2,
+  FiAlertTriangle,
+  FiCheckSquare,
   FiCalendar,
+  FiInbox,
+  FiPauseCircle,
 } from "react-icons/fi";
 import { useGetCompanyStatsChecking } from "../../../api/hooks/dashboard";
-import { MdBusinessCenter } from "react-icons/md";
 import {
   DndContext,
   closestCenter,
@@ -57,38 +61,32 @@ const SortableStatsCard = ({ stat, onClick }) => {
       style={style}
       {...attributes}
       onClick={onClick}
-      className={`${stat.bgColor
-        } rounded-xl p-3 md:p-4 flex flex-col items-center
-       justify-center text-center cursor-pointer border border-transparent
-         ${stat.borderColor
-        } transform group relative overflow-hidden transition-all duration-200 min-w-0
-         ${isDragging
-          ? "shadow-lg scale-105 rotate-2"
-          : "hover:scale-105"
-        }`}
+      className={`rounded-2xl p-3 md:p-4 flex flex-col items-start text-left cursor-pointer
+        bg-gray-50 border border-gray-100 hover:border-gray-300 hover:bg-white group relative
+        transition-colors duration-200 min-w-0 ${isDragging ? "shadow-lg scale-105 z-10" : ""}`}
     >
-      <div className={`${stat.color} p-2 md:p-3 rounded-lg mb-2 md:mb-3`}>
-        <Icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+      <div className="w-full flex items-start justify-between">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.bgColor} ${stat.textColor}`}>
+          <Icon className="w-[18px] h-[18px]" />
+        </div>
+        {/* Drag handle */}
+        <div
+          {...listeners}
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-move hidden md:block text-gray-400 text-sm leading-none px-1 select-none"
+          title="Drag to reorder"
+        >
+          ⋮
+        </div>
       </div>
-      <div
-        className={`text-xl md:text-2xl font-bold ${stat.textColor} mb-1 md:mb-2 `}
-      >
+      <div className="text-2xl md:text-[28px] font-bold text-[#0A1629] mt-4 leading-none">
         {stat.value}
       </div>
-      <p className="text-[11px] md:text-sm font-medium text-gray-700 leading-tight line-clamp-2">
+      <p className="text-xs md:text-sm font-semibold text-gray-800 mt-2 leading-tight line-clamp-1 w-full">
         {stat.title}
       </p>
-      {/* Hover indicator */}
-      <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <span className="text-xs text-gray-400">→</span>
-      </div>
-      {/* Drag indicator with listeners */}
-      <div
-        {...listeners}
-        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-move hidden md:block"
-      >
-        <span className="text-xs text-gray-400">⋮⋮</span>
-      </div>
+      <p className="text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight line-clamp-1 w-full">
+        {stat.subtitle}
+      </p>
     </div>
   );
 };
@@ -229,7 +227,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         value: companyStatsCheck?.statistics?.activeProjects || 0,
         subtitle: `${companyStatsCheck?.statistics?.activeProjects || 0
           } active projects`,
-        icon: FiFolderPlus,
+        icon: FiFolder,
         color: "bg-blue-500",
         borderColor: "hover:border-blue-500",
         bgColor: "bg-blue-50",
@@ -241,7 +239,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Total Tasks",
         value: companyStatsCheck?.statistics?.total || 0,
         subtitle: `${companyStatsCheck?.statistics?.completed || 0} completed`,
-        icon: FiTarget,
+        icon: FiLayers,
         color: "bg-purple-500",
         borderColor: "hover:border-purple-500",
         bgColor: "bg-purple-50",
@@ -253,7 +251,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "In Progress",
         value: companyStatsCheck?.statistics?.inProgress || 0,
         subtitle: `${companyStatsCheck?.statistics?.pending || 0} pending`,
-        icon: FiClock,
+        icon: FiLoader,
         color: "bg-orange-500",
         borderColor: "hover:border-orange-500",
         bgColor: "bg-orange-50",
@@ -265,7 +263,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "On Review",
         value: companyStatsCheck?.statistics?.onReview || 0,
         subtitle: "Awaiting approval",
-        icon: FiBarChart2,
+        icon: FiEye,
         color: "bg-yellow-500",
         borderColor: "hover:border-yellow-500",
         bgColor: "bg-yellow-50",
@@ -277,7 +275,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Client Review Pending",
         value: companyStatsCheck?.statistics?.approved || 0,
         subtitle: "Awaiting client review",
-        icon: FiCheckCircle,
+        icon: FiUserCheck,
         color: "bg-teal-500",
         borderColor: "hover:border-teal-500",
         bgColor: "bg-teal-50",
@@ -289,7 +287,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Publishing Pending",
         value: companyStatsCheck?.statistics?.publishPending ?? companyStatsCheck?.statistics?.clientApproved ?? 0,
         subtitle: "Publishing & Scheduling left",
-        icon: MdBusinessCenter,
+        icon: FiSend,
         color: "bg-indigo-500",
         borderColor: "hover:border-indigo-500",
         bgColor: "bg-indigo-50",
@@ -301,7 +299,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Re-work",
         value: companyStatsCheck?.statistics?.rework || 0,
         subtitle: "Needs revision",
-        icon: FiAlertCircle,
+        icon: FiRefreshCw,
         color: "bg-red-500",
         borderColor: "hover:border-red-500",
         bgColor: "bg-red-50",
@@ -313,7 +311,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Total Reworked",
         value: companyStatsCheck?.statistics?.totalReworked || 0,
         subtitle: "Reworked this month",
-        icon: FiTrendingUp,
+        icon: FiRepeat,
         color: "bg-rose-500",
         borderColor: "hover:border-rose-500",
         bgColor: "bg-rose-50",
@@ -337,7 +335,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Overdue Tasks",
         value: companyStatsCheck?.statistics?.overdue || 0,
         subtitle: "Need attention",
-        icon: FiAlertCircle,
+        icon: FiAlertTriangle,
         color: "bg-red-500",
         borderColor: "hover:border-red-500",
         bgColor: "bg-red-50",
@@ -349,11 +347,11 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Today's Tasks",
         value: companyStatsCheck?.statistics?.todaySubTasks || 0,
         subtitle: `${companyStatsCheck?.statistics?.todayMainTasks || 0} main tasks`,
-        icon: FiCheckCircle,
-        color: "bg-indigo-500",
-        borderColor: "hover:border-indigo-500",
-        bgColor: "bg-indigo-50",
-        textColor: "text-indigo-600",
+        icon: FiCheckSquare,
+        color: "bg-fuchsia-500",
+        borderColor: "hover:border-fuchsia-500",
+        bgColor: "bg-fuchsia-50",
+        textColor: "text-fuchsia-600",
         onClick: () => navigate("/company-today-tasks?taskMonth=" + taskMonth),
       },
       {
@@ -374,7 +372,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "Unscheduled Tasks",
         value: companyStatsCheck?.statistics?.unscheduled || 0,
         subtitle: "Need scheduling",
-        icon: FiCalendar,
+        icon: FiInbox,
         color: "bg-gray-500",
         borderColor: "hover:border-gray-500",
         bgColor: "bg-gray-50",
@@ -386,10 +384,10 @@ const CompanyProgressStats = ({ taskMonth }) => {
         title: "On Hold Tasks",
         value: companyStatsCheck?.statistics?.onHold || 0,
         subtitle: "On hold",
-        icon: FiAlertCircle,
+        icon: FiPauseCircle,
         color: "bg-gray-500",
         borderColor: "hover:border-gray-500",
-        bgColor: "bg-slate-300",
+        bgColor: "bg-slate-100",
         textColor: "text-slate-600",
         onClick: () => handleStatsClick("on-hold"),
       },
@@ -507,15 +505,16 @@ const CompanyProgressStats = ({ taskMonth }) => {
           </div>
 
           {/* Stats grid shimmer */}
-          <div className="grid grid-cols-3 lg:grid-cols-7 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
             {placeholders.map((_, i) => (
               <div
                 key={i}
-                className="rounded-xl p-3 md:p-4 flex flex-col items-center justify-center text-center bg-gray-50 border border-gray-100"
+                className="rounded-2xl p-3 md:p-4 flex flex-col items-start bg-gray-50 border border-gray-100"
               >
-                <div className="w-8 h-8 bg-gray-200 rounded-lg mb-3" />
-                <div className="h-4 w-10 bg-gray-200 rounded mb-2" />
-                <div className="h-3 w-14 bg-gray-100 rounded" />
+                <div className="w-10 h-10 bg-gray-200 rounded-xl mb-4" />
+                <div className="h-6 w-12 bg-gray-200 rounded mb-2" />
+                <div className="h-3 w-20 bg-gray-200 rounded mb-1.5" />
+                <div className="h-2.5 w-16 bg-gray-100 rounded" />
               </div>
             ))}
           </div>
@@ -526,11 +525,6 @@ const CompanyProgressStats = ({ taskMonth }) => {
 
   return (
     <div className="px-3 md:px-4 w-full bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
-      <div className="mb-3">
-        <h4 className="font-semibold text-base md:text-lg text-gray-800">
-          Company Overview
-        </h4>
-      </div>
       {/* Company Statistics Grid */}
       <DndContext
         sensors={sensors}
@@ -538,7 +532,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={cardOrder || []} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-3 lg:grid-cols-7 gap-2 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3 flex-1">
             {orderedStats.map((stat) => (
               <SortableStatsCard
                 key={stat.id}

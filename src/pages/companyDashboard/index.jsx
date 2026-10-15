@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   MdOutlineKeyboardArrowRight,
   MdOutlineKeyboardArrowLeft,
@@ -141,31 +142,25 @@ const CompanyDashboard = () => {
     selectedDate.getMonth() === new Date().getMonth() &&
     selectedDate.getFullYear() === new Date().getFullYear();
 
-  return (
-    <section className="flex flex-col gap-1 pb-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <span className="text-sm md:text-base text-[#7D8592]">
-            Company Dashboard
-            <span className="font-semibold text-gray-800 ml-2">
-              {user?.firstName}!
-            </span>
-          </span>
-        </div>
+  const [headerSlot, setHeaderSlot] = useState(null);
+  useEffect(() => {
+    setHeaderSlot(document.getElementById("header-date-slot"));
+  }, []);
+
+  const monthFilter = (
         <div
-          className="h-9 md:h-11 flex items-center justify-center text-sm gap-x-1.5 md:gap-x-2 text-[#0A1629] px-2.5 md:px-5
-         rounded-xl md:rounded-[14px] w-full sm:w-fit bg-[#E6EDF5] shrink-0"
+          className="h-11 sm:h-12 flex items-center justify-center gap-x-1 sm:gap-x-2 text-gray-700 px-2 sm:px-3 rounded-[14px] bg-white shrink-0"
         >
           <button
             onClick={goToPreviousMonth}
-            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
             title="Previous month"
           >
             <MdOutlineKeyboardArrowLeft className="w-4 h-4" />
           </button>
-          <img src="/icons/calender.svg" alt="" className="w-4 md:w-5 shrink-0" />
+          <img src="/icons/calender.svg" alt="" className="w-4 shrink-0 opacity-70" />
           <span
-            className={`text-xs whitespace-nowrap md:text-base 
+            className={`text-xs whitespace-nowrap sm:text-sm font-medium 
               cursor-pointer hover:text-blue-600 transition-colors text-center flex-1 ${!isCurrentMonth ? "text-blue-600 font-medium" : ""
               }`}
             onClick={resetToCurrentMonth}
@@ -180,18 +175,22 @@ const CompanyDashboard = () => {
           </span>
           <button
             onClick={goToNextMonth}
-            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
             title="Next month"
           >
             <MdOutlineKeyboardArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
+  );
+
+  return (
+    <section className="flex flex-col gap-1 pb-4">
+      {headerSlot && createPortal(monthFilter, headerSlot)}
 
       <ActionRequiredBanner />
 
       {/* Company Progress Stats Section */}
-      <div className="w-full mt-3">
+      <div className="w-full">
         <CompanyProgressStats taskMonth={taskMonth} />
       </div>
 

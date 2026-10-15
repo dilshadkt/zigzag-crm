@@ -1,17 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import {
   FiCalendar,
-  FiChevronRight,
+  FiArrowUpRight,
   FiClock,
-  FiExternalLink,
   FiPlus,
   FiUsers,
   FiVideo,
 } from "react-icons/fi";
-import Header from "../../components/shared/header";
-import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import ScheduleMeetingModal, {
   ReportAttendanceModal,
 } from "../../components/meetings/ScheduleMeetingModal";
@@ -83,19 +81,20 @@ const ShimmerBox = ({ className = "" }) => (
 );
 
 const MeetingCardShimmer = () => (
-  <div className="rounded-3xl bg-white p-4">
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex-1 space-y-3">
-        <ShimmerBox className="h-5 w-20 rounded-full" />
-        <ShimmerBox className="h-5 w-3/4" />
-        <ShimmerBox className="h-4 w-1/2" />
+  <div className="rounded-[24px] bg-white p-3.5 h-[170px]">
+    <div className="flex items-center gap-3">
+      <ShimmerBox className="h-11 w-11 rounded-full" />
+      <div className="space-y-2">
+        <ShimmerBox className="h-4 w-28" />
+        <ShimmerBox className="h-3 w-20" />
       </div>
-      <ShimmerBox className="h-10 w-10 rounded-[14px]" />
     </div>
-    <div className="mt-4 flex items-center gap-2">
-      <ShimmerBox className="h-7 w-7 rounded-full" />
-      <ShimmerBox className="h-7 w-7 rounded-full" />
-      <ShimmerBox className="h-4 w-24" />
+    <ShimmerBox className="mt-8 h-5 w-3/4" />
+    <ShimmerBox className="mt-3 h-4 w-1/2" />
+    <div className="mt-8 flex gap-2">
+      <ShimmerBox className="h-11 flex-1 rounded-full" />
+      <ShimmerBox className="h-11 w-11 rounded-full" />
+      <ShimmerBox className="h-11 w-11 rounded-full" />
     </div>
   </div>
 );
@@ -109,6 +108,11 @@ const Meetings = () => {
   const [editingMeeting, setEditingMeeting] = useState(null);
   const [reportingMeeting, setReportingMeeting] = useState(null);
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+  const [headerSlot, setHeaderSlot] = useState(null);
+
+  useEffect(() => {
+    setHeaderSlot(document.getElementById("header-date-slot"));
+  }, []);
 
   const { data, isLoading } = useGetMeetings();
   const { data: employeesData } = useGetAllEmployees(true, { view: "select" });
@@ -249,21 +253,20 @@ const Meetings = () => {
 
   return (
     <section className="flex flex-col gap-3 pb-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Header>Meetings</Header>
-          <p className="mt-1 text-xs text-[#7D8592]">
-            See scheduled meetings, join with the Meet link, and report who attended so they earn points.
-          </p>
-        </div>
-        {canSchedule && (
-          <PrimaryButton
+      {canSchedule &&
+        headerSlot &&
+        createPortal(
+          <button
+            type="button"
+            onClick={openScheduleMeeting}
+            className="flex h-11 sm:h-12 items-center justify-center gap-2 rounded-[14px] bg-white px-3 sm:px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             title="Schedule meeting"
-            icon={<FiPlus className="h-4 w-4" />}
-            onclick={openScheduleMeeting}
-          />
+          >
+            <FiPlus className="h-5 w-5 text-gray-600" />
+            <span className="hidden sm:inline whitespace-nowrap">Schedule meeting</span>
+          </button>,
+          headerSlot
         )}
-      </div>
 
       {canSchedule && googleStatus && !googleStatus.connected && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-[#F4F9FD] px-4 py-3">
@@ -294,10 +297,10 @@ const Meetings = () => {
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
               tab === item.id
-                ? "bg-[#3F8CFF] text-white"
-                : "bg-white text-[#7D8592]"
+                ? "bg-[#1F1F1F] text-white"
+                : "bg-white text-[#7D8592] hover:text-[#1F1F1F]"
             }`}
           >
             {item.label} {item.count}
@@ -306,7 +309,7 @@ const Meetings = () => {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           <MeetingCardShimmer />
           <MeetingCardShimmer />
           <MeetingCardShimmer />
@@ -327,8 +330,8 @@ const Meetings = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-          {visible.map((meeting) => {
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {visible.map((meeting, cardIndex) => {
             const meta = statusMeta(meeting);
             const { dateLabel, timeLabel } = formatRange(meeting.startAt, meeting.endAt);
             const people =
@@ -336,6 +339,16 @@ const Meetings = () => {
                 ? meeting.attendees || []
                 : meeting.invitees || [];
             const trackedCount = meeting.actionItems?.length || 0;
+            const organizer =
+              meeting.createdBy && typeof meeting.createdBy === "object"
+                ? meeting.createdBy
+                : null;
+            const isNext = tab === "upcoming" && cardIndex === 0;
+            const canJoin = meeting.meetLink && meeting.status === "scheduled";
+            const cardBg = isNext ? "bg-[#3F8CFF]" : "bg-white";
+            const strong = isNext ? "text-white" : "text-[#0A1629]";
+            const soft = isNext ? "text-white/75" : "text-[#7D8592]";
+            const ring = isNext ? "border-white/40" : "border-[#D8E0F0]";
 
             return (
               <article
@@ -349,88 +362,116 @@ const Meetings = () => {
                     setSelectedMeetingId(meeting._id);
                   }
                 }}
-                className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white p-4 pl-7 text-left"
+                className={`group relative cursor-pointer overflow-hidden rounded-[24px] ${cardBg} p-3.5 text-left transition-transform hover:-translate-y-0.5`}
               >
-                <div className="absolute bottom-4 left-3 top-4 w-1 rounded-full bg-[#3F8CFF]" />
-                <div className="flex items-start justify-between gap-3">
+                {/* Notch (drawn in the page colour) that holds the open button */}
+                <svg
+                  className="pointer-events-none absolute right-0 top-0"
+                  width="96"
+                  height="76"
+                  viewBox="0 0 96 76"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 0 H96 V76 A16 16 0 0 0 80 60 H44 A16 16 0 0 1 28 44 V16 A16 16 0 0 0 12 0 Z"
+                    fill="#F4F9FD"
+                  />
+                </svg>
+                <div className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full border border-[#D8E0F0] bg-[#F4F9FD] text-[#0A1629] transition-colors group-hover:border-[#3F8CFF] group-hover:bg-[#3F8CFF] group-hover:text-white">
+                  <FiArrowUpRight className="h-[18px] w-[18px]" />
+                </div>
+
+                {/* Organizer */}
+                <div className="flex items-center gap-2.5 pr-20">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E6EDF5] text-[11px] font-bold text-[#0A1629]">
+                    {organizer?.profileImage ? (
+                      <img src={organizer.profileImage} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      personInitials(organizer || { name: "O" })
+                    )}
+                  </div>
                   <div className="min-w-0">
-                    <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${meta.className}`}>
-                        {meta.label}
+                    <p className={`truncate text-sm font-semibold ${strong}`}>
+                      {organizer ? personName(organizer) : "Organizer"}
+                    </p>
+                    <p className={`truncate text-[11px] ${soft}`}>
+                      {meta.label}
+                      {meeting.pointsPerAttendee > 0 && meeting.status === "completed"
+                        ? ` · +${meeting.pointsPerAttendee} pts`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Title, people and time */}
+                <div className="mt-5 flex items-center gap-2.5">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                      isNext ? "bg-white text-[#3F8CFF]" : "bg-[#3F8CFF] text-white"
+                    }`}
+                  >
+                    <FiVideo className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className={`truncate text-sm font-semibold ${strong}`}>{meeting.title}</h3>
+                    <div className={`mt-0.5 flex items-center gap-1.5 text-[11px] ${soft}`}>
+                      <div className="flex items-center">
+                        {people.slice(0, 3).map((person, index) => (
+                          <div
+                            key={person._id || index}
+                            className="flex h-4 w-4 items-center justify-center overflow-hidden rounded-full border border-white bg-[#E6EDF5] text-[7px] font-bold text-[#0A1629]"
+                            style={{ marginLeft: index > 0 ? "-5px" : 0, zIndex: 10 - index }}
+                            title={personName(person)}
+                          >
+                            {person.profileImage ? (
+                              <img src={person.profileImage} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              personInitials(person)
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="inline-flex items-center gap-1 truncate">
+                        {dateLabel} <FiClock className="h-3 w-3 shrink-0" /> {timeLabel}
                       </span>
-                      {meeting.pointsPerAttendee > 0 && meeting.status === "completed" && (
-                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-bold text-indigo-600">
-                          +{meeting.pointsPerAttendee} pts
-                        </span>
-                      )}
                     </div>
-                    <h3 className="truncate text-sm font-semibold text-[#0A1629]">
-                      {meeting.title}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-[#F4F9FD] text-[#3F8CFF]">
-                      <FiVideo className="h-4 w-4" />
-                    </div>
-                    <FiChevronRight className="h-4 w-4 text-gray-300 transition-colors group-hover:text-[#3F8CFF]" />
                   </div>
                 </div>
 
-                <div className="mt-2 flex flex-wrap gap-2.5 text-xs text-[#7D8592]">
-                  <span className="inline-flex items-center gap-1">
-                    <FiCalendar className="h-3.5 w-3.5" /> {dateLabel}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <FiClock className="h-3.5 w-3.5" /> {timeLabel}
-                  </span>
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex items-center">
-                      {people.slice(0, 3).map((person, index) => (
-                        <div
-                          key={person._id || index}
-                          className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#E6EDF5] text-[9px] font-bold text-[#3F8CFF]"
-                          style={{ marginLeft: index > 0 ? "-8px" : 0, zIndex: 10 - index }}
-                          title={personName(person)}
-                        >
-                          {person.profileImage ? (
-                            <img
-                              src={person.profileImage}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            personInitials(person)
-                          )}
-                        </div>
-                      ))}
-                      {people.length > 3 && (
-                        <div
-                          className="flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-gray-600 px-1 text-[8px] font-bold text-white"
-                          style={{ marginLeft: "-8px" }}
-                        >
-                          +{people.length - 3}
-                        </div>
-                      )}
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-[11px] text-[#7D8592]">
-                      <FiUsers className="h-3 w-3" />
-                      {people.length} {meeting.status === "completed" ? "attended" : "invited"}
-                      {trackedCount > 0 ? ` · ${trackedCount} tracked` : ""}
-                    </span>
+                {/* Footer */}
+                <div className="mt-4 flex items-center gap-2">
+                  <div className={`flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border ${ring} px-3.5 text-xs ${strong}`}>
+                    <FiCalendar className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{meta.label}</span>
                   </div>
-                  {meeting.meetLink && meeting.status === "scheduled" && (
+                  <div
+                    className={`flex h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-full border ${ring} px-2.5 text-xs font-medium ${strong}`}
+                    title={`${people.length} ${meeting.status === "completed" ? "attended" : "invited"}${trackedCount > 0 ? ` · ${trackedCount} tracked` : ""}`}
+                  >
+                    <FiUsers className="h-3.5 w-3.5" />
+                    {people.length}
+                  </div>
+                  {canJoin ? (
                     <a
                       href={meeting.meetLink}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(event) => event.stopPropagation()}
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#3F8CFF] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-600"
+                      title="Join meeting"
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105 ${
+                        isNext ? "bg-white text-[#3F8CFF]" : "bg-[#3F8CFF] text-white"
+                      }`}
                     >
-                      Join <FiExternalLink className="h-3.5 w-3.5" />
+                      <FiVideo className="h-4 w-4" />
                     </a>
+                  ) : (
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                        isNext ? "bg-white/30 text-white/70" : "bg-[#E6EDF5] text-[#9AA7BC]"
+                      }`}
+                    >
+                      <FiVideo className="h-4 w-4" />
+                    </div>
                   )}
                 </div>
               </article>

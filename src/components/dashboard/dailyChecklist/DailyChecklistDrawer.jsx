@@ -16,38 +16,33 @@ const CircularProgress = ({ value, onClick, loading }) => {
             className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-[50] group transition-transform hover:scale-105"
             aria-label="Daily checklist"
         >
-            <div className="relative flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md border border-gray-200">
-                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
-                    <circle cx="24" cy="24" r={radius} stroke="#E5E7EB" strokeWidth="2.5" fill="none" />
+            <div className="relative flex items-center justify-center w-12 h-12 bg-white rounded-[14px] shadow-sm">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                    <rect x="1.25" y="1.25" width="45.5" height="45.5" rx="13" pathLength="100" stroke="#E5E7EB" strokeWidth="2.5" fill="none" />
                     {!loading && (
-                        <circle
-                            cx="24"
-                            cy="24"
-                            r={radius}
+                        <rect
+                            x="1.25" y="1.25" width="45.5" height="45.5" rx="13" pathLength="100"
                             stroke="#111827"
                             strokeWidth="2.5"
                             fill="none"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
+                            strokeDasharray={`${value} 100`}
                             strokeLinecap="round"
                             className="transition-all duration-500 ease-out"
                         />
                     )}
                     {loading && (
-                        <circle
-                            cx="24"
-                            cy="24"
-                            r={radius}
+                        <rect
+                            x="1.25" y="1.25" width="45.5" height="45.5" rx="13" pathLength="100"
                             stroke="#111827"
                             strokeWidth="2.5"
                             fill="none"
-                            strokeDasharray={`${circumference * 0.25} ${circumference}`}
+                            strokeDasharray="25 75"
                             strokeLinecap="round"
-                            className="origin-center animate-spin"
+                            className="animate-[dash-run_1.2s_linear_infinite]"
                         />
                     )}
                 </svg>
-                <FiCheck className="relative w-[18px] h-[18px] text-gray-900" strokeWidth={2} />
+                <FiCheck className="relative w-5 h-5 text-gray-600" strokeWidth={2} />
             </div>
         </button>
     );

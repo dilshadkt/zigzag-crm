@@ -18,6 +18,7 @@ import { useTicketCounts } from "../../features/tickets/hooks/useTickets";
 import SupportSection from "./SupportSection";
 import { signOutOfApp } from "../../pwa/closeGuard";
 import SidebarMenuItem from "./SidebarMenuItem";
+import logo from "../../assets/icons/logo.svg";
 
 const ALWAYS_ACCESSIBLE_ROUTES = ["dashboard", "board", "settings", "tickets"];
 
@@ -251,15 +252,47 @@ const Sidebar = () => {
     }));
   };
 
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar-expanded") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSidebar = () => {
+    setExpanded((prev) => {
+      try {
+        localStorage.setItem("sidebar-expanded", prev ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !prev;
+    });
+  };
+
   const handleLogout = () => {
     signOutOfApp("/auth/signin");
   };
   return (
+    <aside
+      className={`hidden lg:block relative shrink-0 my-3 ml-3 transition-[width] duration-300 ease-in-out ${
+        expanded ? "w-[240px]" : "w-[88px]"
+      }`}
+    >
     <section
-      className=" flex-col min-w-[240px] hidden lg:flex  my-3 ml-3 justify-between
+      className="absolute inset-0 flex flex-col justify-between overflow-hidden
      rounded-[24px] gap-y-10 bg-white p-3"
     >
-      <div className="flex flex-col  overflow-y-auto scrollbar-hide">
+      <div className="flex flex-col  overflow-y-auto overflow-x-hidden scrollbar-hover pl-2">
+        <button
+          onClick={toggleSidebar}
+          title={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          className={`mb-2 rounded-[10px] flexStart text-[#7D8592] ${expanded ? "px-2 py-[10px] gap-x-3.5" : "w-full h-12 !justify-center"} hover:bg-[#ECF3FF] hover:text-[#3F8CFF] transition-colors`}
+        >
+          <img src={logo} alt="" className="w-7 h-7 shrink-0" />
+          {expanded && <span className="text-sm whitespace-nowrap">Collapse</span>}
+        </button>
         <ul className="flex flex-col gap-y-1  text-[#7D8592] ">
           {filteredSidebar.length > 0 ? (
             filteredSidebar.map((item, index) => {
@@ -304,6 +337,7 @@ const Sidebar = () => {
                   onNavigate={navigate}
                   pathname={pathname}
                   getTaskCount={getTaskCount}
+                  collapsed={!expanded}
                 />
               );
             })
@@ -314,8 +348,9 @@ const Sidebar = () => {
           )}
         </ul>
       </div>
-      <SupportSection handleLogout={handleLogout} />
+      <SupportSection handleLogout={handleLogout} collapsed={!expanded} />
     </section>
+    </aside>
   );
 };
 
