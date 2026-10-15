@@ -20,10 +20,10 @@ const EmployeeTodayTasks = () => {
     const completedItems = [...completedSubTasks];
 
     return (
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-4 border border-gray-100 min-h-[360px] md:min-h-[420px] md:h-[470px] flex flex-col">
+        <div className="bg-white rounded-[24px] p-3 md:p-4 min-h-[360px] md:min-h-[420px] md:h-[470px] flex flex-col">
             <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-3">
                 <div>
-                    <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <h3 className="font-semibold text-base text-[#0A1629] flex items-center gap-2">
                         Employees Today Tasks
                     </h3>
                 </div>
@@ -32,7 +32,7 @@ const EmployeeTodayTasks = () => {
                     <select
                         value={selectedEmployeeId}
                         onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5 appearance-none cursor-pointer hover:bg-gray-100 transition-colors"
+                        className="w-full bg-[#F4F9FD] text-[#0A1629] text-sm rounded-full px-4 focus:ring-blue-500 focus:border-blue-500 block p-2.5 appearance-none cursor-pointer hover:bg-gray-100 transition-colors"
                     >
                         <option value="">All Employees</option>
                         {employees.map((emp) => {
@@ -83,9 +83,9 @@ const EmployeeTodayTasks = () => {
                 </div>
 
                 {/* Completed Today */}
-                <div className="flex flex-col h-full bg-emerald-50 rounded-2xl p-3 md:p-4 overflow-hidden min-h-[240px] lg:min-h-0">
+                <div className="flex flex-col h-full bg-[#F4F9FD] rounded-2xl p-3 md:p-4 overflow-hidden min-h-[240px] lg:min-h-0">
                     <div className="flex items-center justify-between mb-4 px-2">
-                        <h4 className="font-semibold text-emerald-700 flex items-center gap-2">
+                        <h4 className="font-semibold text-[#0A1629] flex items-center gap-2">
                             <FaCheckCircle className="text-emerald-500" />
                             Completed Today ({completedItems.length})
                         </h4>
@@ -163,7 +163,7 @@ const TaskItem = ({ item, status }) => {
     };
 
     return (
-        <div onClick={handleTaskClick} className="bg-white p-3 rounded-xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md cursor-pointer group">
+        <div onClick={handleTaskClick} className="bg-[#F4F9FD] p-3 rounded-2xl transition-colors hover:bg-[#E6EDF5] cursor-pointer group">
             <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

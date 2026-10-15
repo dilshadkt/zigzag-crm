@@ -15,9 +15,9 @@ const EmployeesTodayStatus = () => {
 
   return (
     <>
-    <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-gray-100 flex flex-col min-h-0 md:min-h-[420px] md:h-[550px]">
+    <div className="bg-white rounded-[24px] p-4 md:p-5 flex flex-col min-h-0 md:min-h-[420px] md:h-[550px]">
       <div className="mb-3">
-        <h3 className="text-sm md:text-base font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="font-semibold text-base text-[#0A1629] flex items-center gap-2">
           Team Daily Status
         </h3>
         {/* <p className="text-xs text-gray-500 line-clamp-1">Finished vs still working</p> */}
@@ -25,7 +25,7 @@ const EmployeesTodayStatus = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 md:overflow-hidden min-h-0">
         {/* Working / Pending Column */}
-        <div className="flex flex-col bg-slate-50 rounded-2xl p-3 md:p-4 border border-slate-100 overflow-hidden min-h-[220px] md:min-h-0">
+        <div className="flex flex-col bg-[#F4F9FD] rounded-2xl p-3 md:p-4 overflow-hidden min-h-[220px] md:min-h-0">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-[11px] text-slate-700 flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
@@ -47,9 +47,9 @@ const EmployeesTodayStatus = () => {
         </div>
 
         {/* Finished / Completed Column */}
-        <div className="flex flex-col bg-emerald-50 rounded-2xl p-3 md:p-4 border border-emerald-100 overflow-hidden min-h-[220px] md:min-h-0">
+        <div className="flex flex-col bg-[#F4F9FD] rounded-2xl p-3 md:p-4 overflow-hidden min-h-[220px] md:min-h-0">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-[11px] text-emerald-700 flex items-center gap-2">
+            <h4 className="font-bold text-[11px] text-[#0A1629] flex items-center gap-2">
               <FaCheckCircle className="text-emerald-500" />
               Done ({finishedEmployees.length})
             </h4>
@@ -98,7 +98,7 @@ const EmployeesTodayStatus = () => {
         <p className="text-sm text-gray-500 mb-4">The following employees have no subtasks assigned for today:</p>
         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
           {inactiveEmployees.map(emp => (
-            <div key={emp._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div key={emp._id} className="flex items-center gap-3 p-3 bg-[#F4F9FD] rounded-2xl">
               <Avatar user={emp} size="w-10 h-10" />
               <div>
                 <div className="font-medium text-gray-700 text-sm">
@@ -118,7 +118,7 @@ const EmployeesTodayStatus = () => {
 };
 
 const EmployeeCard = ({ emp, status, onViewTasks }) => (
-  <div className="bg-white p-3 rounded-2xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md group min-w-0">
+  <div className="bg-[#F4F9FD] p-3 rounded-2xl transition-colors hover:bg-[#E6EDF5] group min-w-0">
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <Avatar user={emp} size="w-8 h-8 md:w-9 md:h-9" />
@@ -165,7 +165,7 @@ const EmployeeCard = ({ emp, status, onViewTasks }) => (
 const LoadingPulse = ({ count }) => (
   <div className="flex flex-col gap-3">
     {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="h-20 bg-white rounded-2xl animate-pulse"></div>
+      <div key={i} className="h-20 bg-[#F4F9FD] rounded-2xl animate-pulse"></div>
     ))}
   </div>
 );
@@ -252,7 +252,7 @@ const EmployeeTasksModal = ({ isOpen, onClose, emp }) => {
         <div className="flex flex-col gap-6 pt-2">
           {/* Pending Tasks */}
           <div>
-            <h4 className="text-sm font-bold text-amber-600 mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-[#0A1629] mb-3 flex items-center gap-2">
               <FaClock /> Pending Tasks ({pendingList.length})
             </h4>
             {pendingList.length === 0 ? (
@@ -268,7 +268,7 @@ const EmployeeTasksModal = ({ isOpen, onClose, emp }) => {
 
           {/* Completed Tasks */}
           <div>
-            <h4 className="text-sm font-bold text-emerald-600 mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-[#0A1629] mb-3 flex items-center gap-2">
               <FaCheckCircle /> Completed Tasks ({completedList.length})
             </h4>
             {completedList.length === 0 ? (

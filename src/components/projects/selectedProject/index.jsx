@@ -15,6 +15,8 @@ import {
 } from "../../../api/hooks";
 import Modal from "../../shared/modal";
 import { assetPath } from "../../../utils/assetPath";
+import apiClient from "../../../api/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { SelectedProjectShimmer } from "../ProjectDetailShimmer";
 
@@ -59,6 +61,8 @@ const SelectedProject = ({ currentProject, isLoading, selectedMonth, className =
   const deleteProject = useDeleteProject();
   const pauseProject = usePauseProject();
   const resumeProject = useResumeProject();
+  const queryClient = useQueryClient();
+  const [isReopening, setIsReopening] = useState(false);
   const [failedImages, setFailedImages] = useState({});
 
   const { data: projectFields } = useGetProjectFields(companyId);
@@ -112,6 +116,23 @@ const SelectedProject = ({ currentProject, isLoading, selectedMonth, className =
     } catch (error) {
       console.error(`Failed to ${action} project:`, error);
       toast.error(error?.response?.data?.message || `Failed to ${action} project`);
+    }
+  };
+
+  const handleReopenProject = async () => {
+    setIsReopening(true);
+    try {
+      await apiClient.patch(`/projects/${currentProject._id}`, { status: "active" });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["projectDetails"] }),
+        queryClient.invalidateQueries({ queryKey: ["companyProjects"] }),
+        queryClient.invalidateQueries({ queryKey: ["employeeProjects"] }),
+      ]);
+      toast.success("Project reopened");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to reopen project");
+    } finally {
+      setIsReopening(false);
     }
   };
 
@@ -313,12 +334,20 @@ const SelectedProject = ({ currentProject, isLoading, selectedMonth, className =
             {/* Streamlined Sidebar: Removed Custom Fields, Social Media, and Work Progress as they are now in the Overview tab */}
 
             {canPauseProject && currentProject?.status === "completed" && (
-              <div
-                className="w-full h-10 mt-4 rounded-xl flexCenter gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium"
-                title="Completed projects can't be paused. Change the status from Edit Project to reopen it."
-              >
-                <FaCheckCircle className="w-3.5 h-3.5" />
-                Project Completed
+              <div className="mt-4 flex flex-col gap-2">
+                <div className="w-full h-10 rounded-xl flexCenter gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+                  <FaCheckCircle className="w-3.5 h-3.5" />
+                  Project Completed
+                </div>
+                <button
+                  type="button"
+                  onClick={handleReopenProject}
+                  disabled={isReopening}
+                  className="w-full h-9 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Set the project back to active. Extending the deadline from Edit Project also reopens it."
+                >
+                  {isReopening ? "Reopening..." : "Reopen Project"}
+                </button>
               </div>
             )}
             {canPauseProject && currentProject?.status !== "completed" && (

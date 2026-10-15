@@ -32,9 +32,9 @@ const WorkLoad = () => {
   };
 
   return (
-    <div className="px-3 md:px-4 bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
+    <div className="px-3 md:px-4 bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-[24px]">
       <div className="flexBetween">
-        <h4 className="font-semibold text-base md:text-lg text-gray-800">Workload</h4>
+        <h4 className="font-semibold text-base text-[#0A1629]">Workload</h4>
         {employees.length > 0 && (
           <div className="flex items-center gap-x-2">
             <button 
@@ -48,7 +48,7 @@ const WorkLoad = () => {
             </button>
             <Link
               to={"/workload"}
-              className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-1"
+              className="text-[#3F8CFF] text-xs font-semibold bg-[#F4F9FD] hover:bg-[#E6EDF5] px-3 py-1.5 rounded-full transition-colors cursor-pointer flexStart gap-x-1"
             >
               <span>View all</span>
               <MdOutlineKeyboardArrowRight />
@@ -62,7 +62,7 @@ const WorkLoad = () => {
           {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
             <div
               key={index}
-              className="flex flex-col items-center rounded-2xl md:rounded-3xl bg-[#F4F9FD] p-3 md:p-4 py-4"
+              className="flex flex-col items-center rounded-[20px] bg-[#F4F9FD] p-3 md:p-4 py-4"
             >
               <div className="h-[69px] w-[69px] rounded-full bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%]" />
               <div className="h-4 w-20 mt-3 rounded bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%]" />

@@ -55,7 +55,7 @@ const AlertCard = ({ alert, project }) => {
   };
 
   return (
-    <div className="bg-[#F8F9FA] p-4 rounded-2xl border border-[#E4E6E8] flex flex-col gap-y-3 relative overflow-hidden">
+    <div className="bg-[#F4F9FD] p-4 rounded-2xl flex flex-col gap-y-3 relative overflow-hidden">
       {isUpdating && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -195,10 +195,10 @@ const ProjectDeadlineAlerts = () => {
   if (deadlineAlerts.length === 0) return null;
 
   return (
-    <div className="w-full mt-3 bg-white pb-3 pt-5 px-4 flex flex-col rounded-3xl">
+    <div className="w-full mt-3 bg-white pb-3 pt-5 px-4 flex flex-col rounded-[24px]">
       <div className="flex items-center gap-x-2 mb-4">
         <MdOutlineTimer className="w-5 h-5 text-red-500" />
-        <h4 className="font-semibold text-lg text-gray-800">
+        <h4 className="font-semibold text-base text-[#0A1629]">
           Project Deadlines Approaching
         </h4>
       </div>

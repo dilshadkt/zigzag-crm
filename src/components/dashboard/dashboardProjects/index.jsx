@@ -23,16 +23,16 @@ const DashboardProjects = ({
         }`}
     >
       <div
-        className={` md:min-h-[470px] h-auto pb-3 pt-5 flex flex-col rounded-3xl ${isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
+        className={` md:min-h-[470px] h-auto pb-3 pt-5 flex flex-col rounded-[24px] ${isEmployee ? "col-span-1" : " col-span-1 md:col-span-5"
           }`}
       >
         <div className="flexBetween w-full ">
-          <h4 className="font-semibold text-lg text-gray-800">
+          <h4 className="font-semibold text-base text-[#0A1629]">
             {isEmployee ? "My Projects" : "Projects"}
           </h4>
           <Link
             to={isEmployee ? "/my-projects" : "/projects-analytics"}
-            className="text-[#3F8CFF] text-sm cursor-pointer flexStart gap-x-2"
+            className="text-[#3F8CFF] text-xs font-semibold bg-[#F4F9FD] hover:bg-[#E6EDF5] px-3 py-1.5 rounded-full transition-colors cursor-pointer flexStart gap-x-2"
           >
             <span>View all</span>
             <MdOutlineKeyboardArrowRight />

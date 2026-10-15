@@ -20,12 +20,12 @@ const DashboardCampaigns = () => {
     return (
         <div>
             <div className="flex flex-wrap justify-between items-center gap-2 mt-4">
-                <h4 className="font-semibold text-base md:text-[17px] text-gray-800 flex items-center gap-2">
+                <h4 className="font-semibold text-base text-[#0A1629] flex items-center gap-2">
                     Active Campaigns
                 </h4>
                 <Link
                     to="/campaigns"
-                    className="text-[#3F8CFF] text-sm cursor-pointer flex items-center gap-x-1 md:gap-x-2 hover:underline shrink-0"
+                    className="text-[#3F8CFF] text-xs font-semibold bg-[#F4F9FD] hover:bg-[#E6EDF5] px-3 py-1.5 rounded-full transition-colors cursor-pointer flex items-center gap-x-1 md:gap-x-2 hover:underline shrink-0"
                 >
                     <span className="hidden sm:inline">View all campaigns</span>
                     <span className="sm:hidden">View all</span>
@@ -33,7 +33,7 @@ const DashboardCampaigns = () => {
                 </Link>
             </div>
 
-            <div className="mt-3 clear-start bg-white overflow-y-auto rounded-2xl md:rounded-3xl p-3 md:p-4">
+            <div className="mt-3 clear-start bg-white overflow-y-auto rounded-[24px] p-3 md:p-4">
                 {campaigns.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">

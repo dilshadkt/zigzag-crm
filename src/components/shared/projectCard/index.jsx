@@ -263,7 +263,7 @@ const ShimmerBox = ({ className = "" }) => (
 );
 
 export const ProjectCardShimmer = () => (
-  <div className="bg-white rounded-3xl grid gap-y-4 md:gap-y-0 md:grid-cols-2">
+  <div className="bg-white rounded-[24px] grid gap-y-4 md:gap-y-0 md:grid-cols-2">
     <div className="p-4 py-5 h-full flex gap-y-4 flex-col md:border-r border-[#E4E6E8]/60">
       <div className="flex items-center gap-x-3.5">
         <ShimmerBox className="w-10 h-10 rounded-2xl shrink-0" />
@@ -328,7 +328,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
       onClick={onClick}
     >
       <div
-        className={`bg-white   rounded-3xl grid gap-y-4 md:gap-y-0 md:grid-cols-2`}
+        className={`bg-white   rounded-[24px] grid gap-y-4 md:gap-y-0 md:grid-cols-2`}
       >
         <div
           className="p-4  py-5 h-full flex gap-y-4 flex-col  md:border-r 

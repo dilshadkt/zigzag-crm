@@ -188,11 +188,11 @@ const EmployeeWorkDetails = () => {
         {/* Today's Work Section */}
         <div className="flex flex-col h-full min-w-0">
           <div className="flexBetween mb-4">
-            <h4 className="font-semibold text-gray-800">Assigned Tasks</h4>
+            <h4 className="font-semibold text-base text-[#0A1629]">Assigned Tasks</h4>
             {todaySubTasks?.subTasks?.length > 0 && (
               <Link
                 to={"/today-tasks"}
-                className="text-[#3F8CFF] cursor-pointer text-sm flexStart gap-x-2 font-medium"
+                className="text-[#3F8CFF] text-xs font-semibold bg-[#F4F9FD] hover:bg-[#E6EDF5] px-3 py-1.5 rounded-full transition-colors cursor-pointer flexStart gap-x-2 font-medium"
               >
                 <span>View all</span>
                 <MdOutlineKeyboardArrowRight />
@@ -253,7 +253,7 @@ const EmployeeWorkDetails = () => {
         {/* Today's Completed Section */}
         <div className="flex flex-col h-full min-w-0 md:border-l border-gray-100 md:pl-4 pt-4 md:pt-0 border-t md:border-t-0">
           <div className="flexBetween mb-4">
-            <h4 className="font-semibold text-gray-800">Completed Today</h4>
+            <h4 className="font-semibold text-base text-[#0A1629]">Completed Today</h4>
             <div className="flex items-center gap-2">
               <span className="bg-green-50 text-green-600 px-2.5 py-1 rounded-full text-xs font-bold">
                 {completedItems.length}

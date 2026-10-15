@@ -59,7 +59,7 @@ const DashboardRanking = () => {
 
     if (loading && data.length === 0) {
         return (
-            <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-100 shadow-sm min-h-[360px] md:h-[550px] animate-pulse">
+            <div className="bg-white rounded-[24px] p-4 md:p-6 min-h-[360px] md:h-[550px] animate-pulse">
                 <div className="h-6 w-32 bg-gray-100 rounded-lg mb-6"></div>
                 <div className="space-y-4">
                     {[1, 2, 3, 4, 5].map(i => (
@@ -71,14 +71,14 @@ const DashboardRanking = () => {
     }
 
     return (
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-gray-100 min-h-[360px] md:h-[550px] flex flex-col">
+        <div className="bg-white rounded-[24px] p-4 md:p-5 min-h-[360px] md:h-[550px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-50 rounded-xl">
                         <Trophy className="w-5 h-5 text-[#3F8CFF]" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-[#0A1629] uppercase tracking-tight">Top Performers</h3>
+                        <h3 className="font-semibold text-base text-[#0A1629]">Top Performers</h3>
                         <p className="text-[10px] text-[#7D8592] font-bold uppercase tracking-widest leading-none mt-1">Real-time Ranking</p>
                     </div>
                 </div>

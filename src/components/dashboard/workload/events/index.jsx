@@ -44,9 +44,9 @@ const NearestEvents = ({ taskMonth }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-white   rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-4 border border-gray-100 min-h-[360px] md:min-h-[420px] md:h-[470px] flex flex-col">
+      <div className="bg-white   rounded-[24px] p-3 md:p-4 min-h-[360px] md:min-h-[420px] md:h-[470px] flex flex-col">
         <div className="flexBetween">
-          <h4 className="font-semibold text-base md:text-lg text-gray-800">
+          <h4 className="font-semibold text-base text-[#0A1629]">
             Pending Work
           </h4>
         </div>
@@ -63,14 +63,14 @@ const NearestEvents = ({ taskMonth }) => {
   }
 
   return (
-    <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-4 border border-gray-100 min-h-[360px] md:min-h-full md:h-[470px] flex flex-col">
+    <div className="bg-white rounded-[24px] p-3 md:p-4 min-h-[360px] md:min-h-full md:h-[470px] flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-3">
         <div>
-          <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">Pending Work  ({activeProjects.length})</h3>
+          <h3 className="font-semibold text-base text-[#0A1629] flex items-center gap-2">Pending Work  ({activeProjects.length})</h3>
         </div>
         <Link
           to={`/pending-works?month=${taskMonth}`}
-          className="text-[#3F8CFF] text-sm font-medium cursor-pointer flex items-center gap-x-1"
+          className="text-[#3F8CFF] text-xs font-semibold bg-[#F4F9FD] hover:bg-[#E6EDF5] px-3 py-1.5 rounded-full transition-colors font-medium cursor-pointer flex items-center gap-x-1"
         >
           <span>View all</span>
           <MdOutlineKeyboardArrowRight className="w-5 h-5" />
@@ -91,7 +91,7 @@ const NearestEvents = ({ taskMonth }) => {
               <Link
                 key={project._id}
                 to={`/projects/${project._id}`}
-                className="bg-white p-3 rounded-xl shadow-sm border border-transparent hover:border-blue-200 transition-all hover:shadow-md cursor-pointer group flex flex-col gap-3 block"
+                className="bg-[#F4F9FD] p-3 rounded-2xl transition-colors hover:bg-[#E6EDF5] cursor-pointer group flex flex-col gap-3 block"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   {project.thumbImg ? (

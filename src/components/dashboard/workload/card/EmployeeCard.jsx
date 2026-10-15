@@ -30,7 +30,7 @@ const EmployeeCard = ({ employee, index, positions }) => {
   if (todayTasks > dailyLimit) {
     bgColorClass = "bg-red-50";
   } else if (todayTasks > (dailyLimit / 2)) {
-    bgColorClass = "bg-orange-50";
+    bgColorClass = "bg-[#F4F9FD]";
   }
 
   const employeeName =
@@ -59,11 +59,11 @@ const EmployeeCard = ({ employee, index, positions }) => {
       <div
         onClick={handleClick}
         key={employee._id || index}
-        className={`flex flex-col items-center rounded-2xl md:rounded-3xl ${bgColorClass} p-3 md:p-4 py-4 
+        className={`flex flex-col items-center rounded-[20px] ${bgColorClass} p-3 md:p-4 py-4 
                h-full cursor-pointer min-w-0 relative transition-all duration-200 justify-between ${
                  isOverloaded 
-                   ? "border-2 border-red-400 shadow-sm shadow-red-100" 
-                   : "border-2 border-transparent hover:border-gray-200"
+                   ? "border border-red-300" 
+                   : "border border-transparent hover:border-[#D8E0F0]"
                }`}
       >
         {isOverloaded && (
@@ -105,7 +105,7 @@ const EmployeeCard = ({ employee, index, positions }) => {
           <span className="text-xs md:text-sm text-gray-500 line-clamp-2 w-full text-center px-1 leading-tight">
             {employee.position || "—"}
           </span>
-          <div className="text-[#7D8592] border-2 text-xs border-[#7D8592]/60 rounded-lg px-2 mt-2">
+          <div className="text-[#7D8592] bg-white/70 text-[11px] font-medium rounded-full px-2.5 py-0.5 mt-2">
             {employee.level || "Middle"}
           </div>
           <div className="mt-2 flex items-center justify-center text-xs font-semibold bg-white/60 px-2 py-1 rounded-md w-full">

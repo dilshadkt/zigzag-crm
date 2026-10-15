@@ -27,7 +27,7 @@ const ActionRequiredBanner = () => {
   return (
     <div 
       onClick={handleClick}
-      className="w-full bg-white border border-red-200 rounded-xl px-4 py-3 mt-3 mb-2 cursor-pointer hover:border-red-300 transition-colors flex items-center justify-between shadow-sm"
+      className="w-full bg-white border border-red-100 rounded-2xl px-4 py-3 mt-3 mb-2 cursor-pointer hover:border-red-300 transition-colors flex items-center justify-between shadow-sm"
     >
       <div className="flex items-center gap-3">
         <FiAlertCircle className="w-5 h-5 text-red-500 shrink-0" />

@@ -45,7 +45,19 @@ export const useGetCompletionTrend = (userId = null, days = 14) => {
     gcTime: 15 * 60 * 1000,
   });
 };
-export const useTodayTasks = (userId = null, date = null) => {
+export const useGetUpcomingPublishing = (days = 9) => {
+  return useQuery({
+    queryKey: ["upcomingPublishing", days],
+    queryFn: async () => {
+      const response = await apiClient.get(`/dashboard/upcoming-publishing?days=${days}`);
+      return response.data;
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useTodayTasks =(userId = null, date = null) => {
   return useQuery({
     queryKey: ["todayTasks", userId, date],
     queryFn: async () => {

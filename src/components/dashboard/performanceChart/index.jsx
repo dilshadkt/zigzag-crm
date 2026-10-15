@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
-    BarChart,
-    Bar,
+    AreaChart,
+    Area,
     XAxis,
-    YAxis,
-    CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Cell,
 } from "recharts";
 import { useGetCompletionTrend } from "../../../api/hooks/dashboard";
-import { FiActivity, FiChevronDown, FiZap } from "react-icons/fi";
+import { FiChevronDown } from "react-icons/fi";
+import PublishingSchedule from "../publishingSchedule";
+
+const RED = "#EF4444";
 
 const useIsMobile = (breakpoint = 768) => {
     const [isMobile, setIsMobile] = useState(() =>
@@ -33,68 +33,117 @@ const RangeSelector = ({ range, setRange }) => (
         <select
             value={range}
             onChange={(e) => setRange(Number(e.target.value))}
-            className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-[10px] font-bold py-1.5 pl-3 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer hover:bg-white"
+            className="appearance-none h-9 rounded-full bg-[#F4F9FD] pl-4 pr-9 text-xs font-semibold text-[#0A1629] focus:outline-none cursor-pointer hover:bg-[#E6EDF5] transition-colors"
         >
-            <option value={7}>7 Days</option>
-            <option value={14}>14 Days</option>
-            <option value={30}>30 Days</option>
+            <option value={7}>7 days</option>
+            <option value={14}>14 days</option>
+            <option value={30}>30 days</option>
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-            <FiChevronDown className="w-3 h-3" />
-        </div>
+        <FiChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
     </div>
 );
 
-const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-        const data = payload[0].payload;
-        const successRate = data.dailyTarget > 0
-            ? Math.round((data.dailyActual / data.dailyTarget) * 100)
-            : data.dailyActual > 0 ? 100 : 0;
+const formatDay = (date) =>
+    new Date(date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
+const TooltipShell = ({ title, children }) => (
+    <div className="min-w-[150px] rounded-2xl bg-white p-3 shadow-lg ring-1 ring-black/5">
+        <p className="mb-2 text-[11px] font-semibold text-[#0A1629]">{title}</p>
+        <div className="space-y-1.5 text-xs">{children}</div>
+    </div>
+);
+
+const Row = ({ label, value }) => (
+    <div className="flex items-center justify-between gap-6">
+        <span className="text-[#7D8592]">{label}</span>
+        <span className="font-semibold text-[#0A1629]">{value}</span>
+    </div>
+);
+
+const ReworkTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    return (
+        <TooltipShell title={formatDay(d.date)}>
+            <Row label="Rework events" value={d.dailyRework} />
+        </TooltipShell>
+    );
+};
+
+const PeakDot = (peakIndex) => {
+    const Dot = ({ cx, cy, index, value }) => {
+        if (index !== peakIndex || !value) return null;
+        const w = 34;
+        const h = 20;
         return (
-            <div className="bg-white/95 backdrop-blur-sm p-4 rounded-2xl  border border-gray-100 min-w-[160px] shadow-xl">
-                <p className="text-[11px] font-black text-gray-900 mb-3 border-b border-gray-50 pb-2">
-                    {new Date(data.date).toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}
-                </p>
-                <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">Target</span>
-                        <span className="text-xs font-bold text-indigo-600">{data.dailyTarget}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">Completed</span>
-                        <span className="text-xs font-bold text-emerald-600">{data.dailyActual}</span>
-                    </div>
-                    <div className="pt-2 mt-2 border-t border-gray-50 flex justify-between items-center">
-                        <span className="text-[10px] font-black text-gray-900 uppercase">Efficiency</span>
-                        <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${successRate >= 100 ? 'bg-emerald-50 text-emerald-600' :
-                            successRate >= 50 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
-                            }`}>
-                            {successRate}%
-                        </span>
-                    </div>
+            <g>
+                <circle cx={cx} cy={cy} r={5} fill="#fff" stroke={RED} strokeWidth={2.5} />
+                <rect x={cx - w / 2} y={cy - h - 10} width={w} height={h} rx={10} fill={RED} />
+                <text x={cx} y={cy - h / 2 - 10} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={11} fontWeight={600}>{value}</text>
+            </g>
+        );
+    };
+    return Dot;
+};
+
+const indexOfMax = (rows, key) => {
+    let best = -1;
+    let bestValue = 0;
+    rows.forEach((row, i) => {
+        if ((row[key] || 0) > bestValue) {
+            bestValue = row[key];
+            best = i;
+        }
+    });
+    return best;
+};
+
+const ChartCard = ({ title, caption, value, unit, extra, range, setRange, children, footer }) => (
+    <div className="flex min-h-[340px] flex-col rounded-[24px] bg-white p-4 md:p-6">
+        <div className="flex items-start justify-between gap-3">
+            <div>
+                <h3 className="text-base font-semibold text-[#0A1629]">{title}</h3>
+                <p className="mt-3 text-xs text-[#7D8592]">{caption}</p>
+                <div className="mt-0.5 flex items-baseline gap-2">
+                    <span className="text-4xl font-semibold leading-none text-[#0A1629]">{value}</span>
+                    {unit && <span className="text-sm text-[#7D8592]">{unit}</span>}
+                    {extra}
                 </div>
             </div>
-        );
-    }
-    return null;
-};
+            <RangeSelector range={range} setRange={setRange} />
+        </div>
+
+        <div className="mt-4 h-[190px] w-full md:h-[210px]">{children}</div>
+
+        <div className="mt-auto flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 text-xs text-[#7D8592]">{footer}</div>
+    </div>
+);
+
+const Legend = ({ color, label, value }) => (
+    <span className="inline-flex items-center gap-2">
+        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+        {label}
+        <span className="font-semibold text-[#0A1629]">{value}</span>
+    </span>
+);
 
 const CompletionTrendChart = ({ userId = null }) => {
     const [range, setRange] = useState(14);
     const isMobile = useIsMobile();
     const { data, isLoading } = useGetCompletionTrend(userId, range);
-    const chartMargin = isMobile
-        ? { top: 10, right: 4, left: 0, bottom: 0 }
-        : { top: 10, right: 10, left: -25, bottom: 0 };
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-6">
+            <div className="grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
                 {[1, 2].map((i) => (
-                    <div key={i} className="bg-white rounded-3xl p-6 h-96 flex items-center justify-center animate-pulse border border-gray-100">
-                        <div className="text-gray-400 font-medium">Preparing insights {i}...</div>
+                    <div key={i} className="h-[340px] animate-pulse rounded-[24px] bg-white p-6">
+                        <div className="h-4 w-32 rounded bg-[#E6EDF5]" />
+                        <div className="mt-6 h-9 w-24 rounded bg-[#E6EDF5]" />
+                        <div className="mt-8 flex h-[160px] items-end gap-2">
+                            {Array.from({ length: 12 }).map((_, b) => (
+                                <div key={b} className="flex-1 rounded-t-md bg-[#F4F9FD]" style={{ height: `${30 + ((b * 37) % 60)}%` }} />
+                            ))}
+                        </div>
                     </div>
                 ))}
             </div>
@@ -103,164 +152,77 @@ const CompletionTrendChart = ({ userId = null }) => {
 
     const chartData = data?.data || [];
 
-    const totalTarget = chartData.reduce((acc, curr) => acc + curr.dailyTarget, 0);
-    const totalActual = chartData.reduce((acc, curr) => acc + curr.dailyActual, 0);
-    const overallEfficiency = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+    const totalRework = chartData.reduce((acc, curr) => acc + curr.dailyRework, 0);
+    const criticalDays = chartData.filter((d) => d.dailyRework > 2).length;
+    const cleanDays = chartData.filter((d) => d.dailyRework === 0).length;
+
+    const peakRework = indexOfMax(chartData, "dailyRework");
+
+    const margin = { top: 30, right: 4, left: 4, bottom: 0 };
+    const xAxis = (
+        <XAxis
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#9AA7BC", fontSize: isMobile ? 9 : 10 }}
+            dy={8}
+            interval={isMobile && range > 7 ? 1 : range > 14 ? 2 : 0}
+        />
+    );
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full relative">
-            {/* CHART 1: PRODUCTIVITY PULSE (Daily Target vs. Actual) */}
-            <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-100 flex flex-col min-h-[360px] md:min-h-[460px]">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-50 rounded-2xl">
-                            <FiZap className="w-4 h-4 text-indigo-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-base font-bold text-gray-800 tracking-tight">Productivity Pulse</h3>
-                            <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Target vs. Actual Completion</p>
-                        </div>
-                    </div>
-                    <RangeSelector range={range} setRange={setRange} />
-                </div>
+        <div className="relative grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
+            <PublishingSchedule />
 
-                <div className="w-full h-[220px] md:h-[280px] relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={chartMargin} barGap={range > 14 ? 2 : 4}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis
-                                dataKey="label"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#9CA3AF', fontSize: isMobile ? 9 : 10, fontWeight: 600 }}
-                                dy={15}
-                                interval={isMobile && range > 7 ? 1 : 0}
-                            />
-                            <YAxis
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#9CA3AF', fontSize: 10, fontWeight: 600 }}
-                                width={isMobile ? 28 : 40}
-                            />
-                            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F9FAFB', radius: 8 }} />
-                            <Bar
-                                dataKey="dailyTarget"
-                                name="Daily Target"
-                                fill="#E0E7FF"
-                                radius={[4, 4, 0, 0]}
-                                barSize={range > 14 ? 12 : 18}
-                            />
-                            <Bar
-                                dataKey="dailyActual"
-                                name="Completed"
-                                fill="#10B981"
-                                radius={[4, 4, 0, 0]}
-                                barSize={range > 14 ? 12 : 18}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-around bg-gray-50/30 rounded-2xl p-3">
-                    <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">Total Target</span>
-                        <span className="text-sm font-black text-indigo-600">{totalTarget}</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-blue-100 text-blue-600 px-2 py-0.5 rounded-md mb-1">Efficiency</span>
-                        <span className="text-lg font-black text-blue-700">{overallEfficiency}%</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">Total Done</span>
-                        <span className="text-sm font-black text-emerald-600">{totalActual}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* CHART 2: QUALITY AUDIT (Rework Pulse) */}
-            <div className="bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-100 flex flex-col min-h-[360px] md:min-h-[460px]">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-red-50 rounded-2xl">
-                            <FiActivity className="w-4 h-4 text-red-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-base font-bold text-gray-800 tracking-tight">Quality Audit</h3>
-                            <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Rework Distribution Pulse</p>
-                        </div>
-                    </div>
-                    <RangeSelector range={range} setRange={setRange} />
-                </div>
-
-                <div className="w-full h-[220px] md:h-[280px] relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={chartMargin}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis
-                                dataKey="label"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#9CA3AF', fontSize: isMobile ? 9 : 10, fontWeight: 600 }}
-                                dy={15}
-                                interval={isMobile && range > 7 ? 1 : 0}
-                            />
-                            <YAxis
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#9CA3AF', fontSize: 10, fontWeight: 600 }}
-                                width={isMobile ? 28 : 40}
-                            />
-                            <Tooltip
-                                cursor={{ fill: '#FFF1F2', radius: 8 }}
-                                contentStyle={{
-                                    borderRadius: '16px',
-                                    border: 'none',
-                                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                                    padding: '12px',
-                                    backgroundColor: '#111827',
-                                }}
-                                itemStyle={{ color: '#fff', fontSize: '11px', fontWeight: 600 }}
-                                labelStyle={{ color: '#9CA3AF', fontSize: '10px', marginBottom: '4px' }}
-                                labelFormatter={(val, payload) => {
-                                    if (payload && payload[0]?.payload?.date) {
-                                        return new Date(payload[0].payload.date).toLocaleDateString("en-US", {
-                                            weekday: 'short',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        });
-                                    }
-                                    return val;
-                                }}
-                            />
-                            <Bar dataKey="dailyRework" name="Rework Events" radius={[6, 6, 0, 0]} barSize={range > 14 ? 16 : 28}>
-                                {chartData.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={entry.dailyRework > 2 ? '#EF4444' : entry.dailyRework > 0 ? '#FB7185' : '#F1F5F9'}
-                                    />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-
-                <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between px-4 bg-gray-50/30 rounded-2xl p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">Critical: {chartData.filter(d => d.dailyRework > 2).length}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="p-1 px-2 bg-indigo-100 rounded text-[9px] font-black text-indigo-700">TOTAL: {chartData.reduce((acc, curr) => acc + curr.dailyRework, 0)}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">Clean: {chartData.filter(d => d.dailyRework === 0).length}</span>
-                    </div>
-                </div>
-            </div>
+            <ChartCard
+                title="Quality"
+                caption="Rework events"
+                value={totalRework}
+                unit={`in ${range} days`}
+                range={range}
+                setRange={setRange}
+                footer={
+                    <>
+                        <Legend color={RED} label="Critical days" value={criticalDays} />
+                        <Legend color="#FCA5A5" label="Clean days" value={cleanDays} />
+                    </>
+                }
+            >
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={margin}>
+                        <defs>
+                            <linearGradient id="reworkFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={RED} stopOpacity={0.28} />
+                                <stop offset="100%" stopColor={RED} stopOpacity={0.02} />
+                            </linearGradient>
+                        </defs>
+                        {xAxis}
+                        <Tooltip content={<ReworkTooltip />} cursor={{ stroke: "#FCA5A5", strokeDasharray: "4 4" }} />
+                        <Area
+                            type="monotone"
+                            dataKey="dailyRework"
+                            name="Rework"
+                            stroke={RED}
+                            strokeWidth={2.5}
+                            fill="url(#reworkFill)"
+                            dot={false}
+                            activeDot={{ r: 5, fill: "#fff", stroke: RED, strokeWidth: 2.5 }}
+                            label={false}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="dailyRework"
+                            stroke="none"
+                            fill="none"
+                            dot={PeakDot(peakRework)}
+                            activeDot={false}
+                            isAnimationActive={false}
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </ChartCard>
         </div>
     );
 };
 
 export default CompletionTrendChart;
-

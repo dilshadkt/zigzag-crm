@@ -14,10 +14,10 @@ const TodayReworkTasks = () => {
     const allReworkItems = [...reworkTasks, ...reworkSubTasks];
 
     return (
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-gray-100 flex flex-col min-h-[360px] md:min-h-[420px] md:h-[470px]">
+        <div className="bg-white rounded-[24px] p-4 md:p-5 flex flex-col min-h-[360px] md:min-h-[420px] md:h-[470px]">
             <div className="flex flex-col gap-3 mb-4">
                 <div>
-                    <h3 className="text-base font-bold text-red-600 flex items-center gap-2">
+                    <h3 className="font-semibold text-base text-[#0A1629] flex items-center gap-2">
                         <FaReply className="text-red-500" />
                         Today Rework ({allReworkItems.length})
                     </h3>
@@ -28,7 +28,7 @@ const TodayReworkTasks = () => {
                     <select
                         value={selectedEmployeeId}
                         onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                        className="w-full bg-red-50/50 border border-red-100 text-gray-700 text-[11px] rounded-lg focus:ring-red-500 focus:border-red-500 block p-2 appearance-none cursor-pointer hover:bg-red-50 transition-colors"
+                        className="w-full bg-[#F4F9FD] text-[#0A1629] text-[11px] rounded-full px-3 focus:ring-red-500 focus:border-red-500 block p-2 appearance-none cursor-pointer hover:bg-red-50 transition-colors"
                     >
                         <option value="">All Employees</option>
                         {employees.map((emp) => {
@@ -71,7 +71,7 @@ const ReworkItem = ({ item }) => {
     const assignedTo = item.assignedTo?.[0];
 
     return (
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-red-100 hover:border-red-300 transition-all hover:shadow-md group">
+        <div className="bg-[#F4F9FD] p-4 rounded-2xl transition-colors hover:bg-[#E6EDF5] group">
             <div className="flex justify-between items-start gap-2">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

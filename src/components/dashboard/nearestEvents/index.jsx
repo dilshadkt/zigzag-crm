@@ -186,9 +186,9 @@ const NearestEvents = ({ selectedDate }) => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[320px] md:h-[470px] w-full flex-col bg-white py-4 md:py-5 px-3 md:px-4 rounded-2xl md:rounded-3xl">
+      <div className="flex min-h-[320px] md:h-[470px] w-full flex-col bg-white py-4 md:py-5 px-3 md:px-4 rounded-[24px]">
         <div className="flexBetween">
-          <h4 className="font-semibold text-sm md:text-base text-gray-800">
+          <h4 className="font-semibold text-base text-[#0A1629]">
             Nearest Events
           </h4>
           <Link
@@ -212,9 +212,9 @@ const NearestEvents = ({ selectedDate }) => {
   }
 
   return (
-    <div className="flex min-h-[320px] md:h-[470px] flex-col bg-white py-4 md:py-5 px-3 md:px-4 rounded-2xl md:rounded-3xl">
+    <div className="flex min-h-[320px] md:h-[470px] flex-col bg-white py-4 md:py-5 px-3 md:px-4 rounded-[24px]">
       <div className="flexBetween">
-        <h4 className="font-semibold text-sm md:text-base text-gray-800">Nearest Events</h4>
+        <h4 className="font-semibold text-base text-[#0A1629]">Nearest Events</h4>
         <Link
           to={"/calender"}
           className="text-[#3F8CFF] text-xs cursor-pointer flexStart gap-x-2"

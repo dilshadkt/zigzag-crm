@@ -263,8 +263,8 @@ const ActivityStream = () => {
 
   if (isLoading) {
     return (
-      <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-2xl md:rounded-3xl">
-        <h4 className="font-semibold text-sm md:text-base text-gray-800">Activity Stream</h4>
+      <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-[24px]">
+        <h4 className="font-semibold text-base text-[#0A1629]">Activity Stream</h4>
         <div className="flex h-full gap-y-6 overflow-y-auto overflow-x-hidden flex-col mt-4">
           {[1, 2, 3].map((_, index) => (
             <div key={index} className="animate-pulse">
@@ -288,10 +288,10 @@ const ActivityStream = () => {
   );
 
   return (
-    <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-2xl md:rounded-3xl">
+    <div className="flex mt-3 md:mt-5 min-h-[320px] md:h-[450px] flex-col relative mb-3 bg-white pt-4 md:pt-5 pb-8 md:pb-10 px-3 md:px-4 rounded-[24px]">
       <div className="flex justify-between items-start mb-4 gap-2">
         <div className="flex flex-col min-w-0">
-          <h4 className="font-semibold text-sm md:text-base text-gray-800">
+          <h4 className="font-semibold text-base text-[#0A1629]">
             Activity Stream
           </h4>
           <div
