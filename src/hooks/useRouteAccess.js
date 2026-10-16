@@ -42,6 +42,8 @@ export const useRouteAccess = () => {
         calender: "/calender",
         vacations: "/vacations",
         tickets: "/tickets",
+        accounts: "/accounts",
+        "my-payslips": "/my-payslips",
         employees: "/employees",
         messenger: "/messenger",
         leads: "/leads",

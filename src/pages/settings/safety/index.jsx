@@ -27,7 +27,9 @@ import {
   FiChevronRight,
   FiPlus,
   FiVideo,
-  FiPhone
+  FiPhone,
+  FiDollarSign,
+  FiCreditCard
 } from "react-icons/fi";
 import { MdSecurity, MdHistory, MdDevices, MdEdit } from "react-icons/md";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -133,6 +135,20 @@ const PERMISSION_CATEGORIES = {
       { key: "changeStatus", label: "Change Status", description: "Can update ticket status" },
     ],
   },
+  accounts: {
+    label: "Accounts & Finance",
+    icon: <FiDollarSign />,
+    permissions: [
+      { key: "view", label: "View Accounts", description: "Can see the accounts overview, invoices, proposals, clients and expenses" },
+      { key: "manageInvoices", label: "Manage Invoices", description: "Can create, edit, send and record payments on invoices" },
+      { key: "manageProposals", label: "Manage Proposals", description: "Can create, edit, send and convert proposals" },
+      { key: "manageExpenses", label: "Manage Expenses", description: "Can add, approve and edit expenses" },
+      { key: "managePayroll", label: "Manage Payroll & Salaries", description: "Can see every employee salary, edit salary structures and run payroll" },
+      { key: "viewReports", label: "View Financial Reports", description: "Can open profit and loss, GST, client profitability and payroll totals" },
+      { key: "manageSettings", label: "Accounts Settings", description: "Can change business details, bank accounts, numbering and payroll rules" },
+      { key: "delete", label: "Delete Records", description: "Can delete draft invoices, proposals and expenses" },
+    ],
+  },
   settings: {
     label: "Settings & Configuration",
     icon: <FiSettings />,
@@ -164,10 +180,20 @@ const PERMISSION_CATEGORIES = {
   },
 };
 
+// Ready-made Accounts access levels. "view" is implied by every manage permission.
+const ACCOUNTS_PRESETS = [
+  { id: "viewer", label: "Viewer", desc: "Read-only: overview, invoices, proposals, clients, expenses", scopes: ["view"] },
+  { id: "accountant", label: "Accountant", desc: "Invoices, proposals and expenses. No salary access", scopes: ["view", "manageInvoices", "manageProposals", "manageExpenses"] },
+  { id: "payroll", label: "Payroll manager", desc: "Sees all salaries and runs payroll", scopes: ["view", "managePayroll"] },
+  { id: "head", label: "Finance head", desc: "Everything, including reports, settings and salaries", scopes: ["view", "manageInvoices", "manageProposals", "manageExpenses", "managePayroll", "viewReports", "manageSettings", "delete"] },
+];
+
 const MODULES = [
   { id: "dashboard", type: "system", label: "Main Dashboard", icon: <FiActivity />, desc: "Central intelligence & overview", permissionKey: "dashboard" },
   { id: "department-dashboard", type: "route", label: "Department Dashboard", icon: <FiUsers />, desc: "Department overview & conflicts", permissionKey: "departmentDashboard" },
   { id: "projects", type: "route", label: "Client Hub", icon: <FiLayout />, desc: "Client & project management", permissionKey: "projects" },
+  { id: "accounts", type: "route", label: "Accounts", icon: <FiDollarSign />, desc: "Invoices, proposals, expenses, payroll and reports", permissionKey: "accounts" },
+  { id: "my-payslips", type: "route", label: "My Payslips", icon: <FiCreditCard />, desc: "Lets people open and download their own payslips. Only approved payslips are shown, and only their own.", permissionKey: null },
   { id: "tickets", type: "route", label: "Issues & Complaints", icon: <FiAlertCircle />, desc: "Raise and track client tickets", permissionKey: "tickets" },
   { id: "board", type: "route", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards", permissionKey: "tasks" },
   { id: "calendar", type: "route", label: "Timeline", icon: <FiCalendar />, desc: "Global scheduling system", permissionKey: null },
@@ -252,11 +278,32 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
   };
 
   const handleRouteToggle = (routeValue) => {
+    const enabling = !allowedRoutes.includes(routeValue);
     setAllowedRoutes((prev) =>
       prev.includes(routeValue)
         ? prev.filter(r => r !== routeValue)
         : [...prev, routeValue]
     );
+    // An Accounts page with no scopes only shows an error, so start with read access
+    if (routeValue === "accounts" && enabling) {
+      setPermissions((prev) => {
+        const anyScope = Object.values(prev.accounts || {}).some(Boolean);
+        return anyScope ? prev : { ...prev, accounts: { ...(prev.accounts || {}), view: true } };
+      });
+    }
+  };
+
+  const applyAccountsPreset = (preset) => {
+    const accounts = Object.fromEntries(
+      PERMISSION_CATEGORIES.accounts.permissions.map((p) => [p.key, preset.scopes.includes(p.key)])
+    );
+    setPermissions((prev) => ({ ...prev, accounts }));
+    setAllowedRoutes((prev) => (prev.includes("accounts") ? prev : [...prev, "accounts"]));
+  };
+
+  const accountsPresetActive = (preset) => {
+    const current = permissions.accounts || {};
+    return PERMISSION_CATEGORIES.accounts.permissions.every((p) => Boolean(current[p.key]) === preset.scopes.includes(p.key));
   };
 
   const handleAdminDashboardToggle = () => {
@@ -389,6 +436,54 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
                 <div className="w-10 h-5.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-500"></div>
               </label>
             </div>
+          </div>
+        )}
+
+        {/* Accounts: presets and guidance */}
+        {activeModule.id === "accounts" && (
+          <div className="flex flex-col gap-3">
+            <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm shadow-gray-200/40">
+              <h4 className="text-[13px] font-bold text-gray-700 tracking-tight mb-1">Quick access levels</h4>
+              <p className="text-[11px] text-gray-500 mb-3">Pick a starting point, then fine-tune the scopes below. Choosing one also turns Accounts access on.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {ACCOUNTS_PRESETS.map((preset) => {
+                  const active = accountsPresetActive(preset) && allowedRoutes.includes("accounts");
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyAccountsPreset(preset)}
+                      className={`text-left p-3 rounded-xl border transition-all ${active ? "border-blue-300 bg-blue-50/50" : "border-gray-100 hover:border-gray-200 hover:bg-gray-50/50"}`}
+                    >
+                      <span className="flex items-center justify-between">
+                        <span className="text-[12px] font-bold text-gray-800">{preset.label}</span>
+                        {active && <FiCheck className="w-3.5 h-3.5 text-blue-500" />}
+                      </span>
+                      <span className="block text-[11px] text-gray-500 mt-0.5 leading-snug">{preset.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {!hasAccess && countActivePermissions("accounts") > 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100 text-[11px] text-amber-800">
+                <FiAlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                Scopes are selected but Accounts access is switched off, so this role will not see the Accounts page. Turn on Enable Access above.
+              </div>
+            )}
+            {hasAccess && countActivePermissions("accounts") === 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100 text-[11px] text-amber-800">
+                <FiAlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                Accounts access is on but no scopes are selected, so people in this role would only see an error. Pick an access level or tick at least View Accounts.
+              </div>
+            )}
+            {permissions.accounts?.managePayroll && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-[11px] text-red-700">
+                <FiShield className="w-4 h-4 shrink-0 mt-0.5" />
+                <span><b>Manage Payroll &amp; Salaries</b> lets this role see every employee&apos;s salary and bank details. Give it only to people who should see all pay.</span>
+              </div>
+            )}
           </div>
         )}
 

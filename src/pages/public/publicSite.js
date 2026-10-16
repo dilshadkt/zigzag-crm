@@ -8,5 +8,10 @@ const normalizedPath = (pathname = "") => pathname.replace(/\/$/, "") || "/";
 
 export const isPublicAppPath = (pathname = "") => {
   const path = normalizedPath(pathname);
-  return path === "/home" || path === "/privacy" || path === "/terms";
+  return (
+    path === "/home" ||
+    path === "/privacy" ||
+    path === "/terms" ||
+    path.startsWith("/share/")
+  );
 };

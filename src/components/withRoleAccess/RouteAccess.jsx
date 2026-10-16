@@ -134,6 +134,8 @@ function RouteAccess({ children, fallbackPath = "/unauthorized" }) {
       calender: "/calender",
       vacations: "/vacations",
       tickets: "/tickets",
+      accounts: "/accounts",
+      "my-payslips": "/my-payslips",
       employees: "/employees",
       messenger: "/messenger",
       "task-on-review": "/task-on-review",

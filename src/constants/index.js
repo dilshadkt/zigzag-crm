@@ -25,6 +25,8 @@ import {
   FiInstagram,
   FiAlertCircle,
   FiPhone,
+  FiDollarSign,
+  FiCreditCard,
 } from "react-icons/fi";
 import { MdOutlineLeaderboard, MdPayments } from "react-icons/md";
 
@@ -178,6 +180,20 @@ export const SIDE_MENU = [
     icon: FaFingerprint,
     path: "/attendance",
     routeKey: "attendance",
+  },
+  {
+    id: 19,
+    title: "Accounts",
+    icon: FiDollarSign,
+    path: "/accounts",
+    routeKey: "accounts",
+  },
+  {
+    id: 20,
+    title: "My Payslips",
+    icon: FiCreditCard,
+    path: "/my-payslips",
+    routeKey: "my-payslips",
   },
   // {
   //   id: 9,

@@ -22,6 +22,9 @@ const Campaigns = lazy(() => import("../pages/campaigns"));
 const CampaignDetails = lazy(() => import("../pages/campaigns/CampaignDetails"));
 const Vacations = lazy(() => import("../features/vacations"));
 const Tickets = lazy(() => import("../features/tickets"));
+const Accounts = lazy(() => import("../features/accounts"));
+const MyPayslips = lazy(() => import("../features/accounts/MyPayslips"));
+const SharedDocument = lazy(() => import("../features/accounts/SharedDocument"));
 const Employees = lazy(() => import("../pages/employees"));
 const Messenger = lazy(() => import("../pages/messenger"));
 const InfoPortal = lazy(() => import("../pages/infoPortal"));
@@ -122,6 +125,8 @@ const AppRoutes = () => {
         <Route path="/home" element={<PublicLanding />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        {/* Private share links for invoices and proposals, opened by clients without signing in */}
+        <Route path="/share/:type/:token" element={<SharedDocument />} />
         <Route
           path="/"
           element={
@@ -323,6 +328,8 @@ const AppRoutes = () => {
           <Route path="calender" element={<RouteAccess><Calendar /></RouteAccess>} />
           <Route path="vacations" element={<RouteAccess><Vacations /></RouteAccess>} />
           <Route path="tickets" element={<RouteAccess><Tickets /></RouteAccess>} />
+          <Route path="accounts/*" element={<RouteAccess><Accounts /></RouteAccess>} />
+          <Route path="my-payslips" element={<RouteAccess><MyPayslips /></RouteAccess>} />
           <Route path="employees" element={<RouteAccess><Employees /></RouteAccess>} />
           <Route
             path="leads"
