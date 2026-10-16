@@ -211,12 +211,6 @@ export const createTask = async (taskData, projectId) => {
     timeEstimate: taskData?.timeEstimate,
 
     // taskFlow will be conditionally added below
-    // Recurring task fields
-    isRecurring: taskData?.isRecurring,
-    recurringPattern: taskData?.recurringPattern,
-    recurringInterval: taskData?.recurringInterval,
-    recurringEndDate: taskData?.recurringEndDate,
-    maxRecurrences: taskData?.maxRecurrences,
     requiresClientApproval: taskData?.requiresClientApproval,
     sequentialSubtasks: taskData?.sequentialSubtasks,
     requiresWorkLink: taskData?.requiresWorkLink,
@@ -252,12 +246,6 @@ export const createTaskFromBoard = async (taskData) => {
     isBoardTask: true,
     sourceProject: taskData?.project || null,
 
-    // Recurring task fields
-    isRecurring: taskData?.isRecurring,
-    recurringPattern: taskData?.recurringPattern,
-    recurringInterval: taskData?.recurringInterval,
-    recurringEndDate: taskData?.recurringEndDate,
-    maxRecurrences: taskData?.maxRecurrences,
     requiresClientApproval: taskData?.requiresClientApproval,
     sequentialSubtasks: taskData?.sequentialSubtasks,
     requiresWorkLink: taskData?.requiresWorkLink,

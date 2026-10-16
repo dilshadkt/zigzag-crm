@@ -1,5 +1,7 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { isScheduleValid } from "../components/shared/RecurrenceFields/recurrence";
+
 export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) => {
   const initialValues = {
     name: defaultValue?.name || "",
@@ -15,6 +17,7 @@ export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) =>
     workDetails: defaultValue?.workDetails || {},
     socialMedia: defaultValue?.socialMedia || {},
     dailyChecklist: defaultValue?.dailyChecklist || [],
+    recurringWork: defaultValue?.recurringWork || [],
     customFields: defaultValue?.customFields || {},
   };
 
@@ -80,6 +83,16 @@ export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) =>
       .required("Description is required")
       .min(10, "Description must be at least 10 characters")
       .max(1000, "Description must not exceed 1000 characters"),
+    recurringWork: Yup.array().of(
+      Yup.object().shape({
+        title: Yup.string().trim().required("Title is required"),
+        schedule: Yup.object().test(
+          "valid-schedule",
+          "Pick at least one weekday",
+          (value) => isScheduleValid(value)
+        ),
+      })
+    ),
     customFields: Yup.object().shape(customFieldsSchema),
   });
 

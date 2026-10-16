@@ -59,6 +59,7 @@ const EditProject = () => {
       other: [],
     },
     dailyChecklist: currentProject?.dailyChecklist || [],
+    recurringWork: currentProject?.recurringWork || [],
     customFields: currentProject?.customFields || {},
   }), [currentProject?.updatedAt, currentProject?._id]);
 

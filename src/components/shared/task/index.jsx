@@ -5,6 +5,7 @@ import { IoArrowUpOutline } from "react-icons/io5";
 import { FiMoreVertical, FiSend } from "react-icons/fi";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { useUpdateTaskOrder } from "../../../api/hooks";
+import RecurringBadge, { isRecurringItem } from "../RecurringBadge";
 import { formatDate } from "../../../lib/dateUtils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -298,6 +299,7 @@ const Task = memo(({
                 Extra
               </span>
             )}
+            {isRecurringItem(task) && <RecurringBadge />}
           </div>
           <p className="mt-0.5 truncate text-xs text-gray-500">
             {task?.project?.name || task?.project?.displayName || "Extra task"}
@@ -454,6 +456,11 @@ const Task = memo(({
               >
                 {task?.title}
               </h4>
+              {isRecurringItem(task) && (
+                <div>
+                  <RecurringBadge />
+                </div>
+              )}
               {task?.itemType === "subtask" ? (
                 <div className="flex flex-col gap-1.5 mt-1">
                   <div className="flex items-center gap-2">

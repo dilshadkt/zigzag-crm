@@ -57,13 +57,13 @@ const SortableStatsCard = ({ stat, onClick }) => {
       style={style}
       {...attributes}
       onClick={onClick}
-      className={`rounded-2xl p-3 md:p-4 flex flex-col items-start text-left cursor-pointer
+      className={`rounded-2xl p-3 md:p-4 xl:p-3 flex flex-col items-start text-left cursor-pointer
         bg-gray-50 border border-gray-100 hover:border-gray-300 hover:bg-white group relative
         transition-colors duration-200 min-w-0 ${isDragging ? "shadow-lg scale-105 z-10" : ""}`}
     >
       <div className="w-full flex items-start justify-between">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.bgColor} ${stat.textColor}`}>
-          <Icon className="w-[18px] h-[18px]" />
+        <div className={`w-10 h-10 xl:w-8 xl:h-8 rounded-xl flex items-center justify-center ${stat.bgColor} ${stat.textColor}`}>
+          <Icon className="w-[18px] h-[18px] xl:w-4 xl:h-4" />
         </div>
         {/* Drag handle */}
         <div
@@ -74,13 +74,13 @@ const SortableStatsCard = ({ stat, onClick }) => {
           ⋮
         </div>
       </div>
-      <div className="text-2xl md:text-[28px] font-bold text-[#0A1629] mt-4 leading-none">
+      <div className="text-2xl md:text-[28px] xl:text-2xl font-bold text-[#0A1629] mt-4 xl:mt-3 leading-none">
         {stat.value}
       </div>
-      <p className="text-xs md:text-sm font-semibold text-gray-800 mt-2 leading-tight line-clamp-1 w-full">
+      <p className="text-xs md:text-sm xl:text-xs font-semibold text-gray-800 mt-2 xl:mt-1.5 leading-tight line-clamp-1 w-full">
         {stat.title}
       </p>
-      <p className="text-[11px] md:text-xs text-gray-500 mt-0.5 leading-tight line-clamp-1 w-full">
+      <p className="text-[11px] md:text-xs xl:text-[11px] text-gray-500 mt-0.5 leading-tight line-clamp-1 w-full">
         {stat.subtitle}
       </p>
     </div>
@@ -444,9 +444,9 @@ const EmployeeProgressStats = ({ taskMonth }) => {
     return (
       <div className="px-3 md:px-4 w-full bg-white h-full pb-3 pt-4 md:pt-5 flex flex-col rounded-2xl md:rounded-3xl">
         <div className="animate-pulse">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <div key={i} className="h-[136px] bg-gray-50 border border-gray-100 rounded-2xl"></div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2 md:gap-3">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-[136px] xl:h-[112px] bg-gray-50 border border-gray-100 rounded-2xl"></div>
             ))}
           </div>
         </div>
@@ -463,7 +463,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={cardOrder || []} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2 md:gap-3 flex-1">
             {orderedStats.map((stat) => (
               <SortableStatsCard
                 key={stat.id}

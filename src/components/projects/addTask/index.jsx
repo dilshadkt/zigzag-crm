@@ -285,11 +285,6 @@ const AddTask = ({
         : [],
       copyOfDescription: initialValues.copyOfDescription || "",
       description: initialValues.description || "",
-      isRecurring: initialValues.isRecurring || false,
-      recurringPattern: initialValues.recurringPattern || "none",
-      recurringInterval: initialValues.recurringInterval || 1,
-      recurringEndDate: initialValues.recurringEndDate || "",
-      maxRecurrences: initialValues.maxRecurrences || "",
       dueDateChangeReason: initialValues.dueDateChangeReason || "",
       requiresClientApproval: initialValues.requiresClientApproval || false,
       sequentialSubtasks:
@@ -1100,13 +1095,6 @@ const AddTask = ({
     { label: "Other", value: "other" },
   ];
 
-  const recurringOptions = [
-    { label: "Don't repeat", value: "none" },
-    { label: "Daily", value: "daily" },
-    { label: "Weekly", value: "weekly" },
-    { label: "Monthly", value: "monthly" },
-  ];
-
   // Handle due date change - check if we need to ask for reason
   const handleDueDateChange = (e) => {
     const newDate = e.target.value;
@@ -1671,86 +1659,6 @@ const AddTask = ({
                   disable={!isFormEnabled && !isOtherProjectSelected}
                 />
 
-              <div className="border-t border-gray-100 pt-4">
-                <h5 className="text-sm font-medium text-gray-700 mb-3">
-                  Recurring (optional)
-                </h5>
-                <Select
-                  errors={errors}
-                  name={"recurringPattern"}
-                  touched={touched}
-                  value={values.recurringPattern || "none"}
-                  onChange={handleChange}
-                  title="Repeat"
-                  options={recurringOptions}
-                  disabled={!isFormEnabled && !isOtherProjectSelected}
-                />
-                {values.recurringPattern &&
-                  values.recurringPattern !== "none" && (
-                    <div className="space-y-4 mt-4">
-                      <Input
-                        placeholder="1"
-                        title={`Every ${values.recurringPattern === "daily"
-                          ? "X days"
-                          : values.recurringPattern === "weekly"
-                            ? "X weeks"
-                            : "X months"
-                          }`}
-                        errors={errors}
-                        name={"recurringInterval"}
-                        onchange={handleChange}
-                        touched={touched}
-                        value={values?.recurringInterval || ""}
-                        disabled={!isFormEnabled && !isOtherProjectSelected}
-                        type="number"
-                        min="1"
-                      />
-                      <div className="grid gap-x-4 grid-cols-2">
-                        <DatePicker
-                          title="End Date (Optional)"
-                          errors={errors}
-                          value={values.recurringEndDate}
-                          onChange={handleChange}
-                          touched={touched}
-                          name={"recurringEndDate"}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
-                        />
-                        <Input
-                          placeholder="10"
-                          title="Max Recurrences (Optional)"
-                          errors={errors}
-                          name={"maxRecurrences"}
-                          onchange={handleChange}
-                          touched={touched}
-                          value={values?.maxRecurrences || ""}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
-                          type="number"
-                          min="1"
-                        />
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                          <strong>Recurring schedule:</strong>
-                          {" "}This task will repeat every{" "}
-                          {values.recurringInterval || 1}{" "}
-                          {values.recurringPattern === "daily" &&
-                            (values.recurringInterval > 1 ? "days" : "day")}
-                          {values.recurringPattern === "weekly" &&
-                            (values.recurringInterval > 1 ? "weeks" : "week")}
-                          {values.recurringPattern === "monthly" &&
-                            (values.recurringInterval > 1
-                              ? "months"
-                              : "month")}
-                          {values.recurringEndDate &&
-                            ` until ${values.recurringEndDate}`}
-                          {values.maxRecurrences &&
-                            ` for a maximum of ${values.maxRecurrences} times`}
-                          .
-                        </p>
-                      </div>
-                    </div>
-                  )}
-              </div>
             </div>
 
             <div className="min-h-0 space-y-5 overflow-y-auto bg-[#F7F9FC] px-5 py-5 md:px-6">

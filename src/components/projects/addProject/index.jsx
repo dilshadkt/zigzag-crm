@@ -14,6 +14,7 @@ import SocialMediaForm from "../socialMediaForm";
 import ThumbImage from "../thumbImage";
 import MonthlyWorkDetailsForm from "../monthlyWorkDetailsForm";
 import DailyChecklistForm from "../dailyChecklistForm";
+import RecurringWorkForm from "../recurringWorkForm";
 import { useGetProjectFields } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -21,6 +22,7 @@ const TAB_HINTS = {
   basic: "Name, dates, and team on the left. Image and files on the right.",
   customFields: "Fill extra fields configured for your company.",
   workDetails: "Set this month’s work quota for the project.",
+  recurringWork: "Work that repeats on a schedule, created as tasks automatically.",
   socialMedia: "Choose which platforms this project manages.",
   reporter: "People who receive client-facing updates.",
   checklist: "Daily tasks the team should complete.",
@@ -66,6 +68,7 @@ const AddProject = ({
       ? [{ id: "customFields", label: "Additional Info" }]
       : []),
     { id: "workDetails", label: "Work Details" },
+    { id: "recurringWork", label: "Recurring Work" },
     { id: "socialMedia", label: "Social Media" },
     { id: "reporter", label: "Reporter" },
     { id: "checklist", label: "Daily Checklist" },
@@ -86,6 +89,10 @@ const AddProject = ({
         return Object.keys(sourceErrors?.customFields || {}).length;
       case "workDetails":
         return Object.keys(sourceErrors?.workDetails || {}).length > 0 ? 1 : 0;
+      case "recurringWork":
+        return Array.isArray(sourceErrors?.recurringWork)
+          ? sourceErrors.recurringWork.filter(Boolean).length
+          : 0;
       case "socialMedia":
         return Object.keys(sourceErrors?.socialMedia || {}).length > 0 ? 1 : 0;
       case "reporter":
@@ -331,6 +338,23 @@ const AddProject = ({
             </div>
           )}
 
+          {activeTab === "recurringWork" && (
+            <div className="h-full min-h-0 overflow-y-auto px-5 py-5 md:px-6">
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-gray-800">Recurring work</h5>
+                <p className="text-xs text-gray-500">
+                  Repeating jobs for this client. Optional.
+                </p>
+              </div>
+              <RecurringWorkForm
+                values={values}
+                setFieldValue={setFieldValue}
+                errors={errors}
+                touched={touched}
+              />
+            </div>
+          )}
+
           {activeTab === "socialMedia" && (
             <div className="h-full min-h-0 overflow-y-auto px-5 py-5 md:px-6">
               <div className="mb-4">
@@ -516,7 +540,8 @@ const AddProject = ({
               <div className="mb-4">
                 <h5 className="text-sm font-semibold text-gray-800">Daily checklist</h5>
                 <p className="text-xs text-gray-500">
-                  Recurring daily items for this project. Optional.
+                  Quick yes/no items for the team: every day, on certain weekdays, or monthly.
+                  Optional. For work that needs a due date and review, use Recurring Work.
                 </p>
               </div>
               <DailyChecklistForm

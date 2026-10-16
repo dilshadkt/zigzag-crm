@@ -25,12 +25,6 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
       : [],
     copyOfDescription: defaultValue?.copyOfDescription || "",
     description: defaultValue?.description || "",
-    // Recurring task fields
-    isRecurring: defaultValue?.isRecurring || false,
-    recurringPattern: defaultValue?.recurringPattern || "none",
-    recurringInterval: defaultValue?.recurringInterval || 1,
-    recurringEndDate: defaultValue?.recurringEndDate || "",
-    maxRecurrences: defaultValue?.maxRecurrences || "",
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
     sequentialSubtasks: defaultValue?.sequentialSubtasks || false,
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
@@ -78,15 +72,6 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     requiresCampaignReport: Yup.boolean(),
     copyOfDescription: Yup.string(),
     description: Yup.string(),
-    // Recurring validations
-    recurringPattern: Yup.string().oneOf([
-      "none",
-      "daily",
-      "weekly",
-      "monthly",
-    ]),
-    recurringInterval: Yup.number().min(1, "Interval must be at least 1"),
-    maxRecurrences: Yup.number().min(1, "Must be at least 1 recurrence"),
     customFields: Yup.array().of(
       Yup.object().shape({
         label: Yup.string().required("Label is required"),

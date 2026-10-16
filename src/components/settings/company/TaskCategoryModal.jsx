@@ -172,8 +172,8 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                   />
                 </div>
               </div>
-              {/* Department & Maps to Quota */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Department */}
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <label className="text-[13px] font-bold text-gray-700 block">
                     Department
@@ -195,23 +195,8 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                     ))}
                   </Field>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[13px] font-bold text-gray-700 block">
-                    Maps to Core Quota (Optional)
-                  </label>
-                  <Field
-                    as="select"
-                    name="mapsToQuota"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-xl text-[13px] text-gray-800 transition-all font-medium outline-none"
-                  >
-                    <option value="">Does not consume core quota</option>
-                    <option value="reels">Reels</option>
-                    <option value="poster">Posters</option>
-                    <option value="motionPoster">Motion Posters</option>
-                    <option value="shooting">Shooting</option>
-                    <option value="motionGraphics">Motion Graphics</option>
-                  </Field>
-                </div>
+                {/* "Maps to Core Quota" is hidden for now. The value stays in the form
+                    state, so a category that already has a mapping keeps it when edited. */}
               </div>
 
               {/* Active Status */}

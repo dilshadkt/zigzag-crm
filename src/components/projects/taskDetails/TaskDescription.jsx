@@ -76,6 +76,16 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
         </div>
       )}
 
+      {/* Created by a project's recurring work schedule */}
+      {taskDetails.recurrenceRule && (
+        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <span className="text-sm font-medium text-blue-800">
+            Created automatically from this project&apos;s recurring work
+            {taskDetails.recurrenceDate ? ` (scheduled ${taskDetails.recurrenceDate})` : ""}
+          </span>
+        </div>
+      )}
+
       {/* Content from Subtask (Priority) */}
       {hasContentSubTaskData ? (
         <div className="mt-4 space-y-5">

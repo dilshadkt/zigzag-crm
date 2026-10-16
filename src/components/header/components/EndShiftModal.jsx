@@ -3,6 +3,8 @@ import { IoTimeOutline, IoAlertCircleOutline } from "react-icons/io5";
 import { MdChevronRight } from "react-icons/md";
 import PendingTasksReasonModal from "./PendingTasksReasonModal";
 import { useAttendanceManager } from "../../../api/hooks";
+import { useAuth } from "../../../hooks/useAuth";
+import { useMyDailyChecklist } from "../../dashboard/employeeWorkDetails/useMyDailyChecklist";
 
 const EndShiftModal = ({
   isOpen,
@@ -16,6 +18,12 @@ const EndShiftModal = ({
   const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
   const [attendanceError, setAttendanceError] = useState(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
+
+  // Unfinished checklist items don't block clocking out (there is no "reason" for
+  // them), but they are listed here so nobody leaves with them undone.
+  const { user } = useAuth();
+  const checklist = useMyDailyChecklist(user?._id ? String(user._id) : null);
+  const openChecklistItems = checklist.items.filter((item) => !item.completed);
 
   const {
     isEndShiftBlocked,
@@ -193,6 +201,44 @@ const EndShiftModal = ({
               </span>
             </div>
           </div>
+
+          {openChecklistItems.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                  <IoAlertCircleOutline className="h-4 w-4" />
+                  Daily checklist not finished
+                </p>
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                  {checklist.done} / {checklist.total}
+                </span>
+              </div>
+              <div className="custom-scrollbar flex max-h-36 flex-col gap-0.5 overflow-y-auto pr-1">
+                {openChecklistItems.map((item) => (
+                  <label
+                    key={`${item.projectId}-${item.title}`}
+                    className="flex cursor-pointer items-start gap-2 rounded-lg px-1.5 py-1 text-xs text-gray-700 transition-colors hover:bg-white/70"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => checklist.toggleItem(item)}
+                      className="mt-0.5 h-3.5 w-3.5 cursor-pointer rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate">{item.title}</span>
+                      <span className="block truncate text-[10px] text-gray-400">
+                        {item.projectName}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-snug text-amber-700">
+                Tick these off before you leave. Unfinished items can cost you points at the end of the day.
+              </p>
+            </div>
+          )}
 
           {(attendanceError || clockOutError) && (
             <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-center text-sm text-red-600">

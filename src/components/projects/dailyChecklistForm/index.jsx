@@ -2,19 +2,37 @@ import React, { useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { MdEdit, MdCheck, MdClose, MdDelete } from "react-icons/md";
 import { useGetAllEmployees } from "../../../api/hooks";
+import RecurrenceFields from "../../shared/RecurrenceFields";
+import {
+    describeSchedule,
+    isScheduleValid,
+    normalizeSchedule,
+} from "../../shared/RecurrenceFields/recurrence";
+
+const EVERY_DAY = { frequency: "daily", weekdays: [] };
+
+// Items saved before frequencies existed have no frequency and show every day.
+const scheduleOf = (task) => ({
+    frequency: task.frequency || "daily",
+    weekdays: task.weekdays || [],
+    monthDays: task.monthDays,
+    monthDay: task.monthDay,
+});
 
 const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
     const { data: employeesData } = useGetAllEmployees();
     const [newTaskTitle, setNewTaskTitle] = useState("");
     const [newTaskAssignedTo, setNewTaskAssignedTo] = useState("");
+    const [newTaskSchedule, setNewTaskSchedule] = useState(EVERY_DAY);
     const [editingIndex, setEditingIndex] = useState(null);
     const [editingTitle, setEditingTitle] = useState("");
     const [editingAssignedTo, setEditingAssignedTo] = useState("");
+    const [editingSchedule, setEditingSchedule] = useState(EVERY_DAY);
 
     const employees = employeesData?.employees || [];
 
     const handleAddStart = () => {
-        if (!newTaskTitle.trim()) return;
+        if (!newTaskTitle.trim() || !isScheduleValid(newTaskSchedule)) return;
 
         const currentList = values.dailyChecklist || [];
         const newList = [
@@ -23,12 +41,14 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                 title: newTaskTitle,
                 active: true,
                 assignedTo: newTaskAssignedTo || undefined,
+                ...normalizeSchedule(newTaskSchedule),
             },
         ];
 
         setFieldValue("dailyChecklist", newList);
         setNewTaskTitle("");
         setNewTaskAssignedTo("");
+        setNewTaskSchedule(EVERY_DAY);
     };
 
     const handleRemoveTask = (index) => {
@@ -43,17 +63,19 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
         setFieldValue("dailyChecklist", currentList);
     };
 
-    const handleEditStart = (index, title, assignedToId) => {
+    const handleEditStart = (index, task) => {
         setEditingIndex(index);
-        setEditingTitle(title);
-        setEditingAssignedTo(assignedToId || "");
+        setEditingTitle(task.title);
+        setEditingAssignedTo(task.assignedTo?._id || task.assignedTo || "");
+        setEditingSchedule(scheduleOf(task));
     };
 
     const handleEditSave = () => {
-        if (!editingTitle.trim()) return;
+        if (!editingTitle.trim() || !isScheduleValid(editingSchedule)) return;
         const currentList = [...(values.dailyChecklist || [])];
         currentList[editingIndex].title = editingTitle;
         currentList[editingIndex].assignedTo = editingAssignedTo || undefined;
+        Object.assign(currentList[editingIndex], normalizeSchedule(editingSchedule));
         setFieldValue("dailyChecklist", currentList);
         setEditingIndex(null);
         setEditingTitle("");
@@ -82,7 +104,7 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddStart())}
-                    placeholder="Add a daily recurring task..."
+                    placeholder="Add a checklist item (e.g. Check DMs, Weekly report)..."
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <select
@@ -104,6 +126,11 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                 />
             </div>
 
+            <div className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-[#F8FAFC] p-3">
+                <span className="text-xs font-medium text-gray-600">How often does this show up?</span>
+                <RecurrenceFields value={newTaskSchedule} onChange={setNewTaskSchedule} />
+            </div>
+
             <div className="flex flex-wrap gap-2">
                 <span className="text-xs text-gray-500 pt-1">Suggestions:</span>
                 {commonTasks.map((task, i) => (
@@ -121,7 +148,7 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
             <div className="flex-1 overflow-y-auto pr-2">
                 {!values.dailyChecklist || values.dailyChecklist.length === 0 ? (
                     <div className="h-40 flexCenter flex-col text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-                        <p>No recurring tasks defined yet.</p>
+                        <p>No checklist items defined yet.</p>
                         <p className="text-sm">Add tasks above to get started.</p>
                     </div>
                 ) : (
@@ -138,39 +165,47 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                                         title={task.active ? "Active" : "Inactive"}
                                     />
                                     {editingIndex === index ? (
-                                        <div className="flex flex-1 flex-col sm:flex-row gap-2">
-                                            <input
-                                                type="text"
-                                                value={editingTitle}
-                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        e.preventDefault();
-                                                        handleEditSave();
-                                                    } else if (e.key === "Escape") {
-                                                        handleEditCancel();
-                                                    }
-                                                }}
-                                                autoFocus
-                                                className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            />
-                                            <select
-                                                value={editingAssignedTo}
-                                                onChange={(e) => setEditingAssignedTo(e.target.value)}
-                                                className="sm:w-40 bg-white px-2 py-1 border border-gray-300 text-gray-700 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
-                                            >
-                                                <option value="">Unassigned</option>
-                                                {employees.map((emp) => (
-                                                    <option key={emp._id} value={emp._id}>
-                                                        {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                        <div className="flex flex-1 flex-col gap-3">
+                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={editingTitle}
+                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault();
+                                                            handleEditSave();
+                                                        } else if (e.key === "Escape") {
+                                                            handleEditCancel();
+                                                        }
+                                                    }}
+                                                    autoFocus
+                                                    className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                />
+                                                <select
+                                                    value={editingAssignedTo}
+                                                    onChange={(e) => setEditingAssignedTo(e.target.value)}
+                                                    className="sm:w-40 bg-white px-2 py-1 border border-gray-300 text-gray-700 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                                                >
+                                                    <option value="">Unassigned</option>
+                                                    {employees.map((emp) => (
+                                                        <option key={emp._id} value={emp._id}>
+                                                            {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <RecurrenceFields value={editingSchedule} onChange={setEditingSchedule} />
                                         </div>
                                     ) : (
-                                        <div className="flex flex-1 items-center justify-between min-w-0">
+                                        <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
                                             <span className={`font-medium text-sm ${!task.active && "text-gray-500 line-through"}`}>
                                                 {task.title}
+                                                {task.frequency && task.frequency !== "daily" && (
+                                                    <span className="ml-2 rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600 no-underline">
+                                                        {describeSchedule(scheduleOf(task))}
+                                                    </span>
+                                                )}
                                             </span>
                                             {task.assignedTo && (
                                                 <span className="text-[11px] text-gray-500 bg-gray-100/80 px-2.5 py-1 rounded-full border border-gray-200/80 flex items-center gap-1 font-medium select-none">
@@ -212,7 +247,7 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                                         <>
                                             <button
                                                 type="button"
-                                                onClick={() => handleEditStart(index, task.title, task.assignedTo?._id || task.assignedTo)}
+                                                onClick={() => handleEditStart(index, task)}
                                                 className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="Edit Task"
                                             >

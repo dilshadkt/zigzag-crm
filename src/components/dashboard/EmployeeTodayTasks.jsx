@@ -3,6 +3,7 @@ import { useTodayTasks } from "../../api/hooks/dashboard";
 import { useGetAllEmployees } from "../../api/hooks";
 import { FaTasks, FaCheckCircle, FaUserCircle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import RecurringBadge, { isRecurringItem } from "../shared/RecurringBadge";
 
 const EmployeeTodayTasks = () => {
     const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
@@ -174,6 +175,7 @@ const TaskItem = ({ item, status }) => {
                         <span className="text-[10px] text-gray-400 truncate max-w-[150px]">
                             {project?.name || "No Project"}
                         </span>
+                        {isRecurringItem(item) && <RecurringBadge />}
                     </div>
                     <h5 className="font-medium text-gray-800 text-sm truncate group-hover:text-blue-600 transition-colors">
                         {item.title}
