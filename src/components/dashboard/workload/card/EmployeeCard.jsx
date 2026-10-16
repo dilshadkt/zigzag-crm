@@ -22,6 +22,11 @@ const EmployeeCard = ({ employee, index, positions }) => {
       ? employee.today_task_count
       : employee?.todayTaskCount || 0;
 
+  // The daily checklist counts as one task for display, but overload (and the
+  // reschedule drawer behind it) only measures work that can be moved.
+  const checklistToday = employee?.today_checklist_count || 0;
+  const displayedTodayTasks = todayTasks + checklistToday;
+
   const positionObj = positions?.find(p => p.name === employee.position);
   const dailyLimit = positionObj?.dailyTaskLimit || 10;
   const isOverloaded = todayTasks > dailyLimit;
@@ -110,7 +115,7 @@ const EmployeeCard = ({ employee, index, positions }) => {
           </div>
           <div className="mt-2 flex items-center justify-center text-xs font-semibold bg-white/60 px-2 py-1 rounded-md w-full">
             <span className={`${todayTasks > dailyLimit ? 'text-red-600' : todayTasks > (dailyLimit / 2) ? 'text-orange-600' : 'text-blue-600'}`}>
-              {todayTasks} {todayTasks === 1 ? 'Task' : 'Tasks'} Today
+              {displayedTodayTasks} {displayedTodayTasks === 1 ? 'Task' : 'Tasks'} Today
             </span>
           </div>
         </div>

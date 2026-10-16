@@ -129,6 +129,11 @@ const PendingTasksReasonModal = ({
                       <p className="mt-1 truncate text-xs text-slate-500">
                         {getParentTitle(task)}
                       </p>
+                      {task.isOverdue && (
+                        <p className="mt-1 text-[11px] font-medium text-red-600">
+                          Overdue · was due {formatDate(task.dueDate)}
+                        </p>
+                      )}
                     </button>
                   );
                 })}

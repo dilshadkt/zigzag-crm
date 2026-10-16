@@ -2611,12 +2611,18 @@ export const useAttendanceManager = () => {
 
   const isOnBreak = currentStatus?.attendance?.status === "break";
 
-  // Calculate if end shift is blocked by pending tasks without reasons
-  const pendingTasksWithoutReason = (todaySubTasks?.subTasks || []).filter(
-    (task) =>
-      !task.hasPendingReasonToday &&
-      !["on-review", "approved", "completed", "client-approved"].includes(task.status)
-  );
+  // Calculate if end shift is blocked by pending tasks without reasons.
+  // That is anything due today plus anything already overdue; the API's overdue
+  // list leaves out items that got a reason today (they move into subTasks).
+  // In-progress work that is due later never blocks.
+  const pendingTasksWithoutReason = [
+    ...(todaySubTasks?.subTasks || []).filter(
+      (task) =>
+        !task.hasPendingReasonToday &&
+        !["on-review", "approved", "completed", "client-approved"].includes(task.status)
+    ),
+    ...(todaySubTasks?.overdue || []),
+  ];
 
   const isEndShiftBlocked = pendingTasksWithoutReason.length > 0;
   const pendingTasksWithoutReasonCount = pendingTasksWithoutReason.length;

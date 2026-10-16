@@ -30,6 +30,7 @@ const EndShiftModal = ({
     pendingTasksWithoutReasonCount,
     pendingTasksWithoutReason,
   } = useAttendanceManager();
+  const overduePendingCount = pendingTasksWithoutReason.filter((task) => task.isOverdue).length;
 
   useEffect(() => {
     if (!isOpen) {
@@ -143,7 +144,7 @@ const EndShiftModal = ({
               {isEndShiftBlocked
                 ? `${pendingTasksWithoutReasonCount} pending task${
                     pendingTasksWithoutReasonCount === 1 ? "" : "s"
-                  } need a reason`
+                  } need a reason${overduePendingCount > 0 ? ` (${overduePendingCount} overdue)` : ""}`
                 : "Swipe to clock out"}
             </p>
             {isEndShiftBlocked && (

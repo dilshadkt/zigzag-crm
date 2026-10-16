@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetUserStatsChecking } from "../../../api/hooks/dashboard";
 import { useAuth } from "../../../hooks/useAuth";
+import { useMyDailyChecklist } from "../employeeWorkDetails/useMyDailyChecklist";
 import {
   FiAlertCircle,
   FiLayers,
@@ -135,6 +136,11 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const todayTasks = statistics.today || 0;
   const todaySubTasks = statistics.todaySubTasks || 0;
   const todayMainTasks = statistics.todayMainTasks || 0;
+  // The daily checklist counts as one task until every item is ticked. It comes
+  // from the live checklist query (not the cached stats), so it updates on tick.
+  const checklist = useMyDailyChecklist(user?._id ? String(user._id) : null);
+  const openChecklistCount = checklist.total > 0 && !checklist.allDone ? 1 : 0;
+  const todayCardCount = todaySubTasks + openChecklistCount;
   const upcoming3DaysTasks = statistics.upcoming3Days || 0;
   const unscheduledTasks = statistics.unscheduled || 0;
   const assignedProjects = statistics.assignedProjects || 0;
@@ -337,8 +343,8 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       {
         id: "todays-tasks",
         title: "Today's Tasks",
-        value: todaySubTasks,
-        subtitle: "Due today",
+        value: todayCardCount,
+        subtitle: openChecklistCount ? "Due today + checklist" : "Due today",
         icon: FiCheckSquare,
         color: "bg-indigo-500",
         borderColor: "hover:border-indigo-500",
@@ -370,7 +376,8 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       statistics.totalReworked,
       overdueTasks,
       todayTasks,
-      todaySubTasks,
+      todayCardCount,
+      openChecklistCount,
       todayMainTasks,
       upcoming3DaysTasks,
       handleStatsClick,

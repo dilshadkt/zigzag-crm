@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { FiCalendar, FiCheck, FiFolder } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
@@ -35,7 +35,26 @@ const getStatusColor = (status) => {
   }
 };
 
+// Overdue and in-progress groups show this many items until expanded, so a long
+// backlog can't push today's work off the panel.
+const COLLAPSED_LIMIT = 3;
+
 const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+// "Day 2 of 5" for multi-day work that has started; null when the dates don't say.
+const getDayProgress = (item) => {
+  if (!item.startDate || !item.dueDate) return null;
+  const start = startOfDay(new Date(item.startDate));
+  const due = startOfDay(new Date(item.dueDate));
+  const total = Math.round((due - start) / 86400000) + 1;
+  const current = Math.round((startOfDay(new Date()) - start) / 86400000) + 1;
+  if (total < 2 || current < 1) return null;
+  return {
+    current: Math.min(current, total),
+    total,
+    left: Math.max(0, Math.round((due - startOfDay(new Date())) / 86400000)),
+  };
+};
 
 // Label + tone for the due date chip; unfinished work past its date shows as overdue
 const getDueMeta = (dateString, isFinished) => {
@@ -64,6 +83,16 @@ const PanelHeader = ({ title, count, tone, action }) => (
     </div>
     {action}
   </div>
+);
+
+const ShowMoreToggle = ({ expanded, hiddenCount, onToggle }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className="self-start rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-[#3F8CFF] transition-colors hover:bg-white"
+  >
+    {expanded ? "Show less" : `Show ${hiddenCount} more`}
+  </button>
 );
 
 const EmptyState = ({ icon, text }) => (
@@ -121,13 +150,29 @@ const EmployeeWorkDetails = () => {
     [sortedSubTasks]
   );
 
+  // Overdue work (reason needed before ending the shift) and multi-day work that
+  // is under way but not due yet. Both come from the API beside "today".
+  const overdueSubTasks = useMemo(() => todaySubTasks?.overdue || [], [todaySubTasks]);
+  const inProgressSubTasks = useMemo(() => todaySubTasks?.inProgress || [], [todaySubTasks]);
+  const inProgressTotal = todaySubTasks?.inProgressTotal ?? inProgressSubTasks.length;
+  const [showAllOverdue, setShowAllOverdue] = useState(false);
+  const [showAllInProgress, setShowAllInProgress] = useState(false);
+
+  const visibleOverdue = showAllOverdue ? overdueSubTasks : overdueSubTasks.slice(0, COLLAPSED_LIMIT);
+  const visibleInProgress = showAllInProgress
+    ? inProgressSubTasks
+    : inProgressSubTasks.slice(0, COLLAPSED_LIMIT);
+
   const completedItems = [
     ...(todaySubTasks?.completedTasks || []),
     ...(todaySubTasks?.completedSubTasks || []),
   ].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
+  // In-progress work is shown but not counted: only what has to be dealt with today is.
   const assignedCount =
-    sortedSubTasks.length + (showChecklistAssigned ? 1 : 0);
+    sortedSubTasks.length + overdueSubTasks.length + (showChecklistAssigned ? 1 : 0);
+  const hasDueWork =
+    assignedCount > 0;
   const completedCount = completedItems.length + (showChecklistCompleted ? 1 : 0);
 
   const handleSubTaskClick = (item) => {
@@ -150,12 +195,13 @@ const EmployeeWorkDetails = () => {
     }
   };
 
-  const TaskCard = ({ item, completed = false }) => {
+  const TaskCard = ({ item, completed = false, inProgress = false }) => {
     const isFinished = FINISHED_STATUSES.includes(item.status?.toLowerCase());
     const showPendingBadge = item.hasPendingReasonToday && !isFinished;
     const priority = getPriorityStyle(item.priority);
     const due = getDueMeta(item.dueDate, isFinished || completed);
     const projectName = item.project?.displayName || item.project?.name;
+    const dayProgress = inProgress ? getDayProgress(item) : null;
 
     return (
       <div
@@ -187,6 +233,11 @@ const EmployeeWorkDetails = () => {
                   Reason Provided
                 </span>
               )}
+              {item.isOverdue && (
+                <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
+                  Reason needed
+                </span>
+              )}
             </div>
 
             {item.description && (
@@ -211,6 +262,14 @@ const EmployeeWorkDetails = () => {
                   {due.label}
                 </span>
               )}
+              {dayProgress && (
+                <span className="font-medium text-gray-500">
+                  Day {dayProgress.current} of {dayProgress.total} ·{" "}
+                  <span className={dayProgress.left <= 1 ? "text-amber-600" : ""}>
+                    {dayProgress.left} day{dayProgress.left === 1 ? "" : "s"} left
+                  </span>
+                </span>
+              )}
               {projectName && (
                 <span className="inline-flex min-w-0 items-center gap-1 font-medium text-[#3F8CFF]">
                   <FiFolder className="h-3 w-3 shrink-0" />
@@ -218,6 +277,15 @@ const EmployeeWorkDetails = () => {
                 </span>
               )}
             </div>
+
+            {dayProgress && (
+              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className={`h-full rounded-full ${dayProgress.left <= 1 ? "bg-amber-400" : "bg-[#3F8CFF]/60"}`}
+                  style={{ width: `${(dayProgress.current / dayProgress.total) * 100}%` }}
+                />
+              </div>
+            )}
           </div>
 
           <span
@@ -263,7 +331,9 @@ const EmployeeWorkDetails = () => {
           count={isLoading ? "–" : assignedCount}
           tone="bg-blue-50 text-[#3F8CFF]"
           action={
-            todaySubTasks?.subTasks?.length > 0 && (
+            (sortedSubTasks.length > 0 ||
+              overdueSubTasks.length > 0 ||
+              inProgressSubTasks.length > 0) && (
               <Link
                 to={"/today-tasks"}
                 className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#3F8CFF] shadow-sm transition-colors hover:bg-[#E6EDF5]"
@@ -293,9 +363,12 @@ const EmployeeWorkDetails = () => {
               </div>
             )}
 
-            {activeSubTasks.length > 0 ? (
+            {activeSubTasks.length > 0 && (
               <div className="flex flex-col gap-2">
-                {(pendingWithReasonSubTasks.length > 0 || showChecklistAssigned) && (
+                {(pendingWithReasonSubTasks.length > 0 ||
+                  showChecklistAssigned ||
+                  overdueSubTasks.length > 0 ||
+                  inProgressSubTasks.length > 0) && (
                   <SectionLabel count={activeSubTasks.length} dot="bg-blue-500">
                     Active Tasks
                   </SectionLabel>
@@ -304,9 +377,59 @@ const EmployeeWorkDetails = () => {
                   <TaskCard key={`active-${subTask._id || index}`} item={subTask} />
                 ))}
               </div>
-            ) : pendingWithReasonSubTasks.length === 0 && !showChecklistAssigned ? (
+            )}
+
+            {/* Already late: each needs a reason before the shift can end */}
+            {overdueSubTasks.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <SectionLabel count={overdueSubTasks.length} dot="bg-red-500">
+                  Overdue · reason needed to end shift
+                </SectionLabel>
+                {visibleOverdue.map((subTask, index) => (
+                  <TaskCard key={`overdue-${subTask._id || index}`} item={subTask} />
+                ))}
+                {overdueSubTasks.length > COLLAPSED_LIMIT && (
+                  <ShowMoreToggle
+                    expanded={showAllOverdue}
+                    hiddenCount={overdueSubTasks.length - COLLAPSED_LIMIT}
+                    onToggle={() => setShowAllOverdue((open) => !open)}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Multi-day work that has started but isn't due yet. Never blocks the shift. */}
+            {inProgressSubTasks.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <SectionLabel count={inProgressTotal} dot="bg-sky-400">
+                  In Progress · due later
+                </SectionLabel>
+                {!hasDueWork && (
+                  <p className="px-1 text-[11px] text-gray-500">
+                    Nothing is due today. This is what you&apos;re in the middle of.
+                  </p>
+                )}
+                {visibleInProgress.map((subTask, index) => (
+                  <TaskCard key={`in-progress-${subTask._id || index}`} item={subTask} inProgress />
+                ))}
+                {inProgressSubTasks.length > COLLAPSED_LIMIT && (
+                  <ShowMoreToggle
+                    expanded={showAllInProgress}
+                    hiddenCount={inProgressSubTasks.length - COLLAPSED_LIMIT}
+                    onToggle={() => setShowAllInProgress((open) => !open)}
+                  />
+                )}
+                {showAllInProgress && inProgressTotal > inProgressSubTasks.length && (
+                  <p className="px-1 text-[11px] text-gray-400">
+                    +{inProgressTotal - inProgressSubTasks.length} more not shown
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!hasDueWork && inProgressSubTasks.length === 0 && (
               <EmptyState icon="✨" text="You're all caught up for today!" />
-            ) : null}
+            )}
           </div>
         )}
       </section>
