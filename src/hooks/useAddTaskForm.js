@@ -28,6 +28,8 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     requiresClientApproval: defaultValue?.requiresClientApproval || false,
     sequentialSubtasks: defaultValue?.sequentialSubtasks || false,
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
+    assetBankItem: "",
+    coveredTasks: [],
     campaign: defaultValue?.campaign?._id || defaultValue?.campaign || "",
     requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],

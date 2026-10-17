@@ -3620,3 +3620,63 @@ export const useRemoveTelegramSubscriber = () => {
     },
   });
 };
+
+// ── Client asset bank ───────────────────────────────────────────────────────
+export const useAssetBank = (projectId, params = { status: "available" }, options = {}) => {
+  return useQuery({
+    queryKey: ["assetBank", projectId, params],
+    queryFn: () => import("./service").then((m) => m.getAssetBank(projectId, params)),
+    enabled: !!projectId && options.enabled !== false,
+    staleTime: 30 * 1000,
+  });
+};
+
+const useAssetBankMutation = (projectId, mutationFn, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({ queryKey: ["assetBank", projectId] });
+      if (onSuccess) onSuccess(...args);
+    },
+  });
+};
+
+export const useAddAssetBankItems = (projectId, onSuccess) =>
+  useAssetBankMutation(
+    projectId,
+    (data) => import("./service").then((m) => m.addAssetBankItems(projectId, data)),
+    onSuccess
+  );
+
+export const useUpdateAssetBankItem = (projectId, onSuccess) =>
+  useAssetBankMutation(
+    projectId,
+    ({ itemId, data }) =>
+      import("./service").then((m) => m.updateAssetBankItem(projectId, itemId, data)),
+    onSuccess
+  );
+
+export const useRemoveAssetBankItem = (projectId, onSuccess) =>
+  useAssetBankMutation(
+    projectId,
+    (itemId) => import("./service").then((m) => m.removeAssetBankItem(projectId, itemId)),
+    onSuccess
+  );
+
+export const useReleaseAssetBankItem = (projectId, onSuccess) =>
+  useAssetBankMutation(
+    projectId,
+    (itemId) => import("./service").then((m) => m.releaseAssetBankItem(projectId, itemId)),
+    onSuccess
+  );
+
+// ── Shoot sessions ──────────────────────────────────────────────────────────
+export const useShootCandidates = (projectId, params = {}, options = {}) => {
+  return useQuery({
+    queryKey: ["shootCandidates", projectId, params],
+    queryFn: () => import("./service").then((m) => m.getShootCandidates(projectId, params)),
+    enabled: !!projectId && options.enabled !== false,
+    staleTime: 0,
+  });
+};

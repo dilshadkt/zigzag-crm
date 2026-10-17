@@ -6,6 +6,7 @@ import MultiSelect from "../../shared/Field/multiSelect";
 import DatePicker from "../../shared/Field/date";
 import Input from "../../shared/Field/input";
 import CategoryPicker from "../../shared/Field/categoryPicker";
+import CoveredTasksPicker from "./CoveredTasksPicker";
 import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
 import {
   useCreateTask,
@@ -15,6 +16,7 @@ import {
   useGetWorkSchedule,
   useGetHolidays,
   useGetTaskCategories,
+  useAssetBank,
 } from "../../../api/hooks";
 import FileAndLinkUpload from "../../shared/fileUpload";
 import { useAuth } from "../../../hooks/useAuth";
@@ -352,6 +354,28 @@ const AddTask = ({
     projectId: campaignProjectId || undefined,
   });
   const projectCampaigns = projectCampaignsData?.data || [];
+
+  // Banked footage the coordinator can build this reel from (new reel tasks only)
+  const bankProjectId = campaignProjectId || projectData?._id || null;
+  const isReelTask = values.taskGroup === "reels";
+  const { data: assetBankData } = useAssetBank(
+    bankProjectId,
+    { status: "available", workType: "reels" },
+    { enabled: !isEdit && isReelTask }
+  );
+  const bankedReelOptions = (assetBankData?.items || []).map((item, index) => ({
+    value: item._id,
+    label: [
+      item.topic || `Banked reel ${index + 1}`,
+      item.sourceMonth ? `shot ${item.sourceMonth}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+  useEffect(() => {
+    if (values.assetBankItem && !isReelTask) setFieldValue("assetBankItem", "");
+  }, [isReelTask, values.assetBankItem, setFieldValue]);
+
   const prevCampaignRef = useRef(initialValues?.campaign?._id || initialValues?.campaign || "");
   const prevTaskGroupRef = useRef(initialValues?.taskGroup || "");
 
@@ -884,6 +908,27 @@ const AddTask = ({
   const parentCategory = (Array.isArray(taskCategories) ? taskCategories : []).find(
     (category) => String(category._id) === String(values.taskCategory || "")
   );
+  // A category set to "cover other scheduled tasks" (e.g. a shoot) adds a task picker
+  const shootCategory =
+    [
+      parentCategory,
+      ...(values.subtasks || []).map((step) =>
+        (Array.isArray(taskCategories) ? taskCategories : []).find(
+          (category) => String(category._id) === String(getSelectedSubtaskCategoryId(step))
+        )
+      ),
+    ].find((category) => category?.coversWork) || null;
+  const shootProjectId =
+    selectedProjectId && selectedProjectId !== "other"
+      ? selectedProjectId
+      : projectData?._id || "";
+
+  useEffect(() => {
+    if (!shootCategory && values.coveredTasks?.length) {
+      setFieldValue("coveredTasks", []);
+    }
+  }, [shootCategory, values.coveredTasks, setFieldValue]);
+
   const selectedFlow = taskFlows.find((flow) => flow._id === values.taskFlow);
   const flowStepsMissingCategory = (selectedFlow?.flows || []).filter((step) => {
     const name = String(step?.taskName || "").toLowerCase();
@@ -1258,6 +1303,14 @@ const AddTask = ({
                       defaultValue="Select work type"
                       disabled={isLoadingProjectDetails}
                     />
+                    {!isEdit && shootCategory && shootProjectId && (
+                      <CoveredTasksPicker
+                        projectId={shootProjectId}
+                        workType={shootCategory.coversWorkType || "reels"}
+                        value={values.coveredTasks || []}
+                        onChange={(ids) => setFieldValue("coveredTasks", ids)}
+                      />
+                    )}
                     {isExtraTaskSelected && (
                       <div className="space-y-1.5">
                         <Select
@@ -1281,6 +1334,29 @@ const AddTask = ({
                         <p className="text-[11px] text-amber-600 px-0.5">
                           Counted as extra work for this month. Does not use the
                           project quota.
+                        </p>
+                      </div>
+                    )}
+                    {!isEdit && isReelTask && bankedReelOptions.length > 0 && (
+                      <div className="space-y-1.5">
+                        <Select
+                          errors={errors}
+                          touched={touched}
+                          name={"assetBankItem"}
+                          selectedValue={values?.assetBankItem || ""}
+                          value={values?.assetBankItem || ""}
+                          onChange={handleChange}
+                          title="Use banked footage (optional)"
+                          placeholder="Shoot not needed — pick banked footage"
+                          options={[
+                            { label: "No, new footage", value: "" },
+                            ...bankedReelOptions,
+                          ]}
+                        />
+                        <p className="text-[11px] text-gray-500 px-0.5">
+                          {bankedReelOptions.length} reel(s) banked from earlier
+                          shoots. The footage link is added to the task and this
+                          month's reel quota is used as normal.
                         </p>
                       </div>
                     )}

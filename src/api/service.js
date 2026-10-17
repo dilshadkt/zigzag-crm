@@ -219,6 +219,11 @@ export const createTask = async (taskData, projectId) => {
     customFields: taskData?.customFields,
     subtasks: taskData?.subtasks,
     taskCategory: taskData?.taskCategory || undefined,
+    assetBankItem: taskData?.assetBankItem || undefined,
+    coveredTasks:
+      Array.isArray(taskData?.coveredTasks) && taskData.coveredTasks.length
+        ? taskData.coveredTasks
+        : undefined,
   };
   if (taskData?.taskFlow) {
     data.taskFlow = taskData.taskFlow; // Only add if present
@@ -1460,5 +1465,37 @@ export const getDailyChecklistSummary = async (date) => {
   const response = await apiClient.get("/projects/daily-checklist/summary", {
     params: { date },
   });
+  return response.data;
+};
+
+// ── Client asset bank (banked footage / deliverables) ───────────────────────
+export const getAssetBank = async (projectId, params = {}) => {
+  const response = await apiClient.get(`/projects/${projectId}/asset-bank`, { params });
+  return response.data;
+};
+
+export const addAssetBankItems = async (projectId, data) => {
+  const response = await apiClient.post(`/projects/${projectId}/asset-bank`, data);
+  return response.data;
+};
+
+export const updateAssetBankItem = async (projectId, itemId, data) => {
+  const response = await apiClient.patch(`/projects/${projectId}/asset-bank/${itemId}`, data);
+  return response.data;
+};
+
+export const removeAssetBankItem = async (projectId, itemId) => {
+  const response = await apiClient.delete(`/projects/${projectId}/asset-bank/${itemId}`);
+  return response.data;
+};
+
+export const releaseAssetBankItem = async (projectId, itemId) => {
+  const response = await apiClient.post(`/projects/${projectId}/asset-bank/${itemId}/release`);
+  return response.data;
+};
+
+// ── Shoot sessions (a task that covers other scheduled tasks) ───────────────
+export const getShootCandidates = async (projectId, params = {}) => {
+  const response = await apiClient.get(`/projects/${projectId}/shoot-candidates`, { params });
   return response.data;
 };

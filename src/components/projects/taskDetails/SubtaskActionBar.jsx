@@ -4,6 +4,7 @@ import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
 import CampaignReportModal from "../../shared/campaignReportModal";
 import CategoryFieldsModal from "../../shared/CategoryFieldsModal";
+import ShootSubmitModal from "../../shared/ShootSubmitModal";
 import { toast } from "react-hot-toast";
 import { FiPlay, FiPause, FiSend, FiCheck, FiRotateCcw, FiChevronRight, FiFileText } from "react-icons/fi";
 import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
@@ -11,6 +12,11 @@ import {
   getSubTaskCategoryFields,
   needsCategoryFieldsForReview,
 } from "../../../utils/categoryFields";
+import {
+  isShootSessionSubtask,
+  getShootWorkType,
+  withFootageLink,
+} from "../../../utils/shootSession";
 
 /**
  * SubtaskActionBar — replaces the status dropdown for assigned employees
@@ -42,6 +48,8 @@ const SubtaskActionBar = ({
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
   const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
   const [isCategoryFieldsModalOpen, setIsCategoryFieldsModalOpen] = useState(false);
+  const [isShootModalOpen, setIsShootModalOpen] = useState(false);
+  const [pendingShoot, setPendingShoot] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
 
   const status = subtask.status?.toLowerCase() || "todo";
@@ -135,6 +143,12 @@ const SubtaskActionBar = ({
   const handleResume = () => changeStatus("in-progress");
 
   const handleSubmitForReview = () => {
+    // A shoot session collects its footage link and shot tasks first
+    if (isShootSessionSubtask(subtask)) {
+      setPendingAction("on-review");
+      setIsShootModalOpen(true);
+      return;
+    }
     // Check work link requirement before submitting
     if (isWorkLinkRequired) {
       const hasLink = getCurrentLink().trim() !== "";
@@ -269,12 +283,44 @@ const SubtaskActionBar = ({
     }
   };
 
+  const sendShootForReview = (shootSubmission, extra = {}) =>
+    updateMutation.mutateAsync({
+      status: pendingAction || "on-review",
+      shootSubmission,
+      customFields: withFootageLink(subtask.customFields, shootSubmission.footageLink),
+      ...extra,
+    });
+
+  const handleShootSubmit = async (shootSubmission) => {
+    try {
+      if (needsCategoryFieldsForReview(subtask)) {
+        // Category details are still needed: send everything together after them
+        setPendingShoot(shootSubmission);
+        setIsShootModalOpen(false);
+        setIsCategoryFieldsModalOpen(true);
+        return;
+      }
+      await sendShootForReview(shootSubmission);
+      setIsShootModalOpen(false);
+      setPendingAction(null);
+      toast.success("Shoot submitted for review");
+    } catch (err) {
+      console.error("Shoot submit error:", err);
+      toast.error(err.response?.data?.message || "Failed to submit shoot");
+    }
+  };
+
   const handleCategoryFieldsSubmit = async (categoryFieldValues) => {
     try {
-      await updateMutation.mutateAsync({
-        status: pendingAction || "on-review",
-        categoryFieldValues,
-      });
+      if (pendingShoot) {
+        await sendShootForReview(pendingShoot, { categoryFieldValues });
+        setPendingShoot(null);
+      } else {
+        await updateMutation.mutateAsync({
+          status: pendingAction || "on-review",
+          categoryFieldValues,
+        });
+      }
       setIsCategoryFieldsModalOpen(false);
       setPendingAction(null);
       toast.success("Details saved and sent for review");
@@ -435,6 +481,18 @@ const SubtaskActionBar = ({
           fields={getSubTaskCategoryFields(subtask)}
           categoryName={subtask.taskCategory?.name}
         />
+        {isShootSessionSubtask(subtask) && (
+          <ShootSubmitModal
+            isOpen={isShootModalOpen}
+            onClose={() => setIsShootModalOpen(false)}
+            onSubmit={handleShootSubmit}
+            isLoading={isUpdating}
+            subtask={subtask}
+            projectId={subtask.project?._id || subtask.project}
+            shootTaskId={parentTaskId}
+            workType={getShootWorkType(subtask)}
+          />
+        )}
       </>
     );
   }

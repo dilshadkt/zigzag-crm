@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SubTaskStatusButton from "../subTaskStatus";
 import SubtaskActionBar from "./SubtaskActionBar";
+import ShootSubmissionSummary from "./ShootSubmissionSummary";
 import SubTaskAttachments from "../../shared/SubTaskAttachments";
 import Modal from "../../shared/modal";
 import WorkLinkModal from "../../shared/workLinkModal";
@@ -817,6 +818,8 @@ const SubtasksSection = ({
                   isCompany={isCompany}
                   isAdmin={isAdmin}
                 />
+
+                <ShootSubmissionSummary subtask={subtask} parentTaskId={taskDetails?._id} />
 
                 {/* Reviewer Action Bar — shown below the subtask card for reviewers */}
                 {(isCompany || isAdmin || isProjectReviewer || hasPermission("tasks", "changeStatus") || isDepartmentReviewerFor(subtask)) &&

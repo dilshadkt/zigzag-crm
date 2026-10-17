@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { FaInstagram, FaFacebook, FaYoutube, FaLinkedin, FaTwitter, FaGlobe } from "react-icons/fa";
 import { useGetTaskCategories } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
+import AssetBankCard from "./AssetBankCard";
 import {
   collectMonthlyExtraWork,
   getSelectedWorkItems,
@@ -183,6 +184,10 @@ export const OverviewTab = ({ currentProject, selectedMonth }) => {
   return (
     <div className="flex-1 overflow-y-auto flex flex-col gap-6 pr-4 pb-24 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
       <MonthWorkStatus currentProject={currentProject} selectedMonth={selectedMonth} />
+
+      {currentProject?._id && (
+        <AssetBankCard projectId={currentProject._id} selectedMonth={selectedMonth} />
+      )}
 
       {/* Section 1: Stats Summary (Top) - COMPACT */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

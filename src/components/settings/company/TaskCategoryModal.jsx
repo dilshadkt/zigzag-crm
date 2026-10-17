@@ -16,6 +16,8 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     time: category?.time || 0,
     department: category?.department?._id || category?.department || "",
     mapsToQuota: category?.mapsToQuota || "",
+    coversWork: Boolean(category?.coversWork),
+    coversWorkType: category?.coversWorkType || "reels",
     isActive: category?.isActive !== undefined ? category.isActive : true,
     fields: (category?.fields || []).map((field) => ({
       key: field.key || "",
@@ -36,6 +38,8 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     time: Yup.number().min(0, "Must be 0 or more"),
     department: Yup.string().nullable(),
     mapsToQuota: Yup.string().nullable(),
+    coversWork: Yup.boolean(),
+    coversWorkType: Yup.string(),
     isActive: Yup.boolean(),
     fields: Yup.array().of(
       Yup.object().shape({
@@ -218,6 +222,46 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                   <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
                     If inactive, this category will not appear in the dropdown during task creation.
                   </p>
+                </div>
+              </div>
+
+              {/* Shoot session: covers other scheduled tasks */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="pt-0.5">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <Field type="checkbox" name="coversWork" className="sr-only peer" />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-[13px] font-bold text-gray-700">
+                      Covers other scheduled tasks
+                    </h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                      For session work like a shoot: when creating it you pick the
+                      scheduled tasks it covers. To send it for review the footage link
+                      is required and points = category points × tasks shot. Extra
+                      output can go to the client&apos;s asset bank.
+                    </p>
+                    {values.coversWork && (
+                      <div className="mt-3 max-w-[260px] space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-tight text-gray-400 block">
+                          Tasks it covers
+                        </label>
+                        <Field
+                          as="select"
+                          name="coversWorkType"
+                          className="w-full px-3 py-2 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-[13px] text-gray-800 font-medium outline-none transition-all"
+                        >
+                          <option value="reels">Reels</option>
+                          <option value="poster">Posters</option>
+                          <option value="motionPoster">Motion posters</option>
+                          <option value="motionGraphics">Motion graphics</option>
+                        </Field>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
