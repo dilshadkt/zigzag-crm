@@ -44,6 +44,8 @@ const TaskDescription = ({ taskDetails, subTasks = [] }) => {
   };
 
   const isWorkLinkField = (field) => {
+    // Fields added by a shoot or the asset bank are always shown
+    if (field.source) return false;
     const label = field.label?.toLowerCase() || "";
     return (
       label.includes("work link") ||

@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import Modal from "../modal";
 import { useShootCandidates } from "../../../api/hooks";
 import { isHttpLink } from "../../../utils/shootSession";
 
 const MAX_EXTRA = 50;
+const MAX_FIELDS = 10;
+const emptyField = () => ({ label: "", type: "text", value: "", perTaskOn: false, perTask: {} });
 
 const dueLabel = (task) => {
   const date = task?.dueDate ? new Date(task.dueDate) : null;
@@ -30,7 +33,8 @@ const TaskRow = ({ task, checked, onToggle, disabled }) => (
 /**
  * Shown when a shoot-session subtask is sent to review: the drive link, which
  * of the scheduled tasks were actually shot (points = category points x ticked
- * tasks) and any extra reels to put in the client's asset bank.
+ * tasks), extra fields to write onto each shot task, and any extra reels to put
+ * in the client's asset bank.
  */
 const ShootSubmitModal = ({
   isOpen,
@@ -53,19 +57,37 @@ const ShootSubmitModal = ({
   const stored = subtask?.shootSubmission;
   const [link, setLink] = useState("");
   const [ticked, setTicked] = useState(() => new Set());
+  const [fields, setFields] = useState([]);
   const [extraCount, setExtraCount] = useState(0);
   const [extraTopics, setExtraTopics] = useState("");
   const [error, setError] = useState("");
+  const initialized = useRef(false);
 
-  // Start from the stored submission on a resubmit, else from what the shoot covers
+  // Start from the stored submission on a resubmit, else from what the shoot covers.
+  // Done once per opening, so a background refetch never wipes what was typed.
   useEffect(() => {
-    if (!isOpen || !data) return;
+    if (!isOpen) {
+      initialized.current = false;
+      return;
+    }
+    if (!data || initialized.current) return;
+    initialized.current = true;
+
     const storedShot = (stored?.shotTasks || []).map((t) => String(t._id || t));
     const coveredIds = covered.map((t) => String(t._id));
     setTicked(new Set(storedShot.length ? storedShot : coveredIds));
     setLink(stored?.footageLink || "");
     setExtraCount(stored?.extraCount || 0);
     setExtraTopics("");
+    setFields(
+      (stored?.fields || []).map((field) => ({
+        label: field.label || "",
+        type: field.type || "text",
+        value: field.value || "",
+        perTask: field.perTask || {},
+        perTaskOn: Object.keys(field.perTask || {}).length > 0,
+      }))
+    );
     setError("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, data]);
@@ -79,6 +101,25 @@ const ShootSubmitModal = ({
     });
     setError("");
   };
+
+  const updateField = (index, patch) => {
+    setFields((prev) => prev.map((field, i) => (i === index ? { ...field, ...patch } : field)));
+    setError("");
+  };
+  const setTaskValue = (index, taskId, value) => {
+    setFields((prev) =>
+      prev.map((field, i) =>
+        i === index ? { ...field, perTask: { ...field.perTask, [taskId]: value } } : field
+      )
+    );
+    setError("");
+  };
+
+  // Ticked tasks in list order, for the per-task inputs
+  const tickedTasks = useMemo(
+    () => [...covered, ...available].filter((task) => ticked.has(String(task._id))),
+    [covered, available, ticked]
+  );
 
   const categoryPoints = Number(subtask?.taskCategory?.points) || 0;
   const count = ticked.size;
@@ -94,10 +135,41 @@ const ShootSubmitModal = ({
       setError("Tick at least one task this shoot covered.");
       return;
     }
+
+    const customFields = [];
+    for (const field of fields) {
+      const label = field.label.trim();
+      if (!label) {
+        setError("Every extra field needs a label (or remove the empty one).");
+        return;
+      }
+      const perTask = {};
+      if (field.perTaskOn) {
+        tickedTasks.forEach((task) => {
+          const text = String(field.perTask[String(task._id)] || "").trim();
+          if (text) perTask[String(task._id)] = text;
+        });
+      }
+      const value = field.perTaskOn ? "" : field.value.trim();
+      if (!value && !Object.keys(perTask).length) {
+        setError(`Fill in "${label}" or remove the field.`);
+        return;
+      }
+      if (field.type === "url") {
+        const bad = [value, ...Object.values(perTask)].find((text) => text && !isHttpLink(text));
+        if (bad) {
+          setError(`"${label}" must be a full http/https link.`);
+          return;
+        }
+      }
+      customFields.push({ label, type: field.type, value, perTask });
+    }
+
     const extras = Math.max(0, Math.min(MAX_EXTRA, Math.floor(Number(extraCount) || 0)));
     onSubmit({
       footageLink: link.trim(),
       shotTaskIds: [...ticked],
+      customFields,
       extraCount: extras,
       extraTopics: extraTopics
         .split("\n")
@@ -188,6 +260,121 @@ const ShootSubmitModal = ({
               )}
             </>
           )}
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <label className="block text-[13px] font-bold text-gray-700">
+                Additional fields
+                <span className="ml-1 font-normal text-gray-400">(optional)</span>
+              </label>
+              <p className="text-[11px] text-gray-500">
+                Shown on the details page of each task you ticked, e.g. Location, Clip link.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={fields.length >= MAX_FIELDS || isLoading}
+              onClick={() => setFields((prev) => [...prev, emptyField()])}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+            >
+              <FiPlus className="h-3 w-3" /> Add field
+            </button>
+          </div>
+
+          {fields.map((field, index) => (
+            <div key={index} className="space-y-2 rounded-lg border border-gray-100 bg-white p-3">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="mb-1 block text-[10px] font-bold uppercase text-gray-400">
+                    Field label
+                  </label>
+                  <input
+                    type="text"
+                    value={field.label}
+                    onChange={(e) => updateField(index, { label: e.target.value })}
+                    placeholder="e.g. Location"
+                    maxLength={60}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
+                  />
+                </div>
+                <div className="w-28">
+                  <label className="mb-1 block text-[10px] font-bold uppercase text-gray-400">
+                    Type
+                  </label>
+                  <select
+                    value={field.type}
+                    onChange={(e) => updateField(index, { type: e.target.value })}
+                    className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm outline-none focus:border-blue-400"
+                  >
+                    <option value="text">Text</option>
+                    <option value="url">Link</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFields((prev) => prev.filter((_, i) => i !== index))}
+                  className="mb-0.5 flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
+                  title="Remove field"
+                >
+                  <FiTrash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {!field.perTaskOn && (
+                <input
+                  type={field.type === "url" ? "url" : "text"}
+                  value={field.value}
+                  onChange={(e) => updateField(index, { value: e.target.value })}
+                  placeholder={
+                    field.type === "url" ? "https://... (same on every ticked task)" : "Same on every ticked task"
+                  }
+                  maxLength={500}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
+                />
+              )}
+
+              <label className="inline-flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={field.perTaskOn}
+                  onChange={(e) => updateField(index, { perTaskOn: e.target.checked })}
+                  className="h-3.5 w-3.5 rounded text-blue-600"
+                />
+                <span className="text-[12px] font-medium text-gray-600">
+                  Different value for each task
+                </span>
+              </label>
+
+              {field.perTaskOn && (
+                <div className="space-y-1.5">
+                  {tickedTasks.length === 0 ? (
+                    <p className="text-[11px] text-gray-400">Tick tasks above first.</p>
+                  ) : (
+                    tickedTasks.map((task) => (
+                      <div key={task._id} className="flex items-center gap-2">
+                        <span className="w-2/5 shrink-0 truncate text-xs font-medium text-gray-700">
+                          {task.title}
+                        </span>
+                        <input
+                          type={field.type === "url" ? "url" : "text"}
+                          value={field.perTask[String(task._id)] || ""}
+                          onChange={(e) => setTaskValue(index, String(task._id), e.target.value)}
+                          placeholder={field.type === "url" ? "https://..." : "Value"}
+                          maxLength={500}
+                          className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-blue-400"
+                        />
+                      </div>
+                    ))
+                  )}
+                  <p className="text-[11px] text-gray-400">
+                    A task left blank gets no value for this field.
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="space-y-1.5 rounded-xl border border-gray-100 bg-gray-50/60 p-3">

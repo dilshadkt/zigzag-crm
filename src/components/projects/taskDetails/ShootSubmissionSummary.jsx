@@ -74,6 +74,15 @@ const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
         </div>
       )}
 
+      {(submission.fields || []).length > 0 && (
+        <p className="text-xs text-gray-600">
+          Extra fields on each task:{" "}
+          <span className="font-medium text-gray-800">
+            {submission.fields.map((field) => field.label).join(", ")}
+          </span>
+        </p>
+      )}
+
       {Number(submission.extraCount) > 0 && (
         <p className="text-xs text-gray-600">
           {submission.extraCount} extra {workType} added to the client&apos;s asset bank.

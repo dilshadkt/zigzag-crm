@@ -199,8 +199,30 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                     ))}
                   </Field>
                 </div>
-                {/* "Maps to Core Quota" is hidden for now. The value stays in the form
-                    state, so a category that already has a mapping keeps it when edited. */}
+              </div>
+
+              {/* Package item: which monthly package line this category uses up */}
+              <div className="space-y-2">
+                <label className="text-[13px] font-bold text-gray-700 block">
+                  Counts toward package item
+                </label>
+                <Field
+                  as="select"
+                  name="mapsToQuota"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-xl text-[13px] text-gray-800 transition-all font-medium outline-none"
+                >
+                  <option value="">None (counts as extra work)</option>
+                  <option value="reels">Reels</option>
+                  <option value="poster">Posters</option>
+                  <option value="motionPoster">Motion posters</option>
+                  <option value="shooting">Shooting</option>
+                  <option value="motionGraphics">Motion graphics</option>
+                </Field>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Tasks in this category use one slot of that item in the client&apos;s monthly
+                  package, and are picked automatically when that Work type is chosen.
+                  Leave empty and they count as extra work.
+                </p>
               </div>
 
               {/* Active Status */}
@@ -244,6 +266,13 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                       is required and points = category points × tasks shot. Extra
                       output can go to the client&apos;s asset bank.
                     </p>
+                    {values.coversWork && !values.mapsToQuota && (
+                      <p className="mt-2 text-[11px] font-medium text-amber-600">
+                        Not linked to a package item, so these tasks count as extra work.
+                        Set &quot;Counts toward package item&quot; to Shooting to use the
+                        client&apos;s monthly Shooting slot.
+                      </p>
+                    )}
                     {values.coversWork && (
                       <div className="mt-3 max-w-[260px] space-y-1.5">
                         <label className="text-[10px] font-bold uppercase tracking-tight text-gray-400 block">
