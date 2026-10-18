@@ -16,6 +16,7 @@ import {
   updateProject,
   updateTaskById,
   moveTaskToProject,
+  moveTaskToMonth,
   updateTaskOrder,
   deleteProject,
   pauseProject,
@@ -549,6 +550,28 @@ export const useMoveTask = (taskId, onSuccess) => {
       queryClient.invalidateQueries(["subTasksByParentTask", taskId]);
       queryClient.invalidateQueries(["companyProjects"]);
       queryClient.invalidateQueries(["tasksByProject"]);
+      if (onSuccess) onSuccess(data);
+    },
+  });
+};
+
+export const useMoveTaskToMonth = (taskId, onSuccess) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["moveTaskToMonth", taskId],
+    mutationFn: (moveData) => moveTaskToMonth(taskId, moveData),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(["getTaskById", taskId]);
+      queryClient.invalidateQueries(["subTasksByParentTask", taskId]);
+      queryClient.invalidateQueries(["companyProjects"]);
+      queryClient.invalidateQueries(["tasksByProject"]);
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["projectTasks"]);
+      queryClient.invalidateQueries(["companyWorkDetails"]);
+      queryClient.invalidateQueries(["companyStats"]);
+      queryClient.invalidateQueries(["sidebarTaskCounts"]);
+      queryClient.invalidateQueries({ queryKey: ["boardColumn"] });
+      queryClient.invalidateQueries({ queryKey: ["boardMeta"] });
       if (onSuccess) onSuccess(data);
     },
   });

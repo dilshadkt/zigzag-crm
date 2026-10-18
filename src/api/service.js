@@ -302,6 +302,11 @@ export const moveTaskToProject = async (taskId, moveData) => {
   return data;
 };
 
+export const moveTaskToMonth = async (taskId, moveData) => {
+  const { data } = await apiClient.put(`/tasks/${taskId}/move-month`, moveData);
+  return data;
+};
+
 export const getTasksOnReview = async (filters = {}) => {
   try {
     const params = new URLSearchParams();

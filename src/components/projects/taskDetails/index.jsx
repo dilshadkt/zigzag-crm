@@ -15,6 +15,7 @@ import {
   useUpdateTaskById,
   useIsDepartmentHead,
   useMoveTask,
+  useMoveTaskToMonth,
 } from "../../../api/hooks";
 import { useSubmitTaskCampaignReport } from "../../../api/campaignDetails";
 import { useRealtimeSubtaskSync } from "../../../hooks/useRealtimeSubtaskSync";
@@ -56,6 +57,16 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
       const newProjectId = data?.task?.project?._id || data?.task?.project;
       if (newProjectId) {
         navigate(`/projects/${newProjectId}/${taskDetails._id}`);
+      }
+    });
+
+  const { mutateAsync: moveTaskToMonthMutation, isPending: isMovingMonth } =
+    useMoveTaskToMonth(taskDetails?._id, (data) => {
+      setIsMoveTaskModalOpen(false);
+      if (data?.overQuota) {
+        toast(data.message, { icon: "⚠️" });
+      } else {
+        toast.success(data?.message || "Task moved to the new month");
       }
     });
 
@@ -127,6 +138,14 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const handleMoveTaskSubmit = async (moveData) => {
     try {
       await moveTaskMutation(moveData);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to move task");
+    }
+  };
+
+  const handleMoveTaskToMonthSubmit = async (moveData) => {
+    try {
+      await moveTaskToMonthMutation(moveData);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to move task");
     }
@@ -629,7 +648,8 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
           onClose={() => setIsMoveTaskModalOpen(false)}
           taskDetails={taskDetails}
           onMove={handleMoveTaskSubmit}
-          isLoading={isMovingTask}
+          onMoveMonth={handleMoveTaskToMonthSubmit}
+          isLoading={isMovingTask || isMovingMonth}
         />
       )}
     </>

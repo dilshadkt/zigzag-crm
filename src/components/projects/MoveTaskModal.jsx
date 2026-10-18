@@ -3,6 +3,7 @@ import { FiArrowRight, FiChevronDown, FiSearch, FiPackage, FiAlertCircle } from 
 import { useAuth } from "../../hooks/useAuth";
 import { useCompanyProjects } from "../../api/hooks";
 import Modal from "../shared/modal";
+import { matchStandardWorkType } from "./workDetailsForm/workTypeMapping";
 
 const WORK_TYPES = [
   { key: "reels", label: "Reels" },
@@ -13,7 +14,30 @@ const WORK_TYPES = [
   { key: "extraTask", label: "Extra Task / Other" },
 ];
 
-const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
+const getQuotaSlot = (monthDetails, taskGroup) => {
+  if (!monthDetails || !taskGroup || taskGroup === "extraTask") return null;
+  if (monthDetails[taskGroup] && typeof monthDetails[taskGroup] === "object") {
+    return monthDetails[taskGroup];
+  }
+  return (
+    (monthDetails.other || []).find(
+      (item) =>
+        String(item.name).trim().toLowerCase() ===
+        String(taskGroup).trim().toLowerCase()
+    ) || null
+  );
+};
+
+const formatMonth = (monthKey) => {
+  if (!monthKey) return "";
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLoading }) => {
   const { companyId, user } = useAuth();
   const effectiveCompanyId = companyId || user?.company;
 
@@ -26,6 +50,8 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
   const [selectedOtherCategory, setSelectedOtherCategory] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [mode, setMode] = useState("project");
+  const [targetMonth, setTargetMonth] = useState("");
 
   const currentProjectId = taskDetails?.project?._id || taskDetails?.project;
 
@@ -82,6 +108,63 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
     return categories;
   }, [selectedProject, taskDetails?.taskMonth]);
 
+  // Quota before/after for the month move, from the project data already loaded.
+  // Work count = used / total. The old month goes down by 1, the new one up by 1.
+  const monthPreview = useMemo(() => {
+    if (mode !== "month" || !targetMonth || !taskDetails?.taskGroup) return null;
+    const currentProject = (Array.isArray(projects) ? projects : []).find(
+      (p) => p._id === currentProjectId
+    );
+    if (!currentProject) return null;
+
+    // Some tasks store the category name as taskGroup; the category maps it to a quota key.
+    const quotaGroup =
+      matchStandardWorkType(taskDetails.taskGroup) ||
+      taskDetails.taskCategory?.mapsToQuota ||
+      taskDetails.taskGroup;
+    const workDetails = currentProject.workDetails || [];
+    const workLabel =
+      WORK_TYPES.find((w) => w.key === quotaGroup)?.label || quotaGroup;
+
+    const fromSlot = getQuotaSlot(
+      workDetails.find((wd) => wd.month === taskDetails.taskMonth),
+      quotaGroup
+    );
+    if (!fromSlot) return { workLabel, hasQuota: false };
+
+    const toMonthDetails = workDetails.find((wd) => wd.month === targetMonth);
+    let toSlot = getQuotaSlot(toMonthDetails, quotaGroup);
+    if (!toMonthDetails) {
+      // A missing month is created from the latest earlier month's package.
+      const earlier = workDetails
+        .filter((wd) => wd.month < targetMonth)
+        .sort((a, b) => (a.month > b.month ? -1 : 1))[0];
+      const template = getQuotaSlot(earlier, quotaGroup);
+      toSlot = { total: template?.total || 0, count: template?.total || 0, extra: 0 };
+    }
+
+    const used = (slot) => Math.max(0, (slot.total || 0) - (slot.count || 0));
+    const fromBefore = used(fromSlot);
+    // Over-quota (extra) work is released first, otherwise the used count drops by 1.
+    const fromAfter = fromSlot.extra > 0 ? fromBefore : Math.max(0, fromBefore - 1);
+    const toBefore = used(toSlot);
+    const toOverQuota = !!toSlot && toSlot.count <= 0;
+    const toAfter = toOverQuota ? toBefore : toBefore + 1;
+
+    return {
+      hasQuota: true,
+      workLabel,
+      from: { before: fromBefore, after: fromAfter, total: fromSlot.total || 0, extra: fromSlot.extra || 0, extraAfter: Math.max(0, (fromSlot.extra || 0) - (fromSlot.extra > 0 ? 1 : 0)) },
+      to: { before: toBefore, after: toAfter, total: toSlot?.total || 0, extra: toSlot?.extra || 0, overQuota: toOverQuota },
+      toMonthMissing: !toMonthDetails,
+    };
+  }, [mode, targetMonth, projects, currentProjectId, taskDetails?.taskGroup, taskDetails?.taskCategory, taskDetails?.taskMonth]);
+
+  const handleMoveMonth = () => {
+    if (!targetMonth || targetMonth === taskDetails?.taskMonth) return;
+    onMoveMonth?.({ targetMonth });
+  };
+
   const handleMove = () => {
     if (!selectedProjectId || !selectedTaskGroup) return;
 
@@ -111,13 +194,15 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
     setSelectedOtherCategory("");
     setProjectSearch("");
     setShowProjectDropdown(false);
+    setMode("project");
+    setTargetMonth("");
     onClose();
   };
 
   const subTaskCount = taskDetails?.subTaskCount || 0;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Move Task to Another Project" maxWidth="sm:max-w-2xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title={mode === "month" ? "Move Task to Another Month" : "Move Task to Another Project"} maxWidth="sm:max-w-2xl">
       <div className="flex flex-col gap-5 pt-2">
         {/* Source Info */}
         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
@@ -147,6 +232,111 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
           )}
         </div>
 
+        {/* Mode toggle */}
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-xl w-fit">
+          {[
+            { key: "project", label: "Another Project" },
+            { key: "month", label: "Another Month" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setMode(tab.key)}
+              className={`px-4 py-1.5 text-[12px] font-bold rounded-lg transition-all ${
+                mode === tab.key ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {mode === "month" && (
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                Currently in {formatMonth(taskDetails?.taskMonth)} — move to
+              </label>
+              <input
+                type="month"
+                value={targetMonth}
+                onChange={(e) => setTargetMonth(e.target.value)}
+                className="w-full px-3.5 py-3 border border-slate-200 rounded-xl text-[13px] font-medium text-slate-700 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 bg-white shadow-sm"
+              />
+              {targetMonth && targetMonth === taskDetails?.taskMonth && (
+                <p className="mt-1.5 text-[12px] text-rose-500 font-medium">
+                  The task is already in this month.
+                </p>
+              )}
+            </div>
+
+            {monthPreview && targetMonth !== taskDetails?.taskMonth && (
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-4 text-[13px] text-slate-700 flex flex-col gap-2.5">
+                <div className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                  {monthPreview.workLabel} work count
+                </div>
+                {monthPreview.hasQuota ? (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-bold">{formatMonth(taskDetails.taskMonth)}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-slate-500">
+                          {monthPreview.from.before}/{monthPreview.from.total}
+                        </span>
+                        <FiArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-bold text-slate-800">
+                          {monthPreview.from.after}/{monthPreview.from.total}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-600">
+                          {monthPreview.from.extra > 0 ? "extra −1" : "−1"}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-bold">{formatMonth(targetMonth)}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-slate-500">
+                          {monthPreview.to.before}/{monthPreview.to.total}
+                        </span>
+                        <FiArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-bold text-slate-800">
+                          {monthPreview.to.after}/{monthPreview.to.total}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-600">
+                          {monthPreview.to.overQuota ? "extra +1" : "+1"}
+                        </span>
+                      </span>
+                    </div>
+                    {monthPreview.toMonthMissing && (
+                      <p className="text-[12px] text-slate-500">
+                        {formatMonth(targetMonth)} has no work details yet; it will be created from the latest month's package.
+                      </p>
+                    )}
+                    {monthPreview.to.overQuota && (
+                      <div className="flex items-center gap-1.5 text-[12px] font-medium text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-100 w-fit">
+                        <FiAlertCircle className="w-3.5 h-3.5" />
+                        No quota left in {formatMonth(targetMonth)} — this task will count as extra work.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-slate-500">
+                    This work type has no monthly quota to adjust.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {subTaskCount > 0 && (
+              <p className="text-[12px] text-slate-500">
+                Subtask due dates are not changed; only the task's month and work counts move.
+              </p>
+            )}
+          </div>
+        )}
+
+        {mode === "project" && (
+        <>
         {/* Arrow */}
         <div className="flex justify-center -my-2 relative z-10">
           <div className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center">
@@ -354,6 +544,9 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
           </div>
         )}
 
+        </>
+        )}
+
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
           <button
@@ -365,12 +558,14 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, isLoading }) => {
           </button>
           <button
             type="button"
-            onClick={handleMove}
+            onClick={mode === "month" ? handleMoveMonth : handleMove}
             disabled={
-              !selectedProjectId ||
-              !selectedTaskGroup ||
-              (selectedTaskGroup === "extraTask" && !selectedOtherCategory) ||
-              isLoading
+              mode === "month"
+                ? !targetMonth || targetMonth === taskDetails?.taskMonth || isLoading
+                : !selectedProjectId ||
+                  !selectedTaskGroup ||
+                  (selectedTaskGroup === "extraTask" && !selectedOtherCategory) ||
+                  isLoading
             }
             className="px-6 py-2.5 text-[13px] font-bold bg-[#3F8CFF] text-white rounded-xl hover:bg-blue-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
           >

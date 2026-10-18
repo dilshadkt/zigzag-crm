@@ -64,6 +64,7 @@ const ActivityTimeline = ({ activities }) => {
             case "attachments_change":
                 return <FiPaperclip className={`${iconClass} text-pink-600`} />;
             case "task_moved":
+            case "task_month_changed":
                 return <FiArrowRight className={`${iconClass} text-violet-600`} />;
             case "deleted":
                 return <FiTrash2 className={`${iconClass} text-gray-600`} />;
@@ -84,7 +85,8 @@ const ActivityTimeline = ({ activities }) => {
             case "due_date_change": return { bg: "bg-orange-100", border: "border-orange-200", dot: "bg-orange-500" };
             case "assignment_change": return { bg: "bg-cyan-100", border: "border-cyan-200", dot: "bg-cyan-500" };
             case "attachments_change": return { bg: "bg-pink-100", border: "border-pink-200", dot: "bg-pink-500" };
-            case "task_moved": return { bg: "bg-violet-100", border: "border-violet-200", dot: "bg-violet-500" };
+            case "task_moved":
+            case "task_month_changed": return { bg: "bg-violet-100", border: "border-violet-200", dot: "bg-violet-500" };
             default: return { bg: "bg-slate-100", border: "border-slate-200", dot: "bg-slate-400" };
         }
     };
