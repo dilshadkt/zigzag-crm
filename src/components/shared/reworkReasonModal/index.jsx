@@ -3,7 +3,16 @@ import Modal from "../modal";
 import VoiceRecorder from "../VoiceRecorder";
 import { uploadSingleFile } from "../../../api/service";
 import { useGetReworkCandidates } from "../../../api/hooks";
-import { FiMic, FiTrash2, FiPlay, FiSquare } from "react-icons/fi";
+import {
+  FiMic,
+  FiTrash2,
+  FiPlay,
+  FiSquare,
+  FiPaperclip,
+  FiLink,
+  FiFileText,
+  FiPlus,
+} from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
 const NO_FAULT = "__none__";
@@ -55,6 +64,10 @@ const ReworkReasonModal = ({
   const [selectedIds, setSelectedIds] = useState([]);
   const [dueDates, setDueDates] = useState({});
   const [faultUserId, setFaultUserId] = useState(NO_FAULT);
+  const [attachments, setAttachments] = useState([]);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [linkInput, setLinkInput] = useState("");
+  const fileInputRef = React.useRef(null);
 
   const originId = personId(originSubTask);
   const subtasks = useMemo(() => {
@@ -79,6 +92,8 @@ const ReworkReasonModal = ({
     setReason("");
     setVoiceNoteUrl(null);
     setShowVoiceRecorder(false);
+    setAttachments([]);
+    setLinkInput("");
     const origin = originId || personId(subtasks[0]);
     setSelectedIds(origin ? [origin] : []);
     const nextDates = {};
@@ -120,6 +135,7 @@ const ReworkReasonModal = ({
       originSubTaskId: originId,
       reason,
       voiceNoteUrl,
+      attachments: source === "client" ? attachments : [],
       faultUserId: faultUserId === NO_FAULT ? null : faultUserId,
       items: selectedIds.map((id) => ({
         subTaskId: id,
@@ -148,6 +164,48 @@ const ReworkReasonModal = ({
       setIsUploadingVoice(false);
     }
   };
+
+  const handleFilesPicked = async (event) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length) return;
+    setIsUploadingFile(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await uploadSingleFile(formData);
+        const url = response?.success ? response.fileUrl || response.url : null;
+        if (url) {
+          setAttachments((prev) => [...prev, { url, name: file.name, kind: "file" }]);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      }
+    } catch (error) {
+      console.error("Attachment upload error", error);
+      toast.error("Failed to upload attachment");
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
+  const handleAddLink = () => {
+    const value = linkInput.trim();
+    if (!value) return;
+    const url = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    try {
+      new URL(url);
+    } catch {
+      toast.error("Enter a valid link");
+      return;
+    }
+    setAttachments((prev) => [...prev, { url, name: value, kind: "link" }]);
+    setLinkInput("");
+  };
+
+  const removeAttachment = (index) =>
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -275,7 +333,31 @@ const ReworkReasonModal = ({
             />
           </div>
 
-          <div>
+          <div
+            className={
+              source === "client"
+                ? "rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-4"
+                : ""
+            }
+          >
+            {source === "client" && (
+              <div>
+                <h3 className="text-sm font-semibold text-indigo-900">
+                  Client feedback
+                </h3>
+                <p className="text-[11px] text-indigo-700/70">
+                  Add what the client sent: their voice note and any reference
+                  files or links.
+                </p>
+              </div>
+            )}
+
+            <div>
+            {source === "client" && (
+              <p className="mb-2 text-xs font-medium text-gray-700">
+                Client voice note
+              </p>
+            )}
             {voiceNoteUrl ? (
               <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                 <button
@@ -322,6 +404,89 @@ const ReworkReasonModal = ({
                 {isUploadingVoice ? "Uploading Voice Note..." : "Add Voice Note"}
               </button>
             )}
+            </div>
+
+            {source === "client" && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-gray-700">
+                  Reference attachments
+                </p>
+
+                {attachments.length > 0 && (
+                  <ul className="mb-2 space-y-1.5">
+                    {attachments.map((item, index) => (
+                      <li
+                        key={`${item.url}-${index}`}
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2"
+                      >
+                        {item.kind === "link" ? (
+                          <FiLink className="h-4 w-4 shrink-0 text-indigo-500" />
+                        ) : (
+                          <FiFileText className="h-4 w-4 shrink-0 text-indigo-500" />
+                        )}
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="min-w-0 flex-1 truncate text-xs text-gray-700 hover:text-blue-600"
+                        >
+                          {item.name || item.url}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(index)}
+                          className="rounded-full p-1.5 text-red-500 hover:bg-red-50"
+                          aria-label="Remove attachment"
+                        >
+                          <FiTrash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFilesPicked}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingFile}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white py-2.5 text-sm font-medium text-gray-500 transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-60"
+                >
+                  <FiPaperclip className="h-4 w-4" />
+                  {isUploadingFile ? "Uploading..." : "Attach files (images, PDFs, docs)"}
+                </button>
+
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={linkInput}
+                    onChange={(e) => setLinkInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddLink();
+                      }
+                    }}
+                    placeholder="Paste a reference link"
+                    className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddLink}
+                    disabled={!linkInput.trim()}
+                    className="flex items-center gap-1 rounded-xl border border-blue-200 bg-white px-3 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                  >
+                    <FiPlus className="h-4 w-4" /> Add
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
@@ -338,6 +503,7 @@ const ReworkReasonModal = ({
                 (!reason.trim() && !voiceNoteUrl) ||
                 isLoading ||
                 isUploadingVoice ||
+                isUploadingFile ||
                 selectedIds.length === 0
               }
               className={`px-6 h-10 rounded-xl text-sm font-medium transition-all duration-200 
@@ -345,6 +511,7 @@ const ReworkReasonModal = ({
                   (!reason.trim() && !voiceNoteUrl) ||
                   isLoading ||
                   isUploadingVoice ||
+                isUploadingFile ||
                   selectedIds.length === 0
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-[#3F8CFF] text-white hover:bg-blue-600 shadow-md hover:shadow-lg active:scale-95"

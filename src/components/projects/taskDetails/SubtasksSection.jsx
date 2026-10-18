@@ -7,6 +7,7 @@ import Modal from "../../shared/modal";
 import WorkLinkModal from "../../shared/workLinkModal";
 import CampaignReportModal from "../../shared/campaignReportModal";
 import ActivityTimeline from "./ActivityTimeline";
+import ReworkAttachmentList from "./ReworkAttachmentList";
 import { FiActivity, FiClock, FiEdit3, FiLink, FiFileText } from "react-icons/fi";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { useUpdateSubTaskById } from "../../../api/hooks";
@@ -623,6 +624,7 @@ const SubtasksSection = ({
                                 <audio src={entry.voiceNoteUrl} controls className="h-6 w-full" />
                               </div>
                             )}
+                            <ReworkAttachmentList items={entry?.attachments} />
                           </div>
                           <p className="text-[9px] text-gray-400 mt-0.5">
                             Sent back by {entry.changedBy?.firstName || ""} {entry.changedBy?.lastName || ""} on {new Date(entry.changedAt).toLocaleDateString()}{entry.previousStatus ? ` (from ${entry.previousStatus})` : ""}
@@ -972,6 +974,7 @@ const SubtasksSection = ({
                           <audio src={entry.voiceNoteUrl} controls className="h-8 w-full" />
                         </div>
                       )}
+                      <ReworkAttachmentList items={entry?.attachments} />
                     </div>
                   </div>
                   <div className="space-y-1.5 text-xs text-gray-600 ml-4">
