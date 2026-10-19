@@ -9,6 +9,8 @@ import LoadingState from "./companyTasks/LoadingState";
 import TaskQuickFilters from "../components/tasks/TaskQuickFilters";
 import TaskList from "../components/tasks/TaskList";
 import MyWorkBoard from "../components/tasks/MyWorkBoard";
+import DailyChecklistTaskCard from "../components/dashboard/employeeWorkDetails/DailyChecklistTaskCard";
+import { useMyDailyChecklist } from "../components/dashboard/employeeWorkDetails/useMyDailyChecklist";
 
 const TodayTasks = () => {
   const navigate = useNavigate();
@@ -16,6 +18,10 @@ const TodayTasks = () => {
   const { data: todayData, isLoading } = useGetEmployeeSubTasksToday(
     user?._id ? user._id : null
   );
+
+  // The dashboard's Today card counts an open checklist as one task, so show it here too
+  const checklist = useMyDailyChecklist(user?._id ? String(user._id) : null);
+  const showChecklist = checklist.total > 0 && !checklist.allDone;
 
   const {
     superFilters,
@@ -28,7 +34,11 @@ const TodayTasks = () => {
   // Get unique filter options from subtasks
   const combinedItems = useMemo(() => {
     if (!todayData) return [];
-    const subTasks = [...(todayData.subTasks || []), ...(todayData.reworkSubTasks || [])];
+    const subTasks = [
+      ...(todayData.subTasks || []),
+      ...(todayData.carried || []),
+      ...(todayData.reworkSubTasks || []),
+    ];
     // Filter out on-review subtasks exactly like we do in CompanyTasks/useTaskData
     const validSubTasks = subTasks.filter(st => st.status !== 'on-review');
     return [
@@ -134,7 +144,8 @@ const TodayTasks = () => {
     [inProgressItems, superFilters]
   );
   const filteredUpcoming = useMemo(() => applyFilters(upcomingItems), [upcomingItems, superFilters]);
-  const totalCount =filteredItems.length + filteredOverdue.length + filteredInProgress.length;
+  const totalCount =
+    filteredItems.length + filteredOverdue.length + filteredInProgress.length + (showChecklist ? 1 : 0);
 
   if (isLoading) {
     return (
@@ -272,6 +283,7 @@ const TodayTasks = () => {
                     inProgress: filteredInProgress,
                     upcoming: filteredUpcoming,
                   }}
+                  checklist={showChecklist ? checklist : null}
                 />
               )}
               {view === "list" && [
@@ -279,7 +291,7 @@ const TodayTasks = () => {
                 { key: "overdue", label: "Overdue · reason needed to end shift", dot: "bg-red-500", items: filteredOverdue },
                 { key: "in-progress", label: "In progress · due later", dot: "bg-sky-400", items: filteredInProgress },
               ]
-                .filter((group) => group.items.length > 0)
+                .filter((group) => group.items.length > 0 || (group.key === "today" && showChecklist))
                 .map((group) => (
                   <section key={group.key} className="mb-5">
                     <div className="mb-2 flex items-center gap-2 px-1">
@@ -288,9 +300,14 @@ const TodayTasks = () => {
                         {group.label}
                       </h3>
                       <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-bold text-gray-500">
-                        {group.items.length}
+                        {group.items.length + (group.key === "today" && showChecklist ? 1 : 0)}
                       </span>
                     </div>
+                    {group.key === "today" && showChecklist && (
+                      <div className="mb-2">
+                        <DailyChecklistTaskCard checklist={checklist} compact />
+                      </div>
+                    )}
                     <TaskList tasks={group.items} filter="today" />
                   </section>
                 ))}

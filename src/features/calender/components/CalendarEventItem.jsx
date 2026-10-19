@@ -236,7 +236,7 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
               } bg-orange-500 text-white rounded-full font-semibold flex items-center gap-1 shadow-sm`}
             >
               <span>📌</span>
-              <span className={getDueDateColor(task.originalDueDate, task.status)}>Carried from {formatDate(task.originalDueDate)}</span>
+              <span className={getDueDateColor(task.originalDueDate, task.status)}>Carried from {formatDate(task.originalDueDate)}{task.assignedTo?.[0]?.firstName ? ` · ${task.assignedTo[0].firstName}` : ""}</span>
             </span>
           </div>
         )}
@@ -421,7 +421,7 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
               } bg-orange-500 text-white rounded-full font-semibold flex items-center gap-1 shadow-sm`}
             >
               <span>📌</span>
-              <span className={getDueDateColor(subtask.originalDueDate, subtask.status)}>Carried from {formatDate(subtask.originalDueDate)}</span>
+              <span className={getDueDateColor(subtask.originalDueDate, subtask.status)}>Carried from {formatDate(subtask.originalDueDate)}{subtask.assignedTo?.[0]?.firstName ? ` · ${subtask.assignedTo[0].firstName}` : ""}</span>
             </span>
           </div>
         )}

@@ -4,7 +4,8 @@ import { FiCheck, FiFolder } from "react-icons/fi";
 // The user's checklist for today, shown like a task in the Assigned Tasks list.
 // While items are open it lists them with tick boxes; once every item assigned
 // to the user is done it becomes a single finished card for Completed Today.
-const DailyChecklistTaskCard = ({ checklist }) => {
+// compact: header and progress bar only, without the tick-box list.
+const DailyChecklistTaskCard = ({ checklist, compact = false }) => {
   const { items, total, done, allDone, toggleItem } = checklist;
   if (!total) return null;
 
@@ -59,7 +60,7 @@ const DailyChecklistTaskCard = ({ checklist }) => {
           />
         </div>
 
-        <div className="mt-2 flex flex-col gap-2">
+        {!compact && <div className="mt-2 flex flex-col gap-2">
           {Object.entries(byProject).map(([projectId, group]) => (
             <div key={projectId}>
               <p className="mb-1 inline-flex items-center gap-1 text-[11px] font-medium text-[#3F8CFF]">
@@ -86,7 +87,7 @@ const DailyChecklistTaskCard = ({ checklist }) => {
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
     </div>
   );

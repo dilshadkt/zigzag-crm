@@ -18,6 +18,8 @@ import {
   useGetVacationsCalendar,
   useUpdateVacationStatus,
   useUpdateVacationRequest,
+  useUpdateMyVacationRequest,
+  useCancelMyVacationRequest,
 } from "./hooks/useVacations";
 import { useGetMyVacations } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
@@ -73,6 +75,12 @@ const Vacations = () => {
 
   const updateVacationMutation = useUpdateVacationStatus();
   const updateVacationRequestMutation = useUpdateVacationRequest();
+  const updateMyRequestMutation = useUpdateMyVacationRequest();
+  const cancelMyRequestMutation = useCancelMyVacationRequest();
+
+  const handleEditMyRequest = (vacationId, data) =>
+    updateMyRequestMutation.mutateAsync({ vacationId, data });
+  const handleCancelMyRequest = (vacationId) => cancelMyRequestMutation.mutateAsync(vacationId);
 
   const handleUpdateVacationStatus = ({ vacationId, status, notes = "" }) => {
     return updateVacationMutation.mutateAsync({ vacationId, status, notes });
@@ -293,6 +301,9 @@ const Vacations = () => {
               canApproveVacations={canApproveVacations}
               canModifyVacations={canEditVacations}
               onModifyRequest={handleModifyVacationRequest}
+              currentUserId={user?._id || user?.id}
+              onEditMyRequest={handleEditMyRequest}
+              onCancelMyRequest={handleCancelMyRequest}
             />
           ))}
 

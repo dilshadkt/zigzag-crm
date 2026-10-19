@@ -36,6 +36,15 @@ export const updateVacationRequestApi = ({ vacationId, data }) => {
   return apiClient.put(`/vacations/${vacationId}`, data).then((res) => res.data);
 };
 
+// Owner actions on your own request (no admin permission needed)
+export const updateMyVacationRequestApi = ({ vacationId, data }) => {
+  return apiClient.put(`/vacations/${vacationId}/my`, data).then((res) => res.data);
+};
+
+export const cancelMyVacationRequestApi = (vacationId) => {
+  return apiClient.post(`/vacations/${vacationId}/cancel`).then((res) => res.data);
+};
+
 export const createVacationRequestApi = (data) => {
   return apiClient.post("/vacations", data).then((res) => res.data);
 };

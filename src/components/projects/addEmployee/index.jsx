@@ -24,7 +24,7 @@ const AddEmployee = ({
     []
   );
 
-  const { data: employeesData, isLoading } = useEmpoyees(1, 100, debouncedSearchTerm, "select");
+  const { data: employeesData, isLoading } = useEmpoyees(null, null, debouncedSearchTerm, "select");
   const employeesList = employeesData?.employees || [];
 
   // Filter employees based on search term

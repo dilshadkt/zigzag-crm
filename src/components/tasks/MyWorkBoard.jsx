@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FiCalendar, FiFolder } from "react-icons/fi";
+import DailyChecklistTaskCard from "../dashboard/employeeWorkDetails/DailyChecklistTaskCard";
 import { useSubmitPendingReason } from "../../api/hooks";
 import { submitSubTaskPendingReason, updateSubTaskById } from "../../api/service";
 
@@ -274,7 +275,7 @@ BulkReasonBar.propTypes = {
 };
 
 // items: { overdue, today, inProgress, upcoming } — already filtered by the page
-const MyWorkBoard = ({ items }) => {
+const MyWorkBoard = ({ items, checklist }) => {
   const [selected, setSelected] = useState(() => new Set());
   // Only keep ids that are still overdue (a saved reason removes the card)
   const overdueIds = (items.overdue || []).map((item) => item._id);
@@ -293,6 +294,7 @@ const MyWorkBoard = ({ items }) => {
   <div className="grid h-full min-h-[320px] grid-cols-1 grid-rows-[minmax(0,1fr)] gap-3 md:grid-cols-2 xl:grid-cols-4">
     {COLUMNS.map((column) => {
       const cards = items[column.key] || [];
+      const showChecklist = column.key === "today" && !!checklist;
       return (
         <section
           key={column.key}
@@ -302,7 +304,7 @@ const MyWorkBoard = ({ items }) => {
             <span className={`h-2 w-2 rounded-full ${column.dot}`} />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600">{column.title}</h3>
             <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-bold text-gray-500">
-              {cards.length}
+              {cards.length + (showChecklist ? 1 : 0)}
             </span>
             {column.key === "overdue" && cards.length > 0 ? (
               <label className="ml-auto flex cursor-pointer items-center gap-1 text-[10px] font-medium text-gray-500">
@@ -322,7 +324,8 @@ const MyWorkBoard = ({ items }) => {
             <BulkReasonBar selectedIds={selectedIds} onClear={() => setSelected(new Set())} />
           )}
           <div className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-            {cards.length === 0 ? (
+            {showChecklist && <DailyChecklistTaskCard checklist={checklist} compact />}
+            {cards.length === 0 && !showChecklist ? (
               <p className="rounded-xl border-2 border-dashed border-gray-200 px-3 py-6 text-center text-xs text-gray-400">
                 Nothing here
               </p>
@@ -347,6 +350,7 @@ const MyWorkBoard = ({ items }) => {
 
 MyWorkBoard.propTypes = {
   items: PropTypes.object.isRequired,
+  checklist: PropTypes.object,
 };
 
 export default MyWorkBoard;

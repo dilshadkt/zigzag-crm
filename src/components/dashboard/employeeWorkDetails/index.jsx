@@ -132,7 +132,7 @@ const EmployeeWorkDetails = () => {
 
   const sortedSubTasks = useMemo(
     () =>
-      (todaySubTasks?.subTasks || []).slice().sort((a, b) => {
+      [...(todaySubTasks?.subTasks || []), ...(todaySubTasks?.carried || [])].sort((a, b) => {
         const aRank = PRIORITY_RANK[a?.priority?.toLowerCase()] || 0;
         const bRank = PRIORITY_RANK[b?.priority?.toLowerCase()] || 0;
         return bRank - aRank;
@@ -349,9 +349,6 @@ const EmployeeWorkDetails = () => {
           <Loading />
         ) : (
           <div className="custom-scrollbar flex min-h-[200px] max-h-[320px] flex-1 flex-col gap-2 overflow-y-auto pr-1">
-            {/* Daily checklist assigned to this user, until every item is done */}
-            {showChecklistAssigned && <DailyChecklistTaskCard checklist={checklist} />}
-
             {pendingWithReasonSubTasks.length > 0 && (
               <div className="flex flex-col gap-2">
                 <SectionLabel count={pendingWithReasonSubTasks.length} dot="animate-pulse bg-orange-500">
@@ -363,16 +360,21 @@ const EmployeeWorkDetails = () => {
               </div>
             )}
 
-            {activeSubTasks.length > 0 && (
+            {(activeSubTasks.length > 0 || showChecklistAssigned) && (
               <div className="flex flex-col gap-2">
                 {(pendingWithReasonSubTasks.length > 0 ||
                   showChecklistAssigned ||
                   overdueSubTasks.length > 0 ||
                   inProgressSubTasks.length > 0) && (
-                  <SectionLabel count={activeSubTasks.length} dot="bg-blue-500">
+                  <SectionLabel
+                    count={activeSubTasks.length + (showChecklistAssigned ? 1 : 0)}
+                    dot="bg-blue-500"
+                  >
                     Active Tasks
                   </SectionLabel>
                 )}
+                {/* Daily checklist assigned to this user, until every item is done */}
+                {showChecklistAssigned && <DailyChecklistTaskCard checklist={checklist} compact />}
                 {activeSubTasks.map((subTask, index) => (
                   <TaskCard key={`active-${subTask._id || index}`} item={subTask} />
                 ))}

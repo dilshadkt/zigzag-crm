@@ -50,13 +50,18 @@ const VacationCard = ({
   canApproveVacations,
   canModifyVacations,
   onModifyRequest,
+  currentUserId,
+  onEditMyRequest,
+  onCancelMyRequest,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(false);
   const [modifyingRequest, setModifyingRequest] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [ownerEditing, setOwnerEditing] = useState(null);
 
   const employeeId = item.employee?.id || item.employee?._id;
+  const isOwnCard = !!currentUserId && String(employeeId) === String(currentUserId);
   const { data: extraData, isLoading: isLoadingExtra } = useGetEmployeeVacations(
     showAllRequests ? employeeId : null
   );
@@ -96,6 +101,20 @@ const VacationCard = ({
     setProcessingId(requestId);
     try {
       await updateStatus({ vacationId: requestId, status: "cancelled" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const canOwnerCancel = (request) =>
+    request.status === "pending" ||
+    (request.status === "approved" && new Date(request.startDate) >= new Date(new Date().setHours(0, 0, 0, 0)));
+
+  const handleOwnerCancel = async (requestId) => {
+    if (!window.confirm("Cancel this leave request?")) return;
+    setProcessingId(requestId);
+    try {
+      await onCancelMyRequest(requestId);
     } finally {
       setProcessingId(null);
     }
@@ -255,6 +274,30 @@ const VacationCard = ({
                       {processingId === request.id ? "Cancelling..." : "Cancel"}
                     </button>
                   ) : null}
+
+                  {/* Requester's own controls: edit dates while pending, cancel until it starts */}
+                  {isOwnCard && !(request.status === "pending" && (canApproveVacations || canModifyVacations)) && (
+                    <div className="flex items-center gap-1">
+                      {request.status === "pending" && onEditMyRequest && (
+                        <button
+                          onClick={() => setOwnerEditing(request)}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:text-blue-600 px-2 py-1 transition-colors"
+                          title="Edit dates"
+                        >
+                          <FaEdit size={10} /> Edit
+                        </button>
+                      )}
+                      {canOwnerCancel(request) && onCancelMyRequest && (
+                        <button
+                          onClick={() => handleOwnerCancel(request.id)}
+                          disabled={processingId === request.id}
+                          className="text-[10px] font-bold text-gray-400 hover:text-rose-500 px-2 py-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {processingId === request.id ? "Cancelling..." : "Cancel"}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -272,6 +315,16 @@ const VacationCard = ({
             </button>
           )}
         </div>
+      )}
+
+      {ownerEditing && (
+        <ModifyDatesModal
+          isOpen={true}
+          ownerEdit
+          onClose={() => setOwnerEditing(null)}
+          request={ownerEditing}
+          onSave={(data) => onEditMyRequest(ownerEditing.id, data)}
+        />
       )}
 
       {/* Modify dates modal */}

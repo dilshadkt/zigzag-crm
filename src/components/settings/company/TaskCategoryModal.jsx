@@ -18,6 +18,7 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     mapsToQuota: category?.mapsToQuota || "",
     coversWork: Boolean(category?.coversWork),
     coversWorkType: category?.coversWorkType || "reels",
+    noCarryOver: Boolean(category?.noCarryOver),
     isActive: category?.isActive !== undefined ? category.isActive : true,
     fields: (category?.fields || []).map((field) => ({
       key: field.key || "",
@@ -40,6 +41,7 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     mapsToQuota: Yup.string().nullable(),
     coversWork: Yup.boolean(),
     coversWorkType: Yup.string(),
+    noCarryOver: Yup.boolean(),
     isActive: Yup.boolean(),
     fields: Yup.array().of(
       Yup.object().shape({
@@ -243,6 +245,25 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                   </label>
                   <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
                     If inactive, this category will not appear in the dropdown during task creation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Calendar: keep this category on its own due date */}
+              <div className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <div className="pt-0.5">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <Field type="checkbox" name="noCarryOver" className="sr-only peer" />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                  </label>
+                </div>
+                <div>
+                  <h4 className="text-[13px] font-bold text-gray-700">
+                    Don&apos;t carry over to today
+                  </h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                    Upcoming tasks in this category stay on their own due date in the
+                    calendar instead of being pulled onto today.
                   </p>
                 </div>
               </div>

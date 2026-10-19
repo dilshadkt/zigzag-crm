@@ -10,7 +10,8 @@ import {
 import { RxCross2 } from "react-icons/rx";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
-const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
+// ownerEdit: the requester changing their own pending request (no admin notes)
+const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false }) => {
   const [formData, setFormData] = useState({
     startDate: format(new Date(request?.startDate || new Date()), "yyyy-MM-dd"),
     endDate: format(new Date(request?.endDate || new Date()), "yyyy-MM-dd"),
@@ -43,7 +44,7 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         type: selectedType,
-        notes: formData.notes,
+        ...(ownerEdit ? {} : { notes: formData.notes }),
       });
       onClose();
     } catch (error) {
@@ -229,7 +230,7 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
                 </div>
               </div>
 
-              <div>
+              {!ownerEdit && <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Admin Notes</label>
                 <textarea
                   value={formData.notes}
@@ -237,7 +238,7 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave }) => {
                   placeholder="Notes for employee..."
                   className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none min-h-[100px] resize-none font-medium text-slate-600"
                 />
-              </div>
+              </div>}
             </div>
 
             <button

@@ -6,6 +6,8 @@ import {
   updateVacationStatusApi,
   updateVacationRequestApi,
   createVacationRequestApi,
+  updateMyVacationRequestApi,
+  cancelMyVacationRequestApi,
   checkAvailabilityApi,
   getOverlappingTasksApi,
   notifyReporterApi,
@@ -64,6 +66,28 @@ export const useUpdateVacationRequest = () => {
       queryClient.invalidateQueries({ queryKey: ["companyVacations"] });
       queryClient.invalidateQueries({ queryKey: ["employeeVacations"] });
     },
+  });
+};
+
+const refreshVacationQueries = (queryClient) => {
+  ["vacations", "myVacations", "vacationsCalendar", "companyVacations", "employeeVacations"].forEach(
+    (key) => queryClient.invalidateQueries({ queryKey: [key] })
+  );
+};
+
+export const useUpdateMyVacationRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMyVacationRequestApi,
+    onSuccess: () => refreshVacationQueries(queryClient),
+  });
+};
+
+export const useCancelMyVacationRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: cancelMyVacationRequestApi,
+    onSuccess: () => refreshVacationQueries(queryClient),
   });
 };
 

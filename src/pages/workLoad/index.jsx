@@ -884,13 +884,19 @@ const EmployeeCalendar = ({ employee, onDayClick }) => {
     if (isLoading || !workloadData) return 0;
     const dateStr = format(date, "yyyy-MM-dd");
     const { subTasks = [] } = workloadData;
-    return subTasks.filter(
-      (st) =>
-        st.status !== "completed" &&
-        st.status !== "approved" &&
-        st.dueDate &&
-        format(new Date(st.dueDate), "yyyy-MM-dd") === dateStr
-    ).length;
+    const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
+    // Same rule as the employee list: open work due that day, plus (for today)
+    // late work that was given a reason today, which moves it into today's list.
+    return subTasks.filter((st) => {
+      if (["completed", "approved", "client-approved", "on-review"].includes(st.status)) return false;
+      if (st.dueDate && format(new Date(st.dueDate), "yyyy-MM-dd") === dateStr) return true;
+      return (
+        isToday &&
+        (st.pendingReasons || []).some(
+          (r) => r?.date && format(new Date(r.date), "yyyy-MM-dd") === dateStr
+        )
+      );
+    }).length;
   };
 
   const employeeName =
