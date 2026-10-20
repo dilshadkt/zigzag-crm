@@ -224,7 +224,9 @@ const EmployeeTasksModal = ({ isOpen, onClose, emp }) => {
   const completedTasks = data?.completedTasks || [];
   const completedSubTasks = data?.completedSubTasks || [];
 
-  const pendingList = [...subTasks, ...reworkSubTasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+  const carriedSubTasks = data?.carried || [];
+
+  const pendingList = [...subTasks, ...reworkSubTasks, ...carriedSubTasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
   const completedList = [...completedSubTasks].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
   const handleTaskClick = (task) => {
@@ -299,6 +301,11 @@ const TaskListItem = ({ task, isCompleted, onClick }) => {
           <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${isSubtask ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}`}>
             {isSubtask ? 'Subtask' : 'Task'}
           </span>
+          {task.isCarriedForward && (
+            <span className="text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider bg-violet-100 text-violet-700">
+              Carried forward
+            </span>
+          )}
           {task.project && (
             <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded truncate max-w-[150px]">
               Project: {task.project.name}

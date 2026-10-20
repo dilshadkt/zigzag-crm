@@ -107,7 +107,8 @@ export const useCreateVacationRequest = () => {
 
 export const useCheckAvailability = () => {
   return useMutation({
-    mutationFn: (checks) => checkAvailabilityApi(checks),
+    mutationFn: ({ checks, excludeTaskId }) =>
+      checkAvailabilityApi(checks, excludeTaskId),
   });
 };
 

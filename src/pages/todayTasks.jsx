@@ -287,7 +287,7 @@ const TodayTasks = () => {
                 />
               )}
               {view === "list" && [
-                { key: "today", label: "Due today", dot: "bg-blue-500", items: filteredItems },
+                { key: "today", label: "Today · due + carried forward", dot: "bg-blue-500", items: filteredItems },
                 { key: "overdue", label: "Overdue · reason needed to end shift", dot: "bg-red-500", items: filteredOverdue },
                 { key: "in-progress", label: "In progress · due later", dot: "bg-sky-400", items: filteredInProgress },
               ]

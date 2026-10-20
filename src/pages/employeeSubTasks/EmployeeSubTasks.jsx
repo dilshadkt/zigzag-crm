@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { useGetEmployeeTasks } from "../../api/hooks";
+import { useGetEmployeeTasks, useGetEmployeeSubTasksToday } from "../../api/hooks";
 import { FiArrowLeft } from "react-icons/fi";
 import Header from "../../components/shared/header";
 import TaskList from "../../components/tasks/TaskList";
@@ -38,30 +38,28 @@ const EmployeeSubTasks = () => {
     }
   );
 
+  // "Today" is the employee's whole day: what is due today plus upcoming work
+  // carried forward to fill their daily limit, the same list their dashboard counts
+  const isTodayFilter = filter === "today";
+  const { data: todayData, isLoading: isTodayLoading } = useGetEmployeeSubTasksToday(
+    isTodayFilter ? employeeId : null
+  );
+
   // Combine tasks and subtasks, then apply any special client-side filters
   const filteredTasks = useMemo(() => {
+    if (isTodayFilter) {
+      return [
+        ...(todayData?.subTasks || []),
+        ...(todayData?.carried || []),
+        ...(todayData?.reworkSubTasks || []),
+      ].filter((task) => task.status !== "on-review");
+    }
+
     if (!employeeTasksData) return [];
 
     let allTasks = [
       ...(employeeTasksData.subTasks || []),
     ];
-
-    // Special client-side filter for "today" (backend handles most others)
-    if (filter === "today") {
-      const today = new Date();
-      allTasks = allTasks.filter((task) => {
-        if (!task.dueDate) return false;
-        const dueDate = new Date(task.dueDate);
-        return (
-          dueDate.getDate() === today.getDate() &&
-          dueDate.getMonth() === today.getMonth() &&
-          dueDate.getFullYear() === today.getFullYear() &&
-          task.status !== "approved" &&
-          task.status !== "completed" &&
-          task.status !== "client-approved"
-        );
-      });
-    }
 
     // Filter out 'on-review' tasks unless explicitly requested
     if (filter !== "on-review") {
@@ -69,9 +67,9 @@ const EmployeeSubTasks = () => {
     }
 
     return allTasks;
-  }, [employeeTasksData, filter]);
+  }, [employeeTasksData, todayData, filter, isTodayFilter]);
 
-  if (isLoading) {
+  if (isTodayFilter ? isTodayLoading : isLoading) {
     return (
       <div className="flex flex-col h-full bg-gray-50/50">
         {/* Header Skeleton */}

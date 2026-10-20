@@ -75,7 +75,14 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const [activeTab, setActiveTab] = useState("kanban");
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const isBoardView = activeTab === "kanban";
-  const [showSubtasks, setShowSubtasks] = useState(true);
+  const [showSubtasks, setShowSubtasks] = useState(() => {
+    const saved = localStorage.getItem("project_kanban_showSubtasks");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("project_kanban_showSubtasks", JSON.stringify(showSubtasks));
+  }, [showSubtasks]);
   const { mutate: updateOrder } = useUpdateTaskOrder(currentProject?._id);
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();

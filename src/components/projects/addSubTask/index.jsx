@@ -129,6 +129,7 @@ const AddSubTask = ({
   parentTaskId,
   projectData,
   parentCategory: parentCategoryProp,
+  parentDueDate,
 }) => {
   const { user, companyId } = useAuth();
   const effectiveCompanyId = companyId || user?.company?._id || user?.company;
@@ -493,6 +494,7 @@ const AddSubTask = ({
                     name="dueDate"
                     disabled={isLoading}
                     assignedTo={values.assignedTo}
+                    maxDate={parentDueDate}
                   />
                 </div>
 

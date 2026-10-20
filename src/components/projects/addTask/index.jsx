@@ -95,8 +95,30 @@ const ConflictItem = ({ item }) => {
   const scheduledEnd = item.originalEnd || item.endDate;
   const overlapStart = item.overlapStart || item.startDate;
   const overlapEnd = item.overlapEnd || item.endDate;
+  // Open the task in a new tab so the form being filled in is not lost.
+  const detailPath = item.parentTaskId
+    ? item.projectId
+      ? `/projects/${item.projectId}/${item.parentTaskId}?subTaskId=${item.subTaskId}`
+      : `/tasks/${item.parentTaskId}`
+    : null;
+  const openDetail = () => window.open(detailPath, "_blank", "noopener");
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+    <div
+      className={`rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 ${
+        detailPath ? "cursor-pointer transition-colors hover:border-blue-200 hover:bg-blue-50/40" : ""
+      }`}
+      {...(detailPath
+        ? {
+            role: "link",
+            tabIndex: 0,
+            title: "Open task details",
+            onClick: openDetail,
+            onKeyDown: (e) => {
+              if (e.key === "Enter") openDetail();
+            },
+          }
+        : {})}
+    >
       <div className="flex flex-wrap items-center gap-1.5">
         <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${meta.className}`}>
           {meta.label}
@@ -126,7 +148,398 @@ const ConflictItem = ({ item }) => {
   );
 };
 
-const ConflictDetails = ({ conflicts, title, emptyText }) => {
+const toLocalKey = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+const isoDay = (value) => (value ? String(value).slice(0, 10) : null);
+
+const keyToDate = (key) => new Date(`${key}T00:00:00`);
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const isLeaveItem = (item) => item.type === "vacation" || item.type === "sick_leave";
+
+// Full-screen view of one person's load: a month calendar on the left, their
+// conflicting tasks on the right. A task sits on its due date, the day the
+// daily limit is counted on; leave fills every day it covers.
+const ConflictCalendar = ({ conflict, weeklyOffs = [], holidays = [] }) => {
+  const limit = conflict.dailyTaskLimit || 10;
+  const items = conflict.conflictingDates || [];
+  const windowStart = isoDay(conflict.checkStartDate);
+  const windowEnd = isoDay(conflict.checkEndDate);
+
+  const { tasks, tasksByDay, leaveByDay } = useMemo(() => {
+    const taskList = [];
+    const byDay = {};
+    const leave = {};
+    items.forEach((item) => {
+      if (isLeaveItem(item)) {
+        const start = keyToDate(isoDay(item.overlapStart || item.startDate));
+        const end = keyToDate(isoDay(item.overlapEnd || item.endDate));
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const key = toLocalKey(d);
+          (leave[key] = leave[key] || []).push(item);
+        }
+        return;
+      }
+      const dueKey = isoDay(item.originalEnd || item.endDate);
+      if (!dueKey) return;
+      const task = { ...item, dueKey, startKey: isoDay(item.originalStart || item.startDate) };
+      taskList.push(task);
+      (byDay[dueKey] = byDay[dueKey] || []).push(task);
+    });
+    taskList.sort((a, b) => a.dueKey.localeCompare(b.dueKey));
+    return { tasks: taskList, tasksByDay: byDay, leaveByDay: leave };
+  }, [items]);
+
+  // Days this assignment could be due on without going over the limit.
+  const suggestions = useMemo(() => {
+    if (!windowEnd) return [];
+    const anchor = keyToDate(windowEnd);
+    const earliest = windowStart ? keyToDate(windowStart) : anchor;
+    const out = [];
+    for (let offset = -14; offset <= 14; offset += 1) {
+      const date = new Date(anchor);
+      date.setDate(date.getDate() + offset);
+      if (date < earliest) continue;
+      const key = toLocalKey(date);
+      if (isWeeklyOff(date, weeklyOffs) || isHoliday(date, holidays)) continue;
+      if ((leaveByDay[key] || []).length > 0) continue;
+      const load = (tasksByDay[key] || []).length;
+      if (load + 1 > limit) continue;
+      out.push({ key, load, offset });
+    }
+    return out
+      .sort((a, b) => Math.abs(a.offset) - Math.abs(b.offset) || b.offset - a.offset)
+      .slice(0, 5);
+  }, [windowStart, windowEnd, tasksByDay, leaveByDay, weeklyOffs, holidays, limit]);
+  const suggestedKeys = useMemo(() => new Set(suggestions.map((s) => s.key)), [suggestions]);
+
+  const dueLoad = windowEnd ? (tasksByDay[windowEnd] || []).length : 0;
+  const dueDayIsFine =
+    windowEnd &&
+    dueLoad + 1 <= limit &&
+    !(leaveByDay[windowEnd] || []).length;
+
+  const initialDay = windowEnd || tasks[0]?.dueKey || toLocalKey(new Date());
+  const [selectedDay, setSelectedDay] = useState(initialDay);
+  const [selectedTaskIdx, setSelectedTaskIdx] = useState(null);
+  const [month, setMonth] = useState(() => {
+    const base = keyToDate(initialDay);
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+
+  const goToDay = (key) => {
+    setSelectedDay(key);
+    const date = keyToDate(key);
+    setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+  };
+
+  const cells = useMemo(() => {
+    const first = new Date(month.getFullYear(), month.getMonth(), 1);
+    const offset = (first.getDay() + 6) % 7; // week starts on Monday
+    const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    const out = Array(offset).fill(null);
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      out.push(new Date(month.getFullYear(), month.getMonth(), day));
+    }
+    return out;
+  }, [month]);
+
+  const shiftMonth = (delta) =>
+    setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+
+  const selectedTask = selectedTaskIdx !== null ? tasks[selectedTaskIdx] : null;
+
+  // How the picked task collides with the assignment being created.
+  const explain = (task) => {
+    const lines = [];
+    const load = (tasksByDay[task.dueKey] || []).length;
+    if (windowStart && windowEnd) {
+      const overlaps = task.startKey <= windowEnd && task.dueKey >= windowStart;
+      if (task.dueKey === windowEnd) {
+        lines.push({
+          tone: "red",
+          text: `Both are due on ${formatConflictDate(windowEnd)}.`,
+        });
+      } else if (task.dueKey >= windowStart && task.dueKey <= windowEnd) {
+        lines.push({
+          tone: "amber",
+          text: `It is due on ${formatConflictDate(task.dueKey)}, inside this assignment's window (${formatConflictRange(windowStart, windowEnd)}).`,
+        });
+      } else if (overlaps) {
+        lines.push({
+          tone: "amber",
+          text: `Its schedule (${formatConflictRange(task.startKey, task.dueKey)}) overlaps this assignment's window (${formatConflictRange(windowStart, windowEnd)}).`,
+        });
+      }
+    }
+    lines.push({
+      tone: load + 1 > limit ? "red" : load === limit ? "amber" : "gray",
+      text: `${load} task${load === 1 ? "" : "s"} already due on ${formatConflictDate(task.dueKey)}; with this assignment it would be ${load + 1} of a ${limit}-task daily limit.`,
+    });
+    if (windowEnd && task.dueKey === windowEnd && suggestions.length > 0) {
+      lines.push({
+        tone: "green",
+        text: `Moving this assignment's due date to ${formatConflictDate(suggestions[0].key)} avoids the clash.`,
+      });
+    }
+    return lines;
+  };
+
+  const toneClass = {
+    red: "bg-red-50 text-red-700 border-red-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    green: "bg-green-50 text-green-700 border-green-100",
+    gray: "bg-gray-50 text-gray-600 border-gray-100",
+  };
+
+  const dayItems = [...(leaveByDay[selectedDay] || [])];
+
+  return (
+    <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => shiftMonth(-1)}
+            className="rounded-lg border border-gray-200 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
+            aria-label="Previous month"
+          >
+            ‹
+          </button>
+          <p className="text-base font-semibold text-gray-800">
+            {month.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+          </p>
+          <button
+            type="button"
+            onClick={() => shiftMonth(1)}
+            className="rounded-lg border border-gray-200 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
+            aria-label="Next month"
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold uppercase text-gray-400">
+          {WEEKDAYS.map((day) => (
+            <span key={day}>{day}</span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5">
+          {cells.map((date, idx) => {
+            if (!date) return <span key={`blank-${idx}`} />;
+            const key = toLocalKey(date);
+            const dayTasks = tasksByDay[key] || [];
+            const onLeave = (leaveByDay[key] || []).length > 0;
+            const off = isWeeklyOff(date, weeklyOffs) || isHoliday(date, holidays);
+            const count = dayTasks.length;
+            const inWindow = windowStart && windowEnd && key >= windowStart && key <= windowEnd;
+            const isDue = key === windowEnd;
+            const isSuggested = suggestedKeys.has(key) && !isDue;
+            const picked = selectedTask && selectedTask.dueKey === key;
+            const tone = onLeave
+              ? "border-rose-200 bg-rose-50"
+              : count > limit
+              ? "border-red-300 bg-red-50"
+              : count === limit
+              ? "border-amber-300 bg-amber-50"
+              : count > 0
+              ? "border-blue-100 bg-blue-50/50"
+              : off
+              ? "border-gray-100 bg-gray-50"
+              : inWindow
+              ? "border-indigo-100 bg-indigo-50/40"
+              : "border-gray-100 bg-white";
+            const countTone =
+              count > limit
+                ? "bg-red-600 text-white"
+                : count === limit
+                ? "bg-amber-500 text-white"
+                : "bg-blue-100 text-blue-700";
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setSelectedDay(key);
+                  setSelectedTaskIdx(null);
+                }}
+                className={`flex min-h-[84px] flex-col rounded-lg border p-1.5 text-left transition-colors hover:border-blue-300 ${tone} ${
+                  isSuggested ? "outline outline-2 outline-green-400" : ""
+                } ${picked ? "ring-2 ring-purple-500" : selectedDay === key ? "ring-2 ring-blue-500" : ""}`}
+              >
+                <span className="flex items-center justify-between">
+                  <span className={`text-xs font-semibold ${off ? "text-gray-400" : "text-gray-700"}`}>
+                    {date.getDate()}
+                  </span>
+                  {count > 0 && (
+                    <span className={`rounded-full px-1.5 text-[10px] font-bold ${countTone}`}>
+                      {count}/{limit}
+                    </span>
+                  )}
+                </span>
+                {isDue && (
+                  <span className="mt-0.5 truncate rounded bg-indigo-600 px-1 text-[10px] font-semibold text-white">
+                    This task due
+                  </span>
+                )}
+                {isSuggested && (
+                  <span className="mt-0.5 truncate text-[10px] font-semibold text-green-600">✓ Free</span>
+                )}
+                {onLeave && (
+                  <span className="mt-auto truncate text-[10px] font-semibold text-rose-600">
+                    {leaveByDay[key][0].title || "Leave"}
+                  </span>
+                )}
+                {!onLeave && count > 0 && (
+                  <span className="mt-auto truncate text-[10px] text-gray-500">
+                    {dayTasks[0].parentTaskName || dayTasks[0].title}
+                    {count > 1 ? ` +${count - 1}` : ""}
+                  </span>
+                )}
+                {!onLeave && count === 0 && off && (
+                  <span className="mt-auto text-[10px] text-gray-400">Off</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded border border-blue-200 bg-blue-100" />Under limit</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded border border-amber-300 bg-amber-100" />At limit ({limit})</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded border border-red-300 bg-red-100" />Over limit</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded border border-rose-200 bg-rose-100" />Leave</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded border border-indigo-100 bg-indigo-50" />This assignment</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded border-2 border-green-400" />Suggested</span>
+          <span>Tasks are shown on their due date.</span>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-col gap-3">
+        <div className="rounded-xl border border-gray-100 bg-white p-3">
+          <p className="text-xs font-semibold text-gray-700">Suggested due dates</p>
+          {!windowEnd ? (
+            <p className="mt-1 text-xs text-gray-400">Set a due date to get suggestions.</p>
+          ) : dueDayIsFine ? (
+            <p className="mt-1 text-xs text-green-600">
+              {formatConflictDate(windowEnd)} is within the daily limit ({dueLoad + 1} of {limit}).
+            </p>
+          ) : suggestions.length === 0 ? (
+            <p className="mt-1 text-xs text-gray-500">No free working day within two weeks of the current due date.</p>
+          ) : (
+            <>
+              <p className="mt-1 text-xs text-gray-500">
+                {formatConflictDate(windowEnd)} is {(leaveByDay[windowEnd] || []).length ? "a leave day" : `over the limit (${dueLoad + 1} of ${limit})`}. These days are free:
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => goToDay(s.key)}
+                    className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 hover:bg-green-100"
+                  >
+                    {formatConflictDate(s.key)} · {s.load} task{s.load === 1 ? "" : "s"}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-gray-100 bg-white p-3">
+          <p className="mb-2 text-xs font-semibold text-gray-700">
+            Conflicting tasks ({tasks.length})
+          </p>
+          <div className="max-h-[46vh] space-y-2 overflow-y-auto pr-1">
+            {dayItems.map((item, i) => (
+              <ConflictItem key={`leave-${i}`} item={item} />
+            ))}
+            {tasks.length === 0 && dayItems.length === 0 && (
+              <p className="text-xs text-gray-400">No conflicting tasks.</p>
+            )}
+            {tasks.map((task, idx) => {
+              const active = selectedTaskIdx === idx;
+              return (
+                <div
+                  key={`${task.subTaskId || idx}`}
+                  className={`rounded-xl border transition-colors ${
+                    active
+                      ? "border-purple-300 bg-purple-50/40"
+                      : selectedTaskIdx === null && task.dueKey === selectedDay
+                      ? "border-blue-200 bg-blue-50/50"
+                      : "border-gray-100"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTaskIdx(active ? null : idx);
+                      if (!active) goToDay(task.dueKey);
+                    }}
+                    className="w-full px-3 py-2 text-left"
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="truncate text-xs font-semibold text-gray-800">
+                        {task.parentTaskName || task.title}
+                      </span>
+                      <span className="shrink-0 text-[10px] font-semibold text-gray-500">
+                        Due {formatConflictDate(task.dueKey)}
+                      </span>
+                    </span>
+                    <span className="block truncate text-[11px] text-gray-500">
+                      {task.title}
+                      {task.projectName ? ` · ${task.projectName}` : ""}
+                    </span>
+                  </button>
+                  {active && (
+                    <div className="space-y-1.5 px-3 pb-3">
+                      <p className="text-[11px] text-gray-600">
+                        Scheduled: {formatConflictRange(task.startKey, task.dueKey)}
+                        {task.status ? ` · ${task.status.replace("-", " ")}` : ""}
+                      </p>
+                      {explain(task).map((line, i) => (
+                        <p
+                          key={i}
+                          className={`rounded-lg border px-2 py-1.5 text-[11px] font-medium ${toneClass[line.tone]}`}
+                        >
+                          {line.text}
+                        </p>
+                      ))}
+                      {task.parentTaskId && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(
+                              task.projectId
+                                ? `/projects/${task.projectId}/${task.parentTaskId}?subTaskId=${task.subTaskId}`
+                                : `/tasks/${task.parentTaskId}`,
+                              "_blank",
+                              "noopener"
+                            )
+                          }
+                          className="text-[11px] font-semibold text-blue-600 hover:underline"
+                        >
+                          Open task details ↗
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ConflictDetails = ({ conflicts, title, emptyText, weeklyOffs = [], holidays = [] }) => {
   const [openConflict, setOpenConflict] = useState(null);
 
   if (!conflicts?.length) {
@@ -175,15 +588,15 @@ const ConflictDetails = ({ conflicts, title, emptyText }) => {
                 <FiAlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 <span>
                   This assignment exceeds the daily task limit ({conflict.dailyTaskLimit}). 
-                  Currently has {conflict.maxTasksInOneDay} task(s) on a single day.
+                  Would have {conflict.projectedTasksInOneDay ?? conflict.maxTasksInOneDay} task(s) on a single day ({conflict.maxTasksInOneDay} already assigned).
                 </span>
               </div>
             ) : (
               <div className="text-[11px] font-medium text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5 flex items-start gap-1.5 border border-gray-100">
                 <FiCheck className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-green-500" />
                 <span>
-                  Workload is under the daily limit ({conflict.dailyTaskLimit}). 
-                  Currently has {conflict.maxTasksInOneDay} task(s) on a single day.
+                  Workload is within the daily limit ({conflict.dailyTaskLimit}). 
+                  Would have {conflict.projectedTasksInOneDay ?? conflict.maxTasksInOneDay} task(s) on a single day ({conflict.maxTasksInOneDay} already assigned).
                 </span>
               </div>
             )}
@@ -195,17 +608,19 @@ const ConflictDetails = ({ conflicts, title, emptyText }) => {
         isOpen={!!openConflict}
         onClose={() => setOpenConflict(null)}
         title={openConflict ? getConflictSummary(openConflict.employeeName, openConflict.conflictingDates) : "Conflicts"}
+        maxWidth="sm:max-w-[96vw] lg:max-w-[1400px]"
       >
         {openConflict && (
           <div className="space-y-3">
             <p className="text-sm text-gray-600">
               {openConflict.employeeName} has {(openConflict.conflictingDates || []).length} overlapping item{(openConflict.conflictingDates || []).length === 1 ? "" : "s"} on these dates.
             </p>
-            <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-              {(openConflict.conflictingDates || []).map((item, itemIdx) => (
-                <ConflictItem key={itemIdx} item={item} />
-              ))}
-            </div>
+            <ConflictCalendar
+              key={`${openConflict.employeeId}-${openConflict.label}`}
+              conflict={openConflict}
+              weeklyOffs={weeklyOffs}
+              holidays={holidays}
+            />
             <div className="flex justify-end pt-2">
               <button
                 type="button"
@@ -436,6 +851,7 @@ const AddTask = ({
             startDate: sub.startDate,
             endDate: sub.dueDate,
             label: `subtask-${idx}`,
+            taskCategory: sub.taskCategory?._id || sub.taskCategory || undefined,
           });
         }
       });
@@ -444,7 +860,7 @@ const AddTask = ({
     if (checks.length > 0) {
       // Use a timeout to debounce the API call slightly
       const timeoutId = setTimeout(() => {
-        availabilityMutation.mutate(checks, {
+        availabilityMutation.mutate({ checks, excludeTaskId: isEdit ? initialValues?._id : undefined }, {
           onSuccess: (data) => {
             setAvailabilityConflicts(data.conflicts || []);
           },
@@ -747,6 +1163,17 @@ const AddTask = ({
 
   // ── Sync subtasks in Formik whenever flow or main dates change ──────────
   useEffect(() => {
+    // Editing: the subtasks already exist (and the update does not recreate
+    // them), so a date or flow change must not generate a second set.
+    if (isEdit) {
+      prevMasterValues.current = {
+        taskFlow: values.taskFlow,
+        startDate: values.startDate,
+        dueDate: values.dueDate,
+      };
+      return;
+    }
+
     const isMasterChanged =
       values.taskFlow !== prevMasterValues.current.taskFlow ||
       values.startDate !== prevMasterValues.current.startDate ||
@@ -816,7 +1243,7 @@ const AddTask = ({
         dueDate: values.dueDate
       };
     }
-  }, [values.taskFlow, values.startDate, values.dueDate, values.taskCategory, taskFlows, taskCategories, weeklyOffs, holidays, setFieldValue]);
+  }, [isEdit, values.taskFlow, values.startDate, values.dueDate, values.taskCategory, taskFlows, taskCategories, weeklyOffs, holidays, setFieldValue]);
 
   // Handle manual date overrides for subtasks
   const handleSubtaskDateChange = (index, field, newValue) => {
@@ -1017,6 +1444,8 @@ const AddTask = ({
             ? `${item.name} (${remaining} remaining)`
             : `${item.name} (0 remaining)`,
           value: item.kind === "standard" ? item.key : item.name,
+          name: item.name,
+          remaining,
         });
       }
     });
@@ -1025,6 +1454,7 @@ const AddTask = ({
     options.push({
       label: "Campaign",
       value: "campaign",
+      name: "Campaign",
     });
     options.push({
       label: "Other",
@@ -1110,6 +1540,24 @@ const AddTask = ({
   };
 
   const taskGroupOptions = getTaskGroupOptions();
+
+  // Picking a work type suggests it as the task name. The name stays editable:
+  // it is only replaced while it is empty or still the last suggestion.
+  const suggestedTitleRef = useRef("");
+  const suggestedTitle = taskGroupOptions.find(
+    (option) => option.value === values.taskGroup
+  )?.name;
+  useEffect(() => {
+    if (isEdit) return;
+    const suggestion = suggestedTitle;
+    if (!suggestion) return;
+    const current = values.title || "";
+    if (!current || current === suggestedTitleRef.current) {
+      setFieldValue("title", suggestion);
+      suggestedTitleRef.current = suggestion;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestedTitle, isEdit]);
   const taskFlowOptions = getTaskFlowOptions();
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
 
@@ -1123,6 +1571,12 @@ const AddTask = ({
     values.taskGroup !== "Select task group" &&
     values.taskGroup !== "Select work type";
   const isCampaignTaskSelected = values.taskGroup === "campaign";
+  // A work type with no quota left is saved as extra work (same category).
+  const isOverQuotaTask =
+    !isEdit &&
+    taskGroupOptions.some(
+      (option) => option.value === values.taskGroup && option.remaining === 0
+    );
   const isExtraTaskSelected = values.taskGroup === "extraTask";
   const isExtraTaskWorkTypeSelected = isExtraTaskSelected
     ? values.extraTaskWorkType &&
@@ -1303,6 +1757,12 @@ const AddTask = ({
                       defaultValue="Select work type"
                       disabled={isLoadingProjectDetails}
                     />
+                    {isOverQuotaTask && (
+                      <p className="pl-[6px] -mt-2 text-xs font-semibold text-amber-600">
+                        No quota left for this work type. This task will be
+                        added as an extra task.
+                      </p>
+                    )}
                     {!isEdit && shootCategory && shootProjectId && (
                       <CoveredTasksPicker
                         projectId={shootProjectId}
@@ -1913,7 +2373,7 @@ const AddTask = ({
 
                           {stepConflicts.length > 0 && (
                             <div className="mt-3">
-                              <ConflictDetails conflicts={stepConflicts} />
+                              <ConflictDetails conflicts={stepConflicts} weeklyOffs={weeklyOffs} holidays={holidays} />
                             </div>
                           )}
                         </div>
@@ -1957,6 +2417,8 @@ const AddTask = ({
                 </div>
                 <ConflictDetails
                   conflicts={mainConflicts}
+                  weeklyOffs={weeklyOffs}
+                  holidays={holidays}
                   emptyText="No assignee conflicts on the main dates."
                 />
               </div>

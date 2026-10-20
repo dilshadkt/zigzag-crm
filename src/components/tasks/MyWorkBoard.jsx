@@ -18,7 +18,7 @@ const PRIORITY_BAR = { high: "bg-red-400", medium: "bg-amber-400", low: "bg-emer
 
 const COLUMNS = [
   { key: "overdue", title: "Overdue", hint: "reason needed", dot: "bg-red-500", tint: "bg-red-50/60" },
-  { key: "today", title: "Due today", hint: "finish today", dot: "bg-blue-500", tint: "bg-blue-50/60" },
+  { key: "today", title: "Today", hint: "due + carried forward", dot: "bg-blue-500", tint: "bg-blue-50/60" },
   { key: "inProgress", title: "In progress", hint: "due later", dot: "bg-sky-400", tint: "bg-sky-50/60" },
   { key: "upcoming", title: "Upcoming 7 days", hint: "not started", dot: "bg-gray-400", tint: "bg-gray-100/70" },
 ];
@@ -116,6 +116,14 @@ const BoardCard = ({ item, column, selected, onToggle }) => {
               <FiCalendar className="h-3 w-3" />
               {dueLabel}
             </span>
+            {item.isCarriedForward && (
+              <span
+                className="inline-flex items-center rounded-md bg-violet-50 px-1.5 py-0.5 font-medium text-violet-600"
+                title="Pulled onto today to fill your daily task limit"
+              >
+                Carried forward
+              </span>
+            )}
             {dayProgress && (
               <span className="font-medium text-gray-500">
                 Day {dayProgress.current} of {dayProgress.total} ·{" "}

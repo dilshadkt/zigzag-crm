@@ -141,6 +141,14 @@ const EmployeeProgressStats = ({ taskMonth }) => {
   const checklist = useMyDailyChecklist(user?._id ? String(user._id) : null);
   const openChecklistCount = checklist.total > 0 && !checklist.allDone ? 1 : 0;
   const todayCardCount = todaySubTasks + openChecklistCount;
+  // Upcoming work pulled onto today to fill the role's daily task limit
+  const todayCarried = statistics.todayCarried || 0;
+  const todaySubtitle = [
+    todayCarried ? `Due today + ${todayCarried} carried` : "Due today",
+    openChecklistCount ? "checklist" : null,
+  ]
+    .filter(Boolean)
+    .join(" + ");
   const upcoming3DaysTasks = statistics.upcoming3Days || 0;
   const unscheduledTasks = statistics.unscheduled || 0;
   const assignedProjects = statistics.assignedProjects || 0;
@@ -344,7 +352,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
         id: "todays-tasks",
         title: "Today's Tasks",
         value: todayCardCount,
-        subtitle: openChecklistCount ? "Due today + checklist" : "Due today",
+        subtitle: todaySubtitle,
         icon: FiCheckSquare,
         color: "bg-indigo-500",
         borderColor: "hover:border-indigo-500",
@@ -377,6 +385,7 @@ const EmployeeProgressStats = ({ taskMonth }) => {
       overdueTasks,
       todayTasks,
       todayCardCount,
+      todaySubtitle,
       openChecklistCount,
       todayMainTasks,
       upcoming3DaysTasks,

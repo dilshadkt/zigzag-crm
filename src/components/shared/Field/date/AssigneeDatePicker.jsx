@@ -28,6 +28,8 @@ const AssigneeDatePicker = ({
   readOnly = false,
   disabled,
   assignedTo = [], // Array of string IDs or objects with _id
+  maxDate, // days after this date cannot be picked
+  minDate, // days before this date cannot be picked
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value || "");
@@ -101,6 +103,7 @@ const AssigneeDatePicker = ({
   const handleDateSelect = (day, e) => {
     e.stopPropagation();
     const formattedDate = format(day, "yyyy-MM-dd");
+    if ((maxKey && formattedDate > maxKey) || (minKey && formattedDate < minKey)) return;
     setSelectedDate(formattedDate);
     if (onChange) {
       onChange({ target: { name, value: formattedDate } }); // Mimic event object for Formik
@@ -121,6 +124,10 @@ const AssigneeDatePicker = ({
   const endDate = endOfWeek(monthEnd);
   const dateFormat = "d";
   const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  const toKey = (value) => (value ? format(new Date(value), "yyyy-MM-dd") : null);
+  const maxKey = toKey(maxDate);
+  const minKey = toKey(minDate);
 
   const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -201,10 +208,12 @@ const AssigneeDatePicker = ({
                 {days.map((day, idx) => {
                   const isSelected = selectedDate && isSameDay(day, new Date(selectedDate));
                   const isCurrentMonth = isSameMonth(day, monthStart);
+                  const dayKey = format(day, "yyyy-MM-dd");
+                  const isBlocked = (maxKey && dayKey > maxKey) || (minKey && dayKey < minKey);
                   
                   // Check if there are any tasks on this day for the assignees
                   let hasTask = false;
-                  if (isCurrentMonth && calendarData && assignerFilter.length > 0) {
+                  if (isCurrentMonth && !isBlocked && calendarData && assignerFilter.length > 0) {
                     const dayData = calendarData.getItemsForDate(day);
                     if ((dayData.tasks && dayData.tasks.length > 0) || (dayData.subtasks && dayData.subtasks.length > 0)) {
                       hasTask = true;
@@ -219,9 +228,10 @@ const AssigneeDatePicker = ({
                         "h-8 flex flex-col items-center justify-center rounded-lg text-sm cursor-pointer relative transition-all",
                         {
                           "text-gray-300 pointer-events-none": !isCurrentMonth,
+                          "text-gray-300 line-through cursor-not-allowed pointer-events-none": isCurrentMonth && isBlocked && !isSelected,
                           "bg-blue-500 text-white font-semibold shadow-md": isSelected,
-                          "hover:bg-blue-50 text-gray-700": !isSelected && isCurrentMonth,
-                          "border border-blue-200 text-blue-600": isToday(day) && !isSelected && isCurrentMonth,
+                          "hover:bg-blue-50 text-gray-700": !isSelected && isCurrentMonth && !isBlocked,
+                          "border border-blue-200 text-blue-600": isToday(day) && !isSelected && isCurrentMonth && !isBlocked,
                         }
                       )}
                     >

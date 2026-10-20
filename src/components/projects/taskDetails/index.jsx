@@ -553,6 +553,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
         }
         projectData={taskDetails.project}
         parentCategory={taskDetails?.taskCategory}
+        parentDueDate={taskDetails?.dueDate}
       />
 
       {/* Rework History Modal */}

@@ -200,6 +200,14 @@ const TaskCard = memo(({ task, filter }) => {
                 SUBTASK
               </span>
             )}
+            {task.isCarriedForward && (
+              <span
+                className="px-2 py-1 rounded-md text-xs font-medium border bg-violet-50 text-violet-600 border-violet-200"
+                title="Pulled onto today to fill the daily task limit"
+              >
+                CARRIED FORWARD
+              </span>
+            )}
             <span
               className={`px-2 py-1 rounded-md text-xs font-medium border ${getPriorityColor(
                 task.priority

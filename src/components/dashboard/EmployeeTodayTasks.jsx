@@ -17,7 +17,8 @@ const EmployeeTodayTasks = () => {
     const completedTasks = data?.completedTasks || [];
     const completedSubTasks = data?.completedSubTasks || [];
 
-    const activeItems = [...subTasks];
+    // Upcoming work pulled onto each person's day to fill their daily task limit
+    const activeItems = [...subTasks, ...(data?.carried || [])];
     const completedItems = [...completedSubTasks];
 
     return (
@@ -176,6 +177,11 @@ const TaskItem = ({ item, status }) => {
                             {project?.name || "No Project"}
                         </span>
                         {isRecurringItem(item) && <RecurringBadge />}
+                        {item.isCarriedForward && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-100 text-violet-600">
+                                Carried forward
+                            </span>
+                        )}
                     </div>
                     <h5 className="font-medium text-gray-800 text-sm truncate group-hover:text-blue-600 transition-colors">
                         {item.title}
