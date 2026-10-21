@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import apiClient from "../../../api/client";
 import CategoryQuotaSection from "../workDetailsForm/CategoryQuotaSection";
 
 const MonthlyWorkDetailsForm = ({
@@ -134,6 +137,60 @@ const MonthlyWorkDetailsForm = ({
     setFieldValue("workDetails", updatedWorkDetails);
   };
 
+  // Sets Remaining / Extra from the tasks that already exist this month, using
+  // the totals currently in the form. Nothing is saved until the form is saved.
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const { projectId } = useParams();
+  const handleRecalculate = async () => {
+    if (!projectId || !currentMonthDetails) return;
+    setIsRecalculating(true);
+    try {
+      const res = await apiClient.get(
+        `/projects/${projectId}/monthly-work-details/${selectedMonth}/recalculate`
+      );
+      const slots = res.data?.slots || [];
+      const next = {
+        ...currentMonthDetails,
+        other: [...(currentMonthDetails.other || [])],
+      };
+      let changed = 0;
+
+      const recompute = (slot, { used, extraTasks }) => {
+        const total = Number(slot.total) || 0;
+        const count = Math.max(0, total - used);
+        const extra = extraTasks + Math.max(0, used - total);
+        if ((Number(slot.count) || 0) !== count || (Number(slot.extra) || 0) !== extra) {
+          changed += 1;
+        }
+        return { ...slot, count, extra };
+      };
+
+      slots.forEach((slot) => {
+        if (slot.kind === "standard") {
+          if (next[slot.id]) next[slot.id] = recompute(next[slot.id], slot);
+          return;
+        }
+        const index = next.other.findIndex(
+          (entry) => String(entry._id) === slot.id
+        );
+        if (index >= 0) next.other[index] = recompute(next.other[index], slot);
+      });
+
+      handleMonthWorkDetailsChange(next);
+      toast.success(
+        changed
+          ? `Updated ${changed} work type${changed > 1 ? "s" : ""} from this month's tasks. Click Save to keep the changes.`
+          : "Already matches this month's tasks."
+      );
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Could not recalculate from tasks"
+      );
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
   const parsed = parseMonthKey(selectedMonth);
   const previousMonth = (values.workDetails || [])
     .filter((wd) => wd.month && wd.month < selectedMonth)
@@ -177,6 +234,19 @@ const MonthlyWorkDetailsForm = ({
             ? `Starts from ${previousMonthName}. Change the numbers only if this month is different.`
             : "Set the monthly package for this project."}
         </p>
+        {isEditMode && projectId && (
+          <div className="mt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={handleRecalculate}
+              disabled={isRecalculating}
+              title="Set Remaining and Extra from the tasks already created this month. Nothing is saved until you click Save."
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-blue-300 hover:text-blue-600 disabled:opacity-60"
+            >
+              {isRecalculating ? "Recalculating..." : "Recalculate from tasks"}
+            </button>
+          </div>
+        )}
       </div>
 
       <CategoryQuotaSection
