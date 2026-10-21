@@ -386,6 +386,8 @@ export const useCreateTask = (handleClose, projectId) => {
       queryClient.invalidateQueries({
         queryKey: ["projectTasks", projectId],
       });
+      // Creating a task uses up monthly quota, which lives on the project.
+      queryClient.invalidateQueries({ queryKey: ["projectDetails"] });
       window.dispatchEvent(new Event('taskCreated'));
       handleClose(data);
       // toast.success('Target set successfully!');
@@ -535,12 +537,14 @@ export const useUpdateTaskById = (taskId, handleClose) => {
     mutationFn: (updatedData) => updateTaskById(taskId, updatedData),
     onSuccess: () => {
       queryClient.invalidateQueries(["getTaskById", taskId]);
+      // Changing a task's work type moves quota between work types.
+      queryClient.invalidateQueries({ queryKey: ["projectDetails"] });
       handleClose();
     },
   });
 };
 
-export const useMoveTask = (taskId, onSuccess) => {
+export const useMoveTask =(taskId, onSuccess) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["moveTask", taskId],
