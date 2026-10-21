@@ -539,6 +539,8 @@ export const useUpdateTaskById = (taskId, handleClose) => {
       queryClient.invalidateQueries(["getTaskById", taskId]);
       // Changing a task's work type moves quota between work types.
       queryClient.invalidateQueries({ queryKey: ["projectDetails"] });
+      // Saving can reorder the subtasks.
+      queryClient.invalidateQueries({ queryKey: ["subTasksByParentTask", taskId] });
       handleClose();
     },
   });
