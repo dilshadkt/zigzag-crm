@@ -11,12 +11,12 @@ const TaskFlowHeader = ({ taskFlowsCount, onAdd }) => {
             Task Flow Pipeline
           </h1>
           <p className="mt-0.5 text-[11px] text-gray-500">
-            Define and manage your cross-departmental task flows
+            Reusable chains of stages for your tasks. Each stage names a role, and the person is picked from the project&apos;s team.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-[11px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
-            {taskFlowsCount} Flows
+            {taskFlowsCount} {taskFlowsCount === 1 ? "Flow" : "Flows"}
           </div>
           <PrimaryButton
             title="Add Flow"

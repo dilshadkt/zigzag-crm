@@ -69,6 +69,7 @@ import {
   deleteAttendanceRecord,
   // Task Flow imports
   getTaskFlows,
+  resolveTaskFlow,
   createTaskFlow,
   updateTaskFlow,
   deleteTaskFlow,
@@ -128,6 +129,20 @@ export const useGetTaskFlows = (companyId) => {
     queryFn: () => getTaskFlows(companyId),
     enabled: !!companyId,
     select: (data) => data?.taskFlows || [],
+  });
+};
+
+// Stage-by-stage owners of a flow on a project. Re-runs when the flow or project changes.
+export const useResolveTaskFlow = (companyId, taskFlowId, projectId, preferredUserIds = []) => {
+  return useQuery({
+    queryKey: ["resolvedTaskFlow", companyId, taskFlowId, projectId || null],
+    queryFn: () =>
+      resolveTaskFlow(companyId, taskFlowId, { projectId: projectId || null, preferredUserIds }),
+    enabled: !!companyId && !!taskFlowId,
+    select: (data) => data?.stages || [],
+    // A fresh pick every time: "least busy" changes as work is assigned
+    staleTime: 0,
+    gcTime: 60 * 1000,
   });
 };
 

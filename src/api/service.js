@@ -995,6 +995,20 @@ export const restoreTaskFlow = async (companyId, taskFlowId) => {
   }
 };
 
+// Who would do each stage of a flow on a project (role -> person from the team)
+export const resolveTaskFlow = async (companyId, taskFlowId, payload) => {
+  try {
+    const response = await apiClient.post(
+      `/companies/${companyId}/task-flows/${taskFlowId}/resolve`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error resolving task flow:", error);
+    throw error;
+  }
+};
+
 // Permanently delete a task flow
 export const permanentDeleteTaskFlow = async (companyId, taskFlowId) => {
   try {

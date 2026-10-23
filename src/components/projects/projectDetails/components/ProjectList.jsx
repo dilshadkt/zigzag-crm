@@ -8,6 +8,7 @@ const ProjectList = ({
     tasksByStatus,
     completedTasks,
     handleNavigateTask,
+    selectedMonth,
 }) => {
     const parentRef = useRef(null);
 
@@ -81,6 +82,7 @@ const ProjectList = ({
                                     task={item.task}
                                     isBoardView={false}
                                     index={virtualRow.index}
+                                    monthKey={selectedMonth}
                                 />
                             )}
                         </div>

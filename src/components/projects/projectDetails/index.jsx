@@ -274,6 +274,7 @@ const ProjectDetails = ({
           handleNavigateTask={handleNavigateTask}
           activeProject={activeProject}
           canUserDragTask={canUserDragTask}
+          selectedMonth={selectedMonth}
         />
       ) : (
         <ProjectList
@@ -282,6 +283,7 @@ const ProjectDetails = ({
           tasksByStatus={tasksByStatus}
           completedTasks={completedTasks}
           handleNavigateTask={handleNavigateTask}
+          selectedMonth={selectedMonth}
         />
       )}
     </div>

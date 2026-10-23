@@ -6,7 +6,7 @@ import { FiMoreVertical, FiSend } from "react-icons/fi";
 import { BsPlusCircleFill } from "react-icons/bs";
 import { useUpdateTaskOrder } from "../../../api/hooks";
 import RecurringBadge, { isRecurringItem } from "../RecurringBadge";
-import { formatDate } from "../../../lib/dateUtils";
+import { formatDate, getMonthKey, formatMonthKeyShort } from "../../../lib/dateUtils";
 import { formatDistanceToNow } from "date-fns";
 
 const priorityColors = {
@@ -156,6 +156,9 @@ const Task = memo(({
   onSendToClient,
   isSendingToClient,
   compact = false,
+  // "YYYY-MM" of the month the card is shown under. When given, a card whose due
+  // date falls in another month is highlighted (work done ahead of, or after, its month).
+  monthKey,
 }) => {
   const { mutate: updateOrder } = useUpdateTaskOrder(projectId);
   const priorityColor =
@@ -167,9 +170,24 @@ const Task = memo(({
   const compactCardTone = isSentToClient
     ? "bg-teal-50 border-teal-200"
     : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50/60";
+  const dueMonthKey = getMonthKey(task?.dueDate);
+  const isOutsideMonth = Boolean(monthKey && dueMonthKey && dueMonthKey !== monthKey);
+  const outsideMonthLabel = isOutsideMonth
+    ? `${dueMonthKey > monthKey ? "Next month" : "Earlier month"} · due ${formatMonthKeyShort(dueMonthKey)}`
+    : null;
+  const outsideMonthBadge = outsideMonthLabel && (
+    <span
+      className="inline-flex w-fit items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+      title={`Filed under another month: due ${formatDate(task?.dueDate)}`}
+    >
+      {outsideMonthLabel}
+    </span>
+  );
   const cardTone = isSentToClient
     ? "bg-teal-50 ring-2 ring-teal-300 border-l-[3px] border-teal-500"
-    : isSubtaskItem
+    : isOutsideMonth
+      ? "bg-amber-50 ring-1 ring-amber-300 border-l-[3px] border-amber-500"
+      : isSubtaskItem
       ? "bg-white border border-slate-200 border-l-[3px] border-l-blue-400"
       : isExtraTask
         ? "bg-white border border-slate-200 border-l-[3px] border-l-purple-500"
@@ -461,6 +479,7 @@ const Task = memo(({
                   <RecurringBadge />
                 </div>
               )}
+              {outsideMonthBadge}
               {task?.itemType === "subtask" ? (
                 <div className="flex flex-col gap-1.5 mt-1">
                   <div className="flex items-center gap-2">
@@ -599,6 +618,7 @@ const Task = memo(({
                 Sent to client
               </span>
             )}
+            {outsideMonthBadge}
             {task?.isBoardTask &&
               !task?.project &&
               !task?.itemType === "subtask" && (

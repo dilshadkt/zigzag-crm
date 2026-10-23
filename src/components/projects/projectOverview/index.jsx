@@ -535,6 +535,7 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
           canUserDragTask={canUserDragTask}
           handleNavigateToTask={handleNavigateToTask}
           currentProject={currentProject}
+          selectedMonth={selectedMonth}
         />
       )}
 

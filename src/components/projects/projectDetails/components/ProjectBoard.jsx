@@ -11,6 +11,7 @@ const ProjectBoard = ({
     handleNavigateTask,
     activeProject,
     canUserDragTask,
+    selectedMonth,
 }) => {
     return (
         <div className="flex  gap-4 h-full overflow-x-auto
@@ -40,6 +41,7 @@ const ProjectBoard = ({
                                     projectId={activeProject?._id}
                                     index={index}
                                     canDrag={canUserDragTask(task)}
+                                    monthKey={selectedMonth}
                                 />
                             ))
                         ) : (

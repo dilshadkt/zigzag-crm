@@ -11,6 +11,7 @@ import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
 import {
   useCreateTask,
   useGetTaskFlows,
+  useResolveTaskFlow,
   useProjectDetails,
   useGetAllEmployees,
   useGetWorkSchedule,
@@ -637,6 +638,8 @@ const ConflictDetails = ({ conflicts, title, emptyText, weeklyOffs = [], holiday
   );
 };
 
+const NO_STAGES = [];
+
 const MONTHS_AHEAD = 12;
 
 const monthKeyOf = (date) =>
@@ -707,6 +710,8 @@ const AddTask = ({
 
   const skipCategoryWarningRef = useRef(false);
   const [showMissingCategoryModal, setShowMissingCategoryModal] = useState(false);
+  // Set when saving is attempted while a flow stage still has nobody assigned
+  const [flowAssigneeBlocked, setFlowAssigneeBlocked] = useState(false);
 
   const handleClose = () => {
     skipCategoryWarningRef.current = false;
@@ -758,6 +763,15 @@ const AddTask = ({
   };
 
   const handleTaskSubmit = async (formData, helpers) => {
+    const hasUnassignedFlowStep = (formData.subtasks || []).some(
+      (step) => step?.isFromFlow && !(step.assignee?._id || step.assignee)
+    );
+    if (!isEdit && hasUnassignedFlowStep) {
+      setFlowAssigneeBlocked(true);
+      helpers?.setSubmitting?.(false);
+      return;
+    }
+
     const categories = Array.isArray(taskCategories) ? taskCategories : [];
     const missing = (formData.subtasks || []).filter((step) => {
       if (step?.taskCategory) return false;
@@ -846,8 +860,6 @@ const AddTask = ({
   const [showDateChangeReasonModal, setShowDateChangeReasonModal] =
     useState(false);
   const [pendingNewDueDate, setPendingNewDueDate] = useState(null);
-  const [showFlowAssigneeModal, setShowFlowAssigneeModal] = useState(false);
-  const [missingFlowAssignees, setMissingFlowAssignees] = useState([]);
 
   // Vacation availability state
   const availabilityMutation = useCheckAvailability();
@@ -1146,83 +1158,46 @@ const AddTask = ({
     prevTaskGroupRef.current = values.taskGroup;
   }, [values.taskGroup, setFieldValue]);
 
-  // Handle task flow selection with project membership validation
+  // Who does each stage of the chosen flow on this project. A stage names a role
+  // and the person comes from the project's team, so a flow is never turned away
+  // because one particular person is not on the project.
+  const flowProjectId = values.project || projectData?._id || null;
+  const { data: resolvedStages = NO_STAGES, isFetching: isResolvingFlow } =
+    useResolveTaskFlow(companyId, isEdit ? "" : values.taskFlow, flowProjectId);
+
+  // Flow chosen: take its requirements and put the people it resolved to on the task
   useEffect(() => {
-    const normalizeId = (val) => {
-      if (!val) return null;
-      if (typeof val === "string") return val;
-      if (val._id) return String(val._id);
-      if (val.id) return String(val.id);
-      if (val.userId) return String(val.userId);
-      return String(val);
-    };
+    if (!values.taskFlow || taskFlows.length === 0) return;
+    const selectedFlow = taskFlows.find((flow) => flow._id === values.taskFlow);
+    if (!selectedFlow?.flows?.length) return;
 
-    if (values.taskFlow && taskFlows.length > 0) {
-      const selectedFlow = taskFlows.find(
-        (flow) => flow._id === values.taskFlow
-      );
-      if (selectedFlow && selectedFlow.flows && selectedFlow.flows.length > 0) {
-        // Get all assignees from the flow steps
-        const flowAssignees = selectedFlow.flows
-          .map((step) => normalizeId(step.assignee))
-          .filter(Boolean);
-        // Remove duplicates
-        const uniqueAssignees = Array.from(new Set(flowAssignees));
-
-        // Prefer teams prop (project members) for validation; fallback to project data
-        const projectMembersRaw =
-          (Array.isArray(teams) && teams.length > 0 && teams) ||
-          selectedProjectData?.teamMembers ||
-          selectedProjectData?.teams ||
-          [];
-        const projectMemberIds = projectMembersRaw
-          .map((m) => normalizeId(m))
-          .filter(Boolean);
-
-        const missingAssignees = projectMemberIds.length
-          ? uniqueAssignees.filter((id) => !projectMemberIds.includes(id))
-          : [];
-
-        if (missingAssignees.length > 0) {
-          setFieldValue("taskFlow", "");
-          const missingNames = selectedFlow.flows
-            .map((step) => step.assignee)
-            .filter((assignee) =>
-              missingAssignees.includes(normalizeId(assignee))
-            )
-            .map((assignee) => {
-              if (!assignee) return null;
-              if (typeof assignee === "string") return assignee;
-              return (
-                assignee.name ||
-                `${assignee.firstName || ""} ${assignee.lastName || ""}`.trim()
-              );
-            })
-            .filter(Boolean);
-          setMissingFlowAssignees(
-            missingNames.length > 0 ? missingNames : missingAssignees
-          );
-          setShowFlowAssigneeModal(true);
-        } else {
-          const mergedAssignees = Array.from(new Set([...(values.assignedTo || []), ...uniqueAssignees]));
-          if (mergedAssignees.length !== (values.assignedTo?.length || 0)) {
-            setFieldValue("assignedTo", mergedAssignees);
-          }
-          setFieldValue("requiresClientApproval", selectedFlow.flows.some(step => step.requiresClientApproval));
-          setFieldValue("sequentialSubtasks", true);
-          setFieldValue("requiresWorkLink", selectedFlow.flows.some(step => step.requiresWorkLink));
-          setFieldValue(
-            "requiresCampaignReport",
-            selectedFlow.flows.some(
-              (step) =>
-                step.requiresCampaignReport ||
-                String(step.taskName || "").toLowerCase() === "campaign"
-            )
-          );
-        }
-      }
+    const resolvedIds = resolvedStages
+      .map((stage) => stage.assignee?._id)
+      .filter(Boolean)
+      .map(String);
+    const mergedAssignees = Array.from(
+      new Set([...(values.assignedTo || []).map(String), ...resolvedIds])
+    );
+    if (mergedAssignees.length !== (values.assignedTo?.length || 0)) {
+      setFieldValue("assignedTo", mergedAssignees);
     }
-  }, [values.taskFlow, taskFlows, setFieldValue, selectedProjectData]);
+    setFieldValue("requiresClientApproval", selectedFlow.flows.some(step => step.requiresClientApproval));
+    setFieldValue("sequentialSubtasks", true);
+    setFieldValue("requiresWorkLink", selectedFlow.flows.some(step => step.requiresWorkLink));
+    setFieldValue(
+      "requiresCampaignReport",
+      selectedFlow.flows.some(
+        (step) =>
+          step.requiresCampaignReport ||
+          String(step.taskName || "").toLowerCase() === "campaign"
+      )
+    );
+  }, [values.taskFlow, taskFlows, resolvedStages, setFieldValue]);
+
+  // A new flow or project starts with a clean "pick someone" warning
+  useEffect(() => {
+    setFlowAssigneeBlocked(false);
+  }, [values.taskFlow, flowProjectId]);
 
   // ── Sync subtasks in Formik whenever flow or main dates change ──────────
   useEffect(() => {
@@ -1237,10 +1212,14 @@ const AddTask = ({
       return;
     }
 
+    // Wait for the flow's owners so the preview opens with people already filled in
+    if (values.taskFlow && isResolvingFlow) return;
+
     const isMasterChanged =
       values.taskFlow !== prevMasterValues.current.taskFlow ||
       values.startDate !== prevMasterValues.current.startDate ||
-      values.dueDate !== prevMasterValues.current.dueDate;
+      values.dueDate !== prevMasterValues.current.dueDate ||
+      flowProjectId !== (prevMasterValues.current.projectId ?? flowProjectId);
 
     if (isMasterChanged) {
       if (values.taskFlow && values.startDate && values.dueDate && taskFlows.length > 0) {
@@ -1275,7 +1254,17 @@ const AddTask = ({
             return {
             taskName: s.taskName,
             taskCategory: keepPreviousCategory || matchedCategory?._id || "",
-            assignee: typeof s.assignee === 'object' && s.assignee !== null ? s.assignee._id : s.assignee,
+            // Resolved from the project's team; only a flow with no resolution at all
+            // (the lookup failed) falls back to the person saved on the stage
+            assignee:
+              resolvedStages[idx]?.assignee?._id ||
+              (resolvedStages.length
+                ? ""
+                : typeof s.assignee === 'object' && s.assignee !== null ? s.assignee._id : s.assignee) ||
+              "",
+            assigneeSource: resolvedStages[idx]?.source || "",
+            role: selectedFlow.flows[idx].role || resolvedStages[idx]?.role || "",
+            candidateIds: (resolvedStages[idx]?.candidates || []).map((user) => String(user._id)),
             startDate: s.startDate.toISOString().split('T')[0],
             dueDate: s.dueDate.toISOString().split('T')[0],
             wasAdjusted: s.wasAdjusted,
@@ -1303,10 +1292,11 @@ const AddTask = ({
       prevMasterValues.current = {
         taskFlow: values.taskFlow,
         startDate: values.startDate,
-        dueDate: values.dueDate
+        dueDate: values.dueDate,
+        projectId: flowProjectId,
       };
     }
-  }, [isEdit, values.taskFlow, values.startDate, values.dueDate, values.taskCategory, taskFlows, taskCategories, weeklyOffs, holidays, setFieldValue]);
+  }, [isEdit, values.taskFlow, values.startDate, values.dueDate, values.taskCategory, taskFlows, taskCategories, weeklyOffs, holidays, setFieldValue, resolvedStages, isResolvingFlow, flowProjectId]);
 
   // Handle manual date overrides for subtasks
   const handleSubtaskDateChange = (index, field, newValue) => {
@@ -1361,6 +1351,7 @@ const AddTask = ({
   const handleSubtaskChange = (index, field, value) => {
     const updated = [...(values.subtasks || [])];
     updated[index][field] = value;
+    if (field === "assignee") updated[index].assigneeSource = "manual";
     setFieldValue("subtasks", updated);
   };
 
@@ -1606,6 +1597,15 @@ const AddTask = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestedTitle, isEdit]);
   const taskFlowOptions = getTaskFlowOptions();
+
+  // Flow steps with nobody on them yet: from the subtask preview once it exists,
+  // otherwise from what the flow resolved to (dates not set yet)
+  const flowSubtasks = (values.subtasks || []).filter((step) => step?.isFromFlow);
+  const unassignedFlowSteps = !values.taskFlow || isEdit
+    ? []
+    : flowSubtasks.length > 0
+      ? flowSubtasks.filter((step) => !(step.assignee?._id || step.assignee))
+      : resolvedStages.filter((stage) => !stage.assignee);
   const extraTaskWorkTypeOptions = getExtraTaskWorkTypeOptions();
 
   // Check if "Other" project is selected or no project is selected
@@ -2008,6 +2008,39 @@ const AddTask = ({
                       defaultValue=""
                       disabled={!isFormEnabled}
                     />
+                    {unassignedFlowSteps.length > 0 && (
+                      <div
+                        className={`flex items-start gap-2 rounded-xl border px-3 py-2.5 ${
+                          flowAssigneeBlocked
+                            ? "border-red-200 bg-red-50"
+                            : "border-amber-200 bg-amber-50"
+                        }`}
+                      >
+                        <FiAlertTriangle
+                          className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
+                            flowAssigneeBlocked ? "text-red-500" : "text-amber-500"
+                          }`}
+                        />
+                        <div className={`text-xs ${flowAssigneeBlocked ? "text-red-800" : "text-amber-800"}`}>
+                          <p className="font-semibold">
+                            {flowAssigneeBlocked
+                              ? "Choose someone for these steps before saving:"
+                              : "Nobody on this project's team fits these steps:"}
+                          </p>
+                          <ul className="mt-0.5 list-disc pl-4">
+                            {unassignedFlowSteps.map((step, i) => (
+                              <li key={i}>
+                                {step.taskName}
+                                {step.role ? ` (needs a ${step.role})` : ""}
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="mt-1">
+                            Pick someone for each on the right, or add a {unassignedFlowSteps.find((step) => step.role)?.role || "matching"} to the project team.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     {values.taskFlow && (!values.startDate || !values.dueDate) && (
                       <div className="bg-blue-50 px-3 py-2.5 text-xs text-blue-500 italic flex items-center gap-1.5 border border-blue-200 rounded-xl">
                         <FiClock className="w-3 h-3" />
@@ -2355,14 +2388,38 @@ const AddTask = ({
                             <select
                               value={currentAssigneeId || ""}
                               onChange={(e) => handleSubtaskChange(index, "assignee", e.target.value)}
-                              className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-700 outline-none"
+                              className={`rounded-lg border bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-700 outline-none ${
+                                step.isFromFlow && !currentAssigneeId
+                                  ? flowAssigneeBlocked ? "border-red-300" : "border-amber-300"
+                                  : "border-gray-200"
+                              }`}
                             >
                               <option value="">Assign to...</option>
-                              {assigneeOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
+                              {(() => {
+                                const candidates = new Set((step.candidateIds || []).map(String));
+                                const preferred = assigneeOptions.filter((opt) => candidates.has(String(opt.value)));
+                                if (preferred.length === 0) {
+                                  return assigneeOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                  ));
+                                }
+                                return (
+                                  <>
+                                    <optgroup label={step.role ? `${step.role} on this project` : "Suggested"}>
+                                      {preferred.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                      ))}
+                                    </optgroup>
+                                    <optgroup label="Everyone else">
+                                      {assigneeOptions
+                                        .filter((opt) => !candidates.has(String(opt.value)))
+                                        .map((opt) => (
+                                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </optgroup>
+                                  </>
+                                );
+                              })()}
                             </select>
                             <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1">
                               <input
@@ -2380,6 +2437,24 @@ const AddTask = ({
                               />
                             </div>
                           </div>
+
+                          {step.isFromFlow && (
+                            <p
+                              className={`mt-1.5 text-[11px] ${
+                                currentAssigneeId ? "text-gray-400" : flowAssigneeBlocked ? "font-semibold text-red-600" : "text-amber-600"
+                              }`}
+                            >
+                              {!currentAssigneeId
+                                ? `No ${step.role || "matching person"} on this project's team. Choose someone.`
+                                : step.assigneeSource === "manual"
+                                  ? "Chosen by you"
+                                  : step.assigneeSource === "pinned"
+                                    ? "Preferred person for this step"
+                                    : step.assigneeSource === "role"
+                                      ? `Auto-assigned: least busy ${step.role || "team member"}`
+                                      : ""}
+                            </p>
+                          )}
 
                           <div className="mt-3 flex flex-wrap gap-2">
                             <label className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600">
@@ -2572,41 +2647,6 @@ const AddTask = ({
               className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
             >
               Save anyway
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Task Flow Assignee Validation Modal */}
-      <Modal
-        isOpen={showFlowAssigneeModal}
-        onClose={() => setShowFlowAssigneeModal(false)}
-        title="Task Flow Members Not in Project"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-700">
-            One or more users in this task flow are not part of the selected
-            project. Please add them to the project or choose another task flow.
-          </p>
-          {missingFlowAssignees.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm font-medium text-red-800 mb-1">
-                Missing from project:
-              </p>
-              <ul className="list-disc pl-5 space-y-1 text-sm text-red-700">
-                {missingFlowAssignees.map((name, idx) => (
-                  <li key={idx}>{name || "Unknown user"}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowFlowAssigneeModal(false)}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Got it
             </button>
           </div>
         </div>

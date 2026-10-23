@@ -8,6 +8,7 @@ export const DraggableTask = ({
   projectId,
   index,
   canDrag,
+  monthKey,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -56,6 +57,7 @@ export const DraggableTask = ({
         onClick={() => (onClick ? onClick(task) : null)}
         projectId={projectId}
         index={index}
+        monthKey={monthKey}
       />
     </div>
   );
@@ -259,6 +261,7 @@ export const KanbanTab = ({
   canUserDragTask,
   handleNavigateToTask,
   currentProject,
+  selectedMonth,
 }) => {
   return (
     <div
@@ -290,6 +293,7 @@ export const KanbanTab = ({
                   projectId={currentProject?._id}
                   index={index}
                   canDrag={canUserDragTask(task)}
+                  monthKey={selectedMonth}
                 />
               ))
             ) : (

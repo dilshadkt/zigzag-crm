@@ -8,6 +8,7 @@ const DraggableTask = ({
     projectId,
     index,
     canDrag,
+    monthKey,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -56,6 +57,7 @@ const DraggableTask = ({
                 onClick={() => (onClick ? onClick(task) : null)}
                 projectId={projectId}
                 index={index}
+                monthKey={monthKey}
             />
         </div>
     );
