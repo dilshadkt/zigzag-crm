@@ -17,14 +17,22 @@ export const useTaskData = (allTasksData, todayTasksData, filter) => {
     // Filter out subtasks that are on-review
     const itemsWithoutOnReviewSubtasks = rawItems.filter((item) => {
       const isSubTask = Boolean(item.parentTask || item.isSubTask);
-      if (isSubTask && item.status === "on-review") {
+      if (isSubTask && item.status === "on-review" && filter !== "monthly-rework") {
         return false;
       }
       return true;
     });
 
-    setFilteredTasks(itemsWithoutOnReviewSubtasks);
-  }, [allTasksData, todayTasksData, isTodayFilter]);
+    // Hide completed tasks/subtasks only in the unfiltered "Total Tasks" view;
+    // specific filters (completed, monthly-rework, ...) match their dashboard counts
+    const visibleItems = filter
+      ? itemsWithoutOnReviewSubtasks
+      : itemsWithoutOnReviewSubtasks.filter(
+          (item) => item.status !== "completed"
+        );
+
+    setFilteredTasks(visibleItems);
+  }, [allTasksData, todayTasksData, isTodayFilter, filter]);
 
   const getFilterOptions = () => {
     if (isTodayFilter && todayTasksData?.filterOptions) {

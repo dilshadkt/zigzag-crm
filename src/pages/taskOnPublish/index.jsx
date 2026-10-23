@@ -96,8 +96,8 @@ const TaskOnPublish = () => {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [showSubtasks, setShowSubtasks] = useState(() => {
-    const saved = localStorage.getItem("task_on_publish_showSubtasks_v2");
-    return saved !== null ? JSON.parse(saved) : false;
+    const saved = localStorage.getItem("task_on_publish_showSubtasks_v3");
+    return saved !== null ? JSON.parse(saved) : true;
   });
 
   useEffect(() => {
@@ -106,7 +106,7 @@ const TaskOnPublish = () => {
 
   useEffect(() => {
     localStorage.setItem(
-      "task_on_publish_showSubtasks_v2",
+      "task_on_publish_showSubtasks_v3",
       JSON.stringify(showSubtasks)
     );
   }, [showSubtasks]);
