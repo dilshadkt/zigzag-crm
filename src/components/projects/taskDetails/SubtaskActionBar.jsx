@@ -142,6 +142,58 @@ const SubtaskActionBar = ({
   const handlePause = () => changeStatus("paused");
   const handleResume = () => changeStatus("in-progress");
 
+  const needsCampaignReport = () => {
+    if (!isCampaignReportRequired) return false;
+    const lastRework = subtask.reworkHistory?.[subtask.reworkHistory.length - 1];
+    const submittedAt = subtask.campaignReport?.submittedAt
+      ? new Date(subtask.campaignReport.submittedAt)
+      : null;
+    return (
+      !submittedAt ||
+      Boolean(lastRework?.changedAt && submittedAt < new Date(lastRework.changedAt))
+    );
+  };
+
+  const needsWorkLink = () => {
+    if (!isWorkLinkRequired) return false;
+    const hasLink = getCurrentLink().trim() !== "";
+    // If reworked, the link must have been updated after the rework
+    let needsNewLink = false;
+    if (subtask.reworkHistory?.length > 0) {
+      const lastRework = subtask.reworkHistory[subtask.reworkHistory.length - 1];
+      const lastReworkDate = lastRework?.changedAt ? new Date(lastRework.changedAt) : new Date(0);
+      if (subtask.workLinkHistory?.length > 0) {
+        const lastLink = subtask.workLinkHistory[subtask.workLinkHistory.length - 1];
+        const lastLinkDate = lastLink?.submittedAt ? new Date(lastLink.submittedAt) : new Date(0);
+        needsNewLink = lastReworkDate > lastLinkDate;
+      } else {
+        needsNewLink = true;
+      }
+    }
+    return !hasLink || needsNewLink;
+  };
+
+  // Submit-for-review steps run in this order: campaign report, work link,
+  // category details, then the status change. `afterStep` says which step just
+  // finished so it is not asked for again.
+  const continueReviewFlow = (afterStep = null) => {
+    setPendingAction("on-review");
+    if (!afterStep && needsCampaignReport()) {
+      setIsCampaignReportModalOpen(true);
+      return;
+    }
+    if (afterStep !== "link" && needsWorkLink()) {
+      setIsWorkLinkModalOpen(true);
+      return;
+    }
+    if (needsCategoryFieldsForReview(subtask)) {
+      setIsCategoryFieldsModalOpen(true);
+      return;
+    }
+    setPendingAction(null);
+    changeStatus("on-review");
+  };
+
   const handleSubmitForReview = () => {
     // A shoot session collects its footage link and shot tasks first
     if (isShootSessionSubtask(subtask)) {
@@ -149,49 +201,7 @@ const SubtaskActionBar = ({
       setIsShootModalOpen(true);
       return;
     }
-    // Check work link requirement before submitting
-    if (isWorkLinkRequired) {
-      const hasLink = getCurrentLink().trim() !== "";
-      // If reworked, check if link was updated after rework
-      let needsNewLink = false;
-      if (subtask.reworkHistory?.length > 0) {
-        const lastRework = subtask.reworkHistory[subtask.reworkHistory.length - 1];
-        const lastReworkDate = lastRework?.changedAt ? new Date(lastRework.changedAt) : new Date(0);
-        if (subtask.workLinkHistory?.length > 0) {
-          const lastLink = subtask.workLinkHistory[subtask.workLinkHistory.length - 1];
-          const lastLinkDate = lastLink?.submittedAt ? new Date(lastLink.submittedAt) : new Date(0);
-          needsNewLink = lastReworkDate > lastLinkDate;
-        } else {
-          needsNewLink = true;
-        }
-      }
-
-      if (!hasLink || needsNewLink) {
-        setPendingAction("on-review");
-        setIsWorkLinkModalOpen(true);
-        return;
-      }
-    }
-    if (isCampaignReportRequired) {
-      const lastRework = subtask.reworkHistory?.[subtask.reworkHistory.length - 1];
-      const submittedAt = subtask.campaignReport?.submittedAt
-        ? new Date(subtask.campaignReport.submittedAt)
-        : null;
-      const needsReport =
-        !submittedAt ||
-        (lastRework?.changedAt && submittedAt < new Date(lastRework.changedAt));
-      if (needsReport) {
-        setPendingAction("on-review");
-        setIsCampaignReportModalOpen(true);
-        return;
-      }
-    }
-    if (needsCategoryFieldsForReview(subtask)) {
-      setPendingAction("on-review");
-      setIsCategoryFieldsModalOpen(true);
-      return;
-    }
-    changeStatus("on-review");
+    continueReviewFlow();
   };
 
   // Reviewer actions
@@ -265,10 +275,18 @@ const SubtaskActionBar = ({
 
   const handleCampaignReportSubmit = async (payload) => {
     try {
-      const result = await submitCampaignReport.mutateAsync(payload);
+      // When a link or category details are still needed, keep the server from
+      // moving the work to review so those steps are not skipped
+      const moreStepsNeeded =
+        Boolean(pendingAction) &&
+        (needsWorkLink() || needsCategoryFieldsForReview(subtask));
+      const result = await submitCampaignReport.mutateAsync(
+        moreStepsNeeded ? { ...payload, deferReview: true } : payload
+      );
       setIsCampaignReportModalOpen(false);
-      if (needsCategoryFieldsForReview(subtask)) {
-        setIsCategoryFieldsModalOpen(true);
+      if (moreStepsNeeded) {
+        toast.success("Campaign report saved");
+        continueReviewFlow("report-done");
         return;
       }
       if (pendingAction && !result?.sentToReview) {
