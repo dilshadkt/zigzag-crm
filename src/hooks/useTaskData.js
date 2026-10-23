@@ -14,10 +14,11 @@ export const useTaskData = (allTasksData, todayTasksData, filter) => {
       rawItems = allTasksData?.filteredItems || [];
     }
 
-    // Filter out subtasks that are on-review
+    // Filter out on-review subtasks only in the unfiltered "Total Tasks" view.
+    // Specific filters (overdue, monthly-rework, ...) match dashboard counts that include them.
     const itemsWithoutOnReviewSubtasks = rawItems.filter((item) => {
       const isSubTask = Boolean(item.parentTask || item.isSubTask);
-      if (isSubTask && item.status === "on-review" && filter !== "monthly-rework") {
+      if (isSubTask && item.status === "on-review" && !filter) {
         return false;
       }
       return true;
