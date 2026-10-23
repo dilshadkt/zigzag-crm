@@ -18,7 +18,7 @@ export const useTaskData = (allTasksData, todayTasksData, filter) => {
     // Specific filters (overdue, monthly-rework, ...) match dashboard counts that include them.
     const itemsWithoutOnReviewSubtasks = rawItems.filter((item) => {
       const isSubTask = Boolean(item.parentTask || item.isSubTask);
-      if (isSubTask && item.status === "on-review" && !filter) {
+      if (isSubTask && item.status === "on-review" && (!filter || filter === "today")) {
         return false;
       }
       return true;
