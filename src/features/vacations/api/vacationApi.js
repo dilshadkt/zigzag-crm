@@ -1,9 +1,10 @@
 import apiClient from "../../../api/client";
 
-export const getEmployeeVacations = (employeeId, month, year) => {
+export const getEmployeeVacations = (employeeId, month, year, options = {}) => {
   const queryParams = new URLSearchParams();
   if (month) queryParams.append("month", month);
   if (year) queryParams.append("year", year);
+  if (options.includePending) queryParams.append("includePending", "true");
 
   return apiClient
     .get(`/vacations/employee/${employeeId}?${queryParams.toString()}`)

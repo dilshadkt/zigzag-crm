@@ -53,6 +53,8 @@ const VacationCard = ({
   currentUserId,
   onEditMyRequest,
   onCancelMyRequest,
+  month,
+  year,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(false);
@@ -62,8 +64,12 @@ const VacationCard = ({
 
   const employeeId = item.employee?.id || item.employee?._id;
   const isOwnCard = !!currentUserId && String(employeeId) === String(currentUserId);
+  // Expanding a card lists the same month as the board, not the person's whole history
   const { data: extraData, isLoading: isLoadingExtra } = useGetEmployeeVacations(
-    showAllRequests ? employeeId : null
+    showAllRequests ? employeeId : null,
+    month,
+    year,
+    { includePending: true }
   );
 
   const vacationRequests = showAllRequests && extraData?.vacations

@@ -304,6 +304,8 @@ const Vacations = () => {
               currentUserId={user?._id || user?.id}
               onEditMyRequest={handleEditMyRequest}
               onCancelMyRequest={handleCancelMyRequest}
+              month={month}
+              year={year}
             />
           ))}
 

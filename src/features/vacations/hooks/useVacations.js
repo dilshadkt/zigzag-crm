@@ -13,10 +13,10 @@ import {
   notifyReporterApi,
 } from "../api/vacationApi";
 
-export const useGetEmployeeVacations = (employeeId, month, year) => {
+export const useGetEmployeeVacations = (employeeId, month, year, options = {}) => {
   return useQuery({
-    queryKey: ["employeeVacations", employeeId, month, year],
-    queryFn: () => getEmployeeVacations(employeeId, month, year),
+    queryKey: ["employeeVacations", employeeId, month, year, !!options.includePending],
+    queryFn: () => getEmployeeVacations(employeeId, month, year, options),
     enabled: !!employeeId,
   });
 };
