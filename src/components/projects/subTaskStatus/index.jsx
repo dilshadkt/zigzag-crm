@@ -3,6 +3,8 @@ import { useUpdateSubTaskById, useCreateReworkEvent } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 import ReworkReasonModal from "../../shared/reworkReasonModal";
 import WorkLinkModal from "../../shared/workLinkModal";
+import CampaignReportModal from "../../shared/campaignReportModal";
+import { useSubmitSubTaskCampaignReport } from "../../../api/campaignDetails";
 import CategoryFieldsModal from "../../shared/CategoryFieldsModal";
 import ShootSubmitModal from "../../shared/ShootSubmitModal";
 import {
@@ -29,6 +31,7 @@ const SubTaskStatusButton = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isReworkModalOpen, setIsReworkModalOpen] = useState(false);
   const [isWorkLinkModalOpen, setIsWorkLinkModalOpen] = useState(false);
+  const [isCampaignReportModalOpen, setIsCampaignReportModalOpen] = useState(false);
   const [isCategoryFieldsModalOpen, setIsCategoryFieldsModalOpen] = useState(false);
   const [isShootModalOpen, setIsShootModalOpen] = useState(false);
   const [pendingShoot, setPendingShoot] = useState(null);
@@ -36,6 +39,7 @@ const SubTaskStatusButton = ({
   const [reworkSource, setReworkSource] = useState("internal");
   const updateSubTaskMutation = useUpdateSubTaskById(subTask._id, parentTaskId);
   const reworkMutation = useCreateReworkEvent(parentTaskId);
+  const submitCampaignReport = useSubmitSubTaskCampaignReport(subTask._id);
   const { isCompany } = useAuth();
 
   const getCurrentLink = (subt) => {
@@ -118,6 +122,29 @@ const SubTaskStatusButton = ({
     flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() && flow.requiresWorkLink
   ));
 
+  // Campaign work needs a report before it can go to review or completion.
+  // The report is missing, or stale when it predates the last rework.
+  const isCampaignReportRequired =
+    subTask.requiresCampaignReport ||
+    parentTaskFlow?.flows?.some(
+      (flow) =>
+        flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() &&
+        (flow.requiresCampaignReport ||
+          String(flow.taskName || "").toLowerCase() === "campaign")
+    );
+
+  const needsCampaignReport = () => {
+    if (!isCampaignReportRequired) return false;
+    const lastRework = subTask.reworkHistory?.[subTask.reworkHistory.length - 1];
+    const submittedAt = subTask.campaignReport?.submittedAt
+      ? new Date(subTask.campaignReport.submittedAt)
+      : null;
+    return (
+      !submittedAt ||
+      Boolean(lastRework?.changedAt && submittedAt < new Date(lastRework.changedAt))
+    );
+  };
+
   // Check if client approval is required
   const isClientApprovalRequired = subTask.requiresClientApproval || (parentTaskFlow?.flows?.some(flow => 
     flow.taskName?.toLowerCase() === subTask.title?.toLowerCase() && flow.requiresClientApproval
@@ -146,7 +173,8 @@ const SubTaskStatusButton = ({
   const waitingForClient =
     subTask.status === "approved" && isClientApprovalRequired;
 
-  const handleStatusChange = async (newStatus) => {
+  // reportDone: the campaign report step already ran, so go on to the next step
+  const handleStatusChange = async (newStatus, reportDone = false) => {
     if (!canEdit || isLocked) return;
 
     if (newStatus === "re-work") {
@@ -157,6 +185,18 @@ const SubTaskStatusButton = ({
       );
       setPendingStatus(newStatus);
       setIsReworkModalOpen(true);
+      setIsOpen(false);
+      return;
+    }
+
+    // Campaign report comes first, before the work link
+    if (
+      !reportDone &&
+      (newStatus === "on-review" || newStatus === "completed") &&
+      needsCampaignReport()
+    ) {
+      setPendingStatus(newStatus);
+      setIsCampaignReportModalOpen(true);
       setIsOpen(false);
       return;
     }
@@ -254,6 +294,21 @@ const SubTaskStatusButton = ({
     } catch (error) {
       console.error("Error updating subtask status with rework:", error);
       toast.error(error.response?.data?.message || "Failed to send to rework");
+    }
+  };
+
+  const handleCampaignReportSubmit = async (payload) => {
+    try {
+      // deferReview: the server must not move the work to review itself, so the
+      // work link and category steps that follow are not skipped
+      await submitCampaignReport.mutateAsync({ ...payload, deferReview: true });
+      setIsCampaignReportModalOpen(false);
+      toast.success("Campaign report saved");
+      if (pendingStatus) {
+        await handleStatusChange(pendingStatus, true);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit campaign report");
     }
   };
 
@@ -413,6 +468,17 @@ const SubTaskStatusButton = ({
         originSubTask={subTask}
         siblingSubtasks={siblingSubtasks}
         parentTaskId={parentTaskId}
+      />
+
+      <CampaignReportModal
+        isOpen={isCampaignReportModalOpen}
+        onClose={() => {
+          setIsCampaignReportModalOpen(false);
+          setPendingStatus(null);
+        }}
+        onSubmit={handleCampaignReportSubmit}
+        isLoading={submitCampaignReport.isPending}
+        initialReport={subTask.campaignReport}
       />
 
       <WorkLinkModal
