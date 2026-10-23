@@ -637,6 +637,35 @@ const ConflictDetails = ({ conflicts, title, emptyText, weeklyOffs = [], holiday
   );
 };
 
+const MONTHS_AHEAD = 12;
+
+const monthKeyOf = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+const formatMonthKey = (key) =>
+  new Date(`${key}-01T00:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+// This month and the next MONTHS_AHEAD - 1. A task can't be started in a month
+// that has already gone, so earlier months are never offered; `current` (the
+// month the modal opened on) is kept only so an already-selected past month
+// still has something to show.
+const getUpcomingMonthOptions = (current) => {
+  const now = new Date();
+  const options = Array.from({ length: MONTHS_AHEAD }, (_, index) => {
+    const value = monthKeyOf(new Date(now.getFullYear(), now.getMonth() + index, 1));
+    return { value, label: formatMonthKey(value) };
+  });
+  if (current && !options.some((option) => option.value === current)) {
+    if (current < options[0].value) {
+      options.unshift({ value: current, label: formatMonthKey(current) });
+    }
+  }
+  return options;
+};
+
 const AddTask = ({
   isOpen,
   setShowModalTask,
@@ -653,6 +682,14 @@ const AddTask = ({
 }) => {
   const { user } = useAuth();
   const companyId = user?.company;
+
+  // Month the new task belongs to. Starts as the month the page is showing and
+  // can be moved to a later one from the header; editing keeps the task's month.
+  const [activeMonth, setActiveMonth] = useState(selectedMonth || "");
+  useEffect(() => {
+    if (isOpen) setActiveMonth(selectedMonth || "");
+  }, [isOpen, selectedMonth]);
+
   // Fetch task flows for the company
   const { data: taskFlowsData } = useGetTaskFlows(companyId);
   const taskFlows = taskFlowsData || [];
@@ -903,13 +940,57 @@ const AddTask = ({
       selectedProjectId === null
     );
 
-  // Set default taskMonth if not provided
-  useEffect(() => {
-    // if (selectedMonth && !values.taskMonth) {
-    if (selectedMonth) {
-      setFieldValue("taskMonth", selectedMonth);
+  // Project pages only load the month they are showing, so when the header
+  // moves the task to another month, load the project's full work details.
+  const { data: contextProjectData } = useProjectDetails(
+    projectData?._id || null,
+    {
+      enabled:
+        !isEdit &&
+        !!projectData?._id &&
+        !selectedProjectId &&
+        !!activeMonth &&
+        activeMonth !== selectedMonth,
     }
-  }, [selectedMonth, values.taskMonth, setFieldValue]);
+  );
+
+  // Work details (the month's quota per work type) for the month being added to.
+  const resolveMonthWorkDetails = () => {
+    if (
+      selectedProjectData &&
+      selectedProjectId &&
+      selectedProjectId !== "other"
+    ) {
+      return selectedProjectData.workDetails?.find(
+        (wd) => wd.month === activeMonth
+      );
+    }
+    if (!activeMonth || activeMonth === selectedMonth) {
+      return monthWorkDetails || projectData?.workDetails;
+    }
+    const source = contextProjectData?.workDetails || projectData?.workDetails;
+    return Array.isArray(source)
+      ? source.find((wd) => wd.month === activeMonth)
+      : null;
+  };
+
+  // Keep taskMonth on the form in step with the month picked in the header
+  useEffect(() => {
+    if (activeMonth) {
+      setFieldValue("taskMonth", activeMonth);
+    }
+  }, [activeMonth, values.taskMonth, setFieldValue]);
+
+  const handleMonthChange = (event) => {
+    const next = event.target.value;
+    if (!next || next === activeMonth) return;
+    setActiveMonth(next);
+    // Work types and their quotas belong to a month, so the earlier pick may
+    // not exist (or have anything left) in the new one.
+    setFieldValue("taskGroup", "");
+    setFieldValue("extraTaskWorkType", "");
+    setFieldValue("taskCategory", "");
+  };
 
   // Update selectedProjectId when values.project changes
   useEffect(() => {
@@ -928,18 +1009,7 @@ const AddTask = ({
   // Work type pick fills the Master category used for points — no second dropdown
   useEffect(() => {
     if (isEdit) return;
-    let workDetails = null;
-    if (
-      selectedProjectData &&
-      selectedProjectId &&
-      selectedProjectId !== "other"
-    ) {
-      workDetails = selectedProjectData.workDetails?.find(
-        (wd) => wd.month === selectedMonth
-      );
-    } else {
-      workDetails = monthWorkDetails || projectData?.workDetails;
-    }
+    const workDetails = resolveMonthWorkDetails();
 
     const nextId = resolveTaskCategoryId({
       taskGroup: values.taskGroup,
@@ -957,6 +1027,8 @@ const AddTask = ({
     selectedProjectData,
     selectedProjectId,
     selectedMonth,
+    activeMonth,
+    contextProjectData,
     monthWorkDetails,
     projectData,
     taskCategories,
@@ -976,18 +1048,7 @@ const AddTask = ({
       return;
     }
 
-    let workDetails = null;
-    if (
-      selectedProjectData &&
-      selectedProjectId &&
-      selectedProjectId !== "other"
-    ) {
-      workDetails = selectedProjectData.workDetails?.find(
-        (wd) => wd.month === selectedMonth
-      );
-    } else {
-      workDetails = monthWorkDetails || projectData?.workDetails;
-    }
+    const workDetails = resolveMonthWorkDetails();
 
     const categoryId = resolveTaskCategoryId({
       taskGroup: values.taskGroup,
@@ -1013,6 +1074,8 @@ const AddTask = ({
     selectedProjectData,
     selectedProjectId,
     selectedMonth,
+    activeMonth,
+    contextProjectData,
     monthWorkDetails,
     projectData,
     taskCategories,
@@ -1407,23 +1470,7 @@ const AddTask = ({
 
   // Get task group options from selected project's work details
   const getTaskGroupOptions = () => {
-    // Use selected project data if available, otherwise fall back to monthWorkDetails or projectData
-    let workDetails = null;
-
-    if (
-      selectedProjectData &&
-      selectedProjectId &&
-      selectedProjectId !== "other"
-    ) {
-      // Find the work details for the selected month from the selected project
-      const projectMonthWorkDetails = selectedProjectData.workDetails?.find(
-        (wd) => wd.month === selectedMonth
-      );
-      workDetails = projectMonthWorkDetails;
-    } else {
-      // Fallback to provided work details
-      workDetails = monthWorkDetails || projectData?.workDetails;
-    }
+    const workDetails = resolveMonthWorkDetails();
 
     if (!workDetails) {
       return [
@@ -1670,14 +1717,26 @@ const AddTask = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {selectedMonth && (
-              <span className="hidden rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 sm:inline-flex">
-                {new Date(`${selectedMonth}-01`).toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
-            )}
+            {activeMonth &&
+              (isEdit ? (
+                <span className="hidden rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 sm:inline-flex">
+                  {formatMonthKey(activeMonth)}
+                </span>
+              ) : (
+                <select
+                  aria-label="Task month"
+                  value={activeMonth}
+                  onChange={handleMonthChange}
+                  disabled={isLoading}
+                  className="hidden cursor-pointer rounded-full border-0 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 outline-none focus:ring-2 focus:ring-blue-200 sm:inline-flex"
+                >
+                  {getUpcomingMonthOptions(selectedMonth).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ))}
             <PrimaryButton
               icon="/icons/cancel.svg"
               disable={isLoading}
@@ -1732,7 +1791,7 @@ const AddTask = ({
               <input
                 type="hidden"
                 name="taskMonth"
-                value={selectedMonth || ""}
+                value={activeMonth || ""}
               />
 
               {/* Show task group and task flow if:
