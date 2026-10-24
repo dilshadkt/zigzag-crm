@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import { MdEdit, MdCheck, MdClose, MdDelete } from "react-icons/md";
 import { useGetAllEmployees } from "../../../api/hooks";
+import SearchableSelect from "../../pages/campaigns/SearchableSelect";
 import RecurrenceFields from "../../shared/RecurrenceFields";
 import {
     describeSchedule,
@@ -20,7 +21,7 @@ const scheduleOf = (task) => ({
 });
 
 const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
-    const { data: employeesData } = useGetAllEmployees();
+    const { data: employeesData } = useGetAllEmployees(true, { view: "select" });
     const [newTaskTitle, setNewTaskTitle] = useState("");
     const [newTaskAssignedTo, setNewTaskAssignedTo] = useState("");
     const [newTaskSchedule, setNewTaskSchedule] = useState(EVERY_DAY);
@@ -30,6 +31,13 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
     const [editingSchedule, setEditingSchedule] = useState(EVERY_DAY);
 
     const employees = employeesData?.employees || [];
+    const assigneeOptions = [
+        { value: "", label: "Unassigned" },
+        ...employees.map((emp) => ({
+            value: emp._id,
+            label: emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim(),
+        })),
+    ];
 
     const handleAddStart = () => {
         if (!newTaskTitle.trim() || !isScheduleValid(newTaskSchedule)) return;
@@ -107,18 +115,14 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                     placeholder="Add a checklist item (e.g. Check DMs, Weekly report)..."
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <select
-                    value={newTaskAssignedTo}
-                    onChange={(e) => setNewTaskAssignedTo(e.target.value)}
-                    className="sm:w-48 bg-white px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
-                >
-                    <option value="">Unassigned</option>
-                    {employees.map((emp) => (
-                        <option key={emp._id} value={emp._id}>
-                            {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
-                        </option>
-                    ))}
-                </select>
+                <div className="sm:w-56">
+                    <SearchableSelect
+                        value={newTaskAssignedTo}
+                        onChange={(e) => setNewTaskAssignedTo(e.target.value)}
+                        options={assigneeOptions}
+                        placeholder="Unassigned"
+                    />
+                </div>
                 <PrimaryButton
                     title="Add Task"
                     onclick={handleAddStart}
@@ -182,18 +186,14 @@ const DailyChecklistForm = ({ values, setFieldValue, errors, touched }) => {
                                                     autoFocus
                                                     className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                 />
-                                                <select
-                                                    value={editingAssignedTo}
-                                                    onChange={(e) => setEditingAssignedTo(e.target.value)}
-                                                    className="sm:w-40 bg-white px-2 py-1 border border-gray-300 text-gray-700 text-xs rounded focus:ring-1 focus:ring-blue-500 focus:outline-none cursor-pointer"
-                                                >
-                                                    <option value="">Unassigned</option>
-                                                    {employees.map((emp) => (
-                                                        <option key={emp._id} value={emp._id}>
-                                                            {emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim()}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                <div className="sm:w-52">
+                                                    <SearchableSelect
+                                                        value={editingAssignedTo}
+                                                        onChange={(e) => setEditingAssignedTo(e.target.value)}
+                                                        options={assigneeOptions}
+                                                        placeholder="Unassigned"
+                                                    />
+                                                </div>
                                             </div>
                                             <RecurrenceFields value={editingSchedule} onChange={setEditingSchedule} />
                                         </div>
