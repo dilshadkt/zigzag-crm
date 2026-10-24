@@ -57,7 +57,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
   const taskMonthKey = taskDetails?.taskMonth;
   const outsideMonthLabel =
     taskMonthKey && dueMonthKey && dueMonthKey !== taskMonthKey
-      ? `${dueMonthKey > taskMonthKey ? "Next month" : "Earlier month"} · due ${formatMonthKeyShort(dueMonthKey)}`
+      ? `Due ${formatMonthKeyShort(dueMonthKey)} · ${dueMonthKey > taskMonthKey ? "after" : "before"} task month`
       : null;
   const navigate = useNavigate();
   const {
@@ -234,6 +234,22 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
           )}
         </div>
         <div className="gap-y-3 mt-1 flex flex-col mx-3">
+          {taskMonthKey && (
+            <div className="flex flex-col gap-y-1">
+              <span className="text-sm text-[#91929E]">Task Month</span>
+              <span className="text-sm font-semibold text-gray-800">
+                {formatMonthKeyShort(taskMonthKey)}
+              </span>
+              {outsideMonthLabel && (
+                <span
+                  className="inline-flex w-fit items-center rounded-full bg-fuchsia-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                  title={`Belongs to ${formatMonthKeyShort(taskMonthKey)}, but due ${formatDate(taskDetails?.dueDate)}`}
+                >
+                  {outsideMonthLabel}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-y-1">
             <span className="text-sm text-[#91929E]">Dead Line</span>
             <div className="flex flex-col gap-y-1">
@@ -257,14 +273,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
                   {formatDate(taskDetails?.dueDate)}
                 </span>
               </div>
-              {outsideMonthLabel && (
-                <span
-                  className="inline-flex w-fit items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
-                  title={`Filed under ${formatMonthKeyShort(taskDetails.taskMonth)}, but due ${formatDate(taskDetails?.dueDate)}`}
-                >
-                  {outsideMonthLabel}
-                </span>
-              )}
               {taskDetails?.rescheduleCount > 0 && (
                 <span className="text-xs font-semibold text-red-600">
                   Rescheduled: +{taskDetails.rescheduleCount}
