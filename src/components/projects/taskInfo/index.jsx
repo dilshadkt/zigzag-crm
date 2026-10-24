@@ -8,7 +8,7 @@ import {
   useDeleteTask,
 } from "../../../api/hooks";
 import Modal from "../../shared/modal";
-import { formatDate } from "../../../lib/dateUtils";
+import { formatDate, getMonthKey, formatMonthKeyShort } from "../../../lib/dateUtils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -51,6 +51,14 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const [showDueDateHistoryModal, setShowDueDateHistoryModal] = useState(false);
+
+  // Same rule as the Kanban cards: flag a task whose due date is outside the month it is filed under.
+  const dueMonthKey = getMonthKey(taskDetails?.dueDate);
+  const taskMonthKey = taskDetails?.taskMonth;
+  const outsideMonthLabel =
+    taskMonthKey && dueMonthKey && dueMonthKey !== taskMonthKey
+      ? `${dueMonthKey > taskMonthKey ? "Next month" : "Earlier month"} · due ${formatMonthKeyShort(dueMonthKey)}`
+      : null;
   const navigate = useNavigate();
   const {
     data: timeLogData,
@@ -249,6 +257,14 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
                   {formatDate(taskDetails?.dueDate)}
                 </span>
               </div>
+              {outsideMonthLabel && (
+                <span
+                  className="inline-flex w-fit items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                  title={`Filed under ${formatMonthKeyShort(taskDetails.taskMonth)}, but due ${formatDate(taskDetails?.dueDate)}`}
+                >
+                  {outsideMonthLabel}
+                </span>
+              )}
               {taskDetails?.rescheduleCount > 0 && (
                 <span className="text-xs font-semibold text-red-600">
                   Rescheduled: +{taskDetails.rescheduleCount}
