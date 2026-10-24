@@ -10,6 +10,7 @@ import {
 } from "../../../utils/calendarStyles";
 import { truncateText } from "../../../utils/textUtils";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
+import { getMonthKey, formatMonthKeyShort } from "../../../lib/dateUtils";
 
 const CalendarEventItem = ({ type, data, showExtraDetails = false }) => {
   const navigate = useNavigate();
@@ -147,6 +148,14 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
     ? 100 
     : (task.computedProgress || 0);
 
+  // Same rule as the Kanban cards: due date falls outside the month the task is filed under.
+  // Carried copies already have their own badge and a due date moved to today, so skip them.
+  const dueMonthKey = getMonthKey(task.dueDate);
+  const outsideMonthLabel =
+    !isCarriedTask && task.taskMonth && dueMonthKey && dueMonthKey !== task.taskMonth
+      ? `${dueMonthKey > task.taskMonth ? "Next month" : "Earlier month"} · filed ${formatMonthKeyShort(task.taskMonth)}`
+      : null;
+
   const isPublishPending = task.isPublishPending;
   const subtasksCount = task.subtasksCount || { total: 0, completed: 0 };
 
@@ -180,6 +189,8 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
         isBeingCarried
           ? ` - Also showing on ${formatDate(task.carriedToDate)}`
           : ""
+      }${
+        outsideMonthLabel ? ` - ${outsideMonthLabel}` : ""
       } - ${progress}% Completed`}
     >
       {/* Background segments for subtasks */}
@@ -301,6 +312,14 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
                 >
                   {truncateText(task.title, 8)}
                 </span>
+                {outsideMonthLabel && (
+                  <span
+                    className="shrink-0 self-center rounded-full bg-fuchsia-600 px-1.5 text-[9px] font-bold uppercase leading-tight text-white shadow-sm"
+                    title={outsideMonthLabel}
+                  >
+                    {new Date(`${task.taskMonth}-01T00:00:00`).toLocaleDateString("en-US", { month: "short" })}
+                  </span>
+                )}
                 {showExtraDetails && task?.parentTask && (
                   <span className="text-[10px] text-gray-500 font-medium capitalize bg-gray-200 px-1 rounded-sm flexCenter">
                     {task?.parentTask?.taskGroup}
