@@ -78,16 +78,11 @@ const CalendarDayContent = ({
   const carriedTasksCount = carriedTasks.length + carriedSubtasks.length;
   const hasCarriedTasks = isToday && carriedTasksCount > 0;
 
-  // For today with carried tasks: Show only 1 item to make room for carried badge and more button
-  // For other days: Show normal 2 items
-  let itemsToShow;
-  if (hasCarriedTasks) {
-    // On today with carried tasks: show only 1 actual item (exclude carried from display)
-    const actualItemsOnly = allItems.filter((item) => !item.data.isCarriedTask);
-    itemsToShow = 1; // Show only 1 item
-  } else {
-    itemsToShow = MAX_ITEMS_PER_DAY; // Normal: show 2 items
-  }
+  // For today with carried tasks: leave one slot for the carried badge
+  // For other days: show up to MAX_ITEMS_PER_DAY items
+  const itemsToShow = hasCarriedTasks
+    ? MAX_ITEMS_PER_DAY - 1
+    : MAX_ITEMS_PER_DAY;
 
   const displayItems = hasCarriedTasks
     ? allItems.filter((item) => !item.data.isCarriedTask).slice(0, itemsToShow)

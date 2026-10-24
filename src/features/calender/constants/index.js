@@ -26,4 +26,4 @@ export const CALENDAR_MENU_ITEMS = [
   },
 ];
 
-export const MAX_ITEMS_PER_DAY = 2;
+export const MAX_ITEMS_PER_DAY = 3;
