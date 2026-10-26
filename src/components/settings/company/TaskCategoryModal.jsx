@@ -1,12 +1,142 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import ModalLayout from "../../shared/modal";
-import { FiCheck, FiInfo, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiInfo, FiPlus, FiTrash2 } from "react-icons/fi";
 import { CATEGORY_FIELD_TYPES } from "../../../utils/categoryFields";
+import { matchStandardWorkType } from "../../projects/workDetailsForm/workTypeMapping";
 
-const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = [] }) => {
+// Covered tasks are matched on their task group: the quota key for standard
+// work types, otherwise the category name.
+const getCoverableOptions = (categories, current, selfId) => {
+  const seen = new Set();
+  const options = [];
+  const add = (value, label) => {
+    const key = String(value || "").toLowerCase();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    options.push({ value, label });
+  };
+
+  (categories || [])
+    .filter(
+      (item) =>
+        item?.isActive !== false &&
+        (!selfId || String(item._id) !== String(selfId))
+    )
+    .forEach((item) =>
+      add(matchStandardWorkType(item) || String(item.name || "").trim(), item.name)
+    );
+
+  // Keep a saved value that no longer matches a category selectable
+  add(current, current);
+  return options;
+};
+
+const SearchableSelect = ({ options, value, onChange, placeholder = "Select..." }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef(null);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleOutside = (event) => {
+      if (!containerRef.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    searchRef.current?.focus();
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [open]);
+
+  const selected = options.find((option) => option.value === value);
+  const term = search.trim().toLowerCase();
+  const filtered = term
+    ? options.filter((option) => String(option.label).toLowerCase().includes(term))
+    : options;
+
+  const close = () => {
+    setOpen(false);
+    setSearch("");
+  };
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => (open ? close() : setOpen(true))}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-[13px] text-gray-800 font-medium outline-none transition-all"
+      >
+        <span className="truncate">{selected ? selected.label : placeholder}</span>
+        <FiChevronDown
+          className={`shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="absolute z-30 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-gray-100">
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") close();
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (filtered[0]) {
+                    onChange(filtered[0].value);
+                    close();
+                  }
+                }
+              }}
+              placeholder="Search..."
+              className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 focus:border-blue-500 rounded-md text-[12px] outline-none"
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2 text-[12px] text-gray-400">No categories found</p>
+            ) : (
+              filtered.map((option) => (
+                <button
+                  type="button"
+                  key={option.value}
+                  onClick={() => {
+                    onChange(option.value);
+                    close();
+                  }}
+                  className={`w-full text-left px-3 py-2 text-[13px] font-medium transition-colors ${
+                    option.value === value
+                      ? "bg-blue-50 text-blue-600"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TaskCategoryModal = ({
+  isOpen,
+  onClose,
+  category,
+  onSave,
+  departments = [],
+  categories = [],
+}) => {
   const isEditing = !!category;
+  const coverableOptions = getCoverableOptions(
+    categories,
+    category?.coversWorkType,
+    category?._id
+  );
 
   const initialValues = {
     name: category?.name || "",
@@ -17,7 +147,8 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
     department: category?.department?._id || category?.department || "",
     mapsToQuota: category?.mapsToQuota || "",
     coversWork: Boolean(category?.coversWork),
-    coversWorkType: category?.coversWorkType || "reels",
+    coversWorkType:
+      category?.coversWorkType || coverableOptions[0]?.value || "reels",
     noCarryOver: Boolean(category?.noCarryOver),
     isActive: category?.isActive !== undefined ? category.isActive : true,
     fields: (category?.fields || []).map((field) => ({
@@ -299,16 +430,12 @@ const TaskCategoryModal = ({ isOpen, onClose, category, onSave, departments = []
                         <label className="text-[10px] font-bold uppercase tracking-tight text-gray-400 block">
                           Tasks it covers
                         </label>
-                        <Field
-                          as="select"
-                          name="coversWorkType"
-                          className="w-full px-3 py-2 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-[13px] text-gray-800 font-medium outline-none transition-all"
-                        >
-                          <option value="reels">Reels</option>
-                          <option value="poster">Posters</option>
-                          <option value="motionPoster">Motion posters</option>
-                          <option value="motionGraphics">Motion graphics</option>
-                        </Field>
+                        <SearchableSelect
+                          options={coverableOptions}
+                          value={values.coversWorkType}
+                          onChange={(next) => setFieldValue("coversWorkType", next)}
+                          placeholder="Select a category"
+                        />
                       </div>
                     )}
                   </div>

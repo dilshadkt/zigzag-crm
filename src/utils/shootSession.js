@@ -21,6 +21,7 @@ export const getShootWorkType = (subtask) =>
 
 /** Put the footage link on the subtask so the existing work-link rule is met. */
 export const withFootageLink = (customFields = [], link = "") => {
+  if (!String(link || "").trim()) return customFields;
   const rest = (Array.isArray(customFields) ? customFields : []).filter(
     (field) => field?.label !== FOOTAGE_LINK_LABEL
   );

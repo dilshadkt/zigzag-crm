@@ -360,12 +360,7 @@ const SubTaskStatusButton = ({
 
   const handleShootSubmit = async (shootSubmission) => {
     try {
-      if (needsCategoryFieldsForReview(subTask)) {
-        setPendingShoot(shootSubmission);
-        setIsShootModalOpen(false);
-        setIsCategoryFieldsModalOpen(true);
-        return;
-      }
+      // The shoot form already asks for the category's fields, so no second step
       await sendShootForReview(shootSubmission);
       setIsShootModalOpen(false);
       setPendingStatus(null);

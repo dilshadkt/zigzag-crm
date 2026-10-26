@@ -2,6 +2,35 @@ import React from "react";
 import { useShootCandidates } from "../../../api/hooks";
 import { getShootWorkType } from "../../../utils/shootSession";
 
+const isLink = (value) => /^https?:\/\//i.test(String(value || ""));
+
+// Label / value rows, with links clickable
+const FieldValues = ({ fields }) => {
+  const rows = (fields || []).filter((field) => String(field?.value || "").trim());
+  if (!rows.length) return null;
+  return (
+    <div className="space-y-0.5">
+      {rows.map((field, index) => (
+        <div key={`${field.label}-${index}`} className="flex gap-2 text-xs">
+          <span className="w-2/5 shrink-0 truncate text-gray-500">{field.label}</span>
+          {isLink(field.value) ? (
+            <a
+              href={field.value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 truncate font-medium text-blue-600 hover:underline"
+            >
+              {field.value}
+            </a>
+          ) : (
+            <span className="min-w-0 truncate font-medium text-gray-800">{field.value}</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 /**
  * What a shoot session submitted: the footage link, the tasks it covered (and
  * whether the link reached each one) and how many extras went to the bank.
@@ -9,7 +38,7 @@ import { getShootWorkType } from "../../../utils/shootSession";
  */
 const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
   const submission = subtask?.shootSubmission;
-  const hasSubmission = Boolean(submission?.footageLink);
+  const hasSubmission = Boolean(submission?.submittedAt || submission?.footageLink);
   const workType = getShootWorkType(subtask);
   const projectId = subtask?.project?._id || subtask?.project;
 
@@ -21,6 +50,10 @@ const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
   if (!hasSubmission) return null;
 
   const covered = data?.covered || [];
+  // This session's own extras (the shoot task may have more than one session subtask)
+  const extras = (data?.extras || []).filter(
+    (item) => !item.sourceSubTask || String(item.sourceSubTask) === String(subtask?._id)
+  );
   const unlinked = covered.filter((task) => !task.footageLinked).length;
   const points = Number(subtask?.taskCategory?.points) || 0;
   const multiplier = Math.max(1, Number(subtask?.pointsMultiplier) || 1);
@@ -36,14 +69,16 @@ const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
         )}
       </div>
 
-      <a
-        href={submission.footageLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block truncate text-sm font-medium text-blue-600 hover:underline"
-      >
-        {submission.footageLink}
-      </a>
+      {submission.footageLink && (
+        <a
+          href={submission.footageLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block truncate text-sm font-medium text-blue-600 hover:underline"
+        >
+          {submission.footageLink}
+        </a>
+      )}
 
       {covered.length > 0 && (
         <div className="space-y-1">
@@ -51,18 +86,18 @@ const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
             Tasks shot ({covered.length})
           </p>
           {covered.map((task) => (
-            <div
-              key={task._id}
-              className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-1.5 text-sm"
-            >
-              <span className="min-w-0 truncate text-gray-800">{task.title}</span>
-              <span
-                className={`shrink-0 text-[11px] font-semibold ${
-                  task.footageLinked ? "text-emerald-600" : "text-red-500"
-                }`}
-              >
-                {task.footageLinked ? "Link attached" : "Link missing"}
-              </span>
+            <div key={task._id} className="space-y-1 rounded-lg bg-white px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0 truncate font-medium text-gray-800">{task.title}</span>
+                <span
+                  className={`shrink-0 text-[11px] font-semibold ${
+                    task.footageLinked ? "text-emerald-600" : "text-red-500"
+                  }`}
+                >
+                  {task.footageLinked ? "Details attached" : "Details missing"}
+                </span>
+              </div>
+              <FieldValues fields={task.shootFields} />
             </div>
           ))}
           {unlinked > 0 && (
@@ -74,19 +109,31 @@ const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
         </div>
       )}
 
-      {(submission.fields || []).length > 0 && (
-        <p className="text-xs text-gray-600">
-          Extra fields on each task:{" "}
-          <span className="font-medium text-gray-800">
-            {submission.fields.map((field) => field.label).join(", ")}
-          </span>
-        </p>
-      )}
-
       {Number(submission.extraCount) > 0 && (
-        <p className="text-xs text-gray-600">
-          {submission.extraCount} extra {workType} added to the client&apos;s asset bank.
-        </p>
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Extra {workType} in the asset bank ({submission.extraCount})
+          </p>
+          {extras.length > 0 ? (
+            extras.map((item, index) => (
+              <div key={item._id} className="space-y-1 rounded-lg bg-white px-3 py-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate font-medium text-gray-800">
+                    {item.topic || `Extra ${index + 1}`}
+                  </span>
+                  <span className="shrink-0 text-[11px] font-semibold capitalize text-gray-400">
+                    {item.status}
+                  </span>
+                </div>
+                <FieldValues fields={item.fields} />
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-gray-600">
+              {submission.extraCount} extra {workType} added to the client&apos;s asset bank.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

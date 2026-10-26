@@ -5,6 +5,7 @@ import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import SelectedProject from "../../components/projects/selectedProject";
 import ProjectOverView from "../../components/projects/projectOverview";
 import AddTask from "../../components/projects/addTask";
+import AssetBankBucket from "../../components/projects/AssetBankBucket";
 import { useProject } from "../../hooks/useProject";
 import {
   useCreateTask,
@@ -139,6 +140,7 @@ const ProjectDetailLayout = () => {
             }}
           />
         </PageSuspense>
+        <AssetBankBucket projectId={projectData?._id} />
         <AddTask
           isOpen={showModalTask}
           onSubmit={handleSubmit}

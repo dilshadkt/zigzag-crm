@@ -439,6 +439,7 @@ const Master = () => {
           category={selectedCategory}
           onSave={handleSaveCategory}
           departments={departments}
+          categories={categories || []}
         />
       )}
 

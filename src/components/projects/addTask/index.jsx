@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { toast } from "react-hot-toast";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Description from "../../shared/Field/description";
 import Select from "../../shared/Field/select";
@@ -7,6 +8,11 @@ import DatePicker from "../../shared/Field/date";
 import Input from "../../shared/Field/input";
 import CategoryPicker from "../../shared/Field/categoryPicker";
 import CoveredTasksPicker from "./CoveredTasksPicker";
+import CategoryFieldInputs from "../../shared/CategoryFieldInputs";
+import {
+  getFieldsForCategoryId,
+  isCategoryFieldFilled,
+} from "../../../utils/categoryFields";
 import { useAddTaskForm } from "../../../hooks/useAddTaskForm";
 import {
   useCreateTask,
@@ -794,8 +800,28 @@ const AddTask = ({
       return;
     }
 
+    const categoryFields = getFieldsForCategoryId(
+      taskCategories,
+      formData.taskCategory,
+      formData.categoryFieldValues
+    );
+    const missingField = categoryFields.find(
+      (field) => field.required && !isCategoryFieldFilled(field)
+    );
+    if (missingField) {
+      toast.error(`Fill in "${missingField.label}" before saving`);
+      helpers?.setSubmitting?.(false);
+      return;
+    }
+
     skipCategoryWarningRef.current = false;
-    await onSubmit(formData, helpers);
+    await onSubmit(
+      {
+        ...formData,
+        categoryFieldValues: categoryFields.filter((field) => isCategoryFieldFilled(field)),
+      },
+      helpers
+    );
   };
 
   const {
@@ -823,10 +849,16 @@ const AddTask = ({
 
   // Banked footage the coordinator can build this reel from (new reel tasks only)
   const bankProjectId = campaignProjectId || projectData?._id || null;
-  const isReelTask = values.taskGroup === "reels";
+  // Banked footage is filed under the work type of the shoot that covered it
+  // ("reels", or a category name such as "Reel Editing")
+  const bankWorkType =
+    values.taskGroup === "extraTask" ? values.extraTaskWorkType : values.taskGroup;
+  const isReelTask =
+    Boolean(bankWorkType) &&
+    !["campaign", "extraTask", "general", "Select work type"].includes(bankWorkType);
   const { data: assetBankData } = useAssetBank(
     bankProjectId,
-    { status: "available", workType: "reels" },
+    { status: "available", workType: bankWorkType },
     { enabled: !isEdit && isReelTask }
   );
   const bankedReelOptions = (assetBankData?.items || []).map((item, index) => ({
@@ -841,6 +873,51 @@ const AddTask = ({
   useEffect(() => {
     if (values.assetBankItem && !isReelTask) setFieldValue("assetBankItem", "");
   }, [isReelTask, values.assetBankItem, setFieldValue]);
+
+  // Fields the chosen category asks for (e.g. a work link)
+  const categoryFieldDefs = getFieldsForCategoryId(
+    taskCategories,
+    values.taskCategory,
+    values.categoryFieldValues
+  );
+  const handleCategoryFieldChange = (key, value) => {
+    setFieldValue(
+      "categoryFieldValues",
+      categoryFieldDefs.map((field) => (field.key === key ? { ...field, value } : field))
+    );
+  };
+
+  // Picking banked footage fills the matching fields from what was saved with it
+  useEffect(() => {
+    if (isEdit || !values.assetBankItem || !categoryFieldDefs.length) return;
+    const item = (assetBankData?.items || []).find(
+      (entry) => String(entry._id) === String(values.assetBankItem)
+    );
+    if (!item) return;
+    const saved = (item.fields || []).filter((field) => field?.value);
+    const next = categoryFieldDefs.map((field) => {
+      if (isCategoryFieldFilled(field)) return field;
+      const match = saved.find(
+        (entry) => String(entry.label).toLowerCase() === String(field.label).toLowerCase()
+      );
+      return match ? { ...field, value: match.value } : field;
+    });
+    if (next.some((field, index) => field.value !== categoryFieldDefs[index].value)) {
+      setFieldValue("categoryFieldValues", next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.assetBankItem, assetBankData]);
+
+  // A different category has different fields, so start the answers over
+  const prevCategoryRef = useRef(values.taskCategory);
+  useEffect(() => {
+    if (prevCategoryRef.current === values.taskCategory) return;
+    prevCategoryRef.current = values.taskCategory;
+    if (!isEdit && values.categoryFieldValues?.length) {
+      setFieldValue("categoryFieldValues", []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.taskCategory]);
 
   const prevCampaignRef = useRef(initialValues?.campaign?._id || initialValues?.campaign || "");
   const prevTaskGroupRef = useRef(initialValues?.taskGroup || "");
@@ -1554,6 +1631,20 @@ const AddTask = ({
         })) || []
       );
     } else if (
+      !selectedProjectId &&
+      projectData?._id &&
+      (projectData.teams?.length > 0 || teams?.length > 0)
+    ) {
+      // Opened from a project page: only that project's team can be assigned
+      return (
+        (projectData.teams?.length > 0 ? projectData.teams : teams).map(
+          (user) => ({
+            label: `${user.firstName} (${user.position})`,
+            value: user._id,
+          })
+        )
+      );
+    } else if (
       (selectedProjectId === "other" ||
         selectedProjectId === "" ||
         selectedProjectId === null) &&
@@ -1873,10 +1964,19 @@ const AddTask = ({
                           ]}
                         />
                         <p className="text-[11px] text-gray-500 px-0.5">
-                          {bankedReelOptions.length} reel(s) banked from earlier
-                          shoots. The footage link is added to the task and this
-                          month's reel quota is used as normal.
+                          {bankedReelOptions.length} item(s) banked from earlier
+                          shoots. The footage details are added to the task and this
+                          month's quota is used as normal.
                         </p>
+                      </div>
+                    )}
+                    {categoryFieldDefs.length > 0 && (
+                      <div className="space-y-2">
+                        <CategoryFieldInputs
+                          fields={categoryFieldDefs}
+                          onChange={handleCategoryFieldChange}
+                          disabled={isLoadingTaskCategories}
+                        />
                       </div>
                     )}
                   </>

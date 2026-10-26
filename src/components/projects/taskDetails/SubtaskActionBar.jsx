@@ -311,13 +311,7 @@ const SubtaskActionBar = ({
 
   const handleShootSubmit = async (shootSubmission) => {
     try {
-      if (needsCategoryFieldsForReview(subtask)) {
-        // Category details are still needed: send everything together after them
-        setPendingShoot(shootSubmission);
-        setIsShootModalOpen(false);
-        setIsCategoryFieldsModalOpen(true);
-        return;
-      }
+      // The shoot form already asks for the category's fields, so no second step
       await sendShootForReview(shootSubmission);
       setIsShootModalOpen(false);
       setPendingAction(null);

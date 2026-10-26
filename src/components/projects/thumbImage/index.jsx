@@ -56,7 +56,7 @@ const ThumbImage = ({ onSelect, initialImage }) => {
       {/* Upload image from local device */}
       <div
         onClick={() => !isUploading && fileInputRef.current.click()}
-        className={`w-full h-[150px] mt-4 bg-[#F4F9FD] rounded-[10px] flex items-center justify-center flex-col overflow-hidden gap-y-2 cursor-pointer relative border-dashed border-2 border-blue-200 hover:border-blue-400 transition-colors group`}
+        className={`w-full max-w-[240px] aspect-square mx-auto mt-4 bg-[#F4F9FD] rounded-[10px] flex items-center justify-center flex-col overflow-hidden gap-y-2 cursor-pointer relative border-dashed border-2 border-blue-200 hover:border-blue-400 transition-colors group`}
       >
         {isUploading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/50">
@@ -67,7 +67,7 @@ const ThumbImage = ({ onSelect, initialImage }) => {
             <img
               src={uploadedImage.preview}
               alt="Uploaded"
-              className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+              className="w-full h-full object-contain group-hover:opacity-75 transition-opacity"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                <span className="bg-white/80 text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
