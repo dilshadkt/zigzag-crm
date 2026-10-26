@@ -29,7 +29,8 @@ export const useAddTaskForm = (defaultValue, onSubmit) => {
     sequentialSubtasks: defaultValue?.sequentialSubtasks || false,
     requiresWorkLink: defaultValue?.requiresWorkLink || false,
     assetBankItem: "",
-    coveredTasks: [],
+    // Left unset on edit until the picker loads, so an edit never clears them
+    coveredTasks: defaultValue?.coveredTasks,
     campaign: defaultValue?.campaign?._id || defaultValue?.campaign || "",
     requiresCampaignReport: defaultValue?.requiresCampaignReport || false,
     customFields: defaultValue?.customFields || [],

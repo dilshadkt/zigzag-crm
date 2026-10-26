@@ -688,6 +688,7 @@ const AddTask = ({
   selectedMonth,
   projects = [], // <-- add default empty array
   showProjectSelection = false, // <-- new prop to control project selection visibility
+  editShootCategory = null, // edit only: the shoot category found on the task or its subtasks
 }) => {
   const { user } = useAuth();
   const companyId = user?.company;
@@ -1475,7 +1476,7 @@ const AddTask = ({
           (category) => String(category._id) === String(getSelectedSubtaskCategoryId(step))
         )
       ),
-    ].find((category) => category?.coversWork) || null;
+    ].find((category) => category?.coversWork) || (isEdit ? editShootCategory : null);
   const shootProjectId =
     selectedProjectId && selectedProjectId !== "other"
       ? selectedProjectId
@@ -1913,9 +1914,10 @@ const AddTask = ({
                         added as an extra task.
                       </p>
                     )}
-                    {!isEdit && shootCategory && shootProjectId && (
+                    {shootCategory && shootProjectId && (
                       <CoveredTasksPicker
                         projectId={shootProjectId}
+                        shootTaskId={isEdit ? initialValues?._id : null}
                         workType={shootCategory.coversWorkType || "reels"}
                         value={values.coveredTasks || []}
                         onChange={(ids) => setFieldValue("coveredTasks", ids)}

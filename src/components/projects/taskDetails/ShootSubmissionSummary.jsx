@@ -1,6 +1,6 @@
 import React from "react";
 import { useShootCandidates } from "../../../api/hooks";
-import { getShootWorkType } from "../../../utils/shootSession";
+import { getShootWorkType, isShootSessionSubtask } from "../../../utils/shootSession";
 
 const isLink = (value) => /^https?:\/\//i.test(String(value || ""));
 
@@ -45,9 +45,43 @@ const ShootSubmissionSummary = ({ subtask, parentTaskId }) => {
   const { data } = useShootCandidates(
     projectId,
     { workType, shootTaskId: parentTaskId },
-    { enabled: hasSubmission && !!parentTaskId }
+    { enabled: (hasSubmission || isShootSessionSubtask(subtask)) && !!parentTaskId }
   );
-  if (!hasSubmission) return null;
+
+  // Before the shoot is submitted: the tasks it is planned to cover
+  if (!hasSubmission) {
+    if (!isShootSessionSubtask(subtask)) return null;
+    const planned = data?.covered || [];
+    return (
+      <div className="mt-3 space-y-1.5 rounded-xl border border-blue-100 bg-blue-50/40 p-3">
+        <p className="text-[13px] font-bold text-gray-800">
+          Tasks this shoot covers ({planned.length})
+        </p>
+        {planned.length === 0 ? (
+          <p className="text-xs text-gray-500">
+            No scheduled {workType} picked yet. Use Edit on the task to choose them.
+          </p>
+        ) : (
+          planned.map((task) => (
+            <div
+              key={task._id}
+              className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-1.5 text-sm"
+            >
+              <span className="min-w-0 truncate font-medium text-gray-800">{task.title}</span>
+              <span className="shrink-0 text-xs text-gray-400">
+                {task.dueDate
+                  ? new Date(task.dueDate).toLocaleDateString(undefined, {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : ""}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
 
   const covered = data?.covered || [];
   // This session's own extras (the shoot task may have more than one session subtask)

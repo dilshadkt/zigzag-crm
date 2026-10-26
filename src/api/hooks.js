@@ -556,6 +556,8 @@ export const useUpdateTaskById = (taskId, handleClose) => {
       queryClient.invalidateQueries({ queryKey: ["projectDetails"] });
       // Saving can reorder the subtasks.
       queryClient.invalidateQueries({ queryKey: ["subTasksByParentTask", taskId] });
+      // A shoot's covered tasks can change here
+      queryClient.invalidateQueries({ queryKey: ["shootCandidates"] });
       handleClose();
     },
   });

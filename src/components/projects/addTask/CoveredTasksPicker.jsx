@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useShootCandidates } from "../../../api/hooks";
 
 const dueLabel = (task) => {
@@ -17,9 +17,25 @@ const assigneeLabel = (task) =>
  * Lets a shoot-type task pick which already-scheduled tasks (e.g. reels) it
  * will shoot, so the footage link can be attached to them afterwards.
  */
-const CoveredTasksPicker = ({ projectId, workType = "reels", value = [], onChange }) => {
-  const { data, isLoading } = useShootCandidates(projectId, { workType });
-  const tasks = data?.available || [];
+const CoveredTasksPicker = ({
+  projectId,
+  workType = "reels",
+  shootTaskId = null,
+  value = [],
+  onChange,
+}) => {
+  const { data, isLoading } = useShootCandidates(projectId, { workType, shootTaskId });
+  // When editing, what the shoot already covers comes first, then what is still free
+  const tasks = [...(data?.covered || []), ...(data?.available || [])];
+
+  // Editing: start from what the shoot already covers (once)
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!shootTaskId || !data || initialized.current) return;
+    initialized.current = true;
+    onChange((data.covered || []).map((task) => String(task._id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shootTaskId, data]);
   const selected = new Set((value || []).map(String));
 
   const toggle = (id) => {

@@ -94,6 +94,11 @@ const TaskDetailPage = () => {
         setShowModalTask={setShowModalTask}
         teams={teams}
         initialValues={taskDetails}
+        editShootCategory={
+          [taskDetails?.taskCategory, ...subTasks.map((sub) => sub?.taskCategory)].find(
+            (category) => category && typeof category === "object" && category.coversWork
+          ) || null
+        }
         selectedMonth={taskDetails?.taskMonth}
         showProjectSelection={!hasProject} // Enable project selection for tasks without projects
         projects={projectsData || []}
