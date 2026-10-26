@@ -158,7 +158,10 @@ const RealtimeAlertsProvider = () => {
       showBrowserNotification({
         title: notification?.title || "ZigZag CRM",
         body: getSocketMessage(notification),
-        url: "/",
+        url:
+          notification?.type === "shoot_pending" && notification?.data?.taskId
+            ? `/projects/${notification.data.projectId}/${notification.data.taskId}`
+            : "/",
         tag: `notif-${notification?._id || Date.now()}`,
       });
     };

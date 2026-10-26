@@ -57,6 +57,7 @@ const NotificationsPage = () => {
       case "task_updated":
         return "/icons/update.svg";
       case "deadline_reminder":
+      case "shoot_pending":
         return "/icons/clock.svg";
       case "project_update":
         return "/icons/project.svg";
@@ -78,6 +79,7 @@ const NotificationsPage = () => {
       case "task_updated":
         return "bg-purple-100 text-purple-600";
       case "deadline_reminder":
+      case "shoot_pending":
         return "bg-red-100 text-red-600";
       case "project_update":
         return "bg-yellow-100 text-yellow-600";
@@ -101,6 +103,7 @@ const NotificationsPage = () => {
       case "task_assigned":
       case "task_updated":
       case "deadline_reminder":
+      case "shoot_pending":
       case "comment":
         if (notification.data?.taskId) {
           navigate(
@@ -153,6 +156,11 @@ const NotificationsPage = () => {
       value: "deadline_reminder",
       label: "Deadlines",
       count: notifications.filter((n) => n.type === "deadline_reminder").length,
+    },
+    {
+      value: "shoot_pending",
+      label: "Shoot Alerts",
+      count: notifications.filter((n) => n.type === "shoot_pending").length,
     },
     {
       value: "task_updated",

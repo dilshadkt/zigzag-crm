@@ -71,6 +71,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
       case "task_updated":
         return "/icons/update.svg";
       case "deadline_reminder":
+      case "shoot_pending":
       case "project_deadline_reminder":
         return "/icons/clock.svg";
       case "project_update":
@@ -97,6 +98,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
       case "task_updated":
         return "bg-purple-100 text-purple-600";
       case "deadline_reminder":
+      case "shoot_pending":
       case "project_deadline_reminder":
         return "bg-red-100 text-red-600";
       case "project_update":
@@ -127,6 +129,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
       case "task_assigned":
       case "task_updated":
       case "deadline_reminder":
+      case "shoot_pending":
       case "comment":
         if (notification.data?.taskId) {
           navigate(
