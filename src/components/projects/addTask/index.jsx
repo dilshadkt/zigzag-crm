@@ -2043,7 +2043,7 @@ const AddTask = ({
                           name={"startDate"}
                           title="Start date"
                           touched={touched}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                          disabled={false}
                         />
                         {values.startDate && (isWeeklyOff(new Date(values.startDate), weeklyOffs) || isHoliday(new Date(values.startDate), holidays)) && (
                           <div className="flex items-center gap-1.5 mt-1 px-1">
@@ -2065,7 +2065,7 @@ const AddTask = ({
                           onChange={handleDueDateChange}
                           touched={touched}
                           name={"dueDate"}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                          disabled={false}
                         />
                         {values.dueDate && (isWeeklyOff(new Date(values.dueDate), weeklyOffs) || isHoliday(new Date(values.dueDate), holidays)) && (
                           <div className="flex items-center gap-1.5 mt-1 px-1">
@@ -2089,7 +2089,7 @@ const AddTask = ({
                           onchange={handleChange}
                           touched={touched}
                           value={values}
-                          disabled={!isFormEnabled && !isOtherProjectSelected}
+                          disabled={false}
                         />
                       </div>
               </div>
@@ -2190,9 +2190,8 @@ const AddTask = ({
                     : "Select Assignees"
                 }
                 disabled={
-                  (!isFormEnabled &&
-                    !isOtherProjectSelected &&
-                    !isNoProjectSelected) ||
+                  // Once a project is chosen the team is known, so no need to wait for a work type
+                  (!isOtherProjectSelected && !isNoProjectSelected && isLoadingProjectDetails) ||
                   ((isOtherProjectSelected || isNoProjectSelected) &&
                     isLoadingEmployees)
                 }
@@ -2205,7 +2204,7 @@ const AddTask = ({
                 onChange={handleChange}
                 title="Priority"
                 options={["Low", "Medium", "High"]}
-                disabled={!isFormEnabled && !isOtherProjectSelected}
+                disabled={false}
               />
               </div>
 

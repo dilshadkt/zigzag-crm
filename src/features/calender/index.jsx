@@ -82,6 +82,9 @@ const Calendar = () => {
   const [selectedDayData, setSelectedDayData] = useState(null);
   const [showModalTask, setShowModalTask] = useState(false);
   const [selectedDateForTask, setSelectedDateForTask] = useState(null);
+  // Starting values for the Add Task form, captured once when a day is clicked so
+  // later re-renders (or filter changes) never overwrite what the user edits
+  const [taskStartValues, setTaskStartValues] = useState({});
   const [showUnscheduledModal, setShowUnscheduledModal] = useState(false);
   const [selectedDateForScheduling, setSelectedDateForScheduling] =
     useState(null);
@@ -197,6 +200,13 @@ const Calendar = () => {
   const handleMenuItemClick = (action, date) => {
     if (action === "create-task" && canCreateTask) {
       setSelectedDateForTask(date);
+      setTaskStartValues({
+        startDate: format(date, "yyyy-MM-dd"),
+        dueDate: format(date, "yyyy-MM-dd"),
+        // Carry over what the calendar is filtered by
+        ...(projectFilter?.length === 1 ? { project: projectFilter[0] } : {}),
+        ...(assignerFilter?.length ? { assignedTo: [...assignerFilter] } : {}),
+      });
       setShowModalTask(true);
     } else if (action === "unscheduled-tasks" && canCreateTask) {
       setSelectedDateForScheduling(date);
@@ -316,14 +326,7 @@ const Calendar = () => {
         selectedMonth={format(currentDate, "yyyy-MM")}
         isLoading={isCreatingTask}
         showProjectSelection={true}
-        initialValues={
-          selectedDateForTask
-            ? {
-              startDate: format(selectedDateForTask, "yyyy-MM-dd"),
-              dueDate: format(selectedDateForTask, "yyyy-MM-dd"),
-            }
-            : {}
-        }
+        initialValues={taskStartValues}
       />
 
       {/* Unscheduled Tasks Modal */}
