@@ -12,6 +12,13 @@ import { truncateText } from "../../../utils/textUtils";
 import { getDueDateColor } from "../../../utils/workingDayUtils";
 import { getMonthKey, formatMonthKeyShort } from "../../../lib/dateUtils";
 
+const formatFullDate = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+};
+
 const CalendarEventItem = ({ type, data, showExtraDetails = false }) => {
   const navigate = useNavigate();
 
@@ -343,6 +350,13 @@ const TaskItem = ({ task, onNavigate, showExtraDetails }) => {
             <span className={`text-[10px] italic font-bold ml-auto hidden group-hover:block ${getDueDateColor(task.dueDate, task.status) || "opacity-75"}`}>
               {progress}%
             </span>
+            {showExtraDetails && formatFullDate(task.dueDate) && (
+              <span
+                className={`text-[10px] font-medium ml-auto whitespace-nowrap ${getDueDateColor(task.dueDate, task.status) || "text-gray-500"}`}
+              >
+                Due: {formatFullDate(task.dueDate)}
+              </span>
+            )}
             {showExtraDetails && (
               <div className="flex gap-x-0.5">
                 {task?.assignedTo?.map((assignee, index) => (
@@ -541,6 +555,13 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
             <span className={`text-[10px] italic font-bold ml-auto hidden group-hover:block ${getDueDateColor(subtask.dueDate, subtask.status) || "opacity-75"}`}>
               {progress}%
             </span>
+            {showExtraDetails && formatFullDate(subtask.dueDate) && (
+              <span
+                className={`text-[10px] font-medium ml-auto whitespace-nowrap ${getDueDateColor(subtask.dueDate, subtask.status) || "text-gray-500"}`}
+              >
+                Due: {formatFullDate(subtask.dueDate)}
+              </span>
+            )}
             {showExtraDetails && (
               <div className="flex gap-x-0.5">
                 {subtask?.assignedTo?.map((assignee, index) => (
