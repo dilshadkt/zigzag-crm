@@ -17,7 +17,14 @@ import {
 const Vacations = ({ employeeId, employee, canEdit = false }) => {
   const [currentDate] = useState(new Date());
   const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const joinedYear = employee?.joiningDate
+    ? new Date(employee.joiningDate).getFullYear()
+    : currentYear - 2;
+  const yearOptions = Array.from(
+    { length: Math.max(1, currentYear - Math.min(joinedYear, currentYear) + 1) },
+    (_, i) => currentYear - i
+  );
   const [isEditingQuotas, setIsEditingQuotas] = useState(false);
   const [quotaDraft, setQuotaDraft] = useState({
     vacation: "",
@@ -29,8 +36,8 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
 
   const { data, isLoading } = useGetEmployeeVacations(
     employeeId,
-    currentMonth,
-    currentYear
+    undefined,
+    selectedYear
   );
 
   const { user } = useAuth();
@@ -239,9 +246,22 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
           </div>
         </>
       )}
-      <h3 className="text-sm font-bold my-3 ml-1  text-gray-600">
-        Vacation Requests
-      </h3>
+      <div className="flex items-center justify-between my-3 mx-1">
+        <h3 className="text-sm font-bold text-gray-600">
+          Vacation Requests ({selectedYear})
+        </h3>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(Number(e.target.value))}
+          className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700"
+        >
+          {yearOptions.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="w-full pb-4">
         {vacations && vacations.length > 0 ? (
           vacations.map((vacation) => (
