@@ -521,7 +521,7 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
       {/* Add Subtask Modal */}
       <AddSubTask
         isOpen={showSubTaskModal}
-        isAssignee={isAssignedToTask}
+        isAssignee={isAssignedToTask && !canEditTask && !canManageSubtasks}
         setShowSubTaskModal={handleCloseSubTaskModal}
         teams={teams}
         onSubmit={handleSubTaskSubmit}
