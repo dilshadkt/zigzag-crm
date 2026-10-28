@@ -69,7 +69,7 @@ const AssignLeadModal = ({ isOpen, onClose, onAssign, currentOwner, currentClien
   const isLoading = isLoadingEmployees || isLoadingSalesTeam;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
 
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 max-h-[85vh] flex flex-col">

@@ -12,14 +12,14 @@ import LeadsTableShimmer from "./components/LeadsTableShimmer";
 import LeadsPagination from "./components/LeadsPagination";
 import LeadsColumnEditor from "./components/LeadsColumnEditor";
 import LeadActionsMenu from "./components/LeadActionsMenu";
-import LeadUploadModal from "./components/LeadUploadModal";
+import LeadImportFlow from "./components/LeadImportFlow";
 import AddLeadModal from "./components/AddLeadModal";
 import AssignLeadModal from "./components/AssignLeadModal";
 import LeadsFilterDrawer from "./components/LeadsFilterDrawer";
 import LeadsDashboard from "./components/LeadsDashboard";
 import SearchableDropdown from "../../components/shared/dropdown/SearchableDropdown";
 import { useLeadsData } from "./hooks/useLeadsData";
-import { useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads, useGetLeadStats, useGetLeads, useBulkUpdateLeads, useBulkDeleteLeads } from "./api";
+import { useCreateLead, useUpdateLead, useDeleteLead, useGetLeadStats, useGetLeads, useBulkUpdateLeads, useBulkDeleteLeads } from "./api";
 import { useSyncAllCampaignLeads } from "../../api/campaignDetails";
 import { useCompanyActiveProjects, useGetAllEmployees } from "../../api/hooks";
 import { useGetClientSalesTeam } from "../../api/clientSalesTeam";
@@ -126,9 +126,6 @@ const LeadsFeature = ({
   const [isLeadMenuOpen, setLeadMenuOpen] = useState(false);
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
   const [isAddLeadModalOpen, setAddLeadModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
   const [columnDraft, setColumnDraft] = useState([]);
   const hasInitializedColumns = useRef(false);
   const lastGeneratedColumnsKeys = useRef(null);
@@ -695,7 +692,6 @@ const LeadsFeature = ({
 
   // Create lead mutation
   const { mutate: createLead, isLoading: isCreatingLead } = useCreateLead();
-  const { mutate: bulkCreateLeads, isLoading: isBulkCreating } = useBulkCreateLeads();
 
   const visibleLeads = useMemo(() => {
     return leads;
@@ -801,167 +797,18 @@ const LeadsFeature = ({
   const openLeadMenu = () => setLeadMenuOpen(true);
   const closeLeadMenu = () => setLeadMenuOpen(false);
 
+  const clientProjectId = user?.projectId || (typeof user?.project === "string" ? user.project : user?.project?._id);
+  const importProjectId = String(
+    projectId || (isUserClient ? clientProjectId : "") || projectFilterState || projectFilter || ""
+  );
+
   const openUploadModal = () => {
     setLeadMenuOpen(false);
     setUploadModalOpen(true);
-    setSelectedFile(null);
-    setUploadProgress(0);
-    setIsUploading(false);
   };
 
   const closeUploadModal = () => {
     setUploadModalOpen(false);
-    setIsUploading(false);
-    setSelectedFile(null);
-    setUploadProgress(0);
-  };
-
-  const handleUploadStart = () => {
-    if (!selectedFile) return;
-    setIsUploading(true);
-    setUploadProgress(10); // Start progress
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-
-        // Get headers and data
-        const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        if (!headers || headers.length === 0) {
-          toast.error("File is empty or has no headers");
-          setIsUploading(false);
-          return;
-        }
-
-        // Validate Headers
-        const normalize = (str) => String(str).toLowerCase().trim().replace(/['"]/g, '');
-        const headerSet = new Set(headers.map(normalize));
-
-        // Use formFields or fallback to default fields if empty
-        let fieldsToUse = formFields;
-        if (!fieldsToUse || fieldsToUse.length === 0) {
-          fieldsToUse = [
-            { label: "Full Name", key: "system_name", required: true },
-            { label: "Email", key: "system_email", required: true },
-            { label: "Phone Number", key: "system_phone", required: true },
-            { label: "Company", key: "company" },
-          ];
-        }
-
-        const missingFields = fieldsToUse.filter(f => f.required && !headerSet.has(normalize(f.label)) && !headerSet.has(normalize(f.key)));
-
-        if (missingFields.length > 0) {
-          const missingNames = missingFields.map(f => f.label || f.key).join(", ");
-          if (!window.confirm(`Missing required columns: ${missingNames}. Do you want to proceed with potential data loss?`)) {
-            setIsUploading(false);
-            setUploadProgress(0);
-            return;
-          }
-        }
-
-        setUploadProgress(30); // Processing data...
-
-        // Process Rows
-        const processedLeads = jsonData.map(row => {
-          const contact = {};
-          const customFields = {};
-          let statusId = null;
-
-          // Helper to get value from row by checking label/key
-          const getValue = (field) => {
-            const normLabel = normalize(field.label);
-            const normKey = normalize(field.key);
-
-            // Find matching key in row
-            const rowKey = Object.keys(row).find(k => {
-              const nk = normalize(k);
-              return nk === normLabel || nk === normKey;
-            });
-
-            return rowKey ? row[rowKey] : undefined;
-          };
-
-          fieldsToUse.forEach(field => {
-            let value = getValue(field);
-
-            // Handle Select / Dropdown defaults
-            if (field.type === 'select') {
-              // Check if value is valid option
-              const isValidOption = value && field.options && field.options.includes(value);
-              if (!isValidOption && field.options && field.options.length > 0) {
-                // Set first value if empty or invalid
-                value = field.options[0];
-              }
-            }
-
-            // Map to correct structure
-            const key = field.key || field.id;
-            if (['system_name', 'name', 'Full Name'].includes(key)) contact.name = value;
-            else if (['system_email', 'email', 'Email'].includes(key)) contact.email = value;
-            else if (['system_phone', 'phone', 'Phone Number'].includes(key)) contact.phone = value;
-            else if (['company', 'Company', 'companyName'].includes(key)) contact.company = value;
-            else if (key === 'status') {
-              // Try to match status name
-              const statusObj = statuses.find(s => s.name === value || s.key === value || s._id === value);
-              if (statusObj) statusId = statusObj._id;
-            }
-            else {
-              customFields[key] = value;
-            }
-          });
-
-          // Handle Status Default (First value if missing/invalid)
-          if (!statusId) {
-            const defaultStatus = statuses.find(s => s.isDefault) || statuses[0];
-            statusId = defaultStatus?._id;
-          }
-
-          return {
-            contact,
-            status: statusId,
-            customFields,
-            source: 'Import'
-          };
-        });
-
-        setUploadProgress(60); // Sending to server...
-
-        // Send to server
-        bulkCreateLeads(processedLeads, {
-          onSuccess: () => {
-            setUploadProgress(100);
-            toast.success(`Imported ${processedLeads.length} leads successfully`);
-            setTimeout(() => {
-              closeUploadModal();
-              refetchLeads();
-            }, 500);
-          },
-          onError: (err) => {
-            console.error(err);
-            toast.error(err?.response?.data?.message || "Failed to import leads");
-            setUploadProgress(0);
-            setIsUploading(false);
-          }
-        });
-
-      } catch (error) {
-        console.error("Error processing file:", error);
-        toast.error("Error processing file. Please check format.");
-        setIsUploading(false);
-        setUploadProgress(0);
-      }
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read file");
-      setIsUploading(false);
-    };
-    reader.readAsArrayBuffer(selectedFile);
   };
 
   const canToggleColumn =
@@ -1786,14 +1633,13 @@ const LeadsFeature = ({
         </div>
       )}
 
-      <LeadUploadModal
+      <LeadImportFlow
         isOpen={isUploadModalOpen}
         onClose={closeUploadModal}
-        file={selectedFile}
-        onFileSelect={setSelectedFile}
-        onUpload={handleUploadStart}
-        uploadProgress={uploadProgress}
-        isUploading={isUploading}
+        projects={projects}
+        defaultProjectId={importProjectId}
+        isProjectLocked={Boolean(importProjectId) && (Boolean(projectId) || isUserClient)}
+        onImported={refetchLeads}
       />
 
       <AddLeadModal
