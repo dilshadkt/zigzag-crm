@@ -6,7 +6,9 @@ import {
   useGetTaskTimeLogs,
   useCreateTimeLog,
   useDeleteTask,
+  useUpdateTaskById,
 } from "../../../api/hooks";
+import { toast } from "react-hot-toast";
 import Modal from "../../shared/modal";
 import { formatDate, getMonthKey, formatMonthKeyShort } from "../../../lib/dateUtils";
 import { useNavigate } from "react-router-dom";
@@ -42,7 +44,10 @@ const TaskUserAvatar = ({ user, size = "w-8 h-8", fontSize = "text-[10px]" }) =>
   );
 };
 
-const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
+const personName = (person) =>
+  [person?.firstName || person?.name, person?.lastName].filter(Boolean).join(" ") || "Unnamed";
+
+const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) => {
   const { user, isCompany } = useAuth();
   const { hasPermission } = usePermissions();
   const isEmployee = user?.role === "employee";
@@ -51,6 +56,9 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
   const [showDueDateHistoryModal, setShowDueDateHistoryModal] = useState(false);
+  const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
+  const [pickedAssignees, setPickedAssignees] = useState([]);
+  const [assigneeSearch, setAssigneeSearch] = useState("");
 
   // Same rule as the Kanban cards: flag a task whose due date is outside the month it is filed under.
   const dueMonthKey = getMonthKey(taskDetails?.dueDate);
@@ -67,6 +75,7 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
   } = useGetTaskTimeLogs(taskDetails?._id);
   const createTimeLog = useCreateTimeLog();
   const deleteTask = useDeleteTask(taskDetails?.project, onTaskDeleted);
+  const updateTask = useUpdateTaskById(taskDetails?._id, () => setIsAssigneeModalOpen(false));
 
   // Permission checks
   const canDeleteTask = isCompany || hasPermission("tasks", "delete");
@@ -76,6 +85,38 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
     taskDetails?.assignedTo?.some(
       (assignedUser) => assignedUser._id === user?._id
     );
+  const openAssigneeModal = () => {
+    setPickedAssignees((taskDetails?.assignedTo || []).map((person) => String(person._id || person)));
+    setAssigneeSearch("");
+    setIsAssigneeModalOpen(true);
+  };
+
+  const togglePickedAssignee = (id) =>
+    setPickedAssignees((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+
+  const handleSaveAssignees = () => {
+    updateTask.mutate(
+      { assignedTo: pickedAssignees },
+      {
+        onSuccess: () => toast.success("Assignees updated"),
+        onError: (error) =>
+          toast.error(error?.response?.data?.message || "Failed to update assignees"),
+      }
+    );
+  };
+
+  // Everyone who can be picked: the team, plus current assignees who are no longer on it
+  const assigneeChoices = [
+    ...teams,
+    ...(taskDetails?.assignedTo || []).filter(
+      (person) => !teams.some((member) => String(member._id) === String(person._id))
+    ),
+  ].filter((person) =>
+    personName(person).toLowerCase().includes(assigneeSearch.trim().toLowerCase())
+  );
+
   const handleLogTime = () => {
     if (!duration || !description) return;
 
@@ -141,7 +182,18 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
             )}
           </div>
           <div className="flex flex-col gap-y-2">
-            <span className="text-sm text-[#91929E]">Assigned</span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#91929E]">Assigned</span>
+              {canEditTask && (
+                <button
+                  type="button"
+                  onClick={openAssigneeModal}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Change
+                </button>
+              )}
+            </div>
             {taskDetails?.assignedTo?.length > 0 ? (
               <div className="flex -space-x-2">
                 {taskDetails.assignedTo.slice(0, 4).map((user, index) => (
@@ -365,6 +417,66 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress }) => {
               className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Log Time
+            </button>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        isOpen={isAssigneeModalOpen}
+        onClose={() => setIsAssigneeModalOpen(false)}
+        title="Change assignees"
+      >
+        <div className="flex flex-col gap-4">
+          <input
+            type="text"
+            value={assigneeSearch}
+            onChange={(e) => setAssigneeSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          />
+          <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
+            {assigneeChoices.length === 0 ? (
+              <p className="py-3 text-center text-sm text-gray-400">No people found</p>
+            ) : (
+              assigneeChoices.map((person) => {
+                const id = String(person._id);
+                return (
+                  <label
+                    key={id}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={pickedAssignees.includes(id)}
+                      onChange={() => togglePickedAssignee(id)}
+                      className="h-4 w-4 rounded text-blue-600"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm text-gray-800">
+                      {personName(person)}
+                    </span>
+                    {person.position && (
+                      <span className="shrink-0 text-xs text-gray-400">{person.position}</span>
+                    )}
+                  </label>
+                );
+              })
+            )}
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsAssigneeModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAssignees}
+              disabled={updateTask.isPending}
+              className="h-10 rounded-xl bg-blue-600 px-6 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {updateTask.isPending ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
