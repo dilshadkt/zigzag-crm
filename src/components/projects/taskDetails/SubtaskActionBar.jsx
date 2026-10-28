@@ -484,6 +484,8 @@ const SubtaskActionBar = ({
           onSubmit={handleCampaignReportSubmit}
           isLoading={submitCampaignReport.isPending || isUpdating}
           initialReport={subtask.campaignReport}
+          projectId={subtask?.project?._id || subtask?.project}
+        hasCampaign={Boolean(subtask?.campaign)}
         />
         <CategoryFieldsModal
           isOpen={isCategoryFieldsModalOpen}

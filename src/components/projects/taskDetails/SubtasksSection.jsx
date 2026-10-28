@@ -1047,6 +1047,8 @@ const SubtasksSection = ({
         onSubmit={handleCampaignReportSubmit}
         isLoading={submitCampaignReport.isPending}
         initialReport={reportSubTask?.campaignReport}
+        projectId={reportSubTask?.project?._id || reportSubTask?.project}
+        hasCampaign={Boolean(reportSubTask?.campaign)}
         readOnly={
           Boolean(reportSubTask) &&
           isDepartmentReviewerFor(reportSubTask) &&

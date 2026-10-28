@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../modal";
 import { FiFileText } from "react-icons/fi";
+import { useAuth } from "../../../hooks/useAuth";
+import { useGetCampaignsByCompany } from "../../../api/campaigns";
 
 const formatMetric = (value, { money = false, percent = false } = {}) => {
   if (value === undefined || value === null || value === "") return "—";
@@ -19,13 +21,25 @@ const CampaignReportModal = ({
   initialReport = null,
   campaignMetrics = null,
   readOnly = false,
+  // Work with no campaign yet: pass its project so one can be picked here
+  projectId = null,
+  hasCampaign = true,
 }) => {
+  const { user } = useAuth();
+  const needsCampaign = isOpen && !readOnly && !hasCampaign && Boolean(projectId);
+  const { data: campaignsData, isLoading: loadingCampaigns } = useGetCampaignsByCompany(
+    needsCampaign ? user?.company : null,
+    { projectId: projectId || undefined }
+  );
+  const campaignOptions = campaignsData?.data || [];
+  const [campaignId, setCampaignId] = useState("");
   const [summary, setSummary] = useState("");
   const [actionsTaken, setActionsTaken] = useState("");
   const [reportUrl, setReportUrl] = useState("");
 
   useEffect(() => {
     if (isOpen) {
+      setCampaignId("");
       setSummary(initialReport?.summary || "");
       setActionsTaken(initialReport?.actionsTaken || "");
       const existingLink = initialReport?.attachments?.find((a) => a.type === "link");
@@ -37,6 +51,7 @@ const CampaignReportModal = ({
     e.preventDefault();
     if (readOnly) return;
     if (!summary.trim()) return;
+    if (needsCampaign && !campaignId) return;
     const attachments = reportUrl.trim()
       ? [
           {
@@ -51,6 +66,7 @@ const CampaignReportModal = ({
       summary: summary.trim(),
       actionsTaken: actionsTaken.trim(),
       attachments,
+      ...(needsCampaign && campaignId ? { campaign: campaignId } : {}),
     });
   };
 
@@ -64,6 +80,38 @@ const CampaignReportModal = ({
             ? "Review the marketer's report and KPI snapshot, then Approve or send Rework."
             : "This report is the completion proof for campaign work. Metrics are snapshotted from the campaign at submit time — Facebook sync does not award points."}
         </p>
+
+        {needsCampaign && (
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">
+              Campaign <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={campaignId}
+              onChange={(e) => setCampaignId(e.target.value)}
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+            >
+              <option value="">
+                {loadingCampaigns ? "Loading campaigns..." : "Choose the campaign this work is for"}
+              </option>
+              {campaignOptions.map((campaign) => (
+                <option key={campaign._id} value={campaign._id}>
+                  {campaign.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-gray-500">
+              This work isn&apos;t linked to a campaign yet. The one you choose is linked to it and
+              its metrics are used for this report.
+            </p>
+            {!loadingCampaigns && campaignOptions.length === 0 && (
+              <p className="text-[11px] font-medium text-amber-600">
+                This project has no campaigns. Create one in Campaigns first.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-50 border border-gray-100 rounded-xl p-3">
           {[
@@ -142,9 +190,9 @@ const CampaignReportModal = ({
           {!readOnly && (
             <button
               type="submit"
-              disabled={isLoading || !summary.trim()}
+              disabled={isLoading || !summary.trim() || (needsCampaign && !campaignId)}
               className={`px-6 h-10 rounded-xl text-sm font-medium transition-all ${
-                isLoading || !summary.trim()
+                isLoading || !summary.trim() || (needsCampaign && !campaignId)
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-indigo-500 text-white hover:bg-indigo-600 shadow-md"
               }`}

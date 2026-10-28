@@ -474,6 +474,8 @@ const SubTaskStatusButton = ({
         onSubmit={handleCampaignReportSubmit}
         isLoading={submitCampaignReport.isPending}
         initialReport={subTask.campaignReport}
+        projectId={subTask?.project?._id || subTask?.project}
+        hasCampaign={Boolean(subTask?.campaign)}
       />
 
       <WorkLinkModal

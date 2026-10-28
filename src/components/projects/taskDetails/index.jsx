@@ -639,6 +639,8 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
         onSubmit={handleCampaignReportSubmit}
         isLoading={submitCampaignReport.isPending}
         initialReport={taskDetails?.campaignReport}
+        projectId={taskDetails?.project?._id || taskDetails?.project}
+        hasCampaign={Boolean(taskDetails?.campaign)}
         campaignMetrics={
           typeof taskDetails?.campaign === "object" ? taskDetails.campaign : null
         }
