@@ -62,6 +62,12 @@ export const SIDE_MENU = [
         path: "/hr-dashboard",
         routeKey: "hr-dashboard",
       },
+      {
+        id: 109,
+        title: "Digital & Social Dashboard",
+        path: "/digital-dashboard",
+        routeKey: "digital-dashboard",
+      },
       // {
       //   id: 103,
       //   title: "Employee Dashboard",

@@ -161,7 +161,9 @@ const RealtimeAlertsProvider = () => {
         url:
           notification?.type === "shoot_pending" && notification?.data?.taskId
             ? `/projects/${notification.data.projectId}/${notification.data.taskId}`
-            : "/",
+            : notification?.type === "digital_alert"
+              ? notification?.data?.url || "/digital-dashboard?tab=radar"
+              : "/",
         tag: `notif-${notification?._id || Date.now()}`,
       });
     };

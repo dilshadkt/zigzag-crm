@@ -205,6 +205,7 @@ const MODULES = [
   { id: "lead-dashboard", type: "route", label: "Lead Dashboard", icon: <FiBarChart2 />, desc: "Sales & performance analytics hub", permissionKey: null },
   { id: "leaderboard", type: "route", label: "Leaderboard", icon: <FiBarChart2 />, desc: "Performance ranking & stats", permissionKey: null },
   { id: "hr-dashboard", type: "route", label: "HR Dashboard", icon: <FiUsers />, desc: "Workforce & attendance analytics", permissionKey: null },
+  { id: "digital-dashboard", type: "route", label: "Digital & Social Dashboard", icon: <FiBarChart2 />, desc: "Ad performance, social media and marketer KPIs", permissionKey: null },
   { id: "campaigns", type: "route", label: "Marketing", icon: <FiZap />, desc: "Outreach & campaign data", permissionKey: null },
   { id: "task-on-review", type: "route", label: "Quality Control", icon: <FiEye />, desc: "Peer review dashboard", permissionKey: null },
   { id: "task-on-publish", type: "route", label: "Production", icon: <FiCloud />, desc: "Ready for deployment", permissionKey: null },

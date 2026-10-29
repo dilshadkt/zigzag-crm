@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../client";
 
 export const useGetCompanyStatsChecking = (companyId, taskMonth) => {
@@ -117,6 +117,161 @@ export const useGetReporterDashboard = (reporterId = null, enabled = true) => {
       const response = await apiClient.get("/dashboard/reporter", {
         params: reporterId ? { reporterId } : undefined,
       });
+      return response.data;
+    },
+    enabled,
+    staleTime: 30 * 1000,
+    placeholderData: (prev) => prev,
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+// Digital & Social Media dashboard. `days` is one of 7 / 30 / 90.
+export const useGetDigitalDashboard = (days = 30, enabled = true) => {
+  return useQuery({
+    queryKey: ["digitalDashboard", days],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/digital/overview", {
+        params: { days },
+      });
+      return response.data;
+    },
+    enabled,
+    staleTime: 30 * 1000,
+    placeholderData: (prev) => prev,
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useUpdateClientAdConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, ...body }) => {
+      const response = await apiClient.patch(
+        `/dashboard/digital/clients/${projectId}/ad-config`,
+        body
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["digitalDashboard"] });
+    },
+  });
+};
+
+// Daily KPI points per marketer. `days` is 7 / 30.
+export const useGetDigitalPoints = (days = 7, enabled = true) => {
+  return useQuery({
+    queryKey: ["digitalPoints", days],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/digital/points", {
+        params: { days },
+      });
+      return response.data;
+    },
+    enabled,
+    staleTime: 30 * 1000,
+    placeholderData: (prev) => prev,
+    refetchInterval: 60 * 1000,
+  });
+};
+
+// Admin only. job: daily | backfill | health | grace | optimization | spend | rejections
+export const useSyncDigitalNow = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body) => {
+      const response = await apiClient.post("/dashboard/digital/sync-now", body);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["digitalDashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["digitalPoints"] });
+    },
+  });
+};
+
+// ---- Social media marketer log (posts, T+24H engagement, daily checklist) ----
+const invalidateSmm = (queryClient) => {
+  queryClient.invalidateQueries({ queryKey: ["smmToday"] });
+  queryClient.invalidateQueries({ queryKey: ["digitalPoints"] });
+};
+
+export const useGetSmmToday = (day, enabled = true) => {
+  return useQuery({
+    queryKey: ["smmToday", day || "today"],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/digital/smm/posts", {
+        params: day ? { day } : undefined,
+      });
+      return response.data;
+    },
+    enabled,
+    staleTime: 15 * 1000,
+    placeholderData: (prev) => prev,
+    refetchInterval: 60 * 1000,
+  });
+};
+
+export const useCreateSmmPost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body) => {
+      const response = await apiClient.post("/dashboard/digital/smm/posts", body);
+      return response.data;
+    },
+    onSuccess: () => invalidateSmm(queryClient),
+  });
+};
+
+export const useUpdateSmmEngagement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }) => {
+      const response = await apiClient.patch(
+        `/dashboard/digital/smm/posts/${id}/engagement`,
+        body
+      );
+      return response.data;
+    },
+    onSuccess: () => invalidateSmm(queryClient),
+  });
+};
+
+export const useFlagSmmQuality = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...body }) => {
+      const response = await apiClient.patch(
+        `/dashboard/digital/smm/posts/${id}/quality-error`,
+        body
+      );
+      return response.data;
+    },
+    onSuccess: () => invalidateSmm(queryClient),
+  });
+};
+
+export const useSaveSmmChecklist = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body) => {
+      const response = await apiClient.post("/dashboard/digital/smm/checklist", body);
+      return response.data;
+    },
+    onSuccess: () => invalidateSmm(queryClient),
+  });
+};
+
+// Coordinator Radar: open alerts, watch list, unfixed rejections, marketer
+// changelog and social media flags. Scoped to the viewer's clients.
+export const useGetDigitalRadar = (enabled = true) => {
+  return useQuery({
+    queryKey: ["digitalRadar"],
+    queryFn: async () => {
+      const response = await apiClient.get("/dashboard/digital/radar");
       return response.data;
     },
     enabled,

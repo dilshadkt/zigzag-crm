@@ -80,6 +80,7 @@ const NotificationsPage = () => {
         return "bg-purple-100 text-purple-600";
       case "deadline_reminder":
       case "shoot_pending":
+      case "digital_alert":
         return "bg-red-100 text-red-600";
       case "project_update":
         return "bg-yellow-100 text-yellow-600";
@@ -128,6 +129,9 @@ const NotificationsPage = () => {
       case "meeting":
         navigate("/meetings");
         break;
+      case "digital_alert":
+        navigate(notification.data?.url || "/digital-dashboard?tab=radar");
+        break;
       default:
         break;
     }
@@ -161,6 +165,11 @@ const NotificationsPage = () => {
       value: "shoot_pending",
       label: "Shoot Alerts",
       count: notifications.filter((n) => n.type === "shoot_pending").length,
+    },
+    {
+      value: "digital_alert",
+      label: "Marketing Alerts",
+      count: notifications.filter((n) => n.type === "digital_alert").length,
     },
     {
       value: "task_updated",

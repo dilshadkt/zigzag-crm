@@ -88,6 +88,7 @@ const ReporterDashboard = lazy(() => import("../pages/dashboard/ReporterDashboar
 const EmployeeDashboard = lazy(() => import("../pages/dashboard/EmployeeDashboard"));
 const CostDashboard = lazy(() => import("../pages/dashboard/CostDashboard"));
 const HRDashboard = lazy(() => import("../pages/dashboard/HRDashboard"));
+const DigitalDashboard = lazy(() => import("../pages/dashboard/DigitalDashboard"));
 const DepartmentDashboard = lazy(() => import("../pages/dashboard/DepartmentDashboard"));
 const DepartmentTeamTasks = lazy(() => import("../pages/dashboard/DepartmentTeamTasks"));
 const Leaderboard = lazy(() => import("../pages/Leaderboard"));
@@ -192,6 +193,14 @@ const AppRoutes = () => {
             element={
               <RouteAccess>
                 <LeadDashboard />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="digital-dashboard"
+            element={
+              <RouteAccess>
+                <DigitalDashboard />
               </RouteAccess>
             }
           />

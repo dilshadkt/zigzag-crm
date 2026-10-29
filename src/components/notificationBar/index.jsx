@@ -99,6 +99,7 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
         return "bg-purple-100 text-purple-600";
       case "deadline_reminder":
       case "shoot_pending":
+      case "digital_alert":
       case "project_deadline_reminder":
         return "bg-red-100 text-red-600";
       case "project_update":
@@ -136,6 +137,9 @@ const NotificationBar = ({ setNotifyMenuOpen }) => {
             `/projects/${notification.data.projectId}/${notification.data.taskId}`
           );
         }
+        break;
+      case "digital_alert":
+        navigate(notification.data?.url || "/digital-dashboard?tab=radar");
         break;
       case "message":
         if (notification.data?.conversationId) {
