@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -52,10 +52,24 @@ const Prjects = () => {
     );
 
   // Combine the results based on user role
-  const projects =
+  const allProjects =
     user?.role === "company-admin"
       ? companyProjects
       : employeeProjects?.projects;
+
+  // Only people who can create projects manage paused/inactive ones; everyone
+  // else sees active projects only
+  const canSeeInactiveProjects =
+    user?.role === "company-admin" || hasPermission("projects", "create");
+  const projects = useMemo(
+    () =>
+      canSeeInactiveProjects
+        ? allProjects
+        : allProjects?.filter(
+            (project) => project?.status !== "paused" && project?.active !== false
+          ),
+    [allProjects, canSeeInactiveProjects]
+  );
   const isSuccess =
     user?.role === "company-admin" ? isCompanySuccess : isEmployeeSuccess;
 
