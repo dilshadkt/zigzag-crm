@@ -18,6 +18,9 @@ import {
   withFootageLink,
 } from "../../../utils/shootSession";
 
+// Statuses a work link is logged under when it is submitted for review
+const REVIEW_SUBMISSION_STATUSES = ["on-review", "approved", "client-approved", "completed"];
+
 /**
  * SubtaskActionBar — replaces the status dropdown for assigned employees
  * and shows reviewer actions for admins/reporters/managers.
@@ -157,18 +160,20 @@ const SubtaskActionBar = ({
   const needsWorkLink = () => {
     if (!isWorkLinkRequired) return false;
     const hasLink = getCurrentLink().trim() !== "";
-    // If reworked, the link must have been updated after the rework
+    // After a rework the employee has to submit a fresh link. Only entries
+    // logged by a submit-for-review count: the API also logs an entry when the
+    // link is saved through the link chip or the edit form, and those must not
+    // satisfy the rework.
     let needsNewLink = false;
     if (subtask.reworkHistory?.length > 0) {
       const lastRework = subtask.reworkHistory[subtask.reworkHistory.length - 1];
       const lastReworkDate = lastRework?.changedAt ? new Date(lastRework.changedAt) : new Date(0);
-      if (subtask.workLinkHistory?.length > 0) {
-        const lastLink = subtask.workLinkHistory[subtask.workLinkHistory.length - 1];
-        const lastLinkDate = lastLink?.submittedAt ? new Date(lastLink.submittedAt) : new Date(0);
-        needsNewLink = lastReworkDate > lastLinkDate;
-      } else {
-        needsNewLink = true;
-      }
+      needsNewLink = !(subtask.workLinkHistory || []).some(
+        (entry) =>
+          REVIEW_SUBMISSION_STATUSES.includes(entry?.statusAtSubmission) &&
+          entry?.submittedAt &&
+          new Date(entry.submittedAt) > lastReworkDate
+      );
     }
     return !hasLink || needsNewLink;
   };
