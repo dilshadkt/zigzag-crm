@@ -9,6 +9,8 @@ export const FOOTAGE_LINK_LABEL = "Footage Drive Link";
 export const getShootCategory = (item) => {
   const own = item?.taskCategory;
   if (own && typeof own === "object" && own.coversWork) return own;
+  // A subtask with its own non-shoot category is not a shoot session
+  if (own) return null;
   const parent = item?.parentTask?.taskCategory;
   if (parent && typeof parent === "object" && parent.coversWork) return parent;
   // Sent by the subtask list when only the parent task has the shoot category
