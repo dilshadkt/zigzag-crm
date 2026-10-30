@@ -274,7 +274,7 @@ const SubtaskActionBar = ({
       toast.success("Work link submitted & sent for review!");
     } catch (err) {
       console.error("Work link submit error:", err);
-      toast.error("Failed to submit work link");
+      toast.error(err.response?.data?.message || "Failed to submit work link");
     }
   };
 
