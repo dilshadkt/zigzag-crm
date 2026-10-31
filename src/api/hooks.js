@@ -337,9 +337,9 @@ export const useProjectTasks = (projectId, monthKey = null, options = {}) => {
 };
 
 //empoyee
-export const useEmpoyees = (page = null, filters = null, search = "", view = null) => {
+export const useEmpoyees = (page = null, filters = null, search = "", view = null, archived = false) => {
   return useQuery({
-    queryKey: ["employees", page, filters, search, view],
+    queryKey: ["employees", page, filters, search, view, archived],
     queryFn: async () => {
       const params = new URLSearchParams();
 
@@ -361,6 +361,10 @@ export const useEmpoyees = (page = null, filters = null, search = "", view = nul
 
       if (view) {
         params.append("view", view);
+      }
+
+      if (archived) {
+        params.append("archived", "true");
       }
 
       const response = await apiClient.get(`/employee?${params.toString()}`);
@@ -1791,8 +1795,34 @@ export const useDeleteEmployee = () => {
   });
 };
 
+const invalidateEmployeeQueries = (queryClient) => {
+  queryClient.invalidateQueries(["employees"]);
+  queryClient.invalidateQueries(["employee"]);
+  queryClient.invalidateQueries(["allEmployees"]);
+};
+
+export const useRestoreEmployee = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["restoreEmployee"],
+    mutationFn: (employeeId) =>
+      apiClient.patch(`/employee/${employeeId}/restore`).then((res) => res.data),
+    onSuccess: () => invalidateEmployeeQueries(queryClient),
+  });
+};
+
+export const usePermanentlyDeleteEmployee = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["permanentlyDeleteEmployee"],
+    mutationFn: (employeeId) =>
+      apiClient.delete(`/employee/${employeeId}/permanent`).then((res) => res.data),
+    onSuccess: () => invalidateEmployeeQueries(queryClient),
+  });
+};
+
 // SubTask Hooks
-export const useCreateSubTask = (parentTaskId) => {
+export const useCreateSubTask =(parentTaskId) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["createSubTask"],

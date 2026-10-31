@@ -12,6 +12,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import {
   useUpdateProfile,
   useDeleteEmployee,
+  useRestoreEmployee,
+  usePermanentlyDeleteEmployee,
   useGetPositions,
   useGetDepartments,
 } from "../../../api/hooks";
@@ -103,7 +105,13 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   const targetEmployeeId = isOwnProfile ? null : employeeId;
 
   // Delete employee mutation
-  const deleteEmployeeMutation = useDeleteEmployee();
+  const archiveEmployeeMutation = useDeleteEmployee();
+  const restoreEmployeeMutation = useRestoreEmployee();
+  const permanentDeleteMutation = usePermanentlyDeleteEmployee();
+  const isArchived = Boolean(user?.isArchived);
+  const deleteEmployeeMutation = isArchived
+    ? permanentDeleteMutation
+    : archiveEmployeeMutation;
 
   // Initial form values from the user object
   const initialValues = {
@@ -171,8 +179,22 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
 
   // Handle successful employee deletion
   const handleDeleteSuccess = () => {
-    toast.success("Employee deleted successfully!");
+    toast.success(
+      isArchived
+        ? "Employee deleted permanently"
+        : "Employee moved to Former Employees"
+    );
     navigate("/employees"); // Redirect to employees list
+  };
+
+  const handleRestoreEmployee = async () => {
+    try {
+      await restoreEmployeeMutation.mutateAsync(employeeId || user?._id);
+      toast.success("Employee restored successfully!");
+    } catch (error) {
+      toast.error("Failed to restore employee. Please try again.");
+      console.error("Restore employee error:", error);
+    }
   };
 
   // Update profile mutation - pass employeeId if updating another employee
@@ -342,10 +364,10 @@ const UserProfile = ({ user, disableEdit, canDelete, employeeId }) => {
   // Handle delete employee
   const handleDeleteEmployee = async () => {
     try {
-      await deleteEmployeeMutation.mutateAsync(employeeId);
+      await deleteEmployeeMutation.mutateAsync(employeeId || user?._id);
       handleDeleteSuccess();
     } catch (error) {
-      toast.error("Failed to delete employee. Please try again.");
+      toast.error("Failed to remove employee. Please try again.");
       console.error("Delete employee error:", error);
     }
     setShowDeleteConfirm(false);
@@ -397,6 +419,16 @@ rounded-3xl flex flex-col"
               icon={"/icons/edit.svg"}
               className={`${isEditMode ? `bg-[#3F8CFF]` : `bg-[#F4F9FD]`}`}
             />
+            {showDeleteButton && isArchived && (
+              <button
+                onClick={handleRestoreEmployee}
+                disabled={restoreEmployeeMutation.isLoading}
+                className="h-10 px-3 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-medium shadow-sm disabled:opacity-50"
+                title="Restore Employee"
+              >
+                {restoreEmployeeMutation.isLoading ? "Restoring..." : "Restore"}
+              </button>
+            )}
             {showDeleteButton && (
               <button
                 onClick={() =>
@@ -408,7 +440,7 @@ rounded-3xl flex flex-col"
                     : "bg-red-500 hover:bg-red-600 hover:scale-105 active:scale-95"
                   } shadow-sm`}
                 disabled={deleteEmployeeMutation.isLoading}
-                title="Delete Employee"
+                title={isArchived ? "Delete Permanently" : "Remove Employee"}
               >
                 <svg
                   className="w-5 h-5 text-white"
@@ -696,19 +728,37 @@ rounded-3xl flex flex-col"
         <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Delete Employee
+              {isArchived ? "Delete Permanently" : "Remove Employee"}
             </h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this employee? This action will:
-            </p>
-            <ul className="text-sm text-gray-600 mb-6 list-disc list-inside">
-              <li>Remove them from all projects</li>
-              <li>Unassign all their tasks</li>
-              <li>Permanently delete their account</li>
-            </ul>
-            <p className="text-red-600 text-sm font-medium mb-6">
-              This action cannot be undone.
-            </p>
+            {isArchived ? (
+              <>
+                <p className="text-gray-600 mb-6">
+                  This will permanently delete this former employee and:
+                </p>
+                <ul className="text-sm text-gray-600 mb-6 list-disc list-inside">
+                  <li>Delete their leave, attendance and notifications</li>
+                  <li>Unassign their tasks</li>
+                  <li>Delete their account</li>
+                </ul>
+                <p className="text-red-600 text-sm font-medium mb-6">
+                  This action cannot be undone. Use Restore instead if they may return.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-600 mb-6">
+                  This employee will be moved to Former Employees:
+                </p>
+                <ul className="text-sm text-gray-600 mb-6 list-disc list-inside">
+                  <li>They can no longer log in</li>
+                  <li>They are removed from all projects</li>
+                  <li>Their tasks, leave and performance history are kept</li>
+                </ul>
+                <p className="text-gray-600 text-sm mb-6">
+                  You can restore them anytime from Employees → Former.
+                </p>
+              </>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -722,7 +772,11 @@ rounded-3xl flex flex-col"
                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
                 disabled={deleteEmployeeMutation.isLoading}
               >
-                {deleteEmployeeMutation.isLoading ? "Deleting..." : "Delete"}
+                {deleteEmployeeMutation.isLoading
+                  ? "Working..."
+                  : isArchived
+                    ? "Delete Permanently"
+                    : "Remove"}
               </button>
             </div>
           </div>

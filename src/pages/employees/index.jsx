@@ -4,19 +4,78 @@ import CreateEmployee from "../../components/employees/addEmployee";
 import EmployeeActivity from "../../components/employees/employeeActivity";
 import EmployeeList from "../../components/employees/employeeList";
 import NoEmployees from "../../components/employees/noEmployees";
-import ButtonToggle from "../../components/shared/buttons/buttonToggle";
 import PrimaryButton from "../../components/shared/buttons/primaryButton";
 import Header from "../../components/shared/header";
 import PageNavigator from "../../components/shared/navigator/pageNavigator";
 import { useQueryClient } from "@tanstack/react-query";
 import FilterMenu from "../../components/employees/FilterMenu";
 
+const svgProps = {
+  className: "w-5 h-5",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  viewBox: "0 0 24 24",
+};
+
+const ICONS = {
+  active: (
+    <svg {...svgProps}>
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M17 11l2 2 4-4" />
+    </svg>
+  ),
+  former: (
+    <svg {...svgProps}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <path d="M5 8v11a1 1 0 001 1h12a1 1 0 001-1V8M10 12h4" />
+    </svg>
+  ),
+  list: (
+    <svg {...svgProps}>
+      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </svg>
+  ),
+  activity: (
+    <svg {...svgProps}>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  ),
+};
+
+const IconToggle = ({ options, value, onChange }) => (
+  <div className="h-12 w-fit rounded-3xl grid grid-flow-col p-1 bg-[#E6EDF5]">
+    {options.map((option) => (
+      <button
+        key={option.value}
+        type="button"
+        title={option.label}
+        aria-label={option.label}
+        onClick={() => onChange(option.value)}
+        className={`h-full w-12 cursor-pointer rounded-[20px] flexCenter ${
+          value === option.value ? "bg-[#3F8CFF] text-white" : "text-gray-800"
+        }`}
+      >
+        {option.icon}
+      </button>
+    ))}
+  </div>
+);
+
 const Employees = () => {
   const [stat, setStat] = useState("list");
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeFilters, setActiveFilters] = useState(null);
-  const { data } = useEmpoyees(currentPage, activeFilters);
+  const [scope, setScope] = useState("Active");
+  const showFormer = scope === "Former";
+  const { data } = useEmpoyees(currentPage, activeFilters, "", null, showFormer);
   const employees = data?.employees || [];
   const pagination = data?.pagination || { total: 0, page: 1, totalPages: 1 };
   const { mutate } = useAddEmployee();
@@ -75,7 +134,11 @@ const Employees = () => {
 
   const renderStat = () => {
     if (employees.length === 0) {
-      return <NoEmployees>There are no Employees</NoEmployees>;
+      return (
+        <NoEmployees>
+          {showFormer ? "There are no former employees" : "There are no Employees"}
+        </NoEmployees>
+      );
     }
 
     if (stat === "list") {
@@ -89,12 +152,28 @@ const Employees = () => {
     <section className="flex flex-col overflow-y-auto  h-full gap-y-2 md:gap-y-3">
       {/* header  */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Header>Employees ({pagination.total})</Header>
+        <Header>
+          {showFormer ? "Former Employees" : "Employees"} ({pagination.total})
+        </Header>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <ButtonToggle
-            setValue={setStat}
+          <IconToggle
+            value={scope}
+            onChange={(value) => {
+              setScope(value);
+              setCurrentPage(1);
+            }}
+            options={[
+              { value: "Active", label: "Active employees", icon: ICONS.active },
+              { value: "Former", label: "Former employees", icon: ICONS.former },
+            ]}
+          />
+          <IconToggle
             value={stat}
-            values={["list", "activity"]}
+            onChange={setStat}
+            options={[
+              { value: "list", label: "List view", icon: ICONS.list },
+              { value: "activity", label: "Activity view", icon: ICONS.activity },
+            ]}
           />
           <div className="flex items-center gap-2">
             <PrimaryButton
