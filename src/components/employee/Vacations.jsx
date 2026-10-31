@@ -66,7 +66,9 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
     );
   }
 
-  const { summary, vacations } = data;
+  // Balance counts pending requests too, so a request reserves its days.
+  const { vacations } = data;
+  const summary = data.used || data.summary;
   const limits = getLeaveLimits(employeeRecord, leavePolicy || []);
 
   const startQuotaEdit = () => {

@@ -71,13 +71,16 @@ const VacationRequestModal = ({ onClose }) => {
   }, [targetOnProbation]);
 
   const { data: employeeVacationsData } = useGetEmployeeVacations(formData.employeeId);
-  const employeeVacationsSummary = employeeVacationsData?.summary;
+  // Balance counts pending requests too, so a request reserves its days.
+  const employeeVacationsSummary =
+    employeeVacationsData?.used || employeeVacationsData?.summary;
+  const myVacationsSummary = myVacationsData?.used || myVacationsData?.summary;
 
-  const usedVacation = formData.employeeId ? (employeeVacationsSummary?.vacation || 0) : (myVacationsData?.summary?.vacation || 0);
-  const usedSick = formData.employeeId ? (employeeVacationsSummary?.sick_leave || 0) : (myVacationsData?.summary?.sick_leave || 0);
-  const usedRemote = formData.employeeId ? (employeeVacationsSummary?.remote_work || 0) : (myVacationsData?.summary?.remote_work || 0);
+  const usedVacation = formData.employeeId ? (employeeVacationsSummary?.vacation || 0) : (myVacationsSummary?.vacation || 0);
+  const usedSick = formData.employeeId ? (employeeVacationsSummary?.sick_leave || 0) : (myVacationsSummary?.sick_leave || 0);
+  const usedRemote = formData.employeeId ? (employeeVacationsSummary?.remote_work || 0) : (myVacationsSummary?.remote_work || 0);
 
-  const usedUnpaid = formData.employeeId ? (employeeVacationsSummary?.unpaid_leave || 0) : (myVacationsData?.summary?.unpaid_leave || 0);
+  const usedUnpaid = formData.employeeId ? (employeeVacationsSummary?.unpaid_leave || 0) : (myVacationsSummary?.unpaid_leave || 0);
 
   const vacationBalance = vacationLimit - usedVacation;
   const sickBalance = sickLeaveLimit - usedSick;

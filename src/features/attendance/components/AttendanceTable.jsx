@@ -117,8 +117,101 @@ const TimeDisplay = React.memo(({ time, label, className = "" }) => {
   );
 });
 
+const formatHours = (value) => {
+  if (!value) return "0h 0m";
+  const hours = Math.floor(value);
+  const minutes = Math.round((value - hours) * 60);
+  return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+};
+
+// Merge every clock-in/out session of one employee on one day into a single row.
+const mergeSessions = (sorted) => {
+  if (sorted.length === 1) return sorted[0];
+
+  const open = sorted.find((s) => !s.clockOutTime);
+  const lastOut = sorted.reduce(
+    (latest, s) =>
+      s.clockOutTime && (!latest || new Date(s.clockOutTime) > new Date(latest))
+        ? s.clockOutTime
+        : latest,
+    null
+  );
+  const sum = (key) => sorted.reduce((total, s) => total + (s[key] || 0), 0);
+
+  return {
+    ...sorted[0],
+    clockInTime: sorted[0].clockInTime,
+    clockOutTime: open ? null : lastOut,
+    status: open ? open.status : "checked-out",
+    totalHours: sum("totalHours"),
+    overtimeHours: sum("overtimeHours"),
+    breakTime: sum("breakTime"),
+    breaks: sorted.flatMap((s) => s.breaks || []),
+    clockInLocation:
+      sorted.find((s) => s.clockInLocation?.latitude)?.clockInLocation ||
+      sorted[0].clockInLocation,
+    workDescription: sorted.find((s) => s.workDescription)?.workDescription,
+    adminNotes: sorted.find((s) => s.adminNotes)?.adminNotes,
+  };
+};
+
+const dayKey = (record) => {
+  const d = new Date(record.date || record.clockInTime);
+  const empId = record.employee?._id || record.employee;
+  return `${empId}-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+};
+
+// Compact row for one session, shown when a grouped row is expanded
+const SessionRow = React.memo(
+  ({ session, index, canEditAttendance, onEdit }) => (
+    <tr className="bg-gray-50/70">
+      <td className="sticky left-0 z-20 bg-gray-50 px-3 py-2 pl-16 whitespace-nowrap text-xs text-gray-500">
+        Session {index + 1}
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap">
+        <div className="space-y-1">
+          <TimeDisplay time={session.clockInTime} label="In" />
+          <TimeDisplay time={session.clockOutTime} label="Out" />
+        </div>
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+        {formatBreakMinutes(session.breakTime || 0)}
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap">
+        <StatusBadge status={session.status} />
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+        {formatHours(session.totalHours)}
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+        {session.overtimeHours > 0 ? formatHours(session.overtimeHours) : "0h"}
+      </td>
+      <td className="px-3 py-2" />
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 max-w-[140px]">
+        <div className="truncate">
+          {session.workDescription || session.adminNotes || "No notes"}
+        </div>
+      </td>
+      {canEditAttendance && (
+        <td className="sticky right-0 z-20 bg-gray-50 px-3 py-2 whitespace-nowrap text-right">
+          <button
+            type="button"
+            onClick={() => onEdit?.(session)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-100"
+          >
+            <FiEdit2 className="h-3.5 w-3.5" />
+            Edit
+          </button>
+        </td>
+      )}
+    </tr>
+  )
+);
+
 // Memoized employee row component
-const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
+const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, onEdit }) => {
+  const [expanded, setExpanded] = useState(false);
+  const multiple = sessions.length > 1;
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationDetails, setLocationDetails] = useState(null);
   const [imgError, setImgError] = useState(false);
@@ -163,12 +256,10 @@ const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
   }, [employee?.firstName, employee?.lastName]);
 
   // Memoized total hours calculation
-  const totalHours = useMemo(() => {
-    if (!attendance.totalHours) return "0h 0m";
-    const hours = Math.floor(attendance.totalHours);
-    const minutes = Math.round((attendance.totalHours - hours) * 60);
-    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-  }, [attendance.totalHours]);
+  const totalHours = useMemo(
+    () => formatHours(attendance.totalHours),
+    [attendance.totalHours]
+  );
 
   // Memoized overtime calculation
   const overtimeHours = useMemo(() => {
@@ -209,15 +300,25 @@ const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
                 {employeeName}
               </div>
               <div className="text-sm text-gray-500 truncate max-w-[160px]">{employee?.email}</div>
-              {canEditAttendance && (
+              {multiple ? (
                 <button
                   type="button"
-                  onClick={() => onEdit?.(attendance)}
+                  onClick={() => setExpanded((v) => !v)}
                   className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#3F8CFF] hover:text-blue-700"
                 >
-                  <FiEdit2 className="h-3 w-3" />
-                  Edit
+                  {expanded ? "Hide" : "View"} {sessions.length} sessions
                 </button>
+              ) : (
+                canEditAttendance && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit?.(attendance)}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#3F8CFF] hover:text-blue-700"
+                  >
+                    <FiEdit2 className="h-3 w-3" />
+                    Edit
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -330,15 +431,29 @@ const EmployeeRow = React.memo(({ attendance, canEditAttendance, onEdit }) => {
           <td className="sticky right-0 z-20 bg-white group-hover:bg-gray-50 px-3 py-4 whitespace-nowrap text-right shadow-[-2px_0_8px_-4px_rgba(15,23,42,0.18)]">
             <button
               type="button"
-              onClick={() => onEdit?.(attendance)}
+              onClick={() =>
+                multiple ? setExpanded((v) => !v) : onEdit?.(attendance)
+              }
               className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-100"
             >
               <FiEdit2 className="h-3.5 w-3.5" />
-              Edit
+              {multiple ? (expanded ? "Hide" : "Sessions") : "Edit"}
             </button>
           </td>
         )}
       </tr>
+
+      {multiple &&
+        expanded &&
+        sessions.map((session, i) => (
+          <SessionRow
+            key={session._id || i}
+            session={session}
+            index={i}
+            canEditAttendance={canEditAttendance}
+            onEdit={onEdit}
+          />
+        ))}
 
       {/* Location Modal */}
       {showLocationModal && locationDetails && (
@@ -460,6 +575,22 @@ const AttendanceTable = ({
       );
     });
   }, [allAttendanceRecords, searchTerm]);
+
+  // One row per employee per day, however many times they clocked in
+  const groupedRecords = useMemo(() => {
+    const groups = new Map();
+    filteredRecords.forEach((record) => {
+      const key = dayKey(record);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(record);
+    });
+    return Array.from(groups.entries()).map(([key, list]) => {
+      const sessions = [...list].sort(
+        (a, b) => new Date(a.clockInTime) - new Date(b.clockInTime)
+      );
+      return { key, sessions, merged: mergeSessions(sessions) };
+    });
+  }, [filteredRecords]);
 
   // Use ref to track previous data and prevent unnecessary updates
   const prevDataRef = useRef();
@@ -701,10 +832,11 @@ const AttendanceTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredRecords.map((attendance, index) => (
+            {groupedRecords.map(({ key, sessions, merged }) => (
               <EmployeeRow
-                key={attendance._id || index}
-                attendance={attendance}
+                key={key}
+                attendance={merged}
+                sessions={sessions}
                 canEditAttendance={canEditAttendance}
                 onEdit={setEditingRecord}
               />

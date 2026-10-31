@@ -344,7 +344,9 @@ const Vacations = ({ employeeId, selectedMonth, selectedYear, employee }) => {
     );
   }
 
-  const { summary, vacations } = data || { summary: {}, vacations: [] };
+  // Balance counts pending requests too, so a request reserves its days.
+  const { vacations } = data || { vacations: [] };
+  const summary = data?.used || data?.summary || {};
 
   if (onProbation) {
     const unpaidRemaining =
