@@ -43,7 +43,7 @@ const LEAVE_LABELS = {
 const Vacations = () => {
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
-  const [stat, setStat] = useState("Casual Leaves");
+  const [stat, setStat] = useState("Leave");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
@@ -61,7 +61,7 @@ const Vacations = () => {
 
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
-  const isVacationsTab = stat === "Casual Leaves";
+  const isVacationsTab = stat === "Leave";
   const isCalendarTab = stat === "Calendar";
 
   const { data: companyVacationsData, isLoading: isLoadingEmployees } =
@@ -290,7 +290,7 @@ const Vacations = () => {
       );
     }
 
-    if (stat === "Casual Leaves") {
+    if (stat === "Leave") {
       return (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mt-3 pb-6">
           {displayedEmployees?.map((item, index) => (
@@ -522,7 +522,7 @@ const Vacations = () => {
           <ButtonToggle
             setValue={setStat}
             value={stat}
-            values={["Casual Leaves", "Calendar"]}
+            values={["Leave", "Calendar"]}
           />
         </div>
 

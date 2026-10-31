@@ -207,7 +207,9 @@ const VacationCard = ({
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-gray-700 capitalize">
-                      {request.type.replace("_", " ")}
+                      {request.type === "vacation"
+                        ? "Casual Leave"
+                        : request.type.replace("_", " ")}
                     </span>
                     <StatusBadge status={request.status} />
                   </div>

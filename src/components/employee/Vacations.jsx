@@ -211,7 +211,7 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
           )}
           <div className="grid grid-cols-3 gap-5">
             <LeaveBalanceCard
-              title="Vacation"
+              title="Casual Leave"
               remaining={remaining.vacation}
               limit={limits.vacation}
               color="#15C0E6"
@@ -248,7 +248,7 @@ const Vacations = ({ employeeId, employee, canEdit = false }) => {
       )}
       <div className="flex items-center justify-between my-3 mx-1">
         <h3 className="text-sm font-bold text-gray-600">
-          Vacation Requests ({selectedYear})
+          Casual Leave Requests ({selectedYear})
         </h3>
         <select
           value={selectedYear}

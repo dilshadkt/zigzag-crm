@@ -20,6 +20,7 @@ const LeaveCard = ({ request }) => {
 
   // Format type name for display
   const getTypeName = () => {
+    if (request?.type === "vacation") return "Casual Leave";
     return request?.type
       ?.replace("_", " ")
       .replace(/\b\w/g, (l) => l.toUpperCase());
