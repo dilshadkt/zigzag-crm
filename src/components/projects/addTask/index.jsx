@@ -36,6 +36,9 @@ import {
   isWeeklyOff,
   isHoliday,
   formatShortDate,
+  getOffDayReason,
+  findSubtasksOnOffDays,
+  parseDayValue,
 } from "../../../utils/workingDayUtils";
 import { useCheckAvailability } from "../../../features/vacations/hooks/useVacations";
 import { useGetCampaignsByCompany } from "../../../api/campaigns";
@@ -1690,6 +1693,13 @@ const AddTask = ({
   }, [suggestedTitle, isEdit]);
   const taskFlowOptions = getTaskFlowOptions();
 
+  // Dates the person picked that fall on a weekly off or holiday (warning only)
+  const subtasksOnOffDays = findSubtasksOnOffDays(values.subtasks, weeklyOffs, holidays);
+  const startDateOffReason = getOffDayReason(parseDayValue(values.startDate), weeklyOffs, holidays);
+  const dueDateOffReason = getOffDayReason(parseDayValue(values.dueDate), weeklyOffs, holidays);
+  const subtasksOnDueDay = (day) =>
+    subtasksOnOffDays.filter((item) => item.date.toDateString() === parseDayValue(day)?.toDateString());
+
   // Flow steps with nobody on them yet: from the subtask preview once it exists,
   // otherwise from what the flow resolved to (dates not set yet)
   const flowSubtasks = (values.subtasks || []).filter((step) => step?.isFromFlow);
@@ -2045,14 +2055,20 @@ const AddTask = ({
                           touched={touched}
                           disabled={false}
                         />
-                        {values.startDate && (isWeeklyOff(new Date(values.startDate), weeklyOffs) || isHoliday(new Date(values.startDate), holidays)) && (
-                          <div className="flex items-center gap-1.5 mt-1 px-1">
-                            <FiAlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                            <span className="text-[11px] text-amber-600 font-medium whitespace-nowrap">
-                              {isHoliday(new Date(values.startDate), holidays)
-                                ? `Holiday: ${holidays.find(h => new Date(h.date).toDateString() === new Date(values.startDate).toDateString())?.name}`
-                                : "Weekly-off day"} — task can still start here
-                            </span>
+                        {startDateOffReason && (
+                          <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800">
+                              <FiAlertTriangle className="h-3 w-3 flex-shrink-0 text-amber-500" />
+                              {startDateOffReason.type === "Holiday"
+                                ? `Holiday: ${startDateOffReason.name}`
+                                : `Weekly off (${startDateOffReason.name})`} — the company is off on this day
+                            </div>
+                            {subtasksOnDueDay(values.startDate).length > 0 && (
+                              <p className="mt-0.5 text-[11px] leading-snug text-amber-700">
+                                Subtasks on this day:{" "}
+                                {subtasksOnDueDay(values.startDate).map((item) => item.taskName).filter((name, i, all) => all.indexOf(name) === i).join(", ")}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -2067,14 +2083,20 @@ const AddTask = ({
                           name={"dueDate"}
                           disabled={false}
                         />
-                        {values.dueDate && (isWeeklyOff(new Date(values.dueDate), weeklyOffs) || isHoliday(new Date(values.dueDate), holidays)) && (
-                          <div className="flex items-center gap-1.5 mt-1 px-1">
-                            <FiAlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                            <span className="text-[11px] text-amber-600 font-medium whitespace-nowrap">
-                              {isHoliday(new Date(values.dueDate), holidays)
-                                ? `Holiday: ${holidays.find(h => new Date(h.date).toDateString() === new Date(values.dueDate).toDateString())?.name}`
-                                : "Weekly-off day"} — subtasks will be adjusted
-                            </span>
+                        {dueDateOffReason && (
+                          <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800">
+                              <FiAlertTriangle className="h-3 w-3 flex-shrink-0 text-amber-500" />
+                              {dueDateOffReason.type === "Holiday"
+                                ? `Holiday: ${dueDateOffReason.name}`
+                                : `Weekly off (${dueDateOffReason.name})`} — the company is off on this day
+                            </div>
+                            {subtasksOnDueDay(values.dueDate).length > 0 && (
+                              <p className="mt-0.5 text-[11px] leading-snug text-amber-700">
+                                Subtasks on this day:{" "}
+                                {subtasksOnDueDay(values.dueDate).map((item) => item.taskName).filter((name, i, all) => all.indexOf(name) === i).join(", ")}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -2412,6 +2434,31 @@ const AddTask = ({
 
                 {(values.subtasks && values.subtasks.length > 0) || values.taskFlow ? (
                   <div className="space-y-3">
+                    {subtasksOnOffDays.length > 0 && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                        <div className="flex items-center gap-1.5 text-[12px] font-semibold text-amber-800">
+                          <FiAlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                          {subtasksOnOffDays.length === 1
+                            ? "1 subtask date falls on a day the company is off"
+                            : `${subtasksOnOffDays.length} subtask dates fall on days the company is off`}
+                        </div>
+                        <ul className="mt-1.5 space-y-1 text-[11px] leading-snug text-amber-800">
+                          {subtasksOnOffDays.map((item) => (
+                            <li key={`${item.index}-${item.field}`}>
+                              <span className="font-semibold">{item.taskName}</span>{" "}
+                              {item.field === "dueDate" ? "is due" : "starts"} on{" "}
+                              {formatShortDate(item.date)} —{" "}
+                              {item.reason.type === "Holiday"
+                                ? `holiday (${item.reason.name})`
+                                : `weekly off (${item.reason.name})`}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="mt-1.5 text-[11px] text-amber-700">
+                          You can still create the task, or change the dates above.
+                        </p>
+                      </div>
+                    )}
                     {values.subtasks?.map((step, index) => {
                       const assigneeOptions = getAssigneeOptions();
                       const currentAssigneeId = typeof step.assignee === "object" ? step.assignee?._id : step.assignee;

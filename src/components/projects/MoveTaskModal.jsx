@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { FiArrowRight, FiChevronDown, FiSearch, FiPackage, FiAlertCircle } from "react-icons/fi";
 import { useAuth } from "../../hooks/useAuth";
 import { useCompanyProjects } from "../../api/hooks";
@@ -37,6 +37,33 @@ const formatMonth = (monthKey) => {
   });
 };
 
+// Work details of a month. A month that does not exist yet is created by the
+// server from the latest earlier month's package (counts reset to the totals),
+// so show it the same way here.
+const getMonthDetailsOrTemplate = (workDetails, month) => {
+  const existing = (workDetails || []).find((wd) => wd.month === month);
+  if (existing) return { details: existing, isTemplate: false };
+
+  const earlier = (workDetails || [])
+    .filter((wd) => wd.month && wd.month < month)
+    .sort((a, b) => (a.month > b.month ? -1 : 1))[0];
+  const copySlot = (src) => ({
+    total: src?.total || 0,
+    count: src?.total || 0,
+    extra: 0,
+  });
+  const details = { month };
+  ["reels", "poster", "motionPoster", "shooting", "motionGraphics"].forEach(
+    (key) => {
+      details[key] = copySlot(earlier?.[key]);
+    }
+  );
+  details.other = (earlier?.other || [])
+    .filter((item) => Number(item.total) > 0)
+    .map((item) => ({ name: item.name, ...copySlot(item) }));
+  return { details, isTemplate: true };
+};
+
 const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLoading }) => {
   const { companyId, user } = useAuth();
   const effectiveCompanyId = companyId || user?.company;
@@ -52,6 +79,22 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [mode, setMode] = useState("project");
   const [targetMonth, setTargetMonth] = useState("");
+  // Month in the destination project; empty means the task's current month.
+  const [destMonthInput, setDestMonthInput] = useState("");
+
+  // The component stays mounted after a successful move, so clear the form
+  // whenever the modal closes.
+  useEffect(() => {
+    if (isOpen) return;
+    setSelectedProjectId("");
+    setSelectedTaskGroup("");
+    setSelectedOtherCategory("");
+    setProjectSearch("");
+    setShowProjectDropdown(false);
+    setMode("project");
+    setTargetMonth("");
+    setDestMonthInput("");
+  }, [isOpen]);
 
   const currentProjectId = taskDetails?.project?._id || taskDetails?.project;
 
@@ -70,13 +113,18 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
     return availableProjects.find((p) => p._id === selectedProjectId);
   }, [availableProjects, selectedProjectId]);
 
-  // Get work details from the destination project for the task's month
-  const destWorkCategories = useMemo(() => {
-    if (!selectedProject || !taskDetails?.taskMonth) return [];
-    const monthDetails = selectedProject.workDetails?.find(
-      (wd) => wd.month === taskDetails.taskMonth
+  const destMonth = destMonthInput || taskDetails?.taskMonth || "";
+  const destMonthChanged = !!destMonth && destMonth !== taskDetails?.taskMonth;
+
+  // Get work details from the destination project for the chosen month
+  const { destWorkCategories, destMonthIsNew } = useMemo(() => {
+    if (!selectedProject || !destMonth) {
+      return { destWorkCategories: [], destMonthIsNew: false };
+    }
+    const { details: monthDetails, isTemplate } = getMonthDetailsOrTemplate(
+      selectedProject.workDetails,
+      destMonth
     );
-    if (!monthDetails) return [];
 
     const categories = [];
     WORK_TYPES.forEach((wt) => {
@@ -105,8 +153,8 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
       });
     }
 
-    return categories;
-  }, [selectedProject, taskDetails?.taskMonth]);
+    return { destWorkCategories: categories, destMonthIsNew: isTemplate };
+  }, [selectedProject, destMonth]);
 
   // Quota before/after for the month move, from the project data already loaded.
   // Work count = used / total. The old month goes down by 1, the new one up by 1.
@@ -173,6 +221,10 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
       taskGroup: selectedTaskGroup === "other" ? "extraTask" : selectedTaskGroup,
     };
 
+    if (destMonthChanged) {
+      moveData.targetMonth = destMonth;
+    }
+
     if (selectedTaskGroup === "other" && selectedOtherCategory) {
       moveData.extraTaskWorkType = selectedOtherCategory;
     }
@@ -196,6 +248,7 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
     setShowProjectDropdown(false);
     setMode("project");
     setTargetMonth("");
+    setDestMonthInput("");
     onClose();
   };
 
@@ -424,12 +477,50 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
           </div>
         </div>
 
+        {/* Destination Month */}
+        <div>
+          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between gap-2">
+            <span>Destination Month</span>
+            {destMonthChanged && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDestMonthInput("");
+                  setSelectedTaskGroup("");
+                }}
+                className="normal-case tracking-normal text-[12px] font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Reset to {formatMonth(taskDetails?.taskMonth)}
+              </button>
+            )}
+          </label>
+          <input
+            type="month"
+            value={destMonth}
+            onChange={(e) => {
+              setDestMonthInput(e.target.value);
+              setSelectedTaskGroup("");
+            }}
+            className="w-full px-3.5 py-3 border border-slate-200 rounded-xl text-[13px] font-medium text-slate-700 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 bg-white shadow-sm"
+          />
+          <p className="mt-1.5 text-[12px] text-slate-500">
+            {destMonthChanged
+              ? `The task moves from ${formatMonth(taskDetails?.taskMonth)} to ${formatMonth(destMonth)}, and the work count of ${formatMonth(destMonth)} is used.`
+              : "Same month as the task. Pick another month to move the work there."}
+          </p>
+        </div>
+
         {/* Work Type Selector */}
         {selectedProjectId && (
           <div className="animate-fadeIn mt-2">
             <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 block flex items-center gap-2">
-              Work Category in Destination
+              Work Category in Destination ({formatMonth(destMonth)})
             </label>
+            {destMonthIsNew && (
+              <p className="mb-2.5 text-[12px] text-slate-500">
+                {formatMonth(destMonth)} has no work details in this project yet; it will be created from the latest month's package.
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {WORK_TYPES.filter((wt) => wt.key !== "extraTask").map((wt) => {
                 const destCat = destWorkCategories.find((c) => c.key === wt.key);
@@ -498,6 +589,16 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
               </button>
             </div>
 
+            {selectedTaskGroup !== "extraTask" &&
+              destWorkCategories.some(
+                (c) => c.key === selectedTaskGroup && !(c.remaining > 0)
+              ) && (
+                <div className="mt-3 flex items-center gap-1.5 text-[12px] font-medium text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-100 w-fit">
+                  <FiAlertCircle className="w-3.5 h-3.5" />
+                  No quota left in {formatMonth(destMonth)} — this task will count as extra work.
+                </div>
+              )}
+
             {selectedTaskGroup === "extraTask" && (
               <div className="mt-3 animate-fadeIn">
                 <input
@@ -539,7 +640,13 @@ const MoveTaskModal = ({ isOpen, onClose, taskDetails, onMove, onMoveMonth, isLo
                   : WORK_TYPES.find((w) => w.key === selectedTaskGroup)?.label ||
                     selectedTaskGroup}
               </span>{" "}
-              category.
+              category
+              {destMonthChanged && (
+                <span>
+                  {" "}for <span className="font-bold">{formatMonth(destMonth)}</span>
+                </span>
+              )}
+              .
             </p>
           </div>
         )}

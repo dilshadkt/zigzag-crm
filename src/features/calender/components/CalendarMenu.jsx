@@ -5,23 +5,27 @@ const CalendarMenu = ({
   handleMenuItemClick,
   isDropdownOpen,
   position = "top",
+  align = "right", // Which edge of the button the menu is anchored to
 }) => {
   if (!isDropdownOpen) return null;
+
+  const side = align === "left" ? "left-0" : "right-0";
+  const arrowSide = align === "left" ? "left-3" : "right-3";
 
   // Dynamic positioning classes
   const getPositionClasses = () => {
     if (position === "bottom") {
-      return "absolute top-full left-0 mt-2"; // Show below the button
+      return `absolute top-full ${side} mt-2`; // Show below the button
     }
-    return "absolute bottom-full right-0 mb-2"; // Show above the button (default)
+    return `absolute bottom-full ${side} mb-2`; // Show above the button (default)
   };
 
   // Arrow indicator positioning
   const getArrowClasses = () => {
     if (position === "bottom") {
-      return "absolute -top-1 left-3 w-2 h-2 bg-white border-l border-t border-gray-200 transform rotate-45";
+      return `absolute -top-1 ${arrowSide} w-2 h-2 bg-white border-l border-t border-gray-200 transform rotate-45`;
     }
-    return "absolute -bottom-1 right-3 w-2 h-2 bg-white border-r border-b border-gray-200 transform rotate-45";
+    return `absolute -bottom-1 ${arrowSide} w-2 h-2 bg-white border-r border-b border-gray-200 transform rotate-45`;
   };
 
   return (

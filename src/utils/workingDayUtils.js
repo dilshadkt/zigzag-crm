@@ -103,6 +103,59 @@ export const isOffDay = (date, weeklyOffs = [], holidays = []) => {
 };
 
 /**
+ * Why a date is not a working day: { type: "Holiday" | "Weekly Off", name } or
+ * null when the company works that day. Holidays win over weekly offs.
+ */
+export const getOffDayReason = (date, weeklyOffs = [], holidays = []) => {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  if (isHoliday(d, holidays)) {
+    const dayStart = new Date(d).setHours(0, 0, 0, 0);
+    const holiday = holidays.find((h) => {
+      if (h.active === false) return false;
+      return new Date(h.date).setHours(0, 0, 0, 0) === dayStart;
+    });
+    return { type: "Holiday", name: holiday?.name || "Holiday" };
+  }
+  if (isWeeklyOff(d, weeklyOffs)) {
+    return { type: "Weekly Off", name: d.toLocaleDateString("en-US", { weekday: "long" }) };
+  }
+  return null;
+};
+
+// "YYYY-MM-DD" form values are read as local calendar days, not UTC midnight.
+export const parseDayValue = (value) => {
+  if (!value) return null;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, day] = value.split("-").map(Number);
+    return new Date(y, m - 1, day);
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+/**
+ * Which subtasks start or fall due on a weekly off / holiday. Nothing is moved:
+ * this only feeds the warning shown while creating the task.
+ * @param {Array<{taskName?: string, startDate?: string|Date, dueDate?: string|Date}>} subtasks
+ * @returns {Array<{index: number, taskName: string, field: "startDate"|"dueDate", date: Date, reason: {type: string, name: string}}>}
+ */
+export const findSubtasksOnOffDays = (subtasks = [], weeklyOffs = [], holidays = []) => {
+  const found = [];
+  (subtasks || []).forEach((step, index) => {
+    ["startDate", "dueDate"].forEach((field) => {
+      const date = parseDayValue(step?.[field]);
+      const reason = getOffDayReason(date, weeklyOffs, holidays);
+      if (reason) {
+        found.push({ index, taskName: step?.taskName || `Step ${index + 1}`, field, date, reason });
+      }
+    });
+  });
+  return found;
+};
+
+/**
  * Return the next working day on or after `date`.
  * Shifts forward (skipping off days) until a working day is found.
  * Safety cap: max 14 days forward to avoid infinite loops.
@@ -280,8 +333,9 @@ export const computeFlowDatesWithSchedule = (
 
     // Clamp to task due date to ensure we never exceed the parent deadline
     let finalDue = rawDue > rawTaskDue ? new Date(rawTaskDue) : rawDue;
-    
-    // Force the very last subtask to end exactly on the task's due date
+
+    // The very last subtask ends exactly on the task's due date, even when that
+    // is a weekly off or holiday (the form warns about it).
     if (i === flows.length - 1) {
       finalDue = new Date(rawTaskDue);
     }

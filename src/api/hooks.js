@@ -577,6 +577,13 @@ export const useMoveTask =(taskId, onSuccess) => {
       queryClient.invalidateQueries(["subTasksByParentTask", taskId]);
       queryClient.invalidateQueries(["companyProjects"]);
       queryClient.invalidateQueries(["tasksByProject"]);
+      queryClient.invalidateQueries(["projectDetails"]);
+      queryClient.invalidateQueries(["projectTasks"]);
+      queryClient.invalidateQueries(["companyWorkDetails"]);
+      queryClient.invalidateQueries(["companyStats"]);
+      queryClient.invalidateQueries(["sidebarTaskCounts"]);
+      queryClient.invalidateQueries({ queryKey: ["boardColumn"] });
+      queryClient.invalidateQueries({ queryKey: ["boardMeta"] });
       if (onSuccess) onSuccess(data);
     },
   });

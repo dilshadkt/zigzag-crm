@@ -220,6 +220,14 @@ const CompanyProgressStats = ({ taskMonth }) => {
   );
 
   const stats = React.useMemo(() => {
+    // Open subtasks due today. todaySubTasks also holds the upcoming ones
+    // carried onto today (employees see those as upcoming work), so take them out.
+    const todayActiveSubs = Math.max(
+      0,
+      (companyStatsCheck?.statistics?.todaySubTasks || 0) -
+        (companyStatsCheck?.statistics?.todayCarried || 0)
+    );
+
     const allStats = [
       {
         id: "active-projects",
@@ -345,8 +353,10 @@ const CompanyProgressStats = ({ taskMonth }) => {
       {
         id: "todays-tasks",
         title: "Today's Tasks",
-        value: companyStatsCheck?.statistics?.todaySubTasks || 0,
-        subtitle: `${companyStatsCheck?.statistics?.todayMainTasks || 0} main tasks`,
+        // Only today's active subtasks; the list this card opens still shows
+        // the carried-forward ones too.
+        value: todayActiveSubs,
+        subtitle: "Active subtasks today",
         icon: FiCheckSquare,
         color: "bg-fuchsia-500",
         borderColor: "hover:border-fuchsia-500",

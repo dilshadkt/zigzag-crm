@@ -18,6 +18,7 @@ import LoadingState from "./LoadingState";
 import ErrorState from "./ErrorState";
 import TaskQuickFilters from "../../components/tasks/TaskQuickFilters";
 import TaskList from "../../components/tasks/TaskList";
+import CompanyTodayBoard from "../../components/tasks/CompanyTodayBoard";
 import TaskGroup from "./TaskGroup";
 
 const CompanyTasks = ({ filter: propFilter }) => {
@@ -36,6 +37,23 @@ const CompanyTasks = ({ filter: propFilter }) => {
     const saved = localStorage.getItem(`company_tasks_${filter}_showSubtasks`);
     return saved !== null ? JSON.parse(saved) : true;
   });
+
+  // Today's work can be shown as a board or the plain list; remembered per browser
+  const [todayView, setTodayView] = useState(() => {
+    try {
+      return localStorage.getItem("companyTodayView") === "board" ? "board" : "list";
+    } catch {
+      return "list";
+    }
+  });
+  const changeTodayView = (next) => {
+    setTodayView(next);
+    try {
+      localStorage.setItem("companyTodayView", next);
+    } catch {
+      /* storage unavailable: the choice just won't persist */
+    }
+  };
 
   // Persist visibility toggles
   React.useEffect(() => {
@@ -117,6 +135,16 @@ const CompanyTasks = ({ filter: propFilter }) => {
     }).length;
   }, [filteredTasks, showSubtasks, showTasks]);
 
+  const showTodayBoard = isTodayFilter && todayView === "board";
+  const boardItems = useMemo(
+    () =>
+      filteredTasks.filter((task) => {
+        const isSubTask = task?.parentTask || task?.isSubTask;
+        return isSubTask ? showSubtasks : showTasks;
+      }),
+    [filteredTasks, showSubtasks, showTasks]
+  );
+
   // Show error message if there's an error
   if (isTodayFilter && todayTasksError) {
     return (
@@ -180,6 +208,25 @@ const CompanyTasks = ({ filter: propFilter }) => {
                 </label>
               </div>
 
+              {isTodayFilter && (
+                <div className="flex shrink-0 self-start md:self-auto rounded-lg border border-gray-200 bg-white p-0.5 text-xs font-semibold">
+                  {["board", "list"].map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => changeTodayView(mode)}
+                      className={`rounded-md px-3 py-1.5 capitalize transition-colors ${
+                        todayView === mode
+                          ? "bg-[#3F8CFF] text-white"
+                          : "text-gray-500 hover:text-gray-800"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Quick Filters */}
               <div className="flex-1 min-w-0">
                 <TaskQuickFilters
@@ -197,8 +244,16 @@ const CompanyTasks = ({ filter: propFilter }) => {
               </div>
             </div>
 
-            <div className="flex flex-col h-full pb-5 gap-y-2 rounded-xl overflow-hidden overflow-y-auto">
-              {shouldGroupOverdue ? (
+            <div
+              className={
+                showTodayBoard
+                  ? "h-[calc(100vh-260px)] min-h-[360px] pb-3"
+                  : "flex flex-col h-full pb-5 gap-y-2 rounded-xl overflow-hidden overflow-y-auto"
+              }
+            >
+              {showTodayBoard ? (
+                <CompanyTodayBoard items={boardItems} />
+              ) : shouldGroupOverdue ? (
                 <div className="space-y-6">
                   {overdueTaskGroups.map((group) => (
                     <TaskGroup

@@ -15,6 +15,7 @@ const CalendarDay = ({
   isEmployee,
   canCreateTask,
   weekIndex = 0, // Add weekIndex prop to determine if it's first row
+  dayIndex = 0, // Column index (0 = Sun ... 6 = Sat)
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -118,6 +119,7 @@ const CalendarDay = ({
             handleMenuItemClick={handleMenuItemClick}
             isDropdownOpen={isDropdownOpen}
             position={getMenuPosition()}
+            align={dayIndex < 3 ? "left" : "right"}
           />
         </div>
       )}

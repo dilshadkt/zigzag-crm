@@ -44,6 +44,7 @@ const CalendarGrid = ({
               isEmployee={isEmployee}
               canCreateTask={canCreateTask}
               weekIndex={weekIndex}
+              dayIndex={index % 7}
             />
           );
         })}

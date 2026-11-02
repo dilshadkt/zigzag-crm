@@ -53,7 +53,11 @@ const TaskDetails = ({ taskDetails, setShowModalTask, teams, computedProgress })
   const { mutateAsync: moveTaskMutation, isPending: isMovingTask } = 
     useMoveTask(taskDetails?._id, (data) => {
       setIsMoveTaskModalOpen(false);
-      toast.success("Task moved successfully");
+      if (data?.overQuota) {
+        toast(data.message, { icon: "⚠️" });
+      } else {
+        toast.success(data?.message || "Task moved successfully");
+      }
       const newProjectId = data?.task?.project?._id || data?.task?.project;
       if (newProjectId) {
         navigate(`/projects/${newProjectId}/${taskDetails._id}`);
