@@ -1004,13 +1004,15 @@ export const useGetMyVacations = (enabled = true) => {
   });
 };
 
-export const useGetEmployeeVacations = (employeeId, month, year) => {
+export const useGetEmployeeVacations = (employeeId, month, year, options = {}) => {
+  const includePending = !!options.includePending;
   const queryParams = new URLSearchParams();
   if (month) queryParams.append("month", month);
   if (year) queryParams.append("year", year);
+  if (includePending) queryParams.append("includePending", "true");
 
   return useQuery({
-    queryKey: ["employeeVacations", employeeId, month, year],
+    queryKey: ["employeeVacations", employeeId, month, year, includePending],
     queryFn: () =>
       apiClient
         .get(`/vacations/employee/${employeeId}?${queryParams.toString()}`)
