@@ -57,8 +57,8 @@ const Prjects = () => {
       ? companyProjects
       : employeeProjects?.projects;
 
-  // Only people who can create projects manage paused/inactive ones; everyone
-  // else sees active projects only
+  // Only people who can create projects manage paused/inactive/completed ones;
+  // everyone else sees running projects only
   const canSeeInactiveProjects =
     user?.role === "company-admin" || hasPermission("projects", "create");
   const projects = useMemo(
@@ -66,7 +66,10 @@ const Prjects = () => {
       canSeeInactiveProjects
         ? allProjects
         : allProjects?.filter(
-            (project) => project?.status !== "paused" && project?.active !== false
+            (project) =>
+              project?.status !== "paused" &&
+              project?.status !== "completed" &&
+              project?.active !== false
           ),
     [allProjects, canSeeInactiveProjects]
   );
