@@ -5,8 +5,11 @@ import { uploadSingleFile } from "../../../api/service";
 import { useAccountsContext } from "../context";
 import {
   useClientLookup,
+  useAddExpenseCategory,
   useCreateExpense,
   useDeleteExpense,
+  useDeleteVendor,
+  useRemoveExpenseCategory,
   useExpenses,
   useSetExpenseStatus,
   useUpdateExpense,
@@ -51,6 +54,10 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   const { data: vendorData } = useVendors(undefined, isOpen);
   const [addingVendor, setAddingVendor] = useState(false);
   const [newVendorName, setNewVendorName] = useState("");
+  const [toRemove, setToRemove] = useState(null);
+  const deleteVendor = useDeleteVendor();
+  const addCategoryMutation = useAddExpenseCategory();
+  const removeCategoryMutation = useRemoveExpenseCategory();
   const [form, setForm] = useState(blank());
   const [uploading, setUploading] = useState(false);
 
@@ -78,10 +85,43 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
 
   const vendorOptions = [
     ...(form.vendorRef === LEGACY_VENDOR
-      ? [{ value: LEGACY_VENDOR, label: expense?.vendor || "", hint: "not in vendor list" }]
+      ? [{ value: LEGACY_VENDOR, label: expense?.vendor || "", hint: "not in vendor list", removable: false }]
       : []),
     ...(vendorData?.vendors || []).map((v) => ({ value: v._id, label: v.name, hint: v.gstin || v.phone })),
   ];
+
+  // A category already on this expense stays selectable even if it is off the list now
+  const listedCategories = settings?.expenseCategories || [];
+  const categoryOptions = [
+    ...listedCategories.map((c) => ({ value: c, label: c })),
+    ...(form.category && !listedCategories.includes(form.category)
+      ? [{ value: form.category, label: form.category, removable: false }]
+      : []),
+  ];
+
+  const addCategory = async (name) => {
+    try {
+      const res = await addCategoryMutation.mutateAsync(name);
+      set({ category: res.category });
+    } catch {
+      // the mutation hook already showed the error
+    }
+  };
+
+  const confirmRemove = async () => {
+    try {
+      if (toRemove.type === "vendor") {
+        await deleteVendor.mutateAsync(toRemove.id);
+        if (form.vendorRef === toRemove.id) set({ vendorRef: "" });
+      } else {
+        await removeCategoryMutation.mutateAsync(toRemove.id);
+      }
+    } catch {
+      // the mutation hook already showed why (e.g. the vendor is still used on expenses)
+    }
+    setToRemove(null);
+  };
+
   const total = round2((Number(form.amount) || 0) + (Number(form.taxAmount) || 0));
 
   // One payment pays the whole total; with several, each row carries its own amount
@@ -174,10 +214,18 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date"><input type="date" className={inputCls} value={form.date} onChange={(e) => set({ date: e.target.value })} /></Field>
           <Field label="Category" required>
-            <select className={selectCls} value={form.category} onChange={(e) => set({ category: e.target.value })}>
-              {!settings?.expenseCategories?.includes(form.category) && form.category && <option value={form.category}>{form.category}</option>}
-              {(settings?.expenseCategories || []).map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <SearchableSelect
+              value={form.category}
+              onChange={(category) => set({ category })}
+              options={categoryOptions}
+              placeholder="Select category"
+              searchPlaceholder="Search or type a new category…"
+              createLabel="Add category"
+              createRequiresQuery
+              onCreate={addCategory}
+              onRemove={(o) => setToRemove({ type: "category", id: o.value, name: o.label })}
+              removeLabel="Remove category"
+            />
           </Field>
         </div>
         <Field label="Description" required><input className={inputCls} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="What was it for?" /></Field>
@@ -196,6 +244,8 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
                 setNewVendorName(name);
                 setAddingVendor(true);
               }}
+              onRemove={(o) => setToRemove({ type: "vendor", id: o.value, name: o.label })}
+              removeLabel="Remove vendor"
             />
           </Field>
           <Field label="Bill / invoice no."><input className={inputCls} value={form.billNumber} onChange={(e) => set({ billNumber: e.target.value })} /></Field>
@@ -293,6 +343,22 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
       initialName={newVendorName}
       onClose={() => setAddingVendor(false)}
       onSaved={(vendor) => set({ vendorRef: vendor._id })}
+    />
+    <ConfirmModal
+      isOpen={!!toRemove}
+      onClose={() => setToRemove(null)}
+      title={toRemove?.type === "vendor" ? "Remove this vendor?" : "Remove this category?"}
+      message={
+        toRemove?.type === "vendor"
+          ? `${toRemove.name} will be removed from your vendors. A vendor that is already used on expenses can't be removed.`
+          : toRemove
+            ? `"${toRemove.name}" will be removed from the list. Expenses already filed under it keep it.`
+            : ""
+      }
+      confirmLabel="Remove"
+      danger
+      busy={deleteVendor.isPending || removeCategoryMutation.isPending}
+      onConfirm={confirmRemove}
     />
     </>
   );

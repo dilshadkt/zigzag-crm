@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
-import { FiCheck, FiChevronDown, FiPlus, FiSearch } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { inputCls } from "./ui";
 
 /**
@@ -9,7 +9,10 @@ import { inputCls } from "./ui";
  * Open:    Arrow Up/Down (Home/End) move, Enter picks, Esc closes, Tab leaves.
  *
  * options: [{ value, label, hint? }]. Pass `onCreate(query)` to show an
- * "Add new" row at the bottom, and `clearLabel` to allow picking "nothing".
+ * "Add new" row at the bottom (`createRequiresQuery` shows it only once something
+ * is typed), `onRemove(option)` to show a remove button on each row (an option
+ * with `removable: false` keeps it hidden), and `clearLabel` to allow picking
+ * "nothing".
  */
 const SearchableSelect = ({
   value,
@@ -20,6 +23,9 @@ const SearchableSelect = ({
   clearLabel,
   onCreate,
   createLabel = "Add new",
+  createRequiresQuery = false,
+  onRemove,
+  removeLabel = "Remove",
   emptyText = "No matches",
   disabled = false,
 }) => {
@@ -43,14 +49,16 @@ const SearchableSelect = ({
     const out = [];
     if (clearLabel && !q) out.push({ kind: "clear", value: "", label: clearLabel });
     matches.forEach((o) => out.push({ kind: "option", ...o }));
-    if (onCreate) {
+    // Don't offer to add something that is already in the list
+    const exact = matches.some((o) => o.label.toLowerCase() === q);
+    if (onCreate && !exact && (q || !createRequiresQuery)) {
       out.push({
         kind: "create",
         label: q ? `${createLabel} "${query.trim()}"` : `${createLabel}…`,
       });
     }
     return out;
-  }, [options, query, clearLabel, onCreate, createLabel]);
+  }, [options, query, clearLabel, onCreate, createLabel, createRequiresQuery]);
 
   const close = (refocus = true) => {
     setOpen(false);
@@ -177,7 +185,7 @@ const SearchableSelect = ({
             />
           </div>
           <ul id={listId} ref={listRef} role="listbox" className="max-h-56 overflow-y-auto py-1">
-            {rows.length === 1 && rows[0].kind === "create" && (
+            {rows.every((r) => r.kind !== "option") && (
               <li className="px-3 py-2 text-xs text-slate-400" aria-hidden="true">{emptyText}</li>
             )}
             {rows.map((row, i) => {
@@ -192,7 +200,7 @@ const SearchableSelect = ({
                   onMouseEnter={() => setActive(i)}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => choose(row)}
-                  className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm ${
+                  className={`group flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm ${
                     isActive ? "bg-blue-50" : ""
                   } ${row.kind === "create" ? "border-t border-slate-100 font-semibold text-[#3F8CFF]" : "text-slate-700"} ${
                     row.kind === "clear" ? "text-slate-400" : ""
@@ -203,7 +211,28 @@ const SearchableSelect = ({
                     <span className="truncate">{row.label}</span>
                     {row.hint && <span className="truncate text-xs text-slate-400">{row.hint}</span>}
                   </span>
-                  {isSelected && row.kind === "option" && <FiCheck className="shrink-0 text-[#3F8CFF]" />}
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    {isSelected && row.kind === "option" && <FiCheck className="text-[#3F8CFF]" />}
+                    {onRemove && row.kind === "option" && row.removable !== false && (
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        title={removeLabel}
+                        aria-label={`${removeLabel} ${row.label}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          close(false);
+                          onRemove(row);
+                        }}
+                        className={`flex h-5 w-5 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-500 ${
+                          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        <FiX className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </span>
                 </li>
               );
             })}

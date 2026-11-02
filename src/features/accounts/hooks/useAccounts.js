@@ -100,6 +100,8 @@ export const useUpdateExpense = () =>
 export const useSetExpenseStatus = () =>
   useWrite(({ id, data }) => accountsApi.setExpenseStatus(id, data), { success: "Expense updated" });
 export const useDeleteExpense = () => useWrite(accountsApi.deleteExpense, { success: "Expense deleted" });
+export const useAddExpenseCategory = () => useWrite(accountsApi.addExpenseCategory, { success: "Category added" });
+export const useRemoveExpenseCategory = () => useWrite(accountsApi.removeExpenseCategory, { success: "Category removed" });
 
 // Vendors
 export const useVendors = (params, enabled = true) =>

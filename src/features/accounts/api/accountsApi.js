@@ -61,6 +61,8 @@ export const accountsApi = {
   updateExpense: (id, data) => put(`/expenses/${id}`, data),
   setExpenseStatus: (id, data) => patch(`/expenses/${id}/status`, data),
   deleteExpense: (id) => del(`/expenses/${id}`),
+  addExpenseCategory: (name) => post("/expenses/categories", { name }),
+  removeExpenseCategory: (name) => del(`/expenses/categories?name=${encodeURIComponent(name)}`),
 
   vendors: (params) => get("/vendors", params),
   createVendor: (data) => post("/vendors", data),
