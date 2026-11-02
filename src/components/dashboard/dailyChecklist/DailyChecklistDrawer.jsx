@@ -4,6 +4,7 @@ import { updateDailyChecklistStatus, getDailyChecklistSummary } from "../../../a
 import { format, addDays, subDays, isToday } from "date-fns";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { FiCheck } from "react-icons/fi";
+import { useAuth } from "../../../hooks/useAuth";
 
 const CircularProgress = ({ value, onClick, loading }) => {
     const radius = 22;
@@ -181,6 +182,7 @@ const DailyChecklistDrawer = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const queryClient = useQueryClient();
+    const { user } = useAuth();
 
     const currentDate = format(selectedDate, "yyyy-MM-dd");
     const queryKey = ["dailyChecklistSummary", currentDate];
@@ -192,7 +194,28 @@ const DailyChecklistDrawer = () => {
         refetchOnWindowFocus: false,
     });
 
-    const allTasks = useMemo(() => data?.tasks || [], [data]);
+    const canViewAll = !!data?.canViewAll;
+    const [assigneeFilter, setAssigneeFilter] = useState("all"); // "all" | "mine" | userId
+
+    const assigneeOptions = useMemo(() => {
+        const seen = new Map();
+        (data?.tasks || []).forEach((t) => {
+            const a = t.assignedTo;
+            if (a && typeof a === "object" && a._id && !seen.has(String(a._id))) {
+                seen.set(String(a._id), `${a.firstName || ""} ${a.lastName || ""}`.trim() || "Unknown");
+            }
+        });
+        return [...seen.entries()]
+            .map(([id, name]) => ({ id, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [data]);
+
+    const allTasks = useMemo(() => {
+        const tasks = data?.tasks || [];
+        if (!canViewAll || assigneeFilter === "all") return tasks;
+        const targetId = assigneeFilter === "mine" ? String(user?._id) : assigneeFilter;
+        return tasks.filter((t) => String(t.assignedTo?._id || t.assignedTo) === targetId);
+    }, [data, canViewAll, assigneeFilter, user]);
     const completedCount = allTasks.filter((t) => t.completed).length;
     const progress = allTasks.length > 0 ? (completedCount / allTasks.length) * 100 : 0;
 
@@ -306,6 +329,29 @@ const DailyChecklistDrawer = () => {
                                     <MdChevronRight className="w-5 h-5" />
                                 </button>
                             </div>
+                            {canViewAll && (
+                                <div className="flex items-center gap-2 mt-3 w-full">
+                                    <button
+                                        onClick={() => setAssigneeFilter(assigneeFilter === "mine" ? "all" : "mine")}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${assigneeFilter === "mine"
+                                            ? "bg-blue-500 border-blue-500 text-white"
+                                            : "bg-white border-gray-200 text-gray-600 hover:bg-blue-50"
+                                            }`}
+                                    >
+                                        My tasks
+                                    </button>
+                                    <select
+                                        value={assigneeFilter === "mine" ? "all" : assigneeFilter}
+                                        onChange={(e) => setAssigneeFilter(e.target.value)}
+                                        className="flex-1 min-w-0 px-3 py-1.5 rounded-full text-xs border border-gray-200 bg-white text-gray-600"
+                                    >
+                                        <option value="all">All assignees</option>
+                                        {assigneeOptions.map((o) => (
+                                            <option key={o.id} value={o.id}>{o.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                     </div>
