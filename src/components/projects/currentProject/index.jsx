@@ -1,8 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
+import { FiCheckCircle, FiPauseCircle } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { setActiveProject } from "../../../store/slice/projectSlice";
+
+// Projects that are no longer being worked on are dimmed and marked with an icon
+const STATUS_BADGES = {
+  paused: { Icon: FiPauseCircle, label: "Paused", color: "text-amber-500" },
+  completed: { Icon: FiCheckCircle, label: "Completed", color: "text-emerald-500" },
+};
 
 const CurrentProject = ({
   projects,
@@ -78,7 +85,9 @@ const CurrentProject = ({
         className="flex flex-col flex-1 my-2 md:pl-2
     gap-y-2 overflow-y-auto min-h-0 custom-scrollbar"
       >
-        {filteredProjects?.map((project, index) => (
+        {filteredProjects?.map((project, index) => {
+          const badge = STATUS_BADGES[project?.status];
+          return (
           <div
             onClick={() => handleSelect(project?._id)}
             key={project?._id || index}
@@ -89,7 +98,7 @@ const CurrentProject = ({
             }  hover:bg-[#F4F9FD] shrink-0
          cursor-pointer  relative rounded-2xl px-4
           gap-y-1.5  group  md:mr-3 py-3 flex flex-col ${
-            project?.status === "paused" ? "opacity-50" : ""
+            badge ? "opacity-50" : ""
           }`}
           >
             <div className="flex justify-between items-start gap-2">
@@ -99,6 +108,13 @@ const CurrentProject = ({
                 </span>
                 <h4 className="font-medium text-gray-800 text-[13px] leading-snug">
                   {project?.name}
+                  {badge && (
+                    <badge.Icon
+                      className={`inline-block ml-1.5 -translate-y-px w-3.5 h-3.5 ${badge.color}`}
+                      title={badge.label}
+                      aria-label={badge.label}
+                    />
+                  )}
                 </h4>
               </div>
               {project?.thumbImg && (
@@ -131,7 +147,8 @@ const CurrentProject = ({
           } group-hover:h-full transition-all duration-300  bg-[#3F8CFF] rounded-full `}
             ></div>
           </div>
-        ))}
+          );
+        })}
         {filteredProjects?.length === 0 && (
           <div className="text-center text-sm text-[#91929E] py-10">
             No projects found.
