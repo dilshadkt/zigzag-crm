@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoFingerPrintOutline } from "react-icons/io5";
 import EndShiftModal from "./EndShiftModal";
+import OfficeEndReminder from "./OfficeEndReminder";
 import { formatBreakMinutes } from "../../../features/attendance/utils";
 
 const breakSecondsAt = (breaks, now) =>
@@ -48,6 +49,7 @@ const AttendanceStatus = ({
   onEndShift,
   onStartBreak,
   isStartingBreak,
+  shiftStartTime,
 }) => {
   const [showEndShiftModal, setShowEndShiftModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -154,6 +156,13 @@ const AttendanceStatus = ({
           </div>
         )}
       </div>
+
+      <OfficeEndReminder
+        isShiftActive={isShiftActive}
+        shiftStartTime={shiftStartTime}
+        workedLabel={workLabel}
+        onClockOut={() => setShowEndShiftModal(true)}
+      />
 
       <EndShiftModal
         isOpen={showEndShiftModal}

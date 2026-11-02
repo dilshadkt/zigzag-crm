@@ -401,6 +401,7 @@ const DashboardHeader = () => {
           shiftElapsedTime={shiftElapsedTime}
           breaks={currentStatus?.breaks}
           todayRecords={todayRecords}
+          shiftStartTime={shiftStartTime}
           isClockingOut={isClockingOut}
           clockOutError={clockOutError}
           onEndShift={endShift}

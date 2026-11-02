@@ -18,7 +18,7 @@ import { FiEdit2 } from "react-icons/fi";
 // Memoized table header component
 const TableHeader = React.memo(({ title, icon, className = "" }) => {
   return (
-    <th className={`px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
+    <th className={`h-11 px-3 py-0 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}>
       <div className="flex whitespace-nowrap items-center gap-2">
         {icon}
         {title}
@@ -63,26 +63,51 @@ const StatusBadge = React.memo(({ status }) => {
         return {
           bg: "bg-green-100",
           text: "text-green-800",
+          dot: "bg-green-500",
           label: "Checked In",
         };
       case "break":
         return {
           bg: "bg-yellow-100",
           text: "text-yellow-800",
+          dot: "bg-yellow-500",
           label: "On Break",
         };
       case "checked-out":
         return {
           bg: "bg-gray-100",
           text: "text-gray-800",
+          dot: "bg-gray-400",
           label: "Checked Out",
         };
+      case "missing-out":
+        return {
+          bg: "bg-red-100",
+          text: "text-red-700",
+          dot: "bg-red-500",
+          label: "No clock-out",
+        };
       case "absent":
-        return { bg: "bg-red-100", text: "text-red-800", label: "Absent" };
+        return {
+          bg: "bg-red-100",
+          text: "text-red-800",
+          dot: "bg-red-500",
+          label: "Absent",
+        };
       case "late":
-        return { bg: "bg-orange-100", text: "text-orange-800", label: "Late" };
+        return {
+          bg: "bg-orange-100",
+          text: "text-orange-800",
+          dot: "bg-orange-500",
+          label: "Late",
+        };
       default:
-        return { bg: "bg-gray-100", text: "text-gray-800", label: "Unknown" };
+        return {
+          bg: "bg-gray-100",
+          text: "text-gray-800",
+          dot: "bg-gray-400",
+          label: "Unknown",
+        };
     }
   }, []);
 
@@ -90,32 +115,108 @@ const StatusBadge = React.memo(({ status }) => {
 
   return (
     <span
-      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${config.bg} ${config.text}`}
     >
+      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
       {config.label}
     </span>
   );
 });
 
-// Memoized time display component
-const TimeDisplay = React.memo(({ time, label, className = "" }) => {
-  if (!time) return <span className={`text-gray-400 ${className}`}>--:--</span>;
-
-  const formattedTime = useMemo(() => {
-    return new Date(time).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }, [time]);
+// Time with a colored dot: green = in, red = out
+const TimeDisplay = React.memo(
+  ({ time, label, className = "", emptyText = "--:--", emptyClass = "text-gray-400" }) => {
+  const formattedTime = useMemo(
+    () =>
+      time
+        ? new Date(time).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : null,
+    [time]
+  );
 
   return (
-    <div className={className}>
-      <div className="text-sm font-medium text-gray-900">{formattedTime}</div>
-      {label && <div className="text-xs text-gray-500">{label}</div>}
+    <div className={`flex items-center gap-2 text-sm ${className}`}>
+      <span
+        className={`h-2 w-2 rounded-full ${
+          label === "Out" ? "bg-red-400" : "bg-green-500"
+        } ${time ? "" : "opacity-30"}`}
+      />
+      {label && <span className="w-7 text-xs text-gray-500">{label}</span>}
+      <span className={time ? "font-semibold text-gray-900" : emptyClass}>
+        {formattedTime || emptyText}
+      </span>
     </div>
   );
-});
+  }
+);
+
+const isTodayRecord = (r) =>
+  new Date(r.date || r.clockInTime).toDateString() === new Date().toDateString();
+
+// Closed sessions use the stored hours; an open one is estimated up to `now` (display only).
+const liveHours = (sessions, now) =>
+  sessions.reduce(
+    (total, s) =>
+      total +
+      (s.clockOutTime
+        ? s.totalHours || 0
+        : Math.max(
+            0,
+            (now - new Date(s.clockInTime)) / 36e5 - (s.breakTime || 0) / 60
+          )),
+    0
+  );
+
+const outProps = (session) => {
+  if (session.clockOutTime) return {};
+  return isTodayRecord(session)
+    ? { emptyText: "Working…", emptyClass: "text-green-600 font-medium" }
+    : { emptyText: "Missing clock-out", emptyClass: "text-red-600 font-semibold" };
+};
+
+const Dash = () => <span className="text-gray-300">—</span>;
+
+const DayHeaderRow = ({ date, count, colSpan }) => {
+  const valid = date && !isNaN(date);
+  const isToday = valid && date.toDateString() === new Date().toDateString();
+  return (
+    <tr>
+      <td
+        colSpan={colSpan}
+        className="sticky top-11 z-[25] bg-blue-50 px-3 py-2 shadow-[0_2px_6px_-3px_rgba(15,23,42,0.25)]"
+      >
+        <div className="sticky left-3 flex w-max items-center gap-3">
+          <span className="text-sm font-bold text-gray-900">
+            {valid
+              ? date.toLocaleDateString("en-GB", { weekday: "long" })
+              : "Unknown date"}
+          </span>
+          {valid && (
+            <span className="text-sm text-gray-600">
+              {date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
+          )}
+          {isToday && (
+            <span className="rounded-full bg-[#3F8CFF] px-2 py-0.5 text-xs font-semibold text-white">
+              Today
+            </span>
+          )}
+          <span className="text-xs text-gray-500">
+            {count} employee{count === 1 ? "" : "s"}
+          </span>
+        </div>
+      </td>
+    </tr>
+  );
+};
 
 const formatHours = (value) => {
   if (!value) return "0h 0m";
@@ -171,14 +272,20 @@ const SessionRow = React.memo(
       <td className="px-3 py-2 whitespace-nowrap">
         <div className="space-y-1">
           <TimeDisplay time={session.clockInTime} label="In" />
-          <TimeDisplay time={session.clockOutTime} label="Out" />
+          <TimeDisplay time={session.clockOutTime} label="Out" {...outProps(session)} />
         </div>
       </td>
       <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
         {formatBreakMinutes(session.breakTime || 0)}
       </td>
       <td className="px-3 py-2 whitespace-nowrap">
-        <StatusBadge status={session.status} />
+        <StatusBadge
+          status={
+            !session.clockOutTime && !isTodayRecord(session)
+              ? "missing-out"
+              : session.status
+          }
+        />
       </td>
       <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
         {formatHours(session.totalHours)}
@@ -218,6 +325,20 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const employee = attendance.employee;
 
+  const openSession = sessions.find((s) => !s.clockOutTime);
+  const isWorking = Boolean(openSession) && isTodayRecord(attendance);
+  const missingOut = Boolean(openSession) && !isTodayRecord(attendance);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!isWorking) return undefined;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(id);
+  }, [isWorking]);
+  const shownHours = isWorking
+    ? liveHours(sessions, now)
+    : attendance.totalHours;
+
   // Memoized location handler
   const handleLocationClick = useCallback(async () => {
     if (
@@ -256,10 +377,7 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
   }, [employee?.firstName, employee?.lastName]);
 
   // Memoized total hours calculation
-  const totalHours = useMemo(
-    () => formatHours(attendance.totalHours),
-    [attendance.totalHours]
-  );
+  const totalHours = useMemo(() => formatHours(shownHours), [shownHours]);
 
   // Memoized overtime calculation
   const overtimeHours = useMemo(() => {
@@ -308,18 +426,7 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
                 >
                   {expanded ? "Hide" : "View"} {sessions.length} sessions
                 </button>
-              ) : (
-                canEditAttendance && (
-                  <button
-                    type="button"
-                    onClick={() => onEdit?.(attendance)}
-                    className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#3F8CFF] hover:text-blue-700"
-                  >
-                    <FiEdit2 className="h-3 w-3" />
-                    Edit
-                  </button>
-                )
-              )}
+              ) : null}
             </div>
           </div>
         </td>
@@ -328,13 +435,19 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
         <td className="px-3 py-4 whitespace-nowrap">
           <div className="space-y-1 ">
             <TimeDisplay time={attendance.clockInTime} label="In" />
-            <TimeDisplay time={attendance.clockOutTime} label="Out" />
+            <TimeDisplay
+              time={attendance.clockOutTime}
+              label="Out"
+              {...(openSession ? outProps(openSession) : {})}
+            />
           </div>
         </td>
 
         {/* Break */}
         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-          <div className="font-medium">{formatBreakMinutes(breakMinutes)}</div>
+          <div className="font-medium">
+            {breakMinutes > 0 ? formatBreakMinutes(breakMinutes) : <Dash />}
+          </div>
           {(attendance.breaks || []).length > 0 && (
             <div className="text-xs text-gray-500">
               {attendance.breaks.length} break{attendance.breaks.length === 1 ? "" : "s"}
@@ -344,17 +457,33 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
 
         {/* Status */}
         <td className="px-3 py-4 whitespace-nowrap">
-          <StatusBadge status={attendance.status} />
+          <StatusBadge status={missingOut ? "missing-out" : attendance.status} />
         </td>
 
         {/* Total Hours */}
-        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-          {totalHours}
+        <td className="px-3 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+          {shownHours > 0 ? totalHours : <Dash />}
+          {isWorking && (
+            <div className="text-[10px] font-medium text-green-600">
+              so far · live
+            </div>
+          )}
+          {missingOut && (
+            <div className="text-[10px] font-medium text-red-600">
+              Incomplete
+            </div>
+          )}
         </td>
 
         {/* Overtime */}
         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-          {overtimeHours}
+          {attendance.overtimeHours > 0 ? (
+            <span className="rounded-md bg-purple-50 px-2 py-0.5 font-medium text-purple-700">
+              {overtimeHours}
+            </span>
+          ) : (
+            <Dash />
+          )}
         </td>
 
         {/* Location */}
@@ -432,12 +561,26 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
             <button
               type="button"
               onClick={() =>
-                multiple ? setExpanded((v) => !v) : onEdit?.(attendance)
+                missingOut
+                  ? onEdit?.(openSession)
+                  : multiple
+                    ? setExpanded((v) => !v)
+                    : onEdit?.(attendance)
               }
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-100"
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                missingOut
+                  ? "bg-red-50 text-red-600 hover:bg-red-100"
+                  : "bg-blue-50 text-[#3F8CFF] hover:bg-blue-100"
+              }`}
             >
               <FiEdit2 className="h-3.5 w-3.5" />
-              {multiple ? (expanded ? "Hide" : "Sessions") : "Edit"}
+              {missingOut
+                ? "Fix clock-out"
+                : multiple
+                  ? expanded
+                    ? "Hide"
+                    : "Sessions"
+                  : "Edit"}
             </button>
           </td>
         )}
@@ -591,6 +734,18 @@ const AttendanceTable = ({
       return { key, sessions, merged: mergeSessions(sessions) };
     });
   }, [filteredRecords]);
+
+  // Group the rows under a date header, newest day first
+  const dayGroups = useMemo(() => {
+    const map = new Map();
+    groupedRecords.forEach((row) => {
+      const d = new Date(row.merged.date || row.merged.clockInTime);
+      const k = isNaN(d) ? "unknown" : d.toDateString();
+      if (!map.has(k)) map.set(k, { key: k, date: d, rows: [] });
+      map.get(k).rows.push(row);
+    });
+    return Array.from(map.values()).sort((a, b) => b.date - a.date);
+  }, [groupedRecords]);
 
   // Use ref to track previous data and prevent unnecessary updates
   const prevDataRef = useRef();
@@ -813,7 +968,7 @@ const AttendanceTable = ({
     <div className="bg-white flex flex-col h-full shadow-sm rounded-lg overflow-hidden">
       <div className="overflow-x-auto h-full overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0">
+          <thead className="bg-gray-50 sticky top-0 z-40">
             <tr>
               {headers.map((header, index) => (
                 <TableHeader
@@ -832,14 +987,23 @@ const AttendanceTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {groupedRecords.map(({ key, sessions, merged }) => (
-              <EmployeeRow
-                key={key}
-                attendance={merged}
-                sessions={sessions}
-                canEditAttendance={canEditAttendance}
-                onEdit={setEditingRecord}
-              />
+            {dayGroups.map((group) => (
+              <React.Fragment key={group.key}>
+                <DayHeaderRow
+                  date={group.date}
+                  count={group.rows.length}
+                  colSpan={headers.length}
+                />
+                {group.rows.map(({ key, sessions, merged }) => (
+                  <EmployeeRow
+                    key={key}
+                    attendance={merged}
+                    sessions={sessions}
+                    canEditAttendance={canEditAttendance}
+                    onEdit={setEditingRecord}
+                  />
+                ))}
+              </React.Fragment>
             ))}
           </tbody>
         </table>

@@ -24,12 +24,19 @@ const blank = () => ({
   taxAmount: "",
   project: "",
   billable: false,
-  paymentMethod: "bank_transfer",
-  paymentReference: "",
+  payments: [{ method: "bank_transfer", amount: "", reference: "" }],
   status: "approved",
   notes: "",
   attachments: [],
 });
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+// Older expenses only have a single paymentMethod / paymentReference
+const paymentsFor = (expense) =>
+  expense.payments?.length
+    ? expense.payments.map((p) => ({ method: p.method, amount: String(p.amount), reference: p.reference || "" }))
+    : [{ method: expense.paymentMethod || "bank_transfer", amount: "", reference: expense.paymentReference || "" }];
 
 const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   const { settings, symbol } = useAccountsContext();
@@ -51,13 +58,30 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
             amount: expense.amount,
             taxAmount: expense.taxAmount || "",
             attachments: expense.attachments || [],
+            payments: paymentsFor(expense),
           }
         : { ...blank(), category: settings?.expenseCategories?.[0] || "" }
     );
   }, [isOpen, expense, settings]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-  const total = (Number(form.amount) || 0) + (Number(form.taxAmount) || 0);
+  const total = round2((Number(form.amount) || 0) + (Number(form.taxAmount) || 0));
+
+  // One payment pays the whole total; with several, each row carries its own amount
+  const split = form.payments.length > 1;
+  const paidSum = round2(form.payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0));
+  const balance = round2(total - paidSum);
+
+  const setPayment = (i, patch) =>
+    set({ payments: form.payments.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
+  const addPayment = () =>
+    set({
+      payments: [
+        ...form.payments.map((p, i) => (!split && i === 0 ? { ...p, amount: String(total || "") } : p)),
+        { method: "cash", amount: "", reference: "" },
+      ],
+    });
+  const removePayment = (i) => set({ payments: form.payments.filter((_, j) => j !== i) });
 
   const attach = async (file) => {
     if (!file) return;
@@ -79,14 +103,31 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
       toast.error("Category, description and amount are required");
       return;
     }
+    if (split && (Math.abs(balance) > 0.01 || form.payments.some((p) => !(Number(p.amount) > 0)))) {
+      toast.error(
+        balance > 0
+          ? `Payments are ${fmtMoney(balance, symbol)} short of the total`
+          : balance < 0
+            ? `Payments are ${fmtMoney(-balance, symbol)} more than the total`
+            : "Enter an amount for every payment"
+      );
+      return;
+    }
     const payload = {
       ...form,
       amount: Number(form.amount),
       taxAmount: Number(form.taxAmount) || 0,
       project: form.project || null,
       billable: Boolean(form.project && form.billable),
+      payments: form.payments.map((p) => ({
+        method: p.method,
+        amount: split ? Number(p.amount) : total,
+        reference: p.reference,
+      })),
     };
     delete payload._id;
+    delete payload.paymentMethod;
+    delete payload.paymentReference;
     try {
       if (expense) await update.mutateAsync({ id: expense._id, data: payload });
       else await create.mutateAsync(payload);
@@ -143,23 +184,57 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Paid by">
-            <select className={selectCls} value={form.paymentMethod} onChange={(e) => set({ paymentMethod: e.target.value })}>
-              {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">Payments</span>
+            {split && (
+              <span className={`text-xs font-semibold ${Math.abs(balance) <= 0.01 ? "text-emerald-600" : "text-amber-600"}`}>
+                {Math.abs(balance) <= 0.01
+                  ? "Fully paid"
+                  : balance > 0
+                    ? `Remaining ${fmtMoney(balance, symbol)}`
+                    : `Over by ${fmtMoney(-balance, symbol)}`}
+              </span>
+            )}
+          </div>
+          {form.payments.map((p, i) => (
+            <div key={i} className="p-3 rounded-xl border border-slate-100 space-y-2">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={split ? `Payment ${i + 1} · paid by` : "Paid by"}>
+                  <select className={selectCls} value={p.method} onChange={(e) => setPayment(i, { method: e.target.value })}>
+                    {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                </Field>
+                {split ? (
+                  <Field label="Amount">
+                    <input type="number" min="0" step="any" className={inputCls} value={p.amount} onChange={(e) => setPayment(i, { amount: e.target.value })} />
+                  </Field>
+                ) : (
+                  <Field label="Reference / UTR"><input className={inputCls} value={p.reference} onChange={(e) => setPayment(i, { reference: e.target.value })} /></Field>
+                )}
+              </div>
+              {split && (
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Field label="Reference / UTR"><input className={inputCls} value={p.reference} onChange={(e) => setPayment(i, { reference: e.target.value })} /></Field>
+                  </div>
+                  <button type="button" onClick={() => removePayment(i)} className="h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center" aria-label="Remove payment"><FiTrash2 /></button>
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" className={btnSmall} onClick={addPayment}><FiPlus /> {split ? "Add another payment" : "Split into multiple payments"}</button>
+        </div>
+
+        {!expense && (
+          <Field label="Status">
+            <select className={selectCls} value={form.status} onChange={(e) => set({ status: e.target.value })}>
+              <option value="approved">Approved</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending approval</option>
             </select>
           </Field>
-          <Field label="Reference / UTR"><input className={inputCls} value={form.paymentReference} onChange={(e) => set({ paymentReference: e.target.value })} /></Field>
-          {!expense && (
-            <Field label="Status">
-              <select className={selectCls} value={form.status} onChange={(e) => set({ status: e.target.value })}>
-                <option value="approved">Approved</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending approval</option>
-              </select>
-            </Field>
-          )}
-        </div>
+        )}
 
         <Field label="Receipts & bills">
           <div className="space-y-2">
@@ -209,7 +284,7 @@ const Expenses = () => {
     const rows = data?.expenses || [];
     downloadCsv(`expenses-${range.from}-to-${range.to}.csv`, [
       ["Date", "Category", "Description", "Vendor", "Bill no", "Client", "Amount", "GST", "Total", "Status", "Paid by"],
-      ...rows.map((e) => [toInputDate(e.date), e.category, e.description, e.vendor, e.billNumber, e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, methodLabel(e.paymentMethod)]),
+      ...rows.map((e) => [toInputDate(e.date), e.category, e.description, e.vendor, e.billNumber, e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
     ]);
   };
 
@@ -267,7 +342,7 @@ const Expenses = () => {
                 { key: "desc", title: "Expense", render: (r) => (
                   <div>
                     <p className="font-semibold text-slate-800">{r.description}</p>
-                    <p className="text-xs text-slate-400">{r.category}{r.vendor ? ` · ${r.vendor}` : ""}{r.attachments?.length ? ` · ${r.attachments.length} file` : ""}</p>
+                    <p className="text-xs text-slate-400">{r.category}{r.vendor ? ` · ${r.vendor}` : ""}{r.attachments?.length ? ` · ${r.attachments.length} file` : ""}{r.payments?.length > 1 ? ` · ${r.payments.map((p) => methodLabel(p.method)).join(" + ")}` : ""}</p>
                   </div>
                 ) },
                 { key: "client", title: "Client", render: (r) => (r.project ? <div><span>{r.project.name}</span>{r.billable && <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.invoice ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{r.invoice ? `Billed ${r.invoice.number}` : "Billable"}</span>}</div> : <span className="text-slate-300">—</span>) },

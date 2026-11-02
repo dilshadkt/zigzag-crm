@@ -6,10 +6,11 @@ import { toast } from "react-hot-toast";
 
 export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProject, onRefresh }) => {
   const navigate = useNavigate();
-  const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
+  const { mutate: syncFacebookAds, isPending: isSyncing } = useSyncFacebookAds();
   const [statusFilter, setStatusFilter] = React.useState("all");
 
   const handleSync = () => {
+    if (isSyncing) return;
     syncFacebookAds(currentProject?._id, {
       onSuccess: () => {
         toast.success("Facebook campaigns synced successfully!");
@@ -70,9 +71,12 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProje
           <button
             onClick={handleSync}
             disabled={isSyncing || isCampaignsLoading}
+            aria-busy={isSyncing}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all ${isSyncing
-              ? 'bg-gray-50 text-gray-400 border-gray-200'
-              : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200'
+              ? 'bg-blue-50 text-blue-500 border-blue-100 cursor-not-allowed'
+              : isCampaignsLoading
+                ? 'bg-blue-600 text-white border-blue-600 opacity-60 cursor-not-allowed'
+                : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200'
               }`}
           >
             <FiRefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -80,6 +84,15 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProje
           </button>
         )}
       </div>
+
+      {isSyncing && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
+          <span>
+            <strong>Syncing campaigns from Facebook…</strong> This can take a few moments. Please don't leave this page.
+          </span>
+        </div>
+      )}
 
       {isCampaignsLoading ? (
         <div className="flexCenter py-20">
@@ -97,7 +110,7 @@ export const CampaignTab = ({ isCampaignsLoading, projectCampaigns, currentProje
           <p className="text-xs">Active campaigns will appear here after sync.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className={`overflow-x-auto transition-opacity ${isSyncing ? 'opacity-50 pointer-events-none' : ''}`}>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b sticky top-0 bg-white z-50 border-gray-100 uppercase text-[10px] font-bold text-gray-400 tracking-wider">
