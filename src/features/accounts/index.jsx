@@ -13,6 +13,7 @@ import ProposalDetail from "./pages/ProposalDetail";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Expenses from "./pages/Expenses";
+import Vendors from "./pages/Vendors";
 import Payroll from "./pages/Payroll";
 import PayrollRun from "./pages/PayrollRun";
 import Reports from "./pages/Reports";
@@ -47,6 +48,7 @@ const Accounts = () => {
     { to: "/accounts/proposals", label: "Proposals", show: p.view },
     { to: "/accounts/clients", label: "Clients", show: p.view },
     { to: "/accounts/expenses", label: "Expenses", show: p.view },
+    { to: "/accounts/vendors", label: "Vendors", show: p.view },
     { to: "/accounts/payroll", label: "Payroll", show: p.managePayroll },
     { to: "/accounts/reports", label: "Reports", show: p.viewReports },
     { to: "/accounts/settings", label: "Settings", show: p.manageSettings },
@@ -94,6 +96,7 @@ const Accounts = () => {
                 <Route path="clients" element={<Clients />} />
                 <Route path="clients/:projectId" element={<ClientDetail />} />
                 <Route path="expenses" element={<Expenses />} />
+                <Route path="vendors" element={<Vendors />} />
               </>
             )}
             {p.managePayroll && (

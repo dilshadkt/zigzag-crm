@@ -101,6 +101,14 @@ export const useSetExpenseStatus = () =>
   useWrite(({ id, data }) => accountsApi.setExpenseStatus(id, data), { success: "Expense updated" });
 export const useDeleteExpense = () => useWrite(accountsApi.deleteExpense, { success: "Expense deleted" });
 
+// Vendors
+export const useVendors = (params, enabled = true) =>
+  useRead("vendors", accountsApi.vendors, params, { enabled, placeholderData: (prev) => prev });
+export const useCreateVendor = () => useWrite(accountsApi.createVendor, { success: "Vendor added" });
+export const useUpdateVendor = () =>
+  useWrite(({ id, data }) => accountsApi.updateVendor(id, data), { success: "Vendor updated" });
+export const useDeleteVendor = () => useWrite(accountsApi.deleteVendor, { success: "Vendor deleted" });
+
 // Payroll
 export const useSalaries = () => useRead("salaries", accountsApi.salaries);
 export const useSalary = (employeeId) => useRead("salary", accountsApi.salary, employeeId, { enabled: !!employeeId });

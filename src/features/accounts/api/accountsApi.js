@@ -62,6 +62,11 @@ export const accountsApi = {
   setExpenseStatus: (id, data) => patch(`/expenses/${id}/status`, data),
   deleteExpense: (id) => del(`/expenses/${id}`),
 
+  vendors: (params) => get("/vendors", params),
+  createVendor: (data) => post("/vendors", data),
+  updateVendor: (id, data) => put(`/vendors/${id}`, data),
+  deleteVendor: (id) => del(`/vendors/${id}`),
+
   salaries: () => get("/payroll/salaries"),
   salary: (employeeId) => get(`/payroll/salaries/${employeeId}`),
   saveSalary: (employeeId, data) => put(`/payroll/salaries/${employeeId}`, data),

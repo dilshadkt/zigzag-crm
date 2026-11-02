@@ -10,7 +10,10 @@ import {
   useExpenses,
   useSetExpenseStatus,
   useUpdateExpense,
+  useVendors,
 } from "../hooks/useAccounts";
+import VendorDrawer from "../components/VendorDrawer";
+import SearchableSelect from "../components/SearchableSelect";
 import { EXPENSE_STATUS, PAYMENT_METHODS, downloadCsv, errorMessage, fmtDate, fmtMoney, methodLabel, rangePresets, toInputDate } from "../utils/format";
 import { ConfirmModal, DateRangeFilter, Drawer, EmptyState, ErrorState, Field, PageHeader, Pagination, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, btnSmall, inputCls, selectCls } from "../components/ui";
 
@@ -18,7 +21,7 @@ const blank = () => ({
   date: toInputDate(new Date()),
   category: "",
   description: "",
-  vendor: "",
+  vendorRef: "",
   billNumber: "",
   amount: "",
   taxAmount: "",
@@ -29,6 +32,8 @@ const blank = () => ({
   notes: "",
   attachments: [],
 });
+
+const LEGACY_VENDOR = "__legacy";
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -43,6 +48,9 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const { data: clients } = useClientLookup(isOpen);
+  const { data: vendorData } = useVendors(undefined, isOpen);
+  const [addingVendor, setAddingVendor] = useState(false);
+  const [newVendorName, setNewVendorName] = useState("");
   const [form, setForm] = useState(blank());
   const [uploading, setUploading] = useState(false);
 
@@ -59,12 +67,21 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
             taxAmount: expense.taxAmount || "",
             attachments: expense.attachments || [],
             payments: paymentsFor(expense),
+            // Older expenses only have the vendor as text, with no vendor record
+            vendorRef: expense.vendorRef?._id || expense.vendorRef || (expense.vendor ? LEGACY_VENDOR : ""),
           }
         : { ...blank(), category: settings?.expenseCategories?.[0] || "" }
     );
   }, [isOpen, expense, settings]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const vendorOptions = [
+    ...(form.vendorRef === LEGACY_VENDOR
+      ? [{ value: LEGACY_VENDOR, label: expense?.vendor || "", hint: "not in vendor list" }]
+      : []),
+    ...(vendorData?.vendors || []).map((v) => ({ value: v._id, label: v.name, hint: v.gstin || v.phone })),
+  ];
   const total = round2((Number(form.amount) || 0) + (Number(form.taxAmount) || 0));
 
   // One payment pays the whole total; with several, each row carries its own amount
@@ -126,6 +143,8 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
       })),
     };
     delete payload._id;
+    if (form.vendorRef === LEGACY_VENDOR) delete payload.vendorRef; // keep the old text name as it is
+    else delete payload.vendor;
     delete payload.paymentMethod;
     delete payload.paymentReference;
     try {
@@ -139,6 +158,7 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
 
   const busy = create.isPending || update.isPending;
   return (
+    <>
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
@@ -162,7 +182,22 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
         </div>
         <Field label="Description" required><input className={inputCls} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="What was it for?" /></Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Vendor / paid to"><input className={inputCls} value={form.vendor} onChange={(e) => set({ vendor: e.target.value })} /></Field>
+          <Field label="Vendor / paid to">
+            <SearchableSelect
+              value={form.vendorRef}
+              onChange={(vendorRef) => set({ vendorRef })}
+              options={vendorOptions}
+              placeholder="Select vendor"
+              searchPlaceholder="Search vendors…"
+              clearLabel="No vendor"
+              createLabel="Add new vendor"
+              emptyText="No vendor found"
+              onCreate={(name) => {
+                setNewVendorName(name);
+                setAddingVendor(true);
+              }}
+            />
+          </Field>
           <Field label="Bill / invoice no."><input className={inputCls} value={form.billNumber} onChange={(e) => set({ billNumber: e.target.value })} /></Field>
           <Field label="Amount (before tax)" required><input type="number" min="0" step="any" className={inputCls} value={form.amount} onChange={(e) => set({ amount: e.target.value })} /></Field>
           <Field label="GST paid" hint="Input tax credit"><input type="number" min="0" step="any" className={inputCls} value={form.taxAmount} onChange={(e) => set({ taxAmount: e.target.value })} /></Field>
@@ -253,6 +288,13 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
         <Field label="Notes"><textarea className={inputCls} rows={2} value={form.notes} onChange={(e) => set({ notes: e.target.value })} /></Field>
       </form>
     </Drawer>
+    <VendorDrawer
+      isOpen={addingVendor}
+      initialName={newVendorName}
+      onClose={() => setAddingVendor(false)}
+      onSaved={(vendor) => set({ vendorRef: vendor._id })}
+    />
+    </>
   );
 };
 
