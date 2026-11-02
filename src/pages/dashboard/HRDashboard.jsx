@@ -3,6 +3,9 @@ import { attendanceApi } from "../../features/attendance/api/attendanceApi";
 import { useGetAllEmployees } from "../../api/hooks";
 import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
 import PendingTimeChangeList from "../../features/attendance/components/PendingTimeChangeList";
+import EditAttendanceModal from "../../features/attendance/components/EditAttendanceModal";
+import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 
 const SkeletonItem = ({ className }) => (
     <div className={`bg-slate-200 animate-shimmer bg-[linear-gradient(110deg,#e2e8f0,45%,#f1f5f9,55%,#e2e8f0)] bg-[length:200%_100%] rounded ${className}`} />
@@ -72,6 +75,10 @@ const getPresetDateRange = (mode) => {
 };
 
 const HRDashboardPage = () => {
+    const { isCompany } = useAuth();
+    const { hasPermission } = usePermissions();
+    const canEditAttendance = isCompany || hasPermission("attendance", "edit");
+    const [editingRecord, setEditingRecord] = useState(null);
     // State for filtering — default to this month
     const [filterMode, setFilterMode] = useState("thisMonth");
     const [customStartDate, setCustomStartDate] = useState(() => getPresetDateRange("thisMonth").start);
@@ -186,6 +193,12 @@ const HRDashboardPage = () => {
         }
     };
 
+    // After the admin changes times, reload this page's own report data
+    const handleAttendanceSaved = () => {
+        fetchAllStaffReport(true);
+        fetchSingleReport();
+    };
+
     useEffect(() => {
         fetchAllStaffReport();
     }, [reportDateRange]);
@@ -286,10 +299,13 @@ const HRDashboardPage = () => {
                     isEarlyOut: !!log.isEarlyOut,
                     earlyOutBy: log.earlyOutBy || 0,
                     overtimeHours: Number(log.overtimeHours || 0),
-                    isActive: !log.clockOutTime
+                    isActive: !log.clockOutTime,
+                    // The original records behind this day, so each can be edited
+                    records: [log]
                 };
             } else {
                 const current = groups[dateStr];
+                current.records.push(log);
                 
                 // Earliest clock in
                 if (log.clockInTime && (!current.clockInTime || new Date(log.clockInTime) < new Date(current.clockInTime))) {
@@ -939,6 +955,9 @@ const HRDashboardPage = () => {
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Total Working Hrs</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Break Time</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Late Info</th>
+                                                {canEditAttendance && (
+                                                    <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                                                )}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -980,9 +999,31 @@ const HRDashboardPage = () => {
                                                                         <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">On time</span>
                                                                     )}
                                                                 </td>
+                                                                {canEditAttendance && (
+                                                                    <td className="py-2 px-3 whitespace-nowrap">
+                                                                        {(log.records || []).map((record, recordIndex, all) => (
+                                                                            <button
+                                                                                key={record.id || recordIndex}
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    setEditingRecord({
+                                                                                        ...record,
+                                                                                        _id: record.id,
+                                                                                        employee: { firstName: singleEmployeeReport?.employee?.name || "" },
+                                                                                    })
+                                                                                }
+                                                                                className="mr-1 px-2 py-1 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-50 rounded-lg"
+                                                                            >
+                                                                                {all.length > 1
+                                                                                    ? `Edit ${record.clockInTime ? new Date(record.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : recordIndex + 1}`
+                                                                                    : "Edit"}
+                                                                            </button>
+                                                                        ))}
+                                                                    </td>
+                                                                )}
                                                             </>
                                                         ) : (
-                                                            <td colSpan="5" className="py-2 px-3 text-slate-400">
+                                                            <td colSpan={canEditAttendance ? 6 : 5} className="py-2 px-3 text-slate-400">
                                                                 {row.status === "weeklyOff" && "Office off day (weekly off)"}
                                                                 {row.status === "holiday" && `Company holiday${row.holidayName ? ` - ${row.holidayName}` : ""}`}
                                                                 {row.status === "leave" && (row.leave?.reason || `Approved ${leaveTypeLabel(row.leave?.type).toLowerCase()}`)}
@@ -1005,6 +1046,13 @@ const HRDashboardPage = () => {
                     )}
                 </div>
             )}
+
+            <EditAttendanceModal
+                isOpen={Boolean(editingRecord)}
+                record={editingRecord}
+                onClose={() => setEditingRecord(null)}
+                onSaved={handleAttendanceSaved}
+            />
         </div>
     );
 };

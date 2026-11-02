@@ -69,8 +69,7 @@ const VacationCard = ({
   const { data: extraData, isLoading: isLoadingExtra } = useGetEmployeeVacations(
     showAllRequests ? employeeId : null,
     month,
-    year,
-    { includePending: true }
+    year
   );
 
   const vacationRequests = showAllRequests && extraData?.vacations

@@ -28,7 +28,7 @@ const getBreakDurationMinutes = (startTime, endTime) => {
   return Math.max(0, Math.round((end - start) / (1000 * 60)));
 };
 
-const EditAttendanceModal = ({ isOpen, record, onClose }) => {
+const EditAttendanceModal = ({ isOpen, record, onClose, onSaved }) => {
   const [clockInTime, setClockInTime] = useState("");
   const [clockOutTime, setClockOutTime] = useState("");
   const [breaks, setBreaks] = useState([]);
@@ -134,6 +134,7 @@ const EditAttendanceModal = ({ isOpen, record, onClose }) => {
         },
       });
       toast.success("Attendance times updated");
+      onSaved?.();
       onClose();
     } catch (error) {
       toast.error(error?.message || "Failed to update attendance");
@@ -156,6 +157,7 @@ const EditAttendanceModal = ({ isOpen, record, onClose }) => {
           ? "Time-change request approved"
           : "Time-change request rejected"
       );
+      onSaved?.();
       onClose();
     } catch (error) {
       toast.error(error?.message || "Failed to review request");
