@@ -44,7 +44,8 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false 
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         type: selectedType,
-        ...(ownerEdit ? {} : { notes: formData.notes }),
+        // The list does not carry existing notes, so only send them when edited
+        ...(ownerEdit || formData.notes === (request?.notes || "") ? {} : { notes: formData.notes }),
       });
       onClose();
     } catch (error) {

@@ -4,7 +4,9 @@ import { FiCalendar, FiClock, FiCoffee, FiLayers } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useAttendanceCalendarData } from "../hooks/useAttendanceCalendarData";
 import AttendanceCalendarHeader from "./AttendanceCalendarHeader";
-import { formatBreakMinutes } from "../utils";
+import { useGetHolidays, useGetWorkSchedule } from "../../../api/hooks";
+import { getOffDayReason } from "../../../utils/workingDayUtils";
+import { formatBreakMinutes, getOpenSessionEnd, UNENDED_BREAK_MINUTES } from "../utils";
 
 const formatClock = (value) => {
   if (!value) return "—";
@@ -25,18 +27,49 @@ const spanMinutes = (start, end) => {
 const isOpenStatus = (status) =>
   status === "checked-in" || status === "break" || status === "overtime";
 
-const breakMinutesFor = (record, now) =>
-  (record.breaks || []).reduce((total, item) => {
-    if (!item?.startTime) return total;
-    return total + spanMinutes(item.startTime, item.endTime || now);
-  }, 0);
+// A session with no clock-out stops at the office end time once its day is over
+// (see getOpenSessionEnd); until then it runs to `now`.
+const latestBreakStart = (record) =>
+  (record.breaks || []).reduce((latest, item) => {
+    if (!item?.startTime) return latest;
+    const start = new Date(item.startTime);
+    return !latest || start > latest ? start : latest;
+  }, null);
 
-const workMinutesFor = (record, now) => {
-  const end = record.clockOutTime || (isOpenStatus(record.status) ? now : null);
+const openEndFor = (record, now, officeEnd) =>
+  !record.clockOutTime && isOpenStatus(record.status) && record.clockInTime
+    ? getOpenSessionEnd(record, now, officeEnd, latestBreakStart(record))
+    : null;
+
+// A break still running right now (today, session open) keeps counting live. A
+// break that was never ended on a finished or past session counts as a fixed 5 minutes.
+const isLiveBreak = (record, item, now, officeEnd) => {
+  if (item.endTime) return false;
+  const open = openEndFor(record, now, officeEnd);
+  return Boolean(open) && !open.assumed;
+};
+
+const breakItemMinutes = (record, item, now, officeEnd) => {
+  if (!item?.startTime) return 0;
+  if (item.endTime) return spanMinutes(item.startTime, item.endTime);
+  return isLiveBreak(record, item, now, officeEnd)
+    ? spanMinutes(item.startTime, now)
+    : UNENDED_BREAK_MINUTES;
+};
+
+const breakMinutesFor = (record, now, officeEnd) =>
+  (record.breaks || []).reduce(
+    (total, item) => total + breakItemMinutes(record, item, now, officeEnd),
+    0
+  );
+
+const workMinutesFor = (record, now, officeEnd) => {
+  const open = openEndFor(record, now, officeEnd);
+  const end = record.clockOutTime || (open ? open.end : null);
   if (!record.clockInTime || !end) {
     return record.totalHours ? Math.round(Number(record.totalHours) * 60) : 0;
   }
-  return Math.max(0, spanMinutes(record.clockInTime, end) - breakMinutesFor(record, now));
+  return Math.max(0, spanMinutes(record.clockInTime, end) - breakMinutesFor(record, now, officeEnd));
 };
 
 const StatCard = ({ icon, iconClass, label, value }) => (
@@ -50,7 +83,11 @@ const StatCard = ({ icon, iconClass, label, value }) => (
 );
 
 const AttendanceReport = () => {
-  const { user } = useAuth();
+  const { user, companyId } = useAuth();
+  const { data: workSchedule } = useGetWorkSchedule(companyId || user?.company);
+  const officeEnd = workSchedule?.workingHours?.end;
+  const weeklyOffs = workSchedule?.weeklyOffs;
+  const { data: holidays } = useGetHolidays(companyId || user?.company);
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [now, setNow] = useState(() => new Date());
 
@@ -80,11 +117,15 @@ const AttendanceReport = () => {
         const sessions = [...records].sort(
           (a, b) => new Date(a.clockInTime || 0) - new Date(b.clockInTime || 0)
         );
-        const work = sessions.reduce((sum, record) => sum + workMinutesFor(record, now), 0);
-        const brk = sessions.reduce((sum, record) => sum + breakMinutesFor(record, now), 0);
-        return { key, sessions, work, brk };
+        const work = sessions.reduce((sum, record) => sum + workMinutesFor(record, now, officeEnd), 0);
+        const brk = sessions.reduce((sum, record) => sum + breakMinutesFor(record, now, officeEnd), 0);
+        // Checking in on a weekly off or holiday is shown, but is not a day present
+        const offReason = getOffDayReason(new Date(`${key}T12:00:00`), weeklyOffs || [], holidays || []);
+        return { key, sessions, work, brk, offReason };
       });
-  }, [attendanceData, now]);
+  }, [attendanceData, now, officeEnd, weeklyOffs, holidays]);
+
+  const presentDayCount = days.filter((day) => !day.offReason).length;
 
   const monthWork = days.reduce((sum, day) => sum + day.work, 0);
   const monthBreak = days.reduce((sum, day) => sum + day.brk, 0);
@@ -114,7 +155,7 @@ const AttendanceReport = () => {
           icon={<FiCalendar />}
           iconClass="bg-blue-50 text-blue-600"
           label="Days"
-          value={isLoading ? "—" : days.length}
+          value={isLoading ? "—" : presentDayCount}
         />
         <StatCard
           icon={<FiClock />}
@@ -177,12 +218,20 @@ const AttendanceReport = () => {
                           className="border-r border-slate-100 px-3.5 py-3 align-top font-bold text-slate-800"
                         >
                           <div>{format(new Date(`${day.key}T00:00:00`), "EEE, d MMM")}</div>
+                          {day.offReason && (
+                            <span
+                              className="mt-1 inline-block rounded-full border border-purple-100 bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold text-purple-600"
+                              title="Checking in on a day the company is off does not count as a day present"
+                            >
+                              {day.offReason.type === "Holiday" ? day.offReason.name : "Weekly off"} · not counted
+                            </span>
+                          )}
                           <div className="mt-1 font-medium text-slate-400">
                             {formatBreakMinutes(day.work)} · {formatBreakMinutes(day.brk)} break
                           </div>
                         </td>
                       )}
-                      <SessionCells record={record} now={now} />
+                      <SessionCells record={record} now={now} officeEnd={officeEnd} />
                     </tr>
                   ))
                 )}
@@ -195,11 +244,14 @@ const AttendanceReport = () => {
   );
 };
 
-const SessionCells = ({ record, now }) => {
+const SessionCells = ({ record, now, officeEnd }) => {
   const breaks = [...(record.breaks || [])]
     .filter((item) => item?.startTime)
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-  const open = isOpenStatus(record.status) && !record.clockOutTime;
+  const unfinished = openEndFor(record, now, officeEnd);
+  // Still running today, versus a forgotten clock-out on an earlier day
+  const open = Boolean(unfinished) && !unfinished.assumed;
+  const assumedEnd = unfinished?.assumed ? unfinished.end : null;
 
   return (
     <>
@@ -209,12 +261,14 @@ const SessionCells = ({ record, now }) => {
         {breaks.length > 0 && (
           <div className="flex flex-col gap-1">
             {breaks.map((item, index) => {
-              const minutes = spanMinutes(item.startTime, item.endTime || now);
+              const minutes = breakItemMinutes(record, item, now, officeEnd);
               return (
                 <span key={`${item.startTime}-${index}`}>
                   {item.endTime
                     ? `${formatClock(item.startTime)} – ${formatClock(item.endTime)}`
-                    : `${formatClock(item.startTime)} · in progress`}
+                    : isLiveBreak(record, item, now, officeEnd)
+                      ? `${formatClock(item.startTime)} · in progress`
+                      : `${formatClock(item.startTime)} · not ended`}
                   <span className="ml-1 font-semibold text-amber-600">{formatBreakMinutes(minutes)}</span>
                 </span>
               );
@@ -227,15 +281,25 @@ const SessionCells = ({ record, now }) => {
           <span className="inline-block rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
             Still in
           </span>
+        ) : assumedEnd ? (
+          <span
+            className="text-slate-600"
+            title="No check-out was recorded, so this day is counted up to the office end time"
+          >
+            {formatClock(assumedEnd)}
+            <span className="ml-1.5 rounded-full border border-amber-100 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+              Auto
+            </span>
+          </span>
         ) : (
           <span className="text-slate-600">{formatClock(record.clockOutTime)}</span>
         )}
       </td>
       <td className="px-3.5 py-3 font-bold text-slate-800">
-        {formatBreakMinutes(workMinutesFor(record, now))}
+        {formatBreakMinutes(workMinutesFor(record, now, officeEnd))}
       </td>
       <td className="px-3.5 py-3 text-slate-600">
-        {formatBreakMinutes(breakMinutesFor(record, now))}
+        {formatBreakMinutes(breakMinutesFor(record, now, officeEnd))}
       </td>
     </>
   );

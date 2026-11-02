@@ -26,3 +26,41 @@ export const formatBreakMinutes = (minutes) => {
 
 export const hasPendingCorrection = (record) =>
   record?.correctionRequest?.status === "pending";
+
+const DEFAULT_OFFICE_END = "18:00";
+
+const isSameCalendarDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+/**
+ * Where an unfinished session (no clock-out) stops counting.
+ * Today it is still running, so it counts up to `now`. On an earlier day the
+ * person forgot to clock out, so it counts up to the office end time from the
+ * work schedule (never before the clock-in). `assumed` flags that second case.
+ * @param {{clockInTime: string|Date}} record
+ * @param {Date} now
+ * @param {string} [officeEnd] "HH:mm" working-hours end from the company work schedule
+ * @param {Date} [lastActivity] latest known activity (e.g. a break start); the session cannot end before it
+ * @returns {{end: Date, assumed: boolean}}
+ */
+export const getOpenSessionEnd = (record, now, officeEnd, lastActivity) => {
+  const clockIn = new Date(record.clockInTime);
+  if (isNaN(clockIn.getTime()) || isSameCalendarDay(clockIn, now)) {
+    return { end: now, assumed: false };
+  }
+  const valid = /^\d{1,2}:\d{2}$/.test(String(officeEnd || ""));
+  const [h, m] = (valid ? officeEnd : DEFAULT_OFFICE_END).split(":").map(Number);
+  const cutoff = new Date(clockIn);
+  cutoff.setHours(h, m, 0, 0);
+  let end = cutoff < clockIn ? clockIn : cutoff;
+  if (lastActivity && !isNaN(new Date(lastActivity).getTime()) && new Date(lastActivity) > end) {
+    end = new Date(lastActivity);
+  }
+  return { end, assumed: true };
+};
+
+// A break that was never ended on a finished or past session (from before the
+// break-out prompt existed) counts as this many minutes.
+export const UNENDED_BREAK_MINUTES = 5;

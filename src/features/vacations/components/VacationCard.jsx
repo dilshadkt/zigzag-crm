@@ -104,7 +104,8 @@ const VacationCard = ({
 
   const handleModifyOpen = (request) => { setModifyingRequest(request); setMenuOpen(false); };
 
-  const handleCancel = async (requestId) => {
+  const handleCancel = async (requestId, { confirm = false } = {}) => {
+    if (confirm && !window.confirm("Cancel this approved leave? The employee will no longer be on leave for these dates.")) return;
     setProcessingId(requestId);
     try {
       await updateStatus({ vacationId: requestId, status: "cancelled" });
@@ -126,6 +127,10 @@ const VacationCard = ({
       setProcessingId(null);
     }
   };
+
+  // Approvers can still change or cancel leave after it was approved
+  const canAdminEditApproved = (request) => request.status === "approved" && canModifyVacations;
+  const canAdminCancelApproved = (request) => request.status === "approved" && canApproveVacations;
 
   const handleModifySave = (requestId, newDates) => {
     if (!onModifyRequest) return Promise.resolve();
@@ -294,8 +299,34 @@ const VacationCard = ({
                     </button>
                   ) : null}
 
+                  {/* Approved leave: edit and cancel for people who can approve / edit leave */}
+                  {(canAdminEditApproved(request) || canAdminCancelApproved(request)) && (
+                    <div className="flex items-center gap-1">
+                      {canAdminEditApproved(request) && (
+                        <button
+                          onClick={() => handleModifyOpen(request)}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:text-blue-600 px-2 py-1 transition-colors"
+                          title="Edit leave"
+                        >
+                          <FaEdit size={10} /> Edit
+                        </button>
+                      )}
+                      {canAdminCancelApproved(request) && (
+                        <button
+                          onClick={() => handleCancel(request.id, { confirm: true })}
+                          disabled={processingId === request.id}
+                          className="text-[10px] font-bold text-gray-400 hover:text-rose-500 px-2 py-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {processingId === request.id ? "Cancelling..." : "Cancel leave"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Requester's own controls: edit dates while pending, cancel until it starts */}
-                  {isOwnCard && !(request.status === "pending" && (canApproveVacations || canModifyVacations)) && (
+                  {isOwnCard &&
+                    !(request.status === "pending" && (canApproveVacations || canModifyVacations)) &&
+                    !(canAdminEditApproved(request) || canAdminCancelApproved(request)) && (
                     <div className="flex items-center gap-1">
                       {request.status === "pending" && onEditMyRequest && (
                         <button
