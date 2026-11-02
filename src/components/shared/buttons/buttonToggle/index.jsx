@@ -7,7 +7,7 @@ const ButtonToggle = ({ values, value, setValue }) => {
         <button
           key={index}
           onClick={() => setValue(`${item}`)}
-          className={`h-full min-w-[180px] px-5 capitalize w-full cursor-pointer
+          className={`h-full min-w-[120px] sm:min-w-[180px] px-5 capitalize w-full cursor-pointer
          rounded-[20px]  ${
            value === item ? `bg-[#3F8CFF] text-white ` : `text-gray-800`
          } 

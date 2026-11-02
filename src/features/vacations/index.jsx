@@ -511,14 +511,14 @@ const Vacations = () => {
 
   return (
     <section className="flex flex-col h-full gap-y-3">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-2">
         {/* Left: Title */}
         <div className="flex items-center">
           <Header>Leave Reports</Header>
         </div>
 
-        {/* Center: Tab Switch */}
-        <div className="lg:absolute lg:left-1/2 lg:-translate-x-1/2">
+        {/* Tab Switch (in the flow, so it can never cover the date filter) */}
+        <div className="max-w-full">
           <ButtonToggle
             setValue={setStat}
             value={stat}
@@ -527,7 +527,7 @@ const Vacations = () => {
         </div>
 
         {/* Right: Date Section + Add Button */}
-        <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
+        <div className="flex items-center gap-3 max-w-full justify-between lg:justify-end">
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border border-gray-100 shadow-sm">
             <button
               onClick={handlePrevMonth}

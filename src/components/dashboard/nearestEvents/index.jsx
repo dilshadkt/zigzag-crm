@@ -90,10 +90,6 @@ const NearestEvents = ({ selectedDate }) => {
     return format(date, "MMM dd"); // Month day
   };
 
-  const getTimeText = (date) => {
-    return format(date, "h:mm a");
-  };
-
   const getEventAvatar = (event) => {
     const config = {
       project: { Icon: FaProjectDiagram, color: "#3F8CFF", bg: "bg-blue-50", img: event.data?.thumbImg },
@@ -205,9 +201,6 @@ const NearestEvents = ({ selectedDate }) => {
               <div className="flex flex-col items-end shrink-0">
                 <p className="text-sm font-semibold text-[#0A1629]">
                   {getDateText(event.date)}
-                </p>
-                <p className="text-xs text-[#7D8592] mt-0.5">
-                  {getTimeText(event.date)}
                 </p>
               </div>
             </div>

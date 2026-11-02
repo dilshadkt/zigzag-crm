@@ -23,10 +23,10 @@ const emptyForm = {
   attachments: [],
 };
 
-const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
+const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit, canTriage = true }) => {
   const { companyId, user } = useAuth();
   const { data: projects } = useCompanyProjects(companyId || user?.company, 0, null, { view: "all_list" });
-  const { data: employeesData } = useGetAllEmployees(isOpen, { view: 'select' });
+  const { data: employeesData } = useGetAllEmployees(isOpen && canTriage, { view: 'select' });
   const createTicket = useCreateTicket();
   const updateTicket = useUpdateTicket();
   const [form, setForm] = useState(emptyForm);
@@ -92,8 +92,8 @@ const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
         notes: form.notes?.trim() || "",
         type: form.type,
         priority: form.priority,
-        assignedTo: form.assignedTo || null,
-        mentions: form.mentions,
+        // Only people who triage send an owner or mentions; the server ignores them otherwise
+        ...(canTriage ? { assignedTo: form.assignedTo || null, mentions: form.mentions } : {}),
         attachments: processedAttachments,
       };
 
@@ -213,6 +213,8 @@ const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
               </div>
             </div>
 
+            {canTriage && (
+            <>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">Assign to</label>
               <SearchableSelect
@@ -232,6 +234,8 @@ const CreateTicketDrawer = ({ isOpen, onClose, ticketToEdit }) => {
                 onChange={(mentions) => setForm((prev) => ({ ...prev, mentions }))}
               />
             </div>
+            </>
+            )}
           </div>
 
           <div className="p-5 border-t border-slate-100">

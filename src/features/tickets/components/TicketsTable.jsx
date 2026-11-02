@@ -28,7 +28,7 @@ const TicketsTable = ({ tickets, isLoading, onSelect, isAssigneeView }) => {
         </p>
         <p className="text-xs mt-1">
           {isAssigneeView
-            ? "Issues assigned to you, or that mention you, will show up here."
+            ? "Issues you raise, issues assigned to you, or that mention you will show up here."
             : "Raise an issue or complaint against a client to get started."}
         </p>
       </div>

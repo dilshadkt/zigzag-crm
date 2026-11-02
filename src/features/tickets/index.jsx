@@ -19,10 +19,12 @@ const Tickets = () => {
   const [ticketToEdit, setTicketToEdit] = useState(null);
 
   const canSeeAll = isCompany || hasPermission("tickets", "viewAll");
-  const canCreate = isCompany || hasPermission("tickets", "create");
+  // Every employee can raise an issue; assigning and mentioning stay with those who triage
+  const canCreate = true;
   const canAssign = isCompany || hasPermission("tickets", "assign");
   const canMention = canSeeAll || canAssign || hasPermission("tickets", "edit");
   const isAssigneeView = !canSeeAll;
+  const canTriage = canSeeAll || canAssign || hasPermission("tickets", "edit");
   const canChangeStatus =
     isCompany ||
     hasPermission("tickets", "changeStatus") ||
@@ -56,19 +58,19 @@ const Tickets = () => {
           </h2>
           <p className="text-xs text-slate-500 hidden md:block mt-0.5">
             {isAssigneeView
-              ? "Issues assigned to you, and issues that mention you."
+              ? "Issues you raised, issues assigned to you, and issues that mention you."
               : "Raise tickets against clients, assign owners, and mention people who should see them."}
             {openCount ? ` ${openCount} open.` : ""}
           </p>
         </div>
-        {canCreate && !isAssigneeView && (
+        {canCreate && (
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
             className="flex items-center justify-center gap-2 h-9 w-9 md:w-auto md:h-10 md:px-3.5 rounded-xl bg-[#3F8CFF] text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
           >
             <FiPlus className="w-5 h-5 md:w-4 md:h-4" />
-            <span className="hidden md:inline">Raise ticket</span>
+            <span className="hidden md:inline">{isAssigneeView ? "Raise issue" : "Raise ticket"}</span>
           </button>
         )}
       </div>
@@ -118,7 +120,7 @@ const Tickets = () => {
         />
       </div>
 
-      {(canCreate && !isAssigneeView) || ticketToEdit ? (
+      {canCreate || ticketToEdit ? (
         <CreateTicketDrawer
           isOpen={isCreateOpen || !!ticketToEdit}
           onClose={() => {
@@ -126,15 +128,20 @@ const Tickets = () => {
             setTicketToEdit(null);
           }}
           ticketToEdit={ticketToEdit}
+          canTriage={canTriage}
         />
       ) : null}
       <TicketDetailDrawer
         ticket={selected}
         onClose={() => setSelectedTicket(null)}
-        onEdit={() => {
-          setTicketToEdit(selected);
-          setSelectedTicket(null);
-        }}
+        onEdit={
+          canTriage
+            ? () => {
+                setTicketToEdit(selected);
+                setSelectedTicket(null);
+              }
+            : undefined
+        }
         canAssign={canAssign}
         canMention={canMention}
         canChangeStatus={canChangeStatus}

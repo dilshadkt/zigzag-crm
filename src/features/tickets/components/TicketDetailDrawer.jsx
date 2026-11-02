@@ -263,7 +263,11 @@ const TicketDetailDrawer = ({
                 </button>
               ) : (
                 <p className="text-xs text-center text-slate-400 font-medium">
-                  {isClosed ? "This issue is closed." : "You were mentioned on this issue."}
+                  {isClosed
+                    ? "This issue is closed."
+                    : isCreator
+                      ? "You raised this issue."
+                      : "You were mentioned on this issue."}
                 </p>
               )}
             </div>
