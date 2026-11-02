@@ -429,6 +429,10 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
       title={`${isExtraSubtask ? "Extra Subtask" : "Subtask"}: ${
         subtask.title
       } - Status: ${statusText} - Parent: ${subtask.parentTask?.title}${
+        subtask.parentTask?.dueDate
+          ? ` (due ${formatFullDate(subtask.parentTask.dueDate)})`
+          : ""
+      }${
         subtask.project
           ? ` - Project: ${subtask.project.name}`
           : " - No Project"
@@ -543,6 +547,13 @@ const SubtaskItem = ({ subtask, onNavigate, showExtraDetails }) => {
                   <span className="truncate text-green-600 text-xs flex-1">
                     Parent: {truncateText(subtask?.parentTask?.title)}
                   </span>
+                  {formatFullDate(subtask?.parentTask?.dueDate) && (
+                    <span
+                      className={`truncate text-[10px] font-medium flex-1 ${getDueDateColor(subtask.parentTask.dueDate, subtask.parentTask.status) || "text-gray-500"}`}
+                    >
+                      Parent due: {formatFullDate(subtask.parentTask.dueDate)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
