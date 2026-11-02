@@ -92,16 +92,6 @@ const SortableStatsCard = ({ stat, onClick }) => {
 };
 
 const CompanyProgressStats = ({ taskMonth }) => {
-  // Boolean: true if the given taskMonth is the current calendar month (formatted as "YYYY-MM")
-  const isCurrentMonth = React.useMemo(() => {
-    if (!taskMonth) return false;
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1; // getMonth() returns 0-11, so add 1 to get 1-12
-    const currentMonth = `${year}-${String(month).padStart(2, "0")}`; // Format as "YYYY-MM"
-    return currentMonth === taskMonth;
-  }, [taskMonth]);
-
   const { companyId } = useAuth();
 
   const {
@@ -403,30 +393,13 @@ const CompanyProgressStats = ({ taskMonth }) => {
       },
     ];
 
-    // If current month, show all stats; otherwise, only show specific stats
-    if (isCurrentMonth) {
-      return allStats;
-    }
-
-    // Stats to show when NOT current month
-    const allowedIdsForPastMonths = [
-      "on-review",
-      "content-approved",
-      "client-approved",
-      "re-work",
-      "monthly-rework",
-      "overdue-tasks",
-      "unscheduled-tasks",
-    ];
-
-    return allStats.filter((stat) => allowedIdsForPastMonths.includes(stat.id));
+    return allStats;
   }, [
     companyStatsCheck?.statistics,
     handleStatsClick,
     handleOverdueTasksClick,
     navigate,
     taskMonth,
-    isCurrentMonth,
   ]);
 
   // Initialize and maintain card order
@@ -503,7 +476,7 @@ const CompanyProgressStats = ({ taskMonth }) => {
   if (isLoading) {
     // Match the number of shimmer cards to the stats that will be shown
     const placeholderCount =
-      (stats && stats.length) || (isCurrentMonth ? 12 : 6);
+      (stats && stats.length) || 12;
     const placeholders = Array.from({ length: placeholderCount });
 
     return (

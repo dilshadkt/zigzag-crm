@@ -39,6 +39,7 @@ const mapEmployeeVacations = (vacations = []) =>
     endDate: vacation.endDate,
     originalStartDate: vacation.originalStartDate,
     originalEndDate: vacation.originalEndDate,
+    reason: vacation.reason,
     project: vacation.project
       ? { id: vacation.project.id || vacation.project._id, name: vacation.project.name }
       : null,
@@ -231,7 +232,17 @@ const VacationCard = ({
                       </span>
                     )}
                   </div>
-                  
+
+                  {request.reason?.trim() && (
+                    <p
+                      className="text-[10px] text-gray-500 leading-snug whitespace-pre-line break-words"
+                      title={request.reason}
+                    >
+                      <span className="font-semibold text-gray-600">Reason: </span>
+                      {request.reason}
+                    </p>
+                  )}
+
                   {/* Overlapping Tasks integration */}
                   <OverlappingTasks vacationId={request.id} />
                 </div>
