@@ -3,7 +3,7 @@ import { attendanceApi } from "../../features/attendance/api/attendanceApi";
 import { useGetAllEmployees } from "../../api/hooks";
 import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
 import PendingTimeChangeList from "../../features/attendance/components/PendingTimeChangeList";
-import EditAttendanceModal from "../../features/attendance/components/EditAttendanceModal";
+import DaySessionsModal from "../../features/attendance/components/DaySessionsModal";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 
@@ -78,7 +78,11 @@ const HRDashboardPage = () => {
     const { isCompany } = useAuth();
     const { hasPermission } = usePermissions();
     const canEditAttendance = isCompany || hasPermission("attendance", "edit");
-    const [editingRecord, setEditingRecord] = useState(null);
+    const canCreateAttendance = isCompany || hasPermission("attendance", "create");
+    const canDeleteAttendance = isCompany || hasPermission("attendance", "delete");
+    const canManageAttendance = canEditAttendance || canCreateAttendance || canDeleteAttendance;
+    // The day whose sessions are open in the dialog: { date: "YYYY-MM-DD", label }
+    const [sessionsDay, setSessionsDay] = useState(null);
     // State for filtering — default to this month
     const [filterMode, setFilterMode] = useState("thisMonth");
     const [customStartDate, setCustomStartDate] = useState(() => getPresetDateRange("thisMonth").start);
@@ -955,7 +959,7 @@ const HRDashboardPage = () => {
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Total Working Hrs</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Break Time</th>
                                                 <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Late Info</th>
-                                                {canEditAttendance && (
+                                                {canManageAttendance && (
                                                     <th className="py-2 px-3 font-bold text-slate-500 uppercase tracking-wider">Action</th>
                                                 )}
                                             </tr>
@@ -999,36 +1003,38 @@ const HRDashboardPage = () => {
                                                                         <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">On time</span>
                                                                     )}
                                                                 </td>
-                                                                {canEditAttendance && (
+                                                                {canManageAttendance && (
                                                                     <td className="py-2 px-3 whitespace-nowrap">
-                                                                        {(log.records || []).map((record, recordIndex, all) => (
-                                                                            <button
-                                                                                key={record.id || recordIndex}
-                                                                                type="button"
-                                                                                onClick={() =>
-                                                                                    setEditingRecord({
-                                                                                        ...record,
-                                                                                        _id: record.id,
-                                                                                        employee: { firstName: singleEmployeeReport?.employee?.name || "" },
-                                                                                    })
-                                                                                }
-                                                                                className="mr-1 px-2 py-1 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-50 rounded-lg"
-                                                                            >
-                                                                                {all.length > 1
-                                                                                    ? `Edit ${record.clockInTime ? new Date(record.clockInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : recordIndex + 1}`
-                                                                                    : "Edit"}
-                                                                            </button>
-                                                                        ))}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setSessionsDay({ date: row.date, label: formatShortDate(row.date) })}
+                                                                            className="px-2 py-1 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-50 rounded-lg"
+                                                                        >
+                                                                            {(log.records || []).length > 1 ? `Edit (${log.records.length})` : "Edit"}
+                                                                        </button>
                                                                     </td>
                                                                 )}
                                                             </>
                                                         ) : (
-                                                            <td colSpan={canEditAttendance ? 6 : 5} className="py-2 px-3 text-slate-400">
+                                                            <td colSpan="5" className="py-2 px-3 text-slate-400">
                                                                 {row.status === "weeklyOff" && "Office off day (weekly off)"}
                                                                 {row.status === "holiday" && `Company holiday${row.holidayName ? ` - ${row.holidayName}` : ""}`}
                                                                 {row.status === "leave" && (row.leave?.reason || `Approved ${leaveTypeLabel(row.leave?.type).toLowerCase()}`)}
                                                                 {row.status === "absent" && "No attendance recorded"}
                                                                 {row.status === "upcoming" && "-"}
+                                                            </td>
+                                                        )}
+                                                        {!log && canCreateAttendance && (
+                                                            <td className="py-2 px-3 whitespace-nowrap">
+                                                                {row.status !== "upcoming" && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setSessionsDay({ date: row.date, label: formatShortDate(row.date) })}
+                                                                        className="px-2 py-1 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-50 rounded-lg"
+                                                                    >
+                                                                        Add
+                                                                    </button>
+                                                                )}
                                                             </td>
                                                         )}
                                                     </tr>
@@ -1047,11 +1053,20 @@ const HRDashboardPage = () => {
                 </div>
             )}
 
-            <EditAttendanceModal
-                isOpen={Boolean(editingRecord)}
-                record={editingRecord}
-                onClose={() => setEditingRecord(null)}
-                onSaved={handleAttendanceSaved}
+            <DaySessionsModal
+                isOpen={Boolean(sessionsDay) && Boolean(singleEmployeeReport)}
+                onClose={() => setSessionsDay(null)}
+                employee={{
+                    id: singleEmployeeReport?.employee?.id || singleEmployeeReport?.employee?._id || selectedEmployeeId,
+                    name: singleEmployeeReport?.employee?.name || "",
+                }}
+                dateYmd={sessionsDay?.date}
+                dateLabel={sessionsDay?.label || ""}
+                records={dayRows.find((r) => r.date === sessionsDay?.date)?.log?.records || []}
+                canEdit={canEditAttendance}
+                canCreate={canCreateAttendance}
+                canDelete={canDeleteAttendance}
+                onChanged={handleAttendanceSaved}
             />
         </div>
     );
