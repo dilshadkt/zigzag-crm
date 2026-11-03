@@ -1,5 +1,53 @@
 import { useDailyReport, useDateRangeReport } from "./useAttendanceAnalytics";
 import { useMemo } from "react";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { attendanceApi } from "../api/attendanceApi";
+
+// Attendance list that loads the next page as the user scrolls. Works for a
+// single day too (start and end the same). The "dateRangeReport" key prefix
+// keeps it in step with the cache patching and invalidation after edits.
+export const useInfiniteAttendance = ({
+  startDate,
+  endDate,
+  search = "",
+  limit = 50,
+}) => {
+  const query = useInfiniteQuery({
+    queryKey: ["dateRangeReport", "infinite", startDate, endDate, search, limit],
+    queryFn: ({ pageParam }) =>
+      attendanceApi.getAttendanceByDateRange(
+        startDate,
+        endDate,
+        pageParam,
+        limit,
+        search
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage?.pagination?.hasNextPage
+        ? lastPage.pagination.currentPage + 1
+        : undefined,
+    enabled: !!(startDate && endDate),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+
+  const pages = query.data?.pages || [];
+  const attendanceRecords = useMemo(
+    () => pages.flatMap((page) => page?.report || []),
+    [query.data]
+  );
+
+  return {
+    attendanceRecords,
+    totalRecords: pages[pages.length - 1]?.pagination?.totalRecords || 0,
+    isLoading: query.isLoading,
+    error: query.error,
+    hasNextPage: Boolean(query.hasNextPage),
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+  };
+};
 
 // Helper function to calculate metrics
 const calculateMetrics = (attendanceRecords) => {

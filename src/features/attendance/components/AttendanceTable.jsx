@@ -10,7 +10,6 @@ import {
   getDetailedLocation,
 } from "../../../utils/locationUtils";
 import LocationModal from "../../../components/LocationModal";
-import Pagination from "./Pagination";
 import EditAttendanceModal from "./EditAttendanceModal";
 import { formatBreakMinutes } from "../utils";
 import { FiEdit2 } from "react-icons/fi";
@@ -690,34 +689,21 @@ const AttendanceTable = ({
   isLoading,
   error,
   searchTerm,
-  pagination,
-  onPageChange,
+  totalRecords = 0,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  onLoadMore,
+  resetKey,
   onDataChange,
   canEditAttendance,
 }) => {
   const [editingRecord, setEditingRecord] = useState(null);
+  const scrollRef = useRef(null);
+  const sentinelRef = useRef(null);
 
-  // Get attendance records from props
-  const allAttendanceRecords = attendanceRecords || [];
-
-  // Filter records based on search term using useMemo to prevent unnecessary re-computations
-  // Note: Filtering is now done client-side on the current page only
-  // For server-side filtering, you would need to update the API
-  const filteredRecords = useMemo(() => {
-    if (!searchTerm) return allAttendanceRecords;
-
-    const searchLower = searchTerm.toLowerCase();
-    return allAttendanceRecords.filter((record) => {
-      const employeeName = `${record.employee?.firstName || ""} ${record.employee?.lastName || ""
-        }`.toLowerCase();
-      const employeeEmail = record.employee?.email?.toLowerCase() || "";
-
-      return (
-        employeeName.includes(searchLower) ||
-        employeeEmail.includes(searchLower)
-      );
-    });
-  }, [allAttendanceRecords, searchTerm]);
+  // The server already applies the search, and loads further pages as the
+  // table is scrolled
+  const filteredRecords = attendanceRecords || [];
 
   // One row per employee per day, however many times they clocked in
   const groupedRecords = useMemo(() => {
@@ -746,6 +732,25 @@ const AttendanceTable = ({
     });
     return Array.from(map.values()).sort((a, b) => b.date - a.date);
   }, [groupedRecords]);
+
+  // A new search or date range starts from the top of the list
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [resetKey]);
+
+  // Load the next page when the end of the list scrolls into view
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage || isFetchingNextPage || !onLoadMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) onLoadMore();
+      },
+      { root: scrollRef.current, rootMargin: "300px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, onLoadMore, filteredRecords.length, isLoading, error]);
 
   // Use ref to track previous data and prevent unnecessary updates
   const prevDataRef = useRef();
@@ -966,7 +971,7 @@ const AttendanceTable = ({
 
   return (
     <div className="bg-white flex flex-col h-full shadow-sm rounded-lg overflow-hidden">
-      <div className="overflow-x-auto h-full overflow-y-auto">
+      <div ref={scrollRef} className="overflow-x-auto h-full overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0 z-40">
             <tr>
@@ -1007,19 +1012,19 @@ const AttendanceTable = ({
             ))}
           </tbody>
         </table>
+        {/* End of the list: scrolling to here loads the next page */}
+        <div ref={sentinelRef} className="h-px" />
+        {isFetchingNextPage && (
+          <p className="py-3 text-center text-xs font-medium text-gray-400">
+            Loading more...
+          </p>
+        )}
       </div>
 
-      {/* Pagination Controls */}
-      {pagination && pagination.totalRecords > 0 && (
-        <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          totalRecords={pagination.totalRecords}
-          limit={pagination.limit}
-          onPageChange={onPageChange}
-          isLoading={isLoading}
-        />
-      )}
+      <div className="border-t border-gray-100 px-6 py-2 text-xs text-gray-500">
+        Showing {groupedRecords.length} of {Math.max(totalRecords, groupedRecords.length)} results
+        {hasNextPage ? " · scroll down to load more" : ""}
+      </div>
 
       <EditAttendanceModal
         isOpen={Boolean(editingRecord)}

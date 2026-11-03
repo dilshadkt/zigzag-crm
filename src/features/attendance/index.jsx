@@ -7,10 +7,7 @@ import AttendanceTable from "./components/AttendanceTable";
 import AttendanceCalendar from "./components/AttendanceCalendar";
 import AttendanceReport from "./components/AttendanceReport";
 import AddAttendanceDrawer from "./components/AddAttendanceDrawer";
-import {
-  useAttendanceData,
-  useAttendanceDataRange,
-} from "./hooks/useAttendanceData";
+import { useInfiniteAttendance } from "./hooks/useAttendanceData";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 
@@ -173,23 +170,22 @@ const Attendance = () => {
     };
   }, [selectedFilter, customStartDate, customEndDate]);
 
-  // Get attendance data using the appropriate hook with pagination
-  const singleDateResult = useAttendanceData(
-    isSingleDate ? actualStartDate : null,
-    currentPage,
-    pageLimit
-  );
-  const dateRangeResult = useAttendanceDataRange(
-    !isSingleDate ? actualStartDate : null,
-    !isSingleDate ? actualEndDate : null,
-    currentPage,
-    pageLimit
-  );
-
-  // Use the appropriate result based on query type
-  const { attendanceRecords, isLoading, error, pagination } = isSingleDate
-    ? singleDateResult
-    : dateRangeResult;
+  // Records load a page at a time as the table is scrolled; search is applied
+  // on the server so it covers every page
+  const {
+    attendanceRecords,
+    totalRecords,
+    isLoading,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteAttendance({
+    startDate: actualStartDate,
+    endDate: actualEndDate,
+    search: searchTerm,
+    limit: pageLimit,
+  });
 
   // Format date for display in header
   const displayDate = useMemo(() => {
@@ -301,8 +297,11 @@ const Attendance = () => {
           isLoading={isLoading}
           error={error}
           searchTerm={searchTerm}
-          pagination={pagination}
-          onPageChange={handlePageChange}
+          totalRecords={totalRecords}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={fetchNextPage}
+          resetKey={`${actualStartDate}|${actualEndDate}|${searchTerm}`}
           onDataChange={handleDataChange}
           canEditAttendance={canEditAttendance}
           canApproveAttendance={canApproveAttendance}

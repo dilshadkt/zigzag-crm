@@ -22,10 +22,11 @@ export const attendanceApi = {
     startDate,
     endDate,
     page = 1,
-    limit = 50
+    limit = 50,
+    search = ""
   ) => {
     const response = await apiClient.get(
-      `/attendance/date-range?startDate=${startDate}&endDate=${endDate}&page=${page}&limit=${limit}`
+      `/attendance/date-range?startDate=${startDate}&endDate=${endDate}&page=${page}&limit=${limit}&search=${encodeURIComponent(search || "")}`
     );
     return response.data;
   },
