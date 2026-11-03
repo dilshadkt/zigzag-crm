@@ -239,14 +239,12 @@ const LeadsFeature = ({
     
     if (branches && branches.length > 0) {
       rawBranches = branches;
-    } else {
+    } else if (!projectId) {
       const activeProjectId = projectFilterState || projectFilter || projectId;
       if (activeProjectId && projects && projects.length > 0) {
         const selectedProject = projects.find(p => (p.id === activeProjectId || p._id === activeProjectId));
         if (selectedProject?.customFields?.branchLogins && Array.isArray(selectedProject.customFields.branchLogins) && selectedProject.customFields.branchLogins.length > 0) {
           rawBranches = selectedProject.customFields.branchLogins;
-        } else if (selectedProject?.customFields?.branches && Array.isArray(selectedProject.customFields.branches)) {
-          rawBranches = selectedProject.customFields.branches;
         }
       }
     }
