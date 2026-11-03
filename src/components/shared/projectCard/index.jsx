@@ -439,7 +439,7 @@ const ProjectCard = ({ project, onClick, viewMore = false }) => {
             </div>
             <div className="flex flex-col    gap-y-2">
               <span className="text-[#91929E]/90 text-xs">Assignees</span>
-              <div className="font-semibold flex items-center text-gray-800 text-base relative">
+              <div className="font-semibold flex items-center text-gray-800 text-base relative isolate">
                 {project?.teams?.slice(0, 5).map((team, index) => (
                   <div
                     key={index}

@@ -61,18 +61,29 @@ const Prjects = () => {
   // everyone else sees running projects only
   const canSeeInactiveProjects =
     user?.role === "company-admin" || hasPermission("projects", "create");
-  const projects = useMemo(
-    () =>
-      canSeeInactiveProjects
-        ? allProjects
-        : allProjects?.filter(
-            (project) =>
-              project?.status !== "paused" &&
-              project?.status !== "completed" &&
-              project?.active !== false
-          ),
-    [allProjects, canSeeInactiveProjects]
-  );
+  const projects = useMemo(() => {
+    const visible = canSeeInactiveProjects
+      ? allProjects
+      : allProjects?.filter(
+          (project) =>
+            project?.status !== "paused" &&
+            project?.status !== "completed" &&
+            project?.active !== false
+        );
+    if (!Array.isArray(visible)) return visible;
+    // Running projects A-Z, then completed, then paused/inactive
+    const rank = (project) =>
+      project?.status === "completed"
+        ? 1
+        : project?.status === "paused" || project?.active === false
+          ? 2
+          : 0;
+    return [...visible].sort(
+      (a, b) =>
+        rank(a) - rank(b) ||
+        (a?.name || "").localeCompare(b?.name || "", undefined, { sensitivity: "base" })
+    );
+  }, [allProjects, canSeeInactiveProjects]);
   const isSuccess =
     user?.role === "company-admin" ? isCompanySuccess : isEmployeeSuccess;
 

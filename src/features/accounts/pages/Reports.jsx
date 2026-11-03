@@ -224,8 +224,8 @@ const Profitability = ({ range, symbol }) => {
           </div>
           <Card title="Which clients make money" subtitle="Revenue minus direct expenses minus the salary cost of time logged on their tasks" padded={false}
             actions={<ExportButton onClick={() => downloadCsv("client-profitability.csv", [["Client", "Revenue", "Expenses", "Hours", "Team cost", "Profit", "Margin %"], ...d.clients.map((c) => [c.name, c.revenue, c.expenses, c.laborHours, c.laborCost, c.profit, c.margin])])} />}>
-            <Table rows={d.clients} rowKey={(r) => r.project} onRowClick={(r) => navigate(`/accounts/clients/${r.project}`)} empty={<p className="p-8 text-center text-sm text-slate-400">No client activity in this period.</p>} columns={[
-              { key: "n", title: "Client", render: (r) => <span className="font-semibold text-slate-800">{r.name}</span> },
+            <Table rows={d.clients} rowKey={(r) => r.project || "unlinked"} onRowClick={(r) => navigate(r.unlinked ? "/accounts/invoices" : `/accounts/clients/${r.project}`)} empty={<p className="p-8 text-center text-sm text-slate-400">No client activity in this period.</p>} columns={[
+              { key: "n", title: "Client", render: (r) => <span className="font-semibold text-slate-800">{r.name}{r.unlinked && <span className="ml-2 text-xs font-normal text-amber-600">open each invoice and pick its client</span>}</span> },
               { key: "r", title: "Revenue", align: "right", render: (r) => fmtMoney(r.revenue, symbol) },
               { key: "e", title: "Expenses", align: "right", render: (r) => fmtMoney(r.expenses, symbol) },
               { key: "h", title: "Hours", align: "right", render: (r) => r.laborHours },

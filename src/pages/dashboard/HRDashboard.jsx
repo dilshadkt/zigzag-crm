@@ -4,6 +4,7 @@ import { useGetAllEmployees } from "../../api/hooks";
 import { FiClock, FiCalendar, FiCoffee, FiAlertCircle, FiDownload, FiSearch } from "react-icons/fi";
 import PendingTimeChangeList from "../../features/attendance/components/PendingTimeChangeList";
 import DaySessionsModal from "../../features/attendance/components/DaySessionsModal";
+import { formatBreakMinutes } from "../../features/attendance/utils";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 
@@ -18,6 +19,16 @@ const PERIOD_OPTIONS = [
     { value: "lastMonth", label: "Previous Month" },
     { value: "custom", label: "Custom" },
 ];
+
+const HR_FILTERS_KEY = "hrDashboardFilters";
+
+const loadSavedFilters = () => {
+    try {
+        return JSON.parse(localStorage.getItem(HR_FILTERS_KEY)) || {};
+    } catch {
+        return {};
+    }
+};
 
 const LEAVE_TYPE_LABELS = {
     vacation: "Casual Leave",
@@ -83,11 +94,29 @@ const HRDashboardPage = () => {
     const canManageAttendance = canEditAttendance || canCreateAttendance || canDeleteAttendance;
     // The day whose sessions are open in the dialog: { date: "YYYY-MM-DD", label }
     const [sessionsDay, setSessionsDay] = useState(null);
-    // State for filtering — default to this month
-    const [filterMode, setFilterMode] = useState("thisMonth");
-    const [customStartDate, setCustomStartDate] = useState(() => getPresetDateRange("thisMonth").start);
-    const [customEndDate, setCustomEndDate] = useState(() => getPresetDateRange("thisMonth").end);
-    const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+    // State for filtering — restored from the last visit, default to this month
+    const [savedFilters] = useState(loadSavedFilters);
+    const [filterMode, setFilterMode] = useState(
+        PERIOD_OPTIONS.some((opt) => opt.value === savedFilters.filterMode) ? savedFilters.filterMode : "thisMonth"
+    );
+    const [customStartDate, setCustomStartDate] = useState(
+        () => savedFilters.customStartDate || getPresetDateRange("thisMonth").start
+    );
+    const [customEndDate, setCustomEndDate] = useState(
+        () => savedFilters.customEndDate || getPresetDateRange("thisMonth").end
+    );
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState(savedFilters.selectedEmployeeId || "");
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(
+                HR_FILTERS_KEY,
+                JSON.stringify({ filterMode, customStartDate, customEndDate, selectedEmployeeId })
+            );
+        } catch {
+            /* storage unavailable */
+        }
+    }, [filterMode, customStartDate, customEndDate, selectedEmployeeId]);
     const [showLeaveDates, setShowLeaveDates] = useState(false);
 
     useEffect(() => {
@@ -651,7 +680,7 @@ const HRDashboardPage = () => {
                             <FiCoffee />
                         </div>
                         <span className="text-xs font-medium text-slate-400 tracking-wider mt-1">Break Duration</span>
-                        <h3 className="text-xl font-bold text-slate-800">{totals.breakTime}m</h3>
+                        <h3 className="text-xl font-bold text-slate-800">{formatBreakMinutes(totals.breakTime)}</h3>
                     </div>
 
                     {/* Card 5 */}
@@ -906,7 +935,7 @@ const HRDashboardPage = () => {
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.presentDays} days</td>
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.leaveDays} days</td>
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.totalWorkingHours} hrs</td>
-                                            <td className="py-3 px-3.5 text-slate-600">{row.totalBreakDuration} mins</td>
+                                            <td className="py-3 px-3.5 text-slate-600">{formatBreakMinutes(row.totalBreakDuration)}</td>
                                             <td className="py-3 px-3.5 text-slate-600">{row.totalOvertimeHours} hrs</td>
                                             <td className="py-3 px-3.5">
                                                 {row.lateDaysCount > 0 ? (
@@ -995,7 +1024,7 @@ const HRDashboardPage = () => {
                                                                     {log.isActive ? "Active / Working" : (log.clockOutTime ? new Date(log.clockOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "N/A")}
                                                                 </td>
                                                                 <td className="py-2 px-3 font-bold text-slate-700">{Number(log.totalHours || 0).toFixed(2)} hrs</td>
-                                                                <td className="py-2 px-3 text-slate-500">{log.breakTime || 0} mins</td>
+                                                                <td className="py-2 px-3 text-slate-500">{formatBreakMinutes(log.breakTime)}</td>
                                                                 <td className="py-2 px-3">
                                                                     {log.isLate ? (
                                                                         <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100">Late by {log.lateBy}m</span>
