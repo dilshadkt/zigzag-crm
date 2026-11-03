@@ -12,7 +12,10 @@ import {
 import LocationModal from "../../../components/LocationModal";
 import EditAttendanceModal from "./EditAttendanceModal";
 import { formatBreakMinutes } from "../utils";
-import { FiEdit2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { attendanceApi } from "../api/attendanceApi";
 
 // Memoized table header component
 const TableHeader = React.memo(({ title, icon, className = "" }) => {
@@ -263,7 +266,7 @@ const dayKey = (record) => {
 
 // Compact row for one session, shown when a grouped row is expanded
 const SessionRow = React.memo(
-  ({ session, index, canEditAttendance, onEdit }) => (
+  ({ session, index, canEditAttendance, canDeleteAttendance, onEdit, onDelete }) => (
     <tr className="bg-gray-50/70">
       <td className="sticky left-0 z-20 bg-gray-50 px-3 py-2 pl-16 whitespace-nowrap text-xs text-gray-500">
         Session {index + 1}
@@ -298,24 +301,42 @@ const SessionRow = React.memo(
           {session.workDescription || session.adminNotes || "No notes"}
         </div>
       </td>
-      {canEditAttendance && (
+      {(canEditAttendance || canDeleteAttendance) && (
         <td className="sticky right-0 z-20 bg-gray-50 px-3 py-2 whitespace-nowrap text-right">
-          <button
-            type="button"
-            onClick={() => onEdit?.(session)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-100"
-          >
-            <FiEdit2 className="h-3.5 w-3.5" />
-            Edit
-          </button>
+          <div className="inline-flex items-center gap-2">
+            {canEditAttendance && (
+              <button
+                type="button"
+                onClick={() => onEdit?.(session)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-[#3F8CFF] hover:bg-blue-100"
+              >
+                <FiEdit2 className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            )}
+            {canDeleteAttendance && (
+              <DeleteSessionButton onClick={() => onDelete?.(session)} />
+            )}
+          </div>
         </td>
       )}
     </tr>
   )
 );
 
+const DeleteSessionButton = ({ onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
+  >
+    <FiTrash2 className="h-3.5 w-3.5" />
+    Delete
+  </button>
+);
+
 // Memoized employee row component
-const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, onEdit }) => {
+const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, canDeleteAttendance, onEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
   const multiple = sessions.length > 1;
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -555,32 +576,40 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
           </div>
         </td>
 
-        {canEditAttendance && (
+        {(canEditAttendance || canDeleteAttendance) && (
           <td className="sticky right-0 z-20 bg-white group-hover:bg-gray-50 px-3 py-4 whitespace-nowrap text-right shadow-[-2px_0_8px_-4px_rgba(15,23,42,0.18)]">
-            <button
-              type="button"
-              onClick={() =>
-                missingOut
-                  ? onEdit?.(openSession)
-                  : multiple
-                    ? setExpanded((v) => !v)
-                    : onEdit?.(attendance)
-              }
-              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
-                missingOut
-                  ? "bg-red-50 text-red-600 hover:bg-red-100"
-                  : "bg-blue-50 text-[#3F8CFF] hover:bg-blue-100"
-              }`}
-            >
-              <FiEdit2 className="h-3.5 w-3.5" />
-              {missingOut
-                ? "Fix clock-out"
-                : multiple
-                  ? expanded
-                    ? "Hide"
-                    : "Sessions"
-                  : "Edit"}
-            </button>
+            <div className="inline-flex items-center gap-2">
+              {/* With several sessions this opens them, where each can be edited or deleted */}
+              {(canEditAttendance || multiple) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    missingOut && canEditAttendance
+                      ? onEdit?.(openSession)
+                      : multiple
+                        ? setExpanded((v) => !v)
+                        : onEdit?.(attendance)
+                  }
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                    missingOut && canEditAttendance
+                      ? "bg-red-50 text-red-600 hover:bg-red-100"
+                      : "bg-blue-50 text-[#3F8CFF] hover:bg-blue-100"
+                  }`}
+                >
+                  <FiEdit2 className="h-3.5 w-3.5" />
+                  {missingOut && canEditAttendance
+                    ? "Fix clock-out"
+                    : multiple
+                      ? expanded
+                        ? "Hide"
+                        : "Sessions"
+                      : "Edit"}
+                </button>
+              )}
+              {canDeleteAttendance && !multiple && (
+                <DeleteSessionButton onClick={() => onDelete?.(attendance)} />
+              )}
+            </div>
           </td>
         )}
       </tr>
@@ -593,7 +622,9 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
             session={session}
             index={i}
             canEditAttendance={canEditAttendance}
+            canDeleteAttendance={canDeleteAttendance}
             onEdit={onEdit}
+            onDelete={onDelete}
           />
         ))}
 
@@ -696,8 +727,29 @@ const AttendanceTable = ({
   resetKey,
   onDataChange,
   canEditAttendance,
+  canDeleteAttendance,
 }) => {
   const [editingRecord, setEditingRecord] = useState(null);
+  const queryClient = useQueryClient();
+
+  const handleDelete = useCallback(
+    async (record) => {
+      if (!record?._id) return;
+      if (!window.confirm("Delete this session? Its hours and breaks are removed from the report.")) return;
+      try {
+        await attendanceApi.deleteAttendance(record._id);
+        toast.success("Session deleted");
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["dailyReport"] }),
+          queryClient.invalidateQueries({ queryKey: ["dateRangeReport"] }),
+          queryClient.invalidateQueries({ queryKey: ["employeeAttendance"] }),
+        ]);
+      } catch (error) {
+        toast.error(error?.response?.data?.message || error?.message || "Failed to delete session");
+      }
+    },
+    [queryClient]
+  );
   const scrollRef = useRef(null);
   const sentinelRef = useRef(null);
 
@@ -929,7 +981,7 @@ const AttendanceTable = ({
   );
 
   const headers = useMemo(() => {
-    if (!canEditAttendance) return tableHeaders;
+    if (!canEditAttendance && !canDeleteAttendance) return tableHeaders;
     return [
       ...tableHeaders,
       {
@@ -952,7 +1004,7 @@ const AttendanceTable = ({
         ),
       },
     ];
-  }, [tableHeaders, canEditAttendance]);
+  }, [tableHeaders, canEditAttendance, canDeleteAttendance]);
 
   // Show loading state
   if (isLoading) {
@@ -1005,7 +1057,9 @@ const AttendanceTable = ({
                     attendance={merged}
                     sessions={sessions}
                     canEditAttendance={canEditAttendance}
+                    canDeleteAttendance={canDeleteAttendance}
                     onEdit={setEditingRecord}
+                    onDelete={handleDelete}
                   />
                 ))}
               </React.Fragment>
