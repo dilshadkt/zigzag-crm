@@ -106,9 +106,11 @@ const OwnerCell = ({ owner, clientOwner }) => {
 
 const columnRenderers = {
   createdAt: (lead) => {
+    // Actual lead date (when it arrived from the platform); createdAt is only when the CRM stored it
+    const leadDate = lead.fb_created_time || lead.customFields?.fb_created_time;
     return (
       <div className="text-xs whitespace-nowrap font-semibold text-slate-500">
-        {formatDate(lead.createdAt || lead.createdOn)}
+        {formatDate(leadDate || lead.createdAt || lead.createdOn)}
       </div>
     );
   },

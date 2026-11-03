@@ -72,7 +72,14 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState(null);
-  const [activeTab, setActiveTab] = useState("kanban");
+  const activeTabStorageKey = `project_active_tab_${projectId}`;
+  const [activeTab, setActiveTabState] = useState(
+    () => localStorage.getItem(activeTabStorageKey) || "kanban"
+  );
+  const setActiveTab = (tabId) => {
+    setActiveTabState(tabId);
+    localStorage.setItem(activeTabStorageKey, tabId);
+  };
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const isBoardView = activeTab === "kanban";
   const [showSubtasks, setShowSubtasks] = useState(() => {
@@ -103,10 +110,12 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   }, [hasPermission, currentProject?.instagramBusinessId, currentProject?.facebookPageId]);
 
   useEffect(() => {
+    // Wait for the project so a saved tab (e.g. insights) isn't reset before its visibility is known
+    if (!currentProject) return;
     if (availableTabs.length > 0 && !availableTabs.some(tab => tab.id === activeTab)) {
-      setActiveTab(availableTabs[0].id);
+      setActiveTabState(availableTabs[0].id);
     }
-  }, [availableTabs, activeTab]);
+  }, [availableTabs, activeTab, currentProject]);
 
   const [clientCreds, setClientCreds] = useState({
     username: "",
