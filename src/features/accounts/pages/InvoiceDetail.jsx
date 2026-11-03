@@ -183,7 +183,7 @@ const InvoiceDetail = () => {
         actions={
           <>
             <PdfButtons getElement={() => docRef.current} filename={pdfName("Invoice", invoice.number)} title={`Invoice ${invoice.number}`} />
-            {editable && invoice.status !== "paid" && (
+            {editable && (
               <button className={btnGhost} onClick={() => navigate(`/accounts/invoices/${id}/edit`)}><FiEdit2 /> Edit</button>
             )}
             {editable && (
