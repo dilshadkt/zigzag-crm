@@ -317,8 +317,10 @@ const LeadsFeature = ({
     const campaignParam = urlParams.get('campaign');
 
     const scheduledParam = urlParams.get('scheduled');
-    
-    const hasDashboardParams = action || minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue) || projectParam || campaignParam || scheduledParam;
+    const createdParam = urlParams.get('created');
+    const branchParam = urlParams.get('branch');
+
+    const hasDashboardParams = createdParam || action ||minScore || ownerId || statusParam || (startDateParam && endDateParam) || (filterField && filterValue) || projectParam || campaignParam || scheduledParam;
     
     let newFilters = {};
 
@@ -336,6 +338,16 @@ const LeadsFeature = ({
       setStatsDateRange({ startDate: '', endDate: '', preset: 'all' });
       newFilters['scheduled'] = { operator: 'today', value: '' };
       toast.success("Showing today's follow-ups");
+    }
+
+    if (createdParam === 'today') {
+      setStatsDateRange({ startDate: '', endDate: '', preset: 'all' });
+      newFilters['createdAt'] = { operator: 'today', value: 'today' };
+      toast.success("Showing today's new leads");
+    }
+
+    if (branchParam) {
+      setBranchFilterState(branchParam);
     }
 
     if (action === 'followup') {

@@ -22,6 +22,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCompanyActiveProjects } from "../../api/hooks";
 import { useGetCampaignsByCompany } from "../../api/campaigns";
 import { Megaphone } from "lucide-react";
+import SearchableDropdown from "../../components/shared/dropdown/SearchableDropdown";
+
+const FILTER_STORAGE_KEY = "leadDashboardFilters";
 
 const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, onBranchFilterChange, branches = [] }) => {
     const navigate = useNavigate();
@@ -29,26 +32,47 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     const isAdmin = user?.role === 'company-admin';
     const isClient = user?.role === 'client';
     const clientProjectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
-    const [selectedDays, setSelectedDays] = useState(7);
-    const [selectedProject, setSelectedProject] = useState(isClient ? clientProjectId : "all");
-    const [selectedCampaign, setSelectedCampaign] = useState("all");
-    const [branchFilterState, setBranchFilterState] = useState("");
+    // Filters are remembered per browser so they survive a refresh
+    const saved = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY)) || {};
+        } catch {
+            return {};
+        }
+    }, []);
+    const savedRange = (range) =>
+        range?.startDate && range?.endDate
+            ? [{ startDate: new Date(range.startDate), endDate: new Date(range.endDate), key: 'selection' }]
+            : null;
+    const defaultRange = () => [
+        {
+            startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
+            endDate: new Date(),
+            key: 'selection'
+        }
+    ];
+
+    const [selectedDays, setSelectedDays] = useState(saved.selectedDays ?? 7);
+    const [selectedProject, setSelectedProject] = useState(isClient ? clientProjectId : (saved.selectedProject || "all"));
+    const [selectedCampaign, setSelectedCampaign] = useState(saved.selectedCampaign || "all");
+    const [branchFilterState, setBranchFilterState] = useState(saved.branchFilter || "");
     const [showDatePicker, setShowDatePicker] = useState(false);
     const datePickerRef = useRef(null);
-    const [dateRange, setDateRange] = useState([
-        {
-            startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-            endDate: new Date(),
-            key: 'selection'
-        }
-    ]);
-    const [appliedDateRange, setAppliedDateRange] = useState([
-        {
-            startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-            endDate: new Date(),
-            key: 'selection'
-        }
-    ]);
+    const [dateRange, setDateRange] = useState(() => savedRange(saved.dateRange) || defaultRange());
+    const [appliedDateRange, setAppliedDateRange] = useState(() => savedRange(saved.appliedDateRange) || defaultRange());
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+                selectedDays,
+                selectedProject: isClient ? undefined : selectedProject,
+                selectedCampaign,
+                branchFilter: branchFilterState,
+                dateRange: dateRange[0],
+                appliedDateRange: appliedDateRange[0],
+            }));
+        } catch { /* storage unavailable */ }
+    }, [selectedDays, selectedProject, selectedCampaign, branchFilterState, dateRange, appliedDateRange, isClient]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -241,25 +265,17 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Project Filter */}
                     {!isClient && (
-                        <div className="relative group">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3f8cff] transition-colors">
-                                <Briefcase className="w-3.5 h-3.5" />
-                            </div>
-                            <select
-                                value={selectedProject}
-                                onChange={(e) => {
-                                    setSelectedProject(e.target.value);
-                                    setSelectedCampaign("all");
-                                    clearBranchFilter();
-                                }}
-                                className="pl-9 pr-8 py-2 bg-slate-50 border-none text-[11px] font-bold text-slate-600 rounded-xl focus:ring-2 focus:ring-blue-100 cursor-pointer appearance-none min-w-[140px]"
-                            >
-                                <option value="all">All Projects</option>
-                                {projects.map(project => (
-                                    <option key={project._id} value={project._id}>{project.name}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <SearchableDropdown
+                            value={selectedProject === "all" ? "" : selectedProject}
+                            onChange={(val) => {
+                                setSelectedProject(val || "all");
+                                setSelectedCampaign("all");
+                                clearBranchFilter();
+                            }}
+                            options={projects.map(project => ({ label: project.name, value: project._id }))}
+                            placeholder="All Projects"
+                            className="min-w-[160px]"
+                        />
                     )}
 
                     {/* Campaign Filter */}
@@ -431,7 +447,14 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                         color="amber"
                         trend={`${stats?.trends?.newTodayTrend >= 0 ? '+' : ''}${stats?.trends?.newTodayTrend || 0}%`}
                         trendUp={stats?.trends?.newTodayTrend >= 0}
-                        onClick={() => handleNavigate('/leads')}
+                        onClick={() => {
+                            // Carry the dashboard's project/campaign/branch filters over to the leads page
+                            const params = new URLSearchParams({ created: 'today' });
+                            if (selectedProject && selectedProject !== "all") params.set("project", selectedProject);
+                            if (selectedCampaign && selectedCampaign !== "all") params.set("campaign", selectedCampaign);
+                            if (activeBranchFilter) params.set("branch", activeBranchFilter);
+                            handleNavigate(`/leads?${params.toString()}`);
+                        }}
                     />
                     <StatCard
                         title="Hot Leads"
