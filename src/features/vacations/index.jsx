@@ -24,6 +24,7 @@ import {
 import { useGetMyVacations } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
+import { useRouteAccess } from "../../hooks/useRouteAccess";
 import { isOnProbation } from "../../utils/leaveEntitlement";
 
 import VacationCard from "./components/VacationCard";
@@ -43,16 +44,22 @@ const LEAVE_LABELS = {
 const Vacations = () => {
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
+  const { hasAccessToRoute } = useRouteAccess();
   const [stat, setStat] = useState("Leave");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
 
-  const canViewVacations = isCompany || hasPermission("vacations", "view");
+  // Anyone who can open the HR Dashboard sees every employee's requests and
+  // can approve or reject them, like the admin.
+  const hasHrAccess = hasAccessToRoute("/hr-dashboard");
+  const canViewAll = isCompany || hasHrAccess;
+  const canViewVacations =
+    canViewAll || hasPermission("vacations", "view");
   const canCreateVacationRequest =
     isCompany || hasPermission("vacations", "create");
   const canApproveVacations =
-    isCompany || hasPermission("vacations", "approve");
+    canViewAll || hasPermission("vacations", "approve");
   const canEditVacations = isCompany || hasPermission("vacations", "edit");
   const currentUserOnProbation = isOnProbation(user);
   const canOpenRequestModal = canCreateVacationRequest;
@@ -220,7 +227,7 @@ const Vacations = () => {
         dates: myDates,
       }
     ];
-  } else if (!isCompany && user?._id) {
+  } else if (!canViewAll && user?._id) {
     displayedEmployees = companyVacationsData?.employees?.filter(
       (item) => (item.employee?._id || item.employee?.id) === user._id
     );
