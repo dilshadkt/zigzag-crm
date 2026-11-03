@@ -320,11 +320,13 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
     }
   };
 
-  const handleUpdateLeadForm = async () => {
+  const handleUpdateLeadForm = async (formId = selectedLeadForm) => {
     try {
-      await updateProjectLeadFormConfig(projectId, selectedLeadForm);
+      await updateProjectLeadFormConfig(projectId, formId);
       toast.success("Lead form template updated for this client");
       queryClient.invalidateQueries(["projectDetails", projectId]);
+      // Lead pages render fields from this query, so refresh it with the new template
+      queryClient.invalidateQueries({ queryKey: ["leadFormConfig"] });
     } catch (error) {
       toast.error("Failed to update lead form template");
     }

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import LeadDashboardConfig from "../../../features/leadSettings/components/LeadDashboardConfig";
 import { BranchSettings } from "./settings/BranchSettings";
 import { IntegrationSettings } from "./settings/IntegrationSettings";
+import { FacebookFormImportModal } from "./settings/FacebookFormImportModal";
 import LeadStatusList from "../../../features/leadSettings/components/LeadStatusList";
 import LeadScoringRules from "../../../features/leadSettings/components/LeadScoringRules";
 import LeadAssignmentRules from "../../../features/leadSettings/components/LeadAssignmentRules";
@@ -25,6 +26,7 @@ export const SettingsTab = ({
 }) => {
   const [activeSettingTab, setActiveSettingTab] = useState("branch");
   const [editingFormId, setEditingFormId] = useState(null);
+  const [showFacebookImport, setShowFacebookImport] = useState(false);
   const [previewValues, setPreviewValues] = useState({});
   const [previewErrors, setPreviewErrors] = useState({});
   const [previewMessage, setPreviewMessage] = useState("");
@@ -142,7 +144,7 @@ export const SettingsTab = ({
                   <div className="space-y-3">
                     <select
                       value={selectedLeadForm}
-                      onChange={(e) => setSelectedLeadForm(e.target.value)}
+                      onChange={(e) => { setSelectedLeadForm(e.target.value); handleUpdateLeadForm(e.target.value); }}
                       className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-xs outline-none"
                     >
                       <option value="">System Default</option>
@@ -161,7 +163,15 @@ export const SettingsTab = ({
                         New Form
                       </button>
                       <button
-                        onClick={handleUpdateLeadForm}
+                        onClick={() => setShowFacebookImport(true)}
+                        disabled={!currentProject?.facebookAdAccountId}
+                        title={currentProject?.facebookAdAccountId ? "Import a Facebook lead form" : "Link a Facebook Ad Account in the Integration tab first"}
+                        className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
+                      >
+                        Import from Facebook
+                      </button>
+                      <button
+                        onClick={() => handleUpdateLeadForm()}
                         disabled={selectedLeadForm === currentProject?.leadFormConfig}
                         className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-all disabled:opacity-50"
                       >
@@ -201,6 +211,21 @@ export const SettingsTab = ({
             </div>
           )}
         </div>
+      )}
+
+      {showFacebookImport && (
+        <FacebookFormImportModal
+          projectId={currentProject?._id}
+          onClose={() => setShowFacebookImport(false)}
+          onImported={(newFormId) => {
+            setShowFacebookImport(false);
+            if (newFormId) {
+              setSelectedLeadForm(newFormId);
+              handleUpdateLeadForm(newFormId);
+              setEditingFormId(newFormId);
+            }
+          }}
+        />
       )}
 
       {activeSettingTab === "assignment" && (

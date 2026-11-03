@@ -25,9 +25,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess, projectId, branches = [], de
 
   const activeBranches = useMemo(() => {
     if (branches && branches.length > 0) return branches;
-    const branchLogins = projectDetails?.customFields?.branchLogins || [];
-    const legacyBranches = projectDetails?.customFields?.branches || projectDetails?.branches || [];
-    return branchLogins.length > 0 ? branchLogins : legacyBranches;
+    return projectDetails?.customFields?.branchLogins || [];
   }, [branches, projectDetails]);
 
   // Stable handler for form value changes

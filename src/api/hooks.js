@@ -3765,3 +3765,28 @@ export const useShootCandidates = (projectId, params = {}, options = {}) => {
     staleTime: 0,
   });
 };
+
+export const useGetFacebookLeadForms = (projectId, enabled = true) => {
+  return useQuery({
+    queryKey: ["facebookLeadForms", projectId],
+    queryFn: () =>
+      apiClient
+        .get("/leads/settings/facebook-forms", { params: { project: projectId } })
+        .then((res) => res.data.data),
+    enabled: !!projectId && enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+};
+
+export const useImportFacebookLeadForm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) =>
+      apiClient.post("/leads/settings/form-configs/import-facebook", payload).then((res) => res.data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["leadFormConfigs"] });
+      await queryClient.invalidateQueries({ queryKey: ["allLeadFormConfigs"] });
+    },
+  });
+};

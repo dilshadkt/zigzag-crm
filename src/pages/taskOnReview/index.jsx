@@ -577,7 +577,7 @@ const TaskOnReview = () => {
                   <Navigator />
                   <div className="min-w-0">
                     <h3 className="text-base md:text-lg font-medium text-gray-800 leading-snug">
-                      {getFilterTitle()} - ({tasksOnReviewData.statistics.total})
+                      {getFilterTitle()} - ({filteredTasks.length})
                     </h3>
 
                   </div>

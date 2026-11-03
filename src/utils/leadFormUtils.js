@@ -92,6 +92,15 @@ export const mapLeadDataToFormValue = (field, lead, contact) => {
       const val = lead.customFields[fieldKey] ?? lead.customFields[fieldId];
       if (val !== undefined && val !== null) return String(val);
     }
+
+    // Leads synced from Facebook keep the answer under the Facebook question key
+    if (field.facebookField) {
+      const fbVal =
+        lead.customFields instanceof Map
+          ? lead.customFields.get(field.facebookField)
+          : lead.customFields[field.facebookField];
+      if (fbVal !== undefined && fbVal !== null) return String(fbVal);
+    }
   }
 
   return "";

@@ -90,8 +90,6 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                 project.customFields.branchLogins.length > 0
             ) {
                 rawBranches = project.customFields.branchLogins;
-            } else if (Array.isArray(project?.customFields?.branches)) {
-                rawBranches = project.customFields.branches;
             }
         }
 

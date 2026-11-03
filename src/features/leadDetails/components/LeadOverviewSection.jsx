@@ -123,13 +123,9 @@ const LeadOverviewSection = ({ lead, isClient = false }) => {
   const { data: projectDetails } = useProjectDetails(projectId);
   
   const branches = useMemo(() => {
+    // Only branches configured in project Settings → Branch
     const rawBranchLogins = projectDetails?.customFields?.branchLogins || [];
-    const rawLegacyBranches = projectDetails?.customFields?.branches || projectDetails?.branches || [];
-    
-    if (rawBranchLogins.length > 0) {
-      return rawBranchLogins.map(b => b.name || b.branch).filter(Boolean);
-    }
-    return rawLegacyBranches;
+    return rawBranchLogins.map(b => b.name || b.branch).filter(Boolean);
   }, [projectDetails]);
 
   const { data: formConfigData, isLoading: isLoadingFormConfig } =
