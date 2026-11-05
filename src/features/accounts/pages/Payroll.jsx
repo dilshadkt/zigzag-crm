@@ -139,7 +139,7 @@ const Payroll = () => {
                   </div>
                 ) },
                 { key: "joined", title: "Joined", render: (e) => <span className="text-slate-500">{fmtDate(e.joiningDate)}</span> },
-                { key: "gross", title: "Gross / month", align: "right", render: (e) => (e.salary ? <span className="font-semibold">{fmtMoney(e.salary.grossMonthly, symbol)}</span> : <span className="text-slate-300">—</span>) },
+                { key: "gross", title: "Gross / month", align: "right", render: (e) => (e.salary ? (e.salary.payType === "hourly" ? <div><span className="font-semibold">{fmtMoney(e.salary.hourlyRate, symbol)}/hr</span><p className="text-[11px] text-slate-400">≈ {fmtMoney(e.salary.grossMonthly, symbol)} / month</p></div> : <span className="font-semibold">{fmtMoney(e.salary.grossMonthly, symbol)}</span>) : <span className="text-slate-300">—</span>) },
                 { key: "ctc", title: "CTC / year", align: "right", render: (e) => (e.salary ? fmtMoney(e.salary.annualCtc, symbol) : <span className="text-slate-300">—</span>) },
                 { key: "bank", title: "Bank", render: (e) => (e.salary ? (e.salary.hasBank ? <span className="text-xs text-emerald-600">Added</span> : <span className="text-xs text-amber-600">Missing</span>) : "") },
                 { key: "status", title: "Payroll", render: (e) => (e.salary ? <span className={`text-xs font-semibold ${e.salary.status === "active" ? "text-emerald-600" : "text-slate-400"}`}>{e.salary.status === "active" ? "Included" : "Excluded"}</span> : <span className="text-xs text-amber-600 font-semibold">Not set up</span>) },

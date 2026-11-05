@@ -41,10 +41,21 @@ const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, fo
       </div>
 
       <div className="kv" style={{ marginTop: 10 }}>
-        <div><b>Days in month</b>{a.daysInMonth}</div>
-        <div><b>Paid days</b>{a.payableDays}</div>
-        <div><b>Loss of pay</b>{a.lopDays}</div>
-        <div><b>Paid leave</b>{a.paidLeaveDays}</div>
+        {a.payType === "hourly" ? (
+          <>
+            <div><b>Hourly rate</b>{fmtMoney(a.hourlyRate, symbol)}</div>
+            <div><b>Hours worked</b>{a.hoursWorked}</div>
+            <div><b>Days worked</b>{a.daysWorked}</div>
+            <div><b>Paid leave</b>{a.paidLeaveDays}</div>
+          </>
+        ) : (
+          <>
+            <div><b>Days in month</b>{a.daysInMonth}</div>
+            <div><b>Paid days</b>{a.payableDays}</div>
+            <div><b>Loss of pay</b>{a.lopDays}</div>
+            <div><b>Paid leave</b>{a.paidLeaveDays}</div>
+          </>
+        )}
       </div>
 
       <div className="pay-cols">

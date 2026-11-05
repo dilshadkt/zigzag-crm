@@ -109,12 +109,19 @@ const PayrollRun = () => {
           empty={<p className="p-8 text-center text-sm text-slate-400">No payslips in this run.</p>}
           columns={[
             { key: "name", title: "Employee", render: (p) => <div><p className="font-semibold text-slate-800">{p.employeeSnapshot.name}</p><p className="text-xs text-slate-400">{p.employeeSnapshot.position || "—"}</p></div> },
-            { key: "days", title: "Paid days", align: "right", render: (p) => (
-              <div>
-                <span className="font-semibold">{p.attendance.payableDays}</span>
-                <span className="text-slate-400"> / {p.attendance.basisDays}</span>
-                {p.attendance.lopDays > 0 && <p className="text-[11px] text-amber-600">{p.attendance.lopDays} LOP</p>}
-              </div>
+            { key: "days", title: "Paid days / hours", align: "right", render: (p) => (
+              p.attendance.payType === "hourly" ? (
+                <div>
+                  <span className="font-semibold">{p.attendance.hoursWorked} hrs</span>
+                  <p className="text-[11px] text-slate-400">{p.attendance.daysWorked} days worked</p>
+                </div>
+              ) : (
+                <div>
+                  <span className="font-semibold">{p.attendance.payableDays}</span>
+                  <span className="text-slate-400"> / {p.attendance.basisDays}</span>
+                  {p.attendance.lopDays > 0 && <p className="text-[11px] text-amber-600">{p.attendance.lopDays} LOP</p>}
+                </div>
+              )
             ) },
             { key: "gross", title: "Gross", align: "right", render: (p) => fmtMoney(p.grossEarnings, symbol) },
             { key: "ded", title: "Deductions", align: "right", render: (p) => fmtMoney(p.totalDeductions, symbol) },

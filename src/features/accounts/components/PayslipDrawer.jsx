@@ -86,9 +86,15 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
             <div className="rounded-2xl border border-slate-200 p-4 space-y-4 bg-slate-50/60">
               <h4 className="text-sm font-bold text-slate-800">Adjust this payslip</h4>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Loss-of-pay days" hint={`Calculated: ${a.unpaidLeaveDays + a.absentDays}. Leave blank to use it.`}>
-                  <input type="number" min="0" step="0.5" className={inputCls} value={lop} onChange={(e) => setLop(e.target.value)} placeholder={String(a.unpaidLeaveDays + a.absentDays)} />
-                </Field>
+                {a.payType === "hourly" ? (
+                  <Field label="Hours worked" hint="From attendance. Use a one-off bonus or deduction to correct hours.">
+                    <input className={inputCls} value={`${a.hoursWorked} hrs over ${a.daysWorked} days`} readOnly />
+                  </Field>
+                ) : (
+                  <Field label="Loss-of-pay days" hint={`Calculated: ${a.unpaidLeaveDays + a.absentDays}. Leave blank to use it.`}>
+                    <input type="number" min="0" step="0.5" className={inputCls} value={lop} onChange={(e) => setLop(e.target.value)} placeholder={String(a.unpaidLeaveDays + a.absentDays)} />
+                  </Field>
+                )}
                 <Field label="Internal / employee note">
                   <input className={inputCls} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </Field>
