@@ -43,7 +43,7 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
   const { data: fbStatus } = useCheckFacebookStatus();
   const { data: adAccounts } = useGetFacebookAccounts();
   const { mutate: refreshAccounts, isPending: isRefreshingAccounts } = useRefreshFacebookAccounts();
-  const { mutate: selectAccount, isLoading: isSelecting } = useSelectFacebookAccount();
+  const { mutate: selectAccount, isPending: isSelecting } = useSelectFacebookAccount();
 
   const handleRefreshAccounts = () => {
     refreshAccounts(undefined, {
@@ -72,10 +72,12 @@ const Campaigns = ({ isClient: propIsClient, projectId, branchFilter = "" }) => 
     search: search,
     status: statusFilter,
     projectId: selectedProjectId || projectId, // Pass projectId filter
-    facebookAdAccountId: fbStatus?.accountId, // Explicitly pass for query key/filtering
+    // No ad-account filter: the page lists every campaign of the company, including
+    // ones from other ad accounts and ones created by hand. Sync only affects the
+    // selected account.
     leads: "ids", // table doesn't show lead details; skip populating them
   });
-  const { mutate: syncFacebookAds, isLoading: isSyncing } = useSyncFacebookAds();
+  const { mutate: syncFacebookAds, isPending: isSyncing } = useSyncFacebookAds();
 
   const campaigns = useMemo(() => {
     let filtered = campaignsData?.data || [];

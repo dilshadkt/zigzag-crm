@@ -26,7 +26,7 @@ const CampaignsHeader = ({
 }) => {
   const { user } = useAuth();
   const isClient = user?.role === "client";
-  const statusOptions = ["", "planned", "active", "completed", "paused"];
+  const statusOptions = ["", "planned", "active", "completed", "paused", "cancelled"];
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");

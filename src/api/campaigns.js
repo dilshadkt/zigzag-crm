@@ -10,9 +10,9 @@ export const useCreateCampaign = () => {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(["campaigns"]);
+            queryClient.invalidateQueries({ queryKey: ["campaigns"] });
             // You might want to invalidate tasks or other related queries too
-            queryClient.invalidateQueries(["tasksOnPublish"]);
+            queryClient.invalidateQueries({ queryKey: ["tasksOnPublish"] });
         },
     });
 };
@@ -47,7 +47,7 @@ export const useSyncFacebookAds = () => {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(["campaigns"]);
+            queryClient.invalidateQueries({ queryKey: ["campaigns"] });
         },
     });
 };
@@ -98,8 +98,8 @@ export const useSelectFacebookAccount = () => {
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(["facebook-status"]);
-            queryClient.invalidateQueries(["campaigns"]);
+            queryClient.invalidateQueries({ queryKey: ["facebook-status"] });
+            queryClient.invalidateQueries({ queryKey: ["campaigns"] });
         },
     });
 };

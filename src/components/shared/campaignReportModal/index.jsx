@@ -3,6 +3,7 @@ import Modal from "../modal";
 import { FiFileText } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useGetCampaignsByCompany } from "../../../api/campaigns";
+import SearchableSelect from "../../pages/campaigns/SearchableSelect";
 
 const formatMetric = (value, { money = false, percent = false } = {}) => {
   if (value === undefined || value === null || value === "") return "—";
@@ -33,6 +34,7 @@ const CampaignReportModal = ({
   );
   const campaignOptions = campaignsData?.data || [];
   const [campaignId, setCampaignId] = useState("");
+  const [campaignTouched, setCampaignTouched] = useState(false);
   const [summary, setSummary] = useState("");
   const [actionsTaken, setActionsTaken] = useState("");
   const [reportUrl, setReportUrl] = useState("");
@@ -40,6 +42,7 @@ const CampaignReportModal = ({
   useEffect(() => {
     if (isOpen) {
       setCampaignId("");
+      setCampaignTouched(false);
       setSummary(initialReport?.summary || "");
       setActionsTaken(initialReport?.actionsTaken || "");
       const existingLink = initialReport?.attachments?.find((a) => a.type === "link");
@@ -51,7 +54,10 @@ const CampaignReportModal = ({
     e.preventDefault();
     if (readOnly) return;
     if (!summary.trim()) return;
-    if (needsCampaign && !campaignId) return;
+    if (needsCampaign && !campaignId) {
+      setCampaignTouched(true);
+      return;
+    }
     const attachments = reportUrl.trim()
       ? [
           {
@@ -86,21 +92,21 @@ const CampaignReportModal = ({
             <label className="text-sm font-medium text-gray-700">
               Campaign <span className="text-red-500">*</span>
             </label>
-            <select
-              required
+            <SearchableSelect
+              name="campaign"
               value={campaignId}
-              onChange={(e) => setCampaignId(e.target.value)}
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            >
-              <option value="">
-                {loadingCampaigns ? "Loading campaigns..." : "Choose the campaign this work is for"}
-              </option>
-              {campaignOptions.map((campaign) => (
-                <option key={campaign._id} value={campaign._id}>
-                  {campaign.name}
-                </option>
-              ))}
-            </select>
+              onChange={(e) => {
+                setCampaignId(e.target.value);
+                setCampaignTouched(false);
+              }}
+              options={campaignOptions.map((campaign) => ({ value: campaign._id, label: campaign.name }))}
+              placeholder="Choose the campaign this work is for"
+              loading={loadingCampaigns}
+              error={campaignTouched && !campaignId}
+            />
+            {campaignTouched && !campaignId && (
+              <p className="text-[11px] font-medium text-red-500">Choose a campaign to continue.</p>
+            )}
             <p className="text-[11px] text-gray-500">
               This work isn&apos;t linked to a campaign yet. The one you choose is linked to it and
               its metrics are used for this report.
