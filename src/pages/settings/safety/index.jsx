@@ -83,13 +83,14 @@ const PERMISSION_CATEGORIES = {
     ],
   },
   vacations: {
-    label: "Casual Leave Management",
+    label: "Leave Reports",
     icon: <FiMap />,
     permissions: [
-      { key: "approve", label: "Approve Casual Leave", description: "Can approve casual leave requests" },
-      { key: "reject", label: "Reject Casual Leave", description: "Can reject casual leave requests" },
-      { key: "view", label: "View Casual Leaves", description: "Can view all casual leave requests" },
-      { key: "create", label: "Create Casual Leave", description: "Can create casual leave requests" },
+      { key: "approve", label: "Approve / Reject Leave", description: "Can approve, reject and cancel leave requests (also covers the Reject option)" },
+      { key: "reject", label: "Reject Leave", description: "Kept for older settings; rejecting is controlled by Approve / Reject Leave" },
+      { key: "view", label: "View Everyone's Leave", description: "Can see all employees' leave requests and the leave calendar, not only their own" },
+      { key: "create", label: "Request Leave", description: "Can request leave (and use the Add Request button)" },
+      { key: "edit", label: "Edit Leave Requests", description: "Can change the dates or type of other people's leave requests" },
     ],
   },
   meetings: {
@@ -190,35 +191,37 @@ const ACCOUNTS_PRESETS = [
   { id: "head", label: "Finance head", desc: "Everything, including reports, settings and salaries", scopes: ["view", "manageInvoices", "manageProposals", "manageExpenses", "managePayroll", "viewReports", "manageSettings", "delete"] },
 ];
 
+// Each page is named exactly as it appears in the sidebar / page header, and `path`
+// is its address, so what you tick here matches what the person sees.
 const MODULES = [
-  { id: "dashboard", type: "system", label: "Main Dashboard", icon: <FiActivity />, desc: "Central intelligence & overview", permissionKey: "dashboard" },
-  { id: "department-dashboard", type: "route", label: "Department Dashboard", icon: <FiUsers />, desc: "Department overview & conflicts", permissionKey: "departmentDashboard" },
-  { id: "projects", type: "route", label: "Client Hub", icon: <FiLayout />, desc: "Client & project management", permissionKey: "projects" },
-  { id: "accounts", type: "route", label: "Accounts", icon: <FiDollarSign />, desc: "Invoices, proposals, expenses, payroll and reports", permissionKey: "accounts" },
-  { id: "my-payslips", type: "route", label: "My Payslips", icon: <FiCreditCard />, desc: "Lets people open and download their own payslips. Only approved payslips are shown, and only their own.", permissionKey: null },
-  { id: "tickets", type: "route", label: "Issues & Complaints", icon: <FiAlertCircle />, desc: "Raise and track client tickets", permissionKey: "tickets" },
-  { id: "board", type: "route", label: "Task Board", icon: <FiGrid />, desc: "Visual task & project cards", permissionKey: "tasks" },
-  { id: "calendar", type: "route", label: "Timeline", icon: <FiCalendar />, desc: "Global scheduling system", permissionKey: null },
-  { id: "vacations", type: "route", label: "Time Off", icon: <FiMap />, desc: "Leave & casual leave management", permissionKey: "vacations" },
-  { id: "employees", type: "route", label: "Team Directory", icon: <FiUsers />, desc: "Workforce data management", permissionKey: "employees" },
-  { id: "messenger", type: "route", label: "Comms", icon: <FiMessageSquare />, desc: "Internal messaging hub", permissionKey: null },
-  { id: "leads", type: "route", label: "Sales Pipeline", icon: <FiTarget />, desc: "Revenue & lead tracking", permissionKey: "leads" },
-  { id: "my-calls", type: "route", label: "My Calls", icon: <FiPhone />, desc: "Telecaller desk for assigned leads and follow-ups", permissionKey: null },
-  { id: "lead-dashboard", type: "route", label: "Lead Dashboard", icon: <FiBarChart2 />, desc: "Sales & performance analytics hub", permissionKey: null },
-  { id: "leaderboard", type: "route", label: "Leaderboard", icon: <FiBarChart2 />, desc: "Performance ranking & stats", permissionKey: null },
-  { id: "hr-dashboard", type: "route", label: "HR Dashboard", icon: <FiUsers />, desc: "Workforce & attendance analytics", permissionKey: "attendance" },
-  { id: "digital-dashboard", type: "route", label: "Digital & Social Dashboard", icon: <FiBarChart2 />, desc: "Ad performance, social media and marketer KPIs", permissionKey: null },
-  { id: "campaigns", type: "route", label: "Marketing", icon: <FiZap />, desc: "Outreach & campaign data", permissionKey: null },
-  { id: "task-on-review", type: "route", label: "Quality Control", icon: <FiEye />, desc: "Peer review dashboard", permissionKey: null },
-  { id: "task-on-publish", type: "route", label: "Production", icon: <FiCloud />, desc: "Ready for deployment", permissionKey: null },
-  { id: "client-review", type: "route", label: "Approvals", icon: <FiCheck />, desc: "External feedback cycle", permissionKey: null },
-  { id: "attendance", type: "route", label: "Time Tracking", icon: <FiClock />, desc: "Attendance analytics", permissionKey: "attendance" },
-  { id: "workload", type: "route", label: "Workload", icon: <FiBarChart2 />, desc: "Team capacity & distribution", permissionKey: null },
-  { id: "events", type: "route", label: "Company Events", icon: <FiCalendar />, desc: "Corporate events & meets", permissionKey: null },
-  { id: "sticky-notes", type: "route", label: "Quick Notes", icon: <FiFileText />, desc: "Personal scratchpad", permissionKey: null },
-  { id: "meetings", type: "system", label: "Meetings", icon: <FiVideo />, desc: "Schedule meetings and report attendance", permissionKey: "meetings" },
-  { id: "timer", type: "route", label: "Active Timer", icon: <FiClock />, desc: "Task time logging", permissionKey: null },
-  { id: "settings", type: "system", label: "Settings & Configuration", icon: <FiSettings />, desc: "System configuration & management", permissionKey: "settings" },
+  { id: "dashboard", type: "system", label: "Main Dashboard", path: "/", icon: <FiActivity />, desc: "Home dashboard (Dashboard › Main Dashboard). Always visible; the options below control its extra features.", permissionKey: "dashboard" },
+  { id: "department-dashboard", type: "route", label: "Department Dashboard", path: "/department-dashboard", icon: <FiUsers />, desc: "Dashboard › Department Dashboard. Department overview and leave conflicts.", permissionKey: "departmentDashboard" },
+  { id: "projects", type: "route", label: "Clients", path: "/projects", icon: <FiLayout />, desc: "Clients page: client projects and their tasks.", permissionKey: "projects" },
+  { id: "accounts", type: "route", label: "Accounts", path: "/accounts", icon: <FiDollarSign />, desc: "Invoices, proposals, expenses, payroll and reports", permissionKey: "accounts" },
+  { id: "my-payslips", type: "route", label: "My Payslips", path: "/my-payslips", icon: <FiCreditCard />, desc: "Lets people open and download their own payslips. Only approved payslips are shown, and only their own.", permissionKey: null },
+  { id: "tickets", type: "route", label: "Issues", path: "/tickets", icon: <FiAlertCircle />, desc: "Issues page: raise and track issues and complaints.", permissionKey: "tickets" },
+  { id: "board", type: "route", label: "Board", path: "/board", icon: <FiGrid />, desc: "Board page: tasks as cards. The options below are the task permissions used across the app.", permissionKey: "tasks" },
+  { id: "calendar", type: "route", label: "Calendar", path: "/calender", icon: <FiCalendar />, desc: "Calendar page: task and event schedule.", permissionKey: null },
+  { id: "vacations", type: "route", label: "Leave Reports", path: "/vacations", icon: <FiMap />, desc: "Leave Reports page: request leave (casual, sick, unpaid, remote work) and review requests.", permissionKey: "vacations" },
+  { id: "employees", type: "route", label: "Employees", path: "/employees", icon: <FiUsers />, desc: "Employees page: employee list and profiles.", permissionKey: "employees" },
+  { id: "messenger", type: "route", label: "Messenger", path: "/messenger", icon: <FiMessageSquare />, desc: "Messenger page: internal chat.", permissionKey: null },
+  { id: "leads", type: "route", label: "Leads", path: "/leads", icon: <FiTarget />, desc: "Leads page: lead tracking and pipeline.", permissionKey: "leads" },
+  { id: "my-calls", type: "route", label: "My Calls", path: "/my-calls", icon: <FiPhone />, desc: "My Calls page: telecaller desk for assigned leads and follow-ups.", permissionKey: null },
+  { id: "lead-dashboard", type: "route", label: "Lead Dashboard", path: "/lead-dashboard", icon: <FiBarChart2 />, desc: "Dashboard › Lead Dashboard. Sales and lead performance.", permissionKey: null },
+  { id: "leaderboard", type: "route", label: "Leaderboard", path: "/leaderboard", icon: <FiBarChart2 />, desc: "Dashboard › Leaderboard. Performance ranking.", permissionKey: null },
+  { id: "hr-dashboard", type: "route", label: "HR Dashboard", path: "/hr-dashboard", icon: <FiUsers />, desc: "Dashboard › HR Dashboard. Workforce and attendance analytics. Also lets the person see and decide on everyone's leave requests.", permissionKey: "attendance" },
+  { id: "digital-dashboard", type: "route", label: "Digital & Social Dashboard", path: "/digital-dashboard", icon: <FiBarChart2 />, desc: "Dashboard › Digital & Social Dashboard. Ad performance, social media and marketer KPIs.", permissionKey: null },
+  { id: "campaigns", type: "route", label: "Campaigns", path: "/campaigns", icon: <FiZap />, desc: "Campaigns page: ad campaigns and their results.", permissionKey: null },
+  { id: "task-on-review", type: "route", label: "Task on Review", path: "/task-on-review", icon: <FiEye />, desc: "Task on Review page: tasks waiting for review.", permissionKey: null },
+  { id: "task-on-publish", type: "route", label: "Task on Publish", path: "/task-on-publish", icon: <FiCloud />, desc: "Task on Publish page: approved tasks ready to publish.", permissionKey: null },
+  { id: "client-review", type: "route", label: "Client Review", path: "/client-review", icon: <FiCheck />, desc: "Client Review page: work waiting for client feedback.", permissionKey: null },
+  { id: "attendance", type: "route", label: "Attendance", path: "/attendance", icon: <FiClock />, desc: "Attendance page: work sessions and time tracking.", permissionKey: "attendance" },
+  { id: "workload", type: "route", label: "Workload", path: "/workload", icon: <FiBarChart2 />, desc: "Workload page: team capacity and distribution.", permissionKey: null },
+  { id: "events", type: "route", label: "Events", path: "/events", icon: <FiCalendar />, desc: "Events page: upcoming company events.", permissionKey: null },
+  { id: "sticky-notes", type: "route", label: "Sticky Notes", path: "/sticky-notes", icon: <FiFileText />, desc: "Sticky Notes page: personal notes.", permissionKey: null },
+  { id: "meetings", type: "system", label: "Meetings", path: "/meetings", icon: <FiVideo />, desc: "Meetings page. Always visible; the option below controls who can schedule meetings.", permissionKey: "meetings" },
+  { id: "timer", type: "route", label: "Timer", path: "/timer", icon: <FiClock />, desc: "Timer page: task time logging.", permissionKey: null },
+  { id: "settings", type: "system", label: "Settings", path: "/settings", icon: <FiSettings />, desc: "Settings page. Always visible; the options below control which settings sections the person can open.", permissionKey: "settings" },
 ];
 
 
@@ -393,6 +396,10 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
             <div className="flex flex-col gap-1">
               <h3 className="text-[15px] font-extrabold text-gray-800 tracking-tight">{activeModule.label}</h3>
               <p className="text-[12px] text-gray-500 font-medium">{activeModule.desc}</p>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Page address: {activeModule.path}
+                {activeModule.type === 'system' && " · always available to everyone"}
+              </p>
             </div>
           </div>
 
@@ -405,7 +412,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
                 className="sr-only peer"
               />
               <span className="mr-3 text-[11px] font-bold text-gray-400 uppercase group-hover:text-gray-600 transition-colors">
-                Enable Access
+                Can open this page
               </span>
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[22px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
             </label>
@@ -495,7 +502,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
           <div className={`transition-all duration-300 ${!hasAccess && activeModule.type === 'route' ? 'opacity-40 pointer-events-none' : ''}`}>
             <div className="flex items-center justify-between mb-4 mt-2">
               <h4 className="text-[13px] font-bold text-gray-700 tracking-tight flex items-center gap-2">
-                Module Scopes
+                What they can do ({activeModule.label})
                 <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] uppercase">
                   {countActivePermissions(activeModule.permissionKey)} / {permCategory.permissions.length} Enabled
                 </span>
@@ -554,7 +561,7 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
           <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-2xl bg-gray-50/30">
             <FiShield className="text-gray-300 text-3xl mb-3" />
             <p className="text-[12px] text-gray-500 font-medium text-center max-w-sm">
-              This module doesn't have granular CRUD scopes. Simply enable or disable route access using the toggle above.
+              This page has no separate permissions. Turn "Can open this page" on or off above.
             </p>
           </div>
         )}
