@@ -39,6 +39,8 @@ const mapEmployeeVacations = (vacations = []) =>
     endDate: vacation.endDate,
     originalStartDate: vacation.originalStartDate,
     originalEndDate: vacation.originalEndDate,
+    isHalfDay: vacation.isHalfDay || false,
+    halfDayType: vacation.halfDayType || null,
     reason: vacation.reason,
     project: vacation.project
       ? { id: vacation.project.id || vacation.project._id, name: vacation.project.name }
@@ -370,6 +372,7 @@ const VacationCard = ({
         <ModifyDatesModal
           isOpen={true}
           ownerEdit
+          employeeId={employeeId}
           onClose={() => setOwnerEditing(null)}
           request={ownerEditing}
           onSave={(data) => onEditMyRequest(ownerEditing.id, data)}
@@ -380,6 +383,7 @@ const VacationCard = ({
       {modifyingRequest && (
         <ModifyDatesModal
           isOpen={true}
+          employeeId={employeeId}
           onClose={() => setModifyingRequest(null)}
           request={modifyingRequest}
           onSave={(newDates) => handleModifySave(modifyingRequest.id, newDates)}

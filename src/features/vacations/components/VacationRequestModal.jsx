@@ -14,6 +14,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useGetMyVacations, useGetLeavePolicy, useGetAllEmployees } from "../../../api/hooks";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { getLeaveLimits, UNPAID_LEAVE_TYPE } from "../../../utils/leaveEntitlement";
+import { findLeaveConflict, describeLeaveConflict } from "../../../utils/leaveConflicts";
 
 const VacationRequestModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -82,6 +83,20 @@ const VacationRequestModal = ({ onClose }) => {
 
   const usedUnpaid = formData.employeeId ? (employeeVacationsSummary?.unpaid_leave || 0) : (myVacationsSummary?.unpaid_leave || 0);
 
+  // The person's existing requests: a second request for the same day is not allowed
+  const existingRequests = formData.employeeId
+    ? employeeVacationsData?.vacations
+    : myVacationsData?.vacations;
+  const conflictingRequest = findLeaveConflict(existingRequests || [], {
+    startDate: formData.startDate,
+    endDate: formData.endDate,
+    isHalfDay: formData.isHalfDay,
+    halfDayType: formData.halfDayType,
+  });
+  const conflictMessage = conflictingRequest
+    ? describeLeaveConflict(conflictingRequest, !formData.employeeId)
+    : "";
+
   const vacationBalance = vacationLimit - usedVacation;
   const sickBalance = sickLeaveLimit - usedSick;
   const remoteBalance = remoteWorkLimit - usedRemote;
@@ -120,6 +135,12 @@ const VacationRequestModal = ({ onClose }) => {
       setSubmitError(
         "Please select which half of the day you are requesting."
       );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (conflictMessage) {
+      setSubmitError(conflictMessage);
       setIsSubmitting(false);
       return;
     }
@@ -477,9 +498,9 @@ const VacationRequestModal = ({ onClose }) => {
                 </div>
               )}
 
-              {submitError && (
+              {(conflictMessage || submitError) && (
                 <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 text-[10px] font-bold text-center">
-                  {submitError}
+                  {conflictMessage || submitError}
                 </div>
               )}
             </div>
@@ -487,7 +508,7 @@ const VacationRequestModal = ({ onClose }) => {
             <div className="mt-6 sm:mt-8 hidden md:block">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || Boolean(conflictMessage)}
                 className="w-full py-3.5 text-xs font-bold text-white bg-indigo-600 
                 rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100"
               >
@@ -500,8 +521,8 @@ const VacationRequestModal = ({ onClose }) => {
           <div className="md:hidden shrink-0 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 text-xs font-bold text-white bg-indigo-600 
+              disabled={isSubmitting || Boolean(conflictMessage)}
+              className="w-full py-3.5 text-xs font-bold text-white bg-indigo-600
               rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100"
             >
               {isSubmitting ? "Submitting..." : "Submit Request"}

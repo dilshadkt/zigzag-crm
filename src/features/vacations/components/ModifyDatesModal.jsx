@@ -9,9 +9,13 @@ import {
 } from "date-fns";
 import { RxCross2 } from "react-icons/rx";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { useGetMyVacations } from "../../../api/hooks";
+import { useGetEmployeeVacations } from "../hooks/useVacations";
+import { findLeaveConflict, describeLeaveConflict } from "../../../utils/leaveConflicts";
 
 // ownerEdit: the requester changing their own pending request (no admin notes)
-const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false }) => {
+// employeeId: whose request this is (used to look up their other requests)
+const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false, employeeId = null }) => {
   const [formData, setFormData] = useState({
     startDate: format(new Date(request?.startDate || new Date()), "yyyy-MM-dd"),
     endDate: format(new Date(request?.endDate || new Date()), "yyyy-MM-dd"),
@@ -23,6 +27,29 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false 
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedType, setSelectedType] = useState(request?.type || "vacation");
+  const [submitError, setSubmitError] = useState("");
+
+  // The person's other requests, to stop the new dates landing on a day already requested
+  const { data: myVacationsData } = useGetMyVacations(ownerEdit);
+  const { data: employeeVacationsData } = useGetEmployeeVacations(
+    ownerEdit ? null : employeeId
+  );
+  const existingRequests = ownerEdit
+    ? myVacationsData?.vacations
+    : employeeVacationsData?.vacations;
+  // A half-day request keeps its half only while it stays a single day
+  const keepsHalfDay =
+    Boolean(request?.isHalfDay) && formData.startDate === formData.endDate;
+  const conflictingRequest = findLeaveConflict(existingRequests || [], {
+    startDate: formData.startDate,
+    endDate: formData.endDate,
+    isHalfDay: keepsHalfDay,
+    halfDayType: keepsHalfDay ? request?.halfDayType : null,
+    excludeId: request?.id || request?._id,
+  });
+  const conflictMessage = conflictingRequest
+    ? describeLeaveConflict(conflictingRequest, ownerEdit)
+    : "";
 
   useEffect(() => {
     setFormData({
@@ -33,10 +60,16 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false 
     setCurrentMonth(new Date(request?.startDate || new Date()));
     setSelectedType(request?.type || "vacation");
     setSelectionMode("start");
+    setSubmitError("");
   }, [request]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
+    if (conflictMessage) {
+      setSubmitError(conflictMessage);
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -50,6 +83,9 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false 
       onClose();
     } catch (error) {
       console.error("Error updating vacation dates:", error);
+      setSubmitError(
+        error?.response?.data?.message || "Failed to update the request. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -240,11 +276,17 @@ const ModifyDatesModal = ({ isOpen, onClose, request, onSave, ownerEdit = false 
                   className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none min-h-[100px] resize-none font-medium text-slate-600"
                 />
               </div>}
+
+              {(conflictMessage || submitError) && (
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-500 text-[10px] font-bold text-center">
+                  {conflictMessage || submitError}
+                </div>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || Boolean(conflictMessage)}
               className="w-full mt-6 py-4 text-xs font-bold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100"
             >
               {isSubmitting ? "Updating..." : "Update Request"}
