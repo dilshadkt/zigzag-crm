@@ -28,9 +28,9 @@ const CampaignReportModal = ({
 }) => {
   const { user } = useAuth();
   const needsCampaign = isOpen && !readOnly && !hasCampaign && Boolean(projectId);
+  // List every campaign in the company (not only the task's project) so any of them can be chosen
   const { data: campaignsData, isLoading: loadingCampaigns } = useGetCampaignsByCompany(
-    needsCampaign ? user?.company : null,
-    { projectId: projectId || undefined }
+    needsCampaign ? user?.company : null
   );
   const campaignOptions = campaignsData?.data || [];
   const [campaignId, setCampaignId] = useState("");
@@ -113,7 +113,7 @@ const CampaignReportModal = ({
             </p>
             {!loadingCampaigns && campaignOptions.length === 0 && (
               <p className="text-[11px] font-medium text-amber-600">
-                This project has no campaigns. Create one in Campaigns first.
+                There are no campaigns yet. Create one in Campaigns first.
               </p>
             )}
           </div>
