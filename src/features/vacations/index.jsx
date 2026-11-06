@@ -24,7 +24,6 @@ import {
 import { useGetMyVacations } from "../../api/hooks";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import { useRouteAccess } from "../../hooks/useRouteAccess";
 import { isOnProbation } from "../../utils/leaveEntitlement";
 
 import VacationCard from "./components/VacationCard";
@@ -44,7 +43,6 @@ const LEAVE_LABELS = {
 const Vacations = () => {
   const { isCompany, user } = useAuth();
   const { hasPermission } = usePermissions();
-  const { hasAccessToRoute } = useRouteAccess();
   const [stat, setStat] = useState("Leave");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -52,9 +50,16 @@ const Vacations = () => {
 
   // Anyone who can open the HR Dashboard sees every employee's requests and
   // can approve or reject them, like the admin.
-  const hasHrAccess = hasAccessToRoute("/hr-dashboard");
+  // This must match checkPermissionOrHrAccess on the API (it only accepts these
+  // exact entries). hasAccessToRoute is looser (a bare "/" entry matches every
+  // route), so using it here made the page ask for company-wide data the server
+  // then refused with a 403.
+  const hrRoutes = user?.positionDetails?.allowedRoutes || [];
+  const hasHrAccess = hrRoutes.some(
+    (route) => route === "hr-dashboard" || route === "/hr-dashboard" || route === "*"
+  );
   const canViewAll = isCompany || hasHrAccess;
-  const canViewVacations =
+  const canViewCompanyVacations =
     canViewAll || hasPermission("vacations", "view");
   const canCreateVacationRequest =
     isCompany || hasPermission("vacations", "create");
@@ -71,11 +76,23 @@ const Vacations = () => {
   const isVacationsTab = stat === "Leave";
   const isCalendarTab = stat === "Calendar";
 
-  const { data: companyVacationsData, isLoading: isLoadingEmployees } =
-    useGetCompanyVacations(month, year, canViewVacations && isVacationsTab);
+  const {
+    data: companyVacationsData,
+    isLoading: isLoadingEmployees,
+    error: companyError,
+  } = useGetCompanyVacations(month, year, canViewCompanyVacations && isVacationsTab);
 
-  const { data: calendarData, isLoading: isLoadingCalendar } =
-    useGetVacationsCalendar(month, year, canViewVacations && isCalendarTab);
+  const {
+    data: calendarData,
+    isLoading: isLoadingCalendar,
+    error: calendarError,
+  } = useGetVacationsCalendar(month, year, canViewCompanyVacations && isCalendarTab);
+
+  // If the server refuses the company-wide data anyway, fall back to the person's
+  // own leave instead of leaving the page blank.
+  const companyViewForbidden =
+    companyError?.response?.status === 403 || calendarError?.response?.status === 403;
+  const canViewVacations = canViewCompanyVacations && !companyViewForbidden;
 
   const { data: myVacationsData, isLoading: isLoadingMyVacations } =
     useGetMyVacations(!canViewVacations);
