@@ -10,7 +10,7 @@ const columnsFor = (days) => (days === 12 ? 4 : 3);
 // Lime shades from light (1 post) to strong (3+ posts), mirroring the reference heatmap
 const SHADES = ["", "#E4F6A8", "#D3F26A", "#C2EE3D"];
 const HATCH =
-    "repeating-linear-gradient(135deg, #E6EAF0 0px, #E6EAF0 1.5px, #F4F7FA 1.5px, #F4F7FA 5px)";
+    "repeating-linear-gradient(135deg, var(--hatch-a, #E6EAF0) 0px, var(--hatch-a, #E6EAF0) 1.5px, var(--hatch-b, #F4F7FA) 1.5px, var(--hatch-b, #F4F7FA) 5px)";
 
 const formatLongDay = (dateKey) =>
     new Date(`${dateKey}T00:00:00`).toLocaleDateString("en-US", {

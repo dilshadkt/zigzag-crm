@@ -17,6 +17,7 @@ import EmployeeProgressStats from "../../dashboard/employeeProgressStats";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { getLeaveLimits, isOnProbation, formatLeaveBalance } from "../../../utils/leaveEntitlement";
 import ProbationTrack from "../../employee/ProbationTrack";
+import { ThemeToggle } from "../appearance";
 
 const EmployeeSettings = () => {
   const { user } = useAuth();
@@ -86,7 +87,7 @@ const EmployeeSettings = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flexBetween mb-5">
+      <div className="flexBetween flex-wrap gap-3 mb-5">
         <div className="flex bg-[#E6EDF5] rounded-full p-1">
           {["Overview", "Projects", "Teams", "Vacations"].map((item, index) => (
             <button
@@ -104,6 +105,8 @@ const EmployeeSettings = () => {
           ))}
         </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+        <ThemeToggle />
         {activePage === "Vacations" && (
           <div className="flex items-center gap-3 bg-[#E6EDF5] px-4 py-1.5 rounded-full font-medium text-sm text-[#0A1629]">
             <button
@@ -123,6 +126,7 @@ const EmployeeSettings = () => {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {activePage === "Teams" && (

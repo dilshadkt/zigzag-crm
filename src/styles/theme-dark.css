@@ -1,0 +1,269 @@
+/*
+ * Dark theme.
+ *
+ * Activated by <html data-theme="dark"> (see hooks/useTheme.js). Light mode is
+ * untouched: nothing here applies unless that attribute is set.
+ *
+ * How it works
+ *  1. Tailwind's gray/slate palette and the tinted 50-200 shades of the colour
+ *     scales are re-pointed below, so every existing `bg-gray-50`,
+ *     `text-slate-700`, `border-gray-200`, `bg-green-50` ... adapts for free.
+ *  2. Hard-coded values that variables can't reach (bg-white, bg-[#F4F9FD],
+ *     text-[#0A1629] ...) are re-mapped in theme-dark.generated.css.
+ *  3. Global bits (page background, scrollbars, native controls, icons) are
+ *     handled in this file.
+ *
+ * Palette (navy-slate, brand blue #3F8CFF unchanged)
+ *   app      #0B1220   page background
+ *   surface  #111A2B   cards, panels, modals   (was white)
+ *   raised   #172236   inputs, table headers   (was gray-50)
+ *   border   #243349
+ *   text     #E6EBF4 / #A9B4C7 / #7C889E
+ */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --dk-app: #0b1220;
+  --dk-surface: #111a2b;
+  --dk-raised: #172236;
+  --dk-border: #243349;
+  --dk-text: #e6ebf4;
+  --dk-text-2: #a9b4c7;
+  --dk-text-3: #7c889e;
+  --hatch-a: #243349;
+  --hatch-b: #172236;
+
+  /* Neutral scales: light shades become surfaces/borders, dark shades become text. */
+  --color-gray-50: #172236;
+  --color-gray-100: #1b283e;
+  --color-gray-200: #243349;
+  --color-gray-300: #31435f;
+  --color-gray-400: #8491a7;
+  --color-gray-500: #9aa6ba;
+  --color-gray-600: #b2bccd;
+  --color-gray-700: #c7cfdc;
+  --color-gray-800: #dce2ec;
+  --color-gray-900: #eef1f7;
+  --color-gray-950: #f8fafc;
+
+  --color-slate-50: #172236;
+  --color-slate-100: #1b283e;
+  --color-slate-200: #243349;
+  --color-slate-300: #31435f;
+  --color-slate-400: #8491a7;
+  --color-slate-500: #9aa6ba;
+  --color-slate-600: #b2bccd;
+  --color-slate-700: #c7cfdc;
+  --color-slate-800: #dce2ec;
+  --color-slate-900: #eef1f7;
+  --color-slate-950: #f8fafc;
+
+  /* Pastel tints (badges, alerts, highlights) become translucent colour washes. */
+  --color-red-50: color-mix(in oklab, var(--color-red-500) 12%, #111a2b);
+  --color-red-100: color-mix(in oklab, var(--color-red-500) 18%, #111a2b);
+  --color-red-200: color-mix(in oklab, var(--color-red-500) 28%, #111a2b);
+  --color-orange-50: color-mix(in oklab, var(--color-orange-500) 12%, #111a2b);
+  --color-orange-100: color-mix(in oklab, var(--color-orange-500) 18%, #111a2b);
+  --color-orange-200: color-mix(in oklab, var(--color-orange-500) 28%, #111a2b);
+  --color-amber-50: color-mix(in oklab, var(--color-amber-500) 12%, #111a2b);
+  --color-amber-100: color-mix(in oklab, var(--color-amber-500) 18%, #111a2b);
+  --color-amber-200: color-mix(in oklab, var(--color-amber-500) 28%, #111a2b);
+  --color-yellow-50: color-mix(in oklab, var(--color-yellow-500) 12%, #111a2b);
+  --color-yellow-100: color-mix(in oklab, var(--color-yellow-500) 18%, #111a2b);
+  --color-yellow-200: color-mix(in oklab, var(--color-yellow-500) 28%, #111a2b);
+  --color-lime-50: color-mix(in oklab, var(--color-lime-500) 12%, #111a2b);
+  --color-lime-100: color-mix(in oklab, var(--color-lime-500) 18%, #111a2b);
+  --color-lime-200: color-mix(in oklab, var(--color-lime-500) 28%, #111a2b);
+  --color-green-50: color-mix(in oklab, var(--color-green-500) 12%, #111a2b);
+  --color-green-100: color-mix(in oklab, var(--color-green-500) 18%, #111a2b);
+  --color-green-200: color-mix(in oklab, var(--color-green-500) 28%, #111a2b);
+  --color-emerald-50: color-mix(in oklab, var(--color-emerald-500) 12%, #111a2b);
+  --color-emerald-100: color-mix(in oklab, var(--color-emerald-500) 18%, #111a2b);
+  --color-emerald-200: color-mix(in oklab, var(--color-emerald-500) 28%, #111a2b);
+  --color-teal-50: color-mix(in oklab, var(--color-teal-500) 12%, #111a2b);
+  --color-teal-100: color-mix(in oklab, var(--color-teal-500) 18%, #111a2b);
+  --color-teal-200: color-mix(in oklab, var(--color-teal-500) 28%, #111a2b);
+  --color-cyan-50: color-mix(in oklab, var(--color-cyan-500) 12%, #111a2b);
+  --color-cyan-100: color-mix(in oklab, var(--color-cyan-500) 18%, #111a2b);
+  --color-cyan-200: color-mix(in oklab, var(--color-cyan-500) 28%, #111a2b);
+  --color-sky-50: color-mix(in oklab, var(--color-sky-500) 12%, #111a2b);
+  --color-sky-100: color-mix(in oklab, var(--color-sky-500) 18%, #111a2b);
+  --color-sky-200: color-mix(in oklab, var(--color-sky-500) 28%, #111a2b);
+  --color-blue-50: color-mix(in oklab, var(--color-blue-500) 12%, #111a2b);
+  --color-blue-100: color-mix(in oklab, var(--color-blue-500) 18%, #111a2b);
+  --color-blue-200: color-mix(in oklab, var(--color-blue-500) 28%, #111a2b);
+  --color-indigo-50: color-mix(in oklab, var(--color-indigo-500) 12%, #111a2b);
+  --color-indigo-100: color-mix(in oklab, var(--color-indigo-500) 18%, #111a2b);
+  --color-indigo-200: color-mix(in oklab, var(--color-indigo-500) 28%, #111a2b);
+  --color-violet-50: color-mix(in oklab, var(--color-violet-500) 12%, #111a2b);
+  --color-violet-100: color-mix(in oklab, var(--color-violet-500) 18%, #111a2b);
+  --color-violet-200: color-mix(in oklab, var(--color-violet-500) 28%, #111a2b);
+  --color-purple-50: color-mix(in oklab, var(--color-purple-500) 12%, #111a2b);
+  --color-purple-100: color-mix(in oklab, var(--color-purple-500) 18%, #111a2b);
+  --color-purple-200: color-mix(in oklab, var(--color-purple-500) 28%, #111a2b);
+  --color-fuchsia-50: color-mix(in oklab, var(--color-fuchsia-500) 12%, #111a2b);
+  --color-fuchsia-100: color-mix(in oklab, var(--color-fuchsia-500) 18%, #111a2b);
+  --color-fuchsia-200: color-mix(in oklab, var(--color-fuchsia-500) 28%, #111a2b);
+  --color-pink-50: color-mix(in oklab, var(--color-pink-500) 12%, #111a2b);
+  --color-pink-100: color-mix(in oklab, var(--color-pink-500) 18%, #111a2b);
+  --color-pink-200: color-mix(in oklab, var(--color-pink-500) 28%, #111a2b);
+  --color-rose-50: color-mix(in oklab, var(--color-rose-500) 12%, #111a2b);
+  --color-rose-100: color-mix(in oklab, var(--color-rose-500) 18%, #111a2b);
+  --color-rose-200: color-mix(in oklab, var(--color-rose-500) 28%, #111a2b);
+}
+
+html[data-theme="dark"] {
+  background-color: var(--dk-app);
+  /* daisyUI base tokens, in case any daisyUI component is used */
+  --color-base-100: #111a2b;
+  --color-base-200: #172236;
+  --color-base-300: #243349;
+  --color-base-content: #e6ebf4;
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--dk-app);
+  color: var(--dk-text);
+}
+
+/* Native form controls that carry no background class of their own. */
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  color-scheme: dark;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: var(--dk-text-3);
+  opacity: 1;
+}
+html[data-theme="dark"] option {
+  background-color: var(--dk-surface);
+  color: var(--dk-text);
+}
+
+/* Text selection, kept on-brand. */
+html[data-theme="dark"] ::selection {
+  background: rgb(63 140 255 / 0.4);
+  color: #fff;
+}
+
+/* Soft shadows vanish on dark surfaces; deepen them a little. */
+html[data-theme="dark"] .shadow-sm,
+html[data-theme="dark"] .shadow,
+html[data-theme="dark"] .shadow-md {
+  --tw-shadow-color: rgb(0 0 0 / 0.45);
+}
+html[data-theme="dark"] .shadow-lg,
+html[data-theme="dark"] .shadow-xl,
+html[data-theme="dark"] .shadow-2xl {
+  --tw-shadow-color: rgb(0 0 0 / 0.6);
+}
+
+/* Scrollbars (the light rules live in index.css). */
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--dk-app);
+}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #2a3a55;
+  border-color: var(--dk-app);
+}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #3a4d6e;
+}
+html[data-theme="dark"] * {
+  scrollbar-color: #2a3a55 var(--dk-app);
+}
+html[data-theme="dark"] .project-details-scroll::-webkit-scrollbar-track {
+  background: var(--dk-app);
+}
+html[data-theme="dark"] .project-details-scroll::-webkit-scrollbar-thumb {
+  background: #2a3a55;
+}
+html[data-theme="dark"] .project-details-scroll {
+  scrollbar-color: #2a3a55 var(--dk-app);
+}
+html[data-theme="dark"] .scrollbar-hover:hover {
+  scrollbar-color: #3a4d6e transparent;
+}
+html[data-theme="dark"] .scrollbar-hover:hover::-webkit-scrollbar-thumb {
+  background: #3a4d6e;
+}
+
+/* Single-colour dark SVG icons loaded through <img>: flip them to light. */
+html[data-theme="dark"] img[src$="/alert.svg"],
+html[data-theme="dark"] img[src$="/arrowDown.svg"],
+html[data-theme="dark"] img[src$="/calender.svg"],
+html[data-theme="dark"] img[src$="/cancel.svg"],
+html[data-theme="dark"] img[src$="/dot.svg"],
+html[data-theme="dark"] img[src$="/edit.svg"],
+html[data-theme="dark"] img[src$="/filter.svg"],
+html[data-theme="dark"] img[src$="/search.svg"],
+html[data-theme="dark"] img[src$="/settings.svg"],
+html[data-theme="dark"] img[src$="/refresh.svg"] {
+  filter: brightness(0) invert(1) opacity(0.85);
+}
+
+/* Rich text / editor content */
+html[data-theme="dark"] .rich-text-content,
+html[data-theme="dark"] .prose-editor {
+  color: var(--dk-text);
+}
+
+/* Notification list used a prefers-color-scheme rule; follow the app theme instead. */
+html[data-theme="dark"] .notification-item {
+  border-color: var(--dk-border);
+}
+
+html[data-theme="dark"] .notification-unread {
+  background-color: rgb(63 140 255 / 0.1);
+}
+
+/* react-date-range pickers */
+html[data-theme="dark"] .rdrCalendarWrapper,
+html[data-theme="dark"] .rdrDateDisplayWrapper,
+html[data-theme="dark"] .rdrDefinedRangesWrapper,
+html[data-theme="dark"] .rdrStaticRanges .rdrStaticRange,
+html[data-theme="dark"] .rdrInputRanges {
+  background-color: var(--dk-surface);
+  color: var(--dk-text);
+  border-color: var(--dk-border);
+}
+html[data-theme="dark"] .rdrDateInput,
+html[data-theme="dark"] .rdrStaticRange {
+  background-color: var(--dk-raised);
+  border-color: var(--dk-border);
+  color: var(--dk-text);
+}
+html[data-theme="dark"] .rdrStaticRangeLabel:hover,
+html[data-theme="dark"] .rdrStaticRangeLabel:focus {
+  background-color: var(--dk-border);
+}
+html[data-theme="dark"] .rdrDayNumber span,
+html[data-theme="dark"] .rdrMonthAndYearPickers select,
+html[data-theme="dark"] .rdrWeekDay,
+html[data-theme="dark"] .rdrInputRange input {
+  color: var(--dk-text);
+}
+html[data-theme="dark"] .rdrDayPassive .rdrDayNumber span {
+  color: var(--dk-text-3);
+}
+html[data-theme="dark"] .rdrDayDisabled {
+  background-color: var(--dk-raised);
+}
+
+/* Loading skeletons: the light shimmer gradient (slate-200 -> slate-100) becomes a dark one. */
+html[data-theme="dark"] [class*="linear-gradient(110deg,#e2e8f0"] {
+  background-image: linear-gradient(110deg, #1b283e 45%, #2a3a55 55%, #1b283e);
+  background-color: #1b283e;
+}
+
+html[data-theme="dark"] .chat-messages-container::-webkit-scrollbar-track,
+html[data-theme="dark"] .notification-scroll::-webkit-scrollbar-track {
+  background: var(--dk-app);
+}
+html[data-theme="dark"] .chat-messages-container::-webkit-scrollbar-thumb,
+html[data-theme="dark"] .notification-scroll::-webkit-scrollbar-thumb {
+  background: #2a3a55;
+}

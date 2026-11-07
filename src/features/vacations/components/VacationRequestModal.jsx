@@ -479,11 +479,11 @@ const VacationRequestModal = ({ onClose }) => {
                     value={formData.employeeId}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none font-medium"
-                    style={{ color: "#1e293b" }}
+                    style={{ color: "var(--dk-text, #1e293b)" }}
                   >
-                    <option value="" style={{ color: "#1e293b" }}>Select Employee (Default: Self)</option>
+                    <option value="" style={{ color: "var(--dk-text, #1e293b)" }}>Select Employee (Default: Self)</option>
                     {employeesList.map(emp => (
-                      <option key={emp._id} value={emp._id} style={{ color: "#1e293b" }}>
+                      <option key={emp._id} value={emp._id} style={{ color: "var(--dk-text, #1e293b)" }}>
                         {emp.name || `${emp.firstName} ${emp.lastName}`}
                         {emp.isOnProbation ? " (Probation)" : ""}
                       </option>

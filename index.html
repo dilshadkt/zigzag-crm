@@ -53,6 +53,20 @@
       href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap"
       rel="stylesheet"
     />
+    <!-- Apply the saved theme before first paint so dark mode never flashes white.
+         Keep the storage key in sync with src/hooks/useTheme.js -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("zigzag-theme") === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+            document.documentElement.style.colorScheme = "dark";
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute("content", "#0B1220");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <title>Zigzag CRM - Customer Relationship Management</title>
     <!-- Google Search Console: paste the verification meta tag from Search Console here, then deploy. -->
   </head>

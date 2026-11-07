@@ -21,6 +21,7 @@ import {
   FiCamera,
   FiLoader,
 } from "react-icons/fi";
+import { AppearanceCard } from "../../../components/settings/appearance";
 
 const Account = () => {
   const { user } = useAuth();
@@ -137,6 +138,8 @@ const Account = () => {
             </div>
           </div>
         </div>
+
+        <AppearanceCard className="mb-4" />
 
         <div className="flex-1 bg-gray-50 p-8 rounded-2xl border border-gray-100 shadow-sm">
           <div className="max-w-md mx-auto text-center">
@@ -266,6 +269,9 @@ const Account = () => {
             </div>
           </div>
         </div>
+
+        {/* Appearance */}
+        <AppearanceCard />
 
         {/* Danger Zone */}
         <div className="bg-white rounded-2xl p-4 border border-red-50 shadow-sm relative overflow-hidden">

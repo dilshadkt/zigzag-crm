@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Dark theme (html[data-theme="dark"]). Layered with utilities so the generated
+   overrides sit after Tailwind's own classes yet lose to hover:/focus: variants. */
+@import "./styles/theme-dark.css";
+@import "./styles/theme-dark.generated.css" layer(utilities);
+
 @plugin "daisyui" {
   themes: light --default;
 }

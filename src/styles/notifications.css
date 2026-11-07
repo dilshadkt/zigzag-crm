@@ -115,13 +115,4 @@
   }
 }
 
-/* Dark mode styles (if you implement dark mode) */
-@media (prefers-color-scheme: dark) {
-  .notification-item {
-    border-color: #374151;
-  }
-
-  .notification-unread {
-    background-color: rgba(59, 130, 246, 0.1);
-  }
-}
+/* Dark mode: see styles/theme-dark.css (driven by html[data-theme="dark"]) */

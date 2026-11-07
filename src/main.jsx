@@ -8,6 +8,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isNetworkError } from "./utils/networkMonitor";
 import { initPwa } from "./pwa/install";
 
+import { initTheme } from "./hooks/useTheme";
+
+initTheme();
 initPwa();
 
 const queryClient = new QueryClient({
