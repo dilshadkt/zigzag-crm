@@ -562,3 +562,132 @@ export const useGetProjectBranchReport = (projectId, params = {}) => {
     enabled: !!projectId,
   });
 };
+
+// --- WHATSAPP TEMPLATES API ---
+
+export const getWhatsappTemplates = async () => {
+  const response = await apiClient.get("/leads/settings/whatsapp-templates");
+  return response.data;
+};
+
+export const useGetWhatsappTemplates = () => {
+  return useQuery({
+    queryKey: ["whatsappTemplates"],
+    queryFn: getWhatsappTemplates,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useSaveWhatsappTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ templateId, name, text }) => {
+      const response = templateId
+        ? await apiClient.put(`/leads/settings/whatsapp-templates/${templateId}`, { name, text })
+        : await apiClient.post("/leads/settings/whatsapp-templates", { name, text });
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["whatsappTemplates"] }),
+  });
+};
+
+// --- LEAD TASKS API ---
+
+export const useGetLeadTasks = (leadId) => {
+  return useQuery({
+    queryKey: ["leadTasks", leadId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/leads/${leadId}/tasks`);
+      return response.data;
+    },
+    enabled: !!leadId,
+  });
+};
+
+export const useCreateLeadTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, taskData }) => {
+      const response = await apiClient.post(`/leads/${leadId}/tasks`, taskData);
+      return response.data;
+    },
+    onSuccess: (_, { leadId }) => {
+      queryClient.invalidateQueries({ queryKey: ["leadTasks", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["leadActivities", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["telecallerDesk"] });
+    },
+  });
+};
+
+export const useSetLeadTaskDone = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ taskId, done }) => {
+      const response = await apiClient.put(`/leads/tasks/${taskId}/status`, { done });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["telecallerDesk"] });
+      queryClient.invalidateQueries({ queryKey: ["leadTasks"] });
+    },
+  });
+};
+
+// --- LEAD TEAM KPI API ---
+
+export const useLeadKpiConfig = () => {
+  return useQuery({
+    queryKey: ["leadKpiConfig"],
+    queryFn: async () => (await apiClient.get("/lead-kpi/config")).data,
+  });
+};
+
+export const useSaveLeadKpiConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (config) => (await apiClient.put("/lead-kpi/config", config)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leadKpiConfig"] });
+      queryClient.invalidateQueries({ queryKey: ["leadKpiScore"] });
+      queryClient.invalidateQueries({ queryKey: ["leadKpiTeam"] });
+    },
+  });
+};
+
+export const useResetLeadKpiConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => (await apiClient.delete("/lead-kpi/config")).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leadKpiConfig"] });
+      queryClient.invalidateQueries({ queryKey: ["leadKpiTeam"] });
+    },
+  });
+};
+
+export const useLeadKpiScore = ({ userId, date } = {}) => {
+  return useQuery({
+    queryKey: ["leadKpiScore", userId || "me", date || "today"],
+    queryFn: async () => (await apiClient.get("/lead-kpi/score", { params: { userId, date } })).data,
+    refetchInterval: 5 * 60 * 1000,
+  });
+};
+
+export const useLeadKpiTeam = (date, enabled = true) => {
+  return useQuery({
+    queryKey: ["leadKpiTeam", date || "today"],
+    queryFn: async () => (await apiClient.get("/lead-kpi/team", { params: { date } })).data,
+    enabled,
+  });
+};
+
+export const useDeleteWhatsappTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (templateId) => {
+      const response = await apiClient.delete(`/leads/settings/whatsapp-templates/${templateId}`);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["whatsappTemplates"] }),
+  });
+};

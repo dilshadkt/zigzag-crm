@@ -380,6 +380,22 @@ const AppRoutes = () => {
               </RouteAccess>
             }
           />
+          <Route
+            path="my-calls/tasks"
+            element={
+              <RouteAccess>
+                <TelecallerDesk view="tasks" />
+              </RouteAccess>
+            }
+          />
+          <Route
+            path="my-calls/pipeline"
+            element={
+              <RouteAccess>
+                <TelecallerDesk view="pipeline" />
+              </RouteAccess>
+            }
+          />
           <Route path="leads/my-desk" element={<Navigate to="/my-calls" replace />} />
           <Route path="leads/my-desk/overdue" element={<Navigate to="/my-calls/overdue" replace />} />
           <Route path="leads/my-desk/upcoming" element={<Navigate to="/my-calls/upcoming" replace />} />

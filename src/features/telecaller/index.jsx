@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FiAlertCircle,
   FiCalendar,
@@ -11,7 +12,11 @@ import {
   FiChevronRight,
   FiClock,
   FiExternalLink,
+  FiColumns,
+  FiCheckSquare,
+  FiEdit3,
   FiPhone,
+  FiPlay,
   FiSearch,
   FiUsers,
 } from "react-icons/fi";
@@ -21,17 +26,28 @@ import {
   useGetLeadStatuses,
   useGetMyLeadDesk,
   useLogLeadInteraction,
-} from "../leads/api";
+  useUpdateLead,
+} from "../leads/api";import PipelineBoard from "./components/PipelineBoard";
+import LeadTaskList from "./components/LeadTaskList";
+import KpiScoreCard from "./components/KpiScoreCard";
+import CreateLeadTaskModal from "../leadDetails/components/CreateLeadTaskModal";
 import LeadInteractionModal from "../leadDetails/components/LeadInteractionModal";
+import ClosingFields from "../leadDetails/components/ClosingFields";
+import TodaySummary from "./components/TodaySummary";
+import WhatsAppMenu from "./components/WhatsAppMenu";
+import CallQueue from "./components/CallQueue";
 
 const CALL_TABS = [
   { id: "today", title: "Today", path: "/my-calls", icon: FiCalendar },
   { id: "overdue", title: "Overdue", path: "/my-calls/overdue", icon: FiAlertCircle },
   { id: "upcoming", title: "Upcoming", path: "/my-calls/upcoming", icon: FiClock },
   { id: "leads", title: "My leads", path: "/my-calls/leads", icon: FiUsers },
+  { id: "pipeline", title: "Pipeline", path: "/my-calls/pipeline", icon: FiColumns },
+  { id: "tasks", title: "Tasks", path: "/my-calls/tasks", icon: FiCheckSquare },
 ];
 
 const LEAD_FILTERS = [
+  { id: "open", label: "Open" },
   { id: "all", label: "All" },
   { id: "new", label: "Not contacted" },
   { id: "hot", label: "Hot" },
@@ -95,7 +111,122 @@ const ScorePill = ({ category }) => {
   );
 };
 
-const FollowUpCard = ({ lead, overdue, onOpen, onLog }) => {
+const QuickOutcomes = ({ lead, onQuick, onClose, onTask, disabled }) => (
+  <div className="mt-1.5 flex flex-wrap gap-1.5 lg:mt-2">
+    <button
+      type="button"
+      onClick={() => onTask(lead)}
+      className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100"
+    >
+      + Task
+    </button>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => onQuick(lead, "noAnswer")}
+      className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+    >
+      No answer · retry in 2h
+    </button>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => onQuick(lead, "tomorrow")}
+      className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+    >
+      Call tomorrow 10 AM
+    </button>
+    <button
+      type="button"
+      onClick={() => onClose(lead, "won")}
+      className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100"
+    >
+      Won
+    </button>
+    <button
+      type="button"
+      onClick={() => onClose(lead, "lost")}
+      className="rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-100"
+    >
+      Lost
+    </button>
+  </div>
+);
+
+const CloseLeadModal = ({ target, saving, onCancel, onConfirm }) => {
+  const [values, setValues] = useState({});
+  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setValues({});
+    setNote("");
+    setError("");
+  }, [target]);
+
+  if (!target) return null;
+  const won = target.kind === "won";
+
+  const submit = () => {
+    if (!won && !values.lostReason) {
+      setError("Select a reason");
+      return;
+    }
+    if (won && values.dealValue && Number(values.dealValue) < 0) {
+      setError("Deal value cannot be negative");
+      return;
+    }
+    setError("");
+    onConfirm({ ...values, note });
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/60 p-0 sm:items-center sm:p-4">
+      <div className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl">
+        <h3 className="text-base font-bold text-slate-800">
+          {won ? "Mark as won" : "Mark as lost"} · {target.lead.name || "Lead"}
+        </h3>
+        <div className="mt-4 space-y-3">
+          <ClosingFields
+            kind={target.kind}
+            values={values}
+            onChange={setValues}
+            errors={{ lostReason: error && !won ? error : "", dealValue: error && won ? error : "" }}
+          />
+          <textarea
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Note (optional)"
+            className="h-20 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-[#3f8cff]"
+          />
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={saving}
+            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-60 ${
+              won ? "bg-emerald-600 hover:bg-emerald-700" : "bg-rose-600 hover:bg-rose-700"
+            }`}
+          >
+            {saving ? "Saving…" : won ? "Confirm won" : "Confirm lost"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+const FollowUpCard = ({ lead, overdue, onOpen, onLog, onQuick, onClose, onTask, busy, agent }) => {
   const phone = lead.phone || lead.contact?.phone;
   return (
     <article className={`rounded-xl border bg-white p-2.5 lg:p-4 ${overdue ? "border-amber-200" : "border-slate-200/60"}`}>
@@ -144,6 +275,7 @@ const FollowUpCard = ({ lead, overdue, onOpen, onLog }) => {
             Call
           </a>
         )}
+        <WhatsAppMenu phone={phone} name={lead.name} agent={agent} />
         <button
           type="button"
           onClick={() => onLog(lead)}
@@ -160,6 +292,7 @@ const FollowUpCard = ({ lead, overdue, onOpen, onLog }) => {
           <FiExternalLink className="h-3.5 w-3.5" />
         </button>
       </div>
+      <QuickOutcomes lead={lead} onQuick={onQuick} onClose={onClose} onTask={onTask} disabled={busy} />
     </article>
   );
 };
@@ -307,7 +440,7 @@ const DeskNav = () => {
 
   return createPortal(
     <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <div className="grid h-12 grid-cols-4">
+      <div className="grid h-12 grid-cols-6">
         {CALL_TABS.map((tab) => {
           const active = pathname === tab.path;
           const Icon = tab.icon;
@@ -337,10 +470,18 @@ const EMPLOYEE_FILTER_KEY = "telecallerEmployee";
 
 const TelecallerDesk = ({ view = "today" }) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // Remember where the lead was opened from so Back returns here, not to the main Leads page
+  const goToLead = (leadId) => navigate(`/leads/${leadId}`, { state: { from: pathname } });
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const canFilter = user?.role === "company-admin" || hasPermission("leads", "viewAll");
-  const [queue, setQueue] = useState("all");
+  const [queue, setQueue] = useState("open");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [closeTarget, setCloseTarget] = useState(null);
+  const [queueLeads, setQueueLeads] = useState(null);
+  const [taskLead, setTaskLead] = useState(null);
+  const [showDoneTasks, setShowDoneTasks] = useState(false);
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -358,7 +499,7 @@ const TelecallerDesk = ({ view = "today" }) => {
 
   useEffect(() => {
     setPage(1);
-  }, [search, queue, view, employeeId]);
+  }, [search, queue, statusFilter, view, employeeId]);
 
   useEffect(() => {
     if (canFilter) sessionStorage.setItem(EMPLOYEE_FILTER_KEY, employeeId);
@@ -367,6 +508,8 @@ const TelecallerDesk = ({ view = "today" }) => {
   const { data, isLoading, isError } = useGetMyLeadDesk({
     section: view,
     queue: view === "leads" ? queue : "all",
+    ...(view === "leads" && statusFilter ? { status: statusFilter } : {}),
+    ...(view === "tasks" ? { done: showDoneTasks } : {}),
     page: view === "leads" ? page : 1,
     limit: 15,
     search: view === "leads" ? search : "",
@@ -383,12 +526,36 @@ const TelecallerDesk = ({ view = "today" }) => {
 
   const { data: statusesData } = useGetLeadStatuses(null);
   const { mutate: logInteraction, isPending } = useLogLeadInteraction();
+  const { mutate: updateLead } = useUpdateLead();
+  const queryClient = useQueryClient();
+
+  const moveToStage = (lead, stage) => {
+    if (stage.category === "Won" || stage.category === "Lost") {
+      handleCloseRequest(lead, stage.category === "Won" ? "won" : "lost");
+      return;
+    }
+    const projectId = String(lead.project?._id || lead.project || "");
+    const match =
+      stage.statuses.find((status) => status.project && String(status.project) === projectId) ||
+      stage.statuses.find((status) => !status.project) ||
+      stage.statuses[0];
+    updateLead(
+      { leadId: lead._id, leadData: { status: match.id } },
+      {
+        onSuccess: () => {
+          toast.success(`Moved to ${stage.name}`);
+          queryClient.invalidateQueries({ queryKey: ["telecallerDesk"] });
+        },
+        onError: (error) => toast.error(error?.response?.data?.message || "Could not move the lead"),
+      }
+    );
+  };
 
   const firstLoad = isLoading && !data;
   const statuses = statusesData?.data || [];
 
   const openLead = (lead) => {
-    if (lead?._id) navigate(`/leads/${lead._id}`);
+    if (lead?._id) goToLead(lead._id);
   };
 
   const saveInteraction = ({ interactionData, leadUpdateData }) => {
@@ -407,6 +574,95 @@ const TelecallerDesk = ({ view = "today" }) => {
     );
   };
 
+  const idOf = (status) => status?.id || status?._id;
+  const findByCategory = (category) => statuses.find((status) => status.category === category);
+
+  const handleQuick = (lead, kind) => {
+    const when = new Date();
+    if (kind === "noAnswer") {
+      when.setHours(when.getHours() + 2);
+    } else {
+      when.setDate(when.getDate() + 1);
+      when.setHours(10, 0, 0, 0);
+    }
+    const contacted = findByCategory("Contacted");
+    const statusId = idOf(contacted) || idOf(lead.status);
+    logInteraction(
+      {
+        leadId: lead._id,
+        interactionData: {
+          note: kind === "noAnswer" ? "Called – no answer" : "Asked to call back tomorrow",
+          statusId,
+          scheduled: when.toISOString(),
+          isFollowUp: true,
+          // A no-answer attempt is not a conversation, so it must not earn "valid call" points
+          ...(kind === "noAnswer" ? { outcome: "no_answer", talkSeconds: 0 } : {}),
+        },
+      },
+      {
+        onSuccess: () => toast.success(`Next call: ${format(when, "EEE h:mm a")}`),
+        onError: (error) => toast.error(error?.response?.data?.message || "Could not save"),
+      }
+    );
+  };
+
+  const handleCloseRequest = (lead, kind) => {
+    if (!findByCategory(kind === "won" ? "Won" : "Lost")) {
+      toast.error(`No "${kind === "won" ? "Won" : "Lost"}" status is configured. Add one in Lead Settings.`);
+      return;
+    }
+    setCloseTarget({ lead, kind });
+  };
+
+  const confirmClose = ({ dealValue, lostReason, reengageOn, note }) => {
+    const { lead, kind } = closeTarget;
+    const status = findByCategory(kind === "won" ? "Won" : "Lost");
+    logInteraction(
+      {
+        leadId: lead._id,
+        interactionData: {
+          note,
+          statusId: idOf(status),
+          isFollowUp: false,
+          ...(kind === "won"
+            ? { dealValue: dealValue ? Number(dealValue) : undefined }
+            : {
+                lostReason,
+                reengageOn: reengageOn ? new Date(reengageOn).toISOString() : null,
+              }),
+        },
+      },
+      {
+        onSuccess: () => {
+          setCloseTarget(null);
+          if (kind === "won") {
+            toast(
+              (t) => (
+                <span className="flex items-center gap-3 text-sm">
+                  Lead marked as won 🎉
+                  <button
+                    type="button"
+                    className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white"
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      navigate(`/accounts/proposals/new?leadId=${lead._id}`);
+                    }}
+                  >
+                    Create proposal
+                  </button>
+                </span>
+              ),
+              { duration: 8000 }
+            );
+          } else {
+            toast.success("Lead marked as lost");
+          }
+        },
+        onError: (error) => toast.error(error?.response?.data?.message || "Could not save"),
+      }
+    );
+  };
+
   const cardsForView = () => {
     if (view === "today") return data?.todayFollowUps || [];
     if (view === "overdue") return data?.overdueFollowUps || [];
@@ -417,7 +673,13 @@ const TelecallerDesk = ({ view = "today" }) => {
   const cards = cardsForView();
 
   return (
-    <div className="h-full overflow-y-auto px-0 pb-16 pt-0 lg:p-0">
+    <div
+      className={
+        view === "pipeline"
+          ? "flex h-full flex-col overflow-hidden px-0 pb-14 pt-0 lg:p-0"
+          : "h-full overflow-y-auto px-0 pb-16 pt-0 lg:p-0"
+      }
+    >
       <DeskNav />
       {canFilter &&
         headerSlot &&
@@ -437,6 +699,24 @@ const TelecallerDesk = ({ view = "today" }) => {
         </p>
       )}
 
+      {view === "today" && <TodaySummary summary={data?.summary} />}
+      {view === "today" && (!canFilter || employeeId !== "all") && (
+        <KpiScoreCard userId={canFilter ? employeeId : undefined} />
+      )}
+
+      {(view === "today" || view === "overdue") && cards.length > 0 && (
+        <div className="mb-2 flex justify-end lg:mb-3">
+          <button
+            type="button"
+            onClick={() => setQueueLeads(cards)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#3F8CFF] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2f6bff]"
+          >
+            <FiPlay className="h-3.5 w-3.5" />
+            Start calling ({cards.length})
+          </button>
+        </div>
+      )}
+
       {view === "today" && (
         <div className="grid gap-2 lg:grid-cols-3 lg:gap-4">
           <section className="space-y-2 lg:col-span-2 lg:space-y-3">
@@ -446,7 +726,17 @@ const TelecallerDesk = ({ view = "today" }) => {
               <EmptyState>Nothing scheduled for today.</EmptyState>
             ) : (
               cards.map((lead) => (
-                <FollowUpCard key={lead._id} lead={lead} onOpen={openLead} onLog={setActiveLead} />
+                <FollowUpCard
+                  key={lead._id}
+                  lead={lead}
+                  onOpen={openLead}
+                  onLog={setActiveLead}
+                  onQuick={handleQuick}
+                  onClose={handleCloseRequest}
+                  onTask={setTaskLead}
+                  busy={isPending}
+                  agent={user?.firstName}
+                />
               ))
             )}
           </section>
@@ -461,7 +751,7 @@ const TelecallerDesk = ({ view = "today" }) => {
                   <button
                     key={call._id}
                     type="button"
-                    onClick={() => call.leadId && navigate(`/leads/${call.leadId}`)}
+                    onClick={() => call.leadId && goToLead(call.leadId)}
                     className="flex w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left hover:bg-slate-50"
                   >
                     <span className="min-w-0">
@@ -495,10 +785,36 @@ const TelecallerDesk = ({ view = "today" }) => {
                 overdue={view === "overdue"}
                 onOpen={openLead}
                 onLog={setActiveLead}
+                onQuick={handleQuick}
+                onClose={handleCloseRequest}
+                onTask={setTaskLead}
+                busy={isPending}
+                agent={user?.firstName}
               />
             ))
           )}
         </div>
+      )}
+
+      {view === "tasks" && (
+        <LeadTaskList
+          tasks={data?.tasks || []}
+          summary={data?.summary}
+          loading={firstLoad}
+          showDone={showDoneTasks}
+          onToggleDone={setShowDoneTasks}
+          onOpenLead={(leadId) => goToLead(leadId)}
+          onOpenTask={(taskId) => navigate(`/tasks/${taskId}`)}
+        />
+      )}
+
+      {view === "pipeline" && (!canFilter || employeeId !== "all") && (
+        <div className="shrink-0">
+          <KpiScoreCard userId={canFilter ? employeeId : undefined} />
+        </div>
+      )}
+      {view === "pipeline" && (
+        <PipelineBoard pipeline={data?.pipeline} loading={firstLoad} onMove={moveToStage} onOpen={openLead} />
       )}
 
       {view === "leads" && (
@@ -522,16 +838,26 @@ const TelecallerDesk = ({ view = "today" }) => {
             {(data?.statusBreakdown || []).length > 0 && (
               <>
                 <span className="mx-1 hidden h-5 w-px bg-[#E6EDF5] lg:block" />
-                {data.statusBreakdown.map((status) => (
-                  <span
-                    key={status.name}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#D8E0F0] px-3 py-1.5 text-xs text-[#7D8592]"
-                  >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: status.color }} />
-                    {status.name}
-                    <span className="font-bold text-slate-900">{status.count}</span>
-                  </span>
-                ))}
+                {data.statusBreakdown.map((status) => {
+                  const active = statusFilter && statusFilter === String(status.id);
+                  return (
+                    <button
+                      key={status.name}
+                      type="button"
+                      disabled={!status.id}
+                      onClick={() => setStatusFilter(active ? "" : String(status.id))}
+                      className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        active
+                          ? "border-[#3F8CFF] bg-[#3F8CFF]/10 text-[#3F8CFF]"
+                          : "border-[#D8E0F0] text-[#7D8592] hover:border-slate-300"
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: status.color }} />
+                      {status.name}
+                      <span className="font-bold text-slate-900">{status.count}</span>
+                    </button>
+                  );
+                })}
               </>
             )}
             <label className="flex w-full items-center gap-2 rounded-full bg-[#F4F9FD] px-3.5 py-2 lg:ml-auto lg:w-auto lg:min-w-[260px]">
@@ -551,36 +877,58 @@ const TelecallerDesk = ({ view = "today" }) => {
               <p className="py-8 text-center text-sm text-slate-400">No leads in this view.</p>
             ) : (
               data.leads.map((lead) => (
-                <button
+                <div
                   key={lead._id}
-                  type="button"
-                  onClick={() => openLead(lead)}
-                  className="flex w-full items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/70 px-2 py-1.5 text-left"
+                  className="flex w-full items-center gap-2 rounded-lg border border-slate-100 bg-slate-50/70 px-2 py-1.5"
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600">
-                    {initial(lead.name)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-xs font-semibold text-slate-800">{lead.name || "Untitled lead"}</span>
-                      <StatusPill status={lead.status} />
+                  <button
+                    type="button"
+                    onClick={() => openLead(lead)}
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600">
+                      {initial(lead.name)}
                     </span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-slate-400">
-                      {lead.phone ? (
-                        <a
-                          href={dialHref(lead.phone)}
-                          onClick={(event) => event.stopPropagation()}
-                          className="shrink-0 font-semibold text-emerald-700"
-                        >
-                          {lead.phone}
-                        </a>
-                      ) : (
-                        <span>No phone</span>
-                      )}
-                      <span className="truncate">{followUpWhen(lead.scheduled)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-xs font-semibold text-slate-800">{lead.name || "Untitled lead"}</span>
+                        <StatusPill status={lead.status} />
+                      </span>
+                      <span className="mt-0.5 block truncate text-[10px] text-slate-400">
+                        <span className="font-semibold text-emerald-700">{lead.phone || "No phone"}</span>{" "}
+                        {followUpWhen(lead.scheduled)}
+                      </span>
                     </span>
-                  </span>
-                </button>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {lead.phone && (
+                      <a
+                        href={dialHref(lead.phone)}
+                        aria-label={`Call ${lead.name || "lead"}`}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white"
+                      >
+                        <FiPhone className="h-4 w-4" />
+                      </a>
+                    )}
+                    <WhatsAppMenu iconOnly phone={lead.phone} name={lead.name} agent={user?.firstName} />
+                    <button
+                      type="button"
+                      onClick={() => setActiveLead(lead)}
+                      aria-label={`Log follow-up for ${lead.name || "lead"}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/15 text-blue-600"
+                    >
+                      <FiEdit3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTaskLead(lead)}
+                      aria-label={`Add task for ${lead.name || "lead"}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-500/15 text-slate-500"
+                    >
+                      <FiCheckSquare className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -594,16 +942,17 @@ const TelecallerDesk = ({ view = "today" }) => {
                   <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide">Status</th>
                   <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide">Follow-up</th>
                   <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide">Calls</th>
+                  <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {firstLoad ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading your leads…</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading your leads…</td>
                   </tr>
                 ) : (data?.leads || []).length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">No leads in this view.</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">No leads in this view.</td>
                   </tr>
                 ) : (
                   data.leads.map((lead) => (
@@ -632,6 +981,39 @@ const TelecallerDesk = ({ view = "today" }) => {
                       <td className="px-5 py-3.5"><StatusPill status={lead.status} /></td>
                       <td className="px-5 py-3.5 text-slate-600">{followUpWhen(lead.scheduled)}</td>
                       <td className="px-5 py-3.5 text-slate-600">{lead.followUpCount || 0}</td>
+                      <td className="px-5 py-3.5" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex gap-1.5">
+                          <WhatsAppMenu compact phone={lead.phone} name={lead.name} agent={user?.firstName} />
+                          <button
+                            type="button"
+                            onClick={() => setActiveLead(lead)}
+                            className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100"
+                          >
+                            Log
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTaskLead(lead)}
+                            className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                          >
+                            Task
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCloseRequest(lead, "won")}
+                            className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100"
+                          >
+                            Won
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCloseRequest(lead, "lost")}
+                            className="rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-100"
+                          >
+                            Lost
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -671,6 +1053,34 @@ const TelecallerDesk = ({ view = "today" }) => {
         lead={activeLead}
         statuses={statuses}
         interactionType="followup"
+      />
+      {queueLeads && (
+        <CallQueue
+          leads={queueLeads}
+          title={view === "overdue" ? "Overdue calls" : "Today's calls"}
+          onExit={() => setQueueLeads(null)}
+          renderLead={(lead) => (
+            <FollowUpCard
+              key={lead._id}
+              lead={lead}
+              overdue={view === "overdue"}
+              onOpen={openLead}
+              onLog={setActiveLead}
+              onQuick={handleQuick}
+              onClose={handleCloseRequest}
+              onTask={setTaskLead}
+              busy={isPending}
+              agent={user?.firstName}
+            />
+          )}
+        />
+      )}
+      <CreateLeadTaskModal lead={taskLead} isOpen={Boolean(taskLead)} onClose={() => setTaskLead(null)} />
+      <CloseLeadModal
+        target={closeTarget}
+        saving={isPending}
+        onCancel={() => setCloseTarget(null)}
+        onConfirm={confirmClose}
       />
     </div>
   );

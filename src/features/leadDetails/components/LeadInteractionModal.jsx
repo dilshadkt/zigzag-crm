@@ -4,6 +4,7 @@ import LeadStatusBadge from "../../leads/components/LeadStatusBadge";
 import DynamicLeadForm from "../../leads/components/DynamicLeadForm";
 import { useGetLeadFormConfig } from "../../leads/api";
 import { mapLeadDataToFormValue } from "../../../utils/leadFormUtils";
+import ClosingFields, { isWonStatus, isLostStatus } from "./ClosingFields";
 
 const LeadInteractionModal = ({ 
   isOpen, 
@@ -17,7 +18,11 @@ const LeadInteractionModal = ({
   const [statusId, setStatusId] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [isFollowUp, setIsFollowUp] = useState(false);
-  
+  const [closing, setClosing] = useState({});
+  // How long the conversation lasted; feeds the "valid call" points. "" = not recorded.
+  const [talkTime, setTalkTime] = useState("");
+  const [interactionErrors, setInteractionErrors] = useState({});
+
   // Dynamic Form State
   const [formValues, setFormValues] = useState({});
   const [errors, setErrors] = useState({});
@@ -76,6 +81,9 @@ const LeadInteractionModal = ({
     if (isOpen) {
       setNote("");
       setScheduledDate("");
+      setClosing({});
+      setTalkTime("");
+      setInteractionErrors({});
       setIsFollowUp(interactionType === 'followup');
       
       // Initialize dynamic form values
@@ -143,6 +151,20 @@ const LeadInteractionModal = ({
       return;
     }
 
+    const selectedStatus = (statuses || []).find((s) => (s.id || s._id) === statusId);
+    const won = isWonStatus(selectedStatus);
+    const lost = isLostStatus(selectedStatus);
+    const interactionIssues = {};
+    if (isFollowUp && !won && !lost && !scheduledDate) {
+      interactionIssues.scheduledDate = "Pick a date and time for the next follow-up";
+    }
+    if (lost && !closing.lostReason) interactionIssues.lostReason = "Select a reason";
+    if (won && closing.dealValue && Number(closing.dealValue) < 0) {
+      interactionIssues.dealValue = "Deal value cannot be negative";
+    }
+    setInteractionErrors(interactionIssues);
+    if (Object.keys(interactionIssues).length > 0) return;
+
     // Process lead update data
     const contactData = { name: "", email: "", phone: "", company: "" };
     const customFields = {};
@@ -196,11 +218,24 @@ const LeadInteractionModal = ({
         note, 
         statusId: formStatusId, 
         scheduled: scheduledDate ? new Date(scheduledDate).toISOString() : null,
-        isFollowUp 
+        isFollowUp: won || lost ? false : isFollowUp,
+        ...(talkTime !== ""
+          ? {
+              talkSeconds: Number(talkTime),
+              ...(Number(talkTime) === 0 ? { outcome: "no_answer" } : {}),
+            }
+          : {}),
+        ...(won ? { dealValue: closing.dealValue ? Number(closing.dealValue) : undefined } : {}),
+        ...(lost
+          ? {
+              lostReason: closing.lostReason,
+              reengageOn: closing.reengageOn ? new Date(closing.reengageOn).toISOString() : null,
+            }
+          : {}),
       },
       leadUpdateData
     });
-    onClose();
+    // The parent closes the modal once the save succeeds, so a failed save keeps the form.
   };
 
   const getTitle = () => {
@@ -217,7 +252,8 @@ const LeadInteractionModal = ({
     return "Enter your note here...";
   };
 
-  console.log("LeadInteractionModal State:", { isOpen, projectId, formFields, formValues, isLoadingFormConfig, statuses });
+  const selectedStatusObj = (statuses || []).find((s) => (s.id || s._id) === statusId);
+  const closingKind = isWonStatus(selectedStatusObj) ? "won" : isLostStatus(selectedStatusObj) ? "lost" : null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -266,6 +302,31 @@ const LeadInteractionModal = ({
               </div>
 
               <div>
+                <label className="block text-sm font-bold text-slate-700 mb-3">How long did you talk?</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: "0", label: "Not connected" },
+                    { value: "30", label: "Under 1 min" },
+                    { value: "120", label: "1–3 min" },
+                    { value: "240", label: "3+ min" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setTalkTime(talkTime === option.value ? "" : option.value)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        talkTime === option.value
+                          ? "border-[#3f8cff] bg-blue-50 text-[#3f8cff]"
+                          : "border-slate-200 text-slate-500 hover:border-slate-300"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-bold text-slate-700 mb-3">Update Lead Status</label>
                 <div className="grid grid-cols-2 gap-3">
                   {statuses.map((status) => (
@@ -299,8 +360,17 @@ const LeadInteractionModal = ({
                 </div>
               </div>
 
+              {closingKind && (
+                <ClosingFields
+                  kind={closingKind}
+                  values={closing}
+                  onChange={setClosing}
+                  errors={interactionErrors}
+                />
+              )}
+
               {/* Follow-up Specific Fields */}
-              {(interactionType === 'followup' || interactionType === 'call' || interactionType === 'whatsapp') && (
+              {!closingKind && (interactionType === 'followup' || interactionType === 'call' || interactionType === 'whatsapp') && (
                 <div className="space-y-4 pt-4 border-t border-slate-100">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700">Mark as Follow-up Lead?</label>
@@ -338,6 +408,9 @@ const LeadInteractionModal = ({
                         onChange={(e) => setScheduledDate(e.target.value)}
                         className="w-full px-4 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-[#3f8cff]/10 focus:border-[#3f8cff] outline-none transition-all text-slate-600 bg-slate-50/50"
                       />
+                      {interactionErrors.scheduledDate && (
+                        <p className="mt-1 text-xs text-red-500">{interactionErrors.scheduledDate}</p>
+                      )}
                     </div>
                   )}
                 </div>

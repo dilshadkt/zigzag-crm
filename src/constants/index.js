@@ -149,6 +149,8 @@ export const SIDE_MENU = [
       { id: 182, title: "Overdue", path: "/my-calls/overdue", routeKey: "my-calls" },
       { id: 183, title: "Upcoming", path: "/my-calls/upcoming", routeKey: "my-calls" },
       { id: 184, title: "My leads", path: "/my-calls/leads", routeKey: "my-calls" },
+      { id: 185, title: "Pipeline", path: "/my-calls/pipeline", routeKey: "my-calls" },
+      { id: 186, title: "Tasks", path: "/my-calls/tasks", routeKey: "my-calls" },
     ],
   },
   {

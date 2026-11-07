@@ -6,12 +6,14 @@ import LeadStatusList from "./components/LeadStatusList";
 import LeadScoringRules from "./components/LeadScoringRules";
 import LeadAssignmentRules from "./components/LeadAssignmentRules";
 import LeadDashboardConfig from "./components/LeadDashboardConfig";
+import WhatsappTemplates from "./components/WhatsappTemplates";
 import { useGetLeadFormConfig } from "../../api/hooks";
 
 const TABS = {
   FORM: "Lead Form",
   DASHBOARD: "Dashboard",
-  STATUSES: "Statuses",
+  STATUSES: "Pipeline Stages",
+  WHATSAPP: "WhatsApp Templates",
   SCORING: "Scoring Rules",
   ASSIGNMENT: "Assignment Rules",
 };
@@ -65,6 +67,7 @@ const LeadSettingsFeature = () => {
           )
         )}
         {activeTab === TABS.STATUSES && <LeadStatusList />}
+        {activeTab === TABS.WHATSAPP && <WhatsappTemplates />}
         {activeTab === TABS.DASHBOARD && <LeadDashboardConfig fields={fields} />}
         {activeTab === TABS.SCORING && <LeadScoringRules fields={fields} />}
         {activeTab === TABS.ASSIGNMENT && <LeadAssignmentRules fields={fields} />}

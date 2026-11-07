@@ -1,7 +1,7 @@
 import { FaWhatsapp } from "react-icons/fa";
-import { FiPhone, FiMail, FiClipboard } from "react-icons/fi";
+import { FiPhone, FiMail, FiClipboard, FiCheckSquare } from "react-icons/fi";
 
-const LeadQuickActions = ({ onCall, onWhatsapp, onEmail, onNotes, onFollowup, phoneNumber }) => {
+const LeadQuickActions = ({ onCall, onWhatsapp, onEmail, onNotes, onFollowup, onTask, phoneNumber }) => {
   const actions = [
     { 
       label: "Email", 
@@ -37,8 +37,15 @@ const LeadQuickActions = ({ onCall, onWhatsapp, onEmail, onNotes, onFollowup, ph
         if (onFollowup) onFollowup();
       }
     },
-    { 
-      label: "Notes", 
+    {
+      label: "Task",
+      icon: FiCheckSquare,
+      onClick: () => {
+        if (onTask) onTask();
+      }
+    },
+    {
+      label: "Notes",
       icon: FiClipboard,
       onClick: () => {
         if (onNotes) onNotes();

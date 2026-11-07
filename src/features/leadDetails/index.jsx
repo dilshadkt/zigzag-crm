@@ -11,12 +11,15 @@ import LeadActivityPanel from "./components/LeadActivityPanel";
 import LeadQuickActions from "./components/LeadQuickActions";
 import { useUploadLeadAttachment, useGetLeadActivities, useLogLeadActivity, useLogLeadInteraction, useAddLeadNote, useUpdateLead, useGetLeadStatuses, useUpdateLeadNote, useDeleteLeadNote, useGetLeadNotes } from "../leads/api";
 import LeadInteractionModal from "./components/LeadInteractionModal";
+import CreateLeadTaskModal from "./components/CreateLeadTaskModal";
+import LeadTasks from "./components/LeadTasks";
 import { toast } from "react-hot-toast";
 
-const TABS = ["Overview", "Timeline", "Notes", "Attachments", "Follow Up History"];
+const TABS = ["Overview", "Timeline", "Notes", "Tasks", "Attachments", "Follow Up History"];
 
 const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const leadId = lead.id || lead._id;
 
   // Use notes from lead.details (will be updated when API refetches)
@@ -256,6 +259,8 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
             leadId={lead.id || lead._id}
           />
         );
+      case "Tasks":
+        return <LeadTasks leadId={lead.id || lead._id} onCreate={() => setIsTaskModalOpen(true)} />;
       case "Attachments":
         return (
           <LeadAttachments
@@ -338,6 +343,7 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
             onEmail={() => setActiveTab("Emails")}
             onNotes={() => setActiveTab("Notes")}
             onFollowup={handleFollowupClick}
+            onTask={() => setIsTaskModalOpen(true)}
             phoneNumber={phoneNumber}
           />
         </div>
@@ -381,6 +387,12 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
           </button>
         </div>
       )}
+      <CreateLeadTaskModal
+        lead={lead}
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onCreated={() => setActiveTab("Tasks")}
+      />
       {/* Interaction Follow-up Modal */}
       <LeadInteractionModal
         isOpen={isInteractionModalOpen}
