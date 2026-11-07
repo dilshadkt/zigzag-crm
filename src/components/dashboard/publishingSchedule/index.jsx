@@ -9,6 +9,9 @@ const columnsFor = (days) => (days === 12 ? 4 : 3);
 
 // Lime shades from light (1 post) to strong (3+ posts), mirroring the reference heatmap
 const SHADES = ["", "#E4F6A8", "#D3F26A", "#C2EE3D"];
+// Text on the lime tiles: dark olive, readable on every shade above in light and dark mode
+const LIME_TEXT = "#1F2D00";
+const LIME_TEXT_MUTED = "#3A4A0A";
 const HATCH =
     "repeating-linear-gradient(135deg, var(--hatch-a, #E6EAF0) 0px, var(--hatch-a, #E6EAF0) 1.5px, var(--hatch-b, #F4F7FA) 1.5px, var(--hatch-b, #F4F7FA) 5px)";
 
@@ -67,11 +70,24 @@ const DayTile = ({ day, clients, onHover, onLeave, onClick }) => {
             } ${day.isToday ? "ring-2 ring-[#0A1629]" : ""}`}
             style={total ? { backgroundColor: shade } : { background: HATCH }}
         >
+            {/* Filled tiles stay light lime in both themes, so their text uses inline dark
+                colours (the dark theme remaps text-[#0A1629] / text-[#3D5200] to light
+                shades, which made the labels unreadable on the lime). Empty hatched tiles
+                follow the theme. */}
             <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium text-[#5B6B2A]/80">
-                    {day.weekday} <span className="font-semibold text-[#0A1629]">{day.day}</span>
+                <span
+                    className={total ? "text-[10px] font-semibold" : "text-[10px] font-medium text-[#5B6B2A]/80"}
+                    style={total ? { color: LIME_TEXT_MUTED } : undefined}
+                >
+                    {day.weekday}{" "}
+                    <span
+                        className={total ? "font-bold" : "font-semibold text-[#0A1629]"}
+                        style={total ? { color: LIME_TEXT } : undefined}
+                    >
+                        {day.day}
+                    </span>
                 </span>
-                {allDone && <FiCheck className="h-3 w-3 text-[#3D5200]" strokeWidth={3} />}
+                {allDone && <FiCheck className="h-3 w-3" style={{ color: LIME_TEXT }} strokeWidth={3} />}
             </div>
             {total > 0 && (
                 <div className="mt-1 flex items-center">
@@ -83,9 +99,9 @@ const DayTile = ({ day, clients, onHover, onLeave, onClick }) => {
                         ))}
                     </div>
                     {extra > 0 && (
-                        <span className="ml-1 text-[10px] font-semibold text-[#3D5200]">+{extra}</span>
+                        <span className="ml-1 text-[10px] font-bold" style={{ color: LIME_TEXT }}>+{extra}</span>
                     )}
-                    <span className="ml-auto text-[11px] font-semibold text-[#3D5200]">{total}</span>
+                    <span className="ml-auto text-[11px] font-bold" style={{ color: LIME_TEXT }}>{total}</span>
                 </div>
             )}
         </button>

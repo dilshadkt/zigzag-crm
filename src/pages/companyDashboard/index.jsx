@@ -25,6 +25,7 @@ import EmployeeTodayTasks from "../../components/dashboard/EmployeeTodayTasks";
 import TodayReworkTasks from "../../components/dashboard/TodayReworkTasks";
 import ActionRequiredBanner from "../../components/dashboard/ActionRequiredBanner";
 import AIAssistant from "../../components/dashboard/AIAssistant";
+import VirtualOfficeButton from "../../components/dashboard/virtualOffice/VirtualOfficeButton";
 
 const CompanyDashboard = () => {
   const { companyId, user } = useAuth();
@@ -186,7 +187,14 @@ const CompanyDashboard = () => {
 
   return (
     <section className="flex flex-col gap-1 pb-4">
-      {headerSlot && createPortal(monthFilter, headerSlot)}
+      {headerSlot &&
+        createPortal(
+          <div className="flex items-center gap-2">
+            <VirtualOfficeButton />
+            {monthFilter}
+          </div>,
+          headerSlot
+        )}
 
       <ActionRequiredBanner />
 

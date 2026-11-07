@@ -1,0 +1,369 @@
+/* Virtual office scene. Only loaded with the lazy modal chunk.
+   Everything animates transform/opacity so the browser can keep it cheap. */
+
+.vo-root {
+  --vo-sky-top: #bfe3ff;
+  --vo-sky-bottom: #eaf6ff;
+  --vo-bg: #e8eef7;
+  --vo-floor: #f4f1ea;
+  --vo-floor-line: rgba(120, 100, 70, 0.12);
+  --vo-wall-left: #dfe6f1;
+  --vo-wall-right: #cfd8e6;
+  --vo-wall-trim: #b8c4d6;
+  --vo-rug-a: rgba(99, 102, 241, 0.1);
+  --vo-desk-top: #e8c9a0;
+  --vo-desk-front: #c99b68;
+  --vo-desk-side: #b0834f;
+  --vo-desk-edge: #a57846;
+  --vo-chair: #374151;
+  --vo-chair-seat: #4b5563;
+  --vo-shadow: rgba(15, 23, 42, 0.12);
+  --vo-tag-bg: rgba(255, 255, 255, 0.95);
+  --vo-tag-border: rgba(15, 23, 42, 0.12);
+  --vo-tag-text: #1f2937;
+  --vo-zzz: #6366f1;
+  --vo-rug-line: rgba(99, 102, 241, 0.22);
+  --vo-decal: rgba(51, 65, 85, 0.55);
+  background: radial-gradient(ellipse at 50% 30%, var(--vo-sky-bottom), var(--vo-bg) 70%);
+}
+
+html[data-theme="dark"] .vo-root {
+  --vo-bg: #0b1220;
+  --vo-sky-bottom: #16213a;
+  --vo-floor: #1c2538;
+  --vo-floor-line: rgba(148, 163, 184, 0.08);
+  --vo-wall-left: #222d44;
+  --vo-wall-right: #1a2337;
+  --vo-wall-trim: #33415c;
+  --vo-rug-a: rgba(129, 140, 248, 0.12);
+  --vo-desk-top: #8a6a4a;
+  --vo-desk-front: #6b4f35;
+  --vo-desk-side: #57402b;
+  --vo-desk-edge: #4a3624;
+  --vo-chair: #1f2937;
+  --vo-chair-seat: #2b3646;
+  --vo-shadow: rgba(0, 0, 0, 0.35);
+  --vo-tag-bg: rgba(17, 26, 43, 0.95);
+  --vo-tag-border: rgba(148, 163, 184, 0.25);
+  --vo-tag-text: #e5e7eb;
+  --vo-zzz: #a5b4fc;
+  --vo-rug-line: rgba(129, 140, 248, 0.25);
+  --vo-decal: rgba(203, 213, 225, 0.5);
+}
+
+.vo-viewport {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.vo-viewport.vo-dragging {
+  cursor: grabbing;
+}
+
+.vo-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.vo-station {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+.vo-station .vo-hit {
+  pointer-events: all;
+  cursor: pointer;
+}
+/* Only the animated parts measure transforms from their own box; anything
+   placed with a transform attribute must keep the user-space origin. */
+.vo-station [class*="vo-"] {
+  transform-box: fill-box;
+}
+.vo-station.vo-dim {
+  opacity: 0.22;
+  filter: grayscale(0.7);
+}
+.vo-station.vo-highlight .vo-hit {
+  filter: drop-shadow(0 0 6px var(--vo-state));
+}
+
+/* ---------- typing & hands ---------- */
+.vo-type {
+  animation: vo-type 0.32s ease-in-out infinite alternate;
+  animation-delay: var(--vo-phase);
+}
+.vo-type-b {
+  animation-duration: 0.27s;
+  animation-direction: alternate-reverse;
+}
+.vo-fast {
+  animation-duration: 0.11s !important;
+}
+@keyframes vo-type {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2.4px); }
+}
+
+.vo-blink {
+  transform-origin: 50% 50%;
+  animation: vo-blink 4.2s infinite;
+  animation-delay: var(--vo-phase);
+}
+@keyframes vo-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+/* ---------- screens ---------- */
+.vo-code-scroll { animation: vo-code-scroll 4s linear infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-code-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-48px); }
+}
+
+.vo-hue { animation: vo-hue 3s ease-in-out infinite alternate; transform-origin: 50% 50%; }
+.vo-hue-2 { animation-delay: -1s; }
+.vo-hue-3 { animation-delay: -2s; }
+@keyframes vo-hue {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.08); }
+}
+
+.vo-playhead { animation: vo-playhead 3.2s linear infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-playhead {
+  from { transform: translateX(0); }
+  to { transform: translateX(24px); }
+}
+
+.vo-bar { transform-origin: 50% 100%; animation: vo-bar 1.6s ease-in-out infinite alternate; }
+@keyframes vo-bar {
+  from { transform: scaleY(0.25); }
+  to { transform: scaleY(1); }
+}
+
+.vo-line-grow { transform-origin: 0 50%; animation: vo-line-grow 3.6s steps(9) infinite; }
+@keyframes vo-line-grow {
+  from { transform: scaleX(0); }
+  70%, to { transform: scaleX(1); }
+}
+
+.vo-pop { transform-origin: 50% 50%; animation: vo-pop 1.4s ease-in-out infinite; }
+@keyframes vo-pop {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.vo-cell { animation: vo-cell 2.4s steps(1) infinite; }
+@keyframes vo-cell {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(7px, 0); }
+  50% { transform: translate(7px, 6px); }
+  75% { transform: translate(-7px, 6px); }
+}
+
+.vo-card-move { animation: vo-card-move 3s ease-in-out infinite; }
+@keyframes vo-card-move {
+  0%, 20% { transform: translate(0, 0); }
+  60%, 100% { transform: translate(10.5px, -21px); }
+}
+
+.vo-flash { animation: vo-flash 0.5s steps(1) infinite; }
+@keyframes vo-flash {
+  0% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.vo-saver { animation: vo-saver 6s linear infinite; }
+@keyframes vo-saver {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(14px, 18px); }
+  50% { transform: translate(4px, 24px); }
+  75% { transform: translate(16px, 6px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ---------- people ---------- */
+.vo-breathe { transform-origin: 50% 100%; animation: vo-breathe 3.4s ease-in-out infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.035); }
+}
+.vo-breathe-head { animation: vo-breathe-head 3.4s ease-in-out infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-breathe-head {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+.vo-zzz { opacity: 0; animation: vo-zzz 3s ease-out infinite; }
+@keyframes vo-zzz {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(14px, -34px) scale(1.15); }
+}
+
+.vo-nod { transform-origin: 50% 100%; animation: vo-nod 2.2s ease-in-out infinite; animation-delay: var(--vo-phase); }
+.vo-nod-slow { transform-origin: 50% 100%; animation: vo-nod 4s ease-in-out infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-nod {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-4deg); }
+  60% { transform: rotate(3deg); }
+}
+
+.vo-bob { animation: vo-bob 0.55s ease-in-out infinite alternate; animation-delay: var(--vo-phase); }
+@keyframes vo-bob {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(1.5px) rotate(2deg); }
+}
+
+.vo-talk { transform-origin: 50% 50%; animation: vo-talk 0.35s ease-in-out infinite alternate; }
+@keyframes vo-talk {
+  from { transform: scaleY(0.35); }
+  to { transform: scaleY(1.1); }
+}
+
+.vo-gasp { transform-origin: 50% 50%; animation: vo-talk 0.25s ease-in-out infinite alternate; }
+
+.vo-draw { animation: vo-draw 1.8s ease-in-out infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-draw {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(-1px, 4px); }
+  75% { transform: translate(2px, 1px); }
+}
+
+.vo-scroll-phone { animation: vo-scroll-phone 1.2s ease-in-out infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-scroll-phone {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-1.5px) rotate(-4deg); }
+}
+
+.vo-heart { opacity: 0; animation: vo-heart 2.4s ease-out infinite; }
+@keyframes vo-heart {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(8px, -28px) scale(1.2); }
+}
+
+.vo-stamp { animation: vo-stamp 1.1s ease-in infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-stamp {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-9px); }
+  60% { transform: translateY(0); }
+}
+
+.vo-sip { transform-origin: 0% 100%; animation: vo-sip 5s ease-in-out infinite; animation-delay: var(--vo-phase); }
+@keyframes vo-sip {
+  0%, 60%, 100% { transform: translate(0, 0) rotate(0deg); }
+  70%, 85% { transform: translate(-6px, -4px) rotate(-12deg); }
+}
+
+.vo-tick { opacity: 0; animation: vo-tick 2.8s ease-out infinite; }
+@keyframes vo-tick {
+  0% { opacity: 0; transform: translateY(6px) scale(0.6); }
+  25%, 60% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(1); }
+}
+
+.vo-coin { animation: vo-coin 1.4s ease-in-out infinite; }
+@keyframes vo-coin {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.vo-float { animation: vo-float 2s ease-in-out infinite alternate; }
+@keyframes vo-float {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2px); }
+}
+.vo-dot { animation: vo-dot 0.9s ease-in-out infinite; }
+@keyframes vo-dot {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+.vo-steam-soft { opacity: 0.8; animation: vo-steam-soft 2.4s ease-in-out infinite; }
+@keyframes vo-steam-soft {
+  0% { opacity: 0; transform: translateY(2px); }
+  40% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(-5px); }
+}
+
+/* ---------- overloaded ---------- */
+.vo-shake { animation: vo-shake 0.28s linear infinite; }
+@keyframes vo-shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-1.2px, 0.4px); }
+  50% { transform: translate(1px, -0.4px); }
+  75% { transform: translate(-0.6px, 0.6px); }
+}
+
+.vo-sweat { opacity: 0; animation: vo-sweat 1s ease-in infinite; }
+@keyframes vo-sweat {
+  0% { opacity: 0; transform: translateY(0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(14px); }
+}
+
+.vo-steam { opacity: 0; transform-origin: 50% 50%; animation: vo-steam 1.4s ease-out infinite; }
+@keyframes vo-steam {
+  0% { opacity: 0.8; transform: translateY(0) scale(0.5); }
+  100% { opacity: 0; transform: translateY(-18px) scale(1.6); }
+}
+
+.vo-paper { opacity: 0; transform-origin: 50% 50%; animation: vo-paper 2.2s ease-out infinite; }
+@keyframes vo-paper {
+  0% { opacity: 0; transform: translate(0, 18px) rotate(0deg); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-26px, -46px) rotate(260deg); }
+}
+
+.vo-wobble { transform-origin: 50% 100%; animation: vo-wobble 0.9s ease-in-out infinite alternate; }
+@keyframes vo-wobble {
+  from { transform: rotate(-2.5deg); }
+  to { transform: rotate(2.5deg); }
+}
+
+.vo-alarm { transform-origin: 50% 50%; animation: vo-alarm 0.7s ease-in-out infinite; }
+@keyframes vo-alarm {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.75; }
+}
+
+.vo-ring-pulse { transform-origin: 50% 50%; animation: vo-ring-pulse 1s ease-in-out infinite; }
+@keyframes vo-ring-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* ---------- room ---------- */
+.vo-cloud { animation: vo-cloud 40s linear infinite; }
+@keyframes vo-cloud {
+  from { transform: translateX(-30px); }
+  to { transform: translateX(30px); }
+}
+.vo-clock-hand { transform-box: view-box; }
+
+.vo-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  will-change: transform;
+}
+
+/* Stop the motion for people who asked for less of it, and while dragging */
+.vo-viewport.vo-dragging .vo-station * {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vo-root *,
+  .vo-root *::before,
+  .vo-root *::after {
+    animation: none !important;
+  }
+}
