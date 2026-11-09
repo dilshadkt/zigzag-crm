@@ -11,12 +11,14 @@ import {
   useDeleteVendor,
   useRemoveExpenseCategory,
   useExpenses,
+  useExpenseDescriptions,
   useSetExpenseStatus,
   useUpdateExpense,
   useVendors,
 } from "../hooks/useAccounts";
 import VendorDrawer from "../components/VendorDrawer";
 import SearchableSelect from "../components/SearchableSelect";
+import SuggestInput from "../components/SuggestInput";
 import { EXPENSE_STATUS, PAYMENT_METHODS, downloadCsv, errorMessage, fmtDate, fmtMoney, methodLabel, rangePresets, toInputDate } from "../utils/format";
 import { ConfirmModal, DateRangeFilter, Drawer, EmptyState, ErrorState, Field, PageHeader, Pagination, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, btnSmall, inputCls, selectCls } from "../components/ui";
 
@@ -28,7 +30,10 @@ const blank = () => ({
   billNumber: "",
   amount: "",
   taxAmount: "",
-  project: "",
+  // Clients this is charged to. With two or more, each row carries its share of the amount.
+  clientRows: [{ project: "", share: "" }],
+  // false: the amount is split equally; true: the shares were typed in
+  sharesCustom: false,
   billable: false,
   payments: [{ method: "bank_transfer", amount: "", reference: "" }],
   status: "approved",
@@ -37,8 +42,24 @@ const blank = () => ({
 });
 
 const LEGACY_VENDOR = "__legacy";
+// A client picked as "paid to" - saved as the client's name, since it has no vendor record
+const CLIENT_PREFIX = "client:";
 
 const round2 = (n) => Math.round(n * 100) / 100;
+
+// Split an amount between n clients to the paisa; the last one takes the rounding remainder
+const equalShares = (amount, n) => {
+  const each = Math.floor((amount / n) * 100) / 100;
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? round2(amount - each * (n - 1)) : each));
+};
+
+const clientRowsFor = (expense) => {
+  if (expense.allocations?.length) {
+    return expense.allocations.map((a) => ({ project: a.project?._id || a.project, share: String(a.amount) }));
+  }
+  const project = expense.project?._id || expense.project;
+  return [{ project: project || "", share: "" }];
+};
 
 // Older expenses only have a single paymentMethod / paymentReference
 const paymentsFor = (expense) =>
@@ -52,6 +73,7 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   const update = useUpdateExpense();
   const { data: clients } = useClientLookup(isOpen);
   const { data: vendorData } = useVendors(undefined, isOpen);
+  const { data: pastData } = useExpenseDescriptions(isOpen);
   const [addingVendor, setAddingVendor] = useState(false);
   const [newVendorName, setNewVendorName] = useState("");
   const [toRemove, setToRemove] = useState(null);
@@ -69,7 +91,9 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
             ...blank(),
             ...expense,
             date: toInputDate(expense.date),
-            project: expense.project?._id || expense.project || "",
+            clientRows: clientRowsFor(expense),
+            sharesCustom: Boolean(expense.allocations?.length),
+            billable: Boolean(expense.billable),
             amount: expense.amount,
             taxAmount: expense.taxAmount || "",
             attachments: expense.attachments || [],
@@ -88,7 +112,29 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
       ? [{ value: LEGACY_VENDOR, label: expense?.vendor || "", hint: "not in vendor list", removable: false }]
       : []),
     ...(vendorData?.vendors || []).map((v) => ({ value: v._id, label: v.name, hint: v.gstin || v.phone })),
+    // Clients can be paid to as well (refunds, payments made on their behalf)
+    ...(clients?.clients || []).map((c) => ({ value: CLIENT_PREFIX + c._id, label: c.name, hint: "Client", removable: false })),
   ];
+
+  const descriptionSuggestions = (pastData?.descriptions || []).map((d) => ({
+    ...d,
+    label: d.description,
+    hint: d.category,
+  }));
+
+  // Reusing an earlier expense: fill in what it was usually filed under
+  const pickDescription = (item) => {
+    const patch = { description: item.description };
+    if (listedCategories.includes(item.category)) patch.category = item.category;
+    if (!form.vendorRef) {
+      // Last paid to a vendor record, or to a client (kept as the client's name)
+      const match = item.vendorRef
+        ? vendorOptions.find((o) => o.value === item.vendorRef)
+        : item.vendor && vendorOptions.find((o) => o.value.startsWith(CLIENT_PREFIX) && o.label === item.vendor);
+      if (match) patch.vendorRef = match.value;
+    }
+    set(patch);
+  };
 
   // A category already on this expense stays selectable even if it is off the list now
   const listedCategories = settings?.expenseCategories || [];
@@ -123,6 +169,38 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   };
 
   const total = round2((Number(form.amount) || 0) + (Number(form.taxAmount) || 0));
+
+  // Charging to clients: one client owns the whole amount, several split it
+  const chosenRows = form.clientRows.filter((r) => r.project);
+  const multiClient = chosenRows.length > 1;
+  const shareAmounts = multiClient
+    ? form.sharesCustom
+      ? chosenRows.map((r) => Number(r.share) || 0)
+      : equalShares(Number(form.amount) || 0, chosenRows.length)
+    : [];
+  const sharesSum = round2(shareAmounts.reduce((s, a) => s + a, 0));
+  const sharesOff = multiClient && Math.abs(sharesSum - (Number(form.amount) || 0)) > 0.01;
+  const clientList = clients?.clients || [];
+  const clientName = (id) => clientList.find((c) => c._id === id)?.name;
+
+  const setClientRows = (clientRows, sharesCustom = false) => set({ clientRows, sharesCustom });
+  const pickClient = (i, project) =>
+    setClientRows(form.clientRows.map((r, j) => (j === i ? { ...r, project } : r)));
+  const addClientRow = () => setClientRows([...form.clientRows, { project: "", share: "" }]);
+  const removeClientRow = (i) => {
+    const rest = form.clientRows.filter((_, j) => j !== i);
+    setClientRows(rest.length ? rest : [{ project: "", share: "" }]);
+  };
+  // Typing a share freezes the others at what they show now, so only that row moves
+  const setShare = (rowIndex, value) => {
+    let n = -1;
+    const rows = form.clientRows.map((r, j) => {
+      if (r.project) n += 1;
+      const shown = r.project ? String(shareAmounts[n]) : "";
+      return { ...r, share: j === rowIndex ? value : shown };
+    });
+    setClientRows(rows, true);
+  };
 
   // One payment pays the whole total; with several, each row carries its own amount
   const split = form.payments.length > 1;
@@ -170,12 +248,18 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
       );
       return;
     }
+    if (sharesOff) {
+      toast.error(`Client shares add up to ${fmtMoney(sharesSum, symbol)} but the amount is ${fmtMoney(Number(form.amount) || 0, symbol)}`);
+      return;
+    }
     const payload = {
       ...form,
       amount: Number(form.amount),
       taxAmount: Number(form.taxAmount) || 0,
-      project: form.project || null,
-      billable: Boolean(form.project && form.billable),
+      project: chosenRows.length === 1 ? chosenRows[0].project : null,
+      allocations: multiClient ? chosenRows.map((r, i) => ({ project: r.project, amount: shareAmounts[i] })) : [],
+      // A shared expense can't be billed to one client
+      billable: Boolean(chosenRows.length === 1 && form.billable),
       payments: form.payments.map((p) => ({
         method: p.method,
         amount: split ? Number(p.amount) : total,
@@ -183,8 +267,14 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
       })),
     };
     delete payload._id;
+    delete payload.clientRows;
+    delete payload.sharesCustom;
     if (form.vendorRef === LEGACY_VENDOR) delete payload.vendorRef; // keep the old text name as it is
-    else delete payload.vendor;
+    else if (form.vendorRef.startsWith(CLIENT_PREFIX)) {
+      // A client has no vendor record: unlink any vendor and keep the client's name as text
+      payload.vendorRef = null;
+      payload.vendor = vendorOptions.find((o) => o.value === form.vendorRef)?.label || "";
+    } else delete payload.vendor;
     delete payload.paymentMethod;
     delete payload.paymentReference;
     try {
@@ -228,7 +318,15 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
             />
           </Field>
         </div>
-        <Field label="Description" required><input className={inputCls} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="What was it for?" /></Field>
+        <Field label="Description" required>
+          <SuggestInput
+            value={form.description}
+            onChange={(description) => set({ description })}
+            onPick={pickDescription}
+            suggestions={descriptionSuggestions}
+            placeholder="What was it for?"
+          />
+        </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Vendor / paid to">
             <SearchableSelect
@@ -255,13 +353,77 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
         <p className="text-xs text-slate-500">Total paid: <b>{fmtMoney(total, symbol)}</b></p>
 
         <div className="p-3 rounded-xl bg-slate-50 space-y-3">
-          <Field label="Charge to client" hint="Counts towards that client's project cost">
-            <select className={selectCls} value={form.project} onChange={(e) => set({ project: e.target.value, billable: e.target.value ? form.billable : false })}>
-              <option value="">Not for a specific client</option>
-              {(clients?.clients || []).map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
-          </Field>
-          {form.project && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Charge to client</span>
+              {multiClient && form.sharesCustom && (
+                <button type="button" className="text-xs font-semibold text-[#3F8CFF]" onClick={() => setClientRows(form.clientRows)}>
+                  Split equally
+                </button>
+              )}
+            </div>
+            {form.clientRows.map((row, i) => {
+              const taken = new Set(form.clientRows.filter((_, j) => j !== i).map((r) => r.project));
+              const options = clientList.filter((c) => !taken.has(c._id)).map((c) => ({ value: c._id, label: c.name }));
+              // A client that has since been removed from the list stays visible on an old expense
+              if (row.project && !options.some((o) => o.value === row.project)) {
+                options.push({ value: row.project, label: clientName(row.project) || "Unknown client" });
+              }
+              const shareIndex = row.project ? chosenRows.indexOf(row) : -1;
+              return (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <SearchableSelect
+                      value={row.project}
+                      onChange={(project) => pickClient(i, project)}
+                      options={options}
+                      placeholder={i === 0 ? "Not for a specific client" : "Select client"}
+                      searchPlaceholder="Search clients…"
+                      clearLabel={i === 0 ? "Not for a specific client" : undefined}
+                      emptyText="No client found"
+                    />
+                  </div>
+                  {multiClient && row.project && (
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      aria-label={`${clientName(row.project) || "Client"} share`}
+                      className={`${inputCls} !w-28 shrink-0`}
+                      value={shareAmounts[shareIndex] ?? ""}
+                      onChange={(e) => setShare(i, e.target.value)}
+                    />
+                  )}
+                  {form.clientRows.length > 1 && (
+                    <button
+                      type="button"
+                      title="Remove client"
+                      aria-label="Remove client"
+                      onClick={() => removeClientRow(i)}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                    >
+                      <FiX />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {chosenRows.length > 0 && form.clientRows.every((r) => r.project) && clientList.length > form.clientRows.length && (
+              <button type="button" className="flex items-center gap-1 text-xs font-semibold text-[#3F8CFF]" onClick={addClientRow}>
+                <FiPlus /> Add another client
+              </button>
+            )}
+            {multiClient ? (
+              <p className={`text-xs ${sharesOff ? "text-red-500" : "text-slate-500"}`}>
+                {sharesOff
+                  ? `Shares add up to ${fmtMoney(sharesSum, symbol)} of ${fmtMoney(Number(form.amount) || 0, symbol)}`
+                  : "The amount (before tax) is shared between these clients and counts towards each one&apos;s project cost."}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400">Counts towards that client&apos;s project cost</p>
+            )}
+          </div>
+          {chosenRows.length === 1 && (
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" checked={form.billable} onChange={(e) => set({ billable: e.target.checked })} />
               Bill this to the client (shows up when creating their invoice)
@@ -392,7 +554,7 @@ const Expenses = () => {
     const rows = data?.expenses || [];
     downloadCsv(`expenses-${range.from}-to-${range.to}.csv`, [
       ["Date", "Category", "Description", "Vendor", "Bill no", "Client", "Amount", "GST", "Total", "Status", "Paid by"],
-      ...rows.map((e) => [toInputDate(e.date), e.category, e.description, e.vendor, e.billNumber, e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
+      ...rows.map((e) => [toInputDate(e.date), e.category, e.description, e.vendor, e.billNumber, e.allocations?.length ? e.allocations.map((a) => `${a.project?.name || "Unknown"} ${a.amount}`).join(" + ") : e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
     ]);
   };
 
@@ -453,7 +615,7 @@ const Expenses = () => {
                     <p className="text-xs text-slate-400">{r.category}{r.vendor ? ` · ${r.vendor}` : ""}{r.attachments?.length ? ` · ${r.attachments.length} file` : ""}{r.payments?.length > 1 ? ` · ${r.payments.map((p) => methodLabel(p.method)).join(" + ")}` : ""}</p>
                   </div>
                 ) },
-                { key: "client", title: "Client", render: (r) => (r.project ? <div><span>{r.project.name}</span>{r.billable && <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.invoice ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{r.invoice ? `Billed ${r.invoice.number}` : "Billable"}</span>}</div> : <span className="text-slate-300">—</span>) },
+                { key: "client", title: "Client", render: (r) => (r.allocations?.length ? <div title={r.allocations.map((a) => `${a.project?.name || "Unknown"}: ${fmtMoney(a.amount, symbol)}`).join("\n")}><span>{r.allocations[0].project?.name || "Unknown"}</span><span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">+{r.allocations.length - 1} more</span></div> : r.project ? <div><span>{r.project.name}</span>{r.billable && <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.invoice ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{r.invoice ? `Billed ${r.invoice.number}` : "Billable"}</span>}</div> : <span className="text-slate-300">—</span>) },
                 { key: "status", title: "Status", render: (r) => <StatusBadge status={r.status} map={EXPENSE_STATUS} /> },
                 { key: "total", title: "Total", align: "right", render: (r) => <div><span className="font-semibold">{fmtMoney(r.total, symbol)}</span>{r.taxAmount > 0 && <p className="text-[11px] text-slate-400">incl. GST {fmtMoney(r.taxAmount, symbol)}</p>}</div> },
                 ...(canManage ? [{ key: "act", title: "", align: "right", render: (r) => (

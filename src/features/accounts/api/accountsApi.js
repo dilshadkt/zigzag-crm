@@ -57,6 +57,7 @@ export const accountsApi = {
   convertProposal: (id, data) => post(`/proposals/${id}/convert`, data),
 
   expenses: (params) => get("/expenses", params),
+  expenseDescriptions: () => get("/expenses/descriptions"),
   createExpense: (data) => post("/expenses", data),
   updateExpense: (id, data) => put(`/expenses/${id}`, data),
   setExpenseStatus: (id, data) => patch(`/expenses/${id}/status`, data),

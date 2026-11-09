@@ -94,6 +94,8 @@ export const useConvertProposal = () =>
 
 // Expenses
 export const useExpenses = (params) => useRead("expenses", accountsApi.expenses, params, { placeholderData: (prev) => prev });
+export const useExpenseDescriptions = (enabled = true) =>
+  useRead("expense-descriptions", accountsApi.expenseDescriptions, null, { enabled, staleTime: 60 * 1000 });
 export const useCreateExpense = () => useWrite(accountsApi.createExpense, { success: "Expense added" });
 export const useUpdateExpense = () =>
   useWrite(({ id, data }) => accountsApi.updateExpense(id, data), { success: "Expense updated" });
