@@ -478,8 +478,6 @@ const TelecallerDesk = ({ view = "today" }) => {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const canFilter = user?.role === "company-admin" || hasPermission("leads", "viewAll");
-  // The API only lets people with the leads "create" permission add leads
-  const canAddLead = user?.role === "company-admin" || hasPermission("leads", "create");
   const [queue, setQueue] = useState("open");
   const [statusFilter, setStatusFilter] = useState("");
   const [closeTarget, setCloseTarget] = useState(null);
@@ -865,17 +863,16 @@ const TelecallerDesk = ({ view = "today" }) => {
                 })}
               </>
             )}
-            {canAddLead && (
-              <button
-                type="button"
-                onClick={() => setAddLeadOpen(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#3F8CFF] px-4 py-2 text-xs font-semibold text-white hover:bg-[#2f6bff] lg:ml-auto"
-              >
-                <FiPlus className="h-3.5 w-3.5" />
-                Add lead
-              </button>
-            )}
-            <label className={`flex w-full items-center gap-2 rounded-full bg-[#F4F9FD] px-3.5 py-2 lg:w-auto lg:min-w-[260px] ${canAddLead ? "" : "lg:ml-auto"}`}>
+            {/* Anyone on the My Calls desk can add a lead; it is created under their name */}
+            <button
+              type="button"
+              onClick={() => setAddLeadOpen(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#3F8CFF] px-4 py-2 text-xs font-semibold text-white hover:bg-[#2f6bff] lg:ml-auto"
+            >
+              <FiPlus className="h-3.5 w-3.5" />
+              Add lead
+            </button>
+            <label className="flex w-full items-center gap-2 rounded-full bg-[#F4F9FD] px-3.5 py-2 lg:w-auto lg:min-w-[260px]">
               <FiSearch className="h-3.5 w-3.5 text-slate-400" />
               <input
                 value={searchInput}
