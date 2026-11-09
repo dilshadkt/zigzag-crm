@@ -53,13 +53,14 @@ const PayrollRun = () => {
   const draft = run.status === "draft";
   const approvedCount = payslips.filter((p) => p.status === "approved").length;
   const heldCount = payslips.filter((p) => p.status === "hold").length;
-  const negative = payslips.filter((p) => p.netPay < 0);
+  // An advance bigger than the pay is allowed (the rest carries forward); negative pay before that is not
+  const negative = payslips.filter((p) => p.netPay + (p.advancesTaken || 0) < 0);
 
   const exportBank = async () => {
     try {
       const res = await accountsApi.bankSheet(run.month);
       downloadCsv(`salary-transfer-${run.month}.csv`, [
-        ["Employee", "Account holder", "Account number", "IFSC", "Bank", "UPI ID", "Mode", "Net pay", "Status"],
+        ["Employee", "Account holder", "Account number", "IFSC", "Bank", "UPI ID", "Mode", "Amount to pay", "Status"],
         ...res.rows.map((r) => [r.name, r.accountHolder, r.accountNumber, r.ifsc, r.bankName, r.upiId, r.paymentMode, r.netPay, r.status]),
       ]);
     } catch (e) {
@@ -115,6 +116,12 @@ const PayrollRun = () => {
                   <span className="font-semibold">{p.attendance.hoursWorked} hrs</span>
                   <p className="text-[11px] text-slate-400">{p.attendance.daysWorked} days worked</p>
                 </div>
+              ) : p.attendance.payType === "monthly_hours" ? (
+                <div>
+                  <span className="font-semibold">{p.attendance.productiveHours}</span>
+                  <span className="text-slate-400"> / {p.attendance.requiredHours} hrs</span>
+                  {p.attendance.lopDays > 0 && <p className="text-[11px] text-amber-600">{p.attendance.lopDays} LOP days</p>}
+                </div>
               ) : (
                 <div>
                   <span className="font-semibold">{p.attendance.payableDays}</span>
@@ -126,6 +133,16 @@ const PayrollRun = () => {
             { key: "gross", title: "Gross", align: "right", render: (p) => fmtMoney(p.grossEarnings, symbol) },
             { key: "ded", title: "Deductions", align: "right", render: (p) => fmtMoney(p.totalDeductions, symbol) },
             { key: "net", title: "Net pay", align: "right", render: (p) => <span className={`font-semibold ${p.netPay < 0 ? "text-red-600" : ""}`}>{fmtMoney(p.netPay, symbol)}</span> },
+            { key: "payable", title: "To pay", align: "right", render: (p) => {
+              const payable = p.totalPayable ?? p.netPay;
+              return (
+                <div>
+                  <span className="font-semibold">{fmtMoney(Math.max(payable, 0), symbol)}</span>
+                  {payable < 0 && <p className="text-[11px] text-amber-600">{fmtMoney(-payable, symbol)} carried forward</p>}
+                  {p.previousBalance !== 0 && p.previousBalance != null && payable >= 0 && <p className="text-[11px] text-slate-400">incl. {fmtMoney(p.previousBalance, symbol)} previous</p>}
+                </div>
+              );
+            } },
             { key: "status", title: "Status", render: (p) => <StatusBadge status={p.status} map={PAYSLIP_STATUS} /> },
           ]}
         />

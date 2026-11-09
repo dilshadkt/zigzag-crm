@@ -70,6 +70,9 @@ const Settings = () => {
         halfDayHours: numeric(s.payroll.halfDayHours),
         overtimeMultiplier: numeric(s.payroll.overtimeMultiplier),
         hoursPerDay: numeric(s.payroll.hoursPerDay),
+        productiveHoursPerDay: numeric(s.payroll.productiveHoursPerDay),
+        allowedBreakMinutesPerDay: numeric(s.payroll.allowedBreakMinutesPerDay),
+        basicPercent: numeric(s.payroll.basicPercent),
         costingHoursPerMonth: numeric(s.payroll.costingHoursPerMonth),
         pf: { ...s.payroll.pf, employeeRate: numeric(s.payroll.pf.employeeRate), employerRate: numeric(s.payroll.pf.employerRate), wageCeiling: numeric(s.payroll.pf.wageCeiling) },
         esi: { ...s.payroll.esi, employeeRate: numeric(s.payroll.esi.employeeRate), employerRate: numeric(s.payroll.esi.employerRate), grossCeiling: numeric(s.payroll.esi.grossCeiling) },
@@ -246,6 +249,14 @@ const Settings = () => {
               <Field label="Hours per month for project costing" hint="Divides monthly cost into an hourly cost"><input type="number" min="1" className={inputCls} {...bind("payroll.costingHoursPerMonth")} /></Field>
             </div>
             <p className="text-xs text-slate-500 mt-3">Weekly offs and holidays come from Settings → Company. Approved leave comes from the Leave module.</p>
+          </Card>
+          <Card title="Monthly salary paid by hours worked">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Field label="Productive hours in a working day" hint="Required hours = (working days − holidays − paid leave) × this"><input type="number" min="1" step="any" className={inputCls} {...bind("payroll.productiveHoursPerDay")} /></Field>
+              <Field label="Break allowed per day (minutes)" hint="Only break time beyond this is deducted"><input type="number" min="0" step="any" className={inputCls} {...bind("payroll.allowedBreakMinutesPerDay")} /></Field>
+              <Field label="Basic share of gross (%)" hint="Used by the Split button on the salary form"><input type="number" min="1" max="100" step="any" className={inputCls} {...bind("payroll.basicPercent")} /></Field>
+            </div>
+            <p className="text-xs text-slate-500 mt-3">For employees set to “Monthly, by hours worked”. The hourly rate is gross ÷ required hours of the month. Pay is cut for missing hours and extra break time; extra hours are not paid.</p>
           </Card>
           <Card title="Provident Fund (PF)">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">

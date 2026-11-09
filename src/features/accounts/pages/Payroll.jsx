@@ -7,6 +7,7 @@ import { useAccountsContext } from "../context";
 import { useCreateRun, useRuns, useSalaries } from "../hooks/useAccounts";
 import { RUN_STATUS, currentMonthKey, errorMessage, fmtDate, fmtMoney, monthLabel } from "../utils/format";
 import SalaryDrawer from "../components/SalaryDrawer";
+import AdvancesPanel from "../components/AdvancesPanel";
 import { EmptyState, ErrorState, Field, PageHeader, SegmentedTabs, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, btnSmall, inputCls } from "../components/ui";
 
 const NewRunModal = ({ isOpen, onClose, existing }) => {
@@ -87,7 +88,7 @@ const Payroll = () => {
         <StatCard label="Latest net pay" value={latest ? fmtMoney(latest.totals.net, symbol) : "—"} sub={latest ? `${latest.totals.employees} employees` : undefined} />
       </div>
 
-      <div className="mb-4"><SegmentedTabs tabs={[{ value: "runs", label: "Payroll runs" }, { value: "salaries", label: "Salary structures" }]} value={tab} onChange={setTab} /></div>
+      <div className="mb-4"><SegmentedTabs tabs={[{ value: "runs", label: "Payroll runs" }, { value: "salaries", label: "Salary structures" }, { value: "advances", label: "Advances" }]} value={tab} onChange={setTab} /></div>
 
       {tab === "runs" && (
         <div className="bg-white border border-slate-100 rounded-2xl">
@@ -139,7 +140,7 @@ const Payroll = () => {
                   </div>
                 ) },
                 { key: "joined", title: "Joined", render: (e) => <span className="text-slate-500">{fmtDate(e.joiningDate)}</span> },
-                { key: "gross", title: "Gross / month", align: "right", render: (e) => (e.salary ? (e.salary.payType === "hourly" ? <div><span className="font-semibold">{fmtMoney(e.salary.hourlyRate, symbol)}/hr</span><p className="text-[11px] text-slate-400">≈ {fmtMoney(e.salary.grossMonthly, symbol)} / month</p></div> : <span className="font-semibold">{fmtMoney(e.salary.grossMonthly, symbol)}</span>) : <span className="text-slate-300">—</span>) },
+                { key: "gross", title: "Gross / month", align: "right", render: (e) => (e.salary ? (e.salary.payType === "hourly" ? <div><span className="font-semibold">{fmtMoney(e.salary.hourlyRate, symbol)}/hr</span><p className="text-[11px] text-slate-400">≈ {fmtMoney(e.salary.grossMonthly, symbol)} / month</p></div> : <div><span className="font-semibold">{fmtMoney(e.salary.grossMonthly, symbol)}</span>{e.salary.payType === "monthly_hours" && <p className="text-[11px] text-slate-400">by hours worked</p>}</div>) : <span className="text-slate-300">—</span>) },
                 { key: "ctc", title: "CTC / year", align: "right", render: (e) => (e.salary ? fmtMoney(e.salary.annualCtc, symbol) : <span className="text-slate-300">—</span>) },
                 { key: "bank", title: "Bank", render: (e) => (e.salary ? (e.salary.hasBank ? <span className="text-xs text-emerald-600">Added</span> : <span className="text-xs text-amber-600">Missing</span>) : "") },
                 { key: "status", title: "Payroll", render: (e) => (e.salary ? <span className={`text-xs font-semibold ${e.salary.status === "active" ? "text-emerald-600" : "text-slate-400"}`}>{e.salary.status === "active" ? "Included" : "Excluded"}</span> : <span className="text-xs text-amber-600 font-semibold">Not set up</span>) },
@@ -149,6 +150,8 @@ const Payroll = () => {
           )}
         </div>
       )}
+
+      {tab === "advances" && <AdvancesPanel employees={all} />}
 
       <NewRunModal isOpen={showNew} onClose={() => setShowNew(false)} existing={runsQ.data?.runs || []} />
       <SalaryDrawer employee={editing} isOpen={!!editing} onClose={() => setEditing(null)} />

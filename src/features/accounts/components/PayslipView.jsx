@@ -48,6 +48,17 @@ const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, fo
             <div><b>Days worked</b>{a.daysWorked}</div>
             <div><b>Paid leave</b>{a.paidLeaveDays}</div>
           </>
+        ) : a.payType === "monthly_hours" ? (
+          <>
+            <div><b>Days present</b>{a.presentDays}</div>
+            <div><b>Paid leaves</b>{a.paidLeaveDays}</div>
+            <div><b>Total hrs required</b>{a.requiredHours}</div>
+            <div><b>Total checked hrs</b>{a.ckdHours}</div>
+            <div><b>Productive hours</b>{a.productiveHours}</div>
+            <div><b>Hourly rate</b>{fmtMoney(a.hourlyRate, symbol)}</div>
+            <div><b>No. of loss of pay</b>{a.lopDays} days</div>
+            <div><b>CL / SL / PH</b>{a.casualLeaveDays} / {a.sickLeaveDays} / {a.publicHolidayDays}</div>
+          </>
         ) : (
           <>
             <div><b>Days in month</b>{a.daysInMonth}</div>
@@ -100,6 +111,27 @@ const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, fo
         <span>{fmtMoney(payslip.netPay, symbol)}</span>
       </div>
       <p className="small muted" style={{ marginTop: 6 }}>{amountInWords(payslip.netPay)}</p>
+
+      {a.payType === "monthly_hours" && (a.lopHours > 0 || a.breakHours > 0) && (
+        <p className="small muted" style={{ marginTop: 6 }}>
+          Remarks:{" "}
+          {a.lopHours > 0 && `Leave LOP includes ${a.leaveLopDays} days. `}
+          {a.breakHours > 0 && `Break deduction includes ${a.breakHours} hours.`}
+        </p>
+      )}
+
+      {(payslip.previousBalance || payslip.advancesTaken > 0) && payslip.totalPayable != null ? (
+        <>
+          <table style={{ marginTop: 10 }}>
+            <tbody>
+              {payslip.advancesTaken > 0 && <tr><td>Advance recovered (included in deductions)</td><td className="r">{fmtMoney(payslip.advancesTaken, symbol)}</td></tr>}
+              {payslip.previousBalance ? <tr><td>{payslip.previousBalance > 0 ? "Previous month balance (payable)" : "Previous month balance (recoverable)"}</td><td className="r">{fmtMoney(payslip.previousBalance, symbol)}</td></tr> : null}
+              <tr><td><b>Total payable</b></td><td className="r"><b>{fmtMoney(Math.max(payslip.totalPayable, 0), symbol)}</b></td></tr>
+              {payslip.totalPayable < 0 && <tr><td>Carried forward to next month</td><td className="r">{fmtMoney(payslip.totalPayable, symbol)}</td></tr>}
+            </tbody>
+          </table>
+        </>
+      ) : null}
 
       {showEmployerCost && payslip.employerContributions?.length > 0 && (
         <p className="small muted" style={{ marginTop: 10 }}>

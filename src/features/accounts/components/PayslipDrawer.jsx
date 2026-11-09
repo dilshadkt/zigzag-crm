@@ -22,6 +22,7 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
   const [adjustments, setAdjustments] = useState([]);
   const [lop, setLop] = useState("");
   const [notes, setNotes] = useState("");
+  const [prevOverride, setPrevOverride] = useState("");
   const [payForm, setPayForm] = useState({ paidOn: toInputDate(new Date()), paymentMode: "bank_transfer", reference: "" });
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
     setAdjustments((slip.adjustments || []).map((a) => ({ type: a.type, name: a.name, amount: a.amount })));
     setLop(slip.lopDaysOverride ?? "");
     setNotes(slip.notes || "");
+    setPrevOverride(slip.previousBalanceOverride ?? "");
     setPayForm((f) => ({ ...f, paymentMode: slip.employeeSnapshot?.paymentMode || "bank_transfer" }));
   }, [slip?._id, slip?.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -39,6 +41,7 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
         data: {
           adjustments: adjustments.filter((a) => a.name.trim() && Number(a.amount) > 0).map((a) => ({ ...a, amount: Number(a.amount) })),
           lopDaysOverride: lop === "" ? null : Number(lop),
+          previousBalanceOverride: prevOverride === "" ? null : Number(prevOverride),
           notes,
           ...extra,
         },
@@ -79,7 +82,8 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
         <div className="space-y-5">
           <div className="flex items-center gap-2">
             <StatusBadge status={slip.status} map={PAYSLIP_STATUS} />
-            {slip.netPay < 0 && <span className="text-xs text-red-600 font-semibold">Net pay is negative. Reduce deductions.</span>}
+            {slip.netPay + (slip.advancesTaken || 0) < 0 && <span className="text-xs text-red-600 font-semibold">Net pay is negative. Reduce deductions.</span>}
+            {slip.advancesTaken > 0 && <span className="text-xs text-slate-500">{symbol}{slip.advancesTaken} advance recovered. Manage advances under Payroll → Advances.</span>}
           </div>
 
           {editable && (
@@ -90,6 +94,10 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
                   <Field label="Hours worked" hint="From attendance. Use a one-off bonus or deduction to correct hours.">
                     <input className={inputCls} value={`${a.hoursWorked} hrs over ${a.daysWorked} days`} readOnly />
                   </Field>
+                ) : a.payType === "monthly_hours" ? (
+                  <Field label="Leave LOP days (from missing hours)" hint={`Calculated: ${a.calculatedLopDays}. ${a.ckdHours} of ${a.requiredHours} required hrs checked in. Leave blank to use it.`}>
+                    <input type="number" min="0" step="0.01" className={inputCls} value={lop} onChange={(e) => setLop(e.target.value)} placeholder={String(a.calculatedLopDays)} />
+                  </Field>
                 ) : (
                   <Field label="Loss-of-pay days" hint={`Calculated: ${a.unpaidLeaveDays + a.absentDays}. Leave blank to use it.`}>
                     <input type="number" min="0" step="0.5" className={inputCls} value={lop} onChange={(e) => setLop(e.target.value)} placeholder={String(a.unpaidLeaveDays + a.absentDays)} />
@@ -97,6 +105,9 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
                 )}
                 <Field label="Internal / employee note">
                   <input className={inputCls} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                </Field>
+                <Field label="Previous balance (override)" hint={`Carried in: ${symbol}${slip.previousBalance || 0}. Positive = company owes the employee, negative = employee owes. Blank uses the last payslip's balance.`}>
+                  <input type="number" step="any" className={inputCls} value={prevOverride} onChange={(e) => setPrevOverride(e.target.value)} />
                 </Field>
               </div>
               <div>

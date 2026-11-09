@@ -130,6 +130,11 @@ export const useUpdatePayslip = () =>
 export const usePayPayslip = () =>
   useWrite(({ id, data }) => accountsApi.payPayslip(id, data), { success: "Payslip marked paid" });
 export const useReleasePayslip = () => useWrite(accountsApi.releasePayslip, { success: "Payslip released" });
+export const useAdvances = (params) => useRead("advances", accountsApi.advances, params, { placeholderData: (prev) => prev });
+export const useCreateAdvance = () => useWrite(accountsApi.createAdvance, { success: "Advance recorded" });
+export const useUpdateAdvance = () =>
+  useWrite(({ id, data }) => accountsApi.updateAdvance(id, data), { success: "Advance updated" });
+export const useDeleteAdvance = () => useWrite(accountsApi.deleteAdvance, { success: "Advance deleted" });
 export const useMyPayslips = () => useRead("my-payslips", accountsApi.myPayslips);
 export const useMyPayslip = (id) => useRead("my-payslip", accountsApi.myPayslip, id, { enabled: !!id });
 

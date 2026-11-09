@@ -51,9 +51,11 @@ const SalaryDrawer = ({ employee, isOpen, onClose }) => {
   const { data, isLoading } = useSalary(isOpen ? employee?._id : null);
   const save = useSaveSalary();
   const [form, setForm] = useState(blank());
+  const [grossInput, setGrossInput] = useState("");
 
   useEffect(() => {
     if (!isOpen || isLoading) return;
+    setGrossInput("");
     const s = data?.salary;
     setForm(
       s
@@ -81,6 +83,18 @@ const SalaryDrawer = ({ employee, isOpen, onClose }) => {
 
   const num = (v) => Number(v) || 0;
   const hourly = form.payType === "hourly";
+  const hoursBased = form.payType === "monthly_hours";
+  const productiveHrs = settings?.payroll?.productiveHoursPerDay || 8;
+  const basicPercent = settings?.payroll?.basicPercent || 70;
+
+  // Splits a gross salary into basic and other allowances (e.g. 70 / 30)
+  const splitGross = () => {
+    const total = num(grossInput);
+    if (!(total > 0)) return toast.error("Enter the monthly gross salary first");
+    const basic = Math.round(total * basicPercent) / 100;
+    const other = Math.round((total - basic) * 100) / 100;
+    set({ basic, hra: "", allowances: other > 0 ? [{ name: "Other Allowances", amount: other }] : [] });
+  };
   const estHours = settings?.payroll?.costingHoursPerMonth || 208;
   const gross = hourly
     ? num(form.hourlyRate) * estHours
@@ -131,11 +145,16 @@ const SalaryDrawer = ({ employee, isOpen, onClose }) => {
         <form onSubmit={submit} className="space-y-5">
           <section className="space-y-3">
             <h4 className="text-sm font-bold text-slate-800">{hourly ? "Hourly pay" : "Monthly earnings"}</h4>
-            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100">
-              {[["monthly", "Fixed monthly salary"], ["hourly", "Paid per hour worked"]].map(([value, label]) => (
-                <button key={value} type="button" onClick={() => set({ payType: value })} className={`rounded-lg py-2 text-sm font-semibold ${form.payType === value ? "bg-white text-[#3F8CFF] shadow-sm" : "text-slate-500"}`}>{label}</button>
+            <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-slate-100">
+              {[["monthly", "Fixed monthly salary"], ["monthly_hours", "Monthly, by hours worked"], ["hourly", "Paid per hour worked"]].map(([value, label]) => (
+                <button key={value} type="button" onClick={() => set({ payType: value })} className={`rounded-lg py-2 px-1 text-xs sm:text-sm font-semibold ${form.payType === value ? "bg-white text-[#3F8CFF] shadow-sm" : "text-slate-500"}`}>{label}</button>
               ))}
             </div>
+            {hoursBased && (
+              <p className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
+                Pay is cut for missing hours. Required hours = (working days − holidays − paid leave) × {productiveHrs} hrs, so the hourly rate (gross ÷ required hours) changes every month. Break time beyond {settings?.payroll?.allowedBreakMinutesPerDay ?? 30} min a day is deducted too. Extra hours are not paid.
+              </p>
+            )}
             {hourly ? (
               <>
                 <Field label="Rate per hour" required hint={`Pay = hours clocked on working days × this rate (hours on holidays and weekly offs are ignored). Approved paid leave is paid at ${settings?.payroll?.hoursPerDay || 8} hrs a day; weekly offs, holidays and unpaid leave are not paid.`}>
@@ -144,6 +163,14 @@ const SalaryDrawer = ({ employee, isOpen, onClose }) => {
               </>
             ) : (
               <>
+                {hoursBased && (
+                  <div className="flex items-end gap-2">
+                    <Field label="Monthly gross salary" className="flex-1" hint={`Type the total and split it into basic (${basicPercent}%) and other allowances.`}>
+                      <input type="number" min="0" step="any" className={inputCls} value={grossInput} onChange={(e) => setGrossInput(e.target.value)} />
+                    </Field>
+                    <button type="button" className={`${btnSmall} mb-6`} onClick={splitGross}>Split {basicPercent}/{100 - basicPercent}</button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Basic salary" required><input type="number" min="0" step="any" className={inputCls} value={form.basic} onChange={(e) => set({ basic: e.target.value })} /></Field>
                   <Field label="House rent allowance (HRA)"><input type="number" min="0" step="any" className={inputCls} value={form.hra} onChange={(e) => set({ hra: e.target.value })} /></Field>
@@ -172,10 +199,12 @@ const SalaryDrawer = ({ employee, isOpen, onClose }) => {
               <Field label="Income tax / TDS (per month)"><input type="number" min="0" step="any" className={inputCls} value={form.tdsMonthly} onChange={(e) => set({ tdsMonthly: e.target.value })} /></Field>
             </div>
             <ComponentList title="Other fixed deductions" items={form.otherDeductions} onChange={(otherDeductions) => set({ otherDeductions })} addLabel="Add deduction" placeholder="e.g. Loan EMI" />
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" checked={form.overtimeEligible} onChange={(e) => set({ overtimeEligible: e.target.checked })} />
-              {hourly ? `Pay overtime hours (past 8 hrs in a day) at ${settings?.payroll?.overtimeMultiplier ?? 1.5}x the rate` : "Eligible for overtime pay (from attendance overtime hours)"}
-            </label>
+            {!hoursBased && (
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" checked={form.overtimeEligible} onChange={(e) => set({ overtimeEligible: e.target.checked })} />
+                {hourly ? `Pay overtime hours (past 8 hrs in a day) at ${settings?.payroll?.overtimeMultiplier ?? 1.5}x the rate` : "Eligible for overtime pay (from attendance overtime hours)"}
+              </label>
+            )}
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="rounded-xl bg-slate-50 py-2"><p className="text-[11px] text-slate-500">Take-home (full month)</p><p className="text-sm font-bold tabular-nums">{fmtMoney(gross - deductions, symbol)}</p></div>
               <div className="rounded-xl bg-slate-50 py-2"><p className="text-[11px] text-slate-500">Employer contributions</p><p className="text-sm font-bold tabular-nums">{fmtMoney(employerPf + employerEsi, symbol)}</p></div>
