@@ -1,17 +1,7 @@
-import { useState } from "react";
-import { FiAlertCircle, FiAward, FiCalendar, FiEdit2, FiPhoneCall } from "react-icons/fi";
+import { FiAlertCircle, FiAward, FiCalendar, FiPhoneCall } from "react-icons/fi";
 
-const GOAL_KEY = "telecallerDailyCallGoal";
+// Used until a manager sets a call target on the Lead Dashboard (Sales team tab)
 const DEFAULT_GOAL = 40;
-
-const readGoal = () => {
-  try {
-    const stored = Number(localStorage.getItem(GOAL_KEY));
-    return stored > 0 ? stored : DEFAULT_GOAL;
-  } catch {
-    return DEFAULT_GOAL;
-  }
-};
 
 const money = (value) =>
   new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value || 0);
@@ -30,34 +20,22 @@ const Tile = ({ icon: Icon, label, value, hint, tone }) => (
 );
 
 const TodaySummary = ({ summary = {} }) => {
-  const [goal, setGoal] = useState(readGoal);
+  // The target is set by the manager; salespeople cannot change it
+  const managerGoal = summary.callTarget > 0 ? summary.callTarget : null;
+  const goal = managerGoal || DEFAULT_GOAL;
   const calls = summary.callsToday || 0;
   const percent = Math.min(100, Math.round((calls / goal) * 100));
-
-  const editGoal = () => {
-    const next = Number(window.prompt("Daily call goal", String(goal)));
-    if (!Number.isFinite(next) || next <= 0) return;
-    setGoal(Math.round(next));
-    try {
-      localStorage.setItem(GOAL_KEY, String(Math.round(next)));
-    } catch {
-      // storage unavailable: the goal just won't persist
-    }
-  };
 
   return (
     <div className="mb-2 grid grid-cols-2 gap-2 lg:mb-4 lg:grid-cols-4 lg:gap-3">
       <div className="rounded-xl border border-slate-200/60 bg-white p-2.5 lg:p-3.5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <span className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
               <FiPhoneCall className="h-3.5 w-3.5" />
             </span>
             Calls today
           </span>
-          <button type="button" onClick={editGoal} aria-label="Edit daily goal" className="text-slate-300 hover:text-slate-500">
-            <FiEdit2 className="h-3 w-3" />
-          </button>
         </div>
         <p className="mt-1.5 text-xl font-bold text-slate-900 lg:text-2xl">
           {calls}
@@ -69,6 +47,7 @@ const TodaySummary = ({ summary = {} }) => {
             style={{ width: `${percent}%` }}
           />
         </div>
+        {managerGoal && <p className="mt-1 text-[11px] text-slate-400">Target set by your manager</p>}
       </div>
       <Tile
         icon={FiCalendar}

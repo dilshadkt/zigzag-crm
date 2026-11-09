@@ -681,6 +681,47 @@ export const useLeadKpiTeam = (date, enabled = true) => {
   });
 };
 
+// --- LEAD TEAM REPORT & TARGETS (Lead Dashboard > Sales team) ---
+
+export const useLeadTeamReport = (period, enabled = true) => {
+  return useQuery({
+    queryKey: ["leadTeamReport", period],
+    queryFn: async () => (await apiClient.get("/lead-kpi/team-report", { params: { period } })).data,
+    enabled,
+    placeholderData: (previous) => previous,
+    refetchInterval: 2 * 60 * 1000,
+  });
+};
+
+export const useLeadMemberAttention = (userId) => {
+  return useQuery({
+    queryKey: ["leadMemberAttention", userId],
+    queryFn: async () => (await apiClient.get("/lead-kpi/member-attention", { params: { userId } })).data,
+    enabled: !!userId,
+  });
+};
+
+export const useLeadTargets = (enabled = true) => {
+  return useQuery({
+    queryKey: ["leadTargets"],
+    queryFn: async () => (await apiClient.get("/lead-kpi/targets")).data,
+    enabled,
+  });
+};
+
+export const useSaveLeadTargets = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (targets) => (await apiClient.put("/lead-kpi/targets", { targets })).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leadTargets"] });
+      queryClient.invalidateQueries({ queryKey: ["leadTeamReport"] });
+      queryClient.invalidateQueries({ queryKey: ["leadKpiScore"] });
+      queryClient.invalidateQueries({ queryKey: ["telecallerDesk"] });
+    },
+  });
+};
+
 export const useDeleteWhatsappTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({

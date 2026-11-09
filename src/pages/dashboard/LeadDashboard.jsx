@@ -16,9 +16,11 @@ import {
 import { 
     Users, Phone, Mail, ArrowUpRight, ArrowDownRight, Trophy, Target, Flame, TrendingUp, Filter, AlertCircle, RefreshCcw, FileText, CheckCircle2, TrendingDown, Clock, Search, X, ChevronDown, ListIcon, LayoutGrid, SlidersHorizontal, CalendarCheck, MapPin, Building, Briefcase, Plus, Calendar 
 } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
+import SalesTeamPanel from "../../features/leadTeam";
 import { useCompanyActiveProjects } from "../../api/hooks";
 import { useGetCampaignsByCompany } from "../../api/campaigns";
 import { Megaphone } from "lucide-react";
@@ -32,6 +34,34 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     const isAdmin = user?.role === 'company-admin';
     const isClient = user?.role === 'client';
     const clientProjectId = user?.projectId || (typeof user?.project === "string" ? user?.project : user?.project?._id);
+
+    // "Sales team" tab: per-person report and targets, for admins and anyone who can view all leads
+    const { hasPermission } = usePermissions();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const canSeeTeam = viewMode === 'all' && !isClient && (isAdmin || hasPermission("leads", "viewAll"));
+    const tab = canSeeTeam && searchParams.get("tab") === "team" ? "team" : "overview";
+    const switchTab = (next) => {
+        const params = new URLSearchParams(searchParams);
+        if (next === "team") params.set("tab", "team");
+        else params.delete("tab");
+        setSearchParams(params, { replace: true });
+    };
+    const tabSwitcher = canSeeTeam ? (
+        <div className="mt-2 inline-flex rounded-xl bg-slate-50 p-0.5">
+            {[["overview", "Overview"], ["team", "Sales team"]].map(([key, label]) => (
+                <button
+                    key={key}
+                    type="button"
+                    onClick={() => switchTab(key)}
+                    className={`rounded-[10px] px-3.5 py-1.5 text-[11px] font-bold transition ${
+                        tab === key ? "bg-white text-[#3f8cff] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                    }`}
+                >
+                    {label}
+                </button>
+            ))}
+        </div>
+    ) : null;
     // Filters are remembered per browser so they survive a refresh
     const saved = useMemo(() => {
         try {
@@ -181,6 +211,19 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
         else toast.error("Email address not available");
     };
 
+    if (tab === "team") {
+        return (
+            <div className="space-y-2 p-1 bg-slate-50/50">
+                <div className="bg-white p-4 rounded-[2rem] border border-slate-100">
+                    <h1 className="text-xl font-bold text-[#0A1629]">Lead Dashboard</h1>
+                    <p className="text-xs text-slate-500">See how each salesperson is doing, and set their targets.</p>
+                    {tabSwitcher}
+                </div>
+                <SalesTeamPanel />
+            </div>
+        );
+    }
+
     if (statsLoading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -260,6 +303,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                 <div>
                     <h1 className="text-xl font-bold text-[#0A1629]">Lead Dashboard</h1>
                     <p className="text-xs text-slate-500">Track and manage your leads across projects and campaigns.</p>
+                    {tabSwitcher}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
