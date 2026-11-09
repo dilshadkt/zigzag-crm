@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   Award,
+  Briefcase,
   ChevronRight,
   IndianRupee,
   Phone,
@@ -12,9 +13,10 @@ import {
   Users,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLeadTeamReport } from "../leads/api";
+import { useLeadTeamReport, useMyLeadReport } from "../leads/api";
 import MemberDrawer from "./MemberDrawer";
 import TargetsModal from "./TargetsModal";
+import ClientsModal from "./ClientsModal";
 import {
   PERIODS,
   SORTS,
@@ -90,14 +92,18 @@ const Count = ({ value, warn }) => (
 
 const GRID = "xl:grid-cols-[minmax(150px,1.3fr)_112px_96px_96px_96px_96px_84px_56px_44px_16px]";
 
-const SalesTeamPanel = () => {
+// mine: the signed-in salesperson's own report (one person, no targets or client setup)
+const SalesTeamPanel = ({ mine = false }) => {
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState("month");
   const [sort, setSort] = useState("score");
   const [selectedId, setSelectedId] = useState(null);
   const [targetsFor, setTargetsFor] = useState(null); // null = closed, "all" = open, or a user id to list first
+  const [clientsOpen, setClientsOpen] = useState(false);
 
-  const { data: report, isLoading, isError, isFetching, refetch } = useLeadTeamReport(period);
+  const teamQuery = useLeadTeamReport(period, !mine);
+  const myQuery = useMyLeadReport(period, mine);
+  const { data: report, isLoading, isError, isFetching, refetch } = mine ? myQuery : teamQuery;
 
   const rows = useMemo(() => sortRows(report?.rows || [], sort), [report, sort]);
   const selected = rows.find((row) => row.user._id === selectedId) || null;
@@ -145,7 +151,7 @@ const SalesTeamPanel = () => {
         <div>
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
             <Users className="h-4 w-4 text-[#3f8cff]" />
-            Sales team · {info.label}
+            {mine ? "My report" : "Sales team"} · {info.label}
           </h2>
           <p className="mt-0.5 text-[11px] text-slate-400">
             {totals.people} {totals.people === 1 ? "person" : "people"} · {info.workDays} working{" "}
@@ -179,6 +185,16 @@ const SalesTeamPanel = () => {
           >
             <RefreshCcw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
           </button>
+          {report.canEditTargets && (
+            <button
+              type="button"
+              onClick={() => setClientsOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-200"
+            >
+              <Briefcase className="h-3.5 w-3.5" />
+              Set clients
+            </button>
+          )}
           {report.canEditTargets && (
             <button
               type="button"
@@ -261,7 +277,7 @@ const SalesTeamPanel = () => {
       {/* Team list */}
       <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white">
         <div className="flex items-center justify-between gap-3 border-b border-slate-50 px-4 py-3">
-          <h3 className="text-sm font-bold text-slate-800">Team members</h3>
+          <h3 className="text-sm font-bold text-slate-800">{mine ? "Your numbers" : "Team members"}</h3>
           <label className="flex items-center gap-2 text-[11px] font-semibold text-slate-400">
             Sort by
             <select
@@ -281,9 +297,13 @@ const SalesTeamPanel = () => {
         {rows.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <Users className="mx-auto mb-2 h-6 w-6 text-slate-300" />
-            <p className="text-sm font-semibold text-slate-600">No one is on the sales team yet</p>
+            <p className="text-sm font-semibold text-slate-600">
+              {mine ? "Your report isn't available yet" : "No one is on the sales team yet"}
+            </p>
             <p className="mt-1 text-xs text-slate-400">
-              Give a position access to My Calls in Settings → Positions and its employees will show up here.
+              {mine
+                ? "Your report appears once your position has access to My Calls."
+                : "Give a position access to My Calls in Settings → Positions and its employees will show up here."}
             </p>
           </div>
         ) : (
@@ -421,11 +441,16 @@ const SalesTeamPanel = () => {
         onClose={() => setSelectedId(null)}
         onEditTargets={(id) => setTargetsFor(id)}
       />
-      <TargetsModal
-        isOpen={targetsFor !== null}
-        focusUserId={targetsFor && targetsFor !== "all" ? targetsFor : null}
-        onClose={() => setTargetsFor(null)}
-      />
+      {!mine && (
+        <>
+          <TargetsModal
+            isOpen={targetsFor !== null}
+            focusUserId={targetsFor && targetsFor !== "all" ? targetsFor : null}
+            onClose={() => setTargetsFor(null)}
+          />
+          <ClientsModal isOpen={clientsOpen} onClose={() => setClientsOpen(false)} />
+        </>
+      )}
     </div>
   );
 };

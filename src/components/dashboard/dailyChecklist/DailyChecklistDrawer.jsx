@@ -11,7 +11,7 @@ import { describeSchedule } from "../../shared/RecurrenceFields/recurrence";
 import { isSameChecklistTask } from "../employeeWorkDetails/useMyDailyChecklist";
 import { format, addDays, subDays, isToday } from "date-fns";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
-import { FiCheck, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiPlus, FiTrash2, FiX } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 
 const CircularProgress = ({ value, onClick, loading }) => {
@@ -382,7 +382,7 @@ const DailyChecklistDrawer = () => {
                                 aria-expanded={showAddForm}
                                 className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors"
                             >
-                                <FiPlus className="w-3.5 h-3.5" />
+                                {showAddForm ? <FiX className="w-3.5 h-3.5" /> : <FiPlus className="w-3.5 h-3.5" />}
                                 {showAddForm ? "Close" : "Add task"}
                             </button>
                             {canViewAll && (

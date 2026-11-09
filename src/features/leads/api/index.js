@@ -722,6 +722,48 @@ export const useSaveLeadTargets = () => {
   });
 };
 
+// Signed-in salesperson's own row of the team report (Lead Dashboard > My report)
+export const useMyLeadReport = (period, enabled = true) => {
+  return useQuery({
+    queryKey: ["leadMyReport", period],
+    queryFn: async () => (await apiClient.get("/lead-kpi/my-report", { params: { period } })).data,
+    enabled,
+    placeholderData: (previous) => previous,
+    refetchInterval: 2 * 60 * 1000,
+  });
+};
+
+// Clients the signed-in person's Lead Dashboard is limited to: { scoped, configured, projectIds }
+export const useMyLeadClients = (enabled = true) => {
+  return useQuery({
+    queryKey: ["leadMyClients"],
+    queryFn: async () => (await apiClient.get("/lead-kpi/my-clients")).data,
+    enabled,
+    staleTime: 60 * 1000,
+  });
+};
+
+// Admin setup: which clients each salesperson works on (Lead Dashboard > Sales team)
+export const useLeadClientAccess = (enabled = true) => {
+  return useQuery({
+    queryKey: ["leadClientAccess"],
+    queryFn: async () => (await apiClient.get("/lead-kpi/client-access")).data,
+    enabled,
+  });
+};
+
+export const useSaveLeadClientAccess = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (entries) => (await apiClient.put("/lead-kpi/client-access", { entries })).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leadClientAccess"] });
+      queryClient.invalidateQueries({ queryKey: ["leadMyClients"] });
+      queryClient.invalidateQueries({ queryKey: ["leadStats"] });
+    },
+  });
+};
+
 export const useDeleteWhatsappTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({

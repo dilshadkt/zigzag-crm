@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
     useGetLeadStats,
     useGetLeadStatuses,
+    useMyLeadClients,
     useUpdateLead
 } from "../../features/leads/api";
 import { useGetClientTeamStats } from "../../api/clientSalesTeam";
@@ -39,16 +40,21 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     const { hasPermission } = usePermissions();
     const [searchParams, setSearchParams] = useSearchParams();
     const canSeeTeam = viewMode === 'all' && !isClient && (isAdmin || hasPermission("leads", "viewAll"));
-    const tab = canSeeTeam && searchParams.get("tab") === "team" ? "team" : "overview";
+    // A salesperson limited to their own clients gets their own report instead of the team one
+    const { data: myClients } = useMyLeadClients(!isClient);
+    const clientScoped = Boolean(myClients?.scoped);
+    const canSeeMine = viewMode === 'all' && !isClient && clientScoped && !canSeeTeam;
+    const tabParam = searchParams.get("tab");
+    const tab = canSeeTeam && tabParam === "team" ? "team" : canSeeMine && tabParam === "mine" ? "mine" : "overview";
     const switchTab = (next) => {
         const params = new URLSearchParams(searchParams);
-        if (next === "team") params.set("tab", "team");
+        if (next === "team" || next === "mine") params.set("tab", next);
         else params.delete("tab");
         setSearchParams(params, { replace: true });
     };
-    const tabSwitcher = canSeeTeam ? (
+    const tabSwitcher = canSeeTeam || canSeeMine ? (
         <div className="mt-2 inline-flex rounded-xl bg-slate-50 p-0.5">
-            {[["overview", "Overview"], ["team", "Sales team"]].map(([key, label]) => (
+            {[["overview", "Overview"], canSeeTeam ? ["team", "Sales team"] : ["mine", "My report"]].map(([key, label]) => (
                 <button
                     key={key}
                     type="button"
@@ -123,7 +129,23 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
     };
 
     // Fetch filters data
-    const { data: projects = [] } = useCompanyActiveProjects();
+    const { data: allProjects = [] } = useCompanyActiveProjects();
+    // Salespeople only see the clients they work on (set on the Sales team tab, or where their leads are)
+    const projects = useMemo(() => {
+        if (!clientScoped) return allProjects;
+        const allowed = new Set(myClients?.projectIds || []);
+        return allProjects.filter((project) => allowed.has(String(project._id)));
+    }, [allProjects, clientScoped, myClients]);
+
+    // A client picked earlier (filters are remembered) that they no longer work on goes back to "all"
+    useEffect(() => {
+        if (!clientScoped || selectedProject === "all") return;
+        if (!(myClients?.projectIds || []).includes(String(selectedProject))) {
+            setSelectedProject("all");
+            setSelectedCampaign("all");
+            setBranchFilterState("");
+        }
+    }, [clientScoped, myClients, selectedProject]);
     const { data: campaignsData } = useGetCampaignsByCompany(user?.company, {
         projectId: selectedProject !== "all" ? selectedProject : undefined
     });
@@ -224,6 +246,19 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
         );
     }
 
+    if (tab === "mine") {
+        return (
+            <div className="space-y-2 p-1 bg-slate-50/50">
+                <div className="bg-white p-4 rounded-[2rem] border border-slate-100">
+                    <h1 className="text-xl font-bold text-[#0A1629]">Lead Dashboard</h1>
+                    <p className="text-xs text-slate-500">Your calls, deals, revenue and score.</p>
+                    {tabSwitcher}
+                </div>
+                <SalesTeamPanel mine />
+            </div>
+        );
+    }
+
     if (statsLoading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -317,7 +352,7 @@ const LeadDashboardPage = ({ viewMode = 'all', onNavigateToLeads, branchFilter, 
                                 clearBranchFilter();
                             }}
                             options={projects.map(project => ({ label: project.name, value: project._id }))}
-                            placeholder="All Projects"
+                            placeholder={clientScoped ? "All my clients" : "All Projects"}
                             className="min-w-[160px]"
                         />
                     )}
