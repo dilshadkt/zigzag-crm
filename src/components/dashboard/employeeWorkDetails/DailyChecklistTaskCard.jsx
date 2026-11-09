@@ -31,7 +31,7 @@ const DailyChecklistTaskCard = ({ checklist, compact = false }) => {
 
   // Group by project so people can tell which client each item belongs to
   const byProject = items.reduce((groups, item) => {
-    (groups[item.projectId] ||= { name: item.projectName, items: [] }).items.push(item);
+    (groups[item.projectId || "general"] ||= { name: item.projectName, items: [] }).items.push(item);
     return groups;
   }, {});
 
@@ -70,7 +70,7 @@ const DailyChecklistTaskCard = ({ checklist, compact = false }) => {
               <div className="flex flex-col">
                 {group.items.map((item) => (
                   <label
-                    key={item.title}
+                    key={item.itemId || item.title}
                     className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 text-xs text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     <input

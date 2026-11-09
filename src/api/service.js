@@ -1487,6 +1487,35 @@ export const getDailyChecklistSummary = async (date) => {
   return response.data;
 };
 
+// Checklist tasks that don't belong to a project.
+// data: { title, assignedTo?, frequency, weekdays, monthDays, endDate? }
+export const createGeneralChecklistItem = async (data) => {
+  const response = await apiClient.post("/projects/daily-checklist/general", data);
+  return response.data;
+};
+
+export const deleteGeneralChecklistItem = async (itemId) => {
+  const response = await apiClient.delete(`/projects/daily-checklist/general/${itemId}`);
+  return response.data;
+};
+
+// Ticks / unticks one summary task (from getDailyChecklistSummary) for a day,
+// whether it belongs to a project or is a general task.
+export const setChecklistTaskCompleted = async (task, { date, completed }) => {
+  if (task.itemId) {
+    const response = await apiClient.patch(
+      `/projects/daily-checklist/general/${task.itemId}/status`,
+      { date, completed }
+    );
+    return response.data;
+  }
+  return updateDailyChecklistStatus(task.projectId, {
+    date,
+    taskTitle: task.title,
+    completed,
+  });
+};
+
 // ── Client asset bank (banked footage / deliverables) ───────────────────────
 export const getAssetBank = async (projectId, params = {}) => {
   const response = await apiClient.get(`/projects/${projectId}/asset-bank`, { params });

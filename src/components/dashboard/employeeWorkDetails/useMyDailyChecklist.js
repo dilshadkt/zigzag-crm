@@ -1,10 +1,13 @@
 import { useMemo } from "react";
 import { format } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getDailyChecklistSummary,
-  updateDailyChecklistStatus,
-} from "../../../api/service";
+import { getDailyChecklistSummary, setChecklistTaskCompleted } from "../../../api/service";
+
+// A task is identified by its general-item id, or by project + title for project items
+export const isSameChecklistTask = (a, b) =>
+  a.itemId || b.itemId
+    ? a.itemId === b.itemId
+    : a.projectId === b.projectId && a.title === b.title;
 
 // Today's checklist items assigned to this user. Shares its query key with the
 // floating checklist drawer, so ticking an item in either place updates both.
@@ -30,9 +33,9 @@ export const useMyDailyChecklist = (userId) => {
   );
 
   const toggle = useMutation({
-    mutationFn: ({ projectId, title, completed }) =>
-      updateDailyChecklistStatus(projectId, { date: today, taskTitle: title, completed }),
-    onMutate: async ({ projectId, title, completed }) => {
+    mutationFn: ({ item, completed }) =>
+      setChecklistTaskCompleted(item, { date: today, completed }),
+    onMutate: async ({ item, completed }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
       queryClient.setQueryData(queryKey, (old) =>
@@ -40,7 +43,7 @@ export const useMyDailyChecklist = (userId) => {
           ? {
               ...old,
               tasks: old.tasks.map((t) =>
-                t.projectId === projectId && t.title === title
+                isSameChecklistTask(t, item)
                   ? { ...t, completed, completedAt: completed ? new Date().toISOString() : null }
                   : t
               ),
@@ -64,7 +67,6 @@ export const useMyDailyChecklist = (userId) => {
     // Only counts as finished once every item assigned to the user is ticked
     allDone: items.length > 0 && done === items.length,
     isLoading,
-    toggleItem: (item) =>
-      toggle.mutate({ projectId: item.projectId, title: item.title, completed: !item.completed }),
+    toggleItem: (item) => toggle.mutate({ item, completed: !item.completed }),
   };
 };

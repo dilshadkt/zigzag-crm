@@ -1,9 +1,17 @@
 import React, { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { updateDailyChecklistStatus, getDailyChecklistSummary } from "../../../api/service";
+import {
+    setChecklistTaskCompleted,
+    getDailyChecklistSummary,
+    deleteGeneralChecklistItem,
+} from "../../../api/service";
+import { toast } from "react-hot-toast";
+import AddChecklistTask from "./AddChecklistTask";
+import { describeSchedule } from "../../shared/RecurrenceFields/recurrence";
+import { isSameChecklistTask } from "../employeeWorkDetails/useMyDailyChecklist";
 import { format, addDays, subDays, isToday } from "date-fns";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useAuth } from "../../../hooks/useAuth";
 
 const CircularProgress = ({ value, onClick, loading }) => {
@@ -49,13 +57,13 @@ const CircularProgress = ({ value, onClick, loading }) => {
     );
 };
 
-const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completedAt, disabled }) => {
+const TaskItem = ({ task, isCompleted, onToggle, onDelete, completedBy, completedAt, disabled }) => {
     const [loading, setLoading] = useState(false);
     const handleToggle = async () => {
         if (disabled) return;
         setLoading(true);
         // Optimistic update handled by parent, but we keep local loading for safety
-        onToggle(project._id, task.title, !isCompleted);
+        onToggle(task, !isCompleted);
         // We don't await the mutation here to keep UI snappy, 
         // rely on parent prop update for 'isCompleted'
         setTimeout(() => setLoading(false), 300); // minimal debounce
@@ -112,9 +120,24 @@ const TaskItem = ({ project, task, isCompleted, onToggle, completedBy, completed
                                     ? `${task.assignedTo.firstName || ""} ${task.assignedTo.lastName || ""}`.trim()
                                     : "Team Member"
                             }
+                            {task.isGeneral && task.frequency && task.frequency !== "daily" && (
+                                <> · {describeSchedule(task)}</>
+                            )}
                         </span>
                     )}
                 </div>
+
+                {task.isGeneral && task.canManage && (
+                    <button
+                        type="button"
+                        onClick={() => onDelete(task)}
+                        title="Remove this task"
+                        aria-label="Remove this task"
+                        className="ml-2 p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                        <FiTrash2 className="w-3.5 h-3.5" />
+                    </button>
+                )}
 
                 {/* Show avatar and time when completed */}
                 {isCompleted && (completedBy || completedAt) && (
@@ -181,6 +204,7 @@ const DrawerSkeleton = () => (
 const DailyChecklistDrawer = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [showAddForm, setShowAddForm] = useState(false);
     const queryClient = useQueryClient();
     const { user } = useAuth();
 
@@ -220,9 +244,9 @@ const DailyChecklistDrawer = () => {
     const progress = allTasks.length > 0 ? (completedCount / allTasks.length) * 100 : 0;
 
     const mutation = useMutation({
-        mutationFn: ({ projectId, taskTitle, completed }) =>
-            updateDailyChecklistStatus(projectId, { date: currentDate, taskTitle, completed }),
-        onMutate: async ({ projectId, taskTitle, completed }) => {
+        mutationFn: ({ task, completed }) =>
+            setChecklistTaskCompleted(task, { date: currentDate, completed }),
+        onMutate: async ({ task, completed }) => {
             await queryClient.cancelQueries({ queryKey });
             const previous = queryClient.getQueryData(queryKey);
             queryClient.setQueryData(queryKey, (old) =>
@@ -230,7 +254,7 @@ const DailyChecklistDrawer = () => {
                     ? {
                         ...old,
                         tasks: old.tasks.map((t) =>
-                            t.projectId === projectId && t.title === taskTitle
+                            isSameChecklistTask(t, task)
                                 ? {
                                     ...t,
                                     completed,
@@ -253,8 +277,29 @@ const DailyChecklistDrawer = () => {
         },
     });
 
-    const handleTaskToggle = (projectId, taskTitle, completed) => {
-        mutation.mutate({ projectId, taskTitle, completed });
+    const handleTaskToggle = (task, completed) => {
+        mutation.mutate({ task, completed });
+    };
+
+    const deleteMutation = useMutation({
+        mutationFn: (task) => deleteGeneralChecklistItem(task.itemId),
+        onSuccess: () => {
+            toast.success("Task removed");
+            queryClient.invalidateQueries({ queryKey: ["dailyChecklistSummary"] });
+        },
+        onError: (error) => {
+            toast.error(error?.response?.data?.message || "Couldn't remove the task");
+        },
+    });
+
+    const handleTaskDelete = (task) => {
+        if (
+            window.confirm(
+                `Remove "${task.title}"? It stops appearing from today; earlier days keep their history.`
+            )
+        ) {
+            deleteMutation.mutate(task);
+        }
     };
 
     const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
@@ -264,13 +309,15 @@ const DailyChecklistDrawer = () => {
     const tasksByProject = useMemo(() => {
         const groups = {};
         allTasks.forEach(item => {
-            if (!groups[item.projectId]) {
-                groups[item.projectId] = {
-                    project: { _id: item.projectId, name: item.projectName, emoji: item.emoji },
+            // Tasks that aren't part of a project share one "General Tasks" group
+            const groupId = item.projectId || "general";
+            if (!groups[groupId]) {
+                groups[groupId] = {
+                    project: { _id: groupId, name: item.projectName, emoji: item.emoji },
                     tasks: [],
                 };
             }
-            groups[item.projectId].tasks.push(item);
+            groups[groupId].tasks.push(item);
         });
         return Object.values(groups);
     }, [allTasks]);
@@ -329,6 +376,15 @@ const DailyChecklistDrawer = () => {
                                     <MdChevronRight className="w-5 h-5" />
                                 </button>
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddForm((open) => !open)}
+                                aria-expanded={showAddForm}
+                                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                            >
+                                <FiPlus className="w-3.5 h-3.5" />
+                                {showAddForm ? "Close" : "Add task"}
+                            </button>
                             {canViewAll && (
                                 <div className="flex items-center gap-2 mt-3 w-full">
                                     <button
@@ -357,6 +413,13 @@ const DailyChecklistDrawer = () => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {showAddForm && (
+                            <AddChecklistTask
+                                canAssignOthers={canViewAll}
+                                currentUserId={user?._id}
+                                onDone={() => setShowAddForm(false)}
+                            />
+                        )}
                         {isLoading ? (
                             <DrawerSkeleton />
                         ) : isError ? (
@@ -372,7 +435,7 @@ const DailyChecklistDrawer = () => {
                         ) : tasksByProject.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-48 text-gray-400">
                                 <p>No daily tasks defined.</p>
-                                <p className="text-xs mt-2">Tasks added in Project Settings will appear here.</p>
+                                <p className="text-xs mt-2">Use &quot;Add task&quot; for your own repeating tasks, or add project tasks in Project Settings.</p>
                             </div>
                         ) : (
                             tasksByProject.map(({ project, tasks }) => (
@@ -386,13 +449,13 @@ const DailyChecklistDrawer = () => {
                                     <div className="p-2 ">
                                         {tasks.map((item, idx) => (
                                             <TaskItem
-                                                key={`${project._id}-${idx}`}
-                                                project={project}
+                                                key={item.itemId || `${project._id}-${idx}`}
                                                 task={item}
                                                 isCompleted={item.completed}
                                                 completedBy={item.completedBy}
                                                 completedAt={item.completedAt}
                                                 onToggle={handleTaskToggle}
+                                                onDelete={handleTaskDelete}
                                                 disabled={!isToday(selectedDate)}
                                             />
                                         ))}
