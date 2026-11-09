@@ -159,13 +159,30 @@ const TimeDisplay = React.memo(
 const isTodayRecord = (r) =>
   new Date(r.date || r.clockInTime).toDateString() === new Date().toDateString();
 
-// Closed sessions use the stored hours; an open one is estimated up to `now` (display only).
+// Worked hours of a closed session, derived from its clock-in/out and break time.
+// The stored totalHours can be stale (older saves / edits), so it's only a fallback.
+const REGULAR_HOURS = 8;
+const sessionHours = (s) => {
+  if (s.clockInTime && s.clockOutTime) {
+    const span = (new Date(s.clockOutTime) - new Date(s.clockInTime)) / 36e5;
+    if (Number.isFinite(span)) {
+      return Math.max(0, span - (s.breakTime || 0) / 60);
+    }
+  }
+  return s.totalHours || 0;
+};
+const sessionOvertime = (s) =>
+  s.clockInTime && s.clockOutTime
+    ? Math.max(0, sessionHours(s) - REGULAR_HOURS)
+    : s.overtimeHours || 0;
+
+// Closed sessions use their computed hours; an open one is estimated up to `now` (display only).
 const liveHours = (sessions, now) =>
   sessions.reduce(
     (total, s) =>
       total +
       (s.clockOutTime
-        ? s.totalHours || 0
+        ? sessionHours(s)
         : Math.max(
             0,
             (now - new Date(s.clockInTime)) / 36e5 - (s.breakTime || 0) / 60
@@ -229,7 +246,14 @@ const formatHours = (value) => {
 
 // Merge every clock-in/out session of one employee on one day into a single row.
 const mergeSessions = (sorted) => {
-  if (sorted.length === 1) return sorted[0];
+  if (sorted.length === 1) {
+    const only = sorted[0];
+    return {
+      ...only,
+      totalHours: sessionHours(only),
+      overtimeHours: sessionOvertime(only),
+    };
+  }
 
   const open = sorted.find((s) => !s.clockOutTime);
   const lastOut = sorted.reduce(
@@ -240,14 +264,15 @@ const mergeSessions = (sorted) => {
     null
   );
   const sum = (key) => sorted.reduce((total, s) => total + (s[key] || 0), 0);
+  const sumOf = (fn) => sorted.reduce((total, s) => total + fn(s), 0);
 
   return {
     ...sorted[0],
     clockInTime: sorted[0].clockInTime,
     clockOutTime: open ? null : lastOut,
     status: open ? open.status : "checked-out",
-    totalHours: sum("totalHours"),
-    overtimeHours: sum("overtimeHours"),
+    totalHours: sumOf(sessionHours),
+    overtimeHours: sumOf(sessionOvertime),
     breakTime: sum("breakTime"),
     breaks: sorted.flatMap((s) => s.breaks || []),
     clockInLocation:
@@ -290,10 +315,10 @@ const SessionRow = React.memo(
         />
       </td>
       <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-        {formatHours(session.totalHours)}
+        {formatHours(sessionHours(session))}
       </td>
       <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-        {session.overtimeHours > 0 ? formatHours(session.overtimeHours) : "0h"}
+        {sessionOvertime(session) > 0 ? formatHours(sessionOvertime(session)) : "0h"}
       </td>
       <td className="px-3 py-2" />
       <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 max-w-[140px]">
@@ -400,12 +425,11 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
   const totalHours = useMemo(() => formatHours(shownHours), [shownHours]);
 
   // Memoized overtime calculation
-  const overtimeHours = useMemo(() => {
-    if (!attendance.overtimeHours || attendance.overtimeHours <= 0) return "0h";
-    const hours = Math.floor(attendance.overtimeHours);
-    const minutes = Math.round((attendance.overtimeHours - hours) * 60);
-    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-  }, [attendance.overtimeHours]);
+  const overtimeValue = attendance.overtimeHours || 0;
+  const overtimeHours = useMemo(
+    () => (overtimeValue > 0 ? formatHours(overtimeValue) : "0h"),
+    [overtimeValue]
+  );
 
   const breakMinutes = attendance.breakTime || 0;
 
@@ -497,7 +521,7 @@ const EmployeeRow = React.memo(({ attendance, sessions = [], canEditAttendance, 
 
         {/* Overtime */}
         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-          {attendance.overtimeHours > 0 ? (
+          {overtimeValue > 0 ? (
             <span className="rounded-md bg-purple-50 px-2 py-0.5 font-medium text-purple-700">
               {overtimeHours}
             </span>
