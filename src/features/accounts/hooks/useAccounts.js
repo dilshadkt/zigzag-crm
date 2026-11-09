@@ -51,7 +51,8 @@ export const useClientCosting = (id, params, enabled = true) =>
   useRead("client-costing", () => accountsApi.clientCosting(id, params), { id, ...params }, { enabled: !!id && enabled });
 
 // Invoices
-export const useInvoices = (params) => useRead("invoices", accountsApi.invoices, params, { placeholderData: (prev) => prev });
+export const useInvoices = (params, enabled = true) =>
+  useRead("invoices", accountsApi.invoices, params, { enabled, placeholderData: (prev) => prev });
 export const useInvoiceStats = () => useRead("invoice-stats", accountsApi.invoiceStats);
 export const useInvoice = (id) => useRead("invoice", accountsApi.invoice, id, { enabled: !!id });
 export const useCreateInvoice = () => useWrite(accountsApi.createInvoice, { success: "Invoice created" });
@@ -104,6 +105,11 @@ export const useSetExpenseStatus = () =>
 export const useDeleteExpense = () => useWrite(accountsApi.deleteExpense, { success: "Expense deleted" });
 export const useAddExpenseCategory = () => useWrite(accountsApi.addExpenseCategory, { success: "Category added" });
 export const useRemoveExpenseCategory = () => useWrite(accountsApi.removeExpenseCategory, { success: "Category removed" });
+
+// Client payments (money in / out)
+export const usePayments = (params) => useRead("payments", accountsApi.payments, params, { placeholderData: (prev) => prev });
+export const useCreatePayment = () => useWrite(accountsApi.createPayment, { success: "Payment recorded" });
+export const useDeletePayment = () => useWrite(accountsApi.deletePayment, { success: "Payment deleted" });
 
 // Vendors
 export const useVendors = (params, enabled = true) =>

@@ -14,6 +14,7 @@ import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Expenses from "./pages/Expenses";
 import Vendors from "./pages/Vendors";
+import Payments from "./pages/Payments";
 import Payroll from "./pages/Payroll";
 import PayrollRun from "./pages/PayrollRun";
 import Reports from "./pages/Reports";
@@ -47,6 +48,7 @@ const Accounts = () => {
     { to: "/accounts/invoices", label: "Invoices", show: p.view },
     { to: "/accounts/proposals", label: "Proposals", show: p.view },
     { to: "/accounts/clients", label: "Clients", show: p.view },
+    { to: "/accounts/payments", label: "Payments", show: p.view },
     { to: "/accounts/expenses", label: "Expenses", show: p.view },
     { to: "/accounts/vendors", label: "Vendors", show: p.view },
     { to: "/accounts/payroll", label: "Payroll", show: p.managePayroll },
@@ -95,6 +97,7 @@ const Accounts = () => {
                 <Route path="proposals/:id/edit" element={p.manageProposals ? <ProposalForm /> : <Navigate to="/accounts/proposals" replace />} />
                 <Route path="clients" element={<Clients />} />
                 <Route path="clients/:projectId" element={<ClientDetail />} />
+                <Route path="payments" element={<Payments />} />
                 <Route path="expenses" element={<Expenses />} />
                 <Route path="vendors" element={<Vendors />} />
               </>
