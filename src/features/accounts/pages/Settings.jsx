@@ -253,7 +253,6 @@ const Settings = () => {
           <Card title="Monthly salary paid by hours worked">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Field label="Productive hours in a working day" hint="Required hours = (working days − holidays − paid leave) × this"><input type="number" min="1" step="any" className={inputCls} {...bind("payroll.productiveHoursPerDay")} /></Field>
-              <Field label="Break allowed per day (minutes)" hint="Only break time beyond this is deducted"><input type="number" min="0" step="any" className={inputCls} {...bind("payroll.allowedBreakMinutesPerDay")} /></Field>
               <Field label="Basic share of gross (%)" hint="Used by the Split button on the salary form"><input type="number" min="1" max="100" step="any" className={inputCls} {...bind("payroll.basicPercent")} /></Field>
             </div>
             <p className="text-xs text-slate-500 mt-3">For employees set to “Monthly, by hours worked”. The hourly rate is gross ÷ required hours of the month. Pay is cut for missing hours and extra break time; extra hours are not paid.</p>

@@ -152,7 +152,7 @@ const SalaryDrawer = ({ employee, isOpen, onClose }) => {
             </div>
             {hoursBased && (
               <p className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2">
-                Pay is cut for missing hours. Required hours = (working days − holidays − paid leave) × {productiveHrs} hrs, so the hourly rate (gross ÷ required hours) changes every month. Break time beyond {settings?.payroll?.allowedBreakMinutesPerDay ?? 30} min a day is deducted too. Extra hours are not paid.
+                Pay is cut for missing hours. Required hours = (working days − holidays − paid leave) × {productiveHrs} hrs, so the hourly rate (gross ÷ required hours) changes every month. Hours worked are office time minus break time. Extra hours are not paid.
               </p>
             )}
             {hourly ? (

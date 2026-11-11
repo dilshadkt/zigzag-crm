@@ -54,7 +54,7 @@ const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, fo
             <div><b>Paid leaves</b>{a.paidLeaveDays}</div>
             <div><b>Total hrs required</b>{a.requiredHours}</div>
             <div><b>Total checked hrs</b>{a.ckdHours}</div>
-            <div><b>Productive hours</b>{a.productiveHours}</div>
+            <div><b>Productive hours (breaks excluded)</b>{a.productiveHours}</div>
             <div><b>Hourly rate</b>{fmtMoney(a.hourlyRate, symbol)}</div>
             <div><b>No. of loss of pay</b>{a.lopDays} days</div>
             <div><b>CL / SL / PH</b>{a.casualLeaveDays} / {a.sickLeaveDays} / {a.publicHolidayDays}</div>
