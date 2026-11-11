@@ -245,11 +245,11 @@ const HRDashboardPage = () => {
         if (!reportData) return;
 
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Staff Name,Email,Position,Present Days,Leave Days,Total Worked Hours,Total Break Time (mins),Overtime (hrs),Late Arrivals\r\n";
+        csvContent += "Staff Name,Email,Position,Present Days,Leave Days,Total Worked Hours,Total Break Time (mins),Overtime (hrs),Late Arrivals,Days Without Break\r\n";
 
         if (Array.isArray(reportData)) {
             reportData.forEach(row => {
-                csvContent += `"${row.employee?.name}","${row.employee?.email}","${row.employee?.position || "N/A"}",${row.presentDays},${row.leaveDays},${row.totalWorkingHours},${row.totalBreakDuration},${row.totalOvertimeHours},${row.lateDaysCount}\r\n`;
+                csvContent += `"${row.employee?.name}","${row.employee?.email}","${row.employee?.position || "N/A"}",${row.presentDays},${row.leaveDays},${row.totalWorkingHours},${row.totalBreakDuration},${row.totalOvertimeHours},${row.lateDaysCount},${row.noBreakDaysCount || 0}\r\n`;
             });
         }
 
@@ -425,12 +425,20 @@ const HRDashboardPage = () => {
             earlyDays: logs.filter((l) => l.isEarlyOut),
             overtimeDays: logs.filter((l) => l.overtimeHours > 0),
             absentDays: dayRows.filter((r) => r.status === "absent"),
+            noBreakDays: singleEmployeeReport?.noBreakDays || [],
         };
-    }, [dayRows]);
+    }, [dayRows, singleEmployeeReport]);
 
     const leaveDateList = useMemo(
         () => (singleEmployeeReport?.leaves || []).flatMap((leave) =>
-            leave.dates.map((d) => ({ ...d, type: leave.type, reason: leave.reason }))
+            leave.dates.map((d) => ({
+                ...d,
+                type: leave.type,
+                reason: leave.reason,
+                isHalfDay: leave.isHalfDay,
+                halfDayType: leave.halfDayType,
+                approvedByName: leave.approvedByName,
+            }))
         ),
         [singleEmployeeReport]
     );
@@ -681,6 +689,13 @@ const HRDashboardPage = () => {
                         </div>
                         <span className="text-xs font-medium text-slate-400 tracking-wider mt-1">Break Duration</span>
                         <h3 className="text-xl font-bold text-slate-800">{formatBreakMinutes(totals.breakTime)}</h3>
+                        {selectedEmployeeId && singleEmployeeReport?.noBreakDaysCount > 0 && (
+                            <span className="text-[10px] font-medium text-amber-500">
+                                {singleEmployeeReport.neverTakesBreak
+                                    ? "No break taken in this period"
+                                    : `${singleEmployeeReport.noBreakDaysCount} day${singleEmployeeReport.noBreakDaysCount > 1 ? "s" : ""} without a break`}
+                            </span>
+                        )}
                     </div>
 
                     {/* Card 5 */}
@@ -699,7 +714,7 @@ const HRDashboardPage = () => {
                 <div className="bg-white rounded-xl p-3 border border-red-200/70 flex flex-col gap-2">
                     <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                         <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                        <h5 className="font-bold text-slate-700 text-xs">Leave Days ({leaveDateList.length})</h5>
+                        <h5 className="font-bold text-slate-700 text-xs">Leave Days ({leaveDateList.reduce((sum, l) => sum + (l.isHalfDay ? 0.5 : 1), 0)})</h5>
                     </div>
                     {isLoadingSingle ? (
                         <SkeletonItem className="h-10 w-full rounded-lg" />
@@ -710,8 +725,18 @@ const HRDashboardPage = () => {
                                     <div className="flex flex-col min-w-0">
                                         <span className="font-bold text-slate-800">{formatShortDate(l.date)}</span>
                                         <span className="text-slate-400">{l.dayName}{l.reason ? ` · ${l.reason}` : ""}</span>
+                                        {l.approvedByName && (
+                                            <span className="text-slate-400">Approved by: <span className="font-semibold text-slate-500">{l.approvedByName}</span></span>
+                                        )}
                                     </div>
-                                    <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100 shrink-0">{leaveTypeLabel(l.type)}</span>
+                                    <div className="flex flex-col items-end gap-1 shrink-0">
+                                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-50 text-red-600 rounded-md border border-red-100">{leaveTypeLabel(l.type)}</span>
+                                        <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md border ${l.isHalfDay ? "bg-violet-50 text-violet-600 border-violet-100" : "bg-sky-50 text-sky-600 border-sky-100"}`}>
+                                            {l.isHalfDay
+                                                ? `Half day${l.halfDayType === "second_half" ? " · Second half" : l.halfDayType === "first_half" ? " · First half" : ""}`
+                                                : "Full day"}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -723,12 +748,13 @@ const HRDashboardPage = () => {
 
             {/* Member details: replaces the company-wide "today" panels when one staff member is selected */}
             {selectedEmployeeId && !error && (
-                <div className={`grid grid-cols-1 md:grid-cols-4 gap-3 ${isLoadingSingle ? "opacity-50 transition-opacity" : ""}`}>
+                <div className={`grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3 ${isLoadingSingle ? "opacity-50 transition-opacity" : ""}`}>
                     {[
                         { title: "Late Arrivals", dot: "bg-amber-400", badge: "bg-amber-50 text-amber-600 border-amber-100", rows: memberDetails.lateDays, empty: "No late arrivals in this period.", text: (l) => `Late by ${l.lateBy}m` },
                         { title: "Early Checkouts", dot: "bg-blue-400", badge: "bg-blue-50 text-blue-600 border-blue-100", rows: memberDetails.earlyDays, empty: "No early checkouts in this period.", text: (l) => `Left early ${l.earlyOutBy}m` },
                         { title: "Overtime Days", dot: "bg-indigo-500", badge: "bg-indigo-50 text-indigo-600 border-indigo-100", rows: memberDetails.overtimeDays, empty: "No overtime in this period.", text: (l) => `${l.overtimeHours.toFixed(2)} hrs` },
                         { title: "Absent Days", dot: "bg-orange-400", badge: "bg-orange-50 text-orange-600 border-orange-100", rows: memberDetails.absentDays, empty: "No absent days in this period.", text: () => "Absent" },
+                        { title: "No Break Days", dot: "bg-rose-400", badge: "bg-rose-50 text-rose-600 border-rose-100", rows: memberDetails.noBreakDays, empty: "A break was logged on every full working day.", text: (l) => `${l.workedHours.toFixed(1)}h, no break` },
                     ].map((card) => (
                         <div key={card.title} className="bg-white rounded-xl p-3 border border-slate-200/60 flex flex-col h-72 select-none">
                             <div className="flex items-center gap-2 border-b border-slate-100 pb-2 mb-2 shrink-0">
@@ -935,7 +961,16 @@ const HRDashboardPage = () => {
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.presentDays} days</td>
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.leaveDays} days</td>
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.totalWorkingHours} hrs</td>
-                                            <td className="py-3 px-3.5 text-slate-600">{formatBreakMinutes(row.totalBreakDuration)}</td>
+                                            <td className="py-3 px-3.5 text-slate-600">
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <span>{formatBreakMinutes(row.totalBreakDuration)}</span>
+                                                    {row.neverTakesBreak ? (
+                                                        <span title="No break logged on any full working day" className="px-2 py-0.5 text-[10px] font-semibold bg-rose-50 text-rose-600 rounded-full border border-rose-100">Never takes break</span>
+                                                    ) : row.noBreakDaysCount > 0 ? (
+                                                        <span title="Days worked a full shift with no break logged" className="px-2 py-0.5 text-[10px] font-semibold bg-amber-50 text-amber-600 rounded-full border border-amber-100">{row.noBreakDaysCount} day{row.noBreakDaysCount > 1 ? "s" : ""} no break</span>
+                                                    ) : null}
+                                                </div>
+                                            </td>
                                             <td className="py-3 px-3.5 text-slate-600">{row.totalOvertimeHours} hrs</td>
                                             <td className="py-3 px-3.5">
                                                 {row.lateDaysCount > 0 ? (

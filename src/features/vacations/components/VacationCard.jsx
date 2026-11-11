@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { RiMoreLine, RiTimeLine, RiCalendarCheckLine, RiCloseCircleLine } from "react-icons/ri";
 import { FaCheck, FaTimes, FaEdit } from "react-icons/fa";
-import { format } from "date-fns";
+import { format, differenceInCalendarDays } from "date-fns";
 import ApprovalMenu from "./ApprovalMenu";
 import ModifyDatesModal from "./ModifyDatesModal";
 import OverlappingTasks from "./OverlappingTasks";
@@ -30,7 +30,22 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const mapEmployeeVacations = (vacations = []) =>
+// "Full day", "Half day · First half" or "3 days"
+const leaveLengthLabel = (request) => {
+  if (request.isHalfDay) {
+    const part =
+      request.halfDayType === "second_half"
+        ? "Second half"
+        : request.halfDayType === "first_half"
+          ? "First half"
+          : "";
+    return part ? `Half day · ${part}` : "Half day";
+  }
+  const days = differenceInCalendarDays(new Date(request.endDate), new Date(request.startDate)) + 1;
+  return days > 1 ? `${days} days` : "Full day";
+};
+
+const mapEmployeeVacations =(vacations = []) =>
   vacations.map((vacation) => ({
     id: vacation.id || vacation._id,
     type: vacation.type,
@@ -42,6 +57,7 @@ const mapEmployeeVacations = (vacations = []) =>
     isHalfDay: vacation.isHalfDay || false,
     halfDayType: vacation.halfDayType || null,
     reason: vacation.reason,
+    approvedByName: vacation.approvedByName || null,
     project: vacation.project
       ? { id: vacation.project.id || vacation.project._id, name: vacation.project.name }
       : null,
@@ -225,7 +241,16 @@ const VacationCard = ({
                       <RiCalendarCheckLine className="w-3 h-3 text-gray-400" />
                       {format(new Date(request.startDate), "MMM dd")} — {format(new Date(request.endDate), "MMM dd, yyyy")}
                     </div>
-                    {request.originalStartDate && request.originalEndDate && 
+                    <span
+                      className={`px-1.5 py-0.5 rounded border text-[9px] font-bold ${
+                        request.isHalfDay
+                          ? "bg-violet-50 text-violet-600 border-violet-100"
+                          : "bg-sky-50 text-sky-600 border-sky-100"
+                      }`}
+                    >
+                      {leaveLengthLabel(request)}
+                    </span>
+                    {request.originalStartDate && request.originalEndDate &&
                      (format(new Date(request.startDate), "yyyy-MM-dd") !== format(new Date(request.originalStartDate), "yyyy-MM-dd") ||
                       format(new Date(request.endDate), "yyyy-MM-dd") !== format(new Date(request.originalEndDate), "yyyy-MM-dd")) && (
                       <span className="text-[9px] text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 italic">
@@ -238,6 +263,13 @@ const VacationCard = ({
                       </span>
                     )}
                   </div>
+
+                  {request.status === "approved" && request.approvedByName && (
+                    <p className="text-[10px] text-gray-500 leading-snug">
+                      <span className="font-semibold text-gray-600">Approved by: </span>
+                      {request.approvedByName}
+                    </p>
+                  )}
 
                   {request.reason?.trim() && (
                     <p

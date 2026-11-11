@@ -112,11 +112,12 @@ const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, fo
       </div>
       <p className="small muted" style={{ marginTop: 6 }}>{amountInWords(payslip.netPay)}</p>
 
-      {a.payType === "monthly_hours" && (a.lopHours > 0 || a.breakHours > 0) && (
+      {a.payType === "monthly_hours" && (a.lopHours > 0 || a.breakHours > 0 || a.assumedBreakDays > 0) && (
         <p className="small muted" style={{ marginTop: 6 }}>
           Remarks:{" "}
           {a.lopHours > 0 && `Leave LOP includes ${a.leaveLopDays} days. `}
-          {a.breakHours > 0 && `Break deduction includes ${a.breakHours} hours.`}
+          {a.breakHours > 0 && `Break deduction includes ${a.breakHours} hours. `}
+          {a.assumedBreakDays > 0 && `No break was logged on ${a.assumedBreakDays} day${a.assumedBreakDays > 1 ? "s" : ""}; ${a.assumedBreakHours} hrs of break assumed.`}
         </p>
       )}
 
