@@ -8,6 +8,44 @@ const TaskCategorySection = ({
   onEdit,
   onDelete,
 }) => {
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [departmentFilter, setDepartmentFilter] = React.useState("");
+
+  // Departments that actually have categories, with how many each holds
+  const departmentOptions = React.useMemo(() => {
+    const byId = new Map();
+    let withoutDepartment = 0;
+    (categories || []).forEach((c) => {
+      const id = String(c.department?._id || c.department || "");
+      if (!id) {
+        withoutDepartment += 1;
+        return;
+      }
+      const entry = byId.get(id) || { id, name: c.department?.name || "Unknown", count: 0 };
+      entry.count += 1;
+      byId.set(id, entry);
+    });
+    const list = [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+    return { list, withoutDepartment };
+  }, [categories]);
+
+  const filteredCategories = React.useMemo(() => {
+    const needle = searchTerm.trim().toLowerCase();
+    return (categories || []).filter((c) => {
+      if (departmentFilter) {
+        const id = String(c.department?._id || c.department || "");
+        if (departmentFilter === "none" ? id : id !== departmentFilter) return false;
+      }
+      if (!needle) return true;
+      return (
+        c.name?.toLowerCase().includes(needle) ||
+        c.department?.name?.toLowerCase().includes(needle)
+      );
+    });
+  }, [categories, searchTerm, departmentFilter]);
+
+  const isFiltering = Boolean(searchTerm.trim() || departmentFilter);
+
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-48 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -57,30 +95,46 @@ const TaskCategorySection = ({
     );
   }
 
-  const [searchTerm, setSearchTerm] = React.useState("");
-
-  const filteredCategories = React.useMemo(() => {
-    if (!searchTerm) return categories;
-    return categories.filter((c) =>
-      c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.department?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [categories, searchTerm]);
-
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col font-sans">
-      <div className="px-5 py-3 border-b border-gray-50 bg-white flex justify-between items-center">
-        <div className="grid grid-cols-12 gap-4 w-full">
-          <div className="col-span-12 sm:col-span-8 pr-4">
-            <input
-              type="text"
-              placeholder="Search categories..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-            />
-          </div>
-        </div>
+      <div className="px-5 py-3 border-b border-gray-50 bg-white flex flex-col sm:flex-row gap-3 sm:items-center">
+        <input
+          type="text"
+          placeholder="Search categories..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 min-w-0 px-3 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+        />
+        <select
+          aria-label="Filter by department"
+          value={departmentFilter}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
+          className="sm:w-64 px-3 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all cursor-pointer"
+        >
+          <option value="">All departments</option>
+          {departmentOptions.list.map((dept) => (
+            <option key={dept.id} value={dept.id}>
+              {dept.name} ({dept.count})
+            </option>
+          ))}
+          {departmentOptions.withoutDepartment > 0 && (
+            <option value="none">
+              No department ({departmentOptions.withoutDepartment})
+            </option>
+          )}
+        </select>
+        {isFiltering && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm("");
+              setDepartmentFilter("");
+            }}
+            className="text-[12px] font-semibold text-blue-500 hover:text-blue-600 whitespace-nowrap cursor-pointer"
+          >
+            Clear
+          </button>
+        )}
       </div>
       <div className="px-5 py-2 border-b border-gray-50 bg-gray-50/50">
         <div className="grid grid-cols-12 gap-4">
@@ -179,7 +233,11 @@ const TaskCategorySection = ({
           ))
         ) : (
           <div className="px-5 py-8 text-center">
-            <p className="text-[13px] text-gray-500 font-medium">No categories found matching "{searchTerm}"</p>
+            <p className="text-[13px] text-gray-500 font-medium">
+              {searchTerm.trim()
+                ? `No categories found matching "${searchTerm.trim()}"`
+                : "No categories in this department"}
+            </p>
           </div>
         )}
       </div>
@@ -188,7 +246,7 @@ const TaskCategorySection = ({
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
           Total Categories: {categories.length}
         </p>
-        {searchTerm && (
+        {isFiltering && (
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
             Showing: {filteredCategories.length}
           </p>
