@@ -85,6 +85,7 @@ const TaskDetailPage = () => {
         taskDetails={taskDetails}
         teams={teams}
         computedProgress={computedProgress}
+        subTasks={subTasks}
       />
       {/* add task modal */}
       <AddTask

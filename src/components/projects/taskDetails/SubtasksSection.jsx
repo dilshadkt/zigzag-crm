@@ -1020,11 +1020,13 @@ const SubtasksSection = ({
           setTimelineSubTask(null);
         }}
         title={`Subtask Activity: ${timelineSubTask?.title || ""}`}
-        size="lg"
+        maxWidth="sm:max-w-4xl"
       >
-        <div className="max-h-[70vh] overflow-y-auto px-1 custom-scrollbar">
-          <ActivityTimeline activities={timelineSubTask?.activityLog} />
-        </div>
+        {/* The modal itself scrolls, so the day headers stay pinned while reading */}
+        <ActivityTimeline
+          activities={timelineSubTask?.activityLog}
+          subTask={timelineSubTask}
+        />
       </Modal>
 
       <WorkLinkModal

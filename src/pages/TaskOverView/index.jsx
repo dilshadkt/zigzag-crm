@@ -86,6 +86,7 @@ const TaskOverView = () => {
       <TaskInfo
         taskDetails={taskDetails}
         computedProgress={computedProgress}
+        subTasks={subTasks}
       />
       {/* add task modal  */}
       <AddTask

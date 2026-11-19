@@ -4,10 +4,10 @@ import Progress from "../../shared/progress";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import {
   useGetTaskTimeLogs,
-  useCreateTimeLog,
   useDeleteTask,
   useUpdateTaskById,
 } from "../../../api/hooks";
+import TimeTrackingCard from "./TimeTrackingCard";
 import { toast } from "react-hot-toast";
 import Modal from "../../shared/modal";
 import { formatDate, getMonthKey, formatMonthKeyShort } from "../../../lib/dateUtils";
@@ -47,14 +47,11 @@ const TaskUserAvatar = ({ user, size = "w-8 h-8", fontSize = "text-[10px]" }) =>
 const personName = (person) =>
   [person?.firstName || person?.name, person?.lastName].filter(Boolean).join(" ") || "Unnamed";
 
-const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) => {
+const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [], subTasks = [] }) => {
   const { user, isCompany } = useAuth();
   const { hasPermission } = usePermissions();
   const isEmployee = user?.role === "employee";
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [duration, setDuration] = useState("");
-  const [description, setDescription] = useState("");
   const [showDueDateHistoryModal, setShowDueDateHistoryModal] = useState(false);
   const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
   const [pickedAssignees, setPickedAssignees] = useState([]);
@@ -68,23 +65,22 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) 
       ? `Due ${formatMonthKeyShort(dueMonthKey)} · ${dueMonthKey > taskMonthKey ? "after" : "before"} task month`
       : null;
   const navigate = useNavigate();
+  // Time is worked out from the subtasks' own timers. The key changes whenever a
+  // subtask's status, time or rework count does, so the card refreshes with them.
+  const subTaskVersion = (subTasks || [])
+    .map((st) => `${st._id}:${st.status}:${st.totalActualTime || 0}:${st.reworkCount || 0}`)
+    .join("|");
   const {
     data: timeLogData,
     isLoading,
     error,
-  } = useGetTaskTimeLogs(taskDetails?._id);
-  const createTimeLog = useCreateTimeLog();
+  } = useGetTaskTimeLogs(taskDetails?._id, subTaskVersion);
   const deleteTask = useDeleteTask(taskDetails?.project, onTaskDeleted);
   const updateTask = useUpdateTaskById(taskDetails?._id, () => setIsAssigneeModalOpen(false));
 
   // Permission checks
   const canDeleteTask = isCompany || hasPermission("tasks", "delete");
   const canEditTask = isCompany || hasPermission("tasks", "edit");
-  const canLogTime =
-    canEditTask ||
-    taskDetails?.assignedTo?.some(
-      (assignedUser) => assignedUser._id === user?._id
-    );
   const openAssigneeModal = () => {
     setPickedAssignees((taskDetails?.assignedTo || []).map((person) => String(person._id || person)));
     setAssigneeSearch("");
@@ -117,25 +113,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) 
     personName(person).toLowerCase().includes(assigneeSearch.trim().toLowerCase())
   );
 
-  const handleLogTime = () => {
-    if (!duration || !description) return;
-
-    createTimeLog.mutate(
-      {
-        taskId: taskDetails._id,
-        duration: parseInt(duration),
-        description,
-      },
-      {
-        onSuccess: () => {
-          setIsModalOpen(false);
-          setDuration("");
-          setDescription("");
-        },
-      }
-    );
-  };
-
   const handleDeleteTask = () => {
     deleteTask.mutate(taskDetails._id, {
       onSuccess: () => {
@@ -144,18 +121,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) 
       },
     });
   };
-
-  const formatTime = (minutes) => {
-    if (!minutes) return "0h 0m";
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
-
-  const totalTime = timeLogData?.data?.totalTime || 0;
-  const progress = taskDetails?.timeEstimate
-    ? (totalTime / (taskDetails.timeEstimate * 60)) * 100
-    : 0;
 
   return (
     <div
@@ -254,37 +219,12 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) 
           </div>
         </div>
 
-        <div className="rounded-2xl mt-5 p-4 bg-[#F4F9FD] hidden md:flex flex-col">
-          <h4 className="font-medium">Time tracking</h4>
-          {isLoading ? (
-            <div className="text-sm text-gray-500">Loading time data...</div>
-          ) : error ? (
-            <div className="text-sm text-red-500">Error loading time data</div>
-          ) : (
-            <>
-              <div className="flexStart gap-x-3 my-3">
-                <Progress size={33} strokeWidth={2} currentValue={progress} />
-                <div className="flex flex-col">
-                  <span className="text-sm">
-                    {formatTime(totalTime)} logged
-                  </span>
-                  <span className="text-xs text-[#91929E]">
-                    Original Estimate{" "}
-                    {formatTime(taskDetails?.timeEstimate * 60)}
-                  </span>
-                </div>
-              </div>
-              {canLogTime && (
-                <PrimaryButton
-                  title="Log time"
-                  icon={assetPath("icons/time.svg")}
-                  className="w-fit text-white"
-                  onclick={() => setIsModalOpen(true)}
-                />
-              )}
-            </>
-          )}
-        </div>
+        <TimeTrackingCard
+          data={timeLogData?.data}
+          isLoading={isLoading}
+          error={error}
+          estimateHours={taskDetails?.timeEstimate}
+        />
         <div className="gap-y-3 mt-1 flex flex-col mx-3">
           {taskMonthKey && (
             <div className="flex flex-col gap-y-1">
@@ -367,60 +307,6 @@ const TaskInfo = ({ taskDetails, onTaskDeleted, computedProgress, teams = [] }) 
           />
         )}
       </div>
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Log Time"
-      >
-        <div className="flex flex-col gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Duration (minutes)
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                className="block w-full rounded-md border-gray-300 pr-12
-                p-3 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                min="1"
-                placeholder="Enter time in minutes"
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <span className="text-gray-500 sm:text-sm">min</span>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="block w-full p-3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              rows={3}
-              placeholder="What did you work on?"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleLogTime}
-              disabled={!duration || !description}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              Log Time
-            </button>
-          </div>
-        </div>
-      </Modal>
       <Modal
         isOpen={isAssigneeModalOpen}
         onClose={() => setIsAssigneeModalOpen(false)}

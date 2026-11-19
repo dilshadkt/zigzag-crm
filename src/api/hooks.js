@@ -645,9 +645,11 @@ export const useUpdateProject = (projectId, handleSuccess) => {
 };
 
 // Time Log Hooks
-export const useGetTaskTimeLogs = (taskId) => {
+// `version` changes whenever the task's subtasks do (status, time, rework), so
+// the time card re-reads itself instead of going stale
+export const useGetTaskTimeLogs = (taskId, version = "") => {
   return useQuery({
-    queryKey: ["taskTimeLogs", taskId],
+    queryKey: ["taskTimeLogs", taskId, version],
     queryFn: () =>
       apiClient.get(`/time-logs/task/${taskId}`).then((res) => res.data),
     enabled: !!taskId,
