@@ -4,7 +4,8 @@ import { useOutletContext } from "react-router-dom";
 
 const ProjectDetails = () => {
   // Get data passed from the layout via Outlet context
-  const { projectData, selectedMonth, refetchTasks, isLoading } = useOutletContext();
+  const { projectData, selectedMonth, refetchTasks, isLoading, taskSearch, setSearchAvailable } =
+    useOutletContext();
 
   return (
     <ProjectOverView
@@ -12,6 +13,8 @@ const ProjectDetails = () => {
       selectedMonth={selectedMonth}
       onRefresh={refetchTasks}
       isLoading={isLoading}
+      searchQuery={taskSearch}
+      onSearchAvailableChange={setSearchAvailable}
     />
   );
 };

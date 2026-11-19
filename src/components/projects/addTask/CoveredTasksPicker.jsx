@@ -23,6 +23,7 @@ const CoveredTasksPicker = ({
   shootTaskId = null,
   value = [],
   onChange,
+  locked = false,
 }) => {
   const { data, isLoading } = useShootCandidates(projectId, { workType, shootTaskId });
   // When editing, what the shoot already covers comes first, then what is still free
@@ -39,6 +40,7 @@ const CoveredTasksPicker = ({
   const selected = new Set((value || []).map(String));
 
   const toggle = (id) => {
+    if (locked) return;
     const next = new Set(selected);
     if (next.has(id)) next.delete(id);
     else next.add(id);
@@ -57,8 +59,9 @@ const CoveredTasksPicker = ({
         </span>
       </div>
       <p className="text-[11px] text-gray-500">
-        Pick the scheduled {workType} this shoot is for. After the shoot, the footage link goes
-        onto each one and the shoot&apos;s points are counted per task shot.
+        {locked
+          ? "This shoot was already submitted, so the tasks it covers can no longer change."
+          : `Pick the scheduled ${workType} this shoot is for. After the shoot, the footage link goes onto each one and the shoot's points are counted per task shot.`}
       </p>
       {isLoading ? (
         <p className="text-xs text-gray-400">Loading scheduled tasks...</p>
@@ -79,7 +82,8 @@ const CoveredTasksPicker = ({
                   type="checkbox"
                   checked={selected.has(id)}
                   onChange={() => toggle(id)}
-                  className="h-4 w-4 rounded text-blue-600"
+                  disabled={locked}
+                  className="h-4 w-4 rounded text-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">
                   {task.title}

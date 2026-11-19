@@ -43,8 +43,15 @@ const toCount = (value) => {
   return Number.isFinite(num) && num > 0 ? num : 0;
 };
 
-export const extraWorkTypeValueFromName = (name) =>
-  matchStandardWorkType(name) || String(name || "").trim();
+// Accepts a category name or a category object (an object tied to a quota
+// resolves to that quota's key)
+export const extraWorkTypeValueFromName = (nameOrCategory) =>
+  matchStandardWorkType(nameOrCategory) ||
+  String(
+    (nameOrCategory && typeof nameOrCategory === "object"
+      ? nameOrCategory.name
+      : nameOrCategory) || ""
+  ).trim();
 
 /** Master category time is stored in minutes. Task timeEstimate is stored in hours. */
 export const taskMinutesToHours = (minutes) => {

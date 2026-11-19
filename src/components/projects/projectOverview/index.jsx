@@ -66,7 +66,39 @@ const statusConfig = {
   },
 };
 
-const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }) => {
+// Search text matches the task/subtask title, its parent task's title, its
+// category and work type, or an assignee's name.
+const matchesTaskSearch = (task, query) => {
+  const needle = String(query || "").trim().toLowerCase();
+  if (!needle) return true;
+  const assignees = (Array.isArray(task?.assignedTo) ? task.assignedTo : [])
+    .map((user) =>
+      typeof user === "object"
+        ? [user?.name, user?.firstName, user?.lastName].filter(Boolean).join(" ")
+        : ""
+    );
+  const haystack = [
+    task?.title,
+    task?.taskName,
+    task?.parentTask?.title,
+    task?.taskCategory?.name,
+    task?.extraTaskWorkType,
+    ...assignees,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(needle);
+};
+
+const ProjectOverView = ({
+  currentProject,
+  selectedMonth,
+  onRefresh,
+  isLoading,
+  searchQuery = "",
+  onSearchAvailableChange,
+}) => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -172,6 +204,12 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
     }
   }, [activeTab, projectId]);
 
+  // The header search box only applies to the Kanban tab
+  useEffect(() => {
+    onSearchAvailableChange?.(isBoardView);
+    return () => onSearchAvailableChange?.(false);
+  }, [isBoardView, onSearchAvailableChange]);
+
   if (isLoading) {
     return <ProjectOverViewShimmer isBoardView={isBoardView} />;
   }
@@ -196,6 +234,9 @@ const ProjectOverView = ({ currentProject, selectedMonth, onRefresh, isLoading }
   const filterTasks = (tasks) => {
     return tasks.filter((task) => {
       if (!showSubtasks && task?.itemType === "subtask") {
+        return false;
+      }
+      if (isBoardView && !matchesTaskSearch(task, searchQuery)) {
         return false;
       }
       if (activeFilters) {

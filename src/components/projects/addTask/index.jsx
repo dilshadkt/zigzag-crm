@@ -1610,7 +1610,9 @@ const AddTask = ({
           Number(category.points) > 0
             ? `${category.name} (${category.points} pts)`
             : category.name,
-        value: extraWorkTypeValueFromName(category.name),
+        // A category tied to a quota (e.g. Short-form videos -> reels) is stored by
+        // that quota key, so its extra work counts in the same slot.
+        value: extraWorkTypeValueFromName(category),
       }))
       .filter((option) => {
         const key = String(option.value || "").toLowerCase();
@@ -1931,6 +1933,12 @@ const AddTask = ({
                         workType={shootCategory.coversWorkType || "reels"}
                         value={values.coveredTasks || []}
                         onChange={(ids) => setFieldValue("coveredTasks", ids)}
+                        locked={
+                          isEdit &&
+                          (values.subtasks || []).some(
+                            (step) => step?.shootSubmission?.submittedAt
+                          )
+                        }
                       />
                     )}
                     {isExtraTaskSelected && (
