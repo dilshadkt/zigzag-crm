@@ -56,7 +56,11 @@ const TimeTrackingCard = ({ data, isLoading, error, estimateHours }) => {
   const totalMinutes =
     rows.reduce((sum, row) => sum + row.liveTotal, 0) + (data?.taskLevelTime || 0);
   const reworkMinutes = rows.reduce((sum, row) => sum + row.liveRework, 0);
-  const estimateMinutes = Math.round((Number(estimateHours) || 0) * 60);
+  // The task's estimate is the sum of its subtasks' category times. The task's
+  // own estimate is only a fallback (e.g. a task with no subtasks).
+  const subtaskEstimate = rows.reduce((sum, row) => sum + (row.estimateMinutes || 0), 0);
+  const estimateMinutes =
+    subtaskEstimate > 0 ? subtaskEstimate : Math.round((Number(estimateHours) || 0) * 60);
   const progress = estimateMinutes ? Math.min(100, (totalMinutes / estimateMinutes) * 100) : 0;
   const reworkRounds = rows.reduce((sum, row) => sum + (row.reworkCount || 0), 0);
 
