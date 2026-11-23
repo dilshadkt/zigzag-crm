@@ -6,6 +6,7 @@ import { useAttendanceCalendarData } from "../hooks/useAttendanceCalendarData";
 import AttendanceCalendarHeader from "./AttendanceCalendarHeader";
 import { useGetHolidays, useGetWorkSchedule } from "../../../api/hooks";
 import { getOffDayReason } from "../../../utils/workingDayUtils";
+import { companyDayKey } from "../../../utils/companyDate";
 import { formatBreakMinutes, getOpenSessionEnd, UNENDED_BREAK_MINUTES } from "../utils";
 
 const formatClock = (value) => {
@@ -106,7 +107,7 @@ const AttendanceReport = () => {
     (attendanceData || []).forEach((record) => {
       if (!record?.date && !record?.clockInTime) return;
       const source = record.date || record.clockInTime;
-      const key = format(new Date(source), "yyyy-MM-dd");
+      const key = companyDayKey(source);
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(record);
     });

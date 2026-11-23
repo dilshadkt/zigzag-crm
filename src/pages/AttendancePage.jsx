@@ -7,6 +7,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { usePermissions } from "../hooks/usePermissions";
 import { formatLocation } from "../utils/locationUtils";
+import { companyTodayKey, shiftDayKey, formatCompanyDay } from "../utils/companyDate";
 import {
   IoFingerPrintOutline,
   IoTimeOutline,
@@ -19,10 +20,8 @@ const AttendancePage = () => {
   const { user, isCompany } = useAuth();
   const { hasPermission } = usePermissions();
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0], // 30 days ago
-    endDate: new Date().toISOString().split("T")[0], // Today
+    startDate: shiftDayKey(companyTodayKey(), -30), // 30 days ago
+    endDate: companyTodayKey(), // Today
   });
 
   // Permission checks for attendance access
@@ -104,7 +103,8 @@ const AttendancePage = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    // Rows are stamped with the company (IST) day, so read them in that zone
+    return formatCompanyDay(dateString, {
       weekday: "short",
       month: "short",
       day: "numeric",

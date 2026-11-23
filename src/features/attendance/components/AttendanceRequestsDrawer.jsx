@@ -1,5 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
+import { companyDayDate } from "../../../utils/companyDate";
 import { toast } from "react-hot-toast";
 import { FiClock, FiX } from "react-icons/fi";
 import { useReviewAttendanceCorrection } from "../hooks/useAttendanceMutations";
@@ -72,7 +73,7 @@ const AttendanceRequestsDrawer = ({ isOpen, onClose, requests = [], isLoading })
                 const name = employeeName(record.employee);
                 const request = record.correctionRequest || {};
                 const dateLabel = record.date
-                  ? format(new Date(record.date), "EEE, MMM d")
+                  ? format(companyDayDate(record.date), "EEE, MMM d")
                   : "";
 
                 return (

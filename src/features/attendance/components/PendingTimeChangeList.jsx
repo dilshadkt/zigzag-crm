@@ -1,5 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
+import { companyDayDate } from "../../../utils/companyDate";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../../hooks/useAuth";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -61,7 +62,7 @@ const PendingTimeChangeList = ({ onReviewed }) => {
             const name = employeeName(record.employee);
             const request = record.correctionRequest || {};
             const dateLabel = record.date
-              ? format(new Date(record.date), "MMM d")
+              ? format(companyDayDate(record.date), "MMM d")
               : "";
 
             return (

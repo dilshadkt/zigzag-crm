@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { isSameDay, format, startOfMonth, endOfMonth } from "date-fns";
 import { useEmployeeAttendance } from "./useAttendanceAnalytics";
+import { companyDayKey } from "../../../utils/companyDate";
 
 /**
  * Hook to fetch and organize attendance data for calendar view
@@ -37,10 +38,10 @@ export const useAttendanceCalendarData = (currentDate, employeeId) => {
       if (!record.date) return;
 
       try {
-        // Normalize date to start of day for consistent comparison
-        const recordDate = new Date(record.date);
-        recordDate.setHours(0, 0, 0, 0);
-        const dateKey = format(recordDate, "yyyy-MM-dd");
+        // The API stamps each row with the company (IST) day, so bucket by that
+        // day, not by the browser's zone (a UTC device would show it a day early)
+        const dateKey = companyDayKey(record.date);
+        if (!dateKey) return;
 
         if (!map.has(dateKey)) {
           map.set(dateKey, []);

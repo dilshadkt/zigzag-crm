@@ -120,6 +120,7 @@ import {
 import { getUnreadCount } from "./chatService";
 import { format } from "date-fns";
 import { useAuth } from "../hooks/useAuth";
+import { useCompanyToday } from "../utils/companyDate";
 
 // Task Flow hooks
 
@@ -1146,7 +1147,7 @@ export const useGetEmployeeTasks = (employeeId, filters = {}) => {
 
 // Get tasks assigned to an employee that are due today
 export const useGetEmployeeTasksToday = (employeeId) => {
-  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+  const today = useCompanyToday(); // company (IST) day, rolls over at midnight
 
   return useQuery({
     queryKey: ["employeeTasksToday", employeeId, today],
@@ -1185,8 +1186,11 @@ export const useGetEmployeeSubTasks = (employeeId, filters = {}) => {
 
 // Get tasks + subtasks assigned to an employee that are due today
 export const useGetEmployeeSubTasksToday = (employeeId) => {
+  // The day is part of the key so a page left open overnight refetches instead of
+  // keeping yesterday's list; invalidations by the ["employeeSubTasksToday", id] prefix still match
+  const today = useCompanyToday();
   return useQuery({
-    queryKey: ["employeeSubTasksToday", employeeId],
+    queryKey: ["employeeSubTasksToday", employeeId, today],
     queryFn: () => {
       return apiClient
         .get(`/tasks/employee/${employeeId}/today`)

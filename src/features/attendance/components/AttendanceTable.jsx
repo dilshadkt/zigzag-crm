@@ -10,6 +10,7 @@ import {
   getDetailedLocation,
 } from "../../../utils/locationUtils";
 import LocationModal from "../../../components/LocationModal";
+import { companyDayKey, companyDayDate, companyTodayKey } from "../../../utils/companyDate";
 import EditAttendanceModal from "./EditAttendanceModal";
 import { formatBreakMinutes } from "../utils";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
@@ -157,7 +158,7 @@ const TimeDisplay = React.memo(
 );
 
 const isTodayRecord = (r) =>
-  new Date(r.date || r.clockInTime).toDateString() === new Date().toDateString();
+  companyDayKey(r.date || r.clockInTime) === companyTodayKey();
 
 // Worked hours of a closed session, derived from its clock-in/out and break time.
 // The stored totalHours can be stale (older saves / edits), so it's only a fallback.
@@ -284,9 +285,8 @@ const mergeSessions = (sorted) => {
 };
 
 const dayKey = (record) => {
-  const d = new Date(record.date || record.clockInTime);
   const empId = record.employee?._id || record.employee;
-  return `${empId}-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return `${empId}-${companyDayKey(record.date || record.clockInTime)}`;
 };
 
 // Compact row for one session, shown when a grouped row is expanded
@@ -801,7 +801,7 @@ const AttendanceTable = ({
   const dayGroups = useMemo(() => {
     const map = new Map();
     groupedRecords.forEach((row) => {
-      const d = new Date(row.merged.date || row.merged.clockInTime);
+      const d = companyDayDate(row.merged.date || row.merged.clockInTime);
       const k = isNaN(d) ? "unknown" : d.toDateString();
       if (!map.has(k)) map.set(k, { key: k, date: d, rows: [] });
       map.get(k).rows.push(row);

@@ -1,10 +1,9 @@
 import { useState, useCallback, useMemo, useRef } from "react";
+import { companyTodayKey, shiftDayKey } from "../../../utils/companyDate";
 
 // Custom hook for managing attendance state with optimizations
 export const useAttendanceState = () => {
-  const [selectedDate, setSelectedDate] = useState(
-    () => new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState(companyTodayKey);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [attendanceData, setAttendanceData] = useState([]);
@@ -44,14 +43,10 @@ export const useAttendanceState = () => {
         console.error("Export error:", error);
       },
       handlePreviousDay: () => {
-        const prevDate = new Date(selectedDate);
-        prevDate.setDate(prevDate.getDate() - 1);
-        setSelectedDate(prevDate.toISOString().split("T")[0]);
+        setSelectedDate(shiftDayKey(selectedDate, -1));
       },
       handleNextDay: () => {
-        const nextDate = new Date(selectedDate);
-        nextDate.setDate(nextDate.getDate() + 1);
-        setSelectedDate(nextDate.toISOString().split("T")[0]);
+        setSelectedDate(shiftDayKey(selectedDate, 1));
       },
     }),
     [selectedDate]
@@ -81,19 +76,15 @@ export const useDateNavigation = (initialDate) => {
   const navigationHandlers = useMemo(
     () => ({
       goToPreviousDay: useCallback(() => {
-        const prevDate = new Date(currentDate);
-        prevDate.setDate(prevDate.getDate() - 1);
-        setCurrentDate(prevDate.toISOString().split("T")[0]);
+        setCurrentDate(shiftDayKey(currentDate, -1));
       }, [currentDate]),
 
       goToNextDay: useCallback(() => {
-        const nextDate = new Date(currentDate);
-        nextDate.setDate(nextDate.getDate() + 1);
-        setCurrentDate(nextDate.toISOString().split("T")[0]);
+        setCurrentDate(shiftDayKey(currentDate, 1));
       }, [currentDate]),
 
       goToToday: useCallback(() => {
-        setCurrentDate(new Date().toISOString().split("T")[0]);
+        setCurrentDate(companyTodayKey());
       }, []),
 
       goToSpecificDate: useCallback((date) => {

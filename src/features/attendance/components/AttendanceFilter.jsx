@@ -10,6 +10,12 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiOutlineFilter } from "react-icons/hi";
 import { RiFileList2Line } from "react-icons/ri";
 import { exportAttendanceWithLoading } from "../../../utils/excelExport";
+import {
+  companyTodayKey,
+  companyMonthRange,
+  dayKeyToLocalDate,
+  shiftDayKey,
+} from "../../../utils/companyDate";
 
 // Custom hook for debounced search
 const useDebounce = (value, delay) => {
@@ -45,48 +51,27 @@ const DropdownMenu = React.memo(
 );
 
 // Helper functions to get date ranges
-const getDateRanges = () => {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+// Days are the company's (IST) calendar days, as "yyyy-MM-dd" keys. Never go
+// through toISOString() here: it is the UTC day, which is still "yesterday"
+// until 05:30 IST and turns a local month start into the previous month's last day.
+const getDateRanges = (todayKey = companyTodayKey()) => {
+  const yesterdayKey = shiftDayKey(todayKey, -1);
 
   // This Week (Monday to Sunday)
+  const today = dayKeyToLocalDate(todayKey);
   const currentDay = today.getDay();
   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() + mondayOffset);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-
-  // This Month
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-  // Last Month
-  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+  const weekStartKey = shiftDayKey(todayKey, mondayOffset);
 
   return {
-    today: {
-      startDate: today.toISOString().split("T")[0],
-      endDate: today.toISOString().split("T")[0],
-    },
-    yesterday: {
-      startDate: yesterday.toISOString().split("T")[0],
-      endDate: yesterday.toISOString().split("T")[0],
-    },
+    today: { startDate: todayKey, endDate: todayKey },
+    yesterday: { startDate: yesterdayKey, endDate: yesterdayKey },
     thisWeek: {
-      startDate: weekStart.toISOString().split("T")[0],
-      endDate: weekEnd.toISOString().split("T")[0],
+      startDate: weekStartKey,
+      endDate: shiftDayKey(weekStartKey, 6),
     },
-    thisMonth: {
-      startDate: monthStart.toISOString().split("T")[0],
-      endDate: monthEnd.toISOString().split("T")[0],
-    },
-    lastMonth: {
-      startDate: lastMonthStart.toISOString().split("T")[0],
-      endDate: lastMonthEnd.toISOString().split("T")[0],
-    },
+    thisMonth: companyMonthRange(0, todayKey),
+    lastMonth: companyMonthRange(-1, todayKey),
   };
 };
 
@@ -168,7 +153,7 @@ const AttendanceFilter = ({
     }
 
     try {
-      const exportDate = new Date().toISOString().split("T")[0];
+      const exportDate = companyTodayKey();
       await exportAttendanceWithLoading(
         attendanceData,
         exportDate,

@@ -10,17 +10,18 @@ import AddAttendanceDrawer from "./components/AddAttendanceDrawer";
 import { useInfiniteAttendance } from "./hooks/useAttendanceData";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
+import {
+  companyTodayKey,
+  dayKeyToLocalDate,
+  useCompanyToday,
+} from "../../utils/companyDate";
 
 // Custom hook for managing attendance state
 const useAttendanceState = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("today");
-  const [customStartDate, setCustomStartDate] = useState(
-    () => new Date().toISOString().split("T")[0]
-  );
-  const [customEndDate, setCustomEndDate] = useState(
-    () => new Date().toISOString().split("T")[0]
-  );
+  const [customStartDate, setCustomStartDate] = useState(companyTodayKey);
+  const [customEndDate, setCustomEndDate] = useState(companyTodayKey);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageLimit] = useState(50); // Items per page
   const [attendanceData, setAttendanceData] = useState([]);
@@ -151,6 +152,9 @@ const Attendance = () => {
     handleExportError,
   } = useAttendanceState();
 
+  // "Today" rolls over at midnight even if the page stays open overnight
+  const todayKey = useCompanyToday();
+
   // Calculate the actual date range based on selected filter
   const { actualStartDate, actualEndDate, isSingleDate } = useMemo(() => {
     if (selectedFilter === "custom") {
@@ -161,14 +165,14 @@ const Attendance = () => {
       };
     }
 
-    const ranges = getDateRanges();
+    const ranges = getDateRanges(todayKey);
     const range = ranges[selectedFilter] || ranges.today;
     return {
       actualStartDate: range.startDate,
       actualEndDate: range.endDate,
       isSingleDate: range.startDate === range.endDate,
     };
-  }, [selectedFilter, customStartDate, customEndDate]);
+  }, [selectedFilter, customStartDate, customEndDate, todayKey]);
 
   // Records load a page at a time as the table is scrolled; search is applied
   // on the server so it covers every page
@@ -191,17 +195,17 @@ const Attendance = () => {
   const displayDate = useMemo(() => {
     if (selectedFilter === "custom") {
       if (actualStartDate === actualEndDate) {
-        return new Date(actualStartDate).toLocaleDateString("en-US", {
+        return dayKeyToLocalDate(actualStartDate).toLocaleDateString("en-US", {
           weekday: "long",
           year: "numeric",
           month: "long",
           day: "numeric",
         });
       }
-      return `${new Date(actualStartDate).toLocaleDateString("en-US", {
+      return `${dayKeyToLocalDate(actualStartDate).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-      })} - ${new Date(actualEndDate).toLocaleDateString("en-US", {
+      })} - ${dayKeyToLocalDate(actualEndDate).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",

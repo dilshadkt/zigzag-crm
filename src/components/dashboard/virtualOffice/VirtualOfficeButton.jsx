@@ -1,21 +1,14 @@
 import { lazy, Suspense, useState } from "react";
 import { useAuth } from "../../../hooks/useAuth";
-import { usePermissions } from "../../../hooks/usePermissions";
 
 // The whole office (art, animations, data) lives in its own chunk and is only
 // downloaded the first time someone opens it, so the dashboard stays as light as before.
 const VirtualOfficeModal = lazy(() => import("./VirtualOfficeModal"));
 
-// Same people the API lets in: admins, admin-dashboard access, view-all tasks, or create + edit tasks
+// Admins only (the API enforces the same rule)
 export const useCanSeeOffice = () => {
   const { user } = useAuth();
-  const { hasPermission, hasAdminDashboardAccess } = usePermissions();
-  return (
-    user?.role === "company-admin" ||
-    hasAdminDashboardAccess() ||
-    hasPermission("tasks", "viewAll") ||
-    (hasPermission("tasks", "create") && hasPermission("tasks", "edit"))
-  );
+  return user?.role === "company-admin";
 };
 
 const VirtualOfficeButton = ({ className = "" }) => {
