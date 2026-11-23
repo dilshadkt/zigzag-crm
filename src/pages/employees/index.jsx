@@ -9,6 +9,7 @@ import Header from "../../components/shared/header";
 import PageNavigator from "../../components/shared/navigator/pageNavigator";
 import { useQueryClient } from "@tanstack/react-query";
 import FilterMenu from "../../components/employees/FilterMenu";
+import { usePermissions } from "../../hooks/usePermissions";
 
 const svgProps = {
   className: "w-5 h-5",
@@ -71,6 +72,9 @@ const IconToggle = ({ options, value, onChange }) => (
 const Employees = () => {
   const [stat, setStat] = useState("list");
   const [showAddEmployee, setShowAddEmployee] = useState(false);
+  // Same rule the API enforces on POST /employees
+  const { hasPermission } = usePermissions();
+  const canAddEmployee = hasPermission("employees", "create");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeFilters, setActiveFilters] = useState(null);
   const [scope, setScope] = useState("Active");
@@ -181,12 +185,14 @@ const Employees = () => {
               className={"bg-white px-2 hover:bg-gray-50 transition-colors"}
               onclick={() => setShowFilter(true)}
             />
-            <PrimaryButton
-              icon={"/icons/add.svg"}
-              onclick={() => setShowAddEmployee(true)}
-              title={<span className="hidden sm:inline">Add Employee</span>}
-              className={"px-2.5 sm:px-5 text-white"}
-            />
+            {canAddEmployee && (
+              <PrimaryButton
+                icon={"/icons/add.svg"}
+                onclick={() => setShowAddEmployee(true)}
+                title={<span className="hidden sm:inline">Add Employee</span>}
+                className={"px-2.5 sm:px-5 text-white"}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -202,11 +208,13 @@ const Employees = () => {
         />
       </div>
       {/* Add Employee */}
-      <CreateEmployee
-        isOpen={showAddEmployee}
-        handleClose={() => setShowAddEmployee(false)}
-        onSubmit={handleCreateEmployee}
-      />
+      {canAddEmployee && (
+        <CreateEmployee
+          isOpen={showAddEmployee}
+          handleClose={() => setShowAddEmployee(false)}
+          onSubmit={handleCreateEmployee}
+        />
+      )}
       <FilterMenu
         isOpen={showFilter}
         setShowModalFilter={setShowFilter}
