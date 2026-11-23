@@ -2,6 +2,14 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { isScheduleValid } from "../components/shared/RecurrenceFields/recurrence";
 
+// Visible text of the editor's HTML: tags dropped, entities decoded, spaces collapsed
+const htmlToPlainText = (html) => {
+  if (!html) return "";
+  const box = document.createElement("div");
+  box.innerHTML = String(html).replace(/<br\s*\/?>|<\/(div|p|li)>/gi, " ");
+  return (box.textContent || "").replace(/\s+/g, " ").trim();
+};
+
 export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) => {
   const initialValues = {
     name: defaultValue?.name || "",
@@ -79,10 +87,16 @@ export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) =>
     teams: Yup.array()
       .min(1, 'At least one team member must be selected')
       .required('Team members are required'),
+    // The editor stores HTML, so length is checked on the visible text only;
+    // counting the markup (<div>, <br>, &nbsp;...) made short descriptions fail
     description: Yup.string()
       .required("Description is required")
-      .min(10, "Description must be at least 10 characters")
-      .max(1000, "Description must not exceed 1000 characters"),
+      .test("description-min", "Description must be at least 10 characters", (value) =>
+        htmlToPlainText(value).length >= 10
+      )
+      .test("description-max", "Description must not exceed 5000 characters", (value) =>
+        htmlToPlainText(value).length <= 5000
+      ),
     recurringWork: Yup.array().of(
       Yup.object().shape({
         title: Yup.string().trim().required("Title is required"),
