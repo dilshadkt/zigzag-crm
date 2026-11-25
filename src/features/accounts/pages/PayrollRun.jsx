@@ -6,16 +6,18 @@ import Modal from "../../../components/shared/modal";
 import { accountsApi } from "../api/accountsApi";
 import { useAccountsContext } from "../context";
 import { useApproveRun, useDeleteRun, usePayRun, useRegenerateRun, useRun } from "../hooks/useAccounts";
-import { PAYMENT_METHODS, PAYSLIP_STATUS, RUN_STATUS, downloadCsv, errorMessage, fmtMoney, monthLabel, toInputDate } from "../utils/format";
+import { PAYMENT_METHODS, PAYSLIP_STATUS, RUN_STATUS, downloadCsv, errorMessage, fmtMoney, monthLabel, payslipBalance, payslipPaid, payslipStatus, toInputDate } from "../utils/format";
 import PayslipDrawer from "../components/PayslipDrawer";
 import { ConfirmModal, ErrorState, Field, PageHeader, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, inputCls, selectCls } from "../components/ui";
 
-const PayAllModal = ({ isOpen, onClose, onPay, busy, count }) => {
+const PayAllModal = ({ isOpen, onClose, onPay, busy, count, amount }) => {
   const [form, setForm] = useState({ paidOn: toInputDate(new Date()), paymentMode: "bank_transfer", reference: "" });
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Mark payroll as paid">
       <form className="pt-4 space-y-3" onSubmit={(e) => { e.preventDefault(); onPay(form); }}>
-        <p className="text-sm text-slate-600">{count} approved payslip{count === 1 ? "" : "s"} will be marked as paid.</p>
+        <p className="text-sm text-slate-600">
+          Pays everything still pending, <b>{amount}</b>, and marks {count} payslip{count === 1 ? "" : "s"} as paid. To pay only part of a salary, open that payslip instead.
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Paid on"><input type="date" className={inputCls} value={form.paidOn} onChange={(e) => setForm({ ...form, paidOn: e.target.value })} /></Field>
           <Field label="Method">
@@ -53,12 +55,19 @@ const PayrollRun = () => {
   const draft = run.status === "draft";
   const approvedCount = payslips.filter((p) => p.status === "approved").length;
   const heldCount = payslips.filter((p) => p.status === "hold").length;
+  const paidTotal = payslips.filter((p) => ["approved", "paid"].includes(p.status)).reduce((s, p) => s + payslipPaid(p), 0);
+  const pendingTotal = payslips.filter((p) => p.status === "approved").reduce((s, p) => s + payslipBalance(p), 0);
+  const partCount = payslips.filter((p) => payslipStatus(p) === "part_paid").length;
   // An advance bigger than the pay is allowed (the rest carries forward); negative pay before that is not
   const negative = payslips.filter((p) => p.netPay + (p.advancesTaken || 0) < 0);
 
   const exportBank = async () => {
     try {
       const res = await accountsApi.bankSheet(run.month);
+      if (!res.rows.length) {
+        toast.error("Nothing is pending for this month");
+        return;
+      }
       downloadCsv(`salary-transfer-${run.month}.csv`, [
         ["Employee", "Account holder", "Account number", "IFSC", "Bank", "UPI ID", "Mode", "Amount to pay", "Status"],
         ...res.rows.map((r) => [r.name, r.accountHolder, r.accountNumber, r.ifsc, r.bankName, r.upiId, r.paymentMode, r.netPay, r.status]),
@@ -90,11 +99,17 @@ const PayrollRun = () => {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className={`grid grid-cols-2 ${draft ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-3 mb-4`}>
         <StatCard label="Employees" value={run.totals.employees} sub={heldCount ? `${heldCount} on hold` : undefined} />
         <StatCard label="Gross earnings" value={fmtMoney(run.totals.gross, symbol)} />
         <StatCard label="Deductions" value={fmtMoney(run.totals.deductions, symbol)} />
         <StatCard label="Net pay" value={fmtMoney(run.totals.net, symbol)} tone="good" sub={`+ ${fmtMoney(run.totals.employerContributions, symbol)} employer PF/ESI`} />
+        {!draft && (
+          <>
+            <StatCard label="Salary paid" value={fmtMoney(paidTotal, symbol)} />
+            <StatCard label="Still pending" value={fmtMoney(pendingTotal, symbol)} tone={pendingTotal > 0 ? "warn" : "default"} sub={partCount ? `${partCount} part paid` : undefined} />
+          </>
+        )}
       </div>
 
       {negative.length > 0 && draft && (
@@ -143,7 +158,14 @@ const PayrollRun = () => {
                 </div>
               );
             } },
-            { key: "status", title: "Status", render: (p) => <StatusBadge status={p.status} map={PAYSLIP_STATUS} /> },
+            { key: "status", title: "Status", render: (p) => (
+              <div>
+                <StatusBadge status={payslipStatus(p)} map={PAYSLIP_STATUS} />
+                {payslipStatus(p) === "part_paid" && (
+                  <p className="mt-0.5 text-[11px] text-amber-600 whitespace-nowrap">{fmtMoney(payslipBalance(p), symbol)} pending</p>
+                )}
+              </div>
+            ) },
           ]}
         />
       </div>
@@ -169,7 +191,7 @@ const PayrollRun = () => {
         busy={remove.isPending}
         onConfirm={() => remove.mutateAsync(id).then(() => navigate("/accounts/payroll")).catch(() => {})}
       />
-      <PayAllModal isOpen={modal === "pay"} onClose={() => setModal(null)} busy={payRun.isPending} count={approvedCount} onPay={(form) => payRun.mutateAsync({ id, data: form }).then(() => setModal(null)).catch(() => {})} />
+      <PayAllModal isOpen={modal === "pay"} onClose={() => setModal(null)} busy={payRun.isPending} count={approvedCount} amount={fmtMoney(pendingTotal, symbol)}onPay={(form) => payRun.mutateAsync({ id, data: form }).then(() => setModal(null)).catch(() => {})} />
     </div>
   );
 };

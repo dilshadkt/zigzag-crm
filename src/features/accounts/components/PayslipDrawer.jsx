@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { useAccountsContext } from "../context";
-import { usePayPayslip, usePayslip, useReleasePayslip, useUpdatePayslip } from "../hooks/useAccounts";
-import { PAYMENT_METHODS, PAYSLIP_STATUS, errorMessage, monthLabel, toInputDate } from "../utils/format";
+import { usePayslip, useReleasePayslip, useUpdatePayslip } from "../hooks/useAccounts";
+import { PAYSLIP_STATUS, errorMessage, monthLabel, payslipStatus } from "../utils/format";
 import { pdfName } from "../utils/pdf";
 import { PdfButtons } from "./DocumentActions";
+import PayslipPayments from "./PayslipPayments";
 import PayslipView from "./PayslipView";
 import { Drawer, Field, Spinner, StatusBadge, btnPrimary, btnSmall, inputCls, selectCls } from "./ui";
 
@@ -13,7 +14,6 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
   const { settings, symbol } = useAccountsContext();
   const { data, isLoading } = usePayslip(isOpen ? payslipId : null);
   const update = useUpdatePayslip();
-  const pay = usePayPayslip();
   const release = useReleasePayslip();
   const viewRef = useRef(null);
   const slip = data?.payslip;
@@ -23,7 +23,6 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
   const [lop, setLop] = useState("");
   const [notes, setNotes] = useState("");
   const [prevOverride, setPrevOverride] = useState("");
-  const [payForm, setPayForm] = useState({ paidOn: toInputDate(new Date()), paymentMode: "bank_transfer", reference: "" });
 
   useEffect(() => {
     if (!slip) return;
@@ -31,8 +30,7 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
     setLop(slip.lopDaysOverride ?? "");
     setNotes(slip.notes || "");
     setPrevOverride(slip.previousBalanceOverride ?? "");
-    setPayForm((f) => ({ ...f, paymentMode: slip.employeeSnapshot?.paymentMode || "bank_transfer" }));
-  }, [slip?._id, slip?.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  },[slip?._id, slip?.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveChanges = async (extra = {}) => {
     try {
@@ -46,14 +44,6 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
           ...extra,
         },
       });
-    } catch (error) {
-      toast.error(errorMessage(error));
-    }
-  };
-
-  const markPaid = async () => {
-    try {
-      await pay.mutateAsync({ id: payslipId, data: payForm });
     } catch (error) {
       toast.error(errorMessage(error));
     }
@@ -81,7 +71,7 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
       ) : (
         <div className="space-y-5">
           <div className="flex items-center gap-2">
-            <StatusBadge status={slip.status} map={PAYSLIP_STATUS} />
+            <StatusBadge status={payslipStatus(slip)} map={PAYSLIP_STATUS} />
             {slip.netPay + (slip.advancesTaken || 0) < 0 && <span className="text-xs text-red-600 font-semibold">Net pay is negative. Reduce deductions.</span>}
             {slip.advancesTaken > 0 && <span className="text-xs text-slate-500">{symbol}{slip.advancesTaken} advance recovered. Manage advances under Payroll → Advances.</span>}
           </div>
@@ -140,21 +130,7 @@ const PayslipDrawer = ({ payslipId, isOpen, onClose }) => {
             </div>
           )}
 
-          {slip.status === "approved" && (
-            <div className="rounded-2xl border border-slate-200 p-4 space-y-3 bg-slate-50/60">
-              <h4 className="text-sm font-bold text-slate-800">Record payment</h4>
-              <div className="grid grid-cols-3 gap-3">
-                <Field label="Paid on"><input type="date" className={inputCls} value={payForm.paidOn} onChange={(e) => setPayForm({ ...payForm, paidOn: e.target.value })} /></Field>
-                <Field label="Method">
-                  <select className={selectCls} value={payForm.paymentMode} onChange={(e) => setPayForm({ ...payForm, paymentMode: e.target.value })}>
-                    {PAYMENT_METHODS.filter((m) => ["bank_transfer", "upi", "cash", "cheque"].includes(m.value)).map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                  </select>
-                </Field>
-                <Field label="Reference"><input className={inputCls} value={payForm.reference} onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })} /></Field>
-              </div>
-              <button className={btnPrimary} onClick={markPaid} disabled={pay.isPending}>{pay.isPending ? "Saving…" : "Mark as paid"}</button>
-            </div>
-          )}
+          {["approved", "paid"].includes(slip.status) && <PayslipPayments slip={slip} />}
 
           {slip.status === "hold" && (
             <button className={btnSmall} onClick={() => release.mutate(payslipId)}>Release payslip</button>

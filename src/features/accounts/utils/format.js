@@ -121,8 +121,22 @@ export const PAYSLIP_STATUS = {
   draft: { label: "Draft", cls: "bg-slate-100 text-slate-600" },
   hold: { label: "On hold", cls: "bg-amber-50 text-amber-700" },
   approved: { label: "Approved", cls: "bg-blue-50 text-blue-600" },
+  part_paid: { label: "Part paid", cls: "bg-amber-50 text-amber-700" },
   paid: { label: "Paid", cls: "bg-emerald-50 text-emerald-700" },
 };
+
+// Salary payments. These mirror services/accounts/payslipPayments.js in the API.
+const toPaise = (n) => Math.round(n * 100) / 100;
+export const payslipPayable = (slip) => Math.max(toPaise(slip.totalPayable ?? slip.netPay ?? 0), 0);
+// Payslips marked paid before part payments existed have no payment rows: paid in full
+export const payslipPaid = (slip) =>
+  slip.payments?.length
+    ? toPaise(slip.payments.reduce((sum, p) => sum + p.amount, 0))
+    : slip.status === "paid" ? payslipPayable(slip) : 0;
+export const payslipBalance = (slip) => Math.max(toPaise(payslipPayable(slip) - payslipPaid(slip)), 0);
+/** The status to show: an approved payslip with money already paid is "part_paid". */
+export const payslipStatus = (slip) =>
+  slip.status === "approved" && payslipPaid(slip) > 0 ? "part_paid" : slip.status;
 
 export const RUN_STATUS = {
   draft: { label: "Draft", cls: "bg-slate-100 text-slate-600" },

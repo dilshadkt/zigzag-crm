@@ -87,6 +87,7 @@ export const accountsApi = {
   payslip: (id) => get(`/payroll/payslips/${id}`),
   updatePayslip: (id, data) => patch(`/payroll/payslips/${id}`, data),
   payPayslip: (id, data) => post(`/payroll/payslips/${id}/pay`, data),
+  removePayslipPayment: (id, paymentId) => del(`/payroll/payslips/${id}/payments/${paymentId}`),
   releasePayslip: (id) => post(`/payroll/payslips/${id}/release`),
   bankSheet: (month) => get("/payroll/bank-sheet", { month }),
   advances: (params) => get("/payroll/advances", params),

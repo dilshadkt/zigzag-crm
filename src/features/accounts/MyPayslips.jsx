@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { FiDollarSign } from "react-icons/fi";
 import { useMyPayslip, useMyPayslips } from "./hooks/useAccounts";
-import { PAYSLIP_STATUS, fmtDate, fmtMoney, monthLabel } from "./utils/format";
+import { PAYSLIP_STATUS, fmtDate, fmtMoney, monthLabel, payslipBalance, payslipPaid, payslipStatus } from "./utils/format";
 import { pdfName } from "./utils/pdf";
 import { PdfButtons } from "./components/DocumentActions";
 import PayslipView from "./components/PayslipView";
@@ -56,10 +56,13 @@ const MyPayslips = () => {
                 <button onClick={() => setOpen(p._id)} className="w-full text-left border border-slate-100 rounded-2xl p-4 hover:border-[#3F8CFF]/40 hover:bg-[#F8FBFF] transition-colors">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-bold text-slate-800">{monthLabel(p.month, true)}</p>
-                    <StatusBadge status={p.status} map={PAYSLIP_STATUS} />
+                    <StatusBadge status={payslipStatus(p)} map={PAYSLIP_STATUS} />
                   </div>
                   <p className="mt-2 text-xl font-bold text-slate-900 tabular-nums">{fmtMoney(p.netPay)}</p>
                   <p className="text-xs text-slate-500">Net pay{p.paidOn ? ` · paid ${fmtDate(p.paidOn)}` : ""}</p>
+                  {payslipStatus(p) === "part_paid" && (
+                    <p className="text-xs text-amber-600 mt-0.5">{fmtMoney(payslipPaid(p))} paid · {fmtMoney(payslipBalance(p))} pending</p>
+                  )}
                 </button>
               </li>
             ))}

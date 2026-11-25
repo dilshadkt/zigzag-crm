@@ -138,7 +138,11 @@ export const usePayslip = (id) => useRead("payslip", accountsApi.payslip, id, { 
 export const useUpdatePayslip = () =>
   useWrite(({ id, data }) => accountsApi.updatePayslip(id, data), { success: "Payslip updated" });
 export const usePayPayslip = () =>
-  useWrite(({ id, data }) => accountsApi.payPayslip(id, data), { success: "Payslip marked paid" });
+  useWrite(({ id, data }) => accountsApi.payPayslip(id, data), {
+    success: (d) => (d.payslip?.status === "paid" ? "Payslip marked paid" : "Part payment recorded"),
+  });
+export const useRemovePayslipPayment = () =>
+  useWrite(({ id, paymentId }) => accountsApi.removePayslipPayment(id, paymentId), { success: "Payment removed" });
 export const useReleasePayslip = () => useWrite(accountsApi.releasePayslip, { success: "Payslip released" });
 export const useAdvances = (params) => useRead("advances", accountsApi.advances, params, { placeholderData: (prev) => prev });
 export const useCreateAdvance = () => useWrite(accountsApi.createAdvance, { success: "Advance recorded" });

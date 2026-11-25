@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 import { DOC_CSS } from "./documentStyles";
-import { amountInWords, fmtDate, fmtMoney, methodLabel, monthLabel } from "../utils/format";
+import { amountInWords, fmtDate, fmtMoney, methodLabel, monthLabel, payslipBalance } from "../utils/format";
 
 const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, footer, symbol = "₹", showEmployerCost = false }, ref) {
   if (!payslip) return null;
@@ -140,12 +140,25 @@ const PayslipView = forwardRef(function PayslipView({ payslip, business = {}, fo
         </p>
       )}
 
-      {payslip.status === "paid" && payslip.paidOn && (
+      {/* Paid in parts, or still pending: list the payments. Paid in one go: a single line. */}
+      {payslip.payments?.length > 0 && (payslip.payments.length > 1 || payslipBalance(payslip) > 0) ? (
+        <table style={{ marginTop: 10 }}>
+          <tbody>
+            {payslip.payments.map((p, i) => (
+              <tr key={p._id || i}>
+                <td>Paid on {fmtDate(p.paidOn)} by {methodLabel(p.mode)}{p.reference ? ` (ref ${p.reference})` : ""}</td>
+                <td className="r">{fmtMoney(p.amount, symbol)}</td>
+              </tr>
+            ))}
+            <tr><td><b>Balance pending</b></td><td className="r"><b>{fmtMoney(payslipBalance(payslip), symbol)}</b></td></tr>
+          </tbody>
+        </table>
+      ) : payslip.status === "paid" && payslip.paidOn ? (
         <p className="small muted" style={{ marginTop: 6 }}>
           Paid on {fmtDate(payslip.paidOn)} by {methodLabel(payslip.paymentMode)}
           {payslip.paymentReference ? ` (ref ${payslip.paymentReference})` : ""}.
         </p>
-      )}
+      ) : null}
       {payslip.notes && <p className="small" style={{ marginTop: 6 }}>Note: {payslip.notes}</p>}
 
       <div className="footer">{footer || "This is a computer generated payslip and does not require a signature."}</div>

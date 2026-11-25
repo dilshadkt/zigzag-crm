@@ -85,6 +85,18 @@ const getPresetDateRange = (mode) => {
     return { start: toYmd(monthStart), end: toYmd(monthEnd) };
 };
 
+// Worked hours as payroll counts them. An API without that figure gives all clocked hours.
+const workedHours = (row) => row?.payrollHours ?? row?.totalWorkingHours ?? 0;
+
+// Why the worked hours differ from the time clocked
+const workedHoursNotes = (report) => {
+    const notes = [];
+    if (report?.assumedBreakMinutes > 0) notes.push(`${formatBreakMinutes(report.assumedBreakMinutes)} assumed break taken off`);
+    if (report?.unpaidDayHours > 0) notes.push(`${report.unpaidDayHours.toFixed(2)}h on days off not counted`);
+    if (report?.openDays > 0) notes.push(`${report.openDays} day${report.openDays > 1 ? "s" : ""} without clock-out not counted`);
+    return notes;
+};
+
 const HRDashboardPage = () => {
     const { isCompany } = useAuth();
     const { hasPermission } = usePermissions();
@@ -245,11 +257,11 @@ const HRDashboardPage = () => {
         if (!reportData) return;
 
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Staff Name,Email,Position,Present Days,Leave Days,Total Worked Hours,Total Break Time (mins),Overtime (hrs),Late Arrivals,Days Without Break\r\n";
+        csvContent += "Staff Name,Email,Position,Present Days,Leave Days,Total Worked Hours,Total Break Time (mins),Overtime (hrs),Late Arrivals,Days Without Break,All Clocked Hours\r\n";
 
         if (Array.isArray(reportData)) {
             reportData.forEach(row => {
-                csvContent += `"${row.employee?.name}","${row.employee?.email}","${row.employee?.position || "N/A"}",${row.presentDays},${row.leaveDays},${row.totalWorkingHours},${row.totalBreakDuration},${row.totalOvertimeHours},${row.lateDaysCount},${row.noBreakDaysCount || 0}\r\n`;
+                csvContent += `"${row.employee?.name}","${row.employee?.email}","${row.employee?.position || "N/A"}",${row.presentDays},${row.leaveDays},${workedHours(row).toFixed(2)},${row.totalBreakDuration},${row.totalOvertimeHours},${row.lateDaysCount},${row.noBreakDaysCount || 0},${row.totalWorkingHours}\r\n`;
             });
         }
 
@@ -278,7 +290,7 @@ const HRDashboardPage = () => {
                 return {
                     presentDays: empReport.presentDays || 0,
                     leaveDays: empReport.leaveDays || 0,
-                    workingHours: empReport.totalWorkingHours || 0,
+                    workingHours: workedHours(empReport),
                     breakTime: empReport.totalBreakDuration || 0,
                     overtime: empReport.totalOvertimeHours || 0,
                     lateCount: empReport.lateDaysCount || 0
@@ -289,13 +301,15 @@ const HRDashboardPage = () => {
         return reportData.reduce((acc, curr) => {
             acc.presentDays += curr.presentDays || 0;
             acc.leaveDays += curr.leaveDays || 0;
-            acc.workingHours += curr.totalWorkingHours || 0;
+            acc.workingHours += workedHours(curr);
             acc.breakTime += curr.totalBreakDuration || 0;
             acc.overtime += curr.totalOvertimeHours || 0;
             acc.lateCount += curr.lateDaysCount || 0;
             return acc;
         }, { presentDays: 0, leaveDays: 0, workingHours: 0, breakTime: 0, overtime: 0, lateCount: 0 });
     }, [reportData, selectedEmployeeId]);
+
+    const hoursNotes = workedHoursNotes(singleEmployeeReport);
 
     const overtimeList = useMemo(() => {
         if (!reportData || !Array.isArray(reportData)) return [];
@@ -679,14 +693,10 @@ const HRDashboardPage = () => {
                             <FiClock />
                         </div>
                         <span className="text-xs font-medium text-slate-400 tracking-wider mt-1">Work Hours</span>
-                        <h3 className="text-xl font-bold text-slate-800">{totals.workingHours.toFixed(1)}h</h3>
-                        {selectedEmployeeId && singleEmployeeReport?.assumedBreakMinutes > 0 && (
-                            <span
-                                className="text-[10px] font-medium text-emerald-600"
-                                title={`Payroll takes a ${formatBreakMinutes(singleEmployeeReport.assumedBreakMinutes / singleEmployeeReport.noBreakDaysCount)} break off each full day with no break logged, and counts working days only`}
-                            >
-                                {singleEmployeeReport.payrollHours.toFixed(2)}h for payroll ({formatBreakMinutes(singleEmployeeReport.assumedBreakMinutes)} assumed breaks)
-                            </span>
+                        {/* The exact figure payroll uses (2 decimals), so it can be copied as it is */}
+                        <h3 className="text-xl font-bold text-slate-800" title="The hours payroll uses: working days only, less breaks (logged, or assumed on a full day with none)">{totals.workingHours.toFixed(2)}h</h3>
+                        {selectedEmployeeId && hoursNotes.length > 0 && (
+                            <span className="text-[10px] font-medium text-slate-500">{hoursNotes.join(" · ")}</span>
                         )}
                     </div>
 
@@ -968,7 +978,7 @@ const HRDashboardPage = () => {
                                             </td>
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.presentDays} days</td>
                                             <td className="py-3 px-3.5 font-bold text-slate-800">{row.leaveDays} days</td>
-                                            <td className="py-3 px-3.5 font-bold text-slate-800">{row.totalWorkingHours} hrs</td>
+                                            <td className="py-3 px-3.5 font-bold text-slate-800">{workedHours(row).toFixed(2)} hrs</td>
                                             <td className="py-3 px-3.5 text-slate-600">
                                                 <div className="flex flex-col items-start gap-1">
                                                     <span>{formatBreakMinutes(row.totalBreakDuration)}</span>
