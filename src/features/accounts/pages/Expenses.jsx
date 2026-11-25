@@ -616,7 +616,14 @@ const Expenses = () => {
                   </div>
                 ) },
                 { key: "client", title: "Client", render: (r) => (r.allocations?.length ? <div title={r.allocations.map((a) => `${a.project?.name || "Unknown"}: ${fmtMoney(a.amount, symbol)}`).join("\n")}><span>{r.allocations[0].project?.name || "Unknown"}</span><span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">+{r.allocations.length - 1} more</span></div> : r.project ? <div><span>{r.project.name}</span>{r.billable && <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.invoice ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{r.invoice ? `Billed ${r.invoice.number}` : "Billable"}</span>}</div> : <span className="text-slate-300">—</span>) },
-                { key: "status", title: "Status", render: (r) => <StatusBadge status={r.status} map={EXPENSE_STATUS} /> },
+                { key: "status", title: "Status", render: (r) => (
+                  <div>
+                    <StatusBadge status={r.status} map={EXPENSE_STATUS} />
+                    {r.status === "approved" && r.linkedPaid > 0 && (
+                      <p className="mt-0.5 text-[11px] text-slate-400 whitespace-nowrap">{fmtMoney(r.linkedPaid, symbol)} paid · {fmtMoney(r.total - r.linkedPaid, symbol)} due</p>
+                    )}
+                  </div>
+                ) },
                 { key: "total", title: "Total", align: "right", render: (r) => <div><span className="font-semibold">{fmtMoney(r.total, symbol)}</span>{r.taxAmount > 0 && <p className="text-[11px] text-slate-400">incl. GST {fmtMoney(r.taxAmount, symbol)}</p>}</div> },
                 ...(canManage ? [{ key: "act", title: "", align: "right", render: (r) => (
                   <div className="flex items-center justify-end gap-1">

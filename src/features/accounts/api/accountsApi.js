@@ -58,6 +58,7 @@ export const accountsApi = {
 
   expenses: (params) => get("/expenses", params),
   payments: (params) => get("/payments", params),
+  openExpenses: (vendor) => get("/payments/open-expenses", { vendor }),
   createPayment: (data) => post("/payments", data),
   deletePayment: (id) => del(`/payments/${id}`),
   expenseDescriptions: () => get("/expenses/descriptions"),

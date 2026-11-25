@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AccountsContext } from "./context";
 import { useAccountsMeta } from "./hooks/useAccounts";
 import { ErrorState, Spinner } from "./components/ui";
@@ -10,10 +10,9 @@ import InvoiceDetail from "./pages/InvoiceDetail";
 import Proposals from "./pages/Proposals";
 import ProposalForm from "./pages/ProposalForm";
 import ProposalDetail from "./pages/ProposalDetail";
-import Clients from "./pages/Clients";
+import Parties from "./pages/Parties";
 import ClientDetail from "./pages/ClientDetail";
 import Expenses from "./pages/Expenses";
-import Vendors from "./pages/Vendors";
 import Payments from "./pages/Payments";
 import Payroll from "./pages/Payroll";
 import PayrollRun from "./pages/PayrollRun";
@@ -22,6 +21,7 @@ import Settings from "./pages/Settings";
 
 const Accounts = () => {
   const { data, isLoading, isError, error, refetch } = useAccountsMeta();
+  const { pathname } = useLocation();
 
   const value = useMemo(
     () => ({
@@ -47,10 +47,10 @@ const Accounts = () => {
     { to: "/accounts", label: "Overview", end: true, show: p.view },
     { to: "/accounts/invoices", label: "Invoices", show: p.view },
     { to: "/accounts/proposals", label: "Proposals", show: p.view },
-    { to: "/accounts/clients", label: "Clients", show: p.view },
+    // `also`: a client's own page lives under another path but belongs to this tab
+    { to: "/accounts/parties", label: "Parties", also: "/accounts/clients/", show: p.view },
     { to: "/accounts/payments", label: "Payments", show: p.view },
     { to: "/accounts/expenses", label: "Expenses", show: p.view },
-    { to: "/accounts/vendors", label: "Vendors", show: p.view },
     { to: "/accounts/payroll", label: "Payroll", show: p.managePayroll },
     { to: "/accounts/reports", label: "Reports", show: p.viewReports },
     { to: "/accounts/settings", label: "Settings", show: p.manageSettings },
@@ -72,7 +72,7 @@ const Accounts = () => {
                 end={t.end}
                 className={({ isActive }) =>
                   `px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
-                    isActive ? "border-[#3F8CFF] text-[#3F8CFF]" : "border-transparent text-slate-500 hover:text-slate-800"
+                    isActive || (t.also && pathname.startsWith(t.also)) ? "border-[#3F8CFF] text-[#3F8CFF]" : "border-transparent text-slate-500 hover:text-slate-800"
                   }`
                 }
               >
@@ -95,11 +95,13 @@ const Accounts = () => {
                 <Route path="proposals/new" element={p.manageProposals ? <ProposalForm /> : <Navigate to="/accounts/proposals" replace />} />
                 <Route path="proposals/:id" element={<ProposalDetail />} />
                 <Route path="proposals/:id/edit" element={p.manageProposals ? <ProposalForm /> : <Navigate to="/accounts/proposals" replace />} />
-                <Route path="clients" element={<Clients />} />
+                <Route path="parties" element={<Parties />} />
+                {/* Old tab addresses, so saved links still work */}
+                <Route path="clients" element={<Navigate to="/accounts/parties?type=client" replace />} />
+                <Route path="vendors" element={<Navigate to="/accounts/parties?type=vendor" replace />} />
                 <Route path="clients/:projectId" element={<ClientDetail />} />
                 <Route path="payments" element={<Payments />} />
                 <Route path="expenses" element={<Expenses />} />
-                <Route path="vendors" element={<Vendors />} />
               </>
             )}
             {p.managePayroll && (

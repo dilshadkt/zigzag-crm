@@ -680,6 +680,14 @@ const HRDashboardPage = () => {
                         </div>
                         <span className="text-xs font-medium text-slate-400 tracking-wider mt-1">Work Hours</span>
                         <h3 className="text-xl font-bold text-slate-800">{totals.workingHours.toFixed(1)}h</h3>
+                        {selectedEmployeeId && singleEmployeeReport?.assumedBreakMinutes > 0 && (
+                            <span
+                                className="text-[10px] font-medium text-emerald-600"
+                                title={`Payroll takes a ${formatBreakMinutes(singleEmployeeReport.assumedBreakMinutes / singleEmployeeReport.noBreakDaysCount)} break off each full day with no break logged, and counts working days only`}
+                            >
+                                {singleEmployeeReport.payrollHours.toFixed(2)}h for payroll ({formatBreakMinutes(singleEmployeeReport.assumedBreakMinutes)} assumed breaks)
+                            </span>
+                        )}
                     </div>
 
                     {/* Card 4 */}

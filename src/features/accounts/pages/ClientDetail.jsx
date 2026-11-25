@@ -177,7 +177,7 @@ const ClientDetail = () => {
       <PageHeader
         title={client.name}
         subtitle={billing?.legalName && billing.legalName !== client.name ? billing.legalName : client.status}
-        onBack={() => navigate("/accounts/clients")}
+        onBack={() => navigate("/accounts/parties?type=client")}
         actions={
           <>
             {permissions.manageProposals && <button className={btnGhost} onClick={() => navigate(`/accounts/proposals/new`)}><FiPlus /> Proposal</button>}

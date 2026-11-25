@@ -72,6 +72,7 @@ const Settings = () => {
         hoursPerDay: numeric(s.payroll.hoursPerDay),
         productiveHoursPerDay: numeric(s.payroll.productiveHoursPerDay),
         defaultBreakMinutes: numeric(s.payroll.defaultBreakMinutes),
+        minHoursForDefaultBreak: numeric(s.payroll.minHoursForDefaultBreak),
         basicPercent: numeric(s.payroll.basicPercent),
         costingHoursPerMonth: numeric(s.payroll.costingHoursPerMonth),
         pf: { ...s.payroll.pf, employeeRate: numeric(s.payroll.pf.employeeRate), employerRate: numeric(s.payroll.pf.employerRate), wageCeiling: numeric(s.payroll.pf.wageCeiling) },
@@ -251,9 +252,10 @@ const Settings = () => {
             <p className="text-xs text-slate-500 mt-3">Weekly offs and holidays come from Settings → Company. Approved leave comes from the Leave module.</p>
           </Card>
           <Card title="Monthly salary paid by hours worked">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Field label="Productive hours in a working day" hint="Required hours = (working days − holidays − paid leave) × this"><input type="number" min="1" step="any" className={inputCls} {...bind("payroll.productiveHoursPerDay")} /></Field>
-              <Field label="Break assumed when none is logged (minutes)" hint="On a full-shift day (4+ hours, clocked out) with no break logged, this much break is taken off the worked hours. 0 turns this off"><input type="number" min="0" step="any" className={inputCls} {...bind("payroll.defaultBreakMinutes")} /></Field>
+              <Field label="Break assumed when none is logged (minutes)" hint="On a full day (see below, clocked out) with no break logged, this much break is taken off the worked hours. 0 turns this off"><input type="number" min="0" step="any" className={inputCls} {...bind("payroll.defaultBreakMinutes")} /></Field>
+              <Field label="A full day is at least (hours in office)" hint="Shorter days, such as half days or leaving early, get no assumed break. The HR dashboard's No Break Days use the same rule"><input type="number" min="0" max="24" step="any" className={inputCls} {...bind("payroll.minHoursForDefaultBreak")} /></Field>
               <Field label="Basic share of gross (%)" hint="Used by the Split button on the salary form"><input type="number" min="1" max="100" step="any" className={inputCls} {...bind("payroll.basicPercent")} /></Field>
             </div>
             <p className="text-xs text-slate-500 mt-3">For employees set to “Monthly, by hours worked”. The hourly rate is gross ÷ required hours of the month. Worked hours are office time minus break time (logged, or the assumed break above); pay is cut for missing hours and extra hours are not paid.</p>

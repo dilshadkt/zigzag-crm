@@ -106,8 +106,10 @@ export const useDeleteExpense = () => useWrite(accountsApi.deleteExpense, { succ
 export const useAddExpenseCategory = () => useWrite(accountsApi.addExpenseCategory, { success: "Category added" });
 export const useRemoveExpenseCategory = () => useWrite(accountsApi.removeExpenseCategory, { success: "Category removed" });
 
-// Client payments (money in / out)
+// Payments to and from parties (money in / out)
 export const usePayments = (params) => useRead("payments", accountsApi.payments, params, { placeholderData: (prev) => prev });
+export const useOpenExpenses = (vendorId, enabled = true) =>
+  useRead("open-expenses", accountsApi.openExpenses, vendorId, { enabled: !!vendorId && enabled });
 export const useCreatePayment = () => useWrite(accountsApi.createPayment, { success: "Payment recorded" });
 export const useDeletePayment = () => useWrite(accountsApi.deletePayment, { success: "Payment deleted" });
 
