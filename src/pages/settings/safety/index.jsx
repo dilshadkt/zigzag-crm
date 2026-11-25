@@ -29,7 +29,8 @@ import {
   FiVideo,
   FiPhone,
   FiDollarSign,
-  FiCreditCard
+  FiCreditCard,
+  FiBookOpen
 } from "react-icons/fi";
 import { MdSecurity, MdHistory, MdDevices, MdEdit } from "react-icons/md";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -152,6 +153,20 @@ const PERMISSION_CATEGORIES = {
       { key: "delete", label: "Delete Records", description: "Can delete draft invoices, proposals and expenses" },
     ],
   },
+  academy: {
+    label: "Academy",
+    icon: <FiBookOpen />,
+    permissions: [
+      { key: "view", label: "View Academy", description: "Can see students, courses, batches, tasks, attendance, fees and certificates" },
+      { key: "manageStudents", label: "Manage Students", description: "Can add and edit students, enroll them, change status and reset portal passwords" },
+      { key: "manageCourses", label: "Manage Courses & Batches", description: "Can create and edit courses, syllabus and batches" },
+      { key: "manageFees", label: "Manage Fees", description: "Can set fee plans and record or remove payments" },
+      { key: "manageTasks", label: "Manage Tasks", description: "Can create tasks for batches and review student submissions" },
+      { key: "markAttendance", label: "Mark Attendance", description: "Can mark class attendance for batches" },
+      { key: "issueCertificates", label: "Issue Certificates", description: "Can upload and remove student certificates" },
+      { key: "delete", label: "Delete Records", description: "Can delete students and enrollments for good" },
+    ],
+  },
   settings: {
     label: "Settings & Configuration",
     icon: <FiSettings />,
@@ -198,6 +213,7 @@ const MODULES = [
   { id: "department-dashboard", type: "route", label: "Department Dashboard", path: "/department-dashboard", icon: <FiUsers />, desc: "Dashboard › Department Dashboard. Department overview and leave conflicts.", permissionKey: "departmentDashboard" },
   { id: "projects", type: "route", label: "Clients", path: "/projects", icon: <FiLayout />, desc: "Clients page: client projects and their tasks.", permissionKey: "projects" },
   { id: "accounts", type: "route", label: "Accounts", path: "/accounts", icon: <FiDollarSign />, desc: "Invoices, proposals, expenses, payroll and reports", permissionKey: "accounts" },
+  { id: "academy", type: "route", label: "Academy", path: "/academy", icon: <FiBookOpen />, desc: "Students who joined a course, with batches, fees, tasks, class attendance and certificates. Students use their own portal at /student.", permissionKey: "academy" },
   { id: "my-payslips", type: "route", label: "My Payslips", path: "/my-payslips", icon: <FiCreditCard />, desc: "Lets people open and download their own payslips. Only approved payslips are shown, and only their own.", permissionKey: null },
   { id: "tickets", type: "route", label: "Issues", path: "/tickets", icon: <FiAlertCircle />, desc: "Issues page: raise and track issues and complaints.", permissionKey: "tickets" },
   { id: "board", type: "route", label: "Board", path: "/board", icon: <FiGrid />, desc: "Board page: tasks as cards. The options below are the task permissions used across the app.", permissionKey: "tasks" },
@@ -291,6 +307,13 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
         : [...prev, routeValue]
     );
     // An Accounts page with no scopes only shows an error, so start with read access
+    // Same for the academy: opening it with no scopes would only show an error
+    if (routeValue === "academy" && enabling) {
+      setPermissions((prev) => {
+        const anyScope = Object.values(prev.academy || {}).some(Boolean);
+        return anyScope ? prev : { ...prev, academy: { ...(prev.academy || {}), view: true } };
+      });
+    }
     if (routeValue === "accounts" && enabling) {
       setPermissions((prev) => {
         const anyScope = Object.values(prev.accounts || {}).some(Boolean);

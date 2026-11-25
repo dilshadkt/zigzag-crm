@@ -25,6 +25,10 @@ const Tickets = lazy(() => import("../features/tickets"));
 const Accounts = lazy(() => import("../features/accounts"));
 const MyPayslips = lazy(() => import("../features/accounts/MyPayslips"));
 const SharedDocument = lazy(() => import("../features/accounts/SharedDocument"));
+const Academy = lazy(() => import("../features/academy"));
+const StudentLogin = lazy(() => import("../features/academy/portal/StudentLogin"));
+const StudentPortal = lazy(() => import("../features/academy/portal/StudentPortal"));
+const CertificateVerify = lazy(() => import("../features/academy/CertificateVerify"));
 const Employees = lazy(() => import("../pages/employees"));
 const Messenger = lazy(() => import("../pages/messenger"));
 const InfoPortal = lazy(() => import("../pages/infoPortal"));
@@ -128,6 +132,11 @@ const AppRoutes = () => {
         <Route path="/terms" element={<TermsOfService />} />
         {/* Private share links for invoices and proposals, opened by clients without signing in */}
         <Route path="/share/:type/:token" element={<SharedDocument />} />
+        {/* Academy: student portal (its own login) and public certificate check */}
+        <Route path="/student/login" element={<StudentLogin />} />
+        <Route path="/student/*" element={<StudentPortal />} />
+        <Route path="/verify/certificate" element={<CertificateVerify />} />
+        <Route path="/verify/certificate/:number" element={<CertificateVerify />} />
         <Route
           path="/"
           element={
@@ -338,6 +347,7 @@ const AppRoutes = () => {
           <Route path="vacations" element={<RouteAccess><Vacations /></RouteAccess>} />
           <Route path="tickets" element={<RouteAccess><Tickets /></RouteAccess>} />
           <Route path="accounts/*" element={<RouteAccess><Accounts /></RouteAccess>} />
+          <Route path="academy/*" element={<RouteAccess><Academy /></RouteAccess>} />
           <Route path="my-payslips" element={<RouteAccess><MyPayslips /></RouteAccess>} />
           <Route path="employees" element={<RouteAccess><Employees /></RouteAccess>} />
           <Route

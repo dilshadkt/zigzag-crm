@@ -12,6 +12,9 @@ export const isPublicAppPath = (pathname = "") => {
     path === "/home" ||
     path === "/privacy" ||
     path === "/terms" ||
-    path.startsWith("/share/")
+    path.startsWith("/share/") ||
+    path === "/student" ||
+    path.startsWith("/student/") ||
+    path.startsWith("/verify/")
   );
 };

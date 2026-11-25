@@ -43,6 +43,7 @@ export const useRouteAccess = () => {
         vacations: "/vacations",
         tickets: "/tickets",
         accounts: "/accounts",
+        academy: "/academy",
         "my-payslips": "/my-payslips",
         employees: "/employees",
         messenger: "/messenger",

@@ -58,7 +58,10 @@
     <script>
       (function () {
         try {
-          if (localStorage.getItem("zigzag-theme") === "dark") {
+          // The student portal and certificate check are always light
+          var p = location.pathname;
+          var lightOnly = p.indexOf("/student") === 0 || p.indexOf("/verify/") === 0;
+          if (!lightOnly && localStorage.getItem("zigzag-theme") === "dark") {
             document.documentElement.setAttribute("data-theme", "dark");
             document.documentElement.style.colorScheme = "dark";
             var m = document.querySelector('meta[name="theme-color"]');

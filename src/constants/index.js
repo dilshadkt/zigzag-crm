@@ -27,6 +27,7 @@ import {
   FiPhone,
   FiDollarSign,
   FiCreditCard,
+  FiBookOpen,
 } from "react-icons/fi";
 import { MdOutlineLeaderboard, MdPayments } from "react-icons/md";
 
@@ -195,6 +196,13 @@ export const SIDE_MENU = [
     icon: FiDollarSign,
     path: "/accounts",
     routeKey: "accounts",
+  },
+  {
+    id: 21,
+    title: "Academy",
+    icon: FiBookOpen,
+    path: "/academy",
+    routeKey: "academy",
   },
   {
     id: 20,
