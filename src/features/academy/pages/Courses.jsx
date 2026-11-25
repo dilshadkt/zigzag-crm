@@ -30,10 +30,12 @@ import {
   useUpdateCourse,
 } from "../hooks/useAcademy";
 import { useAcademy } from "../context";
+import SyllabusDrawer from "../components/SyllabusDrawer";
+import BatchSyllabusDrawer from "../components/BatchSyllabusDrawer";
 import { BATCH_STATUS, CLASS_DAYS, ENROLLMENT_STATUS, MODE_LABELS, dayKey, fmtDay, fmtMoney } from "../utils";
 
 // ---------- course drawer ----------
-const emptyCourse = () => ({ name: "", code: "", mode: "offline", durationWeeks: "", fee: "", description: "", isActive: true, syllabus: [] });
+const emptyCourse = () => ({ name: "", code: "", mode: "offline", durationWeeks: "", fee: "", description: "", isActive: true });
 
 const CourseDrawer = ({ course, isOpen, onClose }) => {
   const [form, setForm] = useState(emptyCourse);
@@ -50,14 +52,12 @@ const CourseDrawer = ({ course, isOpen, onClose }) => {
             ...course,
             durationWeeks: course.durationWeeks ?? "",
             fee: course.fee ?? "",
-            syllabus: (course.syllabus || []).map((m) => ({ title: m.title, topics: (m.topics || []).join("\n") })),
           }
         : emptyCourse()
     );
   }, [isOpen, course]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }));
-  const setModule = (idx, patch) => setForm((f) => ({ ...f, syllabus: f.syllabus.map((m, i) => (i === idx ? { ...m, ...patch } : m)) }));
 
   const submit = () => {
     const body = {
@@ -68,7 +68,6 @@ const CourseDrawer = ({ course, isOpen, onClose }) => {
       fee: Number(form.fee) || 0,
       description: form.description,
       isActive: form.isActive,
-      syllabus: form.syllabus.map((m) => ({ title: m.title, topics: m.topics.split("\n") })),
     };
     if (course?._id) update.mutate({ id: course._id, ...body }, { onSuccess: onClose });
     else create.mutate(body, { onSuccess: onClose });
@@ -123,39 +122,9 @@ const CourseDrawer = ({ course, isOpen, onClose }) => {
           </label>
         </div>
 
-        <div className="border-t border-slate-100 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-bold text-slate-700">Syllabus</p>
-            <button className={btnSmall} onClick={() => setForm((f) => ({ ...f, syllabus: [...f.syllabus, { title: "", topics: "" }] }))}>
-              <FiPlus /> Module
-            </button>
-          </div>
-          {form.syllabus.length === 0 && <p className="text-xs text-slate-400">Add modules so students can see what they will learn.</p>}
-          <div className="space-y-3">
-            {form.syllabus.map((m, idx) => (
-              <div key={idx} className="rounded-xl border border-slate-100 p-3 space-y-2">
-                <div className="flex gap-2">
-                  <span className="w-7 h-10 flex items-center justify-center text-xs font-bold text-slate-400">{idx + 1}</span>
-                  <input className={inputCls} placeholder="Module title, e.g. Meta Ads" value={m.title} onChange={(e) => setModule(idx, { title: e.target.value })} />
-                  <button
-                    className="w-10 h-10 shrink-0 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center"
-                    onClick={() => setForm((f) => ({ ...f, syllabus: f.syllabus.filter((_, i) => i !== idx) }))}
-                    aria-label="Remove module"
-                  >
-                    <FiTrash2 />
-                  </button>
-                </div>
-                <textarea
-                  className={`${inputCls} ml-9 !w-[calc(100%-2.25rem)]`}
-                  rows={3}
-                  placeholder={"One topic per line\nCampaign structure\nAudiences"}
-                  value={m.topics}
-                  onChange={(e) => setModule(idx, { topics: e.target.value })}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <p className="text-xs text-slate-500 rounded-xl bg-slate-50 px-3 py-2">
+          Add modules, topics, links and files with the <b>Syllabus</b> button on the course after saving.
+        </p>
       </div>
     </Drawer>
   );
@@ -326,6 +295,8 @@ const Courses = () => {
   const [courseDrawer, setCourseDrawer] = useState(null); // {} for new, course to edit
   const [batchDrawer, setBatchDrawer] = useState(null); // {course, batch?}
   const [roster, setRoster] = useState(null);
+  const [syllabusFor, setSyllabusFor] = useState(null); // course id
+  const [coverageFor, setCoverageFor] = useState(null); // batch id
   const [confirm, setConfirm] = useState(null);
 
   if (isLoading) return <Spinner />;
@@ -379,19 +350,24 @@ const Courses = () => {
               .filter(Boolean)
               .join(" · ")}
             actions={
-              p.manageCourses && (
-                <div className="flex gap-1.5">
-                  <button className={btnSmall} onClick={() => setBatchDrawer({ course: c })}>
-                    <FiPlus /> Batch
-                  </button>
-                  <button className={btnSmall} onClick={() => setCourseDrawer(c)} aria-label="Edit course">
-                    <FiEdit2 />
-                  </button>
-                  <button className={btnSmall} onClick={() => setConfirm({ type: "course", item: c })} aria-label="Delete course">
-                    <FiTrash2 />
-                  </button>
-                </div>
-              )
+              <div className="flex flex-wrap justify-end gap-1.5">
+                <button className={`${btnSmall} !border-[#3F8CFF] !text-[#3F8CFF]`} onClick={() => setSyllabusFor(c._id)}>
+                  <FiBookOpen /> Syllabus
+                </button>
+                {p.manageCourses && (
+                  <>
+                    <button className={btnSmall} onClick={() => setBatchDrawer({ course: c })}>
+                      <FiPlus /> Batch
+                    </button>
+                    <button className={btnSmall} onClick={() => setCourseDrawer(c)} aria-label="Edit course">
+                      <FiEdit2 />
+                    </button>
+                    <button className={btnSmall} onClick={() => setConfirm({ type: "course", item: c })} aria-label="Delete course">
+                      <FiTrash2 />
+                    </button>
+                  </>
+                )}
+              </div>
             }
           >
             <div className="pt-2">
@@ -423,6 +399,33 @@ const Courses = () => {
                       </span>
                     ),
                   },
+                  {
+                    key: "syllabus",
+                    title: "Syllabus covered",
+                    render: (b) =>
+                      b.syllabus?.total ? (
+                        <button
+                          className="group w-36 text-left"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            setCoverageFor(b._id);
+                          }}
+                          title={p.manageCourses || p.markAttendance ? "Mark topics as completed" : "See what is covered"}
+                        >
+                          <span className="flex justify-between text-xs mb-1">
+                            <span className="font-semibold text-slate-700">{b.syllabus.percent}%</span>
+                            <span className="text-[#3F8CFF] font-semibold group-hover:underline">
+                              {p.manageCourses || p.markAttendance ? "Mark" : "View"}
+                            </span>
+                          </span>
+                          <span className="block h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                            <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${b.syllabus.percent}%` }} />
+                          </span>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400">No syllabus</span>
+                      ),
+                  },
                   { key: "status", title: "Status", render: (b) => <StatusBadge status={b.status} map={BATCH_STATUS} /> },
                   {
                     key: "actions",
@@ -450,6 +453,8 @@ const Courses = () => {
       <CourseDrawer isOpen={Boolean(courseDrawer)} course={courseDrawer?._id ? courseDrawer : null} onClose={() => setCourseDrawer(null)} />
       <BatchDrawer course={batchDrawer?.course} batch={batchDrawer?.batch} onClose={() => setBatchDrawer(null)} />
       <RosterDrawer batchId={roster} onClose={() => setRoster(null)} />
+      <SyllabusDrawer course={courses.find((c) => c._id === syllabusFor)} canEdit={Boolean(p.manageCourses)} onClose={() => setSyllabusFor(null)} />
+      <BatchSyllabusDrawer batchId={coverageFor} canMark={Boolean(p.manageCourses || p.markAttendance)} onClose={() => setCoverageFor(null)} />
       <ConfirmModal
         isOpen={Boolean(confirm)}
         onClose={() => setConfirm(null)}

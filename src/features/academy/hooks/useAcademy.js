@@ -41,6 +41,12 @@ export const useCreateBatch = () => useWrite(academyApi.createBatch, { success: 
 export const useUpdateBatch = () => useWrite(academyApi.updateBatch, { success: "Batch saved" });
 export const useDeleteBatch = () => useWrite(academyApi.deleteBatch, { success: "Batch deleted" });
 
+export const useSaveSyllabus = () => useWrite(academyApi.updateCourse, { success: "Syllabus saved" });
+export const useUploadModuleFile = () => useWrite(academyApi.uploadModuleFile, { success: "File added" });
+export const useDeleteModuleFile = () => useWrite(academyApi.deleteModuleFile, { success: "File removed" });
+export const useBatchSyllabus = (id) => useRead("batchSyllabus", academyApi.batchSyllabus, id, { enabled: Boolean(id) });
+export const useSetBatchSyllabus = () => useWrite(academyApi.setBatchSyllabus);
+
 export const useStudents = (params) =>
   useRead("students", academyApi.students, params, { placeholderData: keepPreviousData });
 export const useStudent = (id) => useRead("student", academyApi.student, id, { enabled: Boolean(id) });

@@ -162,7 +162,7 @@ const PERMISSION_CATEGORIES = {
       { key: "manageCourses", label: "Manage Courses & Batches", description: "Can create and edit courses, syllabus and batches" },
       { key: "manageFees", label: "Manage Fees", description: "Can set fee plans and record or remove payments" },
       { key: "manageTasks", label: "Manage Tasks", description: "Can create tasks for batches and review student submissions" },
-      { key: "markAttendance", label: "Mark Attendance", description: "Can mark class attendance for batches" },
+      { key: "markAttendance", label: "Mark Attendance", description: "Can mark class attendance for batches and tick syllabus topics as completed" },
       { key: "issueCertificates", label: "Issue Certificates", description: "Can upload and remove student certificates" },
       { key: "delete", label: "Delete Records", description: "Can delete students and enrollments for good" },
     ],

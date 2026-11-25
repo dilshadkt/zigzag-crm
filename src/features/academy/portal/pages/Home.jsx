@@ -147,6 +147,17 @@ const Home = () => {
                 <Bar percent={e.status === "completed" ? 100 : timeline.percent} label="Course timeline" />
               </div>
             )}
+            {e.syllabus?.total > 0 && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p className="text-sm font-bold text-[#0A1629]">Syllabus covered {e.syllabus.percent}%</p>
+                  <p className="text-xs text-[#91929E]">
+                    {e.syllabus.modulesDone} of {e.syllabus.modulesTotal} modules completed
+                  </p>
+                </div>
+                <Bar percent={e.syllabus.percent} color="bg-emerald-500" label="Syllabus covered" />
+              </div>
+            )}
           </Panel>
 
           <Panel title="Tasks to do" action={<PanelLink to="/student/tasks">All tasks</PanelLink>}>

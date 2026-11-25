@@ -89,6 +89,15 @@ export const PAYMENT_MODE_LABELS = {
   other: "Other",
 };
 
+export const durationText = (module) => {
+  const n = Number(module?.durationValue) || 0;
+  if (!n) return "";
+  const unit = module.durationUnit === "hours" ? "hour" : "class";
+  return `${n} ${n === 1 ? unit : unit === "class" ? "classes" : "hours"}`;
+};
+
+export const STUDY_FILE_TYPES = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.webp,.gif,.zip";
+
 export const CLASS_DAYS = [
   ["mon", "Mon"],
   ["tue", "Tue"],
