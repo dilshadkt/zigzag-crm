@@ -38,6 +38,9 @@ import ClosingFields from "../leadDetails/components/ClosingFields";
 import TodaySummary from "./components/TodaySummary";
 import WhatsAppMenu from "./components/WhatsAppMenu";
 import CallQueue from "./components/CallQueue";
+import useLeadConversion from "../academy/lead/useLeadConversion";
+import LeadStudentButton from "../academy/lead/LeadStudentButton";
+import ConvertLeadDrawer from "../academy/lead/ConvertLeadDrawer";
 
 const CALL_TABS = [
   { id: "today", title: "Today", path: "/my-calls", icon: FiCalendar },
@@ -113,7 +116,7 @@ const ScorePill = ({ category }) => {
   );
 };
 
-const QuickOutcomes = ({ lead, onQuick, onClose, onTask, disabled }) => (
+const QuickOutcomes = ({ lead, onQuick, onClose, onTask, disabled, extra }) => (
   <div className="mt-1.5 flex flex-wrap gap-1.5 lg:mt-2">
     <button
       type="button"
@@ -152,6 +155,7 @@ const QuickOutcomes = ({ lead, onQuick, onClose, onTask, disabled }) => (
     >
       Lost
     </button>
+    {extra}
   </div>
 );
 
@@ -228,7 +232,7 @@ const CloseLeadModal = ({ target, saving, onCancel, onConfirm }) => {
   );
 };
 
-const FollowUpCard = ({ lead, overdue, onOpen, onLog, onQuick, onClose, onTask, busy, agent }) => {
+const FollowUpCard = ({ lead, overdue, onOpen, onLog, onQuick, onClose, onTask, busy, agent, conversion, onConvert }) => {
   const phone = lead.phone || lead.contact?.phone;
   return (
     <article className={`rounded-xl border bg-white p-2.5 lg:p-4 ${overdue ? "border-amber-200" : "border-slate-200/60"}`}>
@@ -294,7 +298,14 @@ const FollowUpCard = ({ lead, overdue, onOpen, onLog, onQuick, onClose, onTask, 
           <FiExternalLink className="h-3.5 w-3.5" />
         </button>
       </div>
-      <QuickOutcomes lead={lead} onQuick={onQuick} onClose={onClose} onTask={onTask} disabled={busy} />
+      <QuickOutcomes
+        lead={lead}
+        onQuick={onQuick}
+        onClose={onClose}
+        onTask={onTask}
+        disabled={busy}
+        extra={<LeadStudentButton lead={lead} conversion={conversion} onConvert={onConvert} label="Convert to student" />}
+      />
     </article>
   );
 };
@@ -483,6 +494,8 @@ const TelecallerDesk = ({ view = "today" }) => {
   const [closeTarget, setCloseTarget] = useState(null);
   const [queueLeads, setQueueLeads] = useState(null);
   const [taskLead, setTaskLead] = useState(null);
+  const [convertLead, setConvertLead] = useState(null);
+  const conversion = useLeadConversion();
   const [addLeadOpen, setAddLeadOpen] = useState(false);
   const [showDoneTasks, setShowDoneTasks] = useState(false);
   const [page, setPage] = useState(1);
@@ -737,6 +750,8 @@ const TelecallerDesk = ({ view = "today" }) => {
                   onQuick={handleQuick}
                   onClose={handleCloseRequest}
                   onTask={setTaskLead}
+                  conversion={conversion}
+                  onConvert={setConvertLead}
                   busy={isPending}
                   agent={user?.firstName}
                 />
@@ -791,6 +806,8 @@ const TelecallerDesk = ({ view = "today" }) => {
                 onQuick={handleQuick}
                 onClose={handleCloseRequest}
                 onTask={setTaskLead}
+                conversion={conversion}
+                onConvert={setConvertLead}
                 busy={isPending}
                 agent={user?.firstName}
               />
@@ -939,6 +956,7 @@ const TelecallerDesk = ({ view = "today" }) => {
                     >
                       <FiCheckSquare className="h-4 w-4" />
                     </button>
+                    <LeadStudentButton lead={lead} conversion={conversion} onConvert={setConvertLead} iconOnly />
                   </div>
                 </div>
               ))
@@ -1024,6 +1042,7 @@ const TelecallerDesk = ({ view = "today" }) => {
                           >
                             Lost
                           </button>
+                          <LeadStudentButton lead={lead} conversion={conversion} onConvert={setConvertLead} />
                         </div>
                       </td>
                     </tr>
@@ -1081,6 +1100,8 @@ const TelecallerDesk = ({ view = "today" }) => {
               onQuick={handleQuick}
               onClose={handleCloseRequest}
               onTask={setTaskLead}
+              conversion={conversion}
+              onConvert={setConvertLead}
               busy={isPending}
               agent={user?.firstName}
             />
@@ -1097,6 +1118,7 @@ const TelecallerDesk = ({ view = "today" }) => {
         }}
       />
       <CreateLeadTaskModal lead={taskLead} isOpen={Boolean(taskLead)} onClose={() => setTaskLead(null)} />
+      <ConvertLeadDrawer lead={convertLead} onClose={() => setConvertLead(null)} />
       <CloseLeadModal
         target={closeTarget}
         saving={isPending}

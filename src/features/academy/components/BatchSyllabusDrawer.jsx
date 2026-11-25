@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ConfirmModal, Drawer, EmptyState, ErrorState, Spinner } from "../../accounts/components/ui";
+import { ConfirmModal, Drawer, EmptyState, ErrorState, Spinner, selectCls } from "../../accounts/components/ui";
 import { FiBookOpen } from "react-icons/fi";
-import { useBatchSyllabus, useSetBatchSyllabus } from "../hooks/useAcademy";
+import { useBatchSyllabus, useSetBatchSyllabus, useSetModuleFaculty, useTrainers } from "../hooks/useAcademy";
 import { durationText, fmtDay } from "../utils";
 
 const Tick = ({ checked, partial = false, ...props }) => {
@@ -12,8 +12,44 @@ const Tick = ({ checked, partial = false, ...props }) => {
   return <input ref={ref} type="checkbox" checked={checked} className="w-[18px] h-[18px] shrink-0 accent-emerald-600 cursor-pointer disabled:cursor-default" {...props} />;
 };
 
-/** Tick the modules and topics a batch has been taught. Each tick saves at once. */
-const BatchSyllabusDrawer = ({ batchId, canMark, onClose }) => {
+/** Who teaches a module in this batch; empty means the batch trainer. */
+const FacultyPicker = ({ batchId, module: m, trainerName, canAssign }) => {
+  const { data } = useTrainers();
+  const save = useSetModuleFaculty();
+  const people = data?.trainers || [];
+  const value = m.facultyAssigned ? m.faculty._id : "";
+
+  if (!canAssign) {
+    return (
+      <p className="px-3.5 pb-3 text-xs text-slate-500">
+        Faculty: <span className="font-semibold text-slate-700">{m.faculty?.name || "Not assigned"}</span>
+      </p>
+    );
+  }
+  return (
+    <label className="flex flex-wrap items-center gap-2 px-3.5 pb-3">
+      <span className="pl-[30px] text-xs font-semibold text-slate-500">Faculty</span>
+      <select
+        className={`${selectCls} !w-auto !py-1.5 !text-xs min-w-[220px]`}
+        value={value}
+        disabled={save.isPending}
+        onChange={(e) => save.mutate({ id: batchId, module: m._id, faculty: e.target.value || null })}
+        aria-label={`Faculty for ${m.title}`}
+      >
+        <option value="">{trainerName ? `Batch trainer (${trainerName})` : "Not assigned"}</option>
+        {people.map((t) => (
+          <option key={t._id} value={t._id}>
+            {t.name}
+            {t.position ? ` · ${t.position}` : ""}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+};
+
+/** Per batch: who teaches each module, and what has been covered. Saves at once. */
+const BatchSyllabusDrawer = ({ batchId, canMark, canAssign, onClose }) => {
   const { data, isLoading, isError, error, refetch } = useBatchSyllabus(batchId);
   const set = useSetBatchSyllabus();
   const [confirm, setConfirm] = useState(null); // module to un-complete
@@ -29,7 +65,7 @@ const BatchSyllabusDrawer = ({ batchId, canMark, onClose }) => {
       <Drawer
         isOpen
         onClose={onClose}
-        title="Syllabus covered"
+        title="Syllabus & faculty"
         subtitle={data ? `${data.course.name} · ${data.batch.name}` : ""}
         width="max-w-2xl"
       >
@@ -83,6 +119,7 @@ const BatchSyllabusDrawer = ({ batchId, canMark, onClose }) => {
                     canMark && <span className="shrink-0 text-[11px] font-semibold text-[#3F8CFF]">Mark completed</span>
                   )}
                 </label>
+                <FacultyPicker batchId={batchId} module={m} trainerName={data.batch.trainerName} canAssign={canAssign} />
                 {m.topics.length > 0 && (
                   <ul className="border-t border-slate-100 py-1">
                     {m.topics.map((t) => (

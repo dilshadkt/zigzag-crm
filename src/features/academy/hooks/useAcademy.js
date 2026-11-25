@@ -47,6 +47,11 @@ export const useDeleteModuleFile = () => useWrite(academyApi.deleteModuleFile, {
 export const useBatchSyllabus = (id) => useRead("batchSyllabus", academyApi.batchSyllabus, id, { enabled: Boolean(id) });
 export const useSetBatchSyllabus = () => useWrite(academyApi.setBatchSyllabus);
 
+export const useSetModuleFaculty = () => useWrite(academyApi.setModuleFaculty, { success: "Faculty saved" });
+export const useLeadClients = () => useRead("leadClients", academyApi.leadClients);
+export const useSaveLeadClients = () => useWrite(academyApi.saveLeadClients, { success: "Academy clients saved" });
+export const useConvertLead = () => useWrite(academyApi.convertLead);
+
 export const useStudents = (params) =>
   useRead("students", academyApi.students, params, { placeholderData: keepPreviousData });
 export const useStudent = (id) => useRead("student", academyApi.student, id, { enabled: Boolean(id) });

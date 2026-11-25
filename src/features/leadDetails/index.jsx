@@ -14,6 +14,9 @@ import LeadInteractionModal from "./components/LeadInteractionModal";
 import CreateLeadTaskModal from "./components/CreateLeadTaskModal";
 import LeadTasks from "./components/LeadTasks";
 import { toast } from "react-hot-toast";
+import useLeadConversion from "../academy/lead/useLeadConversion";
+import LeadStudentButton from "../academy/lead/LeadStudentButton";
+import ConvertLeadDrawer from "../academy/lead/ConvertLeadDrawer";
 
 const TABS = ["Overview", "Timeline", "Notes", "Tasks", "Attachments", "Follow Up History"];
 
@@ -21,6 +24,8 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const leadId = lead.id || lead._id;
+  const conversion = useLeadConversion();
+  const [convertLead, setConvertLead] = useState(null);
 
   // Use notes from lead.details (will be updated when API refetches)
   // Fetch notes via hook to ensure we have IDs for edit/delete
@@ -300,6 +305,9 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
         <h1 className="text-base font-bold text-slate-900 truncate">
           {lead.name || lead.contact?.name || "Lead Details"}
         </h1>
+        <span className="ml-auto shrink-0">
+          <LeadStudentButton lead={lead} conversion={conversion} onConvert={setConvertLead} />
+        </span>
       </div>
 
       <div className="h-full lg:overflow-hidden flex flex-col lg:flex-row gap-4 lg:gap-6 p-2 md:p-4 lg:p-6 overflow-y-auto lg:overflow-y-hidden">
@@ -334,6 +342,13 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
           </div>
         </div>
         <div className="w-[400px] shrink-0 hidden lg:flex flex-col space-y-3 ">
+          <LeadStudentButton
+            lead={lead}
+            conversion={conversion}
+            onConvert={setConvertLead}
+            label="Convert to student"
+            className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-violet-600 text-sm font-semibold text-white hover:bg-violet-700"
+          />
           <LeadActivityPanel
             activity={lead.details?.activities || lead.details?.activity || []}
           />
@@ -393,6 +408,7 @@ const LeadDetailsFeature = ({ lead, onBack, isClient = false }) => {
         onClose={() => setIsTaskModalOpen(false)}
         onCreated={() => setActiveTab("Tasks")}
       />
+      <ConvertLeadDrawer lead={convertLead} onClose={() => setConvertLead(null)} />
       {/* Interaction Follow-up Modal */}
       <LeadInteractionModal
         isOpen={isInteractionModalOpen}

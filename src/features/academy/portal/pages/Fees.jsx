@@ -18,14 +18,28 @@ const Fees = () => {
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-3">
         <StatTile icon={FiTag} tone="violet" label="Course fee" value={money(e.fee.total)} sub={e.fee.discount > 0 ? `${money(e.fee.discount)} discount` : "No discount"} />
-        <StatTile icon={FiCreditCard} tone="blue" label="You pay" value={money(fs.net)} sub={`${fs.installments.length || 1} instalment${fs.installments.length === 1 ? "" : "s"}`} />
+        <StatTile
+          icon={FiCreditCard}
+          tone="blue"
+          label="You pay"
+          value={money(fs.net)}
+          sub={fs.admission > 0 ? `Includes ${money(fs.admission)} admission` : `${fs.installments.length || 1} instalment${fs.installments.length > 1 ? "s" : ""}`}
+        />
         <StatTile icon={FiCheckCircle} tone="green" label="Paid" value={money(fs.paid)} sub={`${Math.round(paidPercent)}% of your fee`} />
         <StatTile
           icon={FiAlertCircle}
           tone={fs.overdueAmount > 0 ? "red" : "amber"}
           label="Balance"
           value={money(fs.balance)}
-          sub={fs.overdueAmount > 0 ? `${money(fs.overdueAmount)} overdue` : fs.nextDue ? `Next due ${fmtDay(fs.nextDue.dueDate)}` : "Nothing pending"}
+          sub={
+            fs.overdueAmount > 0
+              ? `${money(fs.overdueAmount)} overdue`
+              : fs.nextDue?.dueDate
+              ? `Next due ${fmtDay(fs.nextDue.dueDate)}`
+              : fs.nextDue
+              ? "To be paid"
+              : "Nothing pending"
+          }
           alert={fs.overdueAmount > 0}
         />
       </div>
@@ -52,7 +66,7 @@ const Fees = () => {
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[#0A1629]">{i.label}</p>
                     <p className="text-xs text-[#91929E]">
-                      Due {fmtDay(i.dueDate)}
+                      {i.dueDate ? `Due ${fmtDay(i.dueDate)}` : "No fixed date"}
                       {i.pending > 0 && i.paid > 0 ? ` · ${fmtMoney(i.pending)} left` : ""}
                     </p>
                   </div>

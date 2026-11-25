@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FiAward, FiDownload, FiEdit2, FiExternalLink, FiKey, FiPlus, FiTrash2, FiUpload } from "react-icons/fi";
 import {
@@ -33,7 +33,7 @@ import { academyApi } from "../api/academyApi";
 import { useAcademy } from "../context";
 import StudentDrawer from "../components/StudentDrawer";
 import CredentialsModal from "../components/CredentialsModal";
-import EnrollmentFields, { emptyEnrollment, enrollmentPayload } from "../components/EnrollmentFields";
+import EnrollmentFields, { emptyEnrollment, enrollmentPayload, enrollmentReady } from "../components/EnrollmentFields";
 import FeePlanDrawer from "../components/FeePlanDrawer";
 import PaymentModal from "../components/PaymentModal";
 import CertificateUploadModal from "../components/CertificateUploadModal";
@@ -140,7 +140,8 @@ const EnrollmentCard = ({ enrollment: e, studentName, courses, onFees, onPay, on
           <div className="flex items-center justify-between gap-2 mb-2">
             <p className="text-xs font-bold text-slate-700">
               Fees · {fmtMoney(e.fee.total)}
-              {e.fee.discount > 0 && <span className="font-normal text-slate-500"> − {fmtMoney(e.fee.discount)} discount</span>} ={" "}
+              {e.fee.discount > 0 && <span className="font-normal text-slate-500"> − {fmtMoney(e.fee.discount)} discount</span>}
+              {e.fee.admission > 0 && <span className="font-normal text-slate-500"> + {fmtMoney(e.fee.admission)} admission</span>} ={" "}
               {fmtMoney(e.fee.net)}
             </p>
             {p.manageFees && (
@@ -337,6 +338,20 @@ const StudentDetail = () => {
             <Info label="Phone" value={student.phone} />
             <Info label="Email" value={student.email} />
             <Info label="Came from" value={SOURCE_LABELS[student.source]} />
+            {student.leads?.length > 0 && (
+              <Info
+                label="Converted from lead"
+                value={
+                  <span className="flex flex-wrap gap-x-3">
+                    {student.leads.map((leadId, i) => (
+                      <Link key={leadId} to={`/leads/${leadId}`} className="font-semibold text-[#3F8CFF] hover:underline">
+                        View lead{student.leads.length > 1 ? ` ${i + 1}` : ""}
+                      </Link>
+                    ))}
+                  </span>
+                }
+              />
+            )}
             <Info label="Qualification" value={student.qualification} />
             <Info label="Date of birth" value={student.dob ? fmtDay(student.dob) : null} />
             <Info label="Guardian" value={[student.guardianName, student.guardianPhone].filter(Boolean).join(" · ")} />
@@ -444,7 +459,7 @@ const StudentDetail = () => {
             </button>
             <button
               className={btnPrimary}
-              disabled={!newEnrollment.course || addEnrollment.isPending}
+              disabled={!enrollmentReady(newEnrollment) || addEnrollment.isPending}
               onClick={() =>
                 addEnrollment.mutate({ studentId: student._id, ...enrollmentPayload(newEnrollment) }, { onSuccess: () => setEnrollOpen(false) })
               }

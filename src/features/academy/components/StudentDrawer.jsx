@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Drawer, Field, inputCls, selectCls, btnPrimary, btnGhost } from "../../accounts/components/ui";
-import EnrollmentFields, { emptyEnrollment, enrollmentPayload } from "./EnrollmentFields";
+import EnrollmentFields, { emptyEnrollment, enrollmentPayload, enrollmentReady } from "./EnrollmentFields";
 import { useCourses, useCreateStudent, useUpdateStudent } from "../hooks/useAcademy";
 import { SOURCE_LABELS, dayKey } from "../utils";
 
@@ -44,7 +44,7 @@ const StudentDrawer = ({ isOpen, onClose, student, onCreated }) => {
   }, [isOpen, student]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const canSave = form.name.trim() && (form.phone.trim() || form.email.trim()) && (isEdit || !enroll || enrollment.course);
+  const canSave = form.name.trim() && (form.phone.trim() || form.email.trim()) && (isEdit || !enroll || enrollmentReady(enrollment));
 
   const submit = (e) => {
     e.preventDefault();

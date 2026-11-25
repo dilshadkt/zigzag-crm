@@ -70,6 +70,14 @@ export const academyApi = {
   openModuleFile: (courseId, moduleId, fileId, opts) =>
     openProtectedFile(apiClient, `/academy/courses/${courseId}/modules/${moduleId}/files/${fileId}`, opts),
 
+  setModuleFaculty: ({ id, module, faculty }) => put(`/batches/${id}/faculty`, { module, faculty }),
+
+  leadConversion: () => get("/lead-conversion"),
+  leadClients: () => get("/lead-clients"),
+  saveLeadClients: (projectIds) => put("/lead-clients", { projectIds }),
+  leadPrefill: (leadId) => get(`/leads/${leadId}/convert`),
+  convertLead: ({ leadId, ...body }) => post(`/leads/${leadId}/convert`, body),
+
   students: (params) => get("/students", params),
   student: (id) => get(`/students/${id}`),
   createStudent: (body) => post("/students", body),

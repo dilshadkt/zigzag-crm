@@ -158,8 +158,8 @@ const PERMISSION_CATEGORIES = {
     icon: <FiBookOpen />,
     permissions: [
       { key: "view", label: "View Academy", description: "Can see students, courses, batches, tasks, attendance, fees and certificates" },
-      { key: "manageStudents", label: "Manage Students", description: "Can add and edit students, enroll them, change status and reset portal passwords" },
-      { key: "manageCourses", label: "Manage Courses & Batches", description: "Can create and edit courses, syllabus and batches" },
+      { key: "manageStudents", label: "Manage Students", description: "Can add and edit students, convert academy leads into students, enroll them, change status and reset portal passwords" },
+      { key: "manageCourses", label: "Manage Courses & Batches", description: "Can create and edit courses, syllabus and batches, assign module faculty and choose the academy lead clients" },
       { key: "manageFees", label: "Manage Fees", description: "Can set fee plans and record or remove payments" },
       { key: "manageTasks", label: "Manage Tasks", description: "Can create tasks for batches and review student submissions" },
       { key: "markAttendance", label: "Mark Attendance", description: "Can mark class attendance for batches and tick syllabus topics as completed" },

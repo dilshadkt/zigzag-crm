@@ -35,7 +35,7 @@ import BatchSyllabusDrawer from "../components/BatchSyllabusDrawer";
 import { BATCH_STATUS, CLASS_DAYS, ENROLLMENT_STATUS, MODE_LABELS, dayKey, fmtDay, fmtMoney } from "../utils";
 
 // ---------- course drawer ----------
-const emptyCourse = () => ({ name: "", code: "", mode: "offline", durationWeeks: "", fee: "", description: "", isActive: true });
+const emptyCourse = () => ({ name: "", code: "", mode: "offline", durationWeeks: "", fee: "", admissionFee: "", description: "", isActive: true });
 
 const CourseDrawer = ({ course, isOpen, onClose }) => {
   const [form, setForm] = useState(emptyCourse);
@@ -52,6 +52,7 @@ const CourseDrawer = ({ course, isOpen, onClose }) => {
             ...course,
             durationWeeks: course.durationWeeks ?? "",
             fee: course.fee ?? "",
+            admissionFee: course.admissionFee || "",
           }
         : emptyCourse()
     );
@@ -66,6 +67,7 @@ const CourseDrawer = ({ course, isOpen, onClose }) => {
       mode: form.mode,
       durationWeeks: Number(form.durationWeeks) || 0,
       fee: Number(form.fee) || 0,
+      admissionFee: Number(form.admissionFee) || 0,
       description: form.description,
       isActive: form.isActive,
     };
@@ -112,6 +114,9 @@ const CourseDrawer = ({ course, isOpen, onClose }) => {
           </Field>
           <Field label="Standard fee" hint="Pre-filled when a student enrolls; can be changed per student">
             <input type="number" min={0} className={inputCls} value={form.fee} onChange={set("fee")} />
+          </Field>
+          <Field label="Admission fee" hint="Added on top of the course fee; can be switched off per student">
+            <input type="number" min={0} className={inputCls} value={form.admissionFee} onChange={set("admissionFee")} placeholder="0" />
           </Field>
           <Field label="Description" hint="Shown to students on their portal" className="sm:col-span-2">
             <textarea className={inputCls} rows={3} value={form.description} onChange={set("description")} />
@@ -346,7 +351,7 @@ const Courses = () => {
                 {!c.isActive && <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">Closed</span>}
               </span>
             }
-            subtitle={[MODE_LABELS[c.mode], c.durationWeeks ? `${c.durationWeeks} weeks` : null, c.fee ? fmtMoney(c.fee) : null, c.syllabus?.length ? `${c.syllabus.length} modules` : null]
+            subtitle={[MODE_LABELS[c.mode], c.durationWeeks ? `${c.durationWeeks} weeks` : null, c.fee ? fmtMoney(c.fee) : null, c.admissionFee ? `${fmtMoney(c.admissionFee)} admission` : null, c.syllabus?.length ? `${c.syllabus.length} modules` : null]
               .filter(Boolean)
               .join(" · ")}
             actions={
@@ -388,7 +393,21 @@ const Courses = () => {
                     ),
                   },
                   { key: "dates", title: "Dates", className: "hidden md:table-cell", render: (b) => <span className="text-xs text-slate-500">{b.startDate ? `${fmtDay(b.startDate)} – ${fmtDay(b.endDate)}` : "—"}</span> },
-                  { key: "trainer", title: "Trainer", className: "hidden md:table-cell", render: (b) => <span className="text-xs text-slate-600">{b.trainerName || "—"}</span> },
+                  {
+                    key: "trainer",
+                    title: "Trainer / faculty",
+                    className: "hidden md:table-cell",
+                    render: (b) => (
+                      <div className="text-xs">
+                        <p className="text-slate-600">{b.trainerName || "—"}</p>
+                        {b.facultyNames?.length > 0 && (
+                          <p className="text-slate-400" title={b.facultyNames.join(", ")}>
+                            + {b.facultyNames.length} module faculty
+                          </p>
+                        )}
+                      </div>
+                    ),
+                  },
                   {
                     key: "students",
                     title: "Students",
@@ -410,7 +429,7 @@ const Courses = () => {
                             ev.stopPropagation();
                             setCoverageFor(b._id);
                           }}
-                          title={p.manageCourses || p.markAttendance ? "Mark topics as completed" : "See what is covered"}
+                          title={p.manageCourses || p.markAttendance ? "Mark topics as completed and set module faculty" : "See what is covered"}
                         >
                           <span className="flex justify-between text-xs mb-1">
                             <span className="font-semibold text-slate-700">{b.syllabus.percent}%</span>
@@ -454,7 +473,12 @@ const Courses = () => {
       <BatchDrawer course={batchDrawer?.course} batch={batchDrawer?.batch} onClose={() => setBatchDrawer(null)} />
       <RosterDrawer batchId={roster} onClose={() => setRoster(null)} />
       <SyllabusDrawer course={courses.find((c) => c._id === syllabusFor)} canEdit={Boolean(p.manageCourses)} onClose={() => setSyllabusFor(null)} />
-      <BatchSyllabusDrawer batchId={coverageFor} canMark={Boolean(p.manageCourses || p.markAttendance)} onClose={() => setCoverageFor(null)} />
+      <BatchSyllabusDrawer
+        batchId={coverageFor}
+        canMark={Boolean(p.manageCourses || p.markAttendance)}
+        canAssign={Boolean(p.manageCourses)}
+        onClose={() => setCoverageFor(null)}
+      />
       <ConfirmModal
         isOpen={Boolean(confirm)}
         onClose={() => setConfirm(null)}

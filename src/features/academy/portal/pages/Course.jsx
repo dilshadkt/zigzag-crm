@@ -1,6 +1,6 @@
 import React from "react";
 import { toast } from "react-hot-toast";
-import { FiCheck, FiClock, FiDownload, FiExternalLink } from "react-icons/fi";
+import { FiCheck, FiClock, FiDownload, FiExternalLink, FiUser } from "react-icons/fi";
 import studentClient from "../studentClient";
 import { openProtectedFile } from "../../api/academyApi";
 import { usePortal } from "../portalContext";
@@ -35,6 +35,11 @@ const Module = ({ module: m, number, enrollmentId }) => {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-bold text-[#0A1629]">{m.title}</p>
+            {m.faculty && (
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-[#7D8592] mt-0.5">
+                <FiUser aria-hidden="true" /> {m.faculty.name}
+              </p>
+            )}
             {(durationText(m) || m.completed) && (
               <p className="flex items-center gap-1.5 text-xs text-[#91929E] mt-0.5">
                 {durationText(m) && (
@@ -106,8 +111,8 @@ const Course = () => {
     <div>
       <PageTitle title={c.name} subtitle={[MODE_LABELS[c.mode], c.durationWeeks ? `${c.durationWeeks} weeks` : null].filter(Boolean).join(" · ")} />
 
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3 items-start">
-        <Panel title="Your batch">
+      <div className="grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3 items-start">
+        <Panel title="Your batch" className="xl:order-last xl:sticky xl:top-0">
           <dl>
             <InfoRow label="Status" value={<Pill status={e.status} map={ENROLLMENT_STATUS} />} />
             <InfoRow label="Batch" value={e.batch?.name || "Not assigned yet"} />

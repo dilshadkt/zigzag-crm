@@ -112,8 +112,10 @@ const Home = () => {
           sub={
             fees.overdueAmount > 0
               ? `₹${fees.overdueAmount.toLocaleString("en-IN")} overdue`
-              : fees.nextDue
+              : fees.nextDue?.dueDate
               ? `Next due ${fmtDay(fees.nextDue.dueDate)}`
+              : fees.nextDue
+              ? "To be paid"
               : "Nothing pending"
           }
           alert={fees.overdueAmount > 0}
@@ -222,7 +224,8 @@ const Home = () => {
                   {fees.nextDue.status === "overdue" ? "Overdue payment" : "Next payment"}
                 </p>
                 <p className="text-sm font-bold text-[#0A1629] mt-0.5">
-                  {fmtMoney(fees.nextDue.pending)} by {fmtDay(fees.nextDue.dueDate)}
+                  {fmtMoney(fees.nextDue.pending)}
+                  {fees.nextDue.dueDate ? ` by ${fmtDay(fees.nextDue.dueDate)}` : ` · ${fees.nextDue.label}`}
                 </p>
               </div>
             ) : (

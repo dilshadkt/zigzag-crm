@@ -11,6 +11,7 @@ import Tasks from "./pages/Tasks";
 import Attendance from "./pages/Attendance";
 import Fees from "./pages/Fees";
 import Certificates from "./pages/Certificates";
+import Settings from "./pages/Settings";
 
 const Academy = () => {
   const { data, isLoading, isError, error, refetch } = useAcademyMeta();
@@ -36,6 +37,7 @@ const Academy = () => {
     { to: "/academy/tasks", label: "Tasks", show: p.manageTasks || p.view },
     { to: "/academy/fees", label: "Fees", show: p.manageFees || p.view },
     { to: "/academy/certificates", label: "Certificates", show: p.issueCertificates || p.view },
+    { to: "/academy/settings", label: "Settings", show: p.manageCourses },
   ].filter((t) => t.show);
   const home = tabs[0]?.to || "/academy/courses";
 
@@ -77,6 +79,7 @@ const Academy = () => {
             {(p.manageTasks || p.view) && <Route path="tasks" element={<Tasks />} />}
             {(p.manageFees || p.view) && <Route path="fees" element={<Fees />} />}
             {(p.issueCertificates || p.view) && <Route path="certificates" element={<Certificates />} />}
+            {p.manageCourses && <Route path="settings" element={<Settings />} />}
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>
         </div>

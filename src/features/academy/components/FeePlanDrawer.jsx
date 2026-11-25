@@ -9,12 +9,14 @@ const FeePlanDrawer = ({ enrollment, onClose }) => {
   const save = useSetFees();
   const [total, setTotal] = useState("");
   const [discount, setDiscount] = useState("");
+  const [admission, setAdmission] = useState("");
   const [installments, setInstallments] = useState([]);
 
   useEffect(() => {
     if (!enrollment) return;
     setTotal(String(enrollment.fee?.total ?? 0));
     setDiscount(String(enrollment.fee?.discount ?? 0));
+    setAdmission(String(enrollment.fee?.admission || ""));
     setInstallments(
       (enrollment.installments || []).map((i) => ({ label: i.label, dueDate: dayKey(i.dueDate), amount: i.amount }))
     );
@@ -22,7 +24,8 @@ const FeePlanDrawer = ({ enrollment, onClose }) => {
   }, [enrollment?._id]);
 
   if (!enrollment) return null;
-  const net = Math.max(0, (Number(total) || 0) - (Number(discount) || 0));
+  const courseFee = Math.max(0, (Number(total) || 0) - (Number(discount) || 0));
+  const net = courseFee + Math.max(0, Number(admission) || 0);
   const paid = enrollment.feeSummary?.paid || 0;
 
   const submit = () =>
@@ -31,6 +34,7 @@ const FeePlanDrawer = ({ enrollment, onClose }) => {
         id: enrollment._id,
         total: Number(total) || 0,
         discount: Number(discount) || 0,
+        admission: Number(admission) || 0,
         installments: installments.map((i) => ({ label: i.label, dueDate: i.dueDate, amount: Number(i.amount) })),
       },
       { onSuccess: onClose }
@@ -54,22 +58,25 @@ const FeePlanDrawer = ({ enrollment, onClose }) => {
       }
     >
       <div className="space-y-5">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Field label="Course fee">
             <input type="number" min={0} className={inputCls} value={total} onChange={(e) => setTotal(e.target.value)} />
           </Field>
           <Field label="Discount">
             <input type="number" min={0} className={inputCls} value={discount} onChange={(e) => setDiscount(e.target.value)} />
           </Field>
-          <Field label="Net fee">
+          <Field label="Admission fee" hint="Empty = none">
+            <input type="number" min={0} className={inputCls} value={admission} onChange={(e) => setAdmission(e.target.value)} placeholder="0" />
+          </Field>
+          <Field label="Student pays">
             <div className="h-10 flex items-center font-bold text-slate-800">{fmtMoney(net)}</div>
           </Field>
         </div>
         <div>
-          <p className="text-xs font-semibold text-slate-600 mb-2">Instalments</p>
-          <InstallmentsEditor value={installments} onChange={setInstallments} net={net} />
+          <p className="text-xs font-semibold text-slate-600 mb-2">Instalments for the course fee ({fmtMoney(courseFee)})</p>
+          <InstallmentsEditor value={installments} onChange={setInstallments} net={courseFee} />
         </div>
-        <p className="text-xs text-slate-400">Payments are applied to instalments in due-date order.</p>
+        <p className="text-xs text-slate-400">Payments cover the admission fee first, then instalments in due-date order.</p>
       </div>
     </Drawer>
   );
