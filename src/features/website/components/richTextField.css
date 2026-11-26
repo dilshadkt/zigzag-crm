@@ -1,0 +1,15 @@
+/* The editor's own dark theme is a flat grey; match the CRM's dark surfaces. */
+html[data-theme="dark"] .website-editor .jodit-container,
+html[data-theme="dark"] .website-editor .jodit-workplace,
+html[data-theme="dark"] .website-editor .jodit-wysiwyg {
+  background: #111a2b;
+  color: #e6ebf4;
+  border-color: #243349;
+}
+
+html[data-theme="dark"] .website-editor .jodit-toolbar__box,
+html[data-theme="dark"] .website-editor .jodit-toolbar-editor-collection,
+html[data-theme="dark"] .website-editor .jodit-status-bar {
+  background: #172236;
+  border-color: #243349;
+}

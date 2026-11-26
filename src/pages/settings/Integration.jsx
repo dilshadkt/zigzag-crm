@@ -18,6 +18,7 @@ import {
   FiExternalLink, FiSettings, FiActivity, FiLayers, FiChevronRight, FiVideo
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import WebsiteConnections from "../../components/settings/integration/WebsiteConnections";
 
 const Integration = () => {
   const { user } = useAuth();
@@ -150,6 +151,8 @@ const Integration = () => {
       </div>
 
       <div className="flex-1 space-y-5 pb-6">
+        <WebsiteConnections />
+
         {/* Facebook Ads Section */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-full h-[3px] bg-blue-500 opacity-80" />

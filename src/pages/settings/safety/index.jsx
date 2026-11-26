@@ -30,7 +30,8 @@ import {
   FiPhone,
   FiDollarSign,
   FiCreditCard,
-  FiBookOpen
+  FiBookOpen,
+  FiGlobe
 } from "react-icons/fi";
 import { MdSecurity, MdHistory, MdDevices, MdEdit } from "react-icons/md";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -167,6 +168,15 @@ const PERMISSION_CATEGORIES = {
       { key: "delete", label: "Delete Records", description: "Can delete students and enrollments for good" },
     ],
   },
+  website: {
+    label: "Websites",
+    icon: <FiGlobe />,
+    permissions: [
+      { key: "view", label: "View Website Content", description: "Can see the content of the connected websites" },
+      { key: "manageContent", label: "Manage Content", description: "Can add and edit blogs, pages, photos and other website content. Changes appear on the live websites" },
+      { key: "delete", label: "Delete Content", description: "Can remove content from the websites for good" },
+    ],
+  },
   settings: {
     label: "Settings & Configuration",
     icon: <FiSettings />,
@@ -214,6 +224,7 @@ const MODULES = [
   { id: "projects", type: "route", label: "Clients", path: "/projects", icon: <FiLayout />, desc: "Clients page: client projects and their tasks.", permissionKey: "projects" },
   { id: "accounts", type: "route", label: "Accounts", path: "/accounts", icon: <FiDollarSign />, desc: "Invoices, proposals, expenses, payroll and reports", permissionKey: "accounts" },
   { id: "academy", type: "route", label: "Academy", path: "/academy", icon: <FiBookOpen />, desc: "Students who joined a course, with batches, fees, tasks, class attendance and certificates. Students use their own portal at /student.", permissionKey: "academy" },
+  { id: "website", type: "route", label: "Websites", path: "/website", icon: <FiGlobe />, desc: "Content of the public websites: blogs, pages, gallery, testimonials and more. Websites are connected in Settings > Integration.", permissionKey: "website" },
   { id: "my-payslips", type: "route", label: "My Payslips", path: "/my-payslips", icon: <FiCreditCard />, desc: "Lets people open and download their own payslips. Only approved payslips are shown, and only their own.", permissionKey: null },
   { id: "tickets", type: "route", label: "Issues", path: "/tickets", icon: <FiAlertCircle />, desc: "Issues page: raise and track issues and complaints.", permissionKey: "tickets" },
   { id: "board", type: "route", label: "Board", path: "/board", icon: <FiGrid />, desc: "Board page: tasks as cards. The options below are the task permissions used across the app.", permissionKey: "tasks" },
@@ -308,10 +319,10 @@ const RolePermissionEditor = ({ role, onUpdate, onClose, companyId }) => {
     );
     // An Accounts page with no scopes only shows an error, so start with read access
     // Same for the academy: opening it with no scopes would only show an error
-    if (routeValue === "academy" && enabling) {
+    if ((routeValue === "academy" || routeValue === "website") && enabling) {
       setPermissions((prev) => {
-        const anyScope = Object.values(prev.academy || {}).some(Boolean);
-        return anyScope ? prev : { ...prev, academy: { ...(prev.academy || {}), view: true } };
+        const anyScope = Object.values(prev[routeValue] || {}).some(Boolean);
+        return anyScope ? prev : { ...prev, [routeValue]: { ...(prev[routeValue] || {}), view: true } };
       });
     }
     if (routeValue === "accounts" && enabling) {

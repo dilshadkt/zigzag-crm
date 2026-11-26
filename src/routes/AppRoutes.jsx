@@ -26,6 +26,7 @@ const Accounts = lazy(() => import("../features/accounts"));
 const MyPayslips = lazy(() => import("../features/accounts/MyPayslips"));
 const SharedDocument = lazy(() => import("../features/accounts/SharedDocument"));
 const Academy = lazy(() => import("../features/academy"));
+const Website = lazy(() => import("../features/website"));
 const StudentLogin = lazy(() => import("../features/academy/portal/StudentLogin"));
 const StudentPortal = lazy(() => import("../features/academy/portal/StudentPortal"));
 const CertificateVerify = lazy(() => import("../features/academy/CertificateVerify"));
@@ -348,6 +349,7 @@ const AppRoutes = () => {
           <Route path="tickets" element={<RouteAccess><Tickets /></RouteAccess>} />
           <Route path="accounts/*" element={<RouteAccess><Accounts /></RouteAccess>} />
           <Route path="academy/*" element={<RouteAccess><Academy /></RouteAccess>} />
+          <Route path="website/*" element={<RouteAccess><Website /></RouteAccess>} />
           <Route path="my-payslips" element={<RouteAccess><MyPayslips /></RouteAccess>} />
           <Route path="employees" element={<RouteAccess><Employees /></RouteAccess>} />
           <Route
