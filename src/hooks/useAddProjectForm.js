@@ -12,6 +12,8 @@ const htmlToPlainText = (html) => {
 
 export const useAddProjectForm = (defaultValue, onSubmit, projectFields = []) => {
   const initialValues = {
+    // Id of the Accounts client this new project is converted from
+    fromClient: "",
     name: defaultValue?.name || "",
     thumbImg: defaultValue?.thumbImg || null,
     startDate: defaultValue?.startDate || "",

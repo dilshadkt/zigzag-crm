@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 import {
   useAddProject,
   useCompanyProjects,
@@ -144,7 +145,7 @@ const Prjects = () => {
         navigate(`/projects/${response.project._id}`);
       }
     } catch (error) {
-      console.error(error);
+      toast.error(error?.response?.data?.message || "Could not create project");
     }
   };
 

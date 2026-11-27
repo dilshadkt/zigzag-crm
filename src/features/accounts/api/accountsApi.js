@@ -69,6 +69,12 @@ export const accountsApi = {
   addExpenseCategory: (name) => post("/expenses/categories", { name }),
   removeExpenseCategory: (name) => del(`/expenses/categories?name=${encodeURIComponent(name)}`),
 
+  // Clients added here that are not projects
+  accountClients: (params) => get("/account-clients", params),
+  createAccountClient: (data) => post("/account-clients", data),
+  updateAccountClient: (id, data) => put(`/account-clients/${id}`, data),
+  deleteAccountClient: (id) => del(`/account-clients/${id}`),
+
   vendors: (params) => get("/vendors", params),
   createVendor: (data) => post("/vendors", data),
   updateVendor: (id, data) => put(`/vendors/${id}`, data),

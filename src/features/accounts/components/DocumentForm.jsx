@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { useAccountsContext } from "../context";
-import { useClient, useClientLookup } from "../hooks/useAccounts";
+import { useAccountClients, useClient, useClientLookup } from "../hooks/useAccounts";
 import { INDIAN_STATES, TAX_MODES, blankItem, computeTotals, errorMessage, fmtMoney, toInputDate } from "../utils/format";
 import LineItemsEditor from "./LineItemsEditor";
 import { Card, Field, PageHeader, btnGhost, btnPrimary, btnSmall, inputCls, selectCls } from "./ui";
@@ -34,6 +34,7 @@ const DocumentForm = ({ type, initial, onSubmit, saving, onCancel, title, defaul
     const today = new Date();
     const base = {
       project: defaults.project || "",
+      accountClient: "",
       client: emptyParty,
       title: "",
       reference: "",
@@ -61,6 +62,7 @@ const DocumentForm = ({ type, initial, onSubmit, saving, onCancel, title, defaul
     return {
       ...base,
       project: initial.project?._id || initial.project || "",
+      accountClient: initial.accountClient || "",
       client: { ...emptyParty, ...initial.client, address: { ...emptyParty.address, ...(initial.client?.address || {}) } },
       title: initial.title || "",
       reference: initial.reference || "",
@@ -92,6 +94,37 @@ const DocumentForm = ({ type, initial, onSubmit, saving, onCancel, title, defaul
   const { data: clientList } = useClientLookup();
   const { data: clientDetail } = useClient(form.project);
   const appliedFor = useRef(initial ? form.project : null);
+  const { data: otherData } = useAccountClients();
+  const otherClients = otherData?.clients || [];
+
+  const taxModeFor = (state) => {
+    const mine = norm(settings?.business?.address?.state);
+    return !hasGstin ? "none" : mine && state && mine !== norm(state) ? "gst_inter" : "gst_intra";
+  };
+
+  // The select holds a project id, or "account:<id>" for a client without a project
+  const pickClient = (value) => {
+    appliedFor.current = null;
+    if (!value.startsWith("account:")) {
+      set({ project: value, accountClient: "" });
+      return;
+    }
+    const picked = otherClients.find((c) => `account:${c._id}` === value);
+    if (!picked) return;
+    set({
+      project: "",
+      accountClient: picked._id,
+      client: {
+        name: picked.name,
+        contactName: picked.contactName || "",
+        email: picked.email || "",
+        phone: picked.phone || "",
+        gstin: picked.gstin || "",
+        address: { ...emptyParty.address, ...picked.address },
+      },
+      taxMode: taxModeFor(picked.address?.state),
+    });
+  };
 
   // When a client is picked, fill in their billing profile once
   useEffect(() => {
@@ -163,6 +196,7 @@ const DocumentForm = ({ type, initial, onSubmit, saving, onCancel, title, defaul
     }
     const payload = {
       project: form.project || null,
+      accountClient: form.accountClient || null,
       client: form.client,
       title: form.title,
       issueDate: form.issueDate,
@@ -233,17 +267,20 @@ const DocumentForm = ({ type, initial, onSubmit, saving, onCancel, title, defaul
               <Field label="Client" className="md:col-span-2" error={errors.client}>
                 <select
                   className={selectCls}
-                  value={form.project}
-                  onChange={(e) => {
-                    appliedFor.current = null;
-                    set({ project: e.target.value });
-                    if (!e.target.value) setForm((f) => ({ ...f, project: "" }));
-                  }}
+                  value={form.accountClient ? `account:${form.accountClient}` : form.project}
+                  onChange={(e) => pickClient(e.target.value)}
                 >
                   <option value="">{isInvoice ? "One-off client (type details below)" : "New prospect (type details below)"}</option>
                   {(clientList?.clients || []).map((c) => (
                     <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
+                  {otherClients.length > 0 && (
+                    <optgroup label="Clients without a project">
+                      {otherClients.map((c) => (
+                        <option key={c._id} value={`account:${c._id}`}>{c.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </Field>
               <Field label="Name on document" required>

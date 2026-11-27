@@ -2,28 +2,32 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiEdit2, FiPlus, FiSearch, FiTrash2, FiUsers } from "react-icons/fi";
 import { useAccountsContext } from "../context";
-import { useClients, useDeleteVendor, useVendors } from "../hooks/useAccounts";
+import { useAccountClients, useClients, useDeleteAccountClient, useDeleteVendor, useVendors } from "../hooks/useAccounts";
 import { fmtMoney } from "../utils/format";
 import { ConfirmModal, EmptyState, ErrorState, PageHeader, SegmentedTabs, Spinner, Table, btnPrimary, inputCls } from "../components/ui";
 import VendorDrawer from "../components/VendorDrawer";
+import ClientDrawer from "../components/ClientDrawer";
 
 const TYPES = ["client", "vendor"];
 
 const dash = <span className="text-slate-300">—</span>;
 
 /**
- * Everyone the company deals with money-wise, in one list. Clients (CRM projects)
- * and vendors stay separate records; this only shows them together.
+ * Everyone the company deals with money-wise, in one list. Clients (CRM projects,
+ * plus clients added here that have no project) and vendors stay separate
+ * records; this only shows them together.
  */
 const Parties = () => {
   const navigate = useNavigate();
   const { permissions, symbol } = useAccountsContext();
   const canManage = permissions.manageExpenses;
+  const canManageClients = permissions.manageInvoices || permissions.manageProposals;
   const [params, setParams] = useSearchParams();
   const type = TYPES.includes(params.get("type")) ? params.get("type") : "";
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   const [drawer, setDrawer] = useState({ open: false, vendor: null });
+  const [clientDrawer, setClientDrawer] = useState({ open: false, client: null });
   const [toDelete, setToDelete] = useState(null);
 
   useEffect(() => {
@@ -33,9 +37,16 @@ const Parties = () => {
 
   const clientQuery = useClients({ search: debounced });
   const vendorQuery = useVendors({ search: debounced });
-  const remove = useDeleteVendor();
+  const otherQuery = useAccountClients({ search: debounced });
+  const removeVendor = useDeleteVendor();
+  const removeClient = useDeleteAccountClient();
+  const remove = toDelete?.type === "client" ? removeClient : removeVendor;
 
-  const clients = (clientQuery.data?.clients || []).map((c) => ({ ...c, type: "client" }));
+  // `noProject` marks a client added here; it has no CRM project or detail page
+  const clients = [
+    ...(clientQuery.data?.clients || []).map((c) => ({ ...c, type: "client" })),
+    ...(otherQuery.data?.clients || []).map((c) => ({ ...c, type: "client", noProject: true })),
+  ].sort((a, b) => a.name.localeCompare(b.name));
   const vendors = (vendorQuery.data?.vendors || []).map((v) => ({ ...v, type: "vendor" }));
   const rows =
     type === "client" ? clients
@@ -46,22 +57,28 @@ const Parties = () => {
   const overdue = clients.reduce((s, c) => s + c.overdue, 0);
 
   const isLoading = clientQuery.isLoading || vendorQuery.isLoading;
+  // The clients added here load separately: if only they fail, say so and still show the rest
   const failed = clientQuery.isError ? clientQuery : vendorQuery.isError ? vendorQuery : null;
 
   const openAdd = () => setDrawer({ open: true, vendor: null });
-  const openEdit = (vendor) => setDrawer({ open: true, vendor });
+  const openEdit = (row) => {
+    if (row.type === "client") setClientDrawer({ open: true, client: row });
+    else setDrawer({ open: true, vendor: row });
+  };
+  const canEdit = (row) => (row.type === "client" ? Boolean(row.noProject) && canManageClients : canManage);
 
   const openRow = (row) => {
-    if (row.type === "client") navigate(`/accounts/clients/${row._id}`);
-    else if (canManage) openEdit(row);
+    if (row.type === "client" && !row.noProject) navigate(`/accounts/clients/${row._id}`);
+    else if (canEdit(row)) openEdit(row);
   };
 
   const nameColumn = {
     key: "name",
     title: type === "client" ? "Client" : type === "vendor" ? "Vendor" : "Party",
     render: (r) => {
-      const sub =
-        r.type === "client"
+      const sub = r.noProject
+        ? ["No project", r.contactName || r.phone || r.email].filter(Boolean).join(" · ")
+        : r.type === "client"
           ? r.hasBilling ? r.billing?.legalName || "Billing profile set" : "No billing details yet"
           : r.gstin ? `GSTIN ${r.gstin}` : r.phone || r.email;
       return (
@@ -91,8 +108,8 @@ const Parties = () => {
   const collected = clientMoney("collected", "Collected", () => "text-emerald-600");
   const outstandingCol = clientMoney("outstanding", "Outstanding", (r) => (r.overdue > 0 ? "text-red-600 font-semibold" : ""));
 
-  const actions = canManage
-    ? [{ key: "act", title: "", align: "right", render: (r) => r.type === "vendor" && (
+  const actions = canManage || canManageClients
+    ? [{ key: "act", title: "", align: "right", render: (r) => canEdit(r) && (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" aria-label={`Edit ${r.name}`} onClick={() => openEdit(r)}><FiEdit2 className="w-3.5 h-3.5" /></button>
           {permissions.delete && (
@@ -126,6 +143,7 @@ const Parties = () => {
       collected,
       outstandingCol,
       { key: "expenses", title: "Expenses", align: "right", render: (r) => (r.expenses ? fmtMoney(r.expenses, symbol) : dash) },
+      ...actions,
     ],
     vendor: [
       nameColumn,
@@ -147,14 +165,23 @@ const Parties = () => {
     ? undefined
     : type === "vendor"
       ? canManage ? "Add the suppliers and people you pay, then pick them on expenses and payments." : undefined
-      : "Clients come from the Clients section of the CRM.";
+      : canManageClients ? "Add a client to quote or bill them without creating a project." : undefined;
 
   return (
     <div>
       <PageHeader
         title="Parties"
         subtitle={`${clients.length} client${clients.length === 1 ? "" : "s"} · ${vendors.length} vendor${vendors.length === 1 ? "" : "s"} ·${fmtMoney(outstanding, symbol)} outstanding${overdue ? `, ${fmtMoney(overdue, symbol)} overdue` : ""}`}
-        actions={canManage && <button className={btnPrimary} onClick={openAdd}><FiPlus /> Add vendor</button>}
+        actions={
+          <>
+            {canManageClients && type !== "vendor" && (
+              <button className={btnPrimary} onClick={() => setClientDrawer({ open: true, client: null })}><FiPlus /> Add client</button>
+            )}
+            {canManage && type !== "client" && (
+              <button className={btnPrimary} onClick={openAdd}><FiPlus /> Add vendor</button>
+            )}
+          </>
+        }
       />
 
       <div className="bg-white border border-slate-100 rounded-2xl">
@@ -174,6 +201,13 @@ const Parties = () => {
           />
         </div>
 
+        {otherQuery.isError && type !== "vendor" && (
+          <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-b border-amber-100" role="alert">
+            Clients without a project could not be loaded.{" "}
+            <button type="button" className="font-semibold underline" onClick={() => otherQuery.refetch()}>Try again</button>
+          </p>
+        )}
+
         {isLoading ? (
           <Spinner />
         ) : failed ? (
@@ -190,10 +224,11 @@ const Parties = () => {
       </div>
 
       <VendorDrawer isOpen={drawer.open} vendor={drawer.vendor} onClose={() => setDrawer({ open: false, vendor: null })} />
+      <ClientDrawer isOpen={clientDrawer.open} client={clientDrawer.client} onClose={() => setClientDrawer({ open: false, client: null })} />
       <ConfirmModal
         isOpen={!!toDelete}
         onClose={() => setToDelete(null)}
-        title="Delete this vendor?"
+        title={toDelete?.type === "client" ? "Delete this client?" : "Delete this vendor?"}
         message={toDelete ? `${toDelete.name} will be removed.` : ""}
         confirmLabel="Delete"
         danger

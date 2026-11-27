@@ -627,11 +627,27 @@ export const useAddProject = () => {
   return useMutation({
     mutationKey: ["addProject"],
     mutationFn: (projectDetails) => addProject(projectDetails),
-    onSuccess: () => {
+    onSuccess: (data, projectDetails) => {
       queryClient.invalidateQueries(["companyProjects"]);
+      // A converted client leaves the Accounts client lists and joins the projects
+      if (projectDetails?.fromClient) {
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["convertibleClients"] });
+      }
     },
   });
 };
+
+// Clients added in Accounts that have no project yet, for "convert" on Add Project
+export const useConvertibleClients = (enabled = true) =>
+  useQuery({
+    queryKey: ["convertibleClients"],
+    queryFn: () => apiClient.get("/projects/convertible-clients").then((res) => res.data?.clients || []),
+    enabled,
+    retry: false,
+    // The list changes from the Accounts page, so re-read it each time the form opens
+    staleTime: 0,
+  });
 
 export const useUpdateProject = (projectId, handleSuccess) => {
   const queryClient = useQueryClient();

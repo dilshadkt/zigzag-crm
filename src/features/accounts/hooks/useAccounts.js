@@ -50,6 +50,14 @@ export const useSaveBilling = () =>
 export const useClientCosting = (id, params, enabled = true) =>
   useRead("client-costing", () => accountsApi.clientCosting(id, params), { id, ...params }, { enabled: !!id && enabled });
 
+// Clients added here that are not projects
+export const useAccountClients = (params, enabled = true) =>
+  useRead("account-clients", accountsApi.accountClients, params, { enabled, placeholderData: (prev) => prev });
+export const useCreateAccountClient = () => useWrite(accountsApi.createAccountClient, { success: "Client added" });
+export const useUpdateAccountClient = () =>
+  useWrite(({ id, data }) => accountsApi.updateAccountClient(id, data), { success: "Client updated" });
+export const useDeleteAccountClient = () => useWrite(accountsApi.deleteAccountClient, { success: "Client deleted" });
+
 // Invoices
 export const useInvoices = (params, enabled = true) =>
   useRead("invoices", accountsApi.invoices, params, { enabled, placeholderData: (prev) => prev });

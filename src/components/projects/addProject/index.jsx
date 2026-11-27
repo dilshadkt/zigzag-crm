@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PrimaryButton from "../../shared/buttons/primaryButton";
 import Input from "../../shared/Field/input";
 import DatePicker from "../../shared/Field/date";
@@ -15,7 +15,7 @@ import ThumbImage from "../thumbImage";
 import MonthlyWorkDetailsForm from "../monthlyWorkDetailsForm";
 import DailyChecklistForm from "../dailyChecklistForm";
 import RecurringWorkForm from "../recurringWorkForm";
-import { useGetProjectFields } from "../../../api/hooks";
+import { useConvertibleClients, useGetProjectFields } from "../../../api/hooks";
 import { useAuth } from "../../../hooks/useAuth";
 
 const TAB_HINTS = {
@@ -58,6 +58,23 @@ const AddProject = ({
     isSubmitting,
     submitCount,
   } = useAddProjectForm(initialValues, onSubmit, projectFields);
+
+  const { data: convertible } = useConvertibleClients(Boolean(isOpen) && !isEditMode);
+
+  // Picking a client fills the project name; clearing it removes only that fill
+  const pickClient = (id) => {
+    const before = convertible?.find((c) => c._id === values.fromClient);
+    const picked = convertible?.find((c) => c._id === id);
+    setFieldValue("fromClient", id);
+    if (picked) setFieldValue("name", picked.name);
+    else if (before && values.name === before.name) setFieldValue("name", "");
+  };
+
+  // Drop a choice that has since been converted or deleted elsewhere
+  useEffect(() => {
+    if (!values.fromClient || !convertible) return;
+    if (!convertible.some((c) => c._id === values.fromClient)) setFieldValue("fromClient", "");
+  }, [convertible, values.fromClient, setFieldValue]);
 
   const [activeTab, setActiveTab] = useState("basic");
   const [attemptedTabs, setAttemptedTabs] = useState({});
@@ -217,6 +234,29 @@ const AddProject = ({
           {activeTab === "basic" && (
             <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2">
               <div className="min-h-0 space-y-5 overflow-y-auto border-gray-100 px-5 py-5 md:px-6 lg:border-r">
+                {!isEditMode && convertible?.length > 0 && (
+                  <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                    <label htmlFor="fromClient" className="block text-sm font-semibold text-gray-800">
+                      Convert from existing client
+                    </label>
+                    <p className="mb-2 text-xs text-gray-500">
+                      Optional. Their billing details, invoices, proposals and payments move to this project.
+                    </p>
+                    <select
+                      id="fromClient"
+                      value={values.fromClient}
+                      onChange={(e) => pickClient(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="">No, this is a new project</option>
+                      {convertible.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.contactName ? `${c.name} (${c.contactName})` : c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <Input
                   name={"name"}
                   errors={errors}

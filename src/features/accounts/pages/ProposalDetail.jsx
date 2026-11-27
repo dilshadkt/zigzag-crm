@@ -55,9 +55,9 @@ const ConvertModal = ({ proposal, isOpen, onClose, onDone }) => {
           </Field>
         )}
         {needsClient && (
-          <Field label="Bill under client" hint="Optional. Leave empty to bill the prospect as a one-off client.">
+          <Field label="Bill under client" hint={proposal?.accountClient ? "Optional. Leave empty to bill the client on this proposal." : "Optional. Leave empty to bill the prospect as a one-off client."}>
             <select className={selectCls} value={project} onChange={(e) => setProject(e.target.value)}>
-              <option value="">One-off client ({proposal?.client?.name})</option>
+              <option value="">{proposal?.accountClient ? proposal?.client?.name : `One-off client (${proposal?.client?.name})`}</option>
               {(clients?.clients || []).map((c) => (
                 <option key={c._id} value={c._id}>{c.name}</option>
               ))}

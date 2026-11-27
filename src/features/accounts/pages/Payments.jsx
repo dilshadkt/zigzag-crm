@@ -57,13 +57,14 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
   const isIn = form.direction === "in";
 
   const party = splitParty(form.party);
-  const clientId = party.project || "";
+  const clientId = party.project || party.accountClient || "";
+  const clientKey = party.accountClient ? "accountClient" : "project";
 
   // Money received from a client can be applied to one of their unpaid invoices
-  const { data: invoiceData } = useInvoices({ project: clientId, limit: 100 }, isOpen && isIn && !!clientId);
+  const { data: invoiceData } = useInvoices({ [clientKey]: clientId, limit: 100 }, isOpen && isIn && !!clientId);
   const openInvoices = useMemo(
-    () => (invoiceData?.invoices || []).filter((i) => i.project?._id === clientId || i.project === clientId).filter((i) => i.status !== "void" && i.balance > 0.009),
-    [invoiceData, clientId]
+    () => (invoiceData?.invoices || []).filter((i) => (i[clientKey]?._id || i[clientKey]) === clientId).filter((i) => i.status !== "void" && i.balance > 0.009),
+    [invoiceData, clientKey, clientId]
   );
   const invoiceOptions = openInvoices.map((i) => ({
     value: i._id,
@@ -134,7 +135,7 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
           ))}
         </div>
         <p className="text-xs text-slate-500">
-          {DRAWER_HINTS[form.direction][party.project ? "client" : party.vendor ? "vendor" : "none"]}
+          {DRAWER_HINTS[form.direction][clientId ? "client" : party.vendor ? "vendor" : "none"]}
         </p>
 
         <Field label="Party" required>
