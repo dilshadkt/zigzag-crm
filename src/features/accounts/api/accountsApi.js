@@ -58,7 +58,8 @@ export const accountsApi = {
 
   expenses: (params) => get("/expenses", params),
   payments: (params) => get("/payments", params),
-  openExpenses: (vendor) => get("/payments/open-expenses", { vendor }),
+  // payee: { vendor } or { staff }
+  openExpenses: (payee) => get("/payments/open-expenses", payee),
   createPayment: (data) => post("/payments", data),
   deletePayment: (id) => del(`/payments/${id}`),
   expenseDescriptions: () => get("/expenses/descriptions"),
@@ -74,6 +75,18 @@ export const accountsApi = {
   createAccountClient: (data) => post("/account-clients", data),
   updateAccountClient: (id, data) => put(`/account-clients/${id}`, data),
   deleteAccountClient: (id) => del(`/account-clients/${id}`),
+
+  expense: (id) => get(`/expenses/${id}`),
+
+  items: (params) => get("/items", params),
+  createItem: (data) => post("/items", data),
+  updateItem: (id, data) => put(`/items/${id}`, data),
+  deleteItem: (id) => del(`/items/${id}`),
+
+  staff: () => get("/staff"),
+  staffMember: (id) => get(`/staff/${id}`),
+  staffVendorMatches: () => get("/staff/vendor-matches"),
+  moveVendorToStaff: (id, vendorId) => post(`/staff/${id}/move-vendor`, { vendorId }),
 
   assets: (params) => get("/assets", params),
   assetSchedule: (id) => get(`/assets/${id}/schedule`),

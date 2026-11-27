@@ -2,6 +2,7 @@ import React from "react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { UNITS, blankItem, fmtMoney, round2 } from "../utils/format";
 import { btnSmall, inputCls, selectCls } from "./ui";
+import ItemPicker from "./ItemPicker";
 
 const lineAmount = (i) => {
   const gross = (Number(i.quantity) || 0) * (Number(i.rate) || 0);
@@ -11,6 +12,21 @@ const lineAmount = (i) => {
 const LineItemsEditor = ({ items, onChange, taxRates = [0, 5, 12, 18, 28], showTax = true, allowOptional = false, symbol = "₹", defaultTaxRate = 18 }) => {
   const update = (index, patch) => onChange(items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   const remove = (index) => onChange(items.filter((_, i) => i !== index));
+
+  // A saved sale item fills the first empty line, or starts a new one
+  const addSaved = (saved) => {
+    const line = {
+      description: saved.name,
+      details: saved.description || "",
+      hsnSac: saved.hsnSac || "",
+      unit: saved.unit || "",
+      rate: saved.rate || "",
+      taxRate: saved.taxRate ?? defaultTaxRate,
+    };
+    const empty = items.findIndex((i) => !i.description && !Number(i.rate));
+    if (empty >= 0) update(empty, line);
+    else onChange([...items, { ...blankItem(defaultTaxRate), ...line }]);
+  };
 
   return (
     <div className="space-y-3">
@@ -98,9 +114,14 @@ const LineItemsEditor = ({ items, onChange, taxRates = [0, 5, 12, 18, 28], showT
           </div>
         </div>
       ))}
-      <button type="button" className={btnSmall} onClick={() => onChange([...items, blankItem(defaultTaxRate)])}>
-        <FiPlus /> Add item
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className={btnSmall} onClick={() => onChange([...items, blankItem(defaultTaxRate)])}>
+          <FiPlus /> Add item
+        </button>
+        <div className="w-full sm:w-72">
+          <ItemPicker type="sale" onPick={addSaved} placeholder="Add from the item list" />
+        </div>
+      </div>
     </div>
   );
 };

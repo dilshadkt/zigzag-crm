@@ -18,13 +18,14 @@ const methodOptions = (current) => (
   </>
 );
 
-const AdvanceModal = ({ advance, employees, onClose }) => {
+/** Record or edit an advance. `employee` fixes who a new one is for. */
+export const AdvanceModal = ({ advance, employees, employee, onClose }) => {
   const create = useCreateAdvance();
   const update = useUpdateAdvance();
   const [form, setForm] = useState(() =>
     advance?._id
       ? { employee: advance.employee?._id || advance.employee, amount: advance.amount, date: toInputDate(advance.date), recoverMonth: advance.recoverMonth, method: advance.method || "", note: advance.note || "" }
-      : blank()
+      : { ...blank(), employee: employee?._id || "" }
   );
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const saving = create.isPending || update.isPending;
@@ -46,7 +47,7 @@ const AdvanceModal = ({ advance, employees, onClose }) => {
     <Modal isOpen onClose={onClose} title={advance?._id ? "Edit advance" : "Record an advance"}>
       <form onSubmit={submit} className="pt-4 space-y-3">
         <Field label="Employee" required>
-          <select className={selectCls} value={form.employee} onChange={(e) => set({ employee: e.target.value })} disabled={!!advance?._id}>
+          <select className={selectCls} value={form.employee} onChange={(e) => set({ employee: e.target.value })} disabled={!!advance?._id || !!employee}>
             <option value="">Select employee</option>
             {employees.map((e) => <option key={e._id} value={e._id}>{e.firstName} {e.lastName}</option>)}
           </select>

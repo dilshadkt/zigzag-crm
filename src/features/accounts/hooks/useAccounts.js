@@ -116,8 +116,26 @@ export const useRemoveExpenseCategory = () => useWrite(accountsApi.removeExpense
 
 // Payments to and from parties (money in / out)
 export const usePayments = (params) => useRead("payments", accountsApi.payments, params, { placeholderData: (prev) => prev });
-export const useOpenExpenses = (vendorId, enabled = true) =>
-  useRead("open-expenses", accountsApi.openExpenses, vendorId, { enabled: !!vendorId && enabled });
+// payee: { vendor } or { staff }, or null
+export const useOpenExpenses = (payee, enabled = true) =>
+  useRead("open-expenses", accountsApi.openExpenses, payee, { enabled: !!payee && enabled });
+export const useExpense = (id) => useRead("expense", accountsApi.expense, id, { enabled: !!id });
+
+// The item list
+export const useItems = (params, enabled = true) =>
+  useRead("items", accountsApi.items, params, { enabled, placeholderData: (prev) => prev });
+export const useCreateItem = () => useWrite(accountsApi.createItem, { success: "Item added" });
+export const useUpdateItem = () =>
+  useWrite(({ id, data }) => accountsApi.updateItem(id, data), { success: "Item updated" });
+export const useDeleteItem = () => useWrite(accountsApi.deleteItem, { success: "Item deleted" });
+
+// Staff. People are added on the Employees page, so these reload when opened.
+export const useStaff = () => useRead("staff", accountsApi.staff, null, { refetchOnMount: "always" });
+export const useStaffMember = (id) => useRead("staff-member", accountsApi.staffMember, id, { enabled: !!id, refetchOnMount: "always" });
+export const useStaffVendorMatches = (enabled = true) =>
+  useRead("staff-matches", accountsApi.staffVendorMatches, null, { enabled, refetchOnMount: "always" });
+export const useMoveVendorToStaff = () =>
+  useWrite(({ id, vendorId }) => accountsApi.moveVendorToStaff(id, vendorId), { success: (d) => `Moved to ${d.staff.name}` });
 export const useCreatePayment = () => useWrite(accountsApi.createPayment, { success: "Payment recorded" });
 export const useDeletePayment = () => useWrite(accountsApi.deletePayment, { success: "Payment deleted" });
 

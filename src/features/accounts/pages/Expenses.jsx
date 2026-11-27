@@ -17,6 +17,7 @@ import {
   useVendors,
 } from "../hooks/useAccounts";
 import VendorDrawer from "../components/VendorDrawer";
+import ItemPicker from "../components/ItemPicker";
 import SearchableSelect from "../components/SearchableSelect";
 import SuggestInput from "../components/SuggestInput";
 import { ASSET_CATEGORIES, EXPENSE_STATUS, PAYMENT_METHODS, depreciationLabel, downloadCsv, errorMessage, fmtDate, fmtMoney, kindNoun, methodLabel, rangePresets, toInputDate } from "../utils/format";
@@ -95,8 +96,11 @@ const paymentsFor = (expense) =>
     ? expense.payments.map((p) => ({ method: p.method, amount: String(p.amount), reference: p.reference || "" }))
     : [{ method: expense.paymentMethod || "bank_transfer", amount: "", reference: expense.paymentReference || "" }];
 
-/** Add or edit an expense, a purchase or an asset. `kind` applies to new records. */
-export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) => {
+/**
+ * Add or edit an expense, a purchase or an asset. `kind` applies to new records;
+ * `staff` is who a new one is paid to, when opened from the Staff section.
+ */
+export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staff }) => {
   const { settings, symbol } = useAccountsContext();
   const create = useCreateExpense();
   const update = useUpdateExpense();
@@ -131,14 +135,35 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) =>
             attachments: expense.attachments || [],
             asset: assetFormFor(expense),
             payments: paymentsFor(expense),
+            staff: expense.staff?._id || expense.staff || "",
             // Older expenses only have the vendor as text, with no vendor record
-            vendorRef: expense.vendorRef?._id || expense.vendorRef || (expense.vendor ? LEGACY_VENDOR : ""),
+            vendorRef: expense.vendorRef?._id || expense.vendorRef || (expense.vendor && !expense.staff ? LEGACY_VENDOR : ""),
           }
-        : { ...blank(), category: kind === "asset" ? "" : settings?.expenseCategories?.[0] || "" }
+        : { ...blank(), staff: staff?._id || "", category: kind === "asset" ? "" : settings?.expenseCategories?.[0] || "" }
     );
+    // `staff` is only read when the drawer opens, so it is left out on purpose
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, expense, settings, kind]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  // A saved item fills in what it knows; everything stays editable
+  const pickItem = (item) => {
+    const patch = { description: item.name };
+    if (item.category) patch.category = item.category;
+    if (item.rate) {
+      patch.amount = String(item.rate);
+      patch.taxAmount = item.taxRate ? String(round2((item.rate * item.taxRate) / 100)) : "";
+    }
+    const d = item.depreciation;
+    setForm((f) => ({
+      ...f,
+      ...patch,
+      asset: isAsset && d?.method
+        ? { ...f.asset, method: d.method, years: d.usefulLifeMonths ? String(Math.round((d.usefulLifeMonths / 12) * 100) / 100) : "", ratePercent: d.ratePercent ?? "" }
+        : f.asset,
+    }));
+  };
   const setAsset = (patch) => setForm((f) => ({ ...f, asset: { ...f.asset, ...patch } }));
   // Something already owned had no purchase to pay for here
   const owned = isAsset && form.asset.alreadyOwned;
@@ -313,7 +338,11 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) =>
     delete payload._id;
     delete payload.clientRows;
     delete payload.sharesCustom;
-    if (form.vendorRef === LEGACY_VENDOR) delete payload.vendorRef; // keep the old text name as it is
+    if (form.staff) {
+      // The API takes the name from the staff record
+      delete payload.vendorRef;
+      delete payload.vendor;
+    } else if (form.vendorRef === LEGACY_VENDOR) delete payload.vendorRef; // keep the old text name as it is
     else if (form.vendorRef.startsWith(CLIENT_PREFIX)) {
       // A client has no vendor record: unlink any vendor and keep the client's name as text
       payload.vendorRef = null;
@@ -322,6 +351,7 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) =>
     delete payload.paymentMethod;
     delete payload.paymentReference;
     delete payload.position;
+    payload.staff = form.staff || null;
     if (expense) delete payload.kind;
     else payload.kind = recordKind;
     if (isAsset) {
@@ -369,6 +399,11 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) =>
             <span>We already own this<span className="block text-[11px] text-slate-400">No payment is recorded. Use the original purchase date and cost.</span></span>
           </label>
         )}
+        <ItemPicker
+          type={isAsset ? "asset" : "expense"}
+          onPick={pickItem}
+          placeholder={isAsset ? "Pick from the asset items" : "Pick from the expense items"}
+        />
         <div className="grid grid-cols-2 gap-3">
           <Field label={isAsset ? "Purchase date" : "Date"}><input type="date" className={inputCls} value={form.date} onChange={(e) => set({ date: e.target.value })} /></Field>
           <Field label="Category" required>
@@ -409,7 +444,15 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) =>
           </Field>
         )}
         <div className="grid grid-cols-2 gap-3">
-          {!owned && <Field label="Vendor / paid to">
+          {!owned && (form.staff ? (
+            <div>
+              <span className="block text-xs font-semibold text-slate-600 mb-1">Paid to (staff)</span>
+              <div className="flex items-center justify-between gap-2 border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50">
+                <span className="truncate">{staff?._id === form.staff ? staff.name : expense?.vendor}</span>
+                <button type="button" className="text-xs font-semibold text-[#3F8CFF] shrink-0" onClick={() => set({ staff: "", vendorRef: "" })}>Change</button>
+              </div>
+            </div>
+          ) : <Field label="Vendor / paid to">
             <SearchableSelect
               value={form.vendorRef}
               onChange={(vendorRef) => set({ vendorRef })}
@@ -426,7 +469,7 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) =>
               onRemove={(o) => setToRemove({ type: "vendor", id: o.value, name: o.label })}
               removeLabel="Remove vendor"
             />
-          </Field>}
+          </Field>)}
           <Field label="Bill / invoice no."><input className={inputCls} value={form.billNumber} onChange={(e) => set({ billNumber: e.target.value })} /></Field>
           <Field label={owned ? "Cost" : "Amount (before tax)"} required hint={isAsset && !owned ? "This is what gets depreciated. Include GST you can't claim." : undefined}><input type="number" min="0" step="any" className={inputCls} value={form.amount} onChange={(e) => set({ amount: e.target.value })} /></Field>
           {!owned && <Field label="GST paid" hint="Input tax credit"><input type="number" min="0" step="any" className={inputCls} value={form.taxAmount} onChange={(e) => set({ taxAmount: e.target.value })} /></Field>}

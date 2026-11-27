@@ -32,28 +32,43 @@ const partyOf = (row) => row.party || { name: row.project?.name, type: "client" 
 
 const statusLabel = (row) => (row.direction === "in" ? "Received" : "Paid out");
 
+const PARTY_TYPES = { client: "Client", vendor: "Vendor", staff: "Staff" };
+const partyType = (row) => PARTY_TYPES[partyOf(row).type] || "Client";
+
+// What a payment with no invoice or expense behind it was
+const PLAIN_PURPOSE = {
+  client: { in: "Advance", out: "Refund" },
+  vendor: { in: "Vendor refund", out: "Vendor payment" },
+  staff: { in: "Received from staff", out: "Paid to staff" },
+};
+
 const DRAWER_HINTS = {
   in: {
+    staff: "Money this person paid back to the company.",
     none: "Money you received from a client or vendor.",
     client: "The client paid you: an invoice payment, an advance or a retainer.",
     vendor: "The vendor paid you back: a refund or a returned advance.",
   },
   out: {
+    staff: "A reimbursement or other payment to this person. Record salaries and salary advances in Payroll, or they count twice.",
     none: "Money you paid to a client or vendor.",
     client: "You paid the client: a refund or an overpayment sent back.",
     vendor: "You paid the vendor: for a bill under Expenses, or as an advance.",
   },
 };
 
-const PaymentDrawer = ({ isOpen, onClose, direction }) => {
+/** Record money in or out. `staff` fixes the party, when opened from the Staff section. */
+export const PaymentDrawer = ({ isOpen, onClose, direction, staff }) => {
   const { symbol, permissions } = useAccountsContext();
   const create = useCreatePayment();
-  const partyOptions = usePartyOptions(isOpen);
+  const partyOptions = usePartyOptions(isOpen && !staff);
   const [form, setForm] = useState(blank());
 
   useEffect(() => {
-    if (isOpen) setForm(blank(direction));
-  }, [isOpen, direction]);
+    if (isOpen) setForm({ ...blank(direction), party: staff ? `staff:${staff._id}` : "" });
+    // The id is enough: the staff object is re-made on every refresh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, direction, staff?._id]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const isIn = form.direction === "in";
@@ -75,10 +90,10 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
   }));
   const chosenInvoice = openInvoices.find((i) => i._id === form.invoice);
 
-  // Money paid to a vendor can settle one of their unpaid expenses
-  const vendorId = party.vendor || "";
-  const canApplyExpense = !isIn && !!vendorId && !!permissions.manageExpenses;
-  const { data: expenseData } = useOpenExpenses(vendorId, isOpen && canApplyExpense);
+  // Money paid to a vendor or a staff member can settle one of their unpaid expenses
+  const payee = party.vendor ? { vendor: party.vendor } : party.staff ? { staff: party.staff } : null;
+  const canApplyExpense = !isIn && !!payee && !!permissions.manageExpenses;
+  const { data: expenseData } = useOpenExpenses(payee, isOpen && canApplyExpense);
   const openExpenses = expenseData?.expenses || [];
   const expenseOptions = openExpenses.map((x) => ({
     value: x._id,
@@ -137,19 +152,23 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
           ))}
         </div>
         <p className="text-xs text-slate-500">
-          {DRAWER_HINTS[form.direction][clientId ? "client" : party.vendor ? "vendor" : "none"]}
+          {DRAWER_HINTS[form.direction][clientId ? "client" : party.vendor ? "vendor" : party.staff ? "staff" : "none"]}
         </p>
 
-        <Field label="Party" required>
-          <SearchableSelect
-            value={form.party}
-            onChange={(value) => set({ party: value, invoice: "", expense: "" })}
-            options={partyOptions}
-            placeholder="Select party"
-            searchPlaceholder="Search clients and vendors…"
-            emptyText="No party found"
-          />
-        </Field>
+        {staff ? (
+          <Field label="Staff member"><input className={inputCls} value={staff.name} disabled /></Field>
+        ) : (
+          <Field label="Party" required>
+            <SearchableSelect
+              value={form.party}
+              onChange={(value) => set({ party: value, invoice: "", expense: "" })}
+              options={partyOptions}
+              placeholder="Select party"
+              searchPlaceholder="Search clients and vendors…"
+              emptyText="No party found"
+            />
+          </Field>
+        )}
 
         {isIn && clientId && (
           <Field label="Apply to invoice" hint={form.invoice ? undefined : "Leave empty to keep it as an advance"}>
@@ -180,7 +199,7 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
               placeholder="Not for a bill"
               searchPlaceholder="Search bills…"
               clearLabel="Not for a bill"
-              emptyText="No unpaid bills for this vendor"
+              emptyText={staff ? "No unpaid expenses for this person" : "No unpaid bills for this vendor"}
             />
           </Field>
         )}
@@ -229,7 +248,7 @@ const Payments = () => {
   const exportCsv = () => {
     downloadCsv(`payments-${range.from}-to-${range.to}.csv`, [
       ["Date", "Party", "Party type", "Status", "Amount", "Method", "Reference", "Invoice", "Expense", "Receipt", "Notes"],
-      ...(data?.payments || []).map((p) => [toInputDate(p.date), partyOf(p).name, partyOf(p).type === "vendor" ? "Vendor" : "Client", statusLabel(p), p.amount, methodLabel(p.method), p.reference, p.invoice?.number || "", p.expense?.description || "", p.receiptNumber, p.notes]),
+      ...(data?.payments || []).map((p) => [toInputDate(p.date), partyOf(p).name, partyType(p), statusLabel(p), p.amount, methodLabel(p.method), p.reference, p.invoice?.number || "", p.expense?.description || "", p.receiptNumber, p.notes]),
     ]);
   };
 
@@ -308,7 +327,7 @@ const Payments = () => {
                 { key: "party", title: "Party", render: (r) => (
                   <div>
                     <p className="font-semibold text-slate-800">{partyOf(r).name}</p>
-                    <p className="text-[11px] text-slate-400">{partyOf(r).type === "vendor" ? "Vendor" : "Client"}</p>
+                    <p className="text-[11px] text-slate-400">{partyType(r)}</p>
                   </div>
                 ) },
                 { key: "status", title: "Status", render: (r) => (
@@ -324,7 +343,7 @@ const Payments = () => {
                   <div className="text-xs text-slate-500">
                     <p>{[r.reference, r.receiptNumber].filter(Boolean).join(" · ")}</p>
                     <p className="text-slate-400">
-                      {r.invoice ? <>Invoice <Link className="text-[#3F8CFF] hover:underline" to={`/accounts/invoices/${r.invoice._id}`}>{r.invoice.number}</Link></> : r.expense ? `${kindNoun(r.expense)}: ${r.expense.description}${r.expense.billNumber ? ` (${r.expense.billNumber})` : ""}` : partyOf(r).type === "vendor" ? (r.direction === "in" ? "Vendor refund" : "Vendor payment") : r.direction === "in" ? "Advance" : "Refund"}
+                      {r.invoice ? <>Invoice <Link className="text-[#3F8CFF] hover:underline" to={`/accounts/invoices/${r.invoice._id}`}>{r.invoice.number}</Link></> : r.expense ? `${kindNoun(r.expense)}: ${r.expense.description}${r.expense.billNumber ? ` (${r.expense.billNumber})` : ""}` : PLAIN_PURPOSE[partyOf(r).type]?.[r.direction]}
                       {r.notes ? ` · ${r.notes}` : ""}
                     </p>
                   </div>

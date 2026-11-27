@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { useAccountClients, useClientLookup, useVendors } from "./useAccounts";
 
 // A party is a client or a vendor. A select holds it as "client:<id>" (a project),
-// "account:<id>" (a client without a project) or "vendor:<id>".
+// "account:<id>" (a client without a project) or "vendor:<id>". Staff are chosen
+// in the Staff section, as "staff:<id>".
 
 /** Clients and vendors as one alphabetical list of select options. */
 export const usePartyOptions = (enabled = true) => {
@@ -20,10 +21,11 @@ export const usePartyOptions = (enabled = true) => {
   );
 };
 
-/** A select value -> the API field it belongs in: { project }, { accountClient } or { vendor }. */
+/** A select value -> the API field it belongs in: { project }, { accountClient }, { vendor } or { staff }. */
 export const splitParty = (value) => {
   if (!value) return {};
   const [type, id] = value.split(":");
   if (type === "vendor") return { vendor: id };
+  if (type === "staff") return { staff: id };
   return type === "account" ? { accountClient: id } : { project: id };
 };

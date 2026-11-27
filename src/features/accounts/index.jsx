@@ -15,6 +15,8 @@ import ClientDetail from "./pages/ClientDetail";
 import Expenses from "./pages/Expenses";
 import Payments from "./pages/Payments";
 import Assets from "./pages/Assets";
+import Items from "./pages/Items";
+import Staff from "./pages/Staff";
 import Payroll from "./pages/Payroll";
 import PayrollRun from "./pages/PayrollRun";
 import Reports from "./pages/Reports";
@@ -50,6 +52,8 @@ const Accounts = () => {
     { to: "/accounts/proposals", label: "Proposals", show: p.view },
     // `also`: a client's own page lives under another path but belongs to this tab
     { to: "/accounts/parties", label: "Parties", also: "/accounts/clients/", show: p.view },
+    { to: "/accounts/staff", label: "Staff", show: p.view },
+    { to: "/accounts/items", label: "Items", show: p.view },
     { to: "/accounts/payments", label: "Payments", show: p.view },
     { to: "/accounts/expenses", label: "Expenses", show: p.view },
     { to: "/accounts/purchases", label: "Purchases", show: p.view },
@@ -107,6 +111,9 @@ const Accounts = () => {
                 <Route path="expenses" element={<Expenses key="expenses" />} />
                 <Route path="purchases" element={<Expenses key="purchases" view="purchases" />} />
                 <Route path="assets" element={<Assets />} />
+                <Route path="items" element={<Items />} />
+                <Route path="staff" element={<Staff />} />
+                <Route path="staff/:staffId" element={<Staff />} />
               </>
             )}
             {p.managePayroll && (

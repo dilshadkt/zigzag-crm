@@ -121,6 +121,12 @@ export const EXPENSE_STATUS = {
 export const KIND_NOUN = { expense: "Expense", purchase: "Purchase", asset: "Asset" };
 export const kindNoun = (record) => KIND_NOUN[record?.kind] || KIND_NOUN.expense;
 
+export const ITEM_TYPES = [
+  { value: "sale", label: "Sale items", one: "sale item", hint: "What you sell. Pick these on invoices and proposals." },
+  { value: "expense", label: "Expense items", one: "expense item", hint: "What you spend on. Pick these on expenses and purchases." },
+  { value: "asset", label: "Assets", one: "asset item", hint: "Things you buy to keep. Pick these when adding an asset." },
+];
+
 export const ASSET_CATEGORIES = ["Computers & Laptops", "Cameras & Studio Equipment", "Furniture & Fittings", "Office Equipment", "Vehicles", "Software", "Other Assets"];
 
 export const ASSET_STATE = {

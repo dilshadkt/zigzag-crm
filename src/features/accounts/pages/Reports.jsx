@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiDownload } from "react-icons/fi";
 import CashBookReport from "../components/CashBookReport";
+import SalaryWarning from "../components/SalaryWarning";
 import { useAccountsContext } from "../context";
 import { useExpenseReport, useGst, usePayrollReport, usePnl, useProfitability, useReceivables } from "../hooks/useAccounts";
 import { downloadCsv, fmtDate, fmtMoney, monthLabel, rangePresets } from "../utils/format";
@@ -24,31 +25,54 @@ const Pnl = ({ range, symbol }) => {
       {(d) => (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard label="Revenue" value={fmtMoney(d.totals.revenue, symbol)} />
-            <StatCard label="Expenses" value={fmtMoney(d.totals.expenses, symbol)} />
-            <StatCard label="Purchases" value={fmtMoney(d.totals.purchases, symbol)} />
-            <StatCard label="Payroll" value={fmtMoney(d.totals.payroll, symbol)} />
-            <StatCard label="Depreciation" value={fmtMoney(d.totals.depreciation, symbol)} sub="wear on assets" />
-            <StatCard label="Profit" value={fmtMoney(d.totals.profit, symbol)} tone={d.totals.profit >= 0 ? "good" : "bad"} />
-            <StatCard label="Margin" value={d.totals.margin === null ? "—" : `${d.totals.margin}%`} />
+            <StatCard label="Sales" value={fmtMoney(d.totals.revenue, symbol)} />
+            <StatCard label="Expenses" value={fmtMoney(d.totals.expenses, symbol)} sub="salaries included" />
+            <StatCard label="Profit" value={fmtMoney(d.totals.profit, symbol)} tone={d.totals.profit >= 0 ? "good" : "bad"} sub="Sales − Expenses" />
+            <StatCard label="Margin" value={d.totals.margin === null ? "—" : `${d.totals.margin}%`} sub="profit as a share of sales" />
           </div>
-          <Card title="Month by month" padded={false} actions={<ExportButton onClick={() => downloadCsv(`profit-and-loss.csv`, [["Month", "Revenue", "Collected", "Expenses", "Purchases", "Payroll", "Depreciation", "Profit"], ...d.months.map((m) => [m.month, m.revenue, m.collected, m.expenses, m.purchases, m.payroll, m.depreciation, m.profit])])} />}>
+          <SalaryWarning warning={d.salaryWarning} symbol={symbol} />
+          <Card title="How the profit is worked out" padded={false}>
+            <table className="w-full text-sm" aria-label="Profit calculation">
+              <tbody>
+                {[
+                  { label: "Sales", note: "invoiced, before tax", value: d.totals.revenue, strong: true },
+                  { label: "General expenses", value: d.totals.general, part: true },
+                  { label: "Purchases", value: d.totals.purchases, part: true },
+                  { label: "Salaries", note: "from approved payroll", value: d.totals.payroll, part: true },
+                  { label: "Depreciation", note: "this period's share of assets", value: d.totals.depreciation, part: true },
+                  { label: "Total expenses", value: d.totals.expenses, strong: true },
+                  { label: "Profit = Sales − Expenses", value: d.totals.profit, strong: true, result: true },
+                ].map((row) => (
+                  <tr key={row.label} className={`border-t border-slate-50 ${row.result ? "bg-slate-50" : ""}`}>
+                    <th scope="row" className={`px-5 py-2.5 text-left ${row.part ? "pl-10 font-normal text-slate-600" : "font-bold text-slate-800"}`}>
+                      {row.label}
+                      {row.note && <span className="ml-2 text-xs font-normal text-slate-400">{row.note}</span>}
+                    </th>
+                    <td className={`px-5 py-2.5 text-right tabular-nums whitespace-nowrap ${row.strong ? "font-bold" : "text-slate-600"} ${row.result ? (row.value >= 0 ? "text-emerald-600" : "text-red-600") : ""}`}>
+                      {fmtMoney(row.value, symbol)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+          <Card title="Month by month" padded={false} actions={<ExportButton onClick={() => downloadCsv(`profit-and-loss.csv`, [["Month", "Sales", "Collected", "General expenses", "Purchases", "Salaries", "Depreciation", "Total expenses", "Profit"], ...d.months.map((m) => [m.month, m.revenue, m.collected, m.general, m.purchases, m.payroll, m.depreciation, m.expenses, m.profit])])} />}>
             <Table
               rows={d.months}
               rowKey={(r) => r.month}
               columns={[
                 { key: "m", title: "Month", render: (r) => monthLabel(r.month, true) },
-                { key: "r", title: "Revenue", align: "right", render: (r) => fmtMoney(r.revenue, symbol) },
-                { key: "c", title: "Collected", align: "right", render: (r) => <span className="text-slate-500">{fmtMoney(r.collected, symbol)}</span> },
-                { key: "e", title: "Expenses", align: "right", render: (r) => fmtMoney(r.expenses, symbol) },
-                { key: "pu", title: "Purchases", align: "right", render: (r) => fmtMoney(r.purchases, symbol) },
-                { key: "p", title: "Payroll", align: "right", render: (r) => fmtMoney(r.payroll, symbol) },
-                { key: "dp", title: "Depreciation", align: "right", render: (r) => fmtMoney(r.depreciation, symbol) },
+                { key: "r", title: "Sales", align: "right", render: (r) => fmtMoney(r.revenue, symbol) },
+                { key: "g", title: "General", align: "right", render: (r) => <span className="text-slate-500">{fmtMoney(r.general, symbol)}</span> },
+                { key: "pu", title: "Purchases", align: "right", render: (r) => <span className="text-slate-500">{fmtMoney(r.purchases, symbol)}</span> },
+                { key: "p", title: "Salaries", align: "right", render: (r) => <span className="text-slate-500">{fmtMoney(r.payroll, symbol)}</span> },
+                { key: "dp", title: "Depreciation", align: "right", render: (r) => <span className="text-slate-500">{fmtMoney(r.depreciation, symbol)}</span> },
+                { key: "e", title: "Total expenses", align: "right", render: (r) => <span className="font-semibold">{fmtMoney(r.expenses, symbol)}</span> },
                 { key: "pr", title: "Profit", align: "right", render: (r) => <span className={`font-semibold ${r.profit < 0 ? "text-red-600" : ""}`}>{fmtMoney(r.profit, symbol)}</span> },
               ]}
             />
           </Card>
-          <p className="text-xs text-slate-500">Revenue is what you invoiced (before GST) in each month. Expenses and purchases count approved and paid records. Payroll counts approved payslips plus employer PF and ESI. Assets are not a cost when bought: their monthly depreciation is counted instead, up to the current month.</p>
+          <p className="text-xs text-slate-500">Sales is what you invoiced (before GST) in each month. Expenses count approved and paid records. Salaries are the pay earned on approved payslips plus employer PF and ESI, so a payroll that is still a draft is not counted. Assets are not a cost when bought: their monthly depreciation is counted instead, up to the current month. Salaries and depreciation count by whole month.</p>
         </div>
       )}
     </Wrap>

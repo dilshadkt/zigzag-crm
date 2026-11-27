@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiEdit2, FiPlus, FiSearch, FiTrash2, FiUsers } from "react-icons/fi";
 import { useAccountsContext } from "../context";
-import { useAccountClients, useClients, useDeleteAccountClient, useDeleteVendor, useVendors } from "../hooks/useAccounts";
+import { useAccountClients, useClients, useDeleteAccountClient, useDeleteVendor, useStaffVendorMatches, useVendors } from "../hooks/useAccounts";
 import { fmtMoney } from "../utils/format";
 import { ConfirmModal, EmptyState, ErrorState, PageHeader, SegmentedTabs, Spinner, Table, btnPrimary, inputCls } from "../components/ui";
 import VendorDrawer from "../components/VendorDrawer";
@@ -38,6 +38,7 @@ const Parties = () => {
   const clientQuery = useClients({ search: debounced });
   const vendorQuery = useVendors({ search: debounced });
   const otherQuery = useAccountClients({ search: debounced });
+  const staffMatches = useStaffVendorMatches(type !== "client").data?.matches?.length || 0;
   const removeVendor = useDeleteVendor();
   const removeClient = useDeleteAccountClient();
   const remove = toDelete?.type === "client" ? removeClient : removeVendor;
@@ -164,7 +165,7 @@ const Parties = () => {
   const emptyText = debounced
     ? undefined
     : type === "vendor"
-      ? canManage ? "Add the suppliers and people you pay, then pick them on expenses and payments." : undefined
+      ? canManage ? "Add the suppliers you pay, then pick them on expenses and payments. Employees are under Staff." : undefined
       : canManageClients ? "Add a client to quote or bill them without creating a project." : undefined;
 
   return (
@@ -205,6 +206,13 @@ const Parties = () => {
           <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-b border-amber-100" role="alert">
             Clients without a project could not be loaded.{" "}
             <button type="button" className="font-semibold underline" onClick={() => otherQuery.refetch()}>Try again</button>
+          </p>
+        )}
+
+        {staffMatches > 0 && type !== "client" && (
+          <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-b border-amber-100">
+            {staffMatches === 1 ? "1 vendor looks like a staff member." : `${staffMatches} vendors look like staff members.`}{" "}
+            <Link to="/accounts/staff" className="font-semibold underline">Move them in Staff</Link>
           </p>
         )}
 
