@@ -64,6 +64,13 @@ const Overview = () => {
 
   const { kpis, trend, aging, topClients, expensesByCategory, dueSoon, recentPayments, proposals, payrollVisible } = data;
   const agingRows = AGING.map((a) => ({ label: a.label, value: aging[a.key] })).filter((a) => a.value > 0);
+  const spent = kpis.expenses + (kpis.purchases || 0);
+  const costTrend = trend.map((m) => ({ ...m, costs: m.expenses + (m.purchases || 0) + (m.depreciation || 0) }));
+  const profitSub = [
+    "revenue − expenses",
+    payrollVisible ? "payroll" : null,
+    kpis.depreciation ? `${fmtMoney(kpis.depreciation, symbol)} depreciation` : null,
+  ].filter(Boolean).join(" − ");
 
   return (
     <div>
@@ -83,29 +90,29 @@ const Overview = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <StatCard label="Revenue" value={fmtMoney(kpis.revenue, symbol)} sub="invoiced, before tax" />
         <StatCard label="Collected" value={fmtMoney(kpis.collected, symbol)} tone="good" sub="payments received" />
-        <StatCard label="Expenses" value={fmtMoney(kpis.expenses, symbol)} />
+        <StatCard label="Expenses" value={fmtMoney(spent, symbol)} sub={kpis.purchases ? `includes ${fmtMoney(kpis.purchases, symbol)} purchases` : undefined} />
         {payrollVisible ? (
           <StatCard label="Payroll cost" value={fmtMoney(kpis.payroll, symbol)} sub="approved payslips + employer PF/ESI" />
         ) : (
           <StatCard label="Invoiced (with tax)" value={fmtMoney(kpis.invoiced, symbol)} />
         )}
-        <StatCard label="Profit" value={fmtMoney(kpis.profit, symbol)} tone={kpis.profit >= 0 ? "good" : "bad"} sub={payrollVisible ? "revenue − expenses − payroll" : "revenue − expenses"} />
+        <StatCard label="Profit" value={fmtMoney(kpis.profit, symbol)} tone={kpis.profit >= 0 ? "good" : "bad"} sub={profitSub} />
         <StatCard label="Outstanding" value={fmtMoney(kpis.outstanding, symbol)} sub={`${kpis.outstandingCount} unpaid invoice${kpis.outstandingCount === 1 ? "" : "s"}`} onClick={() => navigate("/accounts/invoices?status=unpaid")} />
         <StatCard label="Overdue" value={fmtMoney(kpis.overdue, symbol)} tone={kpis.overdueCount ? "bad" : "default"} sub={`${kpis.overdueCount} late`} onClick={() => navigate("/accounts/invoices?status=overdue")} />
         <StatCard label="Proposals open" value={fmtMoney(proposals.value, symbol)} sub={`${proposals.open} waiting for an answer`} onClick={() => navigate("/accounts/proposals")} />
       </div>
 
       <Card title="Last 12 months" subtitle="Revenue against what it cost to earn it" className="mb-4">
-        <div className="h-72 -ml-2" role="img" aria-label="Monthly revenue, expenses, payroll and profit for the last 12 months">
+        <div className="h-72 -ml-2" role="img" aria-label="Monthly revenue, costs, payroll and profit for the last 12 months">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2} barCategoryGap="22%">
+            <ComposedChart data={costTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2} barCategoryGap="22%">
               <CartesianGrid stroke={C.grid} vertical={false} />
               <XAxis dataKey="month" tickFormatter={(m) => monthLabel(m)} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={(v) => fmtCompact(v, symbol)} tick={{ fill: C.axis, fontSize: 11 }} axisLine={false} tickLine={false} width={64} />
               <Tooltip content={<TrendTooltip symbol={symbol} />} cursor={{ fill: "#f1f5f9" }} />
               <Legend iconType="square" iconSize={9} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
               <Bar dataKey="revenue" name="Revenue" fill={C.revenue} radius={[4, 4, 0, 0]} maxBarSize={18} />
-              <Bar dataKey="expenses" name="Expenses" fill={C.expenses} radius={[4, 4, 0, 0]} maxBarSize={18} />
+              <Bar dataKey="costs" name="Expenses, purchases & depreciation" fill={C.expenses} radius={[4, 4, 0, 0]} maxBarSize={18} />
               {payrollVisible && <Bar dataKey="payroll" name="Payroll" fill={C.payroll} radius={[4, 4, 0, 0]} maxBarSize={18} />}
               <Line type="monotone" dataKey="profit" name="Profit" stroke={C.profit} strokeWidth={2} dot={{ r: 3, strokeWidth: 2, stroke: "#fff", fill: C.profit }} activeDot={{ r: 5 }} />
             </ComposedChart>
@@ -128,7 +135,7 @@ const Overview = () => {
             <p className="text-sm text-slate-400 py-6 text-center">No invoices in this period.</p>
           )}
         </Card>
-        <Card title="Where the money goes" subtitle="Expenses by category">
+        <Card title="Where the money goes" subtitle="Expenses and purchases by category">
           {expensesByCategory.length ? (
             <BarList rows={expensesByCategory} labelKey="category" valueKey="total" symbol={symbol} color={C.expenses} />
           ) : (

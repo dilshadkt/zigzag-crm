@@ -75,6 +75,9 @@ export const accountsApi = {
   updateAccountClient: (id, data) => put(`/account-clients/${id}`, data),
   deleteAccountClient: (id) => del(`/account-clients/${id}`),
 
+  assets: (params) => get("/assets", params),
+  assetSchedule: (id) => get(`/assets/${id}/schedule`),
+
   vendors: (params) => get("/vendors", params),
   createVendor: (data) => post("/vendors", data),
   updateVendor: (id, data) => put(`/vendors/${id}`, data),
@@ -111,6 +114,8 @@ export const accountsApi = {
   payrollReport: (params) => get("/reports/payroll", params),
   expenseReport: (params) => get("/reports/expenses", params),
   profitability: (params) => get("/reports/profitability", params),
+  // book: "cash" or "bank"
+  cashBook: (book, params) => get(`/reports/${book}`, params),
 };
 
 // Public share links use no auth header, so they bypass the signed-in client

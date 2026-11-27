@@ -6,7 +6,7 @@ import { useAccountsContext } from "../context";
 import { useCreatePayment, useDeletePayment, useInvoices, useOpenExpenses, usePayments } from "../hooks/useAccounts";
 import { splitParty, usePartyOptions } from "../hooks/useParties";
 import SearchableSelect from "../components/SearchableSelect";
-import { PAYMENT_METHODS, downloadCsv, errorMessage, fmtDate, fmtMoney, methodLabel, rangePresets, toInputDate } from "../utils/format";
+import { PAYMENT_METHODS, downloadCsv, errorMessage, fmtDate, fmtMoney, kindNoun, methodLabel, rangePresets, toInputDate } from "../utils/format";
 import { ConfirmModal, DateRangeFilter, Drawer, EmptyState, ErrorState, Field, PageHeader, Pagination, Spinner, StatCard, Table, btnGhost, btnPrimary, inputCls, selectCls } from "../components/ui";
 
 const blank = (direction = "in") => ({
@@ -29,6 +29,8 @@ const DIRECTIONS = [
 
 // Older API responses carry only `project`, so fall back to it
 const partyOf = (row) => row.party || { name: row.project?.name, type: "client" };
+
+const statusLabel = (row) => (row.direction === "in" ? "Received" : "Paid out");
 
 const DRAWER_HINTS = {
   in: {
@@ -81,7 +83,7 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
   const expenseOptions = openExpenses.map((x) => ({
     value: x._id,
     label: x.description,
-    hint: [`${fmtMoney(x.balance, symbol)} due`, x.billNumber, fmtDate(x.date)].filter(Boolean).join(" · "),
+    hint: [x.kind && x.kind !== "expense" ? kindNoun(x) : null, `${fmtMoney(x.balance, symbol)} due`, x.billNumber, fmtDate(x.date)].filter(Boolean).join(" · "),
   }));
   const chosenExpense = openExpenses.find((x) => x._id === form.expense);
 
@@ -167,7 +169,7 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
         )}
 
         {canApplyExpense && (
-          <Field label="Apply to expense" hint={form.expense ? undefined : "Leave empty to record the money only. Costs reach reports through Expenses."}>
+          <Field label="Apply to expense or purchase" hint={form.expense ? undefined : "Leave empty to record the money only. Costs reach reports through Expenses and Purchases."}>
             <SearchableSelect
               value={form.expense}
               onChange={(expense) => {
@@ -175,10 +177,10 @@ const PaymentDrawer = ({ isOpen, onClose, direction }) => {
                 set({ expense, amount: x && !form.amount ? String(x.balance) : form.amount });
               }}
               options={expenseOptions}
-              placeholder="Not for an expense"
-              searchPlaceholder="Search expenses…"
-              clearLabel="Not for an expense"
-              emptyText="No unpaid expenses for this vendor"
+              placeholder="Not for a bill"
+              searchPlaceholder="Search bills…"
+              clearLabel="Not for a bill"
+              emptyText="No unpaid bills for this vendor"
             />
           </Field>
         )}
@@ -226,8 +228,8 @@ const Payments = () => {
 
   const exportCsv = () => {
     downloadCsv(`payments-${range.from}-to-${range.to}.csv`, [
-      ["Date", "Party", "Party type", "Type", "Amount", "Method", "Reference", "Invoice", "Expense", "Receipt", "Notes"],
-      ...(data?.payments || []).map((p) => [toInputDate(p.date), partyOf(p).name, partyOf(p).type === "vendor" ? "Vendor" : "Client", p.direction === "in" ? "Pay in" : "Pay out", p.amount, methodLabel(p.method), p.reference, p.invoice?.number || "", p.expense?.description || "", p.receiptNumber, p.notes]),
+      ["Date", "Party", "Party type", "Status", "Amount", "Method", "Reference", "Invoice", "Expense", "Receipt", "Notes"],
+      ...(data?.payments || []).map((p) => [toInputDate(p.date), partyOf(p).name, partyOf(p).type === "vendor" ? "Vendor" : "Client", statusLabel(p), p.amount, methodLabel(p.method), p.reference, p.invoice?.number || "", p.expense?.description || "", p.receiptNumber, p.notes]),
     ]);
   };
 
@@ -309,21 +311,20 @@ const Payments = () => {
                     <p className="text-[11px] text-slate-400">{partyOf(r).type === "vendor" ? "Vendor" : "Client"}</p>
                   </div>
                 ) },
-                { key: "type", title: "Type", render: (r) => (
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${r.direction === "in" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                { key: "status", title: "Status", render: (r) => (
+                  <span className={`inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold px-2 py-0.5 rounded-full ${r.direction === "in" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
                     {r.direction === "in" ? <FiArrowDownLeft /> : <FiArrowUpRight />}
-                    {r.direction === "in" ? "Pay in" : "Pay out"}
+                    {statusLabel(r)}
                   </span>
+                ) },
+                { key: "method", title: "Method", render: (r) => (
+                  <span className="inline-block whitespace-nowrap text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{methodLabel(r.method)}</span>
                 ) },
                 { key: "details", title: "Details", render: (r) => (
                   <div className="text-xs text-slate-500">
-                    <p>
-                      {methodLabel(r.method)}
-                      {r.reference ? ` · ${r.reference}` : ""}
-                      {r.receiptNumber ? ` · ${r.receiptNumber}` : ""}
-                    </p>
+                    <p>{[r.reference, r.receiptNumber].filter(Boolean).join(" · ")}</p>
                     <p className="text-slate-400">
-                      {r.invoice ? <>Invoice <Link className="text-[#3F8CFF] hover:underline" to={`/accounts/invoices/${r.invoice._id}`}>{r.invoice.number}</Link></> : r.expense ? `Expense: ${r.expense.description}${r.expense.billNumber ? ` (${r.expense.billNumber})` : ""}` : partyOf(r).type === "vendor" ? (r.direction === "in" ? "Vendor refund" : "Vendor payment") : r.direction === "in" ? "Advance" : "Refund"}
+                      {r.invoice ? <>Invoice <Link className="text-[#3F8CFF] hover:underline" to={`/accounts/invoices/${r.invoice._id}`}>{r.invoice.number}</Link></> : r.expense ? `${kindNoun(r.expense)}: ${r.expense.description}${r.expense.billNumber ? ` (${r.expense.billNumber})` : ""}` : partyOf(r).type === "vendor" ? (r.direction === "in" ? "Vendor refund" : "Vendor payment") : r.direction === "in" ? "Advance" : "Refund"}
                       {r.notes ? ` · ${r.notes}` : ""}
                     </p>
                   </div>
@@ -350,7 +351,7 @@ const Payments = () => {
         isOpen={!!toDelete}
         onClose={() => setToDelete(null)}
         title="Delete this payment?"
-        message={toDelete ? `${toDelete.direction === "in" ? "Pay in" : "Pay out"} of ${fmtMoney(toDelete.amount, symbol)} for ${partyOf(toDelete).name}${toDelete.invoice ? ` will be removed, and taken off invoice ${toDelete.invoice.number}` : toDelete.expense ? ` will be removed from the expense "${toDelete.expense.description}". If this payment had closed it, it becomes unpaid again` : " will be removed"}.` : ""}
+        message={toDelete ? `${toDelete.direction === "in" ? "Pay in" : "Pay out"} of ${fmtMoney(toDelete.amount, symbol)} for ${partyOf(toDelete).name}${toDelete.invoice ? ` will be removed, and taken off invoice ${toDelete.invoice.number}` : toDelete.expense ? ` will be removed from the ${kindNoun(toDelete.expense).toLowerCase()} "${toDelete.expense.description}". If this payment had closed it, it becomes unpaid again` : " will be removed"}.` : ""}
         confirmLabel="Delete"
         danger
         busy={remove.isPending}

@@ -14,6 +14,7 @@ import Parties from "./pages/Parties";
 import ClientDetail from "./pages/ClientDetail";
 import Expenses from "./pages/Expenses";
 import Payments from "./pages/Payments";
+import Assets from "./pages/Assets";
 import Payroll from "./pages/Payroll";
 import PayrollRun from "./pages/PayrollRun";
 import Reports from "./pages/Reports";
@@ -51,6 +52,8 @@ const Accounts = () => {
     { to: "/accounts/parties", label: "Parties", also: "/accounts/clients/", show: p.view },
     { to: "/accounts/payments", label: "Payments", show: p.view },
     { to: "/accounts/expenses", label: "Expenses", show: p.view },
+    { to: "/accounts/purchases", label: "Purchases", show: p.view },
+    { to: "/accounts/assets", label: "Assets", show: p.view },
     { to: "/accounts/payroll", label: "Payroll", show: p.managePayroll },
     { to: "/accounts/reports", label: "Reports", show: p.viewReports },
     { to: "/accounts/settings", label: "Settings", show: p.manageSettings },
@@ -101,7 +104,9 @@ const Accounts = () => {
                 <Route path="vendors" element={<Navigate to="/accounts/parties?type=vendor" replace />} />
                 <Route path="clients/:projectId" element={<ClientDetail />} />
                 <Route path="payments" element={<Payments />} />
-                <Route path="expenses" element={<Expenses />} />
+                <Route path="expenses" element={<Expenses key="expenses" />} />
+                <Route path="purchases" element={<Expenses key="purchases" view="purchases" />} />
+                <Route path="assets" element={<Assets />} />
               </>
             )}
             {p.managePayroll && (

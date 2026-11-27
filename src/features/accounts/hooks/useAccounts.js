@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { accountsApi } from "../api/accountsApi";
-import { errorMessage } from "../utils/format";
+import { errorMessage, kindNoun } from "../utils/format";
 
 const KEY = "accounts";
 
@@ -105,12 +105,12 @@ export const useConvertProposal = () =>
 export const useExpenses = (params) => useRead("expenses", accountsApi.expenses, params, { placeholderData: (prev) => prev });
 export const useExpenseDescriptions = (enabled = true) =>
   useRead("expense-descriptions", accountsApi.expenseDescriptions, null, { enabled, staleTime: 60 * 1000 });
-export const useCreateExpense = () => useWrite(accountsApi.createExpense, { success: "Expense added" });
+export const useCreateExpense = () => useWrite(accountsApi.createExpense, { success: (d) => `${kindNoun(d.expense)} added` });
 export const useUpdateExpense = () =>
-  useWrite(({ id, data }) => accountsApi.updateExpense(id, data), { success: "Expense updated" });
+  useWrite(({ id, data }) => accountsApi.updateExpense(id, data), { success: (d) => `${kindNoun(d.expense)} updated` });
 export const useSetExpenseStatus = () =>
-  useWrite(({ id, data }) => accountsApi.setExpenseStatus(id, data), { success: "Expense updated" });
-export const useDeleteExpense = () => useWrite(accountsApi.deleteExpense, { success: "Expense deleted" });
+  useWrite(({ id, data }) => accountsApi.setExpenseStatus(id, data), { success: (d) => `${kindNoun(d.expense)} updated` });
+export const useDeleteExpense = () => useWrite(accountsApi.deleteExpense, { success: "Deleted" });
 export const useAddExpenseCategory = () => useWrite(accountsApi.addExpenseCategory, { success: "Category added" });
 export const useRemoveExpenseCategory = () => useWrite(accountsApi.removeExpenseCategory, { success: "Category removed" });
 
@@ -120,6 +120,10 @@ export const useOpenExpenses = (vendorId, enabled = true) =>
   useRead("open-expenses", accountsApi.openExpenses, vendorId, { enabled: !!vendorId && enabled });
 export const useCreatePayment = () => useWrite(accountsApi.createPayment, { success: "Payment recorded" });
 export const useDeletePayment = () => useWrite(accountsApi.deletePayment, { success: "Payment deleted" });
+
+// Assets the company bought, with their depreciation
+export const useAssets = (params) => useRead("assets", accountsApi.assets, params, { placeholderData: (prev) => prev });
+export const useAssetSchedule = (id) => useRead("asset-schedule", accountsApi.assetSchedule, id, { enabled: !!id });
 
 // Vendors
 export const useVendors = (params, enabled = true) =>
@@ -168,3 +172,6 @@ export const useGst = (params) => useRead("gst", accountsApi.gst, params, { plac
 export const usePayrollReport = (params) => useRead("payroll-report", accountsApi.payrollReport, params, { placeholderData: (prev) => prev });
 export const useExpenseReport = (params) => useRead("expense-report", accountsApi.expenseReport, params, { placeholderData: (prev) => prev });
 export const useProfitability = (params) => useRead("profitability", accountsApi.profitability, params, { placeholderData: (prev) => prev });
+// Course fees are recorded outside Accounts, so these reload each time they are opened
+export const useCashBook = (book, params) =>
+  useRead(`${book}-report`, (p) => accountsApi.cashBook(book, p), params, { placeholderData: (prev) => prev, refetchOnMount: "always" });

@@ -117,6 +117,28 @@ export const EXPENSE_STATUS = {
   rejected: { label: "Rejected", cls: "bg-red-50 text-red-600" },
 };
 
+// What a spending record is. Older records have no kind: they are expenses.
+export const KIND_NOUN = { expense: "Expense", purchase: "Purchase", asset: "Asset" };
+export const kindNoun = (record) => KIND_NOUN[record?.kind] || KIND_NOUN.expense;
+
+export const ASSET_CATEGORIES = ["Computers & Laptops", "Cameras & Studio Equipment", "Furniture & Fittings", "Office Equipment", "Vehicles", "Software", "Other Assets"];
+
+export const ASSET_STATE = {
+  active: { label: "In use", cls: "bg-emerald-50 text-emerald-700" },
+  not_started: { label: "Not yet in use", cls: "bg-blue-50 text-blue-600" },
+  fully_depreciated: { label: "Fully depreciated", cls: "bg-slate-100 text-slate-600" },
+  disposed: { label: "Disposed", cls: "bg-slate-100 text-slate-400" },
+  pending: { label: "Awaiting approval", cls: "bg-amber-50 text-amber-700" },
+};
+
+/** "Straight line · 3 yrs" or "Written down · 40% a year" */
+export const depreciationLabel = (asset) => {
+  if (!asset) return "—";
+  if (asset.method === "written_down") return `Written down · ${asset.ratePercent}% a year`;
+  const months = asset.usefulLifeMonths || 0;
+  return `Straight line · ${months % 12 ? `${months} months` : `${months / 12} yr${months === 12 ? "" : "s"}`}`;
+};
+
 export const PAYSLIP_STATUS = {
   draft: { label: "Draft", cls: "bg-slate-100 text-slate-600" },
   hold: { label: "On hold", cls: "bg-amber-50 text-amber-700" },

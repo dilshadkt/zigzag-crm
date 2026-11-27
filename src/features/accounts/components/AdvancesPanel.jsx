@@ -4,17 +4,26 @@ import { FiDollarSign, FiPlus, FiTrash2 } from "react-icons/fi";
 import Modal from "../../../components/shared/modal";
 import { useAccountsContext } from "../context";
 import { useAdvances, useCreateAdvance, useDeleteAdvance, useUpdateAdvance } from "../hooks/useAccounts";
-import { currentMonthKey, errorMessage, fmtDate, fmtMoney, monthLabel, toInputDate } from "../utils/format";
+import { PAYMENT_METHODS, currentMonthKey, errorMessage, fmtDate, fmtMoney, monthLabel, toInputDate } from "../utils/format";
 import { EmptyState, ErrorState, Field, Spinner, Table, btnGhost, btnPrimary, btnSmall, inputCls, selectCls } from "./ui";
 
-const blank = () => ({ employee: "", amount: "", date: toInputDate(new Date()), recoverMonth: currentMonthKey(), note: "" });
+const blank = () => ({ employee: "", amount: "", date: toInputDate(new Date()), recoverMonth: currentMonthKey(), method: "bank_transfer", note: "" });
+
+const ADVANCE_METHODS = PAYMENT_METHODS.filter((m) => ["bank_transfer", "upi", "cash", "cheque"].includes(m.value));
+// "Not recorded" is only offered while nothing has been chosen
+const methodOptions = (current) => (
+  <>
+    {!current && <option value="">Not recorded</option>}
+    {ADVANCE_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+  </>
+);
 
 const AdvanceModal = ({ advance, employees, onClose }) => {
   const create = useCreateAdvance();
   const update = useUpdateAdvance();
   const [form, setForm] = useState(() =>
     advance?._id
-      ? { employee: advance.employee?._id || advance.employee, amount: advance.amount, date: toInputDate(advance.date), recoverMonth: advance.recoverMonth, note: advance.note || "" }
+      ? { employee: advance.employee?._id || advance.employee, amount: advance.amount, date: toInputDate(advance.date), recoverMonth: advance.recoverMonth, method: advance.method || "", note: advance.note || "" }
       : blank()
   );
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -46,6 +55,11 @@ const AdvanceModal = ({ advance, employees, onClose }) => {
           <Field label="Amount" required><input type="number" min="0" step="any" className={inputCls} value={form.amount} onChange={(e) => set({ amount: e.target.value })} /></Field>
           <Field label="Given on"><input type="date" className={inputCls} value={form.date} onChange={(e) => set({ date: e.target.value })} /></Field>
         </div>
+        <Field label="Paid by" hint="Puts the advance in the cash report or the bank report.">
+          <select className={selectCls} value={form.method} onChange={(e) => set({ method: e.target.value })}>
+            {methodOptions(advance?._id ? advance.method : "bank_transfer")}
+          </select>
+        </Field>
         <Field label="Recover from the salary of" hint="Deducted from this month's payslip. An advance not recovered by then is picked up by the next payroll.">
           <input type="month" className={inputCls} value={form.recoverMonth} onChange={(e) => set({ recoverMonth: e.target.value })} />
         </Field>
@@ -65,6 +79,7 @@ const AdvancesPanel = ({ employees }) => {
   const [editing, setEditing] = useState(null); // null: closed, {}: new
   const q = useAdvances(status ? { status } : undefined);
   const remove = useDeleteAdvance();
+  const update = useUpdateAdvance();
 
   const onDelete = async (advance) => {
     if (!window.confirm(`Delete the ${fmtMoney(advance.amount, symbol)} advance?`)) return;
@@ -103,6 +118,18 @@ const AdvancesPanel = ({ employees }) => {
             { key: "emp", title: "Employee", render: (a) => <span className="font-semibold text-slate-800">{a.employee?.firstName} {a.employee?.lastName}</span> },
             { key: "date", title: "Given on", render: (a) => <span className="text-slate-500">{fmtDate(a.date)}</span> },
             { key: "amt", title: "Amount", align: "right", render: (a) => <span className="font-semibold tabular-nums">{fmtMoney(a.amount, symbol)}</span> },
+            // Editable even after recovery, so older advances can be filled in
+            { key: "method", title: "Paid by", render: (a) => (
+              <select
+                className={`${selectCls} !w-auto !py-1 !text-xs`}
+                value={a.method || ""}
+                onChange={(e) => update.mutate({ id: a._id, data: { method: e.target.value } })}
+                disabled={update.isPending}
+                aria-label="Paid by"
+              >
+                {methodOptions(a.method)}
+              </select>
+            ) },
             { key: "month", title: "Recover in", render: (a) => monthLabel(a.recoverMonth, true) },
             { key: "note", title: "Note", render: (a) => <span className="text-xs text-slate-500">{a.note || "—"}</span> },
             { key: "status", title: "Status", render: (a) => <span className={`text-xs font-semibold ${a.status === "recovered" ? "text-emerald-600" : "text-amber-600"}`}>{a.status === "recovered" ? "Recovered" : "Waiting"}</span> },

@@ -19,10 +19,38 @@ import {
 import VendorDrawer from "../components/VendorDrawer";
 import SearchableSelect from "../components/SearchableSelect";
 import SuggestInput from "../components/SuggestInput";
-import { EXPENSE_STATUS, PAYMENT_METHODS, downloadCsv, errorMessage, fmtDate, fmtMoney, methodLabel, rangePresets, toInputDate } from "../utils/format";
+import { ASSET_CATEGORIES, EXPENSE_STATUS, PAYMENT_METHODS, depreciationLabel, downloadCsv, errorMessage, fmtDate, fmtMoney, kindNoun, methodLabel, rangePresets, toInputDate } from "../utils/format";
 import { ConfirmModal, DateRangeFilter, Drawer, EmptyState, ErrorState, Field, PageHeader, Pagination, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, btnSmall, inputCls, selectCls } from "../components/ui";
 
+const blankAsset = () => ({
+  method: "straight_line",
+  years: "",
+  ratePercent: "",
+  salvageValue: "",
+  // Empty means the purchase date
+  inUseFrom: "",
+  disposedOn: "",
+  alreadyOwned: false,
+});
+
+// The saved asset details as form values
+const assetFormFor = (expense) => {
+  const a = expense.asset;
+  if (!a) return blankAsset();
+  const boughtOn = toInputDate(expense.date);
+  return {
+    method: a.method,
+    years: a.usefulLifeMonths ? String(Math.round((a.usefulLifeMonths / 12) * 100) / 100) : "",
+    ratePercent: a.ratePercent ?? "",
+    salvageValue: a.salvageValue || "",
+    inUseFrom: a.inUseFrom && toInputDate(a.inUseFrom) !== boughtOn ? toInputDate(a.inUseFrom) : "",
+    disposedOn: a.disposedOn ? toInputDate(a.disposedOn) : "",
+    alreadyOwned: Boolean(a.alreadyOwned),
+  };
+};
+
 const blank = () => ({
+  asset: blankAsset(),
   date: toInputDate(new Date()),
   category: "",
   description: "",
@@ -67,7 +95,8 @@ const paymentsFor = (expense) =>
     ? expense.payments.map((p) => ({ method: p.method, amount: String(p.amount), reference: p.reference || "" }))
     : [{ method: expense.paymentMethod || "bank_transfer", amount: "", reference: expense.paymentReference || "" }];
 
-const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
+/** Add or edit an expense, a purchase or an asset. `kind` applies to new records. */
+export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense" }) => {
   const { settings, symbol } = useAccountsContext();
   const create = useCreateExpense();
   const update = useUpdateExpense();
@@ -82,6 +111,9 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   const removeCategoryMutation = useRemoveExpenseCategory();
   const [form, setForm] = useState(blank());
   const [uploading, setUploading] = useState(false);
+  const recordKind = expense ? expense.kind || "expense" : kind;
+  const isAsset = recordKind === "asset";
+  const noun = recordKind;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -97,15 +129,19 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
             amount: expense.amount,
             taxAmount: expense.taxAmount || "",
             attachments: expense.attachments || [],
+            asset: assetFormFor(expense),
             payments: paymentsFor(expense),
             // Older expenses only have the vendor as text, with no vendor record
             vendorRef: expense.vendorRef?._id || expense.vendorRef || (expense.vendor ? LEGACY_VENDOR : ""),
           }
-        : { ...blank(), category: settings?.expenseCategories?.[0] || "" }
+        : { ...blank(), category: kind === "asset" ? "" : settings?.expenseCategories?.[0] || "" }
     );
-  }, [isOpen, expense, settings]);
+  }, [isOpen, expense, settings, kind]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+  const setAsset = (patch) => setForm((f) => ({ ...f, asset: { ...f.asset, ...patch } }));
+  // Something already owned had no purchase to pay for here
+  const owned = isAsset && form.asset.alreadyOwned;
 
   const vendorOptions = [
     ...(form.vendorRef === LEGACY_VENDOR
@@ -168,7 +204,7 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
     setToRemove(null);
   };
 
-  const total = round2((Number(form.amount) || 0) + (Number(form.taxAmount) || 0));
+  const total = round2((Number(form.amount) || 0) + (owned ? 0 : Number(form.taxAmount) || 0));
 
   // Charging to clients: one client owns the whole amount, several split it
   const chosenRows = form.clientRows.filter((r) => r.project);
@@ -235,10 +271,18 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.category || !form.description.trim() || !(Number(form.amount) >= 0) || form.amount === "") {
-      toast.error("Category, description and amount are required");
+      toast.error(isAsset ? "Category, asset name and cost are required" : "Category, description and amount are required");
       return;
     }
-    if (split && (Math.abs(balance) > 0.01 || form.payments.some((p) => !(Number(p.amount) > 0)))) {
+    if (isAsset && form.asset.method === "straight_line" && !(Number(form.asset.years) > 0)) {
+      toast.error("Enter the useful life in years");
+      return;
+    }
+    if (isAsset && form.asset.method === "written_down" && !(Number(form.asset.ratePercent) > 0)) {
+      toast.error("Enter the yearly depreciation rate");
+      return;
+    }
+    if (!owned && split && (Math.abs(balance) > 0.01 || form.payments.some((p) => !(Number(p.amount) > 0)))) {
       toast.error(
         balance > 0
           ? `Payments are ${fmtMoney(balance, symbol)} short of the total`
@@ -277,6 +321,23 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
     } else delete payload.vendor;
     delete payload.paymentMethod;
     delete payload.paymentReference;
+    delete payload.position;
+    if (expense) delete payload.kind;
+    else payload.kind = recordKind;
+    if (isAsset) {
+      const a = form.asset;
+      payload.asset = {
+        method: a.method,
+        usefulLifeMonths: Math.round(Number(a.years) * 12) || null,
+        ratePercent: Number(a.ratePercent) || null,
+        salvageValue: Number(a.salvageValue) || 0,
+        inUseFrom: a.inUseFrom,
+        disposedOn: a.disposedOn,
+        alreadyOwned: a.alreadyOwned,
+      };
+      Object.assign(payload, { project: null, allocations: [], billable: false });
+      if (owned) Object.assign(payload, { taxAmount: 0, payments: [] });
+    } else delete payload.asset;
     try {
       if (expense) await update.mutateAsync({ id: expense._id, data: payload });
       else await create.mutateAsync(payload);
@@ -292,43 +353,63 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title={expense ? "Edit expense" : "Add expense"}
+      title={expense ? `Edit ${noun}` : isAsset ? "Add asset" : `Add ${noun}`}
+      subtitle={isAsset ? "Its cost reaches profit month by month, as depreciation." : undefined}
       footer={
         <>
           <button className={btnGhost} onClick={onClose}>Cancel</button>
-          <button className={btnPrimary} onClick={submit} disabled={busy || uploading}>{busy ? "Saving…" : "Save expense"}</button>
+          <button className={btnPrimary} onClick={submit} disabled={busy || uploading}>{busy ? "Saving…" : `Save ${noun}`}</button>
         </>
       }
     >
       <form onSubmit={submit} className="space-y-3">
+        {isAsset && !expense && (
+          <label className="flex items-start gap-2 text-sm text-slate-700 p-3 rounded-xl bg-slate-50">
+            <input type="checkbox" className="mt-1" checked={form.asset.alreadyOwned} onChange={(e) => setAsset({ alreadyOwned: e.target.checked })} />
+            <span>We already own this<span className="block text-[11px] text-slate-400">No payment is recorded. Use the original purchase date and cost.</span></span>
+          </label>
+        )}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Date"><input type="date" className={inputCls} value={form.date} onChange={(e) => set({ date: e.target.value })} /></Field>
+          <Field label={isAsset ? "Purchase date" : "Date"}><input type="date" className={inputCls} value={form.date} onChange={(e) => set({ date: e.target.value })} /></Field>
           <Field label="Category" required>
-            <SearchableSelect
-              value={form.category}
-              onChange={(category) => set({ category })}
-              options={categoryOptions}
-              placeholder="Select category"
-              searchPlaceholder="Search or type a new category…"
-              createLabel="Add category"
-              createRequiresQuery
-              onCreate={addCategory}
-              onRemove={(o) => setToRemove({ type: "category", id: o.value, name: o.label })}
-              removeLabel="Remove category"
-            />
+            {isAsset ? (
+              <>
+                <input className={inputCls} list="asset-categories" value={form.category} onChange={(e) => set({ category: e.target.value })} placeholder="Choose or type" />
+                <datalist id="asset-categories">{ASSET_CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist>
+              </>
+            ) : (
+              <SearchableSelect
+                value={form.category}
+                onChange={(category) => set({ category })}
+                options={categoryOptions}
+                placeholder="Select category"
+                searchPlaceholder="Search or type a new category…"
+                createLabel="Add category"
+                createRequiresQuery
+                onCreate={addCategory}
+                onRemove={(o) => setToRemove({ type: "category", id: o.value, name: o.label })}
+                removeLabel="Remove category"
+              />
+            )}
           </Field>
         </div>
-        <Field label="Description" required>
-          <SuggestInput
-            value={form.description}
-            onChange={(description) => set({ description })}
-            onPick={pickDescription}
-            suggestions={descriptionSuggestions}
-            placeholder="What was it for?"
-          />
-        </Field>
+        {isAsset ? (
+          <Field label="Asset name" required>
+            <input className={inputCls} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="e.g. MacBook Pro 14, design desk" />
+          </Field>
+        ) : (
+          <Field label="Description" required>
+            <SuggestInput
+              value={form.description}
+              onChange={(description) => set({ description })}
+              onPick={pickDescription}
+              suggestions={descriptionSuggestions}
+              placeholder={recordKind === "purchase" ? "What did you buy?" : "What was it for?"}
+            />
+          </Field>
+        )}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Vendor / paid to">
+          {!owned && <Field label="Vendor / paid to">
             <SearchableSelect
               value={form.vendorRef}
               onChange={(vendorRef) => set({ vendorRef })}
@@ -345,14 +426,39 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
               onRemove={(o) => setToRemove({ type: "vendor", id: o.value, name: o.label })}
               removeLabel="Remove vendor"
             />
-          </Field>
+          </Field>}
           <Field label="Bill / invoice no."><input className={inputCls} value={form.billNumber} onChange={(e) => set({ billNumber: e.target.value })} /></Field>
-          <Field label="Amount (before tax)" required><input type="number" min="0" step="any" className={inputCls} value={form.amount} onChange={(e) => set({ amount: e.target.value })} /></Field>
-          <Field label="GST paid" hint="Input tax credit"><input type="number" min="0" step="any" className={inputCls} value={form.taxAmount} onChange={(e) => set({ taxAmount: e.target.value })} /></Field>
+          <Field label={owned ? "Cost" : "Amount (before tax)"} required hint={isAsset && !owned ? "This is what gets depreciated. Include GST you can't claim." : undefined}><input type="number" min="0" step="any" className={inputCls} value={form.amount} onChange={(e) => set({ amount: e.target.value })} /></Field>
+          {!owned && <Field label="GST paid" hint="Input tax credit"><input type="number" min="0" step="any" className={inputCls} value={form.taxAmount} onChange={(e) => set({ taxAmount: e.target.value })} /></Field>}
         </div>
-        <p className="text-xs text-slate-500">Total paid: <b>{fmtMoney(total, symbol)}</b></p>
+        {!owned && <p className="text-xs text-slate-500">Total paid: <b>{fmtMoney(total, symbol)}</b></p>}
 
-        <div className="p-3 rounded-xl bg-slate-50 space-y-3">
+        {isAsset && (
+          <div className="p-3 rounded-xl border border-slate-100 space-y-3">
+            <span className="block text-sm font-medium text-slate-700">Depreciation</span>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Method">
+                <select className={selectCls} value={form.asset.method} onChange={(e) => setAsset({ method: e.target.value })}>
+                  <option value="straight_line">Straight line</option>
+                  <option value="written_down">Written down value</option>
+                </select>
+              </Field>
+              {form.asset.method === "straight_line" ? (
+                <Field label="Useful life (years)" required><input type="number" min="0" step="any" className={inputCls} value={form.asset.years} onChange={(e) => setAsset({ years: e.target.value })} /></Field>
+              ) : (
+                <Field label="Rate (% a year)" required><input type="number" min="0" max="100" step="any" className={inputCls} value={form.asset.ratePercent} onChange={(e) => setAsset({ ratePercent: e.target.value })} /></Field>
+              )}
+              <Field label="Salvage value" hint="What it will still be worth at the end"><input type="number" min="0" step="any" className={inputCls} value={form.asset.salvageValue} onChange={(e) => setAsset({ salvageValue: e.target.value })} placeholder="0" /></Field>
+              <Field label="In use from" hint="Empty: the purchase date"><input type="date" className={inputCls} value={form.asset.inUseFrom} onChange={(e) => setAsset({ inUseFrom: e.target.value })} /></Field>
+              {expense && (
+                <Field label="Disposed on" hint="Sold or scrapped: depreciation stops"><input type="date" className={inputCls} value={form.asset.disposedOn} onChange={(e) => setAsset({ disposedOn: e.target.value })} /></Field>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-400">A full month is charged for the month it comes into use. Ask your accountant which method and rate to use.</p>
+          </div>
+        )}
+
+        {!isAsset && <div className="p-3 rounded-xl bg-slate-50 space-y-3">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Charge to client</span>
@@ -429,9 +535,9 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
               Bill this to the client (shows up when creating their invoice)
             </label>
           )}
-        </div>
+        </div>}
 
-        <div className="space-y-2">
+        {!owned && <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-700">Payments</span>
             {split && (
@@ -471,9 +577,9 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
             </div>
           ))}
           <button type="button" className={btnSmall} onClick={addPayment}><FiPlus /> {split ? "Add another payment" : "Split into multiple payments"}</button>
-        </div>
+        </div>}
 
-        {!expense && (
+        {!expense && !owned && (
           <Field label="Status">
             <select className={selectCls} value={form.status} onChange={(e) => set({ status: e.target.value })}>
               <option value="approved">Approved</option>
@@ -526,16 +632,44 @@ const ExpenseDrawer = ({ isOpen, onClose, expense }) => {
   );
 };
 
-const Expenses = () => {
+// The Expenses and Purchases tabs are the same list over different kinds
+const VIEWS = {
+  expenses: {
+    title: "Expenses",
+    subtitle: "Everything the company spends day to day, by category and by client.",
+    kind: "expense",
+    add: [{ kind: "expense", label: "Add expense" }],
+    column: "Expense",
+    one: "expense",
+    search: "Search description or vendor",
+    emptyTitle: "No expenses in this period",
+    emptyText: "Add an expense to start tracking spend.",
+  },
+  purchases: {
+    title: "Purchases",
+    subtitle: "Goods you buy, and assets the company keeps. Assets are depreciated instead of counted as a cost at once.",
+    kind: "purchases",
+    add: [{ kind: "asset", label: "Purchase asset" }, { kind: "purchase", label: "Add purchase" }],
+    column: "Purchase",
+    one: "purchase",
+    search: "Search item or vendor",
+    emptyTitle: "No purchases in this period",
+    emptyText: "Record a purchase, or an asset the company bought.",
+  },
+};
+
+const Expenses = ({ view = "expenses" }) => {
+  const config = VIEWS[view];
   const { permissions, settings, symbol } = useAccountsContext();
   const presets = useMemo(() => rangePresets(settings?.financialYearStartMonth || 4), [settings]);
   const [range, setRange] = useState({ from: presets[0].from, to: presets[0].to });
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
+  const [kind, setKind] = useState(config.kind);
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   const [page, setPage] = useState(1);
-  const [drawer, setDrawer] = useState({ open: false, expense: null });
+  const [drawer, setDrawer] = useState({ open: false, expense: null, kind: "expense" });
   const [toDelete, setToDelete] = useState(null);
   const [toReject, setToReject] = useState(null);
 
@@ -543,30 +677,35 @@ const Expenses = () => {
     const t = setTimeout(() => setDebounced(search), 300);
     return () => clearTimeout(t);
   }, [search]);
-  useEffect(() => setPage(1), [debounced, category, status, range]);
+  useEffect(() => setPage(1), [debounced, category, status, kind, range]);
 
-  const { data, isLoading, isError, error, refetch } = useExpenses({ ...range, category, status, search: debounced, page, limit: 20 });
+  const { data, isLoading, isError, error, refetch } = useExpenses({ ...range, kind, category, status, search: debounced, page, limit: 20 });
   const setExpenseStatus = useSetExpenseStatus();
   const remove = useDeleteExpense();
   const canManage = permissions.manageExpenses;
+  const openNew = (newKind) => setDrawer({ open: true, expense: null, kind: newKind });
+  // The main button comes last, so it sits at the end of the row
+  const addButtons = config.add.map((a, i) => (
+    <button key={a.kind} className={i === config.add.length - 1 ? btnPrimary : btnGhost} onClick={() => openNew(a.kind)}><FiPlus /> {a.label}</button>
+  ));
 
   const exportCsv = () => {
     const rows = data?.expenses || [];
-    downloadCsv(`expenses-${range.from}-to-${range.to}.csv`, [
-      ["Date", "Category", "Description", "Vendor", "Bill no", "Client", "Amount", "GST", "Total", "Status", "Paid by"],
-      ...rows.map((e) => [toInputDate(e.date), e.category, e.description, e.vendor, e.billNumber, e.allocations?.length ? e.allocations.map((a) => `${a.project?.name || "Unknown"} ${a.amount}`).join(" + ") : e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
+    downloadCsv(`${view}-${range.from}-to-${range.to}.csv`, [
+      ["Date", "Type", "Category", "Description", "Vendor", "Bill no", "Client", "Amount", "GST", "Total", "Status", "Paid by"],
+      ...rows.map((e) => [toInputDate(e.date), kindNoun(e), e.category, e.description, e.vendor, e.billNumber, e.allocations?.length ? e.allocations.map((a) => `${a.project?.name || "Unknown"} ${a.amount}`).join(" + ") : e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, e.asset?.alreadyOwned ? "" : e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
     ]);
   };
 
   return (
     <div>
       <PageHeader
-        title="Expenses"
-        subtitle="Everything the company spends, by category and by client."
+        title={config.title}
+        subtitle={config.subtitle}
         actions={
           <>
             <button className={btnGhost} onClick={exportCsv} disabled={!data?.expenses?.length}><FiDownload /> Export page</button>
-            {canManage && <button className={btnPrimary} onClick={() => setDrawer({ open: true, expense: null })}><FiPlus /> Add expense</button>}
+            {canManage && addButtons}
           </>
         }
       />
@@ -575,7 +714,7 @@ const Expenses = () => {
 
       {data && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-          <StatCard label="Total spent" value={fmtMoney(data.summary.total, symbol)} sub={`${data.total} expense${data.total === 1 ? "" : "s"}`} />
+          <StatCard label="Total spent" value={fmtMoney(data.summary.total, symbol)} sub={`${data.total} ${config.one}${data.total === 1 ? "" : "s"}`} />
           <StatCard label="Before tax" value={fmtMoney(data.summary.amount, symbol)} />
           <StatCard label="GST paid" value={fmtMoney(data.summary.tax, symbol)} sub="claimable as input credit" />
           <StatCard label="Biggest category" value={data.summary.byCategory[0]?.category || "—"} sub={data.summary.byCategory[0] ? fmtMoney(data.summary.byCategory[0].total, symbol) : undefined} />
@@ -586,11 +725,18 @@ const Expenses = () => {
         <div className="flex flex-wrap items-center gap-2 p-4 border-b border-slate-100">
           <div className="relative flex-1 min-w-[180px] max-w-xs">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input className={`${inputCls} !pl-9`} placeholder="Search description or vendor" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className={`${inputCls} !pl-9`} placeholder={config.search} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
+          {view === "purchases" && (
+            <select className={`${selectCls} !w-auto`} value={kind} onChange={(e) => { setKind(e.target.value); setCategory(""); }} aria-label="Type">
+              <option value="purchases">All purchases</option>
+              <option value="purchase">Goods</option>
+              <option value="asset">Assets</option>
+            </select>
+          )}
           <select className={`${selectCls} !w-auto`} value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">
             <option value="">All categories</option>
-            {(settings?.expenseCategories || []).map((c) => <option key={c} value={c}>{c}</option>)}
+            {(kind === "asset" ? ASSET_CATEGORIES : settings?.expenseCategories || []).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <select className={`${selectCls} !w-auto`} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
             <option value="">All statuses</option>
@@ -606,12 +752,13 @@ const Expenses = () => {
           <>
             <Table
               rows={data.expenses}
-              empty={<EmptyState title="No expenses in this period" text={canManage ? "Add an expense to start tracking spend." : undefined} action={canManage && <button className={btnPrimary} onClick={() => setDrawer({ open: true, expense: null })}><FiPlus /> Add expense</button>} />}
+              empty={<EmptyState title={config.emptyTitle} text={canManage ? config.emptyText : undefined} action={canManage && <div className="flex gap-2">{addButtons}</div>} />}
               columns={[
                 { key: "date", title: "Date", render: (r) => <span className="text-slate-500 whitespace-nowrap">{fmtDate(r.date)}</span> },
-                { key: "desc", title: "Expense", render: (r) => (
+                { key: "desc", title: config.column, render: (r) => (
                   <div>
-                    <p className="font-semibold text-slate-800">{r.description}</p>
+                    <p className="font-semibold text-slate-800">{r.description}{r.kind === "asset" && <span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-600">Asset</span>}</p>
+                    {r.kind === "asset" && <p className="text-xs text-slate-400">{depreciationLabel(r.asset)}{r.asset?.alreadyOwned ? " · already owned" : ""}</p>}
                     <p className="text-xs text-slate-400">{r.category}{r.vendor ? ` · ${r.vendor}` : ""}{r.attachments?.length ? ` · ${r.attachments.length} file` : ""}{r.payments?.length > 1 ? ` · ${r.payments.map((p) => methodLabel(p.method)).join(" + ")}` : ""}</p>
                   </div>
                 ) },
@@ -633,8 +780,8 @@ const Expenses = () => {
                         <button className="w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 flex items-center justify-center" title="Reject" aria-label="Reject" onClick={() => setToReject(r)}><FiX /></button>
                       </>
                     )}
-                    {r.status === "approved" && <button className={btnSmall} onClick={() => setExpenseStatus.mutate({ id: r._id, data: { status: "paid" } })}>Mark paid</button>}
-                    <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" aria-label="Edit" onClick={() => setDrawer({ open: true, expense: r })}><FiEdit2 className="w-3.5 h-3.5" /></button>
+                    {r.status === "approved" && !r.asset?.alreadyOwned && <button className={btnSmall} onClick={() => setExpenseStatus.mutate({ id: r._id, data: { status: "paid" } })}>Mark paid</button>}
+                    <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" aria-label="Edit" onClick={() => setDrawer({ open: true, expense: r, kind: r.kind || "expense" })}><FiEdit2 className="w-3.5 h-3.5" /></button>
                     {permissions.delete && !r.invoice && <button className="w-7 h-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center" aria-label="Delete" onClick={() => setToDelete(r)}><FiTrash2 className="w-3.5 h-3.5" /></button>}
                   </div>
                 ) }] : []),
@@ -645,12 +792,12 @@ const Expenses = () => {
         )}
       </div>
 
-      <ExpenseDrawer isOpen={drawer.open} expense={drawer.expense} onClose={() => setDrawer({ open: false, expense: null })} />
+      <ExpenseDrawer isOpen={drawer.open} expense={drawer.expense} kind={drawer.kind} onClose={() => setDrawer((d) => ({ ...d, open: false, expense: null }))} />
       <ConfirmModal
         isOpen={!!toDelete}
         onClose={() => setToDelete(null)}
-        title="Delete this expense?"
-        message={toDelete ? `${toDelete.description} (${fmtMoney(toDelete.total, symbol)}) will be removed.` : ""}
+        title={`Delete this ${kindNoun(toDelete).toLowerCase()}?`}
+        message={toDelete ? `${toDelete.description} (${fmtMoney(toDelete.total, symbol)}) will be removed.${toDelete.kind === "asset" ? " Its depreciation is removed from past months too. If it was sold or scrapped, edit it and set the disposal date instead." : ""}` : ""}
         confirmLabel="Delete"
         danger
         busy={remove.isPending}
@@ -659,7 +806,7 @@ const Expenses = () => {
       <ConfirmModal
         isOpen={!!toReject}
         onClose={() => setToReject(null)}
-        title="Reject this expense?"
+        title={`Reject this ${kindNoun(toReject).toLowerCase()}?`}
         confirmLabel="Reject"
         danger
         reasonLabel="Reason"

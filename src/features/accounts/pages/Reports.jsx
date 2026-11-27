@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiDownload } from "react-icons/fi";
+import CashBookReport from "../components/CashBookReport";
 import { useAccountsContext } from "../context";
 import { useExpenseReport, useGst, usePayrollReport, usePnl, useProfitability, useReceivables } from "../hooks/useAccounts";
 import { downloadCsv, fmtDate, fmtMoney, monthLabel, rangePresets } from "../utils/format";
@@ -22,14 +23,16 @@ const Pnl = ({ range, symbol }) => {
     <Wrap q={q}>
       {(d) => (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard label="Revenue" value={fmtMoney(d.totals.revenue, symbol)} />
             <StatCard label="Expenses" value={fmtMoney(d.totals.expenses, symbol)} />
+            <StatCard label="Purchases" value={fmtMoney(d.totals.purchases, symbol)} />
             <StatCard label="Payroll" value={fmtMoney(d.totals.payroll, symbol)} />
+            <StatCard label="Depreciation" value={fmtMoney(d.totals.depreciation, symbol)} sub="wear on assets" />
             <StatCard label="Profit" value={fmtMoney(d.totals.profit, symbol)} tone={d.totals.profit >= 0 ? "good" : "bad"} />
             <StatCard label="Margin" value={d.totals.margin === null ? "—" : `${d.totals.margin}%`} />
           </div>
-          <Card title="Month by month" padded={false} actions={<ExportButton onClick={() => downloadCsv(`profit-and-loss.csv`, [["Month", "Revenue", "Collected", "Expenses", "Payroll", "Profit"], ...d.months.map((m) => [m.month, m.revenue, m.collected, m.expenses, m.payroll, m.profit])])} />}>
+          <Card title="Month by month" padded={false} actions={<ExportButton onClick={() => downloadCsv(`profit-and-loss.csv`, [["Month", "Revenue", "Collected", "Expenses", "Purchases", "Payroll", "Depreciation", "Profit"], ...d.months.map((m) => [m.month, m.revenue, m.collected, m.expenses, m.purchases, m.payroll, m.depreciation, m.profit])])} />}>
             <Table
               rows={d.months}
               rowKey={(r) => r.month}
@@ -38,12 +41,14 @@ const Pnl = ({ range, symbol }) => {
                 { key: "r", title: "Revenue", align: "right", render: (r) => fmtMoney(r.revenue, symbol) },
                 { key: "c", title: "Collected", align: "right", render: (r) => <span className="text-slate-500">{fmtMoney(r.collected, symbol)}</span> },
                 { key: "e", title: "Expenses", align: "right", render: (r) => fmtMoney(r.expenses, symbol) },
+                { key: "pu", title: "Purchases", align: "right", render: (r) => fmtMoney(r.purchases, symbol) },
                 { key: "p", title: "Payroll", align: "right", render: (r) => fmtMoney(r.payroll, symbol) },
+                { key: "dp", title: "Depreciation", align: "right", render: (r) => fmtMoney(r.depreciation, symbol) },
                 { key: "pr", title: "Profit", align: "right", render: (r) => <span className={`font-semibold ${r.profit < 0 ? "text-red-600" : ""}`}>{fmtMoney(r.profit, symbol)}</span> },
               ]}
             />
           </Card>
-          <p className="text-xs text-slate-500">Revenue is what you invoiced (before GST) in each month. Expenses count approved and paid expenses. Payroll counts approved payslips plus employer PF and ESI.</p>
+          <p className="text-xs text-slate-500">Revenue is what you invoiced (before GST) in each month. Expenses and purchases count approved and paid records. Payroll counts approved payslips plus employer PF and ESI. Assets are not a cost when bought: their monthly depreciation is counted instead, up to the current month.</p>
         </div>
       )}
     </Wrap>
@@ -174,7 +179,7 @@ const ExpenseReport = ({ range, symbol }) => {
     <Wrap q={q}>
       {(d) => (
         <div className="space-y-4">
-          <StatCard label="Total spent" value={fmtMoney(d.total, symbol)} />
+          <StatCard label="Total spent" value={fmtMoney(d.total, symbol)} sub="expenses and purchases; assets are listed under Assets" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card title="By category" padded={false} actions={<ExportButton onClick={() => downloadCsv("expenses-by-category.csv", [["Category", "Count", "GST", "Total"], ...d.byCategory.map((c) => [c.category, c.count, c.tax, c.total])])} />}>
               <Table rows={d.byCategory} rowKey={(r) => r.category} dense empty={<p className="p-6 text-center text-sm text-slate-400">No expenses.</p>} columns={[
@@ -243,6 +248,8 @@ const Profitability = ({ range, symbol }) => {
 
 const REPORTS = [
   { value: "pnl", label: "Profit & loss" },
+  { value: "cash", label: "Cash report" },
+  { value: "bank", label: "Bank report" },
   { value: "profit", label: "Client profitability" },
   { value: "receivables", label: "Receivables" },
   { value: "gst", label: "GST" },
@@ -265,6 +272,7 @@ const Reports = () => {
       </div>
       {tab !== "receivables" && <div className="mb-4"><DateRangeFilter value={range} onChange={setRange} fyStartMonth={settings?.financialYearStartMonth} /></div>}
       {tab === "pnl" && <Pnl range={range} symbol={symbol} />}
+      {(tab === "cash" || tab === "bank") && <CashBookReport key={tab} book={tab} range={range} />}
       {tab === "profit" && <Profitability range={range} symbol={symbol} />}
       {tab === "receivables" && <Receivables symbol={symbol} />}
       {tab === "gst" && <Gst range={range} symbol={symbol} />}
