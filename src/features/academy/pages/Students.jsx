@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiPlus, FiSearch, FiUsers } from "react-icons/fi";
+import { FiEdit2, FiPlus, FiSearch, FiUsers } from "react-icons/fi";
 import { Card, EmptyState, ErrorState, PageHeader, Pagination, Spinner, StatusBadge, Table, btnPrimary, inputCls, selectCls } from "../../accounts/components/ui";
 import { useCourses, useStudents } from "../hooks/useAcademy";
 import { useAcademy } from "../context";
 import StudentDrawer from "../components/StudentDrawer";
 import CredentialsModal from "../components/CredentialsModal";
+import ChangeCourseDrawer from "../components/ChangeCourseDrawer";
 import { ENROLLMENT_STATUS, SOURCE_LABELS, fmtMoney } from "../utils";
 
 const Students = () => {
@@ -17,6 +18,7 @@ const Students = () => {
   const [page, setPage] = useState(1);
   const [drawer, setDrawer] = useState(false);
   const [created, setCreated] = useState(null);
+  const [courseFor, setCourseFor] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -62,9 +64,25 @@ const Students = () => {
       title: "Course / batch",
       render: (s) =>
         s.current ? (
-          <div className="min-w-0">
-            <p className="text-slate-700 truncate">{s.current.course?.name}</p>
-            <p className="text-xs text-slate-400">{s.current.batch?.name || "No batch"}</p>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <p className="text-slate-700 truncate">{s.current.course?.name}</p>
+              <p className="text-xs text-slate-400">{s.current.batch?.name || "No batch"}</p>
+            </div>
+            {permissions.manageStudents && (
+              <button
+                type="button"
+                className="w-8 h-8 shrink-0 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation(); // the row itself opens the student
+                  setCourseFor({ studentId: s._id, enrollmentId: s.current._id });
+                }}
+                title="Change course"
+                aria-label={`Change course for ${s.name}`}
+              >
+                <FiEdit2 />
+              </button>
+            )}
           </div>
         ) : (
           <span className="text-xs text-slate-400">Not enrolled</span>
@@ -167,6 +185,7 @@ const Students = () => {
       </Card>
 
       <StudentDrawer isOpen={drawer} onClose={() => setDrawer(false)} onCreated={(res) => setCreated(res)} />
+      {courseFor && <ChangeCourseDrawer {...courseFor} onClose={() => setCourseFor(null)} />}
       <CredentialsModal
         credentials={created?.credentials}
         student={created?.student}

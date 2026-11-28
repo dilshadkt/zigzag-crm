@@ -89,6 +89,7 @@ export const academyApi = {
   addEnrollment: ({ studentId, ...body }) => post(`/students/${studentId}/enrollments`, body),
   updateEnrollment: ({ id, ...body }) => put(`/enrollments/${id}`, body),
   deleteEnrollment: (id) => del(`/enrollments/${id}`),
+  changeCourse: ({ id, ...body }) => put(`/enrollments/${id}/course`, body),
   setFees: ({ id, ...body }) => put(`/enrollments/${id}/fees`, body),
   addPayment: ({ id, ...body }) => post(`/enrollments/${id}/payments`, body),
   removePayment: ({ id, paymentId }) => del(`/enrollments/${id}/payments/${paymentId}`),

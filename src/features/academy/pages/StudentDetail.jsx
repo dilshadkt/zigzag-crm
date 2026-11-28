@@ -36,6 +36,7 @@ import CredentialsModal from "../components/CredentialsModal";
 import EnrollmentFields, { emptyEnrollment, enrollmentPayload, enrollmentReady } from "../components/EnrollmentFields";
 import FeePlanDrawer from "../components/FeePlanDrawer";
 import PaymentModal from "../components/PaymentModal";
+import ChangeCourseDrawer from "../components/ChangeCourseDrawer";
 import CertificateUploadModal from "../components/CertificateUploadModal";
 import {
   ENROLLMENT_STATUS,
@@ -74,7 +75,7 @@ const openFile = async (fn) => {
   }
 };
 
-const EnrollmentCard = ({ enrollment: e, studentName, courses, onFees, onPay, onCertificate }) => {
+const EnrollmentCard = ({ enrollment: e, studentName, courses, onChangeCourse, onFees, onPay, onCertificate }) => {
   const { permissions: p } = useAcademy();
   const update = useUpdateEnrollment();
   const removePayment = useRemovePayment();
@@ -97,7 +98,10 @@ const EnrollmentCard = ({ enrollment: e, studentName, courses, onFees, onPay, on
       }`}
       actions={
         p.manageStudents && (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap justify-end gap-1.5">
+            <button className={btnSmall} onClick={() => onChangeCourse(e)}>
+              <FiEdit2 /> Change course
+            </button>
             <select
               className={`${selectCls} !h-8 !py-0 !text-xs !w-auto`}
               value={e.status}
@@ -293,6 +297,7 @@ const StudentDetail = () => {
   const [payFor, setPayFor] = useState(null);
   const [certFor, setCertFor] = useState(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [courseFor, setCourseFor] = useState(null);
   const [newEnrollment, setNewEnrollment] = useState(emptyEnrollment);
 
   if (isLoading) return <Spinner />;
@@ -386,6 +391,7 @@ const StudentDetail = () => {
               enrollment={e}
               studentName={student.name}
               courses={courses}
+              onChangeCourse={setCourseFor}
               onFees={setFeeFor}
               onPay={setPayFor}
               onCertificate={setCertFor}
@@ -442,6 +448,7 @@ const StudentDetail = () => {
 
       <StudentDrawer isOpen={editing} onClose={() => setEditing(false)} student={student} />
       <CredentialsModal credentials={credentials} student={student} onClose={() => setCredentials(null)} />
+      {courseFor && <ChangeCourseDrawer studentId={student._id} enrollmentId={courseFor._id} onClose={() => setCourseFor(null)} />}
       <FeePlanDrawer enrollment={live(feeFor)} onClose={() => setFeeFor(null)} />
       <PaymentModal enrollment={live(payFor)} onClose={() => setPayFor(null)} />
       <CertificateUploadModal enrollment={live(certFor)} studentName={student.name} onClose={() => setCertFor(null)} />

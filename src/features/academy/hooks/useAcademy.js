@@ -65,6 +65,7 @@ export const useDeleteStudent = () => useWrite(academyApi.deleteStudent, { succe
 export const useAddEnrollment = () => useWrite(academyApi.addEnrollment, { success: "Enrolled" });
 export const useUpdateEnrollment = () => useWrite(academyApi.updateEnrollment, { success: "Enrollment updated" });
 export const useDeleteEnrollment = () => useWrite(academyApi.deleteEnrollment, { success: "Enrollment removed" });
+export const useChangeCourse = () => useWrite(academyApi.changeCourse, { success: "Course changed" });
 export const useSetFees = () => useWrite(academyApi.setFees, { success: "Fee plan saved" });
 export const useAddPayment = () => useWrite(academyApi.addPayment, { success: "Payment recorded" });
 export const useRemovePayment = () => useWrite(academyApi.removePayment, { success: "Payment removed" });
