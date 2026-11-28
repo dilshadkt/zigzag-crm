@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiFileText, FiPlus, FiSearch } from "react-icons/fi";
+import { FiCopy, FiFileText, FiPlus, FiSearch } from "react-icons/fi";
 import { useAccountsContext } from "../context";
-import { useInvoiceStats, useInvoices } from "../hooks/useAccounts";
+import { useDuplicateInvoice, useInvoiceStats, useInvoices } from "../hooks/useAccounts";
 import { INVOICE_STATUS, fmtDate, fmtMoney } from "../utils/format";
 import { EmptyState, ErrorState, PageHeader, Pagination, SegmentedTabs, Spinner, StatCard, StatusBadge, Table, btnPrimary, inputCls } from "../components/ui";
 
@@ -41,6 +41,9 @@ const Invoices = () => {
   };
   const { data, isLoading, isError, error, refetch } = useInvoices(query);
   const { data: statsData } = useInvoiceStats();
+  const duplicate = useDuplicateInvoice();
+  // The copy is a new draft; open it so it can be checked and sent
+  const copy = (id) => duplicate.mutateAsync(id).then((r) => navigate(`/accounts/invoices/${r.invoice._id}`)).catch(() => {});
   const stats = statsData?.stats;
 
   const setTab = (value) => {
@@ -119,6 +122,17 @@ const Invoices = () => {
                 { key: "balance", title: "Balance", align: "right", render: (r) => (
                   <span className={r.balance > 0 && r.status !== "draft" && r.status !== "void" ? "text-slate-800" : "text-slate-300"}>{fmtMoney(r.status === "draft" ? 0 : r.balance, r.currencySymbol)}</span>
                 ) },
+                ...(permissions.manageInvoices ? [{ key: "act", title: "", align: "right", render: (r) => (
+                  <button
+                    className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 inline-flex items-center justify-center disabled:opacity-40"
+                    title="Duplicate"
+                    aria-label={`Duplicate ${r.number}`}
+                    disabled={duplicate.isPending}
+                    onClick={(e) => { e.stopPropagation(); copy(r._id); }}
+                  >
+                    <FiCopy className="w-3.5 h-3.5" />
+                  </button>
+                ) }] : []),
               ]}
             />
             <Pagination page={data?.page} pages={data?.pages} total={data?.total} onPage={setPage} />

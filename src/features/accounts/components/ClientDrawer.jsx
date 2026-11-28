@@ -10,15 +10,15 @@ const blank = () => ({
 });
 
 /** Add or edit a client who has no project: someone we only quote and bill. */
-const ClientDrawer = ({ isOpen, onClose, client }) => {
+const ClientDrawer = ({ isOpen, onClose, client, initialName = "", onSaved }) => {
   const create = useCreateAccountClient();
   const update = useUpdateAccountClient();
   const [form, setForm] = useState(blank);
 
   useEffect(() => {
     if (!isOpen) return;
-    setForm(client ? { ...blank(), ...client, address: { ...blank().address, ...client.address } } : blank());
-  }, [isOpen, client]);
+    setForm(client ? { ...blank(), ...client, address: { ...blank().address, ...client.address } } : { ...blank(), name: initialName });
+  }, [isOpen, client, initialName]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const setAddress = (patch) => setForm((f) => ({ ...f, address: { ...f.address, ...patch } }));
@@ -43,7 +43,10 @@ const ClientDrawer = ({ isOpen, onClose, client }) => {
     };
     try {
       if (client) await update.mutateAsync({ id: client._id, data });
-      else await create.mutateAsync(data);
+      else {
+        const res = await create.mutateAsync(data);
+        onSaved?.(res.client);
+      }
       onClose();
     } catch {
       // the mutation hook already showed the error

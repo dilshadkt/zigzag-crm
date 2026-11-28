@@ -52,7 +52,7 @@ const DRAWER_HINTS = {
   out: {
     staff: "A reimbursement or other payment to this person. Record salaries and salary advances in Payroll, or they count twice.",
     none: "Money you paid to a client or vendor.",
-    client: "You paid the client: a refund or an overpayment sent back.",
+    client: "You paid the client: for a bill under Expenses, or a refund.",
     vendor: "You paid the vendor: for a bill under Expenses, or as an advance.",
   },
 };
@@ -90,8 +90,8 @@ export const PaymentDrawer = ({ isOpen, onClose, direction, staff }) => {
   }));
   const chosenInvoice = openInvoices.find((i) => i._id === form.invoice);
 
-  // Money paid to a vendor or a staff member can settle one of their unpaid expenses
-  const payee = party.vendor ? { vendor: party.vendor } : party.staff ? { staff: party.staff } : null;
+  // Money paid out can settle one of that party's unpaid expenses
+  const payee = form.party ? party : null;
   const canApplyExpense = !isIn && !!payee && !!permissions.manageExpenses;
   const { data: expenseData } = useOpenExpenses(payee, isOpen && canApplyExpense);
   const openExpenses = expenseData?.expenses || [];
@@ -199,7 +199,7 @@ export const PaymentDrawer = ({ isOpen, onClose, direction, staff }) => {
               placeholder="Not for a bill"
               searchPlaceholder="Search bills…"
               clearLabel="Not for a bill"
-              emptyText={staff ? "No unpaid expenses for this person" : "No unpaid bills for this vendor"}
+              emptyText={staff ? "No unpaid expenses for this person" : "No unpaid bills for this party"}
             />
           </Field>
         )}

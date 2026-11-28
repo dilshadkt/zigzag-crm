@@ -85,7 +85,7 @@ const Assets = () => {
     <div>
       <PageHeader
         title="Asset list"
-        subtitle="What the company owns, and how its value comes down each month."
+        subtitle="What the company owns. Depreciation is calculated monthly."
         actions={
           <>
             <button className={btnGhost} onClick={exportCsv} disabled={!assets.length}><FiDownload /> Export CSV</button>
@@ -139,7 +139,10 @@ const Assets = () => {
               ]}
             />
           </div>
-          <p className="mt-3 text-xs text-slate-500">Click an asset to see it month by month. Depreciation counts against profit in Overview and Reports. Pending assets are approved under Purchases.</p>
+          <div className="mt-3 text-xs text-slate-500 space-y-1">
+            <p><b>How depreciation is worked out (every month):</b> Straight line is (cost − salvage value) ÷ months of useful life. Written down value is the value at the start of the financial year × yearly rate ÷ 12.</p>
+            <p>Click an asset to see it month by month. A year&apos;s depreciation is its months added up. It counts against profit in Overview and Reports. Pending assets are approved under Purchases.</p>
+          </div>
         </>
       )}
 

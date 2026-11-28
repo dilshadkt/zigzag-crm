@@ -112,7 +112,8 @@ export const PROPOSAL_STATUS = {
 
 export const EXPENSE_STATUS = {
   pending: { label: "Pending", cls: "bg-amber-50 text-amber-700" },
-  approved: { label: "Approved", cls: "bg-blue-50 text-blue-600" },
+  // Approved and still to be paid
+  approved: { label: "Unpaid", cls: "bg-blue-50 text-blue-600" },
   paid: { label: "Paid", cls: "bg-emerald-50 text-emerald-700" },
   rejected: { label: "Rejected", cls: "bg-red-50 text-red-600" },
 };

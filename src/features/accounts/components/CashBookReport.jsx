@@ -167,7 +167,7 @@ const CashBookReport = ({ book, range }) => {
 
       <p className="text-xs text-slate-500">
         Counts invoice payments, entries under Payments, expenses and purchases (assets too) marked Paid, salary payments, salary advances and academy course fees.
-        Anything only Approved is not counted until marked Paid. Moving money between cash and bank is not recorded yet.
+        Anything still Unpaid is not counted until marked Paid. Moving money between cash and bank is not recorded yet.
       </p>
 
       {editing && <OpeningModal book={book} name={name} saved={d.openingSetting} onClose={() => setEditing(false)} />}

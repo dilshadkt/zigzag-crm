@@ -72,7 +72,7 @@ const Pnl = ({ range, symbol }) => {
               ]}
             />
           </Card>
-          <p className="text-xs text-slate-500">Sales is what you invoiced (before GST) in each month. Expenses count approved and paid records. Salaries are the pay earned on approved payslips plus employer PF and ESI, so a payroll that is still a draft is not counted. Assets are not a cost when bought: their monthly depreciation is counted instead, up to the current month. Salaries and depreciation count by whole month.</p>
+          <p className="text-xs text-slate-500">Sales is what you invoiced (before GST) in each month. Expenses count paid and unpaid records, not pending or rejected ones. Salaries are the pay earned on approved payslips plus employer PF and ESI, so a payroll that is still a draft is not counted. Assets are not a cost when bought: their monthly depreciation is counted instead, up to the current month. Salaries and depreciation count by whole month.</p>
         </div>
       )}
     </Wrap>

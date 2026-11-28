@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiDollarSign, FiEdit2, FiMail, FiMoreHorizontal, FiRepeat, FiTrash2 } from "react-icons/fi";
+import { FiCopy, FiDollarSign, FiEdit2, FiMail, FiMoreHorizontal, FiRepeat, FiTrash2 } from "react-icons/fi";
 import Modal from "../../../components/shared/modal";
 import { accountsApi } from "../api/accountsApi";
 import { useAccountsContext } from "../context";
@@ -189,6 +189,9 @@ const InvoiceDetail = () => {
             {editable && (
               <button className={btnGhost} onClick={() => setModal("send")}><FiMail /> {invoice.sentAt ? "Resend" : "Send"}</button>
             )}
+            {permissions.manageInvoices && (
+              <button className={btnGhost} disabled={duplicate.isPending} onClick={() => duplicate.mutateAsync(id).then((r) => navigate(`/accounts/invoices/${r.invoice._id}`)).catch(() => {})}><FiCopy /> Duplicate</button>
+            )}
             {canPay && <button className={btnPrimary} onClick={() => setModal("payment")}><FiDollarSign /> Record payment</button>}
             {editable && (
               <div className="relative">
@@ -200,7 +203,6 @@ const InvoiceDetail = () => {
                       {invoice.status === "draft" && (
                         <MenuItem onClick={() => { setMenuOpen(false); markSent.mutate(id); }}>Mark as sent</MenuItem>
                       )}
-                      <MenuItem onClick={() => { setMenuOpen(false); duplicate.mutateAsync(id).then((r) => navigate(`/accounts/invoices/${r.invoice._id}`)).catch(() => {}); }}>Duplicate</MenuItem>
                       <MenuItem onClick={() => { setMenuOpen(false); setModal("recurring"); }}>Recurring…</MenuItem>
                       {invoice.status !== "void" && !invoice.payments?.length && (
                         <MenuItem danger onClick={() => { setMenuOpen(false); setModal("void"); }}>Void invoice</MenuItem>

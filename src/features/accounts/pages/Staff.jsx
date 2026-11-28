@@ -16,6 +16,7 @@ import {
 import { EXPENSE_STATUS, downloadCsv, fmtDate, fmtMoney, methodLabel, monthLabel, toInputDate } from "../utils/format";
 import { ConfirmModal, EmptyState, ErrorState, PageHeader, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, btnSmall, inputCls } from "../components/ui";
 import SearchableSelect from "../components/SearchableSelect";
+import { useMarkUnpaid } from "../components/MarkUnpaid";
 import { AdvanceModal } from "../components/AdvancesPanel";
 import { ExpenseDrawer } from "./Expenses";
 import { PaymentDrawer } from "./Payments";
@@ -151,6 +152,7 @@ const StaffDetail = ({ staffId }) => {
   const { data, isLoading, isError, error, refetch } = useStaffMember(staffId);
   const { data: vendorData } = useVendors(undefined, mayMove(permissions));
   const setExpenseStatus = useSetExpenseStatus();
+  const unpaid = useMarkUnpaid();
   const removePayment = useDeletePayment();
   const removeAdvance = useDeleteAdvance();
   const move = useMoveVendorToStaff();
@@ -230,6 +232,7 @@ const StaffDetail = ({ staffId }) => {
             { key: "act", title: "", align: "right", render: (t) => (
               <div className="flex items-center justify-end gap-1">
                 {t.type === "expense" && permissions.manageExpenses && t.status === "approved" && !t.paid && <button className={btnSmall} onClick={() => setExpenseStatus.mutate({ id: t.id, data: { status: "paid" } })}>Mark paid</button>}
+                {t.type === "expense" && permissions.manageExpenses && t.status === "paid" && <button className={btnSmall} onClick={() => unpaid.ask({ id: t.id, description: t.description, total: t.amount, linkedPaid: t.paid })}>Mark unpaid</button>}
                 {t.type === "expense" && permissions.manageExpenses && <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" aria-label={`Edit ${t.description}`} onClick={() => setExpenseDrawer({ open: true, id: t.id })}><FiEdit2 className="w-3.5 h-3.5" /></button>}
                 {canDelete(t) && <button className="w-7 h-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center" aria-label={`Delete ${t.description}`} onClick={() => setToDelete(t)}><FiTrash2 className="w-3.5 h-3.5" /></button>}
               </div>
@@ -261,6 +264,7 @@ const StaffDetail = ({ staffId }) => {
         staff={staff}
         onClose={closeExpense}
       />
+      {unpaid.modal}
       <PaymentDrawer isOpen={paying} direction="out" staff={staff} onClose={() => setPaying(false)} />
       {advancing && <AdvanceModal advance={{}} employee={staff} employees={[staff]} onClose={() => setAdvancing(false)} />}
       <ConfirmModal

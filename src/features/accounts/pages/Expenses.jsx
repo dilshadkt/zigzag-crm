@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { FiCheck, FiDownload, FiEdit2, FiPaperclip, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
+import { FiCheck, FiCopy, FiDownload, FiEdit2, FiPaperclip, FiPlus, FiSearch, FiTrash2, FiX } from "react-icons/fi";
 import { uploadSingleFile } from "../../../api/service";
 import { useAccountsContext } from "../context";
 import {
+  useAccountClients,
   useClientLookup,
   useAddExpenseCategory,
+  useCreateItem,
+  useItems,
   useCreateExpense,
   useDeleteExpense,
   useDeleteVendor,
@@ -18,9 +21,11 @@ import {
 } from "../hooks/useAccounts";
 import VendorDrawer from "../components/VendorDrawer";
 import ItemPicker from "../components/ItemPicker";
+import ClientDrawer from "../components/ClientDrawer";
+import { useMarkUnpaid } from "../components/MarkUnpaid";
 import SearchableSelect from "../components/SearchableSelect";
 import SuggestInput from "../components/SuggestInput";
-import { ASSET_CATEGORIES, EXPENSE_STATUS, PAYMENT_METHODS, depreciationLabel, downloadCsv, errorMessage, fmtDate, fmtMoney, kindNoun, methodLabel, rangePresets, toInputDate } from "../utils/format";
+import { ASSET_CATEGORIES, EXPENSE_STATUS, PAYMENT_METHODS, depreciationLabel, downloadCsv, errorMessage, fmtDate, fmtMoney, kindNoun, methodLabel, rangePresets, round2, toInputDate } from "../utils/format";
 import { ConfirmModal, DateRangeFilter, Drawer, EmptyState, ErrorState, Field, PageHeader, Pagination, Spinner, StatCard, StatusBadge, Table, btnGhost, btnPrimary, btnSmall, inputCls, selectCls } from "../components/ui";
 
 const blankAsset = () => ({
@@ -57,8 +62,13 @@ const blank = () => ({
   description: "",
   vendorRef: "",
   billNumber: "",
+  quantity: "1",
+  unitPrice: "",
+  // Follows from the quantity and the price
   amount: "",
   taxAmount: "",
+  // Set when a saved item brought its GST rate, so the GST follows the amount
+  gstRate: null,
   // Clients this is charged to. With two or more, each row carries its share of the amount.
   clientRows: [{ project: "", share: "" }],
   // false: the amount is split equally; true: the shares were typed in
@@ -71,10 +81,53 @@ const blank = () => ({
 });
 
 const LEGACY_VENDOR = "__legacy";
-// A client picked as "paid to" - saved as the client's name, since it has no vendor record
+// How the party dropdown tells a client from a vendor: "client:<project id>" or
+// "account:<id>" for a client without a project. A vendor is its id alone.
 const CLIENT_PREFIX = "client:";
+const ACCOUNT_PREFIX = "account:";
 
-const round2 = (n) => Math.round(n * 100) / 100;
+const partyValueFor = (r) => {
+  if (r.staff) return "";
+  if (r.partyProject) return CLIENT_PREFIX + (r.partyProject._id || r.partyProject);
+  if (r.partyClient) return ACCOUNT_PREFIX + (r.partyClient._id || r.partyClient);
+  // Older expenses only have the party as text, with no record behind it
+  return r.vendorRef?._id || r.vendorRef || (r.vendor ? LEGACY_VENDOR : "");
+};
+
+// A saved record as form values
+const formFor = (record) => ({
+  ...blank(),
+  ...record,
+  date: toInputDate(record.date),
+  clientRows: clientRowsFor(record),
+  sharesCustom: Boolean(record.allocations?.length),
+  billable: Boolean(record.billable),
+  // Records from before quantity and price were entered are one of the whole amount
+  quantity: String(record.quantity || 1),
+  unitPrice: String(record.unitPrice ?? record.amount ?? ""),
+  amount: record.amount,
+  taxAmount: record.taxAmount || "",
+  gstRate: null,
+  attachments: record.attachments || [],
+  asset: assetFormFor(record),
+  payments: paymentsFor(record),
+  staff: record.staff?._id || record.staff || "",
+  vendorRef: partyValueFor(record),
+});
+
+// What a duplicate takes from the original. Its date, bill number, files, status
+// and payment references belong to the original alone.
+const copyFor = (record) => {
+  const form = formFor(record);
+  return {
+    ...blank(),
+    ...Object.fromEntries(
+      ["category", "description", "vendor", "vendorRef", "staff", "quantity", "unitPrice", "amount", "taxAmount", "clientRows", "sharesCustom", "billable", "notes"].map((k) => [k, form[k]])
+    ),
+    asset: { ...form.asset, inUseFrom: "", disposedOn: "" },
+    payments: form.payments.map((p) => ({ ...p, reference: "" })),
+  };
+};
 
 // Split an amount between n clients to the paisa; the last one takes the rounding remainder
 const equalShares = (amount, n) => {
@@ -98,10 +151,11 @@ const paymentsFor = (expense) =>
 
 /**
  * Add or edit an expense, a purchase or an asset. `kind` applies to new records;
- * `staff` is who a new one is paid to, when opened from the Staff section.
+ * `staff` is who a new one is paid to, when opened from the Staff section, and
+ * `copyOf` is the record a new one starts from.
  */
-export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staff }) => {
-  const { settings, symbol } = useAccountsContext();
+export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staff, copyOf }) => {
+  const { settings, symbol, permissions } = useAccountsContext();
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const { data: clients } = useClientLookup(isOpen);
@@ -109,93 +163,110 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
   const { data: pastData } = useExpenseDescriptions(isOpen);
   const [addingVendor, setAddingVendor] = useState(false);
   const [newVendorName, setNewVendorName] = useState("");
+  const [addingClient, setAddingClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const { data: otherClients } = useAccountClients(undefined, isOpen);
+  const { data: itemData } = useItems({ type: "expense" }, isOpen);
+  const createItem = useCreateItem();
   const [toRemove, setToRemove] = useState(null);
   const deleteVendor = useDeleteVendor();
   const addCategoryMutation = useAddExpenseCategory();
   const removeCategoryMutation = useRemoveExpenseCategory();
   const [form, setForm] = useState(blank());
   const [uploading, setUploading] = useState(false);
-  const recordKind = expense ? expense.kind || "expense" : kind;
+  // The saved record behind the form, if any: the one edited, or the one copied
+  const source = expense || copyOf;
+  const recordKind = source ? source.kind || "expense" : kind;
   const isAsset = recordKind === "asset";
   const noun = recordKind;
 
   useEffect(() => {
     if (!isOpen) return;
-    setForm(
-      expense
-        ? {
-            ...blank(),
-            ...expense,
-            date: toInputDate(expense.date),
-            clientRows: clientRowsFor(expense),
-            sharesCustom: Boolean(expense.allocations?.length),
-            billable: Boolean(expense.billable),
-            amount: expense.amount,
-            taxAmount: expense.taxAmount || "",
-            attachments: expense.attachments || [],
-            asset: assetFormFor(expense),
-            payments: paymentsFor(expense),
-            staff: expense.staff?._id || expense.staff || "",
-            // Older expenses only have the vendor as text, with no vendor record
-            vendorRef: expense.vendorRef?._id || expense.vendorRef || (expense.vendor && !expense.staff ? LEGACY_VENDOR : ""),
-          }
-        : { ...blank(), staff: staff?._id || "", category: kind === "asset" ? "" : settings?.expenseCategories?.[0] || "" }
-    );
+    if (expense) setForm(formFor(expense));
+    else if (copyOf) setForm(copyFor(copyOf));
+    else setForm({ ...blank(), staff: staff?._id || "", category: kind === "asset" ? "" : settings?.expenseCategories?.[0] || "" });
     // `staff` is only read when the drawer opens, so it is left out on purpose
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, expense, settings, kind]);
+  }, [isOpen, expense, copyOf, settings, kind]);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+  // Quantity or price changed: the amount follows, and so does a saved item's GST
+  const withAmount = (next) => {
+    const quantity = Number(next.quantity);
+    const amount = next.unitPrice === "" || !(quantity >= 0) ? "" : String(round2(quantity * Number(next.unitPrice)));
+    const taxAmount = next.gstRate ? (amount === "" ? "" : String(round2((Number(amount) * next.gstRate) / 100))) : next.taxAmount;
+    return { ...next, amount, taxAmount };
+  };
+  const setLine = (patch) => setForm((f) => withAmount({ ...f, ...patch }));
+
   // A saved item fills in what it knows; everything stays editable
   const pickItem = (item) => {
-    const patch = { description: item.name };
-    if (item.category) patch.category = item.category;
-    if (item.rate) {
-      patch.amount = String(item.rate);
-      patch.taxAmount = item.taxRate ? String(round2((item.rate * item.taxRate) / 100)) : "";
-    }
     const d = item.depreciation;
-    setForm((f) => ({
-      ...f,
-      ...patch,
-      asset: isAsset && d?.method
-        ? { ...f.asset, method: d.method, years: d.usefulLifeMonths ? String(Math.round((d.usefulLifeMonths / 12) * 100) / 100) : "", ratePercent: d.ratePercent ?? "" }
-        : f.asset,
-    }));
+    setForm((f) => {
+      const next = {
+        ...f,
+        description: item.name,
+        category: item.category || f.category,
+        asset: isAsset && d?.method
+          ? { ...f.asset, method: d.method, years: d.usefulLifeMonths ? String(Math.round((d.usefulLifeMonths / 12) * 100) / 100) : "", ratePercent: d.ratePercent ?? "" }
+          : f.asset,
+      };
+      if (!item.rate) return next;
+      return withAmount({ ...next, unitPrice: String(item.rate), gstRate: item.taxRate || null, taxAmount: "" });
+    });
   };
   const setAsset = (patch) => setForm((f) => ({ ...f, asset: { ...f.asset, ...patch } }));
   // Something already owned had no purchase to pay for here
   const owned = isAsset && form.asset.alreadyOwned;
 
-  const vendorOptions = [
+  // Vendors and clients together. Clients can be paid to as well (refunds,
+  // payments made on their behalf).
+  const partyOptions = [
     ...(form.vendorRef === LEGACY_VENDOR
-      ? [{ value: LEGACY_VENDOR, label: expense?.vendor || "", hint: "not in vendor list", removable: false }]
+      ? [{ value: LEGACY_VENDOR, label: source?.vendor || "", hint: "not in the party list", removable: false }]
       : []),
-    ...(vendorData?.vendors || []).map((v) => ({ value: v._id, label: v.name, hint: v.gstin || v.phone })),
-    // Clients can be paid to as well (refunds, payments made on their behalf)
+    ...(vendorData?.vendors || []).map((v) => ({ value: v._id, label: v.name, hint: "Vendor" })),
     ...(clients?.clients || []).map((c) => ({ value: CLIENT_PREFIX + c._id, label: c.name, hint: "Client", removable: false })),
+    ...(otherClients?.clients || []).map((c) => ({ value: ACCOUNT_PREFIX + c._id, label: c.name, hint: "Client", removable: false })),
   ];
+  // A saved client that has since left the lists stays visible
+  if (/^(client|account):/.test(form.vendorRef) && !partyOptions.some((o) => o.value === form.vendorRef)) {
+    partyOptions.push({ value: form.vendorRef, label: source?.vendor || "Client", hint: "Client", removable: false });
+  }
+  const mayAddVendor = Boolean(permissions.manageExpenses);
+  const mayAddClient = Boolean(permissions.manageExpenses || permissions.manageInvoices || permissions.manageProposals);
+  const addVendor = (name) => { setNewVendorName(name); setAddingVendor(true); };
+  const addClient = (name) => { setNewClientName(name); setAddingClient(true); };
 
-  const descriptionSuggestions = (pastData?.descriptions || []).map((d) => ({
-    ...d,
-    label: d.description,
-    hint: d.category,
-  }));
+  // Saved expense items first, then what was typed on earlier expenses
+  const items = itemData?.items || [];
+  const sameName = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const itemSuggestions = [
+    ...items.map((i) => ({ item: i, label: i.name, hint: i.rate ? `Item · ${fmtMoney(i.rate, symbol)}` : "Item" })),
+    ...(pastData?.descriptions || [])
+      .filter((d) => !items.some((i) => sameName(i.name, d.description)))
+      .map((d) => ({ ...d, label: d.description, hint: d.category })),
+  ];
+  const typed = form.description.trim();
+  const canSaveItem = Boolean(permissions.manageExpenses) && typed && !!itemData && !items.some((i) => sameName(i.name, typed));
+  const saveItem = () =>
+    createItem.mutate({ type: "expense", name: typed, category: form.category, rate: Number(form.unitPrice) || 0, taxRate: form.gstRate || 0 });
 
   // Reusing an earlier expense: fill in what it was usually filed under
-  const pickDescription = (item) => {
-    const patch = { description: item.description };
-    if (listedCategories.includes(item.category)) patch.category = item.category;
+  const pickPast = (past) => {
+    const patch = { description: past.description };
+    if (listedCategories.includes(past.category)) patch.category = past.category;
     if (!form.vendorRef) {
-      // Last paid to a vendor record, or to a client (kept as the client's name)
-      const match = item.vendorRef
-        ? vendorOptions.find((o) => o.value === item.vendorRef)
-        : item.vendor && vendorOptions.find((o) => o.value.startsWith(CLIENT_PREFIX) && o.label === item.vendor);
+      const value = partyValueFor({ ...past, staff: null });
+      // Older ones kept a client only by name
+      const match = partyOptions.find((o) => o.value === value)
+        || (past.vendor && partyOptions.find((o) => o.value !== LEGACY_VENDOR && o.label === past.vendor));
       if (match) patch.vendorRef = match.value;
     }
     set(patch);
   };
+  const pickSuggestion = (s) => (s.item ? pickItem(s.item) : pickPast(s));
 
   // A category already on this expense stays selectable even if it is off the list now
   const listedCategories = settings?.expenseCategories || [];
@@ -295,8 +366,12 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.category || !form.description.trim() || !(Number(form.amount) >= 0) || form.amount === "") {
-      toast.error(isAsset ? "Category, asset name and cost are required" : "Category, description and amount are required");
+    if (!form.category || !form.description.trim() || form.unitPrice === "" || !(Number(form.unitPrice) >= 0)) {
+      toast.error(`Category, ${isAsset ? "asset name" : `${noun} item`} and price are required`);
+      return;
+    }
+    if (!(Number(form.quantity) > 0)) {
+      toast.error("Enter a quantity greater than zero");
       return;
     }
     if (isAsset && form.asset.method === "straight_line" && !(Number(form.asset.years) > 0)) {
@@ -323,6 +398,8 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
     }
     const payload = {
       ...form,
+      quantity: Number(form.quantity),
+      unitPrice: Number(form.unitPrice),
       amount: Number(form.amount),
       taxAmount: Number(form.taxAmount) || 0,
       project: chosenRows.length === 1 ? chosenRows[0].project : null,
@@ -338,16 +415,17 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
     delete payload._id;
     delete payload.clientRows;
     delete payload.sharesCustom;
-    if (form.staff) {
-      // The API takes the name from the staff record
+    delete payload.gstRate;
+    payload.partyProject = null;
+    payload.partyClient = null;
+    // For a staff member or a client the API takes the name from their record
+    const client = /^(client|account):(.+)$/.exec(form.vendorRef);
+    if (form.staff || client) {
       delete payload.vendorRef;
       delete payload.vendor;
+      if (client && !form.staff) payload[client[1] === "client" ? "partyProject" : "partyClient"] = client[2];
     } else if (form.vendorRef === LEGACY_VENDOR) delete payload.vendorRef; // keep the old text name as it is
-    else if (form.vendorRef.startsWith(CLIENT_PREFIX)) {
-      // A client has no vendor record: unlink any vendor and keep the client's name as text
-      payload.vendorRef = null;
-      payload.vendor = vendorOptions.find((o) => o.value === form.vendorRef)?.label || "";
-    } else delete payload.vendor;
+    else delete payload.vendor;
     delete payload.paymentMethod;
     delete payload.paymentReference;
     delete payload.position;
@@ -383,8 +461,8 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title={expense ? `Edit ${noun}` : isAsset ? "Add asset" : `Add ${noun}`}
-      subtitle={isAsset ? "Its cost reaches profit month by month, as depreciation." : undefined}
+      title={expense ? `Edit ${noun}` : copyOf ? `Duplicate ${noun}` : isAsset ? "Add asset" : `Add ${noun}`}
+      subtitle={copyOf ? "Check the details and save. The original stays as it is." : isAsset ? "Its cost reaches profit month by month, as depreciation." : undefined}
       footer={
         <>
           <button className={btnGhost} onClick={onClose}>Cancel</button>
@@ -399,11 +477,7 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
             <span>We already own this<span className="block text-[11px] text-slate-400">No payment is recorded. Use the original purchase date and cost.</span></span>
           </label>
         )}
-        <ItemPicker
-          type={isAsset ? "asset" : "expense"}
-          onPick={pickItem}
-          placeholder={isAsset ? "Pick from the asset items" : "Pick from the expense items"}
-        />
+        {isAsset && <ItemPicker type="asset" onPick={pickItem} placeholder="Pick from the asset items" />}
         <div className="grid grid-cols-2 gap-3">
           <Field label={isAsset ? "Purchase date" : "Date"}><input type="date" className={inputCls} value={form.date} onChange={(e) => set({ date: e.target.value })} /></Field>
           <Field label="Category" required>
@@ -433,48 +507,55 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
             <input className={inputCls} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="e.g. MacBook Pro 14, design desk" />
           </Field>
         ) : (
-          <Field label="Description" required>
-            <SuggestInput
-              value={form.description}
-              onChange={(description) => set({ description })}
-              onPick={pickDescription}
-              suggestions={descriptionSuggestions}
-              placeholder={recordKind === "purchase" ? "What did you buy?" : "What was it for?"}
-            />
-          </Field>
+          <div>
+            <Field label={recordKind === "purchase" ? "Purchase item" : "Expense item"} required>
+              <SuggestInput
+                value={form.description}
+                onChange={(description) => set({ description })}
+                onPick={pickSuggestion}
+                suggestions={itemSuggestions}
+                placeholder={recordKind === "purchase" ? "What did you buy?" : "What was it for?"}
+              />
+            </Field>
+            {canSaveItem && (
+              <button type="button" className="mt-1 text-xs font-semibold text-[#3F8CFF]" onClick={saveItem} disabled={createItem.isPending}>
+                Save “{typed}” to the item list
+              </button>
+            )}
+          </div>
         )}
         <div className="grid grid-cols-2 gap-3">
           {!owned && (form.staff ? (
             <div>
               <span className="block text-xs font-semibold text-slate-600 mb-1">Paid to (staff)</span>
               <div className="flex items-center justify-between gap-2 border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50">
-                <span className="truncate">{staff?._id === form.staff ? staff.name : expense?.vendor}</span>
+                <span className="truncate">{staff?._id === form.staff ? staff.name : source?.vendor}</span>
                 <button type="button" className="text-xs font-semibold text-[#3F8CFF] shrink-0" onClick={() => set({ staff: "", vendorRef: "" })}>Change</button>
               </div>
             </div>
-          ) : <Field label="Vendor / paid to">
+          ) : <Field label="Party" hint="Vendor or client">
             <SearchableSelect
               value={form.vendorRef}
               onChange={(vendorRef) => set({ vendorRef })}
-              options={vendorOptions}
-              placeholder="Select vendor"
-              searchPlaceholder="Search vendors…"
-              clearLabel="No vendor"
-              createLabel="Add new vendor"
-              emptyText="No vendor found"
-              onCreate={(name) => {
-                setNewVendorName(name);
-                setAddingVendor(true);
-              }}
+              options={partyOptions}
+              placeholder="Select party"
+              searchPlaceholder="Search vendors and clients…"
+              clearLabel="No party"
+              createLabel="New vendor"
+              emptyText="No party found"
+              onCreate={mayAddVendor ? addVendor : undefined}
+              extraActions={mayAddClient ? [{ label: "New client", onSelect: addClient }] : undefined}
               onRemove={(o) => setToRemove({ type: "vendor", id: o.value, name: o.label })}
               removeLabel="Remove vendor"
             />
           </Field>)}
           <Field label="Bill / invoice no."><input className={inputCls} value={form.billNumber} onChange={(e) => set({ billNumber: e.target.value })} /></Field>
-          <Field label={owned ? "Cost" : "Amount (before tax)"} required hint={isAsset && !owned ? "This is what gets depreciated. Include GST you can't claim." : undefined}><input type="number" min="0" step="any" className={inputCls} value={form.amount} onChange={(e) => set({ amount: e.target.value })} /></Field>
-          {!owned && <Field label="GST paid" hint="Input tax credit"><input type="number" min="0" step="any" className={inputCls} value={form.taxAmount} onChange={(e) => set({ taxAmount: e.target.value })} /></Field>}
+          <Field label="Quantity" required><input type="number" min="0" step="any" className={inputCls} value={form.quantity} onChange={(e) => setLine({ quantity: e.target.value })} /></Field>
+          <Field label="Price per unit" required hint="Before tax"><input type="number" min="0" step="any" className={inputCls} value={form.unitPrice} onChange={(e) => setLine({ unitPrice: e.target.value })} /></Field>
+          <Field label={owned ? "Cost" : isAsset ? "Cost (before tax)" : "Amount (before tax)"} hint={isAsset && !owned ? "This is what gets depreciated. Include GST you can't claim." : "Quantity × price"}><input className={inputCls} value={form.amount} readOnly tabIndex={-1} /></Field>
+          {!owned && <Field label="GST paid" hint="Input tax credit"><input type="number" min="0" step="any" className={inputCls} value={form.taxAmount} onChange={(e) => set({ taxAmount: e.target.value, gstRate: null })} /></Field>}
         </div>
-        {!owned && <p className="text-xs text-slate-500">Total paid: <b>{fmtMoney(total, symbol)}</b></p>}
+        {!owned && <p className="text-xs text-slate-500">Total with GST: <b>{fmtMoney(total, symbol)}</b></p>}
 
         {isAsset && (
           <div className="p-3 rounded-xl border border-slate-100 space-y-3">
@@ -497,7 +578,7 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
                 <Field label="Disposed on" hint="Sold or scrapped: depreciation stops"><input type="date" className={inputCls} value={form.asset.disposedOn} onChange={(e) => setAsset({ disposedOn: e.target.value })} /></Field>
               )}
             </div>
-            <p className="text-[11px] text-slate-400">A full month is charged for the month it comes into use. Ask your accountant which method and rate to use.</p>
+            <p className="text-[11px] text-slate-400">Depreciation is calculated monthly, even though a rate is entered per year. A full month is charged for the month it comes into use. Ask your accountant which method and rate to use.</p>
           </div>
         )}
 
@@ -625,7 +706,7 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
         {!expense && !owned && (
           <Field label="Status">
             <select className={selectCls} value={form.status} onChange={(e) => set({ status: e.target.value })}>
-              <option value="approved">Approved</option>
+              <option value="approved">Unpaid</option>
               <option value="paid">Paid</option>
               <option value="pending">Pending approval</option>
             </select>
@@ -655,6 +736,12 @@ export const ExpenseDrawer = ({ isOpen, onClose, expense, kind = "expense", staf
       onClose={() => setAddingVendor(false)}
       onSaved={(vendor) => set({ vendorRef: vendor._id })}
     />
+    <ClientDrawer
+      isOpen={addingClient}
+      initialName={newClientName}
+      onClose={() => setAddingClient(false)}
+      onSaved={(client) => set({ vendorRef: ACCOUNT_PREFIX + client._id })}
+    />
     <ConfirmModal
       isOpen={!!toRemove}
       onClose={() => setToRemove(null)}
@@ -682,9 +769,9 @@ const VIEWS = {
     subtitle: "Everything the company spends day to day, by category and by client.",
     kind: "expense",
     add: [{ kind: "expense", label: "Add expense" }],
-    column: "Expense",
+    column: "Expense item",
     one: "expense",
-    search: "Search description or vendor",
+    search: "Search item or party",
     emptyTitle: "No expenses in this period",
     emptyText: "Add an expense to start tracking spend.",
   },
@@ -693,9 +780,9 @@ const VIEWS = {
     subtitle: "Goods you buy, and assets the company keeps. Assets are depreciated instead of counted as a cost at once.",
     kind: "purchases",
     add: [{ kind: "asset", label: "Purchase asset" }, { kind: "purchase", label: "Add purchase" }],
-    column: "Purchase",
+    column: "Purchase item",
     one: "purchase",
-    search: "Search item or vendor",
+    search: "Search item or party",
     emptyTitle: "No purchases in this period",
     emptyText: "Record a purchase, or an asset the company bought.",
   },
@@ -724,9 +811,11 @@ const Expenses = ({ view = "expenses" }) => {
 
   const { data, isLoading, isError, error, refetch } = useExpenses({ ...range, kind, category, status, search: debounced, page, limit: 20 });
   const setExpenseStatus = useSetExpenseStatus();
+  const unpaid = useMarkUnpaid();
   const remove = useDeleteExpense();
   const canManage = permissions.manageExpenses;
   const openNew = (newKind) => setDrawer({ open: true, expense: null, kind: newKind });
+  const openCopy = (record) => setDrawer({ open: true, expense: null, copyOf: record, kind: record.kind || "expense" });
   // The main button comes last, so it sits at the end of the row
   const addButtons = config.add.map((a, i) => (
     <button key={a.kind} className={i === config.add.length - 1 ? btnPrimary : btnGhost} onClick={() => openNew(a.kind)}><FiPlus /> {a.label}</button>
@@ -735,8 +824,8 @@ const Expenses = ({ view = "expenses" }) => {
   const exportCsv = () => {
     const rows = data?.expenses || [];
     downloadCsv(`${view}-${range.from}-to-${range.to}.csv`, [
-      ["Date", "Type", "Category", "Description", "Vendor", "Bill no", "Client", "Amount", "GST", "Total", "Status", "Paid by"],
-      ...rows.map((e) => [toInputDate(e.date), kindNoun(e), e.category, e.description, e.vendor, e.billNumber, e.allocations?.length ? e.allocations.map((a) => `${a.project?.name || "Unknown"} ${a.amount}`).join(" + ") : e.project?.name || "", e.amount, e.taxAmount, e.total, e.status, e.asset?.alreadyOwned ? "" : e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
+      ["Date", "Type", "Category", "Item", "Party", "Bill no", "Client", "Quantity", "Price", "Amount", "GST", "Total", "Status", "Paid by"],
+      ...rows.map((e) => [toInputDate(e.date), kindNoun(e), e.category, e.description, e.vendor, e.billNumber, e.allocations?.length ? e.allocations.map((a) => `${a.project?.name || "Unknown"} ${a.amount}`).join(" + ") : e.project?.name || "", e.quantity || 1, e.unitPrice ?? e.amount, e.amount, e.taxAmount, e.total, EXPENSE_STATUS[e.status]?.label || e.status, e.asset?.alreadyOwned ? "" : e.payments?.length > 1 ? e.payments.map((p) => `${methodLabel(p.method)} ${p.amount}`).join(" + ") : methodLabel(e.paymentMethod)]),
     ]);
   };
 
@@ -802,7 +891,7 @@ const Expenses = ({ view = "expenses" }) => {
                   <div>
                     <p className="font-semibold text-slate-800">{r.description}{r.kind === "asset" && <span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-600">Asset</span>}</p>
                     {r.kind === "asset" && <p className="text-xs text-slate-400">{depreciationLabel(r.asset)}{r.asset?.alreadyOwned ? " · already owned" : ""}</p>}
-                    <p className="text-xs text-slate-400">{r.category}{r.vendor ? ` · ${r.vendor}` : ""}{r.attachments?.length ? ` · ${r.attachments.length} file` : ""}{r.payments?.length > 1 ? ` · ${r.payments.map((p) => methodLabel(p.method)).join(" + ")}` : ""}</p>
+                    <p className="text-xs text-slate-400">{r.category}{r.vendor ? ` · ${r.vendor}` : ""}{r.unitPrice != null && r.quantity && r.quantity !== 1 ? ` · ${r.quantity} × ${fmtMoney(r.unitPrice, symbol)}` : ""}{r.attachments?.length ? ` · ${r.attachments.length} file` : ""}{r.payments?.length > 1 ? ` · ${r.payments.map((p) => methodLabel(p.method)).join(" + ")}` : ""}</p>
                   </div>
                 ) },
                 { key: "client", title: "Client", render: (r) => (r.allocations?.length ? <div title={r.allocations.map((a) => `${a.project?.name || "Unknown"}: ${fmtMoney(a.amount, symbol)}`).join("\n")}><span>{r.allocations[0].project?.name || "Unknown"}</span><span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">+{r.allocations.length - 1} more</span></div> : r.project ? <div><span>{r.project.name}</span>{r.billable && <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${r.invoice ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{r.invoice ? `Billed ${r.invoice.number}` : "Billable"}</span>}</div> : <span className="text-slate-300">—</span>) },
@@ -824,7 +913,9 @@ const Expenses = ({ view = "expenses" }) => {
                       </>
                     )}
                     {r.status === "approved" && !r.asset?.alreadyOwned && <button className={btnSmall} onClick={() => setExpenseStatus.mutate({ id: r._id, data: { status: "paid" } })}>Mark paid</button>}
-                    <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" aria-label="Edit" onClick={() => setDrawer({ open: true, expense: r, kind: r.kind || "expense" })}><FiEdit2 className="w-3.5 h-3.5" /></button>
+                    {r.status === "paid" && !r.asset?.alreadyOwned && <button className={btnSmall} onClick={() => unpaid.ask({ id: r._id, description: r.description, total: r.total, linkedPaid: r.linkedPaid })}>Mark unpaid</button>}
+                    <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" title="Edit" aria-label="Edit" onClick={() => setDrawer({ open: true, expense: r, kind: r.kind || "expense" })}><FiEdit2 className="w-3.5 h-3.5" /></button>
+                    <button className="w-7 h-7 rounded-lg text-slate-400 hover:text-[#3F8CFF] hover:bg-blue-50 flex items-center justify-center" title="Duplicate" aria-label={`Duplicate ${r.description}`} onClick={() => openCopy(r)}><FiCopy className="w-3.5 h-3.5" /></button>
                     {permissions.delete && !r.invoice && <button className="w-7 h-7 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center" aria-label="Delete" onClick={() => setToDelete(r)}><FiTrash2 className="w-3.5 h-3.5" /></button>}
                   </div>
                 ) }] : []),
@@ -835,7 +926,8 @@ const Expenses = ({ view = "expenses" }) => {
         )}
       </div>
 
-      <ExpenseDrawer isOpen={drawer.open} expense={drawer.expense} kind={drawer.kind} onClose={() => setDrawer((d) => ({ ...d, open: false, expense: null }))} />
+      <ExpenseDrawer isOpen={drawer.open} expense={drawer.expense} copyOf={drawer.copyOf} kind={drawer.kind} onClose={() => setDrawer((d) => ({ open: false, expense: null, kind: d.kind }))} />
+      {unpaid.modal}
       <ConfirmModal
         isOpen={!!toDelete}
         onClose={() => setToDelete(null)}

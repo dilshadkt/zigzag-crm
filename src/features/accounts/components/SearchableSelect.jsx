@@ -10,7 +10,7 @@ import { inputCls } from "./ui";
  *
  * options: [{ value, label, hint? }]. Pass `onCreate(query)` to show an
  * "Add new" row at the bottom (`createRequiresQuery` shows it only once something
- * is typed), `onRemove(option)` to show a remove button on each row (an option
+ * is typed), `extraActions` ([{ label, onSelect(query) }]) for more such rows, `onRemove(option)` to show a remove button on each row (an option
  * with `removable: false` keeps it hidden), and `clearLabel` to allow picking
  * "nothing".
  */
@@ -24,6 +24,7 @@ const SearchableSelect = ({
   onCreate,
   createLabel = "Add new",
   createRequiresQuery = false,
+  extraActions,
   onRemove,
   removeLabel = "Remove",
   emptyText = "No matches",
@@ -51,14 +52,14 @@ const SearchableSelect = ({
     matches.forEach((o) => out.push({ kind: "option", ...o }));
     // Don't offer to add something that is already in the list
     const exact = matches.some((o) => o.label.toLowerCase() === q);
-    if (onCreate && !exact && (q || !createRequiresQuery)) {
-      out.push({
-        kind: "create",
-        label: q ? `${createLabel} "${query.trim()}"` : `${createLabel}…`,
-      });
+    const addRow = (label, key, run) =>
+      out.push({ kind: "create", key, run, label: q ? `${label} "${query.trim()}"` : `${label}…` });
+    if (!exact && (q || !createRequiresQuery)) {
+      if (onCreate) addRow(createLabel, "create", onCreate);
+      (extraActions || []).forEach((a, i) => addRow(a.label, `create-${i}`, a.onSelect));
     }
     return out;
-  }, [options, query, clearLabel, onCreate, createLabel, createRequiresQuery]);
+  }, [options, query, clearLabel, onCreate, createLabel, createRequiresQuery, extraActions]);
 
   const close = (refocus = true) => {
     setOpen(false);
@@ -79,7 +80,7 @@ const SearchableSelect = ({
     if (row.kind === "create") {
       const q = query.trim();
       close(false);
-      onCreate(q);
+      row.run(q);
       return;
     }
     onChange(row.value);
@@ -193,7 +194,7 @@ const SearchableSelect = ({
               const isSelected = row.kind !== "create" && row.value === value && (row.kind === "option" || !value);
               return (
                 <li
-                  key={row.kind === "option" ? row.value : row.kind}
+                  key={row.kind === "option" ? row.value : row.key || row.kind}
                   id={`${listId}-${i}`}
                   role="option"
                   aria-selected={isSelected}
